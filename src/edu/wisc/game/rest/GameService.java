@@ -131,9 +131,12 @@ public class GameService {
     @Produces(MediaType.APPLICATION_JSON)
     public FileWriteReport writeFile(@FormParam("dir") String dir,
 				     @FormParam("file") String file,
+				     @FormParam("append") String appendString,
 				     @FormParam("data") String data) {
 	try {
 
+	    boolean append = (appendString!=null) && appendString.trim().equalsIgnoreCase("true");
+	    
 	    if (file==null) throw new IOException("File name not specified");
 	    file = file.trim();
 	    if (file.length()==0) throw new IOException("Empty file name");
@@ -154,9 +157,9 @@ public class GameService {
 	    } else {
 		if (!d.mkdirs())  throw new IOException("Failed to create directory: " + d);
 	    }
-	    File f= new File(d, file);
-	    if (f.exists()) throw new IOException("File already exists: " + f);
-	    PrintWriter w = new PrintWriter(new FileWriter(f));
+	    File f= new File(d, file);	    
+	    if (f.exists() && !append) throw new IOException("File already exists, and append="+append+": " + f);
+	    PrintWriter w = new PrintWriter(new FileWriter(f, append));
 	    w.print(data);
 	    w.close();	    
 	    return  new	    FileWriteReport(f, f.length());

@@ -2,7 +2,7 @@
   <head><title>File writing demo A</title>
    <script>
 
-     function sendData() {
+     function sendData(append) {
        let url = "<%=request.getContextPath() %>";
       url =  url +"/game-data/GameService/writeFile";
       document.getElementById("demo").innerHTML = "Sending data to " + url + " ...";
@@ -19,19 +19,10 @@
       xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
 
 
-      //let form = document.getElementById("wfForm"); //querySelector(".wfForm");
-      //let data = new FormData(form);
-      //console.log('form=' + form + "; " + JSON.stringify(form));
-      //console.log('data=' + data +  "; " + JSON.stringify(form));
-
-//      let data = new FormData();
-//      data.append("dir", document.getElementById("wf.dir").value); 
-//      data.append("file", document.getElementById("wf.file").value); 
-//      data.append("data", document.getElementById("wf.data").value);
-
 	let data="dir=" +encodeURIComponent( document.getElementById("wf.dir").value) +
-	    "&file=" +encodeURIComponent(document.getElementById("wf.file").value) +
-	    "&data=" +encodeURIComponent( document.getElementById("wf.data").value);
+     "&file=" +encodeURIComponent(document.getElementById("wf.file").value) +
+     "&append=" + append +
+     "&data=" +encodeURIComponent( document.getElementById("wf.data").value);
 
       xhttp.send(data);
       }
@@ -53,6 +44,12 @@
 	      enctype="application/x-www-form-urlencoded">
 	Subdirectory (relative to /opt/tomcat/saved; optional)<input name="dir" type="text" id="wf.dir" size="50" value="test"><br>
 	File name (without directory name)<input name="file" type="text" id="wf.file" size="50" value="sample.txt"><br>
+
+Append?	<select name="append">
+<option value="false" selected>false</option>
+<option value="true">true</option>
+</select>
+	<br>
 	<textarea id="wf.data" name="data" rows="10" cols="60">
 Please type some arbitrary text data here
 	</textarea><br>
@@ -62,7 +59,10 @@ When you click "submit", the data will be sent to the server, where they will be
 
 <li>  <strong>Option 2: sending data using JavaScript</strong><br>
 
-      <button  onclick="sendData();">Send data using JS</button>
+  <p>This options ignores the "append" selector. Instead, click on one of the two buttons:</p>
+  
+      <button  onclick="sendData(false);">Send data using JS (no append)</button>
+      <button  onclick="sendData(true);">Send data using JS (append allowed)</button>
       <br><hr>
 
 
