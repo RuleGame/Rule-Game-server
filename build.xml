@@ -1,0 +1,228 @@
+<!-- This is the main build file for use with Apache Ant. It tells Ant how to
+    compile our application from the source code, how to build Javadoc documentation,
+    etc. 
+
+    To carry out a particular operation with Ant, you provide the name of the
+    appropriate target. E.g., to compile the code, you type 
+
+      and compile
+
+     Apache Ant is available for most modern operating systems.
+     You can read more about Apache Ant at http://ant.apache.org/manual/index.html
+
+-->
+
+<project name="w2020" default="jar" basedir=".">
+
+ <property name="main" location="."/>
+
+ <property name="src" location="src"/>
+ <!-- property name="src.doc" location="src.doc"/ -->
+
+ <property name="classes" location="${main}/classes"/>
+ <property name="lib" location="${main}/lib"/>
+ <property name="out.doc" location="${main}/out.doc"/>
+ <property name="enapp.api" location="${out.doc}/html/api"/>
+ <property name="build.tmp" location="/tmp"/>
+
+ <property name="our.jar" value="game.jar"/>
+ <property name="dist.war"       value="w2020.war"/>
+
+
+<!-- where to look for OpenJPA -->
+<property name="openjpa"  location="/opt/apache-openjpa-3.1.0"/>
+
+<!-- property name="javamail.lib"  location="../javax-mail-1.6.2"/ -->
+
+
+ 
+<path id="classpath"
+       description="The classpath to use for compiling this app">
+   <fileset dir="${lib}">
+     <include name="*.jar"/>
+   </fileset>
+   <fileset dir="${main}/../jaxrs-ri/api">
+     <include name="*.jar"/>
+   </fileset>
+   <fileset dir="${main}/../jaxrs-ri/ext">
+     <include name="*.jar"/>
+   </fileset>
+   <fileset dir="${main}/../jaxrs-ri/lib">
+     <include name="*.jar"/>
+   </fileset>
+   <fileset dir="${main}/../jaxb-ri/mod">
+     <include name="*.jar"/>
+   </fileset>
+  <fileset dir="${openjpa}">
+     <include name="**/*.jar"/>
+   </fileset>
+ </path>
+
+
+ <path id="javaagent">
+   <fileset dir="${openjpa}">
+     <!-- include name="openjpa-*.jar"/ -->
+     <include name="openjpa-all-*.jar"/>
+   </fileset>
+ </path>
+ <pathconvert property="javaagent" refid="javaagent"/>
+
+
+<!-- An attempt to tell Ant where OpenJPA jars are, for a
+taskdef. This is an alternative to putting them into ~/.ant/lib, which
+works in ant 1.8 but does not seem to work with the ant 1.7
+installation on cornell machines.  See an example at
+http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
+. (2013-07-20). -->
+<path id="openjpa-classpath">
+   <fileset dir="${openjpa}">
+     <include name="openjpa-*.jar"/>
+   </fileset>
+</path>
+
+
+<!-- An auxiliary target; you aren't likely to use it directly.  It just creates necessary directories -->
+<target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${lib}"/>
+    <mkdir dir="${classes}"/>
+    <mkdir dir="${out.doc}"/>
+    <mkdir dir="${enapp.api}"/>
+    <mkdir dir=""/>
+</target>
+
+
+<target name="clean"
+        description="Clean up compiled files and generated database files">
+
+  <!-- delete dir="${deploy.home}"/ -->
+  <delete dir="${classes}"/>
+	
+  <delete file="${lib}/${our.jar}"/>
+  <!-- delete includeemptydirs="yes">
+    <fileset dir="${deploy.home}">
+         <include name="*"/>
+  	 </fileset>
+   </delete -->
+</target>
+
+
+
+<!-- This target tells Ant how to compile the application. -->
+<target name="compile" depends="init"
+        description="Compile the source code" >
+  <!-- Compile the java code from ${src} into ${classes} -->
+  <javac srcdir="${src}" destdir="${classes}"
+	 includes="edu/**,com/**"  optimize="on"
+	 debug="on" debuglevel="lines,vars,source"	 
+	 includeantruntime="false"
+	 target="1.8" source="1.8"
+	 >
+    <classpath refid="classpath"/>
+    <!-- compilerarg value="-Xlint"/ -->
+  </javac>
+  <!-- copy todir="${classes}">
+    <fileset dir="${src}">
+      <include name="**/*.png"/>
+    </fileset>
+  </copy -->
+</target>
+
+
+
+<target name="enhance" description="Enhance class files for OpenJPA">
+  <!-- META-INF/persistence.xml should be under a directory that's 
+       in the classpath; so we simply include it into the jar -->
+  <copy  file="META-INF/persistence.xml" todir="${classes}/META-INF"/>
+
+  <!-- as per instructions in http://openjpa.apache.org/builds/1.0.2/apache-openjpa-1.0.2/docs/manual/ref_guide_integration.html -->
+  <taskdef name="openjpac" classname="org.apache.openjpa.ant.PCEnhancerTask"
+	   classpathref="openjpa-classpath"/>
+
+  <!-- invoke enhancer on all .java files below the model directory -->
+  <openjpac>
+    <config
+       propertiesFile="${classes}/META-INF/persistence.xml"/> 
+    <!-- classpath refid="classpath"/ -->
+
+   <classpath>
+      <!-- path refid="entity.cp"/>
+      <path refid="jpa.used.cp"/ -->
+      <pathelement location="${classes}"/>
+      <path refid="classpath"/>
+    </classpath> 
+
+
+    <fileset dir="${classes}/edu/wisc/game/sql">
+      <!-- include name="**/*.class"/ -->
+      <include name="Piece.class" />
+      <include name="Board.class" />
+    </fileset>
+  </openjpac>
+
+</target>
+
+<target name="jar" depends="compile,enhance"
+        description="Builds a Jar file that will include all  class files. It will include all of our own class files, and can be used as a binary distribution. The manifest file will specify the .... driver class as the main class; it will also mention two other Jar files (from the Xerces distribution) that should be found in the same directory with this jar file">
+  <echo message="lib=${lib}, our=${our.jar}. Preparing jar file ${lib}/${our.jar}, from ${classes}"/>
+ <jar destfile="${lib}/${our.jar}"   basedir="${classes}">
+
+   <!-- file="manifest-data.dat" mode="replace" -->
+   <!-- attribute name="Class-Path" value=". xercesImpl.jar xml-apis.jar"/ -->
+   <!-- manifest> 
+      <attribute name="Main-Class" value="edu.rutgers.enats.Enats"/>
+      <attribute name="Class-Path" value="."/>	
+    </manifest -->
+  </jar>
+</target>
+
+<target name="captive-jar" depends="compile"
+        description="Builds a Jar file that will include all  class files. This version uses non-enhanced class files, to run a captive server without persistence; thus no JPA needed.">
+  <echo message="lib=${lib}, our=${our.jar}. Preparing jar file ${lib}/${our.jar}, from ${classes}"/>
+ <jar destfile="${lib}/captive.jar"   basedir="${classes}">
+  </jar>
+</target>
+
+
+<target name="javadoc" depends="init,compile">
+ 
+  <javadoc sourcepath="src" packagenames="edu.*,com.*"
+	   classpathref="classpath"
+	   destdir="${enapp.api}"
+           use="true"
+	   link="https://docs.oracle.com/en/java/javase/11/docs/api/"
+	   header="&lt;em&gt;CHEETA 2.012&lt;/em&gt;"   
+	   windowtitle="CHEETA 2.012 API documentation" 
+	   overview="${src.doc}/html/api/overview.html"
+	   additionalparam="-Xdoclint:none" />
+
+</target>
+
+<!-- an alternative to "deploy" -->
+<target name="war" depends="init,jar">
+<war destfile="../${dist.war}" webxml="WEB-INF/web.xml">
+  <fileset dir="web" excludes=".svn" />
+  <lib dir="${lib}"><include name="**/*.jar"/></lib>
+  <lib dir="${main}/../jaxrs-ri/api">    <include name="*.jar"/> </lib>
+  <lib dir="${main}/../jaxrs-ri/ext">    <include name="*.jar"/> </lib>
+  <lib dir="${main}/../jaxrs-ri/lib">    <include name="*.jar"/> </lib>
+  <lib dir="${main}/../jaxb-ri/mod">    <include name="*.jar"/> </lib>
+  <lib dir="${openjpa}">  <include name="*.jar"/> </lib>
+
+  <!-- lib dir="${tomcat.lib.copy2}"> <include name="*.jar"/> </lib -->
+  <webinf dir="WEB-INF"/>
+  <!-- webinf dir="."><include name="osmot.conf"/></webinf -->
+  <metainf dir="META-INF"/>
+</war>
+</target>
+
+
+</project>
+
+
+<!--
+    module-path /usr/share/openjfx/lib
+add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.web
+   -->

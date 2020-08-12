@@ -1,0 +1,81 @@
+package edu.wisc.game.rest;
+
+import java.io.*;
+import java.util.*;
+import java.text.*;
+import java.net.*;
+//import javax.persistence.*;
+
+//import org.apache.openjpa.persistence.jdbc.*;
+
+
+import java.io.Serializable;  
+import javax.xml.bind.annotation.XmlElement; 
+import javax.xml.bind.annotation.XmlRootElement; 
+@XmlRootElement(name = "piece") 
+
+
+
+/** Represents a piece of a specified type at a specified location. Used
+    in board description.
+
+<pre>
+ "boardObjectsArrays":{
+     "Cvu0lwRnl":{
+     "id":"Cvu0lwRnl",
+     "value":
+     [{"color":"yellow","shape":"square","id":"1","x":1,"y":1},
+     {"color":"black","shape":"square","id":"6","x":6,"y":1},
+     {"color":"red","shape":"square","id":"31","x":1,"y":6},
+     {"color":"blue","shape":"square","id":"36","x":6,"y":6}],
+     "name":"Four squares in corners"}
+     }
+}
+</pre>
+*/
+
+public class Piece  implements Serializable {
+
+    enum Color { RED, YELLOW, GREEN, BLUE, BLACK};
+    enum Shape { CIRLCE, STAR, SQUARE, TRIANGLE};
+    
+    private static final long serialVersionUID = 1L; 
+    private String id; 
+    private String color; 
+    private String shape;  
+    private int x;
+    private int y;
+
+    public String getId() { return id; }
+  @XmlElement 
+    public void setId(String _id) { id = _id; }
+
+    
+    public String getColor() { return color; }
+  @XmlElement 
+    public void setColor(String _color) { color = _color; }
+    
+    
+    public String getShape() { return shape; }
+  @XmlElement 
+    public void setShape(String _shape) { shape = _shape; }
+
+    public int getX() { return x; }
+  @XmlElement 
+    public void setX(int _x) { x = _x; }
+
+    public int getY() { return y; }
+  @XmlElement 
+    public void setY(int _y) { y = _y; }
+
+   public Piece(){} 
+ 
+    
+    public Piece(int _id, Shape _shape, Color _color, int _x, int _y) {
+	id = ""+_id;
+	shape = _shape.toString().toLowerCase();
+	color = _color.toString().toLowerCase();
+	x = _x;
+	y = _y;
+    }
+}

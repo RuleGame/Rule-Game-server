@@ -1,0 +1,107 @@
+<?xml version = "1.0" encoding = "UTF-8"?> 
+<web-app xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"  
+   xmlns = "http://java.sun.com/xml/ns/javaee"  
+   xsi:schemaLocation="http://java.sun.com/xml/ns/javaee  
+   http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"  
+   id = "WebApp_ID" version = "3.0">
+
+  <description>
+    University of Wisconsin Rule-Game Application
+  </description>
+
+  <request-character-encoding>UTF-8</request-character-encoding>
+
+ 
+   <display-name>University of Wisconsin Rule-Game Application</display-name> 
+
+   <!-- Inserted as per Kevin Mui's request, 2020-07-31, to allow access from
+	JS code running on different hosts or at different ports.
+	See instructions
+	at https://tomcat.apache.org/tomcat-9.0-doc/config/filter.html#CORS_Filter -->
+   <filter>
+     <filter-name>CorsFilter</filter-name>
+     <filter-class>org.apache.catalina.filters.CorsFilter</filter-class>
+     <init-param>
+       <param-name>cors.allowed.origins</param-name>
+       <param-value>*</param-value>
+     </init-param>
+    </filter>
+   <filter-mapping>
+     <filter-name>CorsFilter</filter-name>
+     <url-pattern>/*</url-pattern>
+   </filter-mapping>
+
+   <servlet> 
+      <servlet-name>Rule-Game-Test</servlet-name> 
+      <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class> 
+      <init-param> 
+         <param-name>jersey.config.server.provider.packages</param-name> 
+         <param-value>com.tutorialspoint</param-value> 
+      </init-param> 
+   </servlet> 
+   <servlet-mapping> 
+      <servlet-name>Rule-Game-Test</servlet-name> 
+      <url-pattern>/rest/*</url-pattern> 
+   </servlet-mapping>
+
+   <display-name>University of Wisconsin Rule-Game Application</display-name> 
+   <servlet> 
+      <servlet-name>Rule-Game-REST</servlet-name> 
+      <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class> 
+      <init-param> 
+         <param-name>jersey.config.server.provider.packages</param-name> 
+         <param-value>edu.wisc.game.rest</param-value> 
+      </init-param> 
+   </servlet> 
+    <servlet-mapping> 
+      <servlet-name>Rule-Game-REST</servlet-name> 
+      <url-pattern>/game-data/*</url-pattern> 
+    </servlet-mapping>
+
+     <security-role>
+      <description>
+        Admins can do anything, including user administration
+      </description>
+      <role-name>admin</role-name>
+    </security-role>
+   <security-role>
+      <description>
+      </description>
+      <role-name>researcher</role-name>
+    </security-role>
+  <security-role>
+      <description>
+      </description>
+      <role-name>player</role-name>
+    </security-role>
+
+
+
+  <security-constraint>
+      <display-name>Example Security Constraint - part 1</display-name>
+      <web-resource-collection>
+         <web-resource-name>Protected Area - Allow methods</web-resource-name>
+         <!-- Define the context-relative URL(s) to be protected -->
+         <!-- url-pattern>/*</url-pattern -->
+         <url-pattern>/nonesuch</url-pattern>
+      </web-resource-collection>
+      <auth-constraint>
+         <!-- Anyone with one of the listed roles may access this area -->
+         <role-name>researcher</role-name>
+         <role-name>player</role-name>
+      </auth-constraint>
+    </security-constraint>
+  
+   <!-- Default login configuration uses form-based authentication -->
+    <login-config>
+      <auth-method>FORM</auth-method>
+      <realm-name>Example Form-Based Authentication Area</realm-name>
+      <form-login-config>
+        <form-login-page>/jsp/security/protected/login.jsp</form-login-page>
+        <form-error-page>/jsp/security/protected/error.jsp</form-error-page>
+      </form-login-config>
+    </login-config>
+
+
+   
+</web-app>

@@ -1,0 +1,28 @@
+Parameter Name,Description
+rule_id,unique rule identifier (name of rule). NOT shown to the subject.
+max_boards,max number of boards is a subject allowed to attempt for this rule
+max_points,this will determine the maximum number of points a subject is allowed to earn from clearing a board (used as parameter in the point calculation formula)
+min_points, this will determine the min number of points a subject is allowed to earn if they don’t clear the board in max_boards attempts
+activate_bonus_at,this determines when (on which board) “Activate bonus” option is available to them. This is the board at which they can try to guess the rule and see whether their
+min_objects,minimum number of objects to be displayed on the board for this rule
+max_objects,maximum number of objects to be displayed on the board for this rule
+min_shapes,minimum number of unique shapes to be displayed on the board for this rule
+max_shapes,maximum number of unique shapes to be displayed on the board for this rule
+min_colors,minimum number of unique colors to be displayed on the board for this rule
+max_colors,maximum number of unique colors to be displayed on the board for this rule
+f,rate of point falloff
+m,max number of points possible for this rule
+n,y-offset (min points possible.. will be adjusted together with m)
+b,another rate of point falloff parameter
+clear_how_many,"(if they successfully clear the next clear_how_many boards, they get bonus_amt extra points"
+bonus_extra_pts,number of bonus points awarded for clearing clear_how_many boards successfully
+clearing_threshold,"determines what counts as successfully clearing a board. 1.2 means the person is allowed to make 1.2 * number_of_starting_shapes moves (move = putting object in a bucket or attempting to; in other words, a drag and release). This parameter  should be the next integer higher than ct*noss."
+feedback_switches,"This are  switches controlling the degree of feedback that the game provides to the player. It may not be a part of the game, as it may be overridden by a control imposed per subject, in the experimental design
+fixed = (current default). Unmovable objects are marked with an X
+free = no objects are marked with X. Seeking to move an object is counted as some fraction of a move. 
+new_display_trigger = number of wrong drop attempts allowed. When this is exceeded a new display is draw. defaul = inf
+free_trigger = number of wrong attempts to move an object, default=inf
+free_wrong_cost = fraction of a move charged for wrong attempt to move. non-neagtive real. default = 0. "
+stack_memory_depth,"controls how many dropped objects show in the stack or ""beaker"" next to each bucket. . Currently accomodates at least 16. Objects shrink as the stack gets too big. "
+stack_memory_show_order,TRUE: the drop order of each move is displayed next to the object in the stack; default: FALSE
+grid_memory_show_order,"TRUE: instead of a check mark, the drop order of the object is displayed over the image; default FALSE"

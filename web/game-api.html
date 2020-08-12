@@ -1,0 +1,123 @@
+<html>
+  <head><title>RESTful API for the use by the Rule Game client</title>
+  </head>
+<body>
+  <h1>RESTful API for the use by the Rule Game client</h1>
+
+  <p align="center"><em>Ver 1.005, 2020-08-12</em></p>
+
+<p>This API includes several HTTP request/response pairs that can be used by the TypeScript/React GUI. Conceptually, its functionality is fairly similar to that of the 
+<a href="package.html#move">Captive Game Server</a> (used by the ML programs), but is customized for the needs of a GUI app used by human players; and, of course, the client communicates with it over HTTP, instead of pipes or the socket level.</p>
+  
+  <ol>
+    <li>GET <strong>Retrieve a parameter set:</strong>
+   <form method="get" action="game-data/GameService/getParaSet"
+	 enctype="application/x-www-form-urlencoded">
+     Name: <input name="name" type="text" value="param-1">
+	  <input type="submit">
+   </form>
+<p>
+  The argument is the name of the parameter set.</p>
+
+<P>The return value is a JSON object, which may look like this: <tt>
+    {"max_points":10, "min_points":3, "max_colors":4,
+    "feedback_switches":"fixed",
+    "error":false,
+    "clear_how_many":4, "max_objects":8, "grid_memory_show_order":true,
+    "min_shapes":2, "stack_memory_show_order":true, "activate_bonus_at":3, "clearing_threshold":1.2, "b":0.1, "f":0.2,
+    "errmsg":"No error",
+    "min_objects":2, "m":10, "n":4, "bonus_extra_pts":10,
+    "rule_id":"rule-1",
+    "name":"param-1", "max_shapes":4, "min_colors":1,
+    "stack_memory_depth":16, "max_boards":5} </tt>. In the return value, the boolean field <tt>error</tt> contains <tt>false</tt> if the parameter set has been successfully retrieved, or  <tt>true</tt> if an error has been encountered (e.g. no parameter set with this name exists). The field  <tt>errmsg</tt>, if provided, may contain a human-readable error message.</p>
+
+   <p>
+   (The data will be retrieved from a CSV file in the directory <tt>/opt/tomcat/game-data/param/ </tt> on the server. The file name consists of the name of the parameter set and extension ".csv").</p>
+
+   <p>The server does not know the semantics of the fields in the CSV file, nor does it know what the type of each field is supposed to be (integer vs. boolean vs. string). If the value in a field looks like a number or a boolean, the server treats it accordingly; otherwise, the field value is treated as a string.</p>
+
+     <li>POST <strong><tt>newEpisode</tt>: Create a new episode:</strong>
+        <form method="post" action="game-data/GameService/newEpisode"
+	 enctype="application/x-www-form-urlencoded">
+	  Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="rules-01"><br>
+	  Number of pieces (a number within the [min_objects, max_objects] 
+	  range given in the param set): <input name="pieces" type="text" value="4"><br>
+	  <input type="submit">
+	</form>
+
+       <p>This returns a JSON object which contains the <tt>error</tt> field (true on an error, false on success), the optional <tt>errmsg</tt> field, and the <tt>episodeId</tt> field. The <tt>episodeId</tt> field contains the ID (a string) of the episode object, which can be used in the later <tt>move</tt> calls. The returned structure also contains the description of the current board at the beginning of the episode (in the same format as in the <tt>move</tt> call, below).</P>
+
+       <p>A typical return value: on success	 <pre>
+{"board":
+ {"longId":0,"id":0,
+  "value":[
+   {"buckets":[3],"color":"BLUE","id":0,"shape":"SQUARE","x":1,"y":2},
+   {"buckets":[],"color":"BLUE","id":0,"shape":"CIRCLE","x":2,"y":3},
+   {"buckets":[],"color":"BLUE","id":0,"shape":"STAR","x":2,"y":4},
+   {"buckets":[1],"color":"YELLOW","id":0,"shape":"CIRCLE","x":6,"y":5}]},
+ "episodeId":"20200811-163531-8K175O",
+ "error":false}	 </pre>
+	 On failure:	 <pre>  
+{"errmsg":
+ "Cannot read rule file: /opt/tomcat/game-data/rules/nonesuch.txt",
+ "error":true}
+	 </pre>
+       </p></li>
+
+     <li>GET <strong><tt>display</tt>: Display the current board:</strong>
+      <form method="get" action="game-data/GameService/display"
+	 enctype="application/x-www-form-urlencoded">
+	  Episode ID (returned by an earlier newEpisode call): <input name="episode" type="text" size="25">
+	  <input type="submit">
+      </form>
+      <p>Returns the same JSON structure as was returned by the most recent <tt>move</tt> or  <tt>newEpisode</tt> call, describing the current board and the current <tt>finishCode</tt>, except that the <tt>code</tt> value on success is -8 (JUST_A_DISPLAY, indicating that this was a "display" call, rather than a "move" call).</p></li>
+       
+       <li>POST <strong><tt>move</tt>: Make a move:</strong>
+      <form method="post" action="game-data/GameService/move"
+	 enctype="application/x-www-form-urlencoded">
+	  Episode ID (returned by an earlier newEpisode call): <input name="episode" type="text" size="25"><br>
+	  Piece to move: column=x=<input name="x" type="text" value="1" size="2">,
+	  row=y=<input name="y" type="text" value="1" size="2"> (both ranging 1 thru 6)<br>
+	  Destination bucket (identified by  bucket_column=bx=<input name="bx" type="text" value="7" size="2">,
+	  bucket_row=by=<input name="by" type="text" value="7" size="2"> (possible values are 0 and 7)<br>
+	  Attempted move count so far (the number of previous calls to <strong><tt>move</tt></strong> in this episode) <input name="cnt" type="text" value="0" size="5"><br>
+	  <input type="submit">
+      </form>
+	 <p>The return value is a JSON object which contains:
+	   <ul>
+	     <li>the boolean <tt>error</tt> flag;</li>
+	     <li>the <tt>code</tt> value that may provide more details on the operation results;
+	     <li>the <tt>finishCode</tt> value which indicates whether the game still goes on, has finished (the board has been cleared), or has stalemated;
+	     <li>the <tt>board</tt> object that desribes the current board (what pieces are currently on the board, and whither they can be moved). The code is negative if the request was not understood (reference to a non-existent episode, missing or malformed parameters etc), positive if the request was valid but the piece could not be moved, and 0 if the requested piece has been moved.
+	     <li>The value <tt>attemptCnt</tt> is incremented by one on each valid request (regardless of whether the piece requested was moved or not). Therefore, when calling <tt>move</tt>, the supplied value of the <tt>attemptCnt</tt> parameter should be 0 on the first move;   on subsequent calls, it should be equal to the value of attemptCnt returned by the previous <tt>move</tt> call.</p>
+	 </ul>
+
+	 <P>For the semantics of the <tt>code</tt> and  <tt>finishCode</tt> fields, see the entry on the MOVE command in the <a href="package.html#move">documentation on the Captive Game Server</a>.
+
+	  <p>A typical return value: on success	 <pre>
+{"attemptCnt":1,
+ "board":{"longId":0,"id":0,
+ "value":[
+   {"buckets":[],"color":"BLUE","id":0,"shape":"SQUARE","x":6,"y":4},
+   {"buckets":[0,1],"color":"RED","id":0,"shape":"TRIANGLE","x":2,"y":5}]},
+"code":0,
+"finishCode":0}	    </pre>
+On failure:<pre>
+{"attemptCnt":0,"code":-6,"errmsg":"# Invalid episode ID"}  
+	    </pre>
+	    or
+<pre>
+{"attemptCnt":1,
+ "board":{"longId":0,"id":0,"value":[{"buckets":[],"color":"BLUE","id":0,"shape":"SQUARE","x":6,"y":4}, ... ]},
+"code":-7,
+"errmsg":"Given attemptCnt=0, expected 1"}
+</pre>
+</p>
+</li>
+
+<li>GET <strong><tt>writeFile</tt>: see <a href="write.jsp">Write file</a>
+	  
+</ul>
+  </body>
+</html>
+  

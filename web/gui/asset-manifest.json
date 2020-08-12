@@ -1,0 +1,24 @@
+{
+  "files": {
+    "main.css": "/w2020/gui/static/css/main.a365ad36.chunk.css",
+    "main.js": "/w2020/gui/static/js/main.48d4d54a.chunk.js",
+    "main.js.map": "/w2020/gui/static/js/main.48d4d54a.chunk.js.map",
+    "runtime-main.js": "/w2020/gui/static/js/runtime-main.f0b824a9.js",
+    "runtime-main.js.map": "/w2020/gui/static/js/runtime-main.f0b824a9.js.map",
+    "static/js/2.4a251590.chunk.js": "/w2020/gui/static/js/2.4a251590.chunk.js",
+    "static/js/2.4a251590.chunk.js.map": "/w2020/gui/static/js/2.4a251590.chunk.js.map",
+    "index.html": "/w2020/gui/index.html",
+    "precache-manifest.c3d7758bd28f5fc25f961ed91aeb0e06.js": "/w2020/gui/precache-manifest.c3d7758bd28f5fc25f961ed91aeb0e06.js",
+    "service-worker.js": "/w2020/gui/service-worker.js",
+    "static/css/main.a365ad36.chunk.css.map": "/w2020/gui/static/css/main.a365ad36.chunk.css.map",
+    "static/js/2.4a251590.chunk.js.LICENSE": "/w2020/gui/static/js/2.4a251590.chunk.js.LICENSE",
+    "static/media/bucket.svg": "/w2020/gui/static/media/bucket.dc583d8d.svg",
+    "static/media/smiley-face.png": "/w2020/gui/static/media/smiley-face.770bd064.png"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.f0b824a9.js",
+    "static/js/2.4a251590.chunk.js",
+    "static/css/main.a365ad36.chunk.css",
+    "static/js/main.48d4d54a.chunk.js"
+  ]
+}

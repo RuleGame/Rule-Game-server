@@ -1,0 +1,65 @@
+package edu.wisc.game.rest;
+
+import java.io.*;
+import java.util.*;
+import java.text.*;
+import java.net.*;
+//import javax.persistence.*;
+
+//import org.apache.openjpa.persistence.jdbc.*;
+
+
+import java.io.Serializable;  
+import javax.xml.bind.annotation.XmlElement; 
+import javax.xml.bind.annotation.XmlRootElement; 
+@XmlRootElement(name = "board") 
+
+
+/** Represents a piece of a specified type at a specified location. Used
+    in board description.
+
+<pre>
+ "boardObjectsArrays":{
+     "Cvu0lwRnl":{
+     "id":"Cvu0lwRnl",
+     "value":
+     [{"color":"yellow","shape":"square","id":"1","x":1,"y":1},
+     {"color":"black","shape":"square","id":"6","x":6,"y":1},
+     {"color":"red","shape":"square","id":"31","x":1,"y":6},
+     {"color":"blue","shape":"square","id":"36","x":6,"y":6}],
+     "name":"Four squares in corners"}
+     }
+}
+</pre>
+*/
+
+public class Board implements Serializable {
+
+    static final int L = 6;
+    
+    private String id;
+    private String name;
+    private Vector<Piece> value;
+
+     public String getId() { return id; }
+ @XmlElement
+ public void setId(String _id) { id = _id; }
+    public String getName() { return name; }
+    @XmlElement
+    public void setName(String _name) { name = _name; }
+    public Vector<Piece> getValue() { return value; }
+    @XmlElement
+    public void setValue(Vector<Piece> _value) { value = _value; }
+
+    Board() {
+	setName("Sample board");
+	setId("0");
+	value = new Vector<>();
+	Piece.Shape[] shapes = 	Piece.Shape.values();
+	Piece.Color[] colors = 	Piece.Color.values();
+	for(int i=0; i<L; i++) {
+	    value.add( new Piece( i, shapes[i%shapes.length],
+				  colors[i%colors.length], i, L-1-i));
+	}
+    }
+}
