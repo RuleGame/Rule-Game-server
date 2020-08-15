@@ -5,14 +5,14 @@
 #-- and plays with it using pipe I/O
 #--
 #-- Usage:
-#-- client.py rules/rules-01.txt 5
+#-- client.py game-data/rules/rules-01.txt 5
 #----------------------------------------------------------------------
 
 
 import subprocess, sys, re, random, json
 import gameLoop
 
-#game='rules/rules-01.txt'
+#game='game-data/rules/rules-01.txt'
 game=sys.argv[1]
 
 # nPieces = '5'

@@ -7,7 +7,7 @@
 #-- Usage:
 #-- client-socket.py host port rule-filet nPieces
 #-- e.g.
-#-- client-socket.py localhost 7501 rules/rules-01.txt 5
+#-- client-socket.py localhost 7501 game-data/rules/rules-01.txt 5
 #----------------------------------------------------------------------
 
 
@@ -16,7 +16,7 @@ import gameLoop
 import socket
 
 
-#game='rules/rules-01.txt'
+#game='game-data/rules/rules-01.txt'
 host=sys.argv[1]
 port=int(sys.argv[2])
 

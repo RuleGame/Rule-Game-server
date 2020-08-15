@@ -5,7 +5,7 @@ set sc=`dirname $0`
 set h=`(cd $sc; pwd)`
 source "$h/set-var-captive.sh"
 
-$sc/python/client-socket.py localhost 7501 $sc/rules/rules-02.txt 5
+$sc/python/client-socket.py localhost 7501 $sc/game-data/rules/rules-02.txt 5
 
 
 
