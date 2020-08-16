@@ -145,6 +145,7 @@ public class CsvData {
 	BasicLineEntry(String[] _csv) {
 	    csv = _csv;
 	}
+	public int nCol() { return csv.length; }
 	public String getKey() { return csv[0]; }
 	public String getCol(int j) { return j<csv.length? csv[j]: null; }
 	

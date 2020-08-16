@@ -1,0 +1,4 @@
+# Syntax (counter,shape,color,position,bucketFunctions)
+(1,square,*,NearestObject,[Nearby]) (1,triangle,*,NearestObject,[Nearby]) (1,star,*,NearestObject,[Nearby]) (1,circle,*,NearestObject,[Nearby])
+(*,*,red,T,[0,1])
+

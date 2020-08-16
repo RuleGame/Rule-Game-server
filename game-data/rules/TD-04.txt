@@ -1,0 +1,6 @@
+# This rule only allows picking elements from corner positions; so it
+# will cause a stalemate if there are any elements not in the corners
+# Syntax (counter,shape,color,position,bucketFunctions)
+(*,*,*,[1,6,31,36],[Nearby])
+
+

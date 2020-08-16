@@ -36,6 +36,28 @@ public class ParaSet extends HashMap<String, Object> {
     public void setErrmsg(String _errmsg) { errmsg = _errmsg; }
     */
 
+    /** Initializes a ParaSet object from a line of trial list file */
+    ParaSet(CsvData.BasicLineEntry header, CsvData.BasicLineEntry line) throws IOException {
+	int nCol=header.nCol();
+	if (nCol!=line.nCol()) throw new  IOException("Column count mismatch:\nHEADER=" + header + ";\nLINE=" + line);
+	for(int k=0; k<nCol; k++) {
+	    typedPut(header.getCol(k), line.getCol(k));		    	    
+	}
+    }
+
+    /** Converts the value to an object of a (likely) proper type, and 
+	puts it into this HashMap */
+    private Object typedPut(String key, String val) {
+	val = val.trim();
+	String s= val.toLowerCase();
+	return
+	    (s.equals("true")||s.equals("false")) ? put(key,Boolean.valueOf(s)):
+	    s.matches("[0-9]+") ? 	    put(key, Integer.valueOf(s)) :
+	    s.matches("[0-9]*\\.[0-9]+") ?    put(key, Double.valueOf(s)) :
+	    put(key, val);
+    }
+
+    /** Reads a ParaSet from a CSV file with key-val columns */
     ParaSet(String name) {
 	put("error", false);
 	put("errmsg", "No error");
@@ -57,19 +79,7 @@ public class ParaSet extends HashMap<String, Object> {
 		String key = e.getKey();
 		String val = ((CsvData.BasicLineEntry)e).getCol(1);
 		if (val==null) continue;
-		val = val.trim();
-		String s= val.toLowerCase();
-		s = s.trim();
-		if (s.equals("true") || s.equals("false")) {
-		    put(key, Boolean.valueOf(s));
-		} else if (s.matches("[0-9]+")) {
-		    put(key, Integer.valueOf(s));
-		} else if (s.matches("[0-9]*\\.[0-9]+")) {
-		    put(key, Double.valueOf(s));
-		} else {
-		    put(key, val);
-		}
-		    
+		typedPut(key, val);		    
 	    }
 
 

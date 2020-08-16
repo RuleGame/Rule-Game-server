@@ -45,8 +45,11 @@ public class NewEpisodeWrapper {
     private static HashMap<String, RuleSet> ruleSets = new HashMap<>();
     
 
-    NewEpisodeWrapper(String ruleSetName, String nPiecesString) {
+    NewEpisodeWrapper(String ruleSetName, int nPieces,
+		      int nShapes,
+		      int nColors	      ) {
 	try {
+	    /*
 	    if (nPiecesString==null)  throw new IOException("The number of pieces is not specified");
 	    int nPieces;
 	    try {
@@ -54,6 +57,8 @@ public class NewEpisodeWrapper {
 	    } catch( NumberFormatException ex) {
 		throw new IOException("Cannot parse nPieces as a number: " + nPiecesString);
 	    }
+	    */
+	    if (nPieces<=0 || nPieces>Board.N * Board.N) throw new IOException("Invalid #pieces=" + nPieces);
 	    if (ruleSetName==null ||ruleSetName.trim().equals("")) throw new IOException("No rules set specified");
 	    
 
@@ -72,7 +77,7 @@ public class NewEpisodeWrapper {
 		ruleSets.put(ruleSetName, rules);
 	    }
 	    if (nPieces <= 0)  throw new IOException("Number of pieces must be positive");
-	    Game game = new  Game(rules, nPieces);
+	    Game game = new  Game(rules, nPieces, nShapes, nColors);
 	    Episode epi = new Episode(game, Episode.OutputMode.BRIEF, null, null); //in, out);
 
 	    board = epi.getCurrentBoard();

@@ -184,9 +184,12 @@ public class GameService {
     @Path("/newEpisode") 
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
-    public NewEpisodeWrapper newEpisode(@FormParam("rules") String rules,
-					@FormParam("pieces") String pieces) {
-	return new NewEpisodeWrapper(rules, pieces);
+    public NewEpisodeWrapper
+	newEpisode(@FormParam("rules") String rules,
+		   @DefaultValue("0") @FormParam("pieces") int pieces,
+		   @DefaultValue("0") @FormParam("shapes") int shapes,
+		   @DefaultValue("0") @FormParam("colors") int colors) {
+	return new NewEpisodeWrapper(rules, pieces, shapes, colors);
     }
 
     @GET
@@ -226,5 +229,14 @@ public class GameService {
     }
 
     Episode dummyEpisode = new Episode();
-    
+
+    @POST
+    @Path("/startTrial") 
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    public TrialList startTrial(@QueryParam("playerId") String playerId){
+	return TrialList.chooseRandomTrialList( playerId);
+    }
+
+
 }

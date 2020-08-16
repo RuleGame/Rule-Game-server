@@ -266,6 +266,8 @@ public class Episode {
 	out=null;
 	in=null;
     };
+
+  
     
     public Episode(Game game, OutputMode _outputMode, Reader _in, PrintWriter _out) {
 	in = _in;
@@ -276,7 +278,7 @@ public class Episode {
 	
 	rules = game.rules;
 	Board b =  game.initialBoard;
-	if (b==null) b = new Board( game.randomObjCnt);
+	if (b==null) b = new Board( game.randomObjCnt, game.nShapes, game.nColors);
 	
 	for(Piece p: b.getValue()) {
 	    Pos pos = p.pos();

@@ -194,6 +194,66 @@ public class Board extends OurTable {
 	}
     }
 
+    /** Creates an array with elements, containing exactly nProp distinct values. */
+    private void designatedProps(Enum[] allProps, Enum results[], int nProp) {
+	final int m = results.length;
+	if (nProp==0) {
+	    for(int j=0; j<m; j++) {
+		int k = random.nextInt(allProps.length);
+		results[j] = allProps[k];
+	    }
+	} else {
+	    // each value r[j] will be in the range [0:nProp-1]
+	    int[] r = new int[m];
+	    for(int j=0; j<m; j++) {
+		int k = random.nextInt(nProp);
+		r[j] = k;
+	    }
+	    // change a few values to ensure that every color is present at least once
+	    Vector<Integer> placesToChange=random.randomSubsetPermuted(m,nProp);
+	    for(int  i=0; i<nProp; i++) {
+		r[ placesToChange.get(i)] = i;
+	    }
+
+	    // indexes of the colors to use
+	    Vector<Integer> shallUse  = 
+		random.randomSubsetOrdered(allProps.length,  nProp); 
+	    for(int j=0; j<m; j++) {
+		results[j] = allProps[ shallUse.get(r[j])];
+	    }	    
+	}	
+    }
+    
+    
+    /** @param randomCnt required number of pieces. 
+	@param nShapes required number of shapes. If 0 is passed, there is no restriction (independent decision is made for each piece)
+	@param nColors required number of colors. If 0 is passed, there is no restriction (independent decision is made for each piece)
+     */
+    public Board(int randomCnt, int nShapes, int nColors) {
+	setName("Random board with " + randomCnt + " pieces, "+nShapes+" shapes, and " + nColors+" colors");
+	Piece.Shape[] allShapes = 	Piece.Shape.values();
+	Piece.Color[] allColors = 	Piece.Color.values();
+	if (randomCnt>N*N) throw new IllegalArgumentException("Cannot fit " + randomCnt + " pieces on an "+ N + " square board!");
+	if (nShapes<0 || nShapes>allShapes.length) throw new IllegalArgumentException("Invalid number of shapes: " + nShapes);
+	if (nColors<0 || nColors>allColors.length) throw new IllegalArgumentException("Invalid number of shapes: " + nColors);
+	
+	Vector<Integer> w  = random.randomSubsetOrdered(N*N, randomCnt); 
+
+	Piece.Shape[] useShapes = new Piece.Shape[randomCnt];
+	Piece.Color[] useColors = new Piece.Color[randomCnt];	
+	designatedProps(allShapes, useShapes, nShapes);
+	designatedProps(allColors, useColors, nColors);
+
+	
+	for(int i=0; i<randomCnt; i++) {
+	    Pos pos = new Pos(w.get(i)+1);
+	    
+	    value.add( new Piece( useShapes[i], useColors[i],
+				  pos.x, pos.y));
+	}
+    }
+    
+
     /** Only used for JSON, not for persistence */
     public Board(Piece[] pieces, BitSet[] moveableTo) {
 	for(Piece p: pieces) {

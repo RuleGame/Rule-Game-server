@@ -4,13 +4,32 @@
 <body>
   <h1>RESTful API for the use by the Rule Game client</h1>
 
-  <p align="center"><em>Ver 1.005, 2020-08-12</em></p>
+  <p align="center"><em>Ver 1.006, 2020-08-15</em></p>
 
 <p>This API includes several HTTP request/response pairs that can be used by the TypeScript/React GUI. Conceptually, its functionality is fairly similar to that of the 
 <a href="package.html">Captive Game Server</a> (used by the ML programs), but is customized for the needs of a GUI app used by human players. And, of course, the client communicates with it over HTTP, instead of pipes or the socket level.</p>
   
-  <ol>
-    <li>GET <strong>Retrieve a parameter set:</strong>
+<ol>
+<li>POST <strong><tt>startTrial:</tt> Start a player's interaction with the system, and obtain a randomly selected trial list for this player</strong>
+  <form method="post" action="game-data/GameService/startTrial"
+	 enctype="application/x-www-form-urlencoded">
+     <input name="playerId" type="text" size="25" value="AnyText">
+	  <input type="submit">
+  </form>
+  <p>The input parameter is the player ID (a string). In the future, the system will determine, based on the player ID, what experiment the person is enrolled into (e.g MTurkers vs. psych students vs. ourselves testing a particular game); at present, the player ID does not really matter, as everybody is considered to be enrolled in the experiment called "default".</P>
+
+  <p>Return value: a JSON structure containing the content of one trial list, randomly selected among all trial lists used in this experiment. This structure is a list of ParaSet structure, each of them is similar to those that <tt>getParaSet</tt> would select. A typical returned structure:
+<pre>
+  [{"clearing_threshold":1.3,"max_points":10,"b":1.5,"min_points":2,"max_colors":4,"f":4,"feedback_switches":"fixed","min_objects":4,"m":9,"n":1,"clear_how_many":2,"bonus_extra_pts":3,"rule_id":"TD-01","max_objects":6,"grid_memory_show_order":false,"min_shapes":4,"stack_memory_show_order":false,"max_shapes":4,"min_colors":3,"stack_memory_depth":6,"max_boards":5,"activate_bonus_at":2},
+  {"clearing_threshold":1.3,"max_points":10,"b":1.5,"min_points":2,"max_colors":4,"f":4,"feedback_switches":"fixed","min_objects":4,"m":9,"n":1,"clear_how_many":2,"bonus_extra_pts":3,"rule_id":"TD-02","max_objects":6,"grid_memory_show_order":false,"min_shapes":4,"stack_memory_show_order":false,"max_shapes":4,"min_colors":3,"stack_memory_depth":6,"max_boards":5,"activate_bonus_at":2},
+  {"clearing_threshold":1.3,"max_points":10,"b":1.5,"min_points":2,"max_colors":4,"f":4,"feedback_switches":"fixed","min_objects":4,"m":9,"n":1,"clear_how_many":2,"bonus_extra_pts":3,"rule_id":"TD-03","max_objects":6,"grid_memory_show_order":false,"min_shapes":4,"stack_memory_show_order":false,"max_shapes":4,"min_colors":3,"stack_memory_depth":6,"max_boards":5,"activate_bonus_at":2},
+  ...
+  ...
+  ]
+    </pre>
+    </p>
+  
+    <li>[Note: this method is not needed anymore, as it is superseded by <tt>startTrial:</tt>!] GET <strong>getParaSet: Retrieve a parameter set:</strong>
    <form method="get" action="game-data/GameService/getParaSet"
 	 enctype="application/x-www-form-urlencoded">
      Name: <input name="name" type="text" value="param-1">
@@ -39,12 +58,23 @@
      <li>POST <strong><tt>newEpisode</tt>: Create a new episode:</strong>
         <form method="post" action="game-data/GameService/newEpisode"
 	 enctype="application/x-www-form-urlencoded">
-	  Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="rules-01"><br>
+	  Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="TD-01"><br>
 	  Number of pieces (a number within the [min_objects, max_objects] 
 	  range given in the param set): <input name="pieces" type="text" value="4"><br>
 	  <input type="submit">
 	</form>
 
+	<li>newEpisode, with additional parameters: the number of shapes and the number of colors:
+     <form method="post" action="game-data/GameService/newEpisode"
+	 enctype="application/x-www-form-urlencoded">
+	  Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="TD-01"><br>
+	  Number of pieces (a number within the [min_objects, max_objects] 
+	  range given in the param set): <input name="pieces" type="text" value="4"><br>
+	  Number of shapes:  <input name="shapes" type="text" value="4"><br>
+	  Number of colors:  <input name="colors" type="text" value="4"><br>
+	  <input type="submit">
+	</form>
+	
        <p>This returns a JSON object which contains the <tt>error</tt> field (true on an error, false on success), the optional <tt>errmsg</tt> field, and the <tt>episodeId</tt> field. The <tt>episodeId</tt> field contains the ID (a string) of the episode object, which can be used in the later <tt>move</tt> calls. The returned structure also contains the description of the current board at the beginning of the episode (in the same format as in the <tt>move</tt> call, below).</P>
 
        <p>A typical return value: on success	 <pre>
