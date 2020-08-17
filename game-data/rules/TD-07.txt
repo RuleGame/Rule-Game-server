@@ -1,0 +1,5 @@
+# ruleArrayName=Rule-10.a
+# used in game=TD-07
+(*,square,*,*,[0,1])
+(*,*,red,*,[2,3])
+(*,*,*,*,[0])

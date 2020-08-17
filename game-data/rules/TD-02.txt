@@ -1,9 +1,6 @@
-Order fromOutsideIn=[ [1,2,3,4,5,6, 7,13,19,25, 31,32,33,34,35,36, 30,24,18,12], [8,9,10,11, 14,20, 26,27,28,29, 23,17], [15,16,21,22]]
-Order fromInsideOut=[ [15,16,21,22],  [8,9,10,11, 14,20, 26,27,28,29, 23,17], [1,2,3,4,5,6, 7,13,19,25, 31,32,33,34,35,36, 30,24,18,12]]
-# Syntax (counter,shape,color,position,bucketFunctions)
-# Picking squares and triangles from the outside; circles and stars, from inside
-(*,square,*,fromOutsideIn,[0]) (*,triangle,*,fromOutsideIn,[0]) (*,circle,*,fromInsideOut,[0])  (*,star,*,fromInsideOut,[0])
-# If the above rule cannot pick any piece, pick the "first" piece in the English reader order
-(1,*,*,L1,[0])
-
-
+# ruleArrayName=rule-023
+# used in game=TD-02
+(1,*,blue,*,[1])
+(1,*,red,*,[0])
+(1,*,black,*,[3])
+(1,*,yellow,*,[2])

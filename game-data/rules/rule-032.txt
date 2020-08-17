@@ -1,0 +1,4 @@
+# ruleArrayName=rule-032
+(*,square,red,*,[1])
+(*,square,*,*,[0,1]) (*,*,red,*,[2,3])
+(*,*,*,*,[0])

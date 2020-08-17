@@ -1,0 +1,2 @@
+# ruleArrayName=rule-035
+(1,*,red,*,[2]) (2,*,blue,*,[0]) (1,*,black,*,[3]) (1,*,yellow,*,[1])

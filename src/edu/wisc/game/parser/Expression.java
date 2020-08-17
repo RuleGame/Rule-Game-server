@@ -57,6 +57,8 @@ public interface Expression {
 	 */
 	HashSet<Integer> evalSet(HashMap<String, HashSet<Integer>> h);
 	HashSet<String> listAllVars();
+	public String toSrc();
+
     }
 
     /** A numeric constant */
@@ -65,6 +67,9 @@ public interface Expression {
 	Num(Token t) throws RuleParseException {
 	    if (t.type!=Token.Type.NUMBER) throw new RuleParseException("Not a number");
 	    nVal = t.nVal;
+	}
+	public Num(int n) {
+	    nVal = n;
 	}
 	public Integer eval(HashMap<String, Integer> h) {
 	    return nVal;
@@ -77,6 +82,7 @@ public interface Expression {
 	public String toString() {
 	    return "" + nVal;
 	}
+	public String toSrc() { return toString(); }
 	public HashSet<String> listAllVars() { return new HashSet<String>(); }
     }
 
@@ -97,6 +103,7 @@ public interface Expression {
 	public String toString() {
 	    return sVal;
 	}
+	public String toSrc() { return toString(); }
 	public HashSet<String> listAllVars() {
 	    HashSet<String> h = new HashSet<String>();
 	    h.add(sVal);
@@ -117,7 +124,21 @@ public interface Expression {
 	    }
 	    return "{"+ String.join(" ", v) + "}";
 	}
-
+	
+	public String toSrc() {
+	    Vector<String> v = new Vector<>();
+	    v.add(firstElement().toSrc());
+	    for(int j=0; j<ops.size(); j++) {
+		v.add(ops.get(j).toSrc());
+		v.add(get(j+1).toSrc());
+	    }
+	    String s = String.join(" ", v);
+	    if (v.size()>1) 	    s= "("+ s + ")";
+	    return s; 
+	    
+	}
+	
+	
 	/** Lists all variable names used in this expression */
 	public HashSet<String> listAllVars() {
 	    HashSet<String> h = new HashSet<String>();

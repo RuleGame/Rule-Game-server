@@ -1,0 +1,2 @@
+# ruleArrayName=rule-022
+(*,star,*,*,[3]) (*,triangle,*,*,[1]) (*,square,*,*,[0]) (*,circle,*,*,[2])

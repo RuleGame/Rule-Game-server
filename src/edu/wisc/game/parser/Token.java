@@ -29,13 +29,16 @@ public class Token {
     }
 
     public String toString() {
-	String s = "" + type + ".";
-	if (type == Type.NUMBER) s += nVal;
-	else if (type == Type.ID) s += sVal;
-	else if (type == Type.STRING) s += '"' + sVal + '"';
-	else s += cVal;
-	return s;
+	return  "" + type + "." + toSrc();
     }
+
+    public String toSrc() {
+	 return
+	     (type == Type.NUMBER) ? ""+nVal:
+	     (type == Type.ID) ? sVal:
+	     (type == Type.STRING) ? '"' + sVal + '"':
+	     ""+cVal;
+    }   
 
     /** Init based on the first character */
     private Token(char c) throws RuleParseException {

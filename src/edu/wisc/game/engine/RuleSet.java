@@ -30,12 +30,24 @@ public class RuleSet {
 	    return "[" + Util.joinNonBlank(",", list1) + "; " +
 		Util.joinNonBlank(",",list2) + "]";	       
 	}
+
+	public String toSrc() {
+	    if (any) return "*";
+	    
+	    String q[]= new String[]{ Util.joinNonBlank(",", list1),	    
+				      Util.joinNonBlank(",", list2)};
+	    return "[" + Util.joinNonBlank(",", q) + "]";	       
+	}
+
 	
 	private void addAll(PositionList q) throws RuleParseException {
 	    if (any || q.any) throw new RuleParseException("When describing position lists, '*' cannot be used in combinations");
 	    list1.addAll(q.list1);
 	    list2.addAll(q.list2);
 	}
+	/** @param ex A parsed expression, which may be "*", a or "L1", or contain some numerical positions or order name.
+	    @param The dictionary of all known orders
+	 */
 	PositionList(Expression ex, TreeMap<String, Order> orders)  throws RuleParseException {
 	    any = (ex instanceof Expression.Star);
 	    if (any) return;
@@ -67,6 +79,7 @@ public class RuleSet {
 	    of each order */
 	boolean allowsPicking(int pos,
 			      HashMap<String, BitSet> eligibleForEachOrder) {
+	    if (any) return true;
 	    for(int k: list1) {
 		if (k==pos) return true;
 	    }
@@ -77,10 +90,23 @@ public class RuleSet {
 	    }
 	    return false;
 	}
+
+	/** Used when converting Kevin's JSON to our server format */
+	void forceOrder(String orderName) {
+	    if (list1.size()>0 || list2.size()>0) throw new IllegalArgumentException("Cannot force an order on this PositionList, because it is already non-empty");
+	    list2.add(orderName);
+	}
 	
     }
 
     static class BucketList extends Vector<Expression.ArithmeticExpression>{
+	/** Star is allowed in Kevin's syntax, and means "any bucket" */
+	BucketList( Expression.Star star) throws RuleParseException {
+	    for(int j=0; j<4; j++) {
+		add(new Expression.Num(j));
+	    }
+	}
+	
 	BucketList( Expression.BracketList bex) throws RuleParseException {
 	    for(Expression ex: bex) {
 		if (!(ex instanceof Expression.ArithmeticExpression)) 	throw new RuleParseException("Invalid bucket specifier (not a symbol or an arithmetic expression): " + ex);
@@ -93,6 +119,14 @@ public class RuleSet {
 
 	public String toString() {
 	    return "[" + Util.joinNonBlank(",",this)  + "]";	       
+	}
+
+	public String toSrc() {
+	    Vector<String> v = new Vector<>();
+	    for(Expression.ArithmeticExpression ex: this) {
+		v.add(ex.toSrc());
+	    }
+	    return "[" + String.join(",",v)  + "]";	       
 	}
 
 	/** To which destinations a piece can be taken?
@@ -128,7 +162,14 @@ public class RuleSet {
 	    return "(" + counter + ","  +shape + "," + color+","+
 		plist +  "," + bucketList + ")";	       
 	}
-
+	
+	/** Format as the source code of the rules set */
+	public String toSrc() {
+	    return "(" +  (counter<0? "*" : ""+counter) +
+		","  +(shape==null?"*":shape.toString().toLowerCase()) +
+		"," + (color==null?"*":color.toString().toLowerCase()) +
+		","+ plist.toSrc() +  "," + bucketList.toSrc() + ")";	       
+	}
 	
 	/** Syntax:(counter,shape,color,position,bucketFunctions)     */
 	Atom(Expression.ParenList pex, TreeMap<String, Order> orders) throws RuleParseException {
@@ -166,12 +207,20 @@ public class RuleSet {
 	    g = pex.get(4); // buckets
 	    if (g instanceof Expression.BracketList) {
 		bucketList = new BucketList((Expression.BracketList)g);
+	    } else if (g instanceof Expression.Star) {
+		// for compatibility with Kevin's syntax
+		bucketList = new BucketList((Expression.Star)g);
 	    } else {
 		throw new RuleParseException("Buckets must be specified by a bracket list. Instead, found "+g+" in: " + pex);
 	    }
 		      
 	}
 	
+	/** Used when converting Kevin's JSON to our server format */
+	void forceOrder(String orderName) {
+	    plist.forceOrder(orderName);
+	}
+
     }
 
     
@@ -179,6 +228,7 @@ public class RuleSet {
 	description file, i.e. the optional global counter and 
 	one or several rules */
     static class Row extends Vector<Atom> {
+	/** The default value, 0, means that there is no global limit in this row */
 	final int globalCounter;
 	Row(Vector<Token> tokens, TreeMap<String, Order> orders)
 	    throws RuleParseException {
@@ -209,6 +259,20 @@ public class RuleSet {
 	public String toString() {
 	    return "(globalCounter="+globalCounter+") "+Util.joinNonBlank(" ",this);	       
 	}
+	
+	/** Format as the source code of this row */
+	public String toSrc() {
+	    Vector<String> v = new Vector<>();
+	    if (globalCounter>0) v.add( "" + globalCounter);
+	    for(Atom atom: this) v.add( atom.toSrc());
+	    return String.join(" ",v);
+	}
+	
+	/** Used when converting Kevin's JSON to our server format */
+	void forceOrder(String orderName) {
+	    for(Atom atom: this) atom.forceOrder(orderName);
+	}
+
     }
 
     /** All orders */
@@ -260,7 +324,23 @@ public class RuleSet {
 	return s +    Util.joinNonBlank("\n",rows);	       
     }
 
-    
+    /** Format as the source code of the rules set */
+    public String toSrc() {
+	Vector<String> v = new Vector<>();
+	for(String name: orders.keySet()) {
+	    v.add("Order " + name + "=" + orders.get(name));
+	}
+	for(Row row: rows) {
+	    v.add( row.toSrc());
+	}
+	return String.join("\n", v);
+    }
+
+    /** Used when converting Kevin's JSON to our server format */
+    void forceOrder(String orderName) {
+	for(Row row: rows) row.forceOrder(orderName);
+    }
+
     
     public static void main(String[] argv) throws IOException,  RuleParseException {
 	System.out.println("Have " + argv.length + " files to read");
