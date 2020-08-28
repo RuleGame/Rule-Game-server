@@ -1,13 +1,17 @@
-package edu.wisc.game.engine;
+package edu.wisc.game.sql;
 
 import java.io.*;
 import java.util.*;
 import java.text.*;
 
 import javax.json.*;
+import javax.persistence.*;
+
+//import org.apache.openjpa.persistence.jdbc.*;
+
 
 import edu.wisc.game.util.*;
-import edu.wisc.game.sql.*;
+import edu.wisc.game.engine.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.sql.Board.Pos;
 import edu.wisc.game.engine.RuleSet.BucketSelector;
@@ -16,18 +20,30 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 
-
 /** An Episode is a single instance of a Game played by a person or machine 
-    with our game server */
+    with our game server. It describes the current state of the game, and has methods
+    for processing player's actions.
+*/
+@Entity
 public class Episode {
+
+        @Id 
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    private long id;
+
 
     /** This is used to assign episode IDs, which are unique within a
 	given server run. The IDs are not meant to be persistent.
     */
-    public final String episodeId;
-    
+    @Basic
+    public String episodeId;
+    public String getEpisodeId() { return episodeId; }
+    public void setEpisodeId(String _episodeId) { episodeId = _episodeId; }
+ 
     // When this Episode was created
-    final Date startTime = new Date();    
+    Date startTime;    
+    public Date getStartTime() { return startTime; }
+    public void setStartTime(Date _startTime) { startTime = _startTime; }
 
     // The number of buckets
     static final int NBU = Board.buckets.length; // 4
@@ -45,29 +61,40 @@ public class Episode {
     /** The current board: an array of N*N+1 elements (only positions
 	[1..N*N] are used), with nulls for empty cells and non-nulls
 	for positions where pieces currently are. */
+    @Transient
     private Piece[] pieces = new Piece[Board.N*Board.N + 1];
+    /** Pieces are moved into this array once they are removed from the board.
+	This is only shown in web UI.
+     */
+    @Transient
+    private Piece[] removedPieces = new Piece[Board.N*Board.N + 1];
 
-
-    //Board board;
     /** The count of all attempts done so far, including successful and unsuccessful */
     int attemptCnt=0;
     /** All successful moves so far */
     int doneMoveCnt;
+    @Transient
     Vector<Move> transcript = new Vector<>();
 
     /** Set when appropriate */
     boolean stalemate = false;
-    boolean finished = false;
+    boolean cleared = false;
+    boolean givenUp = false;
     
     /** Which bucket was the last one to receive a piece of a given color? */
+    @Transient
     private HashMap<Piece.Color, Integer> pcMap = new HashMap<>();
     /** Which bucket was the last  one to receive a piece of a given shape? */
+    @Transient
     private HashMap<Piece.Shape, Integer> psMap = new HashMap<>();
     /** Which bucket was the last one to receive a piece? */
+    @Transient
     private Integer pMap=null;
 
     /** Which row of rules do we look at now? (0-based) */
+    @Transient
     private int ruleLineNo = 0;
+    @Transient
     private RuleLine ruleLine = null;
     /** Our interface to the current rule line. When pieces are removed, this
 	structure updates itself, until it cannot pick any pieces anymore. */
@@ -193,13 +220,17 @@ public class Episode {
 	    if (acceptingAtoms.isEmpty()) return CODE.DENY;
 	    if (ourGlobalCounter>0) ourGlobalCounter--;
 
-	    doneMoveCnt++;	    
-	    pieces[move.pos] = null; // remove the piece	    
+	    doneMoveCnt++;
+	    removedPieces[move.pos] = pieces[move.pos];
+	    removedPieces[move.pos].setDropped(true);
+	    pieces[move.pos] = null; // remove the piece
+	    
 	    // Check if this rule can continue to be used, and if so,
 	    // update its acceptance map
 	    doneWith = exhausted() || !buildAcceptanceMap();
-	
-	    finished = (onBoard().cardinality()==0);
+
+	    System.err.println("Episode.accept: move accepted. card=" + onBoard().cardinality());
+	    cleared = (onBoard().cardinality()==0);
 	    
 	    //	    Logging.info("Accepted, return " + CODE.ACCEPT);
 	    return CODE.ACCEPT;
@@ -242,10 +273,13 @@ public class Episode {
 
     }
 
+    @Transient
     private OutputMode outputMode;
+    @Transient
     private final PrintWriter out;
+    @Transient
     private final Reader in;
-
+   
     private static DateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
 
     /** Creates a more or less unique string ID for this Episode object */
@@ -265,11 +299,19 @@ public class Episode {
 	rules=null;
 	out=null;
 	in=null;
+	nPiecesStart = 0;
+	startTime = new Date();    
     };
 
-  
+    /** The initial number of pieces */
+    @Basic
+    int nPiecesStart;
+    public int getNPiecesStart() { return nPiecesStart; }
+    public void setNPiecesStart(int _nPiecesStart) { nPiecesStart = _nPiecesStart; }
+
     
     public Episode(Game game, OutputMode _outputMode, Reader _in, PrintWriter _out) {
+	startTime = new Date();    
 	in = _in;
 	out = _out;
 	outputMode = _outputMode;
@@ -279,12 +321,13 @@ public class Episode {
 	rules = game.rules;
 	Board b =  game.initialBoard;
 	if (b==null) b = new Board( game.randomObjCnt, game.nShapes, game.nColors);
-	
+	nPiecesStart = b.getValue().size();
 	for(Piece p: b.getValue()) {
 	    Pos pos = p.pos();
 	    pieces[pos.num()] = p;
 	}
 	doPrep();
+	
     }
 
 
@@ -333,7 +376,10 @@ public class Episode {
 	// no pieces left on the board
 	    FINISH = 1,
 	// there are some pieces on the board, but none can be moved anymore
-	    STALEMATE=2;
+	    STALEMATE=2,
+	// The player has said he does not want to play any more. This
+	// may only happen in some GUI versions.
+	    GIVEN_UP =3;
     }
 
     /** Creates a bit set with bits set in the positions where there are
@@ -345,7 +391,8 @@ public class Episode {
 	}
 	return onBoard;
     }
-    
+
+    @Transient
     private boolean prepReady = false;
 
     
@@ -367,6 +414,7 @@ public class Episode {
 	}
     }
 
+    @Transient
     private EligibilityForOrders eligibleForEachOrder = new EligibilityForOrders();
 
     /** Run this method at the beginning of the game, and
@@ -407,6 +455,7 @@ public class Episode {
 	return true;
     }
 
+    @Transient
     private Move lastMove = null;
     
     int accept(Move move) {
@@ -418,7 +467,7 @@ public class Episode {
 	// FIXME code here
 	int code = ruleLine.accept(move);
 
-	if (code==CODE.ACCEPT && !finished && !stalemate) {
+	if (code==CODE.ACCEPT && !cleared && !stalemate && !givenUp) {
 	    doPrep();
 	}
 	
@@ -432,7 +481,7 @@ public class Episode {
 	Vector<String> w = new Vector<>();
 
 	String div = "#---+";
-	for(int x=1; x<=Board.N; x++) div += "----";
+	for(int x=1; x<=Board.N; x++) div += "-----";
 	w.add(div);
 	
 	
@@ -440,10 +489,11 @@ public class Episode {
 	    String s = "# " + y + " |";
 	    for(int x=1; x<=Board.N; x++) {
 		int pos = (new Pos(x,y)).num();
-		String z = ".";
+		String z = " .";
 		if (pieces[pos]!=null) {
 		    Piece p = pieces[pos];
-		    z = p.getShape().symbol();
+		    z = p.getColor().symbol() +
+			p.getShape().symbol();
 		}
 
 		z = (lastMove!=null && lastMove.pos==pos) ?    "[" + z + "]" :
@@ -456,14 +506,16 @@ public class Episode {
 	}
 	w.add(div);
 	String s = "#   |";
-	for(int x=1; x<=Board.N; x++) s += "  " + x + " ";
+	for(int x=1; x<=Board.N; x++) s += "   " + x + " ";
 	w.add(s);
 	return String.join("\n", w);
     }
 
     int getFinishCode() {
-	 return finished? FINISH_CODE.FINISH :
-	     stalemate?FINISH_CODE.STALEMATE :FINISH_CODE.NO;
+	 return cleared? FINISH_CODE.FINISH :
+	     stalemate? FINISH_CODE.STALEMATE :
+	     givenUp?  FINISH_CODE.GIVEN_UP :
+	     FINISH_CODE.NO;
     }
        
 
@@ -475,7 +527,10 @@ public class Episode {
     
 
     public Board getCurrentBoard() {
-	return ruleLine==null? null: new Board(pieces, ruleLine.moveableTo());
+	boolean showRemoved = this instanceof EpisodeInfo;
+	return ruleLine==null? null:
+	    showRemoved ?    new Board(pieces, removedPieces, ruleLine.moveableTo()):
+	    new Board(pieces, null, ruleLine.moveableTo());
     }
     
     private String displayJson() {
@@ -484,7 +539,7 @@ public class Episode {
 	return json.toString();
     }
 
-    static final String version = "1.006";
+    static final String version = "1.008";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();
@@ -492,15 +547,19 @@ public class Episode {
     }
 
     /** Can be used to display the current state of the episode */
-    public class Display {
+    public class Display //extends ResponseBase
+    {
 	// The following describe the state of this episode, and are only used in the web GUI
-	int attemptCnt = Episode.this.attemptCnt;
-	int finishCode = getFinishCode();
+	int finishCode = Episode.this.getFinishCode();
 	Board board =  getCurrentBoard();
-        public int getAttemptCnt() { return attemptCnt; }
+
+	/*
+	int attemptCnt = Episode.this.attemptCnt;
+	public int getAttemptCnt() { return attemptCnt; }
         @XmlElement
         public void setAttemptCnt(int _attemptCnt) { attemptCnt = _attemptCnt; }
-
+	*/
+	
         public Board getBoard() { return board; }
         @XmlElement
         public void setBoard(Board _b) { board = _b; }
@@ -518,6 +577,22 @@ public class Episode {
         @XmlElement
         public void setErrmsg(String _msg) { errmsg = _msg; }
 
+       	int numMovesMade = Episode.this.attemptCnt;
+        public int getNumMovesMade() { return numMovesMade; }
+        @XmlElement
+        public void setNumMovesMade(int _numMovesMade) { numMovesMade = _numMovesMade;}
+
+	boolean bonus;
+	public boolean isBonus() { return bonus; }
+	@XmlElement
+	public void setBonus(boolean _bonus) { bonus = _bonus; }
+
+	/** Totals for the player; only used in web GUI */
+	int totalRewardEarned=0;
+	public int getTotalRewardEarned() { return totalRewardEarned; }
+	@XmlElement
+	public void setTotalRewardEarned(int _totalRewardEarned) { totalRewardEarned = _totalRewardEarned; }
+	
 	public Display(int _code, 	String _errmsg) {
 	    code = _code;
 	    errmsg = _errmsg;
@@ -525,8 +600,8 @@ public class Episode {
     }
     
     public Display doMove(int y, int x, int by, int bx, int _attemptCnt) {
-	if (finished || stalemate) {
-	    return new Display(CODE.NO_GAME, "No game is on right now (finished="+finished+", stalemate="+stalemate+"). Use NEW to start a new game");
+	if (cleared || stalemate || givenUp) {
+	    return new Display(CODE.NO_GAME, "No game is on right now (cleared="+cleared+", stalemate="+stalemate+"). Use NEW to start a new game");
 	}
 
 	if (_attemptCnt != attemptCnt)  return new Display(CODE.ATTEMPT_CNT_MISMATCH, "Given attemptCnt="+_attemptCnt+", expected " + attemptCnt);
@@ -546,8 +621,10 @@ public class Episode {
 	int code = accept(move);
 	String msg =
 	    (outputMode==OutputMode.BRIEF) ? null:
-	    finished?  "Game finished - the board is clear" :
-	    stalemate?  "Stalemate - no piece can be moved any more. Apology for these rules!" : null;
+	    cleared?  "Game cleared - the board is clear" :
+	    stalemate?  "Stalemate - no piece can be moved any more. Apology for these rules!" :
+	    givenUp? "You have given up this episode" :
+	    null;
 	return new Display(code, msg);
     }
 
@@ -555,7 +632,7 @@ public class Episode {
     /** Lets this episode play out until either all pieces are cleared, or
 	a stalemate is reached, or the player gives up (sends an EXIT or NEW command)
 	@return true if another game is requested */
-    boolean playGame(int gameCnt) throws IOException {
+    public boolean playGame(int gameCnt) throws IOException {
 	try {
 	String msg = "# Hello. This is Captive Game Server ver. "+version+". Starting a new game (no. "+gameCnt+")";
 	if (stalemate) {
@@ -664,7 +741,9 @@ public class Episode {
 	// Two-line response on MOVE; human-readable comments
 	FULL}; 
     
-    
+    boolean isCompleted() {
+	return cleared || stalemate || givenUp;
+    }
 
     
 }

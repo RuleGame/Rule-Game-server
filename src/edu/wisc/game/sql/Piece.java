@@ -41,7 +41,15 @@ import javax.xml.bind.annotation.XmlTransient;
 //@Embeddable
 public class Piece  implements Serializable {
 
-    public enum Color { RED, BLACK, BLUE, YELLOW};
+    public enum Color {
+	RED, BLACK, BLUE, YELLOW;
+	/** "r", "b", etc; BLUE becomes "g", as if its GREEN */
+	public String symbol() {
+	    String s = toString().toLowerCase().substring(0,1);
+	    if (this==BLUE) s = "g";
+	    return s;
+	}
+    };
     public enum Shape {
 	SQUARE, STAR, CIRCLE, TRIANGLE;
 	public String symbol() {
@@ -83,6 +91,7 @@ public class Piece  implements Serializable {
     private int x;
     private int y;
 
+    boolean dropped=false;
     
     public long getId() { return id; }
   @XmlElement 
@@ -116,9 +125,12 @@ public class Piece  implements Serializable {
   @XmlElement 
     public void setY(int _y) { y = _y; }
 
-   public Piece(){} 
- 
-    
+    public boolean getDropped() { return dropped; }
+   @XmlElement
+   public void setDropped(boolean _dropped) { dropped = _dropped; }
+
+    public Piece(){} 
+     
     public Piece(//int _id,
 		 Shape _shape, Color _color, int _x, int _y) {
 	//	id = ""+_id;

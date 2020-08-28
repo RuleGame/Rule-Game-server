@@ -10,10 +10,8 @@ import javax.json.*;
 import edu.wisc.game.util.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.parser.*;
-//import edu.wisc.game.sql.Board.Pos;
-import edu.wisc.game.engine.Episode.CODE;
-
-import edu.wisc.game.engine.Episode.OutputMode;
+import edu.wisc.game.sql.Episode.CODE;
+import edu.wisc.game.sql.Episode.OutputMode;
 
 
 class GameSocketServerThread extends Thread {

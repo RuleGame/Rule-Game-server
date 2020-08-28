@@ -138,7 +138,7 @@ public class Board extends OurTable {
         orphanRemoval = true,
 	fetch = FetchType.EAGER)
     
-      private Vector<Piece> value = new  Vector<>();
+	private Vector<Piece> value = new  Vector<>();
 
      public void addPiece(Piece c) {
         value.add(c);
@@ -255,7 +255,8 @@ public class Board extends OurTable {
     
 
     /** Only used for JSON, not for persistence */
-    public Board(Piece[] pieces, BitSet[] moveableTo) {
+    public Board(Piece[] pieces, Piece[] removedPieces, BitSet[] moveableTo) {
+	
 	for(Piece p: pieces) {
 	    if (p!=null) {
 		BitSet bi = moveableTo[ p.pos().num()];
@@ -265,6 +266,12 @@ public class Board extends OurTable {
 		    if (bi.get(i)) z[k++] = i;
 		}
 		p.setBuckets(z);
+		value.add(p);
+	    }
+	}
+	if (removedPieces==null) return;
+	for(Piece p: removedPieces) {
+	    if (p!=null) {
 		value.add(p);
 	    }
 	}
@@ -292,15 +299,12 @@ public class Board extends OurTable {
     */
 
     public long persistNewBoard() {
-	EntityManager em = Main.getEM();
 	try {
 
-	    em.getTransaction().begin();
 	    this.setId(0); // default value?
 	    //this.setLongId(0L);
 	    System.out.println("Creating board: " + name );
-	    em.persist(this);
-	    em.getTransaction().commit();
+	    Main.persistObjects(this);
 
 	    return this.getId();
 	    /*
@@ -315,8 +319,8 @@ public class Board extends OurTable {
 
 	    
 	} finally {
-	    try {em.getTransaction().commit();} catch (Exception _e) {}
-	    em.close();
+	    //try {em.getTransaction().commit();} catch (Exception _e) {}
+	    //em.close();
 	}
 	
     }

@@ -13,7 +13,17 @@ import edu.wisc.game.util.*;
 
 @XmlRootElement(name = "ParaSet") 
 
-
+/** <pre>
+rule_id,max_boards,min_points,max_points,activate_bonus_at,min_objects,max_objects,min_shapes,max_shapes,min_colors,max_colors,f,m,n,b,clear_how_many,bonus_extra_pts,clearing_threshold,feedback_switches,stack_m
+emory_depth,stack_memory_show_order,grid_memory_show_order
+TD-01,5,2,10,2,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,FALSE,FALSE
+TD-02,5,2,10,2,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,FALSE,FALSE
+TD-03,5,2,10,2,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,FALSE,FALSE
+TD-04,5,2,10,2,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,FALSE,FALSE
+TD-05,5,2,10,2,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,FALSE,FALSE
+</pre>
+*/
+    
 public class ParaSet extends HashMap<String, Object> {
 
     /*
@@ -89,6 +99,28 @@ public class ParaSet extends HashMap<String, Object> {
 	}
 
     }
-    
+
+    public int getInt(String key) {
+	Integer o = (Integer)get(key);
+	if (o==null) throw new IllegalArgumentException("Parameter set has no variable named "+key);
+	return o.intValue();
+    }
+
+    public double getDouble(String key) {
+	Object o = get(key);
+	if (o==null) throw new IllegalArgumentException("Parameter set has no variable named "+key);
+	if (o instanceof Integer) {
+	    Integer q = (Integer)get(key);	    
+	    return q.intValue();
+	} else {
+	    Double q = (Double)get(key);	    
+	    return q.doubleValue();
+	}
+	
+    }
+
+    public int getMaxBoards() {
+	return getInt("max_boards");
+    }
 }
 			     

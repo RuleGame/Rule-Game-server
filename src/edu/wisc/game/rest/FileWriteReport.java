@@ -18,15 +18,13 @@ import edu.wisc.game.util.*;
 @XmlRootElement(name = "report") 
 
 
-public class FileWriteReport {
-    boolean error;
-    String errMsg;
-    String path;
+public class FileWriteReport extends ResponseBase {
+   String path;
     long byteCnt;
 
     FileWriteReport() {
 	error=false;
-	errMsg=null;
+	errmsg=null;
 	path=null;
 	byteCnt=0;
     }
@@ -37,13 +35,6 @@ public class FileWriteReport {
 	byteCnt= _byteCnt;
     }
 
-    public boolean getError() { return error; }
-    @XmlElement
-    public void setError(boolean _error) { error = _error; }
-    
-    public String getErrMsg() { return errMsg; }   
-    @XmlElement
-    public void setErrMsg(String _errMsg) { errMsg = _errMsg; }
 	
     public String getPath() { return path; }    
     @XmlElement

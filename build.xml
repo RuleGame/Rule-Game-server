@@ -159,6 +159,11 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
       <!-- include name="**/*.class"/ -->
       <include name="Piece.class" />
       <include name="Board.class" />
+      <include name="PlayerInfo.class" />
+      <include name="EpisodeInfo.class" />
+      <include name="Episode.class" />
+    </fileset>
+    <fileset dir="${classes}/edu/wisc/game/engine">
     </fileset>
   </openjpac>
 

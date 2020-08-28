@@ -49,9 +49,12 @@ public class Main {
         return factory;
     }
 
+    private static EntityManager oneEm = null;
+    
     /** Creates a new EntityManager from the EntityManagerFactory. 
      */
     public static synchronized EntityManager getEM() {
+	if (oneEm!=null) return oneEm;
         // Create a new EntityManagerFactory if not created yet
         getFactory();
         // Create a new EntityManager from the EntityManagerFactory. The
@@ -59,7 +62,7 @@ public class Main {
         // used to create, delete, and query objects, as well as access
         // the current transaction
         EntityManager em = factory.createEntityManager();
-        return em;
+        return oneEm=em;
     }
 
     /** Reports memory use */
@@ -86,6 +89,27 @@ public class Main {
         return "[MEMORY]"+s+" max=" + memFmt.format(mmem) + ", total=" +  memFmt.format(tmem) +
             ", free=" +  memFmt.format(fmem) + ", used=" +  memFmt.format(used);
     }
+
+    //    static void persistObject(Object o) {
+    //	 persistObjects(Object[] v) {
+    //    }
+	 
+    static public void persistObjects(Object... v) {
+	EntityManager em = Main.getEM();
+	synchronized(em) {
+	try {
+	    em.getTransaction().begin();
+	    for(Object o: v) {
+		em.persist(o);
+	    }
+	    em.getTransaction().commit();
+	} finally {
+	    try {em.getTransaction().commit();} catch (Exception _e) {}
+	    //em.close();
+	}
+	}
+    }
+
 
     
 

@@ -10,7 +10,7 @@ import edu.wisc.game.parser.*;
 import edu.wisc.game.sql.Board.Pos;
 
 
-class Order extends Vector<Vector<Integer>> {
+public class Order extends Vector<Vector<Integer>> {
 
     static enum PositionSelector {
 	L1,L2,L3,L4,
@@ -194,7 +194,7 @@ class Order extends Vector<Vector<Integer>> {
     /** In the present board configuration, which piece(s) would be eligible
 	to be picked right now under this order?
 	@param pieces An array of N*N elements (some may be nulls) */
-    BitSet findEligiblePieces(BitSet onBoard) {
+    public BitSet findEligiblePieces(BitSet onBoard) {
 	BitSet result = new BitSet();
 	for(Vector<Integer> v: this) {
 	    //Logging.info("#FEP: " + result + " OR (" + Util.joinNonBlank(",", v) + ")");

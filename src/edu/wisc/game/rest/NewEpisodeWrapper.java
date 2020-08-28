@@ -40,10 +40,6 @@ public class NewEpisodeWrapper {
     public void setBoard(Board _b) { board = _b; }
 
     
-    static HashMap<String, Episode> episodes = new HashMap<>();
-
-    private static HashMap<String, RuleSet> ruleSets = new HashMap<>();
-    
 
     NewEpisodeWrapper(String ruleSetName, int nPieces,
 		      int nShapes,
@@ -62,27 +58,15 @@ public class NewEpisodeWrapper {
 	    if (ruleSetName==null ||ruleSetName.trim().equals("")) throw new IOException("No rules set specified");
 	    
 
-	    RuleSet rules = ruleSets.get(ruleSetName);
-	    if (rules==null) {
-		File base = new File("/opt/tomcat/game-data");
-		base = new File(base, "rules");
-		String ext = ".txt";
-		String name = ruleSetName;
-		if (!name.endsWith(ext)) name += ext;
-
-		File f = new File(base, name);
-		if (!f.canRead())  throw new IOException("Cannot read rule file: " + f);
-		String text = Util.readTextFile(f);
-		rules = new RuleSet(text);
-		ruleSets.put(ruleSetName, rules);
-	    }
+	    RuleSet rules = AllRuleSets.obtain(ruleSetName);
+	
 	    if (nPieces <= 0)  throw new IOException("Number of pieces must be positive");
 	    Game game = new  Game(rules, nPieces, nShapes, nColors);
 	    Episode epi = new Episode(game, Episode.OutputMode.BRIEF, null, null); //in, out);
 
 	    board = epi.getCurrentBoard();
 	    
-	    episodes.put( episodeId = epi.episodeId, epi);
+	    EpisodeInfo.globalAllEpisodes.put( episodeId = epi.episodeId, epi);
 	    
 	    setError( false);
 	

@@ -17,10 +17,7 @@ import javax.persistence.*;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 
-import edu.wisc.game.sql.Main;
-import edu.wisc.game.sql.JsonReflect;
-import edu.wisc.game.sql.Piece;
-import edu.wisc.game.sql.Board;
+import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
 
 @Path("/GameService") 
@@ -106,7 +103,7 @@ public class GameService {
 		return b;
 	    }
 	} finally {
-	    em.close();
+	    //em.close();
 	}
    }
 
@@ -166,7 +163,7 @@ public class GameService {
 	} catch(IOException ex) {
 	    FileWriteReport r = new	    FileWriteReport();
 	    r.setError(true);
-	    r.setErrMsg(ex.getMessage());
+	    r.setErrmsg(ex.getMessage());
 	    return r;
 	}
 
@@ -196,7 +193,7 @@ public class GameService {
     @Path("/display") 
     @Produces(MediaType.APPLICATION_JSON)
     public Episode.Display display(@QueryParam("episode") String episodeId)   {
-	Episode epi = NewEpisodeWrapper.episodes.get(episodeId);
+	Episode epi = EpisodeInfo.locateEpisode(episodeId);
 	if (epi==null) return dummyEpisode.new Display(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID");
 	return epi.new Display(Episode.CODE.JUST_A_DISPLAY, "Display requested");
     }
@@ -213,7 +210,7 @@ public class GameService {
 				    @FormParam("by") String _by,
 				    @FormParam("cnt") String _cnt
 				    )   {
-	Episode epi = NewEpisodeWrapper.episodes.get(episodeId);
+	Episode epi = EpisodeInfo.locateEpisode(episodeId);
 	if (epi==null) return dummyEpisode.new Display(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID");
 	try {
 	    int x = Integer.parseInt(_x);

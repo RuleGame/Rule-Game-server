@@ -17,6 +17,8 @@ public class RandomRG extends Random {
 	return nextDouble()<p;
     }
 
+    /** Generates a random integer number x,  uniformly distributed among the
+	(max-min+1) values: 	min &le; x &le; max. */
     public int getInRange(int min, int max) {
 	return  min + (max<=min ? 0 : nextInt(max - min + 1));
     }

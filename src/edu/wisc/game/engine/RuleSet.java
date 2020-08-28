@@ -10,7 +10,7 @@ import edu.wisc.game.parser.*;
 
 public class RuleSet {
 
-    enum BucketSelector {
+    public enum BucketSelector {
 	p, pc, ps,
 	//Nearby= into the nearest bucket
 	Nearby,
@@ -18,7 +18,7 @@ public class RuleSet {
 	Remotest}
 
     
-    static class PositionList {
+    public static class PositionList {
 	/** If true, there is no restriction */
 	final boolean any;
 	Vector<Integer> list1 = new Vector<>();
@@ -77,7 +77,7 @@ public class RuleSet {
 	    specified position?
 	    @param  eligibleForEachOrder What positions are now "in front"
 	    of each order */
-	boolean allowsPicking(int pos,
+	public boolean allowsPicking(int pos,
 			      HashMap<String, BitSet> eligibleForEachOrder) {
 	    if (any) return true;
 	    for(int k: list1) {
@@ -99,7 +99,7 @@ public class RuleSet {
 	
     }
 
-    static class BucketList extends Vector<Expression.ArithmeticExpression>{
+    public static class BucketList extends Vector<Expression.ArithmeticExpression>{
 	/** Star is allowed in Kevin's syntax, and means "any bucket" */
 	BucketList( Expression.Star star) throws RuleParseException {
 	    for(int j=0; j<4; j++) {
@@ -132,7 +132,7 @@ public class RuleSet {
 	/** To which destinations a piece can be taken?
 	    @param varMap Information about p, ps, pc, Nearby etc for the piece
 	    under consideration*/
-	BitSet destinations( HashMap<String, HashSet<Integer>> varMap) {
+	public BitSet destinations( HashMap<String, HashSet<Integer>> varMap) {
 	    BitSet q= new BitSet(Board.buckets.length);
 	    for(Expression.ArithmeticExpression ae: this) {
 		q.or( Util.toBitSet( ae.evalSet(varMap)));
@@ -147,15 +147,15 @@ public class RuleSet {
 	<p>
 	Example: (10,square,*,*,[1,2]) (10,*,blue,10,[2,3])
     */
-    static class Atom {
+    public static class Atom {
 	/** -1 means "no limit" */
-	final int counter;
+	public final int counter;
 	/** null means "no restriction" */
-	final Piece.Shape shape;
+	public final Piece.Shape shape;
 	//final
-	Piece.Color color;
-	PositionList plist;       	
-	BucketList bucketList;
+	public Piece.Color color;
+	public PositionList plist;       	
+	public BucketList bucketList;
 
 
 	public String toString() {
@@ -227,9 +227,9 @@ public class RuleSet {
     /** A row object represents the content of one line of the rule set
 	description file, i.e. the optional global counter and 
 	one or several rules */
-    static class Row extends Vector<Atom> {
+    public static class Row extends Vector<Atom> {
 	/** The default value, 0, means that there is no global limit in this row */
-	final int globalCounter;
+	public final int globalCounter;
 	Row(Vector<Token> tokens, TreeMap<String, Order> orders)
 	    throws RuleParseException {
 	    
@@ -276,9 +276,9 @@ public class RuleSet {
     }
 
     /** All orders */
-    TreeMap<String, Order> orders =  new TreeMap<>();
+    public TreeMap<String, Order> orders =  new TreeMap<>();
     /** All rows of this rule set */
-    Vector<Row> rows = new Vector<>();
+    public Vector<Row> rows = new Vector<>();
     
     public RuleSet(String ruleText) throws RuleParseException {
 	this( ruleText.split("\n"));

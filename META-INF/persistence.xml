@@ -43,6 +43,9 @@
 
         <class>edu.wisc.game.sql.Piece</class>
         <class>edu.wisc.game.sql.Board</class>
+        <class>edu.wisc.game.sql.PlayerInfo</class>
+        <class>edu.wisc.game.sql.Episode</class>
+        <class>edu.wisc.game.sql.EpisodeInfo</class>
 
         <properties>
             <!--
