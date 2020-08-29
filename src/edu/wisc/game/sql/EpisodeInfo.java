@@ -75,7 +75,7 @@ public class EpisodeInfo extends Episode {
 	throws IOException, RuleParseException {
 	//try {
 
-	    String ruleSetName = (String)para.get("rule_id");
+	String ruleSetName = para.getRuleSetName();
 	    int nPieces =  Board.random.getInRange(para.getInt("min_objects"),
 						   para.getInt("max_objects"));
 	    int nShapes = Board.random.getInRange(para.getInt("min_shapes"),
@@ -132,6 +132,8 @@ public class EpisodeInfo extends Episode {
 	return q;
     }
 
+    
+    
     /** Concise report, handy for debugging */
     public String report() {
 	return "["+episodeId+"; FC="+getFinishCode()+"; "+(bonus?"B":"M")+" " + attemptCnt + "/"+getNPiecesStart()  + " $"+getTotalRewardEarned()+"]";

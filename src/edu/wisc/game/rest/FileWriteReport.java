@@ -4,22 +4,19 @@ import java.io.*;
 import java.util.*;
 import java.text.*;
 import java.net.*;
-import javax.persistence.*;
+//import javax.persistence.*;
 
-import org.apache.openjpa.persistence.jdbc.*;
+//import org.apache.openjpa.persistence.jdbc.*;
 
 import javax.xml.bind.annotation.XmlElement; 
 import javax.xml.bind.annotation.XmlRootElement;
 
-
 import edu.wisc.game.util.*;
-
 
 @XmlRootElement(name = "report") 
 
-
 public class FileWriteReport extends ResponseBase {
-   String path;
+    String path;
     long byteCnt;
 
     FileWriteReport() {
@@ -29,6 +26,11 @@ public class FileWriteReport extends ResponseBase {
 	byteCnt=0;
     }
 
+    FileWriteReport(boolean _error, String msg) {
+	super(_error, msg);
+    }
+
+    
     FileWriteReport(File f, long _byteCnt) {
 	this();
 	path=f.getPath();

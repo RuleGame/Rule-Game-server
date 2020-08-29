@@ -26,5 +26,10 @@ public class ResponseBase {
     @XmlElement
     public void setErrmsg(String _errmsg) { errmsg = _errmsg; }
 
+    ResponseBase( ) {}
 
+    ResponseBase( boolean _error,     String _errmsg) {
+	setError(_error);
+	setErrmsg( _errmsg);
+    }
 }

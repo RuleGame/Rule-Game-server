@@ -745,5 +745,8 @@ public class Episode {
 	return cleared || stalemate || givenUp;
     }
 
+    void giveUp() {
+	if (!cleared && !stalemate)	givenUp = true;
+    }
     
 }

@@ -122,5 +122,10 @@ public class ParaSet extends HashMap<String, Object> {
     public int getMaxBoards() {
 	return getInt("max_boards");
     }
+
+    public String getRuleSetName() {
+	return (String)get("rule_id");
+    }
+	
 }
 			     

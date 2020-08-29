@@ -17,6 +17,7 @@ import javax.persistence.*;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 
+import edu.wisc.game.util.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.sql.JsonReflect;
 import edu.wisc.game.engine.*;
@@ -88,6 +89,17 @@ public class GameService2 {
 	activateBonus(@FormParam("playerId") String playerId) {
 	return new  ActivateBonusWrapper(playerId);
     }
+
+    @POST
+    @Path("/giveUp") 
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    public  GiveUpWrapper
+	activateBonus(@FormParam("playerId") String playerId,
+		      @FormParam("seriesNo") int seriesNo) {
+	return new  GiveUpWrapper(playerId, seriesNo);
+    }
+
     
     @GET
     @Path("/debug") 
@@ -96,6 +108,45 @@ public class GameService2 {
 	return new PlayerResponse( playerId, true);
     }
 
+
+    @POST 
+    @Path("/guess")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    public FileWriteReport guess(@FormParam("episode") String episodeId,
+				 @FormParam("data") String text) {
+	try {
+	    EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
+	    if (epi==null)  {
+		return new FileWriteReport(true,"No such episode: " + episodeId);
+	    }
+	    PlayerInfo x = epi.getPlayer();
+	    String pid = x.getPlayerId();
+
+	    ParaSet para = x.getPara(epi);
+	    String ruleSetName = para.getRuleSetName();
+
+	    File d = new File("/opt/tomcat/saved/guesses");
+	    if (d.exists()) {
+		if (!d.isDirectory() || !d.canWrite())  throw new IOException("Not a writeable directory: " + d);
+	    } else {
+		if (!d.mkdirs())  throw new IOException("Failed to create directory: " + d);
+	    }
+	    
+	    File f= new File(d, pid + ".csv");	    
+	    PrintWriter w = new PrintWriter(new FileWriter(f, true));
+
+	    
+	    String ss[] = { pid, episodeId, ruleSetName, text};
+	    String data = ImportCSV.escape(ss);
+	    w.println(data);
+	    w.close();	    
+	    return  new	FileWriteReport(f, f.length());
+	} catch(IOException ex) {
+	    return  new	    FileWriteReport(true,ex.getMessage());
+	}
+
+    }
 
     
 }

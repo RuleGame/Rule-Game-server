@@ -78,16 +78,7 @@ public class PlayerInfo {
 	return "(PlayerInfo: id=" + id +",  playerId="+ playerId+", trialListId=" + trialListId +", date=" + date+")";
     }
 
-
-    /*
-    enum SeriesState {
-	FUTURE, CURRENT_MAIN, CURRENT_BONUS, COMPLETED, GIVEN_UP;
-	boolean isFinished() {
-	    return this==COMPLETED || this==GIVEN_UP;
-	}
-    }
-    */
-    
+  
     class Series {
 	ParaSet para;
 	Vector<EpisodeInfo> episodes = new Vector<>();
@@ -99,7 +90,7 @@ public class PlayerInfo {
 	
 
 	public String toString() {
-	    return "(Series: para.rules=" + para.get("rule_id") +
+	    return "(Series: para.rules=" +	para.getRuleSetName() +
 		", episode cnt= "+ episodes.size()+")";
 	}
 
@@ -175,6 +166,22 @@ public class PlayerInfo {
 	System.err.println("Bonus activated: player="+playerId+", series No. "+currentSeriesNo+", size="+ser.episodes.size());
 	Main.persistObjects(this); // this saves the new value of inBonus
     }
+
+    public void giveUp(int seriesNo) {
+	if (seriesNo!=currentSeriesNo) throw new IllegalArgumentException("Cannot give up on series " + seriesNo +", because we are presently are on series " + currentSeriesNo);
+	if (seriesNo>=allSeries.size())  throw new IllegalArgumentException("Already finished all "+allSeries.size()+" series");
+	Series ser=getCurrentSeries();
+	if (ser!=null || ser.episodes.size()>0) {
+	    EpisodeInfo epi = ser.episodes.lastElement();
+	    // give up on the currently active episode, if any
+	    if (!epi.isCompleted()) {
+		epi.giveUp();
+		Main.persistObjects(epi);
+	    }
+	}
+	goToNextSeries();
+    }
+
 
     boolean canHaveAnotherRegularEpisode() {
 	Series ser=getCurrentSeries();
@@ -258,35 +265,6 @@ public class PlayerInfo {
 	or a new episode, or null if this player has finished with all
 	series. */
     public EpisodeInfo episodeToDo() throws IOException, RuleParseException {
-	/*
-	System.err.println("Will check "+allSeries.size()+" series");
-
-	for(Series ser: allSeries) {
-	    System.err.println("Checking series: " + ser);
-
-	    
-	    if (ser.state.isFinished()) continue;
-	    if (ser.episodes.size()>0) {
-		EpisodeInfo x = ser.episodes.lastElement();
-		// should we resume the last episode?
-		if (!x.isCompleted()) return x;
-	    }
-	    if (ser.state == SeriesState.FUTURE) ser.state = SeriesState.CURRENT_MAIN;
-
-	    EpisodeInfo x = null;
-	    if (ser.canHaveAnotherRegularEpisode()) {
-		x = EpisodeInfo.mkEpisodeInfo(ser.para, false);
-	    } else if (ser.canHaveAnotherBonusEpisode()) {
-		x = EpisodeInfo.mkEpisodeInfo(ser.para, true);
-	    }
-
-	    if (x!=null) {
-		ser.episodes.add(x);
-		addEpisode(x);
-		return x;
-	    }	    	    
-	}
-	*/
 
 	while(currentSeriesNo < allSeries.size()) {
 	    
@@ -332,6 +310,9 @@ public class PlayerInfo {
 	return  whoseEpisode(epi).para;
     }
 
+    /** Adjusts the counters/flags indicating what series and subseries we are on,
+	and persists this object.
+     */
     private void goToNextSeries() {
 	currentSeriesNo++;
 	inBonus=false;
@@ -392,7 +373,9 @@ public class PlayerInfo {
    	
     }
 
-    /** Concise report, handy for debugging */
+    /** Generates a concise report on this player's history, handy for
+	debugging. It gives summaries of all episodes done (or in
+	progress) by this player, broken down by series. */
     public String report() {
 	Vector<String> v = new Vector<>();
 	int j=0;
@@ -407,6 +390,9 @@ public class PlayerInfo {
 	v.add("R=$"+getTotalRewardEarned());
 	return String.join("\n", v);
     }
+
+
+
     
 }
  

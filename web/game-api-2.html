@@ -4,7 +4,7 @@
 <body>
   <h1>RESTful API for the use by the Rule Game client - second batch</h1>
 
-  <p align="center"><em>Ver 1.008,  2020-08-26</em></p>
+  <p align="center"><em>Ver 1.009,  2020-08-28</em></p>
 
   <ol>
 <li>POST <strong><tt>/startTrial:</tt> Start a player's interaction with the system, and obtain a randomly selected trial list for this player</strong>
@@ -34,6 +34,7 @@
 <pre>
   {"errmsg":"Debug...", <em> // either used to describe errors, or contains various status info for debugging.</em>
   "error":false,   <em> // true if something bad has happened</em>
+  "alreadyFinished":false,  <em> // this will be true if error==true, and the error is caused by the fact that the player has already done all his param sets</em>
  "board":{"longId":0,"id":0,"value":
 [{"buckets":[0],"color":"RED","dropped":false,"id":0,"shape":"STAR","x":3,"y":1},
 {"buckets":[0],"color":"RED","dropped":false,"id":0,"shape":"STAR","x":3,"y":5}]},
@@ -124,8 +125,48 @@
   <pre>
     {"errmsg":"Bonus activated successfully","error":false}
   </pre>
+	</li>
+   <p>The finish code reports the current state: 0=can play (there are pieces on the board, and some can be moved), 1=finish (no pieces left on the board), 2=stalemate (there are pieces on the board, but none of them can be moved anymore).</p>
+   </li>
+ 
+	<li>POST <strong><tt>/giveUp:</tt> "Gives up" the current series (i.e. the series played with the current param set), so that the next episode will be run with the next param set.</strong> If this is invoked while an episode is in progress, the episode will be marked as "given up" as well. However, you may choose to only used this call at the end of an episode (that is, give the player an option of switching to the next param set for the next episode, regardless of one's current position in the current series).
+  <form method="post" action="game-data/GameService2/giveUp"
+	 enctype="application/x-www-form-urlencoded">
+Player ID:     <input name="playerId" type="text" size="25" value="AnyText-01">
+Series No.:     <input name="seriesNo" type="text" size="2" value="0">
+	  <input type="submit">
+  </form>
+  <br>The seriesNo value must be exactly the same to which the current (or just completed) episode belongs to, as per the "seriesNo" value obtained in the last /newEpisode call. This is required as a safety check, to ensure that the client and server are on the same page. (If it's an annoyance to have it, I can remove this parameter)
+  <br>Sample output (on success):
+  <pre>
+{"errmsg":"Gave up series 0","error":false}
+  </pre>
   </li>
-  
+	
+
+
+ <li>POST <strong><tt>/guess:</tt> Recording a guess</strong>
+      <form
+        id="wfForm"
+        class="wfForm"
+	method="post" action="game-data/GameService2/guess"
+	enctype="application/x-www-form-urlencoded">
+
+	  Episode ID (returned by an earlier newEpisode call): <input name="episode" type="text" size="25"><br>
+	
+
+	<br>
+	<textarea id="wf.data" name="data" rows="10" cols="60">
+Please type your guess here (an arbitrary test)
+	</textarea><br>
+	<input type="submit">
+      </form>
+      <br>
+Response (on success):
+      <pre>
+{"error":false,"byteCnt":91,"path":"/opt/tomcat/saved/guesses/qt-01.csv"}
+</pre>
+	
   <li>GET <strong><tt>/debug</tt></strong>: Same info as given by /player, and some more for a specified user:</strong>
         <form method="get" action="game-data/GameService2/debug"
 	 enctype="application/x-www-form-urlencoded">

@@ -14,9 +14,9 @@ import edu.wisc.game.engine.*;
 import edu.wisc.game.sql.*;
 
 
-public class ActivateBonusWrapper extends ResponseBase {
+public class GiveUpWrapper extends ResponseBase {
   
-    ActivateBonusWrapper(String pid) {
+    GiveUpWrapper(String pid, int seriesNo) {
 	try {
 	    PlayerInfo x = PlayerResponse.findPlayerInfo(pid);
 	    if (x==null) {
@@ -24,9 +24,9 @@ public class ActivateBonusWrapper extends ResponseBase {
 		setErrmsg("Player not found: " + pid);
 		return;
 	    }
-	    x.activateBonus();	   
+	    x.giveUp(seriesNo);	   
 	    setError( false);
-	    setErrmsg("Bonus activated successfully");
+	    setErrmsg("Gave up series "+seriesNo);
 	} catch(Exception ex) {
 	    setError(true);
 	    setErrmsg(ex.getMessage());

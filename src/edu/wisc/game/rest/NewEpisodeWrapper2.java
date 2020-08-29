@@ -77,6 +77,13 @@ public class NewEpisodeWrapper2 extends ResponseBase {
     @XmlElement
     public void setTotalRewardEarned(int _totalRewardEarned) { totalRewardEarned = _totalRewardEarned; }
 
+    boolean alreadyFinished;
+    public boolean getAlreadyFinished() { return alreadyFinished; }
+    @XmlElement
+    public void setAlreadyFinished(boolean _alreadyFinished) { alreadyFinished = _alreadyFinished; }
+
+    
+
     NewEpisodeWrapper2(String pid) {
 	try {
 	    PlayerInfo x = PlayerResponse.findPlayerInfo(pid);
@@ -89,7 +96,11 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	    EpisodeInfo epi = x.episodeToDo();
 	    if (epi==null) {
 		setError(true);
-		setErrmsg("Failed to find or create episode!");
+		alreadyFinished = (epi.getSeriesNo()>0);
+		String msg = alreadyFinished ?
+		    "This player has completed all his parameter sets already":
+		    "Failed to find or create episode!";
+		setErrmsg(msg);
 		return;	
 	    }
 	    seriesNo = epi.getSeriesNo();

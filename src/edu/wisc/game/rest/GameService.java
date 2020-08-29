@@ -159,7 +159,7 @@ public class GameService {
 	    PrintWriter w = new PrintWriter(new FileWriter(f, append));
 	    w.print(data);
 	    w.close();	    
-	    return  new	    FileWriteReport(f, f.length());
+	    return  new	FileWriteReport(f, f.length());
 	} catch(IOException ex) {
 	    FileWriteReport r = new	    FileWriteReport();
 	    r.setError(true);
