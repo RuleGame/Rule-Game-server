@@ -11,6 +11,7 @@ import edu.wisc.game.sql.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.sql.Episode.OutputMode;
 
+/** The main class for the Captive Game Server */
 public class Captive {
 
     static String asComment(String s) {
@@ -31,6 +32,46 @@ public class Captive {
 	System.exit(1);
     }
 
+    /** @param x "n" or "n1:n2"
+     */
+    /*
+    static private int randomFromRange(String x, Class<? extends Enum> p) {
+	int nProp = p.getEnumConstants().length;
+	String v[] = x.split(":");
+	if (v.length==1) {
+	    int n=Integer.parseInt(v[0]);
+	    if (n<=0 || n>nProp) throw new IllegalArgumentException("Illegal value (" + n+") for the number of " + p + " properties");
+	    return n;
+	} else if (v.length==2) {
+	    int z[]= {Integer.parseInt(v[0]),Integer.parseInt(v[1])};
+	    for(int n: z) {
+		if (n<=0 || n>nProp) throw new IllegalArgumentException("Illegal value (" + n+") for the number of " + p + " properties");
+	    }
+	    return Board.random.getInRange(z[0], z[1]);
+	} else {
+	    throw new IllegalArgumentException("Cannot parse range spec: " + x);
+	}
+    }
+    */
+
+    static private int[] range(String x, Class<? extends Enum> p) {
+	int nProp = p.getEnumConstants().length;
+	String v[] = x.split(":");
+	if (v.length==1) {
+	    int n=Integer.parseInt(v[0]);	    
+	    if (n<0 || n>nProp) throw new IllegalArgumentException("Illegal value (" + n+") for the number of " + p + " properties");
+	    return new int[] {n, n};
+	} else if (v.length==2) {
+	    int z[]= {Integer.parseInt(v[0]),Integer.parseInt(v[1])};
+	    for(int n: z) {
+		if (n<=0 || n>nProp) throw new IllegalArgumentException("Illegal value (" + n+") for the number of " + p + " properties");
+	    }
+	    return z;
+	} else {
+	    throw new IllegalArgumentException("Cannot parse range spec: " + x);
+	}
+    }
+    
     public static void main(String[] argv) throws IOException,  RuleParseException {
 
 	ParseConfig ht = new ParseConfig();
@@ -39,30 +80,36 @@ public class Captive {
 	
 	//System.out.println("output mode=" +  outputMode);
 	int ja=0;
-	if (argv.length!=2) usage();
+	if (argv.length<2) usage();
 	File f = new File(argv[ja++]);
 	if (!f.canRead()) usage("Cannot read file " + f);
 
-	// System.out.println("Reading file " + f);
-	String text = Util.readTextFile(f);
-	RuleSet rules = new RuleSet(text);
-
-	Game game;
+	GameGenerator gg;
+	//Game game;
 	String a = argv[ja++];
 	if (a.indexOf(".")>=0) {
 	    throw new IllegalArgumentException("Board JSON not supported yet");
 	} else {
 	    int nPieces = Integer.parseInt(a);
 	    if (nPieces <= 0) usage("The number of pieces must be positive");
-	    game = new Game(rules, nPieces);
+	    int[] nPiecesRange = {nPieces, nPieces};
+	    int[] zeros = {0,0};
+	    int[] nShapesRange=(ja<argv.length)? range(argv[ja++], Piece.Shape.class) : zeros;
+	    int[] nColorsRange=(ja<argv.length)? range(argv[ja++], Piece.Color.class) : zeros;
+
+	    gg =new GameGenerator(f, nPiecesRange, nShapesRange,
+						nColorsRange);    
+	   
+	    
 	}
 	       
-	if (outputMode== OutputMode.FULL)  System.out.println(asComment(rules.toString()));
-
 	int gameCnt=0;
 
 	while(true) {
 	    gameCnt++;
+	    Game game = gg.nextGame();
+	    if (outputMode== OutputMode.FULL)  System.out.println(asComment(game.rules.toString()));
+
 	    Episode epi = new Episode(game, outputMode,
 				      new InputStreamReader(System.in),
 				      new PrintWriter(System.out, true));

@@ -176,7 +176,8 @@ public class Board extends OurTable {
     }
 
     static public RandomRG random = new RandomRG();
-    
+
+    /** The simple constructor */
     public Board(int randomCnt) {
 	setName("Random board with " + randomCnt + " pieces");
 	Piece.Shape[] shapes = 	Piece.Shape.values();
@@ -194,8 +195,11 @@ public class Board extends OurTable {
 	}
     }
 
-    /** Creates an array with elements, containing exactly nProp distinct values. */
+    /** Fills the array results[] with random values from allProps[], ensuring that results will contain exactly nProp distinct values. 
+	@param nProp If 0 is given, each object is assigned properties independently from the entire available range; so the resulting scheme may have any number of distinct properties. If non-zero is given, this will be the exact number of distinct values in the resulting scheme.
+     */
     private void designatedProps(Enum[] allProps, Enum results[], int nProp) {
+	if (nProp < 0 || nProp>allProps.length) throw new IllegalArgumentException("Illegal number of values ("+nProp+") to pick out of "+allProps.length);
 	final int m = results.length;
 	if (nProp==0) {
 	    for(int j=0; j<m; j++) {
@@ -225,7 +229,8 @@ public class Board extends OurTable {
     }
     
     
-    /** @param randomCnt required number of pieces. 
+    /** The main constructor for a random initial board.
+	@param randomCnt required number of pieces. 
 	@param nShapes required number of shapes. If 0 is passed, there is no restriction (independent decision is made for each piece)
 	@param nColors required number of colors. If 0 is passed, there is no restriction (independent decision is made for each piece)
      */
@@ -254,7 +259,14 @@ public class Board extends OurTable {
     }
     
 
-    /** Only used for JSON, not for persistence */
+    /** Creates a board object to be sent out (as JSON) to the player's client.
+	@param pieces The pieces still on the board. (An array of N^2 elements,
+	with nulls)
+	@param removedPieces If not null, these pieces will also be included
+	into the generated Board object, with the flag dropped=true. This is 
+	what the GUI client wants.
+	@param moveableTo Specifies to which buckets each piece can be moved to.
+     */
     public Board(Piece[] pieces, Piece[] removedPieces, BitSet[] moveableTo) {
 	
 	for(Piece p: pieces) {
@@ -278,58 +290,15 @@ public class Board extends OurTable {
     }
 
     
-    /** Find the matching record for a board object
-	@return The Article object with the matching name, or null if none is found */
-    /*
-@SuppressWarnings("unchecked")
-    public static  findByAid( EntityManager em, String _aid) {
-
-	Role r = (Role)em.find(Role.class, name.toString());
-	
-    
-	Query q = em.createQuery("select m from Article m where m.aid=:c");
-	q.setParameter("c", _aid);
-	List<Article> res = (List<Article>)q.getResultList();
-	if (res.size() != 0) {
-	    return  res.iterator().next();
-	} else {
-	    return null;
-	}
-    }   
-    */
-
     public long persistNewBoard() {
-	try {
-
-	    this.setId(0); // default value?
-	    //this.setLongId(0L);
-	    System.out.println("Creating board: " + name );
-	    Main.persistObjects(this);
-
-	    return this.getId();
-	    /*
-	    Board b1 = (Board)em.find(Board.class, id);
-	    if (b1==null) {
-		// FIXME: must return an error message of some kind...
-		return null;
-	    } else {
-		return b1;
-	    }
-	    */
-
-	    
-	} finally {
-	    //try {em.getTransaction().commit();} catch (Exception _e) {}
-	    //em.close();
-	}
-	
+	this.setId(0); // default value?
+	//this.setLongId(0L);
+	System.out.println("Creating board: " + name );
+	Main.persistObjects(this);
+	return this.getId();	    	
     }
-
     
     static public void main(String[] argv) throws IOException {
-   }
-
- 
-
+    }
     
 }

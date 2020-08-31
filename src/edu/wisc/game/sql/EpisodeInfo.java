@@ -73,36 +73,25 @@ public class EpisodeInfo extends Episode {
 	appropriate randomization) on a specified parameter set */
     static EpisodeInfo mkEpisodeInfo(int seriesNo, ParaSet para, boolean bonus)
 	throws IOException, RuleParseException {
-	//try {
 
 	String ruleSetName = para.getRuleSetName();
-	    int nPieces =  Board.random.getInRange(para.getInt("min_objects"),
-						   para.getInt("max_objects"));
-	    int nShapes = Board.random.getInRange(para.getInt("min_shapes"),
-						   para.getInt("max_shapes"));
-	    int nColors = Board.random.getInRange(para.getInt("min_colors"),
-						   para.getInt("max_colors"));
+	int[] nPiecesRange = {para.getInt("min_objects"),
+			      para.getInt("max_objects")},
+	    nShapesRange = {para.getInt("min_shapes"),
+			    para.getInt("max_shapes")},
+	    nColorsRange = {para.getInt("min_colors"),
+			    para.getInt("max_colors")};
 
-	    if (nPieces<=0 || nPieces>Board.N * Board.N) throw new IOException("Invalid #pieces=" + nPieces);
-	    if (ruleSetName==null ||ruleSetName.trim().equals("")) throw new IOException("No rules set specified");
-	    RuleSet rules = AllRuleSets.obtain(ruleSetName);
-
+	GameGenerator gg =new 	GameGenerator(ruleSetName, nPiecesRange, nShapesRange,
+					      nColorsRange);    
 	   
-	    if (nPieces <= 0)  throw new IOException("Number of pieces must be positive");
-	    Game game = new  Game(rules, nPieces, nShapes, nColors);
-	    EpisodeInfo epi = new EpisodeInfo(game);
-	    epi.bonus = bonus;
-	    epi.seriesNo = seriesNo;
-	    	    
-	    globalAllEpisodes.put(epi.episodeId, epi);
-	    return epi;
-	    
-	    //setError( false);
+	Game game = gg.nextGame();
+	EpisodeInfo epi = new EpisodeInfo(game);
+	epi.bonus = bonus;
+	epi.seriesNo = seriesNo;
 	
-	    //} catch(Exception ex) {
-	    //	    setError(true);
-	    //setErrmsg(ex.getMessage());
-	    //	}	      
+	globalAllEpisodes.put(epi.episodeId, epi);
+	return epi;	    	      
     }
 
     /** An episode deserves a bonus if it was part of the bonus series,

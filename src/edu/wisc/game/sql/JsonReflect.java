@@ -86,6 +86,8 @@ public class JsonReflect {
 		objectBuilder.add(e.name, (Double)val);
 	    } else if (val instanceof Enum) {
 		objectBuilder.add(e.name, val.toString());
+	    } else if (val instanceof Boolean) {
+		objectBuilder.add(e.name, val.toString());
 	    } else if (val instanceof Array) { // an array
 		//System.out.println("Array name=" + e.name +", size=" +Array.getLength(val));
 		JsonArrayBuilder ab = doCollection(array2vector((Array)val), skipNulls);

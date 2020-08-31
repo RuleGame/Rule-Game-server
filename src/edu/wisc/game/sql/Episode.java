@@ -309,7 +309,9 @@ public class Episode {
     public int getNPiecesStart() { return nPiecesStart; }
     public void setNPiecesStart(int _nPiecesStart) { nPiecesStart = _nPiecesStart; }
 
-    
+
+    /** Creates a new Episode for a given Game (which defines rules and the 
+	properties of the initial board). */
     public Episode(Game game, OutputMode _outputMode, Reader _in, PrintWriter _out) {
 	startTime = new Date();    
 	in = _in;

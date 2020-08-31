@@ -1,8 +1,6 @@
 package edu.wisc.game.util;
 
-//import java.io.*;
 import java.util.*;
-//import java.text.*;
 import java.math.*;
 
 public class RandomRG extends Random {
@@ -20,7 +18,10 @@ public class RandomRG extends Random {
     /** Generates a random integer number x,  uniformly distributed among the
 	(max-min+1) values: 	min &le; x &le; max. */
     public int getInRange(int min, int max) {
-	return  min + (max<=min ? 0 : nextInt(max - min + 1));
+	return (max<=min)? min :  min + nextInt(max - min + 1);
+    }
+    public int getInRange(int z[]) {
+	return  getInRange(z[0], z[1]);
     }
 
 
