@@ -33,7 +33,8 @@ import edu.wisc.game.util.*;
 </pre>
 */
 @Entity  
-public class Board extends OurTable {
+public class Board// extends OurTable
+{
  	
     static public final int N = 6;
 

@@ -1,12 +1,14 @@
-package edu.wisc.game.sql;
+package edu.wisc.game.reflect;
 
 import java.util.*;
 import java.text.*;
+import java.lang.reflect.*;
 import javax.persistence.*;
+
 //import javax.json.*;
 
-import java.lang.reflect.*;
 import edu.wisc.game.util.Logging;
+import edu.wisc.game.sql.Role;
 
 /** A bunch of methods to figure what fields a class has, and how to
  * print them out in a more or less sensible way.
@@ -172,6 +174,17 @@ public class Reflect {
 	    }
 
 
+
+	    if (e.g.getAnnotation(javax.xml.bind.annotation.XmlTransient.class)!=null) {
+		// This annotation is used to prevent REST from converting a field
+		// to JSON... so we should ignore it to. I use it to prevent
+		// infinite looping
+		continue;
+	    }
+
+
+
+	    
 	    Display anno = (Display)e.f.getAnnotation(Display.class);
 	    e.editable = (anno!=null) && anno.editable(); // default no
 	    e.rp = (anno!=null) && anno.rp(); // default no

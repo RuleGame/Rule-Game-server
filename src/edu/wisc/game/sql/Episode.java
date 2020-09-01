@@ -11,6 +11,7 @@ import javax.persistence.*;
 
 
 import edu.wisc.game.util.*;
+import edu.wisc.game.reflect.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.sql.Board.Pos;
@@ -541,7 +542,7 @@ public class Episode {
 	return json.toString();
     }
 
-    static final String version = "1.008";
+    static final String version = "1.009";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();

@@ -1,7 +1,10 @@
-package edu.wisc.game.sql;
+package edu.wisc.game.reflect;
 
 import java.lang.reflect.*;
 import javax.persistence.*;
+
+import edu.wisc.game.reflect.*;
+
 
 /** All our entities (corresponding to table rows) implement  this.
  */

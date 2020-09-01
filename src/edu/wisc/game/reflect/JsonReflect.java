@@ -1,4 +1,4 @@
-package edu.wisc.game.sql;
+package edu.wisc.game.reflect;
 
 import java.util.*;
 import java.text.*;
@@ -8,6 +8,7 @@ import javax.json.*;
 import java.lang.reflect.*;
 import edu.wisc.game.util.Logging;
 
+/** Tools for exporting Java objects as JSON structures */
 public class JsonReflect {
 
     private static JsonArrayBuilder doCollection(Collection col, boolean skipNulls) {
@@ -46,13 +47,13 @@ public class JsonReflect {
     }
     
 
-    /** Convert an object to a JSON object, to the extent possible */
+    /** Converts a Java object to a JSON object, to the extent possible */
     public static JsonObjectBuilder reflectToJSON(Object o, boolean skipNulls) {
 	
 	JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
        
 	Reflect r = Reflect.getReflect(  o.getClass());
-	//Logging.info("Reflecting on " + o.getClass() +"; reflect=" + r + ", has " + r.entries.length + " entries");
+	//Logging.info("Reflecting on object "+o+", class="+ o.getClass() +"; reflect=" + r + ", has " + r.entries.length + " entries");
 	for(Reflect.Entry e: r.entries) {
 	    if (o instanceof OurTable &&((OurTable)o).ignores(e.name)) continue;
 	    Object val = null;
@@ -71,7 +72,6 @@ public class JsonReflect {
 
 	    Class c = val.getClass();
 	    //System.out.println("name=" + e.name +", val("+c+"; "+c.getName()+"; isArray"+c.isArray()+")=" + val);
-
 
 	    
 	    if (val instanceof String) {
@@ -105,7 +105,7 @@ public class JsonReflect {
 		JsonArrayBuilder ab = doCollection(col, skipNulls);
 		objectBuilder.add(e.name, ab);
 	    } else { // some object
-		System.out.println("Treating ("+val+") as 'some object'");
+		System.out.println("For key="+e.name+", treating val=("+val+") as 'some object'");
 		JsonObjectBuilder ob =  reflectToJSON(val, skipNulls);
 		objectBuilder.add(e.name, ob);
 	    }
@@ -132,7 +132,7 @@ public class JsonReflect {
 
 
     
-    /** Convert an object to a JSON object, to the extent possible */
+    /** Converts an object to a JSON object, to the extent possible */
     public static JsonObject reflectToJSONObject(Object o, boolean skipNulls) {
 	return reflectToJSON(o, skipNulls).build();
     }

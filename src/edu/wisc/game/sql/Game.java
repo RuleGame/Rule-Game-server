@@ -14,6 +14,11 @@ public class Game {
     /** If starting with a random board, the number of pieces to use. Only used if initialBoard==null */
     public int randomObjCnt, nShapes=0, nColors=0;
     
+    public Game(RuleSet _rules, Board _initialBoard) {
+	rules = _rules;
+	initialBoard = _initialBoard;
+	randomObjCnt = 0;
+    }
     public Game(RuleSet _rules, int _randomObjCnt) {
 	rules = _rules;
 	randomObjCnt = _randomObjCnt;

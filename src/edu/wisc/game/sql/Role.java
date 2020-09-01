@@ -6,6 +6,8 @@ import javax.persistence.*;
 import java.lang.reflect.*;
 import java.lang.annotation.*;
 
+import edu.wisc.game.reflect.*;
+
 /** A role is simply a database-storable wrapper around the role name */
 @Entity    
     @Table(name="arxiv_Role")

@@ -3,7 +3,7 @@
   <body>
     <h1>Captive Game Server</h1>
 
-<div align="center"><em>Updated 2020-08-07 for ver 1.003</em></div>
+<div align="center"><em>Updated 2020-08-31 for ver 1.009</em></div>
     
     <h2>What is the Captive Game Server</h2>
 
@@ -21,12 +21,12 @@
     <p>For example: suppose you have downloaded both the CGS distribution file (e.g. captive-1.003-2020-08-07.zip, or a later version) and jaxrs-ri-2.31.zip into your home directory. Then you do the following to unpack the files into properly positioned directories:
       <pre>
 	cd
-	mkdir cgs
-	cd cgs
+	mkdir captive
+	cd captive
 	unzip ~/captive-1.003-2020-08-07.zip
 	unzip ~/jaxrs-ri-2.31.zip
       </pre>
-	
+
 
     <p>
 In this way CGS can find relevant JAR files (used for handling JSON) in <tt>../jaxrs-ri/ext/*.jar</tt>, relative to the directory  where the scripts are. This is how the class path is set in the shell scripts (specifically, in <tt>set-var-captive.sh</tt>, which is included into <tt>captive-brief.sh</tt> and other scripts).</p>
@@ -46,10 +46,45 @@ In this way CGS can find relevant JAR files (used for handling JSON) in <tt>../j
       </pre>
 This will start a session using the rule description from the specified file; each episode will use a random initial board with 8 pieces.
 
-      <p>During the session. You will be able to type commands on the console, and the program will send the output to your screen. Type HELP to see the list of command, or EXIT to exit.
+      <p>During the session, you will be able to type commands on the console, and the program will send the output to your screen. Type HELP to see the list of command, or EXIT to exit.
     </p>
 
     <p>To use the CGS with your ML program, use the standard mechanism for spawning a child process, starting the script (captive-full.sh, captive-standard.sh, or captive-brief.sh) as a child process from your program. Capture the CGS's standard input and standard output via pipes, and communicate with it via writing into one pipe and reading from the other.</p>
+
+
+    <h3>Specifying the initial board</h3>
+
+    <p>The command line arguments for the scripts such as <tt>captive-full.sh</tt> are the same as for the underlying Java program, <tt>edu.wisc.game.engine.Captive</tt>. The first argument is always the name (path) of the text file containing the rule set description. The additional arguments specify the initial board, or the random distribution from which initial boards are drawn in each episodes. There are several ways to do this:
+    </p>
+    
+    <ol>
+      <li>Specific board file identified by name:
+	<pre>
+ ./captive-brief.sh game-data/rules/farthest.txt game-data/boards/four-corners.json 
+	</pre>
+	If you do that, every episode in your session will start with the same identical initial board.
+      <li>Specify only the number of pieces, as a single number:
+ 	<pre>
+ ./captive-brief.sh game-data/rules/farthest.txt 3
+	</pre>
+	In this example, every episode will start with a random board with the same number (3) pieces. The shapes and colors of each piece will be selected independently from each other from the entire set of shapes and colors available, which means that the number of shapes and colors will vary in each episode over the entire possible range.
+	  <li>Specify only the number of pieces, as a single number:
+ 	<pre>
+ ./captive-brief.sh game-data/rules/farthest.txt 2:4
+	</pre>
+	In the above example, for each episode the number of pieces will be selected randomly, with a uniform distribution, from the speciified range, meaning that, on average, one-third of all initial boards will have 2 pieces, one-third will have 3, and one-third will have 4.
+	  <li>Specify the number of pieces, the number of shapes, and the number of colors, as single numbers:
+ 	<pre>
+ ./captive-brief.sh game-data/rules/farthest.txt 5 2 3
+	</pre>
+	In the above example, every initial board will have 5 pieces, with exactly 2 distinct shapes and 3 distinct colors
+	 <li>Same as the above, but with using ranges for any of the three quantities. Ranges and single numbers can be combined in arbitrary ways; essentially, a single number <em>n</em> is equivalent to the range <em>n</em>:<em>n</em>. E.g.
+  	<pre>
+ ./captive-brief.sh game-data/rules/farthest.txt 5 1:3 3:4
+	</pre>
+	In the above example,  every initial board will have 5 pieces, with 1, 2, or 3 distinct shapes (with equal probability) and 3 or 4 distinct colors.
+     </ol>
+    
 
 <h3>Talking to the CGS from a Java application</h3>
     

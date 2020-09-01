@@ -18,8 +18,8 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 
 import edu.wisc.game.util.*;
+import edu.wisc.game.reflect.*;
 import edu.wisc.game.sql.*;
-import edu.wisc.game.sql.JsonReflect;
 import edu.wisc.game.engine.*;
 
 @Path("/GameService2") 

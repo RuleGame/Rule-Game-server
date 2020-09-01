@@ -1,4 +1,4 @@
-package edu.wisc.game.sql;
+package edu.wisc.game.reflect;
 
 
 interface PairFormatter {
