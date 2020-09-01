@@ -535,10 +535,13 @@ public class Episode {
 	    showRemoved ?    new Board(pieces, removedPieces, ruleLine.moveableTo()):
 	    new Board(pieces, null, ruleLine.moveableTo());
     }
+
+    /** No need to show this field */
+    private static final HashSet<String> excludableNames =  Util.array2set("dropped");
     
     private String displayJson() {
 	Board b = getCurrentBoard();
-	JsonObject json = JsonReflect.reflectToJSONObject(b, true);
+	JsonObject json = JsonReflect.reflectToJSONObject(b, true, excludableNames);
 	return json.toString();
     }
 

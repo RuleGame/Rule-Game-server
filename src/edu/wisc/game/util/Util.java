@@ -20,12 +20,21 @@ public class Util {
 	}
 	return h;
     }
-     
+
+    /** Can also take String[] a */
+    public static HashSet<String> array2set(String... a) {
+	HashSet<String> h = new HashSet<String>();
+	for(String x:a) h.add(x);
+	return h;
+    }
+
+    /*
     public static HashSet<String> array2set(String[] a) {
 	HashSet<String> h = new HashSet<String>();
 	for(String x:a) h.add(x);
 	return h;
     }
+    */
 
     /** Only uses non-null non-blank strings */
     public static <T> String joinNonBlank(String sep, Vector<T> v) {
