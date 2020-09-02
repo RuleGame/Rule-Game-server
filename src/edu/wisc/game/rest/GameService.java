@@ -5,14 +5,12 @@ import java.util.*;
 import javax.servlet.http.HttpServletResponse;
 import javax.json.*;
 
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
-
 // For database work
 import javax.persistence.*;
 
 
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
 // test
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -26,50 +24,50 @@ import edu.wisc.game.engine.*;
 public class GameService {  
 
     @GET 
-   @Path("/pieceX") 
-   @Produces(MediaType.APPLICATION_XML) 
-   public Piece getPiece1(){
+    @Path("/pieceX") 
+    @Produces(MediaType.APPLICATION_XML) 
+    public Piece getPiece1(){
 	Piece p = new  Piece( Piece.Shape.SQUARE, Piece.Color.BLACK, 0,0);
 	return p;	
-   }
+    }
 
     @GET 
-   @Path("/piece") 
-   @Produces(MediaType.APPLICATION_JSON) 
-   public Piece getPiece2(){
+    @Path("/piece") 
+    @Produces(MediaType.APPLICATION_JSON) 
+    public Piece getPiece2(){
 	Piece p = new  Piece( Piece.Shape.SQUARE, Piece.Color.BLACK, 0,0);
 	return p;	
-   }
+    }
 
-  @GET 
-   @Path("/boardX") 
-   @Produces(MediaType.APPLICATION_XML) 
-   public Board getBoard1(){
-      return new Board();	
-   }
+    @GET 
+    @Path("/boardX") 
+    @Produces(MediaType.APPLICATION_XML) 
+    public Board getBoard1(){
+	return new Board();	
+    }
     
- @GET 
-   @Path("/board") 
-   @Produces(MediaType.APPLICATION_JSON) 
-   public Board getBoard2(){
-      return new Board();	
-   }
-
+    @GET 
+    @Path("/board") 
+    @Produces(MediaType.APPLICATION_JSON) 
+    public Board getBoard2(){
+	return new Board();	
+    }
+    
     /** Prints 
 	Hello: edu.wisc.game.sql.Board@3692d23f
     */
      @GET 
-   @Path("/hello1") 
-   @Produces(MediaType.APPLICATION_JSON) 
-   public String getHello1() {
+     @Path("/hello1") 
+     @Produces(MediaType.APPLICATION_JSON) 
+     public String getHello1() {
 	 Board b = new Board();
 	 return "Hello: " + b.toString();	
-   }
-
+     }
+    
     @GET 
-   @Path("/hello2") 
-   @Produces(MediaType.APPLICATION_JSON) 
-   public String getHello2() {
+    @Path("/hello2") 
+    @Produces(MediaType.APPLICATION_JSON) 
+    public String getHello2() {
 	Board b = new Board();
 
 
@@ -186,8 +184,9 @@ public class GameService {
 	newEpisode(@FormParam("rules") String rules,
 		   @DefaultValue("0") @FormParam("pieces") int pieces,
 		   @DefaultValue("0") @FormParam("shapes") int shapes,
-		   @DefaultValue("0") @FormParam("colors") int colors) {
-	return new NewEpisodeWrapper(rules, pieces, shapes, colors);
+		   @DefaultValue("0") @FormParam("colors") int colors,
+		   @DefaultValue("null") @FormParam("board") String boardName) {
+	return new NewEpisodeWrapper(rules, pieces, shapes, colors, boardName);
     }
 
     @GET

@@ -4,15 +4,18 @@ import java.io.*;
 import java.util.*;
 import java.text.*;
 import java.net.*;
-import javax.persistence.*;
+import java.lang.reflect.*;
 
-import org.apache.openjpa.persistence.jdbc.*;
+import javax.persistence.*;
+import javax.json.*;
 
 import javax.xml.bind.annotation.XmlElement; 
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.apache.openjpa.persistence.jdbc.*;
 
 import edu.wisc.game.util.*;
+import edu.wisc.game.reflect.*;
 
 @XmlRootElement(name = "board") 
 
@@ -298,6 +301,26 @@ public class Board// extends OurTable
 	Main.persistObjects(this);
 	return this.getId();	    	
     }
+
+    /** Reads a board description from a JSON file */
+    public static Board readBoard(File f) throws IOException, ReflectiveOperationException { 
+	//System.err.println("ReadBoard " + f);
+	JsonReader jsonReader = Json.createReader(new FileReader(f));
+	JsonObject obj = jsonReader.readObject();
+	jsonReader.close();
+
+	Board board = new Board();
+	JsonToJava.json2java(obj, board);
+
+	//System.err.println("Have imported the board:\n" + 
+	// JsonReflect.reflectToJSONObject(board, true));	
+
+	return board;
+    }
+
+    
+
+
     
     static public void main(String[] argv) throws IOException {
     }

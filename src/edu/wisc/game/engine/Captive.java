@@ -2,10 +2,9 @@ package edu.wisc.game.engine;
 
 import java.io.*;
 import java.util.*;
-//import java.text.*;
-import java.lang.reflect.*;
+//import java.lang.reflect.*;
 
-import javax.json.*;
+//import javax.json.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.reflect.*;
@@ -84,24 +83,6 @@ public class Captive {
     }
 
 
-    private static Board readBoard(File f) throws IOException, ReflectiveOperationException { 
-	//System.err.println("ReadBoard " + f);
-	JsonReader jsonReader = Json.createReader(new FileReader(f));
-
-	JsonObject obj = jsonReader.readObject();
-
-	jsonReader.close();
-
-	Board board = new Board();
-	JsonToJava.json2java(obj, board);
-
-	//System.err.println("Have imported the board:\n" + 
-	// JsonReflect.reflectToJSONObject(board, true));	
-
-	return board;
-    }
-
-    
     public static void main(String[] argv) throws IOException,  RuleParseException, ReflectiveOperationException { 
 
 	ParseConfig ht = new ParseConfig();
@@ -118,7 +99,7 @@ public class Captive {
 	String a = argv[ja++];
 	if (a.indexOf(".")>=0) {
 	    File bf = new File(a);
-	    Board board = readBoard(bf);
+	    Board board = Board.readBoard(bf);
 	    gg = new GameGenerator(new Game(AllRuleSets.read(f), board));
 	} else {
 	    int[] nPiecesRange = range(a);

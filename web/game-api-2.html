@@ -6,6 +6,11 @@
 
   <p align="center"><em>Ver 1.009,  2020-08-28</em></p>
 
+  <p>This is the "Second Batch" (prefix=<tt>/GameService2</tt>)  of the Game Service web API calls. They are intended for use with a client app that works with players enrolled in experiments; each player is identified by a player ID, and the server assigns each player to a "trial list" (a particular track in the experiment plan with which this player ID is associated with).</p>
+
+  <p>For calls used by players not enrolled in experiments (e.g. our own team members developing and testing games), see <a href="game-api.html">the First Batch</a>.</P>
+    
+  
   <ol>
 <li>POST <strong><tt>/startTrial:</tt> Start a player's interaction with the system, and obtain a randomly selected trial list for this player</strong>
   <form method="post" action="game-data/GameService2/player"

@@ -1,14 +1,21 @@
 <html>
-  <head><title>RESTful API for the use by the Rule Game client</title>
+  <head><title>RESTful API for the use by the Rule Game client - first batch</title>
   </head>
 <body>
-  <h1>RESTful API for the use by the Rule Game client</h1>
+  <h1>RESTful API for the use by the Rule Game client - first batch</h1>
+  
+  <p align="center"><em>Ver 1.010, 2020-09-01</em></p>
 
-  <p align="center"><em>Ver 1.006, 2020-08-15</em></p>
+
+  <p>The "first batch" (prefix=<tt>/GameService</tt>) of the Rule Game web API consists of calls that can be used for players that do not participate in any experiments (i.e. don't have player IDs, don't have any trial lists associated with them, etc). This is suitable e.g. for the research interface, for the research team members to develop and test rule sets.</p>
 
 <p>This API includes several HTTP request/response pairs that can be used by the TypeScript/React GUI. Conceptually, its functionality is fairly similar to that of the 
 <a href="package.html">Captive Game Server</a> (used by the ML programs), but is customized for the needs of a GUI app used by human players. And, of course, the client communicates with it over HTTP, instead of pipes or the socket level.</p>
-  
+
+<h3>Deprecated methods for players enrolled in experiments</h3>
+
+<p>Methods described in this section were developed before it was clearly understood how the logic is to be divided between the client and server code; so they are not to be used, and the methods from the <a href="game-api-2.html">Second Batch</a> are to be used instead.</p>
+
 <ol>
 <li>POST <strong><tt>startTrial:</tt> Start a player's interaction with the system, and obtain a randomly selected trial list for this player</strong>
   <form method="post" action="game-data/GameService/startTrial"
@@ -28,7 +35,7 @@
   ]
     </pre>
     </p>
-  
+
     <li>[Note: this method is not needed anymore, as it is superseded by <tt>startTrial:</tt>!] GET <strong>getParaSet: Retrieve a parameter set:</strong>
    <form method="get" action="game-data/GameService/getParaSet"
 	 enctype="application/x-www-form-urlencoded">
@@ -55,26 +62,41 @@
 
    <p>The server does not know the semantics of the fields in the CSV file, nor does it know what the type of each field is supposed to be (integer vs. boolean vs. string). If the value in a field looks like a number or a boolean, the server treats it accordingly; otherwise, the field value is treated as a string.</p>
 
-     <li>POST <strong><tt>newEpisode</tt>: Create a new episode:</strong>
+</ol>
+
+<h3>Researcher interface methods</h3>
+
+   <ol>
+
+     <li>POST <strong><tt>newEpisode</tt> (a):  Create a new episode:</strong>
         <form method="post" action="game-data/GameService/newEpisode"
 	 enctype="application/x-www-form-urlencoded">
-	  Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="TD-01"><br>
+	  Rule set name (given in the param set <tt>rule_id</tt>; refers to a TXT file in <tt>game-data/rules</tt>, without the extension): <input name="rules" type="text" value="Rule-001"><br>
 	  Number of pieces (a number within the [min_objects, max_objects] 
 	  range given in the param set): <input name="pieces" type="text" value="4"><br>
 	  <input type="submit">
 	</form>
 
-	<li>newEpisode, with additional parameters: the number of shapes and the number of colors:
+	<li>POST <strong><tt>newEpisode</tt> (b): with additional parameters: the number of shapes and the number of colors:</strong>
      <form method="post" action="game-data/GameService/newEpisode"
 	 enctype="application/x-www-form-urlencoded">
-	  Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="TD-01"><br>
+	  Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="Rule-001"><br>
 	  Number of pieces (a number within the [min_objects, max_objects] 
 	  range given in the param set): <input name="pieces" type="text" value="4"><br>
 	  Number of shapes:  <input name="shapes" type="text" value="4"><br>
 	  Number of colors:  <input name="colors" type="text" value="4"><br>
 	  <input type="submit">
 	</form>
-	
+
+	<li>POST <strong><tt>newEpisode</tt> (c): with additional parameters: the number of shapes and the number of colors:</strong>
+     <form method="post" action="game-data/GameService/newEpisode"
+	 enctype="application/x-www-form-urlencoded">
+       Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="Rule-001"><br>
+       Initial board name (refers to a JSON file in <tt>game-data/boards</tt>, without the extension): <input name="board" type="text" value="four-corners"><br>
+       
+	  <input type="submit">
+	</form>
+     
        <p>This returns a JSON object which contains the <tt>error</tt> field (true on an error, false on success), the optional <tt>errmsg</tt> field, and the <tt>episodeId</tt> field. The <tt>episodeId</tt> field contains the ID (a string) of the episode object, which can be used in the later <tt>move</tt> calls. The returned structure also contains the description of the current board at the beginning of the episode (in the same format as in the <tt>move</tt> call, below).</P>
 
        <p>A typical return value: on success	 <pre>
@@ -147,7 +169,7 @@ On failure:<pre>
 
 <li>GET <strong><tt>writeFile</tt>: see <a href="write.jsp">Write file</a> (including append)</li>
 	  
-</ul>
+</ol>
   </body>
 </html>
   

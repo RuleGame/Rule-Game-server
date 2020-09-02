@@ -12,24 +12,9 @@ import edu.wisc.game.util.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.sql.*;
 
-//@XmlRootElement(name = "NewEpisode") 
-
-/**
-FIXME: need to add periodic purge on episodes 
- */
-public class NewEpisodeWrapper {
-    boolean error=false;
-    String errmsg=null;
+public class NewEpisodeWrapper extends ResponseBase {
     String episodeId=null;
-    
-    public boolean getError() { return error; }
-    @XmlElement
-    public void setError(boolean _error) { error = _error; }
-    
-    public String getErrmsg() { return errmsg; }
-    @XmlElement
-    public void setErrmsg(String _errmsg) { errmsg = _errmsg; }
-    
+
     public String getEpisodeId() { return episodeId; }
     @XmlElement
     public void setEpisodeId(String _episodeId) { episodeId = _episodeId; }
@@ -38,12 +23,9 @@ public class NewEpisodeWrapper {
     public Board getBoard() { return board; }
     @XmlElement
     public void setBoard(Board _b) { board = _b; }
-
     
-
-    NewEpisodeWrapper(String ruleSetName, int nPieces,
-		      int nShapes,
-		      int nColors	      ) {
+    NewEpisodeWrapper(String ruleSetName, int nPieces,   int nShapes,  int nColors,
+		      String boardName) {
 	try {
 	    /*
 	    if (nPiecesString==null)  throw new IOException("The number of pieces is not specified");
@@ -54,14 +36,25 @@ public class NewEpisodeWrapper {
 		throw new IOException("Cannot parse nPieces as a number: " + nPiecesString);
 	    }
 	    */
-	    if (nPieces<=0 || nPieces>Board.N * Board.N) throw new IOException("Invalid #pieces=" + nPieces);
 	    if (ruleSetName==null ||ruleSetName.trim().equals("")) throw new IOException("No rules set specified");
 	    
 
 	    RuleSet rules = AllRuleSets.obtain(ruleSetName);
+
+	    Game game;
+	    if (boardName!=null && boardName.trim().length()>0) {
+		File base = new File("/opt/tomcat/game-data");
+		base = new File(base, "boards");
+		File bf = new File(base, boardName + ".json");
+		if (!bf.canRead())  throw new IOException("Cannot read board file: " +bf);
+		Board board = Board.readBoard(bf);
+		game = new Game(rules, board);
+	    } else {
 	
-	    if (nPieces <= 0)  throw new IOException("Number of pieces must be positive");
-	    Game game = new  Game(rules, nPieces, nShapes, nColors);
+		if (nPieces<=0 || nPieces>Board.N * Board.N) throw new IOException("Invalid #pieces=" + nPieces);
+
+		game = new  Game(rules, nPieces, nShapes, nColors);
+	    }
 	    Episode epi = new Episode(game, Episode.OutputMode.BRIEF, null, null); //in, out);
 
 	    board = epi.getCurrentBoard();
@@ -71,6 +64,9 @@ public class NewEpisodeWrapper {
 	    setError( false);
 	
 	} catch(Exception ex) {
+	    System.err.print("NewServiceWrapper: " + ex);
+	    ex.printStackTrace(System.err);
+
 	    setError(true);
 	    setErrmsg(ex.getMessage());
 	}

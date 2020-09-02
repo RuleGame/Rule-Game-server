@@ -63,7 +63,7 @@ public class Piece  implements Serializable {
     
     private static final long serialVersionUID = 1L;
 
-    // The link is used for JPA, but not JSON
+    // This back link and its "get" method are used for JPA, but not JSON
     //    @JsonIgnore
     @XmlTransient
     @ManyToOne(fetch = FetchType.EAGER)
@@ -71,8 +71,8 @@ public class Piece  implements Serializable {
  
 
     // Using "xget" instead of "get" to avoid looping (Board to Piece to Board...) during the conversion to JSON
-    @XmlTransient
-    public Board getBoard() { return board; }
+    //@XmlTransient
+    //public Board getBoard() { return board; }
     //   @XmlElement
     public void setBoard(Board _board) { board = _board; }
 
