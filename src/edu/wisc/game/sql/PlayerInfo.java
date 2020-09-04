@@ -272,7 +272,13 @@ public class PlayerInfo {
 	    if (ser!=null && ser.episodes.size()>0) {
 		EpisodeInfo x = ser.episodes.lastElement();
 		// should we resume the last episode?
-		if (!x.isCompleted()) return x;
+		if (!x.isCompleted()) {
+		    if (x.isNotPlayable()) {
+			x.giveUp();
+		    } else {
+			return x;
+		    }
+		}
 	    }
 
 	    
