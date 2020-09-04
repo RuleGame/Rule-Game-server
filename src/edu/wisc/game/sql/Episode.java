@@ -223,7 +223,7 @@ public class Episode {
 
 	    doneMoveCnt++;
 	    removedPieces[move.pos] = pieces[move.pos];
-	    removedPieces[move.pos].setDropped(true);
+	    removedPieces[move.pos].setDropped(move.bucketNo);
 	    pieces[move.pos] = null; // remove the piece
 	    
 	    // Check if this rule can continue to be used, and if so,
@@ -545,7 +545,7 @@ public class Episode {
 	return json.toString();
     }
 
-    static final String version = "1.010";
+    static final String version = "1.011";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();

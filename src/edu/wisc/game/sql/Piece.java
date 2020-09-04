@@ -82,16 +82,15 @@ public class Piece  implements Serializable {
     @GeneratedValue(strategy=GenerationType.IDENTITY) 
     private long id;
     
-    //    private String id; 
-    // private String color; 
-    // private String shape;  
     private Color color; 
     private Shape shape;  
 
     private int x;
     private int y;
 
-    boolean dropped=false;
+    /** Empty vector for the pieces still on the board; contains the destination
+	bucket number for the pieces that have been removed */
+    Integer dropped=null;
     
     public long getId() { return id; }
   @XmlElement 
@@ -118,16 +117,16 @@ public class Piece  implements Serializable {
 
     
     public int getX() { return x; }
-  @XmlElement 
+    @XmlElement 
     public void setX(int _x) { x = _x; }
 
     public int getY() { return y; }
-  @XmlElement 
+    @XmlElement 
     public void setY(int _y) { y = _y; }
 
-    public boolean getDropped() { return dropped; }
-   @XmlElement
-   public void setDropped(boolean _dropped) { dropped = _dropped; }
+    public Integer getDropped() { return dropped; }
+    @XmlElement
+    public void setDropped(Integer _dropped) { dropped = _dropped; }
 
     public Piece(){} 
      

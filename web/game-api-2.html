@@ -4,7 +4,7 @@
 <body>
   <h1>RESTful API for the use by the Rule Game client - second batch</h1>
 
-  <p align="center"><em>Ver 1.009,  2020-08-28</em></p>
+  <p align="center"><em>Ver 1.011,  2020-09-03</em></p>
 
   <p>This is the "Second Batch" (prefix=<tt>/GameService2</tt>)  of the Game Service web API calls. They are intended for use with a client app that works with players enrolled in experiments; each player is identified by a player ID, and the server assigns each player to a "trial list" (a particular track in the experiment plan with which this player ID is associated with).</p>
 
@@ -41,8 +41,8 @@
   "error":false,   <em> // true if something bad has happened</em>
   "alreadyFinished":false,  <em> // this will be true if error==true, and the error is caused by the fact that the player has already done all his param sets</em>
  "board":{"longId":0,"id":0,"value":
-[{"buckets":[0],"color":"RED","dropped":false,"id":0,"shape":"STAR","x":3,"y":1},
-{"buckets":[0],"color":"RED","dropped":false,"id":0,"shape":"STAR","x":3,"y":5}]},
+[{"buckets":[0],"color":"RED","id":0,"shape":"STAR","x":3,"y":1},
+{"buckets":[0],"color":"RED","id":0,"shape":"STAR","x":3,"y":5}]},
 <em> // description of the initial board </em>
 "bonus":false,    <em> // true if this episode is part of a bonus subseries</em>
 "bonusEpisodeNo":0, <em> // the number of previous bonus episodes in this series</em>
@@ -65,6 +65,9 @@
 "totalRewardEarned":33 <em> // the sum total of rewards earned by this player in all episodes so far</em>
 }
 </pre>
+<p>As of ver. 1.011, in the board description the field <tt>dropped</tt> is shown only in the pieces that have been already removed from the board; the value is the ientifying number (0 thru 3) of the bucket into which the piece has been dropped.</p>
+
+
   </li>
   <li>GET <strong><tt>/display</tt>: View the current display:</strong>
       <form method="get" action="game-data/GameService2/display"
@@ -75,8 +78,8 @@
       <br>Sample output
 <pre>
   {"board":{"longId":0,"id":0,"value":
-  [{"buckets":[0],"color":"RED","dropped":true,"id":0,"shape":"STAR","x":3,"y":1},
-  {"buckets":[0],"color":"RED","dropped":true,"id":0,"shape":"STAR","x":3,"y":5}]},
+  [{"buckets":[0],"color":"RED","dropped":1,"id":0,"shape":"STAR","x":3,"y":1},
+  {"buckets":[0],"color":"RED","dropped":3,"id":0,"shape":"STAR","x":3,"y":5}]},
   "bonus":false,  <em> // true if this episode is part of a bonus subseries</em>
   "code":-8, <em> // It is always -8 on /display calls </em>
   "errmsg":"Display requested", 
@@ -102,8 +105,8 @@
       </form>
 <br>Sample response<pre>
   {"board":{"longId":0,"id":0,"value":
-  [{"buckets":[1],"color":"BLUE","dropped":false,"id":0,"shape":"TRIANGLE","x":4,"y":2},
-  {"buckets":[1],"color":"BLUE","dropped":false,"id":0,"shape":"TRIANGLE","x":2,"y":3}]}, <em> // the board after this move </em>
+  [{"buckets":[1],"color":"BLUE","id":0,"shape":"TRIANGLE","x":4,"y":2},
+  {"buckets":[1],"color":"BLUE","dropped":3,"id":0,"shape":"TRIANGLE","x":2,"y":3}]}, <em> // the board after this move </em>
   "bonus":false, <em> // true if this episode is part of a bonus subseries</em>
   "code":4, <em> Outcome of this move.
     For the semantics of the <tt>code</tt> and  <tt>finishCode</tt> fields,

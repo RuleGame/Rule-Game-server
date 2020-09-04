@@ -236,4 +236,18 @@ public class GameService {
     }
 
 
+    /**------------------- Just testing ------------------------*/
+    /** Gets the entire parameter set, identified by name */
+    @GET 
+    @Path("/getParaSetHtml") 
+    @Produces(MediaType.TEXT_HTML)
+    public String getParamHtml(@QueryParam("name") String name){
+	//	ParaSet para =	   new ParaSet(name);
+	ParaSet para =	   getParam(name);
+	String s = "Para:<br><em>" + para  + "</em>";
+	s = "<html><body>"  + s + "</body></html>";
+	return s;
+    }
+  
+  
 }
