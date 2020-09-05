@@ -2,7 +2,6 @@ package edu.wisc.game.rest;
 
 import java.io.*;
 import java.util.*;
-import javax.servlet.http.HttpServletResponse;
 import javax.json.*;
 
 // For database work
@@ -12,15 +11,15 @@ import javax.persistence.*;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 // test
-import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 
 import edu.wisc.game.reflect.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
 
-@Path("/GameService") 
 
+/** The "First Batch" of API calls, primarily for use in the research environment, where a player can choose any game to play */
+@Path("/GameService") 
 public class GameService {  
 
     @GET 

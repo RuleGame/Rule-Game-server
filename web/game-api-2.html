@@ -4,7 +4,7 @@
 <body>
   <h1>RESTful API for the use by the Rule Game client - second batch</h1>
 
-  <p align="center"><em>Ver 1.011,  2020-09-03</em></p>
+  <p align="center"><em>Ver 1.012,  2020-09-05</em></p>
 
   <p>This is the "Second Batch" (prefix=<tt>/GameService2</tt>)  of the Game Service web API calls. They are intended for use with a client app that works with players enrolled in experiments; each player is identified by a player ID, and the server assigns each player to a "trial list" (a particular track in the experiment plan with which this player ID is associated with).</p>
 
@@ -36,7 +36,30 @@
 	  <input type="submit">
 	</form>
 
-      <br>Results:
+	<br>Sample output (in ver. 1.012); note that some fields have been moved from X to display.X. The fields within display.{...} are the same as those given by the /display and /move calls.	
+	<pre>
+	  {"errmsg":"Debug:...",
+	  "error":false,
+	  "alreadyFinished":false,
+	  "display":{
+	  "board":{"id":0,"value":[{"buckets":[3],"color":"BLUE","id":0,"shape":"SQUARE","x":5,"y":5}]},"code":-8,"errmsg":"Display requested\nDEBUG\n[0][20200827-153052-F66ITP; FC=1; M 2/2 $10][20200827-153246-R7LHH9; FC=1; M 3/3 $10]\n[1][20200827-160602-PYQTAJ; FC=1; M 2/2 $10][20200827-162713-2HRENR; FC=1; M 2/2 $10]\n*M*[2][20200905-120700-PDF966; FC=1; M 1/1 $10][20200905-121136-7L3EHY; FC=0; M 0/1 $0]\nR=$50",
+	  "finishCode":0,
+	  "numMovesMade":0,
+	  "bonus":false,
+	  "bonusEpisodeNo":0,
+	  "canActivateBonus":true,
+	  "episodeNo":1,
+	  "guessSaved":false,
+	  "seriesNo":2,
+	  "totalBoardsPredicted":2,
+	  "totalRewardEarned":50
+	  },
+	  "episodeId":"20200905-121136-7L3EHY",
+	  "para":{"clearing_threshold":1.3,"max_points":10,"b":1.5,"min_points":2,"max_colors":1,"f":4,"feedback_switches":"fixed","min_objects":1,"m":9,"n":1,"clear_how_many":2,"bonus_extra_pts":3,"rule_id":"TD-03","max_objects":3,"grid_memory_show_order":false,"min_shapes":1,"stack_memory_show_order":false,"max_shapes":1,"min_colors":1,"stack_memory_depth":6,"max_boards":2,"activate_bonus_at":2}}  
+	    </pre>
+ <br>Sample output (in ver. 1.011)
+<pre>
+	
 <pre>
   {"errmsg":"Debug...", <em> // either used to describe errors, or contains various status info for debugging.</em>
   "error":false,   <em> // true if something bad has happened</em>
@@ -55,7 +78,8 @@
 "clear_how_many":2,"bonus_extra_pts":3,"rule_id":"TD-02","max_objects":3,
 "grid_memory_show_order":false,"min_shapes":1,"stack_memory_show_order":false,
 "max_shapes":1,"min_colors":1,"stack_memory_depth":6,"max_boards":2,
-"activate_bonus_at":2}, ,<em> // All the parameters from the current param set
+"activate_bonus_at":2},
+<em> // All the parameters from the current param set
   //  (the current row of the trial list file). Some of them may be used by the
 //GUI tool to control some points of the appearance </em>
 "seriesNo":1, <em> // the 0-based sequential number of this series (= 0-based sequential number of this row of the trial list file).
@@ -76,7 +100,25 @@
 	  Episode ID (returned by an earlier newEpisode call): <input name="episode" type="text" size="25"><br>
 	  <input type="submit">
       </form>
-      <br>Sample output
+  <br>Sample output (in ver. 1.012), extra fields added (some of which pevious were only seen in /newEpisode):
+<pre>
+  {"board":{"id":0,"value":[{"buckets":[3],"color":"BLUE","dropped":3,"id":0,"shape":"SQUARE","x":5,"y":5}]},
+  "code":-8,
+   "errmsg":"Display requested\nDEBUG\n[0][20200827-153052-F66ITP; FC=1; M 2/2 $10][20200827-153246-R7LHH9; FC=1; M 3/3 $10]\n[1][20200827-160602-PYQTAJ; FC=1; M 2/2 $10][20200827-162713-2HRENR; FC=1; M 2/2 $10]\n*B*[2][20200905-120700-PDF966; FC=1; M 1/1 $10][20200905-121136-7L3EHY; FC=1; B 1/1 $10]\nR=$60", // <em>just a progress report for this session, handy for debugging </em>
+  "finishCode":1,
+  "numMovesMade":1,
+  "bonus":true,
+  "bonusEpisodeNo":0,
+  "canActivateBonus":false,
+  "episodeNo":1, // <em>sequential number in this series (0-based)</em>
+  "guessSaved":false, // <em>has the guess been recorded for this episode?</em>
+  "seriesNo":2, // <em>sequential number of this series in the trial list (0-based)</em>
+  "totalBoardsPredicted":3, // <em>The current prediction for the total number of episodes to be played in this series.
+    // During the main subserties, this is simply para.max_boards; during the bonus subseries, this is A+para.clear_how_many,
+    // where A is the number of non-bonus episodes that had been played in this series before bonus was activated.</em>
+  "totalRewardEarned":60}
+      </pre>
+      <br>Sample output (in ver. 1.011)
 <pre>
   {"board":{"longId":0,"id":0,"value":
   [{"buckets":[0],"color":"RED","dropped":1,"id":0,"shape":"STAR","x":3,"y":1},

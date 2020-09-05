@@ -193,17 +193,18 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
 
 <target name="javadoc" depends="init,compile">
  
-  <javadoc sourcepath="src" packagenames="edu.*,com.*"
+  <javadoc sourcepath="src" packagenames="edu.*"
 	   classpathref="classpath"
-	   destdir="${enapp.api}"
+	   destdir="web/api"
            use="true"
 	   link="https://docs.oracle.com/en/java/javase/11/docs/api/"
-	   header="&lt;em&gt;CHEETA 2.012&lt;/em&gt;"   
-	   windowtitle="CHEETA 2.012 API documentation" 
-	   overview="${src.doc}/html/api/overview.html"
+	   header="&lt;em&gt;Rule Game&lt;/em&gt;"   
+	   windowtitle="Rule Game web API documentation" 
 	   additionalparam="-Xdoclint:none" />
-
 </target>
+
+<!--	   overview="${src.doc}/html/api/overview.html" -->
+
 
 <!-- an alternative to "deploy" -->
 <target name="war" depends="init,jar">

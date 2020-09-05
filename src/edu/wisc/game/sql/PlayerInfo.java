@@ -2,15 +2,11 @@ package edu.wisc.game.sql;
 
 import java.io.*;
 import java.util.*;
-import java.text.*;
-import java.net.*;
 import javax.persistence.*;
 
 import org.apache.openjpa.persistence.jdbc.*;
 
 import javax.xml.bind.annotation.XmlElement; 
-import javax.xml.bind.annotation.XmlRootElement;
-
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.parser.*;
@@ -42,6 +38,9 @@ public class PlayerInfo {
     public Date getDate() { return date; }
     public void setDate(Date _date) { date = _date; }
 
+    /** FIXME: this may result in an Episode being persisted before its completed, 
+	which we, generally, don't like. Usually not a big deal though.
+     */
     @OneToMany(
         mappedBy = "player",
         cascade = CascadeType.ALL,
@@ -58,18 +57,14 @@ public class PlayerInfo {
         allEpisodes.remove(c);
         c.setPlayer(null);
     }
-
     
     public Vector<EpisodeInfo> getAllEpisodes() { return allEpisodes; }
     public void setAllEpisodes(Vector<EpisodeInfo> _allEpisodes) {
-	//allEpisodes = _allEpisodes;
 	for(EpisodeInfo p: allEpisodes) p.setPlayer(null);
 	allEpisodes.setSize(0);
 	for(EpisodeInfo p: _allEpisodes) addEpisode(p);    	
     }
-
-
-    
+   
     public static String assignTrialList(String player) {
 	return null;
     }
@@ -78,22 +73,25 @@ public class PlayerInfo {
 	return "(PlayerInfo: id=" + id +",  playerId="+ playerId+", trialListId=" + trialListId +", date=" + date+")";
     }
 
-  
+
+    /** A Series is a list of all episodes played under a specific param set. A player
+	has as many Series objects as there are lines in that player's trial list.
+     */
     class Series {
 	ParaSet para;
 	Vector<EpisodeInfo> episodes = new Vector<>();
-	//SeriesState state = SeriesState.FUTURE;
 
 	Series(ParaSet _para) {
 	    para = _para;
 	}
 	
-
 	public String toString() {
 	    return "(Series: para.rules=" +	para.getRuleSetName() +
 		", episode cnt= "+ episodes.size()+")";
 	}
 
+	/** How many bonus episodes (completed or not) this user has
+	    completed or is still playing? */
 	int countBonusEpisodes() {
 	    int cnt=0;
 	    for(EpisodeInfo x: episodes) {
@@ -130,14 +128,28 @@ public class PlayerInfo {
 	
     }
 
+    /** Retrieves a link to the currently played series, or null if this player
+	has finihed all his series */
     private Series getCurrentSeries() {
 	return currentSeriesNo<allSeries.size()? allSeries.get(currentSeriesNo): null;
     }
 
+    /** Based on the current situation, what is the maximum number
+	of episodes that can be run within the current series? 
+	(Until max_boards is reached, if in the main subseries, 
+	or until the bonus is earned, if in the bonus subseries).
+    */
+    int totalBoardsPredicted() {
+	Series ser = getCurrentSeries();	
+	return ser==null? 0:
+	    inBonus? ser.episodes.size() +    ser.para.getInt("clear_how_many")-
+	    countBonusEpisodes(currentSeriesNo):	    
+	    getCurrentSeries().para.getMaxBoards();
+    }
+
     
-    /** @return true if an "Activate Bonus" button can be displayed,
-	i.e. the player is eligible to start bonus episodes, but has not done that 
-	yet */
+    /** @return true if an "Activate Bonus" button can be displayed, i.e. 
+	the player is eligible to start bonus episodes, but has not done that yet */
     public boolean canActivateBonus() {
 	Series ser=getCurrentSeries();
 	int at = ser.para.getInt("activate_bonus_at");
@@ -146,7 +158,8 @@ public class PlayerInfo {
 	return answer;
     } 
 
-
+    /** Switches this player from the main subseries to the bonus subseries, and
+	perisist the information about this fact in the SQL server. */
     public void activateBonus() {
 	if (inBonus) throw new IllegalArgumentException("Bonus already activated in the current series");
 	
@@ -157,7 +170,7 @@ public class PlayerInfo {
 	Series ser=getCurrentSeries();
 	if (ser!=null && ser.episodes.size()>0) {
 	    EpisodeInfo epi = ser.episodes.lastElement();
-	    // if it's still running, make it a bonus episode too
+	    // if the current episode is still running, make it a bonus episode too
 	    if (!epi.isCompleted()) {
 		epi.bonus=true;
 		System.err.println("Bonus activated for current episode " + epi.episodeId);
@@ -167,8 +180,10 @@ public class PlayerInfo {
 	Main.persistObjects(this); // this saves the new value of inBonus
     }
 
+    /** "Gives up" the current series, i.e. immediately switches the player to the next
+	series (if there is one) */
     public void giveUp(int seriesNo) {
-	if (seriesNo!=currentSeriesNo) throw new IllegalArgumentException("Cannot give up on series " + seriesNo +", because we are presently are on series " + currentSeriesNo);
+	if (seriesNo!=currentSeriesNo) throw new IllegalArgumentException("Cannot give up on series " + seriesNo +", because we presently are on series " + currentSeriesNo);
 	if (seriesNo>=allSeries.size())  throw new IllegalArgumentException("Already finished all "+allSeries.size()+" series");
 	Series ser=getCurrentSeries();
 	if (ser!=null || ser.episodes.size()>0) {
@@ -183,13 +198,14 @@ public class PlayerInfo {
     }
 
 
-    boolean canHaveAnotherRegularEpisode() {
+    /** Can a new "regular" (non-bonus) episode be started in the current series? */
+    private boolean canHaveAnotherRegularEpisode() {
 	Series ser=getCurrentSeries();
 	return ser!=null && !inBonus && ser.episodes.size()<ser.para.getMaxBoards();
     } 
-	
-	
-    boolean canHaveAnotherBonusEpisode() {
+
+    /** Can a new bonus episode be started in the current series? */
+    private boolean canHaveAnotherBonusEpisode() {
 	Series ser=getCurrentSeries();
 	if (ser==null || !inBonus) return false;
 	double clearingThreshold = ser.para.getDouble("clearing_threshold");
@@ -204,9 +220,9 @@ public class PlayerInfo {
 	return cnt<ser.para.getInt("clear_how_many");
     }
 
-    
+    /** The main table for all episodes of this player, arranged in series */
     @Transient
-    Vector<Series> allSeries = new Vector<>();
+    private Vector<Series> allSeries = new Vector<>();
 
     /** How many episodes are currently in series No. k? */
     public int seriesSize(int k) {
@@ -226,11 +242,11 @@ public class PlayerInfo {
     
     /** What series will the next episode be a part of? (Or, if the current episode
 	is not completed, what series is it a part of?) */
-    int currentSeriesNo=0;
-    /** Will the next episode be a part of a bonus subseries? (Or, if
-	the current episode is not completed, is it a part of  a bonus subseries?)
+    private int currentSeriesNo=0;
+    /** Will the next episode be a part of a bonus subseries? (Or, if the current 
+	episode is not completed, is it a part of  a bonus subseries?)
      */
-    boolean inBonus;
+    private boolean inBonus;
 
     
     /** This is used when a player is first registered and a PlayerInfo object is firesst created */
@@ -242,7 +258,7 @@ public class PlayerInfo {
 	}
     }
 
-    /** After restoring the object from the SQL database, re-create some of the necessary non-persistent structures */
+    /** This method should be called after restoring the object from the SQL database, in order to re-create some of the necessary non-persistent structures. */
     public void restoreTransientFields() {
 	TrialList trialList  = new TrialList(playerId, trialListId);
 	allSeries.clear();
@@ -256,18 +272,14 @@ public class PlayerInfo {
 		ser.episodes.add(  allEpisodes.get(k++));
 	    }
 	}
-	//updateTotalReward();
     }
-
-
     
     /** Returns the currently unfinished last episode to be resumed,
-	or a new episode, or null if this player has finished with all
-	series. */
+	or a new episode (in the current series or the next series, as
+	the case may be), or null if this player has finished with all series. */
     public EpisodeInfo episodeToDo() throws IOException, RuleParseException {
 
-	while(currentSeriesNo < allSeries.size()) {
-	    
+	while(currentSeriesNo < allSeries.size()) {	    
 	    Series ser=getCurrentSeries();
 	    if (ser!=null && ser.episodes.size()>0) {
 		EpisodeInfo x = ser.episodes.lastElement();
@@ -275,12 +287,12 @@ public class PlayerInfo {
 		if (!x.isCompleted()) {
 		    if (x.isNotPlayable()) {
 			x.giveUp();
+			Main.persistObjects(x);
 		    } else {
 			return x;
 		    }
 		}
 	    }
-
 	    
 	    EpisodeInfo x = null;
 	    if (canHaveAnotherRegularEpisode()) {
@@ -311,7 +323,7 @@ public class PlayerInfo {
 	return null;
     }
 
-
+    /** Gives a link to the ParaSet associated with a given episode */
     public ParaSet getPara(EpisodeInfo epi) {
 	return  whoseEpisode(epi).para;
     }
@@ -325,15 +337,14 @@ public class PlayerInfo {
 	Main.persistObjects(this);
     }
 
-    //@Transient
-    int totalRewardEarned;
+    private int totalRewardEarned;
     public int getTotalRewardEarned() {
 	System.err.println("getTotalReward("+playerId+")=" + totalRewardEarned);
 	return totalRewardEarned;
     }
-    //@XmlElement
     public void setTotalRewardEarned(int _totalRewardEarned) { totalRewardEarned = _totalRewardEarned; }
 
+    /** Recomputes this player's totalRewardEarned, based on all episodes in his record*/
     private void updateTotalReward() {
 	int sum=0;
 	int cnt=0;
@@ -348,15 +359,16 @@ public class PlayerInfo {
     }
     
     
-    /** This method is called after an episode completes. It computes rewards,
-     and, if needed, switches the series and subseries. */
+    /** This method is called after an episode completes. It computes
+	rewards (if the board has been cleared), and, if needed,
+	switches the series and subseries. */
     void ended(EpisodeInfo epi) {
 	Series ser = whoseEpisode(epi);
 	if (ser==null) throw new IllegalArgumentException("Could not figure to which series this episode belongs");
 	epi.endTime=new Date();
 	
 	if (epi.stalemate) {
-	    // The experimenters should try to ensure that stalemates
+	    // The experimenters should try to design rule sets so that stalemates
 	    // do not happen; but if one does, let just finish this series
 	    // to avoid extra annoyance for the player
 	    goToNextSeries();
@@ -364,7 +376,7 @@ public class PlayerInfo {
 	    double smax = ser.para.getDouble("max_points");
 	    double smin = ser.para.getDouble("min_points");
 	    double b = ser.para.getDouble("b");
-	    int d = epi.attemptCnt - epi.nPiecesStart;
+	    int d = epi.attemptCnt - epi.getNPiecesStart();
 	    epi.rewardMain = (int)Math.round( smin + (smax-smin)/(1.0 + Math.exp(b*(d-2))));
 	    if (epi.bonus) {
 		ser.assignBonus();
@@ -372,11 +384,7 @@ public class PlayerInfo {
 	    updateTotalReward();
 	}
 
-	Main.persistObjects(this, epi);
-	//Main.persistObjects(this);
-	//Main.persistObjects(epi);
-
-   	
+	Main.persistObjects(this, epi);   	
     }
 
     /** Generates a concise report on this player's history, handy for
@@ -396,9 +404,6 @@ public class PlayerInfo {
 	v.add("R=$"+getTotalRewardEarned());
 	return String.join("\n", v);
     }
-
-
-
     
 }
  

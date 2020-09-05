@@ -293,7 +293,8 @@ public class Board// extends OurTable
 	}
     }
 
-    
+    /** We aren't actually using SQL server to store boards, even though we 
+	have support for this */
     public long persistNewBoard() {
 	this.setId(0); // default value?
 	//this.setLongId(0L);
@@ -318,11 +319,38 @@ public class Board// extends OurTable
 	return board;
     }
 
-    
-
-
-    
-    static public void main(String[] argv) throws IOException {
+    /** Let's just write one file at a time */
+    static private final String file_writing_lock = "Board file writing lock";
+	
+    /*
+      boards/pid.board.csv
+      pid,episode-id,y,x,shape,color
+    */    
+    void saveToFile(String pid, String eid, File f) {
+	synchronized(file_writing_lock) {
+	try {	    
+	    PrintWriter w = new PrintWriter(new	FileWriter(f, true));
+	    if (f.length()==0) w.println("#playerId,episodeId,y,x,shape,color");
+	    Vector<String> v = new Vector<>();
+	    for(Piece p: value) {
+		v.clear();
+		v.add(pid);
+		v.add(eid);
+		v.add(""+p.getY());
+		v.add(""+p.getX());
+		v.add(""+p.getShape());
+		v.add(""+p.getColor());
+		w.println(String.join(",", v));
+	    }
+	    w.close();
+	} catch(IOException ex) {
+	    System.err.println("Error writing the board: " + ex);
+	    ex.printStackTrace(System.err);
+	}	    
+	}  
     }
+
+    
+    //    static public void main(String[] argv) throws IOException {    }
     
 }

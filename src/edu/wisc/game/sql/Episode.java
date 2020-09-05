@@ -7,8 +7,6 @@ import java.text.*;
 import javax.json.*;
 import javax.persistence.*;
 
-//import org.apache.openjpa.persistence.jdbc.*;
-
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.reflect.*;
@@ -18,7 +16,7 @@ import edu.wisc.game.sql.Board.Pos;
 import edu.wisc.game.engine.RuleSet.BucketSelector;
 
 import javax.xml.bind.annotation.XmlElement; 
-import javax.xml.bind.annotation.XmlRootElement;
+//import javax.xml.bind.annotation.XmlRootElement;
 
 
 /** An Episode is a single instance of a Game played by a person or machine 
@@ -320,9 +318,9 @@ public class Episode {
 	startTime = new Date();    
     };
 
-    /** The initial number of pieces */
+    /** The initial number of pieces on the board */
     @Basic
-    int nPiecesStart;
+    private int nPiecesStart;
     public int getNPiecesStart() { return nPiecesStart; }
     public void setNPiecesStart(int _nPiecesStart) { nPiecesStart = _nPiecesStart; }
 
@@ -403,7 +401,7 @@ public class Episode {
 
     /** Creates a bit set with bits set in the positions where there are
 	pieces */
-    BitSet onBoard() {
+    private BitSet onBoard() {
 	BitSet onBoard = new BitSet(Board.N*Board.N+1);
 	for(int i=0; i<pieces.length; i++) {
 	    if (pieces[i]!=null) onBoard.set(i);
@@ -442,7 +440,7 @@ public class Episode {
 	@return true, unless stalemeate (no piece can be picked) is
 	detected, in which case it return false
     */
-    boolean doPrep() {
+    private boolean doPrep() {
 
 	// Which pieces currently on the border can be picked under
 	// various ordering schemes?
@@ -477,7 +475,7 @@ public class Episode {
     @Transient
     private Move lastMove = null;
     
-    int accept(Move move) {
+    private int accept(Move move) {
 	lastMove = move;
 	if (stalemate) {
 	    return CODE.STALEMATE;
@@ -538,18 +536,22 @@ public class Episode {
     }
        
 
-    void respond(int code, String msg) {
+    private void respond(int code, String msg) {
 	String s = "" + code + " " + getFinishCode() +" "+attemptCnt;
 	if (msg!=null) s += "\n" + msg;
 	out.println(s);
     }    
     
 
-    public Board getCurrentBoard() {
-	boolean showRemoved = (this instanceof EpisodeInfo);
+    Board getCurrentBoard(boolean showRemoved) {
 	return ruleLine==null? null:
-	    showRemoved ?    new Board(pieces, removedPieces, ruleLine.moveableTo()):
+	    showRemoved? new Board(pieces, removedPieces, ruleLine.moveableTo()): 
 	    new Board(pieces, null, ruleLine.moveableTo());
+    }
+
+    /** Shows tHe current board (without removed [dropped] pieces) */
+    public Board getCurrentBoard() {
+	return getCurrentBoard(false);
     }
 
     /** No need to show this field */
@@ -569,18 +571,11 @@ public class Episode {
     }
 
     /** Can be used to display the current state of the episode */
-    public class Display //extends ResponseBase
-    {
+    public class Display     {
 	// The following describe the state of this episode, and are only used in the web GUI
 	int finishCode = Episode.this.getFinishCode();
 	Board board =  getCurrentBoard();
 
-	/*
-	int attemptCnt = Episode.this.attemptCnt;
-	public int getAttemptCnt() { return attemptCnt; }
-        @XmlElement
-        public void setAttemptCnt(int _attemptCnt) { attemptCnt = _attemptCnt; }
-	*/
 	
         public Board getBoard() { return board; }
         @XmlElement
@@ -604,22 +599,17 @@ public class Episode {
         @XmlElement
         public void setNumMovesMade(int _numMovesMade) { numMovesMade = _numMovesMade;}
 
-	boolean bonus;
-	public boolean isBonus() { return bonus; }
-	@XmlElement
-	public void setBonus(boolean _bonus) { bonus = _bonus; }
-
-	/** Totals for the player; only used in web GUI */
-	int totalRewardEarned=0;
-	public int getTotalRewardEarned() { return totalRewardEarned; }
-	@XmlElement
-	public void setTotalRewardEarned(int _totalRewardEarned) { totalRewardEarned = _totalRewardEarned; }
-	
 	public Display(int _code, 	String _errmsg) {
 	    code = _code;
 	    errmsg = _errmsg;
 	}
     }
+
+    /** Builds a display to be sent out over the web UI */
+    public Display mkDisplay() {
+    	return new Display(Episode.CODE.JUST_A_DISPLAY, "Display requested");
+    }
+ 
     
     public Display doMove(int y, int x, int by, int bx, int _attemptCnt) {
 	if (cleared || stalemate || givenUp) {
@@ -768,7 +758,7 @@ public class Episode {
     }
 
     void giveUp() {
-	if (!cleared && !stalemate)	givenUp = true;
+	if (!cleared && !stalemate) givenUp = true;
     }
     
 }

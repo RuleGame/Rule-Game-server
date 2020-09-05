@@ -22,10 +22,10 @@ import edu.wisc.game.reflect.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
 
-@Path("/GameService2") 
-
-/** This API is set up in accordance with Kevin Mui's request, 2020-08-17.
+/** The "Second Batch" of API calls, primarily for use with players constrained by an experiment plan, and playing a sequence of games as outlined in the trial list to which the player is assigned. This API is set up in accordance with Kevin Mui's request, 2020-08-17.
  */
+
+@Path("/GameService2") 
 public class GameService2 {
 
 
@@ -54,7 +54,8 @@ public class GameService2 {
     public Episode.Display display(@QueryParam("episode") String episodeId)   {
 	Episode epi = EpisodeInfo.locateEpisode(episodeId);
 	if (epi==null) return dummyEpisode.new Display(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID");
-	return epi.new Display(Episode.CODE.JUST_A_DISPLAY, "Display requested");
+	//return epi.new Display(Episode.CODE.JUST_A_DISPLAY, "Display requested");
+	return epi.mkDisplay();
     }
   
     @POST
@@ -140,7 +141,12 @@ public class GameService2 {
 	    String ss[] = { pid, episodeId, ruleSetName, text};
 	    String data = ImportCSV.escape(ss);
 	    w.println(data);
-	    w.close();	    
+	    w.close();
+
+	    epi.setGuessSaved(true);
+	    Main.persistObjects(epi);
+
+	    
 	    return  new	FileWriteReport(f, f.length());
 	} catch(IOException ex) {
 	    return  new	    FileWriteReport(true,ex.getMessage());
