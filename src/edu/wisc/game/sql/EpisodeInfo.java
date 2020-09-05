@@ -61,6 +61,8 @@ public class EpisodeInfo extends Episode {
 
     @Basic
     boolean guessSaved;
+    public boolean getGuessSaved() { return guessSaved; }
+    public void setGuessSaved(boolean _guessSaved) { guessSaved = _guessSaved; }
 
     
     EpisodeInfo(Game game) {
