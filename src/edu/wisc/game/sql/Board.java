@@ -193,9 +193,11 @@ public class Board// extends OurTable
 	for(int i=0; i<randomCnt; i++) {
 	    Pos pos = new Pos(w.get(i)+1);
 	    
-	    value.add( new Piece( random.getEnum(Piece.Shape.class),
-				  random.getEnum(Piece.Color.class),
-				  pos.x, pos.y));
+	    Piece p =new Piece( random.getEnum(Piece.Shape.class),
+				random.getEnum(Piece.Color.class),
+				pos.x, pos.y);
+	    p.setId(i);
+	    value.add(p);
 	}
     }
 
@@ -257,8 +259,9 @@ public class Board// extends OurTable
 	for(int i=0; i<randomCnt; i++) {
 	    Pos pos = new Pos(w.get(i)+1);
 	    
-	    value.add( new Piece( useShapes[i], useColors[i],
-				  pos.x, pos.y));
+	    Piece p = new Piece( useShapes[i], useColors[i],  pos.x, pos.y);
+	    p.setId(i);
+	    value.add(p);
 	}
     }
     
@@ -322,9 +325,11 @@ public class Board// extends OurTable
     /** Let's just write one file at a time */
     static private final String file_writing_lock = "Board file writing lock";
 	
-    /*
+    /* Saves this board in CSV file.
+       <pre>
       boards/pid.board.csv
       pid,episode-id,y,x,shape,color
+</pre>
     */    
     void saveToFile(String pid, String eid, File f) {
 	synchronized(file_writing_lock) {

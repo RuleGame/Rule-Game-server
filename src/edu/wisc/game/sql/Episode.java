@@ -14,6 +14,7 @@ import edu.wisc.game.engine.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.sql.Board.Pos;
 import edu.wisc.game.engine.RuleSet.BucketSelector;
+import edu.wisc.game.formatter.*;
 
 import javax.xml.bind.annotation.XmlElement; 
 //import javax.xml.bind.annotation.XmlRootElement;
@@ -47,14 +48,19 @@ public class Episode {
     // The number of buckets
     static final int NBU = Board.buckets.length; // 4
     
-    static class Move {
+    public static class Move {
 	/** The position of the piece being moved, in the [1:N*N] range */
 	int pos;
+	public int getPos() { return pos; }
 	/** (Attempted) destination, in the [0:3] range */
 	int bucketNo;
-	Move(int _pos, int b) { pos = _pos; bucketNo = b; }
+	public int getBucketNo() { return bucketNo ; }
+ 	Move(int _pos, int b) { pos = _pos; bucketNo = b; }
 	Piece piece =  null;
-    }
+	/** Acceptance code; will be recorded upon processing */
+	int code;
+ 	public int getCode() { return code; }
+   }
     
     final RuleSet rules;
     /** The current board: an array of N*N+1 elements (only positions
@@ -74,6 +80,8 @@ public class Episode {
     int doneMoveCnt;
     @Transient
     Vector<Move> transcript = new Vector<>();
+    //@XmlElement
+    //public void setTranscript(Vector<Move> _transcript) { transcript = _transcript; }
 
     /** Set when appropriate */
     boolean stalemate = false;
@@ -215,12 +223,13 @@ public class Episode {
 	/** Request acceptance for this move. Returns result (accept/deny);
 	    in case of acceptance, decrements appropriate counters */
 	int accept(Move move) {
+	    
 	    if (doneWith) throw  new IllegalArgumentException("Forgot to scroll?");
 	    transcript.add(move);
 	    attemptCnt++;
 
 	    move.piece =pieces[move.pos];
-	    if (move.piece==null) return CODE.EMPTY_CELL;	    
+	    if (move.piece==null) return move.code=CODE.EMPTY_CELL;	    
 
 	    BitSet[] r = acceptanceMap[move.pos];
 	    Vector<Integer> acceptingAtoms = new  Vector<>();
@@ -232,7 +241,7 @@ public class Episode {
 		    }
 		}
 	    }
-	    if (acceptingAtoms.isEmpty()) return CODE.DENY;
+	    if (acceptingAtoms.isEmpty()) return  move.code=CODE.DENY;
 	    if (ourGlobalCounter>0) ourGlobalCounter--;
 
 	    doneMoveCnt++;
@@ -248,7 +257,7 @@ public class Episode {
 	    cleared = (onBoard().cardinality()==0);
 	    
 	    //	    Logging.info("Accepted, return " + CODE.ACCEPT);
-	    return CODE.ACCEPT;
+	    return  move.code=CODE.ACCEPT;
 	}
 
 	/** Is this row of rules "exhausted", based either on the global 
@@ -386,8 +395,8 @@ public class Episode {
 	    
     }
 
-    static class FINISH_CODE {
-	static final int
+    public static class FINISH_CODE {
+	public static final int
 	// there are still pieces on the board, and some are moveable
 	    NO = 0,
 	// no pieces left on the board
@@ -491,10 +500,21 @@ public class Episode {
 	return code;
     }
 
+    private static HTMLFmter  fm = new HTMLFmter(null);
 
 
     /** Graphic display of the board */
-    String graphicDisplay() {
+    public String graphicDisplay() {
+	return graphicDisplay(false);
+    }
+    
+    public String graphicDisplay(boolean html) {
+
+	if (isNotPlayable()) {
+	    return "This episode must have been restored from SQL server, and does not have the details necessary to show the board";
+	}
+
+	
 	Vector<String> w = new Vector<>();
 
 	String div = "#---+";
@@ -509,8 +529,10 @@ public class Episode {
 		String z = " .";
 		if (pieces[pos]!=null) {
 		    Piece p = pieces[pos];
-		    z = p.getColor().symbol() +
-			p.getShape().symbol();
+		    z = p.getShape().symbol();
+		    z =  html?
+			fm.wrap("strong",fm.colored( p.getColor().toString().toLowerCase(), z)) :
+			p.getColor().symbol() + z;
 		}
 
 		z = (lastMove!=null && lastMove.pos==pos) ?    "[" + z + "]" :
@@ -599,6 +621,10 @@ public class Episode {
         @XmlElement
         public void setNumMovesMade(int _numMovesMade) { numMovesMade = _numMovesMade;}
 
+	private Vector<Move> transcript =  Episode.this.transcript;
+	public Vector<Move> getTranscript() { return transcript; }
+
+
 	public Display(int _code, 	String _errmsg) {
 	    code = _code;
 	    errmsg = _errmsg;
@@ -611,7 +637,7 @@ public class Episode {
     }
  
     
-    public Display doMove(int y, int x, int by, int bx, int _attemptCnt) {
+    public Display doMove(int y, int x, int by, int bx, int _attemptCnt) throws IOException {
 	if (cleared || stalemate || givenUp) {
 	    return new Display(CODE.NO_GAME, "No game is on right now (cleared="+cleared+", stalemate="+stalemate+"). Use NEW to start a new game");
 	}
@@ -752,7 +778,8 @@ public class Episode {
 	STANDARD,
 	// Two-line response on MOVE; human-readable comments
 	FULL}; 
-    
+
+    /** @return true if this episode cannot accept any more move attempts */
     boolean isCompleted() {
 	return cleared || stalemate || givenUp;
     }

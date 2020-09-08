@@ -16,6 +16,10 @@ import edu.wisc.game.sql.*;
 
 public class GiveUpWrapper extends ResponseBase {
   
+    GiveUpWrapper(String pid) {
+	this(pid, -1);
+    }
+    
     GiveUpWrapper(String pid, int seriesNo) {
 	try {
 	    PlayerInfo x = PlayerResponse.findPlayerInfo(pid);
@@ -24,6 +28,7 @@ public class GiveUpWrapper extends ResponseBase {
 		setErrmsg("Player not found: " + pid);
 		return;
 	    }
+	    if (seriesNo<0) seriesNo=x.getCurrentSeriesNo();
 	    x.giveUp(seriesNo);	   
 	    setError( false);
 	    setErrmsg("Gave up series "+seriesNo);

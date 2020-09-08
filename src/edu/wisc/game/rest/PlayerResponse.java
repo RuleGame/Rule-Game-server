@@ -6,14 +6,12 @@ import javax.json.*;
 
 import javax.persistence.*;
 
-import org.apache.openjpa.persistence.jdbc.*;
+//import org.apache.openjpa.persistence.jdbc.*;
 
 import javax.xml.bind.annotation.XmlElement; 
-//import javax.xml.bind.annotation.XmlRootElement;
 
 import edu.wisc.game.util.*;
-import edu.wisc.game.sql.Main;
-import edu.wisc.game.sql.PlayerInfo;
+import edu.wisc.game.sql.*;
 
 
 /** The HashMap capability is used for debugging info in debug mode */
@@ -99,6 +97,7 @@ public class PlayerResponse extends ResponseBase {
 
 	EntityManager lem  = null;
 	if (em==null) em=lem=Main.getEM();
+
 	
 	synchronized(em) {
 	try {
@@ -108,15 +107,20 @@ public class PlayerResponse extends ResponseBase {
 	List<PlayerInfo> res = (List<PlayerInfo>)q.getResultList();
 	if (res.size() != 0) {
 	    x = res.iterator().next();
-	    allPlayers.put(pid,x); // save in a local cache for faster lookup later
-	    x.restoreTransientFields(); // make it ready to use
-	    return x;
 	} else {
 	    return null;
 	}
 	} finally{
 	    //	    if (lem!=null) lem.close();
 	}
+	allPlayers.put(pid,x); // save in a local cache for faster lookup later
+	x.restoreTransientFields(); // make it ready to use
+	for(EpisodeInfo epi: x.getAllEpisodes())  {
+	    epi.cache();
+	}
+	return x;
+
+
 	}
     }    
 

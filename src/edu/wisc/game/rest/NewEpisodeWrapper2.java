@@ -42,7 +42,8 @@ public class NewEpisodeWrapper2 extends ResponseBase {
     @XmlElement
     public void setDisplay(Episode.Display _display) { display = _display; }
 
-    NewEpisodeWrapper2(String pid) {
+    /** @param existing If true, look for the most recent existing episode (completed or incomplete); if false, return the recent incomplete expisode or create a new one */
+    NewEpisodeWrapper2(String pid, boolean existing) {
 	try {
 	    PlayerInfo x = PlayerResponse.findPlayerInfo(pid);
 	    if (x==null) {
@@ -51,12 +52,13 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 		return;
 	    }
 			    
-	    EpisodeInfo epi = x.episodeToDo();
+	    EpisodeInfo epi = existing? x.mostRecentEpisode(): x.episodeToDo();
 	    if (epi==null) {
 		setError(true);
-		alreadyFinished = (epi.getSeriesNo()>0);
+		alreadyFinished = x.alreadyFinished();
 		String msg = alreadyFinished ?
 		    "This player has completed all his parameter sets already":
+		    existing ? "Failed to find any episode!":
 		    "Failed to find or create episode!";
 		setErrmsg(msg);
 		return;	
@@ -68,7 +70,6 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	    setDisplay(epi.mkDisplay());
 	    
 	    setError( false);
-	    setErrmsg("Debug:\n" + x.report());
 	} catch(Exception ex) {
 	    setError(true);
 	    setErrmsg(ex.getMessage());

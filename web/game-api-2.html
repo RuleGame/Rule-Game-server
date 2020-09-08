@@ -4,7 +4,7 @@
 <body>
   <h1>RESTful API for the use by the Rule Game client - second batch</h1>
 
-  <p align="center"><em>Ver 1.012,  2020-09-05</em></p>
+  <p align="center"><em>Ver 1.014,  2020-09-07</em></p>
 
   <p>This is the "Second Batch" (prefix=<tt>/GameService2</tt>)  of the Game Service web API calls. They are intended for use with a client app that works with players enrolled in experiments; each player is identified by a player ID, and the server assigns each player to a "trial list" (a particular track in the experiment plan with which this player ID is associated with).</p>
 
@@ -29,22 +29,44 @@
     </pre>
     
     In practice, you don't need any of the returned values, other than the error code.</p></li>
-  <li>POST <strong><tt>/newEpisode</tt>: Create a new episode for a specified user:</strong>
-        <form method="post" action="game-data/GameService2/newEpisode"
+
+<li>POST <strong><tt>/mostRecentEpisode</tt>: Return the latest episode (complete or incomplete) for a specified user:</strong>
+        <form method="post" action="game-data/GameService2/mostRecentEpisode"
 	 enctype="application/x-www-form-urlencoded">
 	  Player ID: <input name="playerId" type="text" value="" size="20"><br>
 	  <input type="submit">
 	</form>
 
-	<br>Sample output (in ver. 1.012); note that some fields have been moved from X to display.X. The fields within display.{...} are the same as those given by the /display and /move calls.	
+  <P>The response is in the same format as for /newEpisode, below. Check the values of <tt>display.<a href="api/constant-values.html">finishCode</a></tt> to see the status of the game (continuing/cleared/stalemated/given up), and of <tt>display.guessSaved</tt> to see if a guess has been recorded.</p> 
+
+<li>POST <strong><tt>/newEpisode</tt>: Create a new episode for a specified user:</strong>
+        <form method="post" action="game-data/GameService2/newEpisode"
+	 enctype="application/x-www-form-urlencoded">
+	  Player ID: <input name="playerId" type="text" value="" size="20"><br>
+	  Optional parameters (to effect certain preliminary actions before
+	  the /newEpisode call):
+	  <br>
+	  Activate Bonus: 	  <select name="activateBonus">
+	    <option value="true">true</option>
+	    <option value="false" selected>false</option>
+	  </select> (If true, the /activateBonus operation will be executed immediately prior to the new episode retrieval)
+	  <br>
+	  Give up: 	  <select name="giveUp">
+	    <option value="true">true</option>
+	    <option value="false" selected>false</option>
+	  </select> (If true, the /giveUp operation will be executed immediately prior to the new episode retrieval)	  
+	  <input type="submit">
+	</form>
+
+	<br>Sample output (in ver. 1.014); note that some fields have been moved from X to display.X. The fields within display.{...} are the same as those given by the /display and /move calls.	
 	<pre>
 	  {"errmsg":"Debug:...",
 	  "error":false,
 	  "alreadyFinished":false,
 	  "display":{
-	  "board":{"id":0,"value":[{"buckets":[3],"color":"BLUE","id":0,"shape":"SQUARE","x":5,"y":5}]},"code":-8,"errmsg":"Display requested\nDEBUG\n[0][20200827-153052-F66ITP; FC=1; M 2/2 $10][20200827-153246-R7LHH9; FC=1; M 3/3 $10]\n[1][20200827-160602-PYQTAJ; FC=1; M 2/2 $10][20200827-162713-2HRENR; FC=1; M 2/2 $10]\n*M*[2][20200905-120700-PDF966; FC=1; M 1/1 $10][20200905-121136-7L3EHY; FC=0; M 0/1 $0]\nR=$50",
+	  "board":{"id":0,"value":[{"buckets":[3],"color":"BLUE","id":1,"shape":"SQUARE","x":5,"y":5}]},"code":-8,"errmsg":"Display requested\nDEBUG\n[0][20200827-153052-F66ITP; FC=1; M 2/2 $10][20200827-153246-R7LHH9; FC=1; M 3/3 $10]\n[1][20200827-160602-PYQTAJ; FC=1; M 2/2 $10][20200827-162713-2HRENR; FC=1; M 2/2 $10]\n*M*[2][20200905-120700-PDF966; FC=1; M 1/1 $10][20200905-121136-7L3EHY; FC=0; M 0/1 $0]\nR=$50",
 	  "finishCode":0,
-	  "numMovesMade":0,
+	  "numMovesMade":1,
 	  "bonus":false,
 	  "bonusEpisodeNo":0,
 	  "canActivateBonus":true,
@@ -53,10 +75,14 @@
 	  "seriesNo":2,
 	  "totalBoardsPredicted":2,
 	  "totalRewardEarned":50
+	  "transcript":[{"pos":32,"bucketNo":3,"code":0}]} // <em>All moves (and move attempts) - new in ver 1.014
 	  },
 	  "episodeId":"20200905-121136-7L3EHY",
 	  "para":{"clearing_threshold":1.3,"max_points":10,"b":1.5,"min_points":2,"max_colors":1,"f":4,"feedback_switches":"fixed","min_objects":1,"m":9,"n":1,"clear_how_many":2,"bonus_extra_pts":3,"rule_id":"TD-03","max_objects":3,"grid_memory_show_order":false,"min_shapes":1,"stack_memory_show_order":false,"max_shapes":1,"min_colors":1,"stack_memory_depth":6,"max_boards":2,"activate_bonus_at":2}}  
-	    </pre>
+	</pre>
+
+<p>display.transcript contains the description of all previous moves, as a vector. Each element has pos=the origin position (as an integer, numbered from 1=(1,1) to 36=(6,6), by row from left bottom corner), bucketNo=the destination bucket number, and the success code (same meaning as display.code)
+	
  <br>Sample output (in ver. 1.011)
 <pre>
 	
@@ -217,7 +243,26 @@ Response (on success):
       <pre>
 {"error":false,"byteCnt":91,"path":"/opt/tomcat/saved/guesses/qt-01.csv"}
 </pre>
-	
+
+   <p>The response contains a structure, <tt>transitionMap</tt>, which can be used to create a set of button offering the player possible further actions. The structure describes buttons in terms of key/value pairs, where the key tells where you'll get if you click the button, and the value tells how you can get there.
+     Listed below  are all possible key/value pairs, and their semantics.
+
+     
+     <table border=1>
+       <tr><th>Key<th>Value<th>How the button can be labeled <th>What the client can if after player clicks the button
+
+	   <tr><td>MAIN <td> DEFAULT <td>Next episode <td> Call /newEpisode, which will produce another main-subseries (non-bonus) episode in the same series</tr>
+	   <tr><td>BONUS <td>DEFAULT <td>Next episode <td> Call /newEpisode, which will produce another bonus episode in the same series</tr>
+	   <tr><td>NEXT <td>DEFAULT <td>Next series<td> Call /newEpisode, which will automatically start the first episode of the next series (because no more episodes can be started in the current series)</tr>
+	   <tr><td>END <td>DEFAULT<td>End<td>Say goodbye, as all series have been completed</tr>
+	   
+	   <tr><td>BONUS <td> ACTIVATE <td>Activate Bonus<td> Call /activateBonus, followed by /newEpisode, which will start the first bonus episode in this series</tr>
+	   <tr><td>NEXT <td>GIVE_UP <td>Give up <td> Call /giveUp (which will switch series) followed by /newEpisode. The first episode of the next series will start</tr>
+	   <tr><td>END <td>GIVE_UP<td>Give up (and end the last series)<td>Call /giveUp, and then tell the player goodbye, as he will terminate the last series</tr>
+     </table>
+
+     <p>A button with value="DEFAULT" is produced after every episode, indicating the default action (continuing in the same series, switching to the next series if the current series is done, or finishing one's work after the last series). A button with value="GIVE_UP" is produced after every episode other than the last episode of a series; it indicates the player's ability to end a series prematurely (and then go to the next series, if available). A button with value="ACTIVATE" is produced after main-subseries episodes if the player is eligibile to switch to ("activate") the bonus subseries.</p>
+      
   <li>GET <strong><tt>/debug</tt></strong>: Same info as given by /player, and some more for a specified user:</strong>
         <form method="get" action="game-data/GameService2/debug"
 	 enctype="application/x-www-form-urlencoded">
@@ -226,6 +271,40 @@ Response (on success):
 	</form>
   
   </ol>
+
+<hr>
+<h3>HTML play (for testing)</h3>
+
+<ul>
+<li>POST <strong><tt>/mostRecentEpisodeHtml</tt>: Create a new episode for a specified user:</strong>
+        <form method="post" action="game-data/GameService2/mostRecentEpisodeHtml"
+	 enctype="application/x-www-form-urlencoded">
+	  Player ID: <input name="playerId" type="text" value="" size="20"><br>
+	  <input type="submit">
+	</form>
+
+<li>POST <strong><tt>/newEpisodeHtml</tt>: Create a new episode for a specified user:</strong>
+        <form method="post" action="game-data/GameService2/newEpisodeHtml"
+	 enctype="application/x-www-form-urlencoded">
+	  Player ID: <input name="playerId" type="text" value="" size="20"><br>
+	  <input type="submit">
+	</form>
+
+	
+<li>/moveHtml
+
+      <form method="post" action="game-data/GameService2/moveHtml"
+	 enctype="application/x-www-form-urlencoded">
+	  Episode ID (returned by an earlier newEpisode call): <input name="episode" type="text" size="25"><br>
+	  Piece to move: column=x=<input name="x" type="text" value="1" size="2">,
+	  row=y=<input name="y" type="text" value="1" size="2"> (both ranging 1 thru 6)<br>
+	  Destination bucket (identified by  bucket_column=bx=<input name="bx" type="text" value="7" size="2">,
+	  bucket_row=by=<input name="by" type="text" value="7" size="2"> (possible values are 0 and 7)<br>
+	  Attempted move count so far (the number of previous calls to <strong><tt>move</tt></strong> in this episode. This can also be interpreted as 0-based number of this move attempt) <input name="cnt" type="text" value="0" size="5"><br>
+	  <input type="submit">
+      </form>
+
+</ul>    
 
 </body>
 </html>

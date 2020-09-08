@@ -12,8 +12,9 @@ import edu.wisc.game.util.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.rest.ParaSet;
 import edu.wisc.game.rest.TrialList;
+import edu.wisc.game.rest.Files;
 
-/** Information about a player (what trial list he's in) stored in the SQL database.
+/** Information about a player (what trial list he's in, what episodes he's done etc) stored in the SQL database.
  */
 
 @Entity  
@@ -122,11 +123,18 @@ public class PlayerInfo {
 			x.rewardBonus= (x.earnedBonus)? para.getInt("bonus_extra_pts"):0;
 		    }
 		}
-		goToNextSeries();
 	    }
 	}
-	
+
+	boolean bonusHasBeenEarned() {
+	    for(EpisodeInfo x: episodes) {
+		if (x.earnedBonus) return true;
+	    }
+	    return false;
+	}
+
     }
+
 
     /** Retrieves a link to the currently played series, or null if this player
 	has finihed all his series */
@@ -134,6 +142,10 @@ public class PlayerInfo {
 	return currentSeriesNo<allSeries.size()? allSeries.get(currentSeriesNo): null;
     }
 
+    public boolean alreadyFinished() {
+	return currentSeriesNo>=allSeries.size();
+    }
+    
     /** Based on the current situation, what is the maximum number
 	of episodes that can be run within the current series? 
 	(Until max_boards is reached, if in the main subseries, 
@@ -152,8 +164,16 @@ public class PlayerInfo {
 	the player is eligible to start bonus episodes, but has not done that yet */
     public boolean canActivateBonus() {
 	Series ser=getCurrentSeries();
+	if (ser==null) return false;
 	int at = ser.para.getInt("activate_bonus_at");
-	boolean answer = ser!=null && !inBonus && ser.episodes.size() >=at;
+	// 0-based index of the episode on which activation will be in effect, if
+	// it happens
+	int nowAt = ser.episodes.size();
+	if (ser.episodes.size()>0 && !ser.episodes.lastElement().isCompleted()) nowAt--;
+	// 1-based
+	nowAt++;
+
+	boolean answer = (nowAt >= at);
 	System.err.println("canActivateBonus("+playerId+")="+answer+", for series No. "+currentSeriesNo+", size="+ser.episodes.size()+", at="+at);
 	return answer;
     } 
@@ -183,6 +203,10 @@ public class PlayerInfo {
     /** "Gives up" the current series, i.e. immediately switches the player to the next
 	series (if there is one) */
     public void giveUp(int seriesNo) {
+	if (seriesNo+1==currentSeriesNo) {
+	    // that series has just ended anyway...
+	    return;
+	}
 	if (seriesNo!=currentSeriesNo) throw new IllegalArgumentException("Cannot give up on series " + seriesNo +", because we presently are on series " + currentSeriesNo);
 	if (seriesNo>=allSeries.size())  throw new IllegalArgumentException("Already finished all "+allSeries.size()+" series");
 	Series ser=getCurrentSeries();
@@ -207,7 +231,7 @@ public class PlayerInfo {
     /** Can a new bonus episode be started in the current series? */
     private boolean canHaveAnotherBonusEpisode() {
 	Series ser=getCurrentSeries();
-	if (ser==null || !inBonus) return false;
+	if (ser==null || !inBonus || ser.bonusHasBeenEarned()) return false;
 	double clearingThreshold = ser.para.getDouble("clearing_threshold");
 	int cnt=0;
 	for(EpisodeInfo x: ser.episodes) {
@@ -243,6 +267,8 @@ public class PlayerInfo {
     /** What series will the next episode be a part of? (Or, if the current episode
 	is not completed, what series is it a part of?) */
     private int currentSeriesNo=0;
+     public int getCurrentSeriesNo() { return currentSeriesNo; }
+
     /** Will the next episode be a part of a bonus subseries? (Or, if the current 
 	episode is not completed, is it a part of  a bonus subseries?)
      */
@@ -273,6 +299,17 @@ public class PlayerInfo {
 	    }
 	}
     }
+
+    /** Retrieves the most recent episode, which may be completed or incomplete.
+     */
+    public EpisodeInfo mostRecentEpisode() {
+	for(int k= Math.min(currentSeriesNo, allSeries.size()-1); k>=0; k--) {
+	    Series ser=allSeries.get(k);
+	    if (ser.episodes.size()>0) return ser.episodes.lastElement();
+	}
+	return null;
+    }
+    
     
     /** Returns the currently unfinished last episode to be resumed,
 	or a new episode (in the current series or the next series, as
@@ -282,6 +319,12 @@ public class PlayerInfo {
 	while(currentSeriesNo < allSeries.size()) {	    
 	    Series ser=getCurrentSeries();
 	    if (ser!=null && ser.episodes.size()>0) {
+
+		if (inBonus && ser.bonusHasBeenEarned()) {
+		    goToNextSeries();
+		    continue;
+		}
+		
 		EpisodeInfo x = ser.episodes.lastElement();
 		// should we resume the last episode?
 		if (!x.isCompleted()) {
@@ -362,7 +405,7 @@ public class PlayerInfo {
     /** This method is called after an episode completes. It computes
 	rewards (if the board has been cleared), and, if needed,
 	switches the series and subseries. */
-    void ended(EpisodeInfo epi) {
+    void ended(EpisodeInfo epi) throws IOException {
 	Series ser = whoseEpisode(epi);
 	if (ser==null) throw new IllegalArgumentException("Could not figure to which series this episode belongs");
 	epi.endTime=new Date();
@@ -384,7 +427,11 @@ public class PlayerInfo {
 	    updateTotalReward();
 	}
 
-	Main.persistObjects(this, epi);   	
+	Main.persistObjects(this, epi);
+	//try {
+	    File f =  Files.boardsFile(playerId);
+	    epi.getCurrentBoard(true).saveToFile(playerId, epi.episodeId, f);
+	    //} catch(IOException ex) {	}
     }
 
     /** Generates a concise report on this player's history, handy for
@@ -403,6 +450,38 @@ public class PlayerInfo {
 	}
 	v.add("R=$"+getTotalRewardEarned());
 	return String.join("\n", v);
+    }
+
+
+    public static enum Transition { MAIN, BONUS, NEXT, END};
+    public static enum Action { DEFAULT, ACTIVATE, GIVE_UP};
+
+    /** After an episode has been completed, what other episode(s) can follow?
+     */
+    public class TransitionMap extends HashMap<Transition,Action> {
+	public TransitionMap() {
+	    
+	    Series ser = getCurrentSeries();
+	    boolean isLastSeries = (currentSeriesNo + 1 == allSeries.size());
+	    if (ser==null) return;
+	    if (inBonus) {
+		if (canHaveAnotherBonusEpisode()) {
+		    put(Transition.BONUS, Action.DEFAULT);
+		    put(isLastSeries?Transition.END: Transition.NEXT, Action.GIVE_UP);
+		} else {
+		    put(isLastSeries?Transition.END: Transition.NEXT, Action.DEFAULT);
+		}
+	    } else {
+		if (ser.episodes.size()<ser.para.getMaxBoards()) {
+		    put(Transition.MAIN, Action.DEFAULT);
+		    put(Transition.NEXT, Action.GIVE_UP);
+		} else {
+		    put(isLastSeries?Transition.END: Transition.NEXT, Action.DEFAULT);
+		}
+
+		if (canActivateBonus())  put(Transition.BONUS, Action.ACTIVATE);
+	    }
+	}
     }
     
 }

@@ -22,6 +22,10 @@ public class Reflect {
 	String capName = name.substring(0,1).toUpperCase() + name.substring(1);
 	return "get" + capName; 
     }
+    static public String makeGetMethodName2(String name) {
+	String capName = name.substring(0,1).toUpperCase() + name.substring(1);
+	return "is" + capName; 
+    }
     static public String  makeSetMethodName(String name) {
 	String capName = name.substring(0,1).toUpperCase() + name.substring(1);
 	return "set" + capName; 
@@ -151,22 +155,34 @@ public class Reflect {
 	return r;
     }
 
+    /** One can do it the other way: use getMethods() for all public methods...
+     */
     private Reflect(Class c) {
-	//Logging.info("Reflect(" + c +")");
+	//	Logging.info("Reflect(" + c +"), has " + c.getFields().length + " fields, " + c.getDeclaredFields().length + " declared fields");
 	Vector<Entry> v = new Vector<Entry>();
+
+	for(;c!=null && c!=Object.class; c=c.getSuperclass()) {
+	
 	for(Field f: c.getDeclaredFields()) {
 	    Entry e = new Entry();
 	    e.f = f;
 	    e.name = f.getName();
-
-	    String gn = makeGetMethodName(e.name), sn=makeSetMethodName(e.name);
+	    //Logging.info("Reflect(" + c +"), field named " + e.name);
+	    String gn = makeGetMethodName(e.name),
+		 gn2 = makeGetMethodName2(e.name),
+		sn=makeSetMethodName(e.name);
 	    e.g = e.s = null;
 	    try {
 		e.g =c.getMethod(gn);
 		e.s =c.getMethod(sn, e.f.getType() );	      
-	    } catch (Exception ex) { 
-	    }
+	    } catch (Exception ex) { 	    }
 
+	    if (e.g==null) {
+		try {
+		    e.g =c.getMethod(gn2);
+		} catch (Exception ex) { 	    }
+	    }
+	    
 	    if (e.g==null) {
 		// Fields with no public getter are not shown. The setter,
 		// OTOH, is optional
@@ -178,7 +194,7 @@ public class Reflect {
 	    if (e.g.getAnnotation(javax.xml.bind.annotation.XmlTransient.class)!=null) {
 		// This annotation is used to prevent REST from converting a field
 		// to JSON... so we should ignore it to. I use it to prevent
-		// infinite looping
+		// infinite looping on back links
 		continue;
 	    }
 
@@ -193,9 +209,11 @@ public class Reflect {
 	    v.addElement(e);
 	    entryTable.put(e.name, e);
 	}
+	
+	}
 	entries = v.toArray(new Entry[v.size()]);
 	Arrays.sort(entries);
-	//Logging.info("Reflect(" + c +") successful, e.length="+entries.length);	
+	Logging.info("Reflect(" + c +") successful, e.length="+entries.length);	
     } 
 
     /** Prints all appropriate fields of the specified object in the default

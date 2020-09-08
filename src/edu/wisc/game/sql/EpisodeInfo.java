@@ -32,6 +32,10 @@ public class EpisodeInfo extends Episode {
     public static Episode locateEpisode(String eid) {
 	return globalAllEpisodes.get(eid);
     }
+    public void cache() {
+    	globalAllEpisodes.put(episodeId, this);
+    }
+
     
     Date endTime;
     int finishCode;
@@ -89,10 +93,11 @@ public class EpisodeInfo extends Episode {
 	EpisodeInfo epi = new EpisodeInfo(game);
 	epi.bonus = bonus;
 	epi.seriesNo = seriesNo;
-	
-	globalAllEpisodes.put(epi.episodeId, epi);
+
+	epi.cache();
 	return epi;	    	      
     }
+
 
     /** An episode deserves a bonus if it was part of the bonus series,
 	has been completed, and was completed sufficiently quickly */
@@ -108,7 +113,7 @@ public class EpisodeInfo extends Episode {
 	return bonus && (givenUp || stalemate || cleared && !deservesBonus(clearingThreshold));
     }
 
-    public Display doMove(int y, int x, int by, int bx, int _attemptCnt) {
+    public Display doMove(int y, int x, int by, int bx, int _attemptCnt) throws IOException {
 	Display _q = super.doMove(y, x, by, bx, _attemptCnt);
 	if (isCompleted() && getPlayer()!=null) {
 	    getPlayer().ended(this);
@@ -121,7 +126,10 @@ public class EpisodeInfo extends Episode {
     
     /** Concise report, handy for debugging */
     public String report() {
-	return "["+episodeId+"; FC="+getFinishCode()+"; "+(bonus?"B":"M")+" " + attemptCnt + "/"+getNPiecesStart()  + " $"+getTotalRewardEarned()+"]";
+	return "["+episodeId+"; FC="+getFinishCode()+
+	    (getGuessSaved()? "g" : "") +   
+	    "; "+(bonus?"B":"M")+" " + attemptCnt + "/"+getNPiecesStart()  +
+	    " $"+getTotalRewardEarned()+"]";
     }
     
     /** Shows tHe current board (including dropped pieces, which are labeled as such) */
