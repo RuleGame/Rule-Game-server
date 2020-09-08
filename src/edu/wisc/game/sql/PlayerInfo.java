@@ -117,7 +117,7 @@ public class PlayerInfo {
 		// and end the series
 		int r = 0;
 		for(EpisodeInfo x: episodes) {
-		    if (x.bonus) {		       
+		    if (x.bonusSuccessful) {		       
 			r++;
 			x.earnedBonus = (r==cnt);
 			x.rewardBonus= (x.earnedBonus)? para.getInt("bonus_extra_pts"):0;
@@ -230,18 +230,27 @@ public class PlayerInfo {
 
     /** Can a new bonus episode be started in the current series? */
     private boolean canHaveAnotherBonusEpisode() {
+	System.err.println("canHaveAnotherBonusEpisode("+playerId+",ser="+currentSeriesNo+")? inBonus="+inBonus);
 	Series ser=getCurrentSeries();
-	if (ser==null || !inBonus || ser.bonusHasBeenEarned()) return false;
+	if (ser==null) return false;
+	System.err.println("ser=" + ser+", earned=" +  ser.bonusHasBeenEarned());
+	if (!inBonus || ser.bonusHasBeenEarned()) return false;
 	double clearingThreshold = ser.para.getDouble("clearing_threshold");
 	int cnt=0;
+	System.err.println("Have " +  ser.episodes.size() + " episodes to look at");
 	for(EpisodeInfo x: ser.episodes) {
+	    System.err.println("looking at "+(x.isBonus()? "main" : " bonus")+
+			       " episode " + x.episodeId + ", completed=" + x.isCompleted());
 	    if (x.isBonus()) {
 		cnt++;
 		if (!x.isCompleted()) return false;
 		if (x.failedBonus(clearingThreshold)) return false;
-	    }
+		System.err.println("ok bonus episode " + x.episodeId);
+	    } 
 	}
-	return cnt<ser.para.getInt("clear_how_many");
+	boolean result = cnt<ser.para.getInt("clear_how_many");
+	System.err.println("cnt=" + cnt+", allowed up to " + ser.para.getInt("clear_how_many") +", result=" + result);
+	return result;
     }
 
     /** The main table for all episodes of this player, arranged in series */
@@ -431,6 +440,9 @@ public class PlayerInfo {
 	//try {
 	    File f =  Files.boardsFile(playerId);
 	    epi.getCurrentBoard(true).saveToFile(playerId, epi.episodeId, f);
+	    f =  Files.transcriptsFile(playerId);
+	    epi.saveTranscriptToFile(playerId, epi.episodeId, f);
+	
 	    //} catch(IOException ex) {	}
     }
 
@@ -483,6 +495,6 @@ public class PlayerInfo {
 	    }
 	}
     }
-    
+
 }
  

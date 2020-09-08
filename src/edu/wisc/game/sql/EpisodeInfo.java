@@ -44,13 +44,19 @@ public class EpisodeInfo extends Episode {
     public boolean isBonus() { return bonus; }
     public void setBonus(boolean _bonus) { bonus = _bonus; }
 
-    /** Set to true if this was a bonus-series episode, and the board was cleared
-	quickly enough for the bonus series to continue. */
+    /** Set to true if this was one of the "successful bonus episodes", i.e. 
+	bonus-series episode, and the board
+	was cleared quickly enough for the bonus series to
+	continue. */
+    boolean bonusSuccessful;
+   /** True if the bonus rewarded has been given for this
+    episode. This typically is the last episode of a successful
+    bonus subseries. */     
     boolean earnedBonus;
-    /** The standard reward that has been given for this episode */
+    /** The standard reward that has been given for this episode.  */
     int rewardMain;
-    /** The bonus reward that has been given for this episode. This value normally
-	appears in the last episode of a successful bonus subseries. */
+    /** The bonus reward that has been given for this episode. This episode 
+	has earnedBonus=true */
     int rewardBonus;
 
     /** The total reward earned in this episode */
@@ -102,9 +108,9 @@ public class EpisodeInfo extends Episode {
     /** An episode deserves a bonus if it was part of the bonus series,
 	has been completed, and was completed sufficiently quickly */
     boolean deservesBonus(double clearingThreshold ) {
-	earnedBonus = earnedBonus ||
+	bonusSuccessful = bonusSuccessful ||
 	    (bonus && cleared && attemptCnt <= getNPiecesStart() * clearingThreshold);
-	return earnedBonus;
+	return bonusSuccessful;
     }
 
     /** An episode was part of a bonus series, but has permanently failed to earn the
@@ -127,8 +133,11 @@ public class EpisodeInfo extends Episode {
     /** Concise report, handy for debugging */
     public String report() {
 	return "["+episodeId+"; FC="+getFinishCode()+
-	    (getGuessSaved()? "g" : "") +   
-	    "; "+(bonus?"B":"M")+" " + attemptCnt + "/"+getNPiecesStart()  +
+	    (getGuessSaved()? "g" : "") +   	    "; "+
+	    (earnedBonus? "BB" :
+	     bonusSuccessful? "B" :
+	     bonus?"b":"m")+" " +
+	    attemptCnt + "/"+getNPiecesStart()  +
 	    " $"+getTotalRewardEarned()+"]";
     }
     

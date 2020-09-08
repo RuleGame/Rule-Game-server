@@ -22,7 +22,7 @@ public class Files {
 	return f;
     }
 
-       /** The file into which guesses by a given player are written */
+    /** The file into which the initial boards of all episodes played by a given player are written */
     public static File boardsFile(String playerId) throws IOException {
 
 	File d = new File(savedDir, "boards");
@@ -34,7 +34,18 @@ public class Files {
 	File f= new File(d, playerId + ".boards.csv");
 	return f;
     }
-			    
+
+    public static File transcriptsFile(String playerId) throws IOException {
+
+	File d = new File(savedDir, "transcripts");
+	if (d.exists()) {
+	    if (!d.isDirectory() || !d.canWrite())  throw new IOException("Not a writeable directory: " + d);
+	} else {
+	    if (!d.mkdirs())  throw new IOException("Failed to create directory: " + d);
+	}
+	File f= new File(d, playerId + ".transcripts.csv");
+	return f;
+    }
     
 }
 

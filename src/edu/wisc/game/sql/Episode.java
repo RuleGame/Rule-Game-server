@@ -585,7 +585,7 @@ public class Episode {
 	return json.toString();
     }
 
-    static final String version = "1.011";
+    static final String version = "1.015";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();
@@ -787,5 +787,48 @@ public class Episode {
     void giveUp() {
 	if (!cleared && !stalemate) givenUp = true;
     }
+
+   /** Let's just write one file at a time */
+    static private final String file_writing_lock = "Board file writing lock";
+	
+    /* Saves all the recorded moves (the transcript of the episode) in a CSV file.
+       <pre>
+       transcripts/pid.transcript.csv
+      pid,episodeId,moveNo,y,x,by,bx,code
+</pre>
+    */    
+    void saveTranscriptToFile(String pid, String eid, File f) {
+	synchronized(file_writing_lock) {
+	try {	    
+	    PrintWriter w = new PrintWriter(new	FileWriter(f, true));
+	    if (f.length()==0) w.println("#pid,episodeId,moveNo,y,x,by,bx,code");
+	    Vector<String> v = new Vector<>();
+	    int k=0;
+	    for(Move move: transcript) {
+		v.clear();
+		v.add(pid);
+		v.add(eid);
+		v.add(""+(k++));
+		Board.Pos q = new Board.Pos(move.pos);
+		v.add(""+q.y);
+		v.add(""+q.x);
+		Board.Pos b = Board.buckets[move.bucketNo];
+		v.add(""+b.y);
+		v.add(""+b.x);
+		v.add(""+move.code);
+		w.println(String.join(",", v));
+	    }
+	    w.close();
+	} catch(IOException ex) {
+	    System.err.println("Error writing the transcript: " + ex);
+	    ex.printStackTrace(System.err);
+	}	    
+	}  
+    }
+
+
+    
+
+
     
 }

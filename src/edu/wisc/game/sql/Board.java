@@ -121,8 +121,8 @@ public class Board// extends OurTable
 
     /** The positions of the 4 buckets */
     final static public Pos buckets[] = {
-	new Pos(0, N), 	new Pos(N, N), 
-	new Pos(N, 0), 	new Pos(0, 0) };
+	new Pos(0, N+1), 	new Pos(N+1, N+1), 
+	new Pos(N+1, 0), 	new Pos(0, 0) };
 	
 
     
