@@ -6,8 +6,6 @@ import javax.json.*;
 
 import javax.persistence.*;
 
-//import org.apache.openjpa.persistence.jdbc.*;
-
 import javax.xml.bind.annotation.XmlElement; 
 
 import edu.wisc.game.util.*;
@@ -20,18 +18,18 @@ public class PlayerResponse extends ResponseBase {
     boolean newlyRegistered;
     public boolean getNewlyRegistered() { return newlyRegistered; }
     @XmlElement
-    public void setNewlyRegistered(boolean _newlyRegistered) { newlyRegistered = _newlyRegistered; }
+    void setNewlyRegistered(boolean _newlyRegistered) { newlyRegistered = _newlyRegistered; }
 
     private String trialListId;
     public String getTrialListId() { return trialListId; }
     @XmlElement
-    public void setTrialListId(String _trialListId) { trialListId = _trialListId; }
+    void setTrialListId(String _trialListId) { trialListId = _trialListId; }
 
     /** Only used in debug mode */
     private PlayerInfo playerInfo=null; 
     public PlayerInfo getPlayerInfo() { return playerInfo; }
     @XmlElement
-    public void setPlayerInfo(PlayerInfo _playerInfo) { playerInfo = _playerInfo; }
+    void setPlayerInfo(PlayerInfo _playerInfo) { playerInfo = _playerInfo; }
 
 
     PlayerResponse(String pid) {
@@ -49,11 +47,11 @@ public class PlayerResponse extends ResponseBase {
 		setTrialListId( x.getTrialListId());		
 	    } else { // new player
 		x = new PlayerInfo();
-		x.setPlayerId(pid);
 		x.setDate( new Date());
-		String ti = chooseRandomTrialList(x, pid);
-		setTrialListId( ti);
-		x.setTrialListId(ti);
+		x.setPlayerId(pid);
+		x.setExperimentPlan( TrialList.extractExperimentPlanFromPlayerId(pid));
+		assignRandomTrialList(x);
+		setTrialListId( x.getTrialListId());
 		Main.persistObjects(x);
 		allPlayers.put(pid,x);
 	    }
@@ -100,59 +98,42 @@ public class PlayerResponse extends ResponseBase {
 	    epi.cache();
 	}
 	return x;
-
-	
     }    
 
     /** Uses the database to balance assignments to different lists fairly precisely.
 	This is done when a player is first entering the system.
+	@param x It already has the experiment plan set, but the specific trial list within that experiment needs to be choosen and set now
      */
-    private String chooseRandomTrialList(PlayerInfo x, String playerId) throws IOException {
-	File base =  TrialList.dirForTrialLists(playerId);
-	//try {
-	if (!base.isDirectory()) throw new IOException("No such directory: " + base);
-	if (!base.canRead()) throw new IOException("Cannot read directory: " + base);
-	//	Vector<File> v = new Vector<>();
+    private void assignRandomTrialList(PlayerInfo x) throws IOException {
+	String exp = x.getExperimentPlan();
+	Vector<String> lists = TrialList.listTrialLists(x.getExperimentPlan());
+	if (lists.size()==0)  throw new IOException("Found no CSV files in the trial list directory for experiment plan=" + exp);
 	HashMap<String,Integer> names = new HashMap<>();
-	final String suff = ".csv";
-	for(String s: base.list()) {
-	    File f = new File(base, s);		
-	    if (!f.isFile()) continue;
-	    if (!s.endsWith(suff)) continue;
-	    //	v.add(f);
-	    String key=s.substring(0, s.length()-suff.length());
-	    names.put(key,0);
-	}
-	if (names.size()==0)  throw new IOException("Found no CSV files in directory: " + base);
+	for(String key: lists) names.put(key,0);
 
 	EntityManager em  = Main.getEM();
 	synchronized(em) {
-	// FIXME: could restrict by the experiment plan, if we had a table for that
-	Query q = em.createQuery("select x.trialListId, count(x) from PlayerInfo x group by  x.trialListId");
-
-	List list = q.getResultList();
-	for(Object o: list) {
-	    Object[] z = (Object[]) o;
-	    String name = (String)(z[0]);
-	    if (names.containsKey(name)) {
-		int cnt = (int)((Long)(z[1])).longValue();
-		names.put(name,cnt);
-	    }		
-	}
+	    Query q = em.createQuery("select x.trialListId, count(x) from PlayerInfo x where x.experimentPlan=:e  group by x.trialListId");
+	    q.setParameter("e", exp);
+	    List list = q.getResultList();
+	    for(Object o: list) {
+		Object[] z = (Object[]) o;
+		String name = (String)(z[0]);
+		if (names.containsKey(name)) {
+		    int cnt = (int)((Long)(z[1])).longValue();
+		    names.put(name,cnt);
+		}		
+	    }
 	}
 	
 	String minName=null;
-	for(String name: names.keySet()) {
+	for(String name: lists) {
 	    if (minName==null || names.get(name)<names.get(minName)) minName=name;
 	}
 
-	File g = new File(base, minName + suff);		
-	TrialList trialList  = new TrialList(g);
+	x.setTrialListId(minName);
+	TrialList trialList  = new TrialList(exp, minName);
 	x.initSeries(trialList);
-
-
-	
-	return minName;
     }
     
 }

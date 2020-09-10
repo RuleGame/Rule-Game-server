@@ -26,6 +26,8 @@ public class PlayerInfo {
     @Basic 
     private String playerId;
     @Basic 
+    private String experimentPlan;
+    @Basic 
     private String trialListId;
 
     /** The date of first activity */
@@ -34,6 +36,11 @@ public class PlayerInfo {
 
     public String getPlayerId() { return playerId; }
     public void setPlayerId(String _playerId) { playerId = _playerId; }
+
+    public String getExperimentPlan() { return experimentPlan; }
+    public void setExperimentPlan(String _experimentPlan) { experimentPlan = _experimentPlan; }
+
+    
     public String getTrialListId() { return trialListId; }
     public void setTrialListId(String _trialListId) { trialListId = _trialListId; }
     public Date getDate() { return date; }
@@ -284,7 +291,7 @@ public class PlayerInfo {
     private boolean inBonus;
 
     
-    /** This is used when a player is first registered and a PlayerInfo object is firesst created */
+    /** This is usesd when a player is first registered and a PlayerInfo object is firesst created */
     public void initSeries(TrialList trialList) {
 	if (allSeries.size()>0) throw new IllegalArgumentException("Attempt to initialize PlayerInfor.allSeries again");
 	allSeries.clear();
@@ -295,7 +302,13 @@ public class PlayerInfo {
 
     /** This method should be called after restoring the object from the SQL database, in order to re-create some of the necessary non-persistent structures. */
     public void restoreTransientFields() {
-	TrialList trialList  = new TrialList(playerId, trialListId);
+	String exp = experimentPlan;
+	// grandfathering older (pre 1.016) entries
+	if (exp==null || exp.equals("")) {
+	    exp = TrialList.extractExperimentPlanFromPlayerId(playerId);
+	}
+	    
+	TrialList trialList  = new TrialList(exp, trialListId);
 	allSeries.clear();
 
 	int k = 0;

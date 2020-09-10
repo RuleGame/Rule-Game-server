@@ -1,78 +1,13 @@
 <html>
-  <head><title>REST JAX-RS test</title>
-    <!-- Advice on passing data as application/json:
-https://www.nabisoft.com/tutorials/java-ee/producing-and-consuming-json-or-xml-in-java-rest-services-with-jersey-and-jackson
-https://stackoverflow.com/questions/19446544/post-request-to-include-content-type-and-json
-      -->
-    <script>
-      var xhttp = new XMLHttpRequest();
-xhttp.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200) {
-       // Typical action to be performed when the document is ready:
-       document.getElementById("demo").innerHTML = xhttp.responseText;
-    }
-};
-xhttp.open("GET", "filename", true);
-      xhttp.send();
-    </script>
-    <!--
-      var ctxPath = "<%=request.getContextPath() %>";
-      $(function(){                
-      $("#post1").on("click", function(){
-      $.ajax({
-      url: ctxPath+"/game-data/GameService/saveBoard",
-      type: "POST",
-      data: document.getElementById("board").value,
-      contentType: "application/json",
-      cache: false,
-      dataType: "json"
-      });
-      });                
-      });
-      -->
-  </head>
+  <head><title>Rule Game web API</title></head>
   <body>
-    <h2>Test A</h2>
+
     <ul>
-      <li>    <a href="rest/UserService/users">List users</a>
-      <li><a href="rest/UserService/users2">List users2</a>
-      <li>Create user:
-	<form method="post" action="rest/UserService/users"
-	      enctype="application/x-www-form-urlencoded">
-	  Name: <input name="name" type="text">;
-	  Profession: <input name="profession" type="text">;
-	  <input type="submit">
-	</form>
+      <li><a href="game-api.html">First Batch (deprecated)</a>
+      <li><a href="game-api-2.html">Second Batch (in use)</a>
+      <li><a href="data.html">About the data files</a>
+      <li><a href="api/">Java API documentation</a>
     </ul>
-
-    <h2>Test B2</h2>
-    <ul>
-    <li>    <a href="game-data/GameService/pieceX">Piece XML</a>
-    <li>    <a href="game-data/GameService/piece">Piece JSON</a>      
-    <li>    <a href="game-data/GameService/boardX">Board XML</a>
-    <li>    <a href="game-data/GameService/board">Board JSON</a>
-    <li>Get board
-      <form method="post" action="game-data/GameService/getBoard"
-	      enctype="application/x-www-form-urlencoded">
-	id= <input name="id" type="text">;
-	  <input type="submit">
-      </form>
-    <li>Save new board
-      <form method="post" action="game-data/GameService/saveBoard"
-	      enctype="application/json">
-	<textarea name="board" rows="6" cols="60">
-	  {"id":"0","name":"Sample board 2","value":[{"color":"black","id":"4","shape":"cirlce","x":5,"y":1},{"color":"red","id":"5","shape":"star","x":0,"y":0}]}
-	</textarea>
-	<!-- input type="submit" -->
-	<button id="saveBoard">Save Board Description A</button>
-      </form>
-      <br>
-      Demo result: <div id="demo">NONE YET</a>
-    <li><a href="gui/">Try the game GUI</a>
-      </h2>
-
-   
-</ul>
+    
   </body>
-</html>
-  
+<html>

@@ -51,8 +51,10 @@ public class Episode {
     public static class Move {
 	/** The position of the piece being moved, in the [1:N*N] range */
 	int pos;
+	int pieceId = -1;
 	public int getPos() { return pos; }
-	/** (Attempted) destination, in the [0:3] range */
+        public int getPieceId() { return pieceId; }
+ 	/** (Attempted) destination, in the [0:3] range */
 	int bucketNo;
 	public int getBucketNo() { return bucketNo ; }
  	Move(int _pos, int b) { pos = _pos; bucketNo = b; }
@@ -229,7 +231,8 @@ public class Episode {
 
 	    move.piece =pieces[move.pos];
 	    if (move.piece==null) return move.code=CODE.EMPTY_CELL;	    
-
+	    move.pieceId = (int)move.piece.getId();
+	    
 	    BitSet[] r = acceptanceMap[move.pos];
 	    Vector<Integer> acceptingAtoms = new  Vector<>();
 	    for(int j=0; j<row.size(); j++) {

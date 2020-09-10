@@ -2,18 +2,13 @@ package edu.wisc.game.rest;
 
 import java.io.*;
 import java.util.*;
-//import javax.servlet.http.HttpServletResponse;
 import javax.json.*;
 
 
 import javax.xml.bind.annotation.XmlElement; 
-import javax.xml.bind.annotation.XmlRootElement;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.sql.Board;
-
-@XmlRootElement(name = "TrialList") 
-
 
 public class TrialList extends Vector<ParaSet> {
     
@@ -33,47 +28,38 @@ public class TrialList extends Vector<ParaSet> {
     @XmlElement
     public void setPath(String _path) { path = _path; }
 
-
-    /** Which directory contains trial lists that can be assigned for this player?
-	// FIXME: In the future, different directories could be used for
-	// different experiment plans
-     */
-    static File dirForTrialLists(String playerId) {
-	File base = new File("/opt/tomcat/game-data");	
-	base = new File(base, "trial-lists");
-	String subdir = playerId.startsWith("qt-")? "qt" : "default";
-	return new File(base, subdir);
+    /** To which experiment plan does this player ID belong? */
+    public static String extractExperimentPlanFromPlayerId(String playerId) {
+	if (playerId==null || playerId.equals("") || playerId.startsWith("-")) throw new IllegalArgumentException("Illegal playerId: " + playerId);
+	String[] seg = playerId.split("-");
+	return (seg.length>1) ? seg[0]:  "default";
     }
 
+    static File dirForExperiment(String exp) {
+	File base = Files.trialListMainDir();
+	return new File(base, exp);	
+    }
 
-    /** Chooses one trial list at random among the lists in the trial
-	list directory for the experiment with which a given player is
-	associated. While a uniform random distribution is used, there is no
-	precise (non-stochastic) load balancing.
-    */
-    static TrialList chooseRandomTrialList(String playerId) {
-	File base =  dirForTrialLists(playerId);
-	try {
-	    if (!base.isDirectory()) throw new IOException("No such directory: " + base);
-	    if (!base.canRead()) throw new IOException("Cannot read directory: " + base);
-	    Vector<File> v = new Vector<>();
-	    for(String s: base.list()) {
-		File f = new File(base, s);
-		if (!f.isFile()) continue;
-		if (!s.endsWith(suff)) continue;
-		v.add(f);
-	    }
-	    if (v.size()==0)  throw new IOException("Found no CSV files in directory: " + base);
-	    // FIXME: need to check if this player already played and was assigned a trial list, and return the same one. Or maybe send a prohibition signal...
-	    int k = Board.random.nextInt( v.size());	    
-	    return new TrialList(v.get(k));
-	} catch(Exception ex) {
-	    return new TrialList(true, ex.getMessage());
+    public static Vector<String> listTrialLists(String exp) throws IOException {
+	File base = dirForExperiment(exp);
+	//try {
+	if (!base.isDirectory()) throw new IOException("No experiment plan directory exists: " + base);
+	if (!base.canRead()) throw new IOException("Cannot read experiment plan directory: " + base);
+	//	Vector<File> v = new Vector<>();
+	Vector<String> names = new Vector<>();
+	for(String s: base.list()) {
+	    File f = new File(base, s);		
+	    if (!f.isFile()) continue;
+	    if (!s.endsWith(suff)) continue;
+	    String key=s.substring(0, s.length()-suff.length());
+	    names.add(key);
 	}
-
-	
+	return names;
     }
+
+
     
+
     /** The error object  */
     TrialList(boolean _error, String _errmsg) {
 	setError(_error);
@@ -82,10 +68,18 @@ public class TrialList extends Vector<ParaSet> {
 
     static final String suff = ".csv";
 
-    /** Locates a trial list based on the player ID and the already chosen 
-	trialList ID */
-    public TrialList(String playerId, String trialListId) {
-	this( new File(  dirForTrialLists(playerId), trialListId + suff));
+    /** Reads a trial list from the  file that corresponds to a given
+       experiment trial and the specified trial list id within that
+       experiment. */
+    public static File trialListFile(String exp, String trialListId) {
+	 return new File(dirForExperiment(exp), trialListId + suff);
+    }
+
+    /** Reads a trial list from the  file that corresponds to a given
+	experiment trial and the specified trial list id within that
+	experiment. */
+    public TrialList(String exp, String trialListId) {
+    	this( trialListFile(exp, trialListId));
     }
 
     

@@ -8,6 +8,7 @@ import java.util.*;
 public class Files {
 
     static final File savedDir = new File("/opt/tomcat/saved");
+    static final File inputDir = new File("/opt/tomcat/game-data");
 
     /** The file into which guesses by a given player are written */
     public static File guessesFile(String playerId) throws IOException {
@@ -45,6 +46,12 @@ public class Files {
 	}
 	File f= new File(d, playerId + ".transcripts.csv");
 	return f;
+    }
+
+    
+
+    static File trialListMainDir() {
+	return new File(inputDir, "trial-lists");
     }
     
 }
