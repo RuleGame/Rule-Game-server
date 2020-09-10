@@ -8,6 +8,7 @@ import edu.wisc.game.util.Util;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.parser.*;
 
+/** A RuleSet describes the rules of a game. */
 public class RuleSet {
 
     public enum BucketSelector {
@@ -326,16 +327,36 @@ public class RuleSet {
 
     /** Format as the source code of the rules set */
     public String toSrc() {
+	ReportedSrc rr = new ReportedSrc();
 	Vector<String> v = new Vector<>();
-	for(String name: orders.keySet()) {
-	    v.add("Order " + name + "=" + orders.get(name));
-	}
-	for(Row row: rows) {
-	    v.add( row.toSrc());
-	}
+	v.addAll(rr.orders);
+	v.addAll(rr.rows);
 	return String.join("\n", v);
     }
 
+    public ReportedSrc reportSrc() {	return new ReportedSrc();    }
+
+
+    /** This is used for pretty-printing in the GUI client.
+     */
+    public class ReportedSrc {
+	Vector<String> orders=new Vector<>();
+	Vector<String> rows=new Vector<>();
+
+	public Vector<String> getOrders() { return orders; }
+        public Vector<String> getRows() { return rows; }
+	
+	ReportedSrc() {
+	    for(Map.Entry<String,Order> e: RuleSet.this.orders.entrySet()) {
+		orders.add("Order " + e.getKey() + "=" +  e.getValue());
+	    }
+	    for(Row row: RuleSet.this.rows) {
+		rows.add(  row.toSrc());
+	    }
+	}
+    }
+
+    
     /** Used when converting Kevin's JSON to our server format */
     void forceOrder(String orderName) {
 	for(Row row: rows) row.forceOrder(orderName);

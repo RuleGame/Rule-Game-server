@@ -4,7 +4,7 @@
 <body>
   <h1>RESTful API for the use by the Rule Game client - second batch</h1>
 
-  <p align="center"><em>Ver 1.015,  2020-09-08</em></p>
+  <p align="center"><em>Ver 1.016,  2020-09-09</em></p>
 
   <p>This is the "Second Batch" (prefix=<tt>/GameService2</tt>)  of the Game Service web API calls. They are intended for use with a client app that works with players enrolled in experiments; each player is identified by a player ID, and the server assigns each player to a "trial list" (a particular track in the experiment plan with which this player ID is associated with).</p>
 
@@ -126,7 +126,31 @@
 	  Episode ID (returned by an earlier newEpisode call): <input name="episode" type="text" size="25"><br>
 	  <input type="submit">
       </form>
-  <br>Sample output (in ver. 1.012), extra fields added (some of which pevious were only seen in /newEpisode):
+      <br>Sample output (in ver. 1.016). The new fields are ruleSrc and ruleLineNo.
+<pre>
+  {"bonus":false,
+  "totalRewardEarned":0,
+  "seriesNo":0,"episodeNo":0,
+  "bonusEpisodeNo":0,
+  "canActivateBonus":false,
+  "totalBoardsPredicted":2,
+  "guessSaved":false,
+  "rulesSrc":{  <em>// The rules of this game </em>
+  "orders":   <em>// array of orders. In this specific game (TD-1) one order is defined, but is not actually used</em>
+     ["Order Custom=[36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]"],
+  "rows": <em>// array of rules, one element per line </em>
+     ["(1,*,*,*,[0,1,2,3])",
+      "(*,*,*,*,[((p + 3) % 4)])"]
+  },
+  "ruleLineNo":0,  <em>//  which line of the rules set is currently active (0-based)</em>
+  "finishCode":0,
+  "board":{"id":0,"value":[{"id":1,"color":"RED","shape":"SQUARE","x":6,"y":3,"buckets":[0,1,2,3]},{"id":0,"color":"RED","shape":"SQUARE","x":1,"y":1,"dropped":3,"buckets":[0,1,2,3]}]},
+  "code":-8, <em> // It is always -8 on /display calls </em>
+  "errmsg":"null\nDEBUG\n*M*[0][20200910-005354-0JVTXF; FC=0; m 1/2 $0]\n[1]\n[2]\nR=$0","numMovesMade":1,
+  "transcript":[{"pos":1,"bucketNo":3,"code":0}]
+  }
+</pre>
+      <br>Sample output (in ver. 1.012), extra fields added (some of which pevious were only seen in /newEpisode):
 <pre>
   {"board":{"id":0,"value":[{"buckets":[3],"color":"BLUE","dropped":3,"id":0,"shape":"SQUARE","x":5,"y":5}]},
   "code":-8,
@@ -273,18 +297,18 @@ Response (on success):
   </ol>
 
 <hr>
-<h3>HTML play (for testing)</h3>
+<h3><a name=#html">HTML play (for testing)</a></h3>
 
 <ul>
-<li>POST <strong><tt>/mostRecentEpisodeHtml</tt>: Create a new episode for a specified user:</strong>
-        <form method="post" action="game-data/GameService2/mostRecentEpisodeHtml"
+<li>POST <strong><tt>/mostRecentEpisodeHtml</tt>: Look up the most recent episode for a specified user:</strong>
+        <form method="post" action="game-data/GameServiceHtml/mostRecentEpisodeHtml"
 	 enctype="application/x-www-form-urlencoded">
 	  Player ID: <input name="playerId" type="text" value="" size="20"><br>
 	  <input type="submit">
 	</form>
 
 <li>POST <strong><tt>/newEpisodeHtml</tt>: Create a new episode for a specified user:</strong>
-        <form method="post" action="game-data/GameService2/newEpisodeHtml"
+        <form method="post" action="game-data/GameServiceHtml/newEpisodeHtml"
 	 enctype="application/x-www-form-urlencoded">
 	  Player ID: <input name="playerId" type="text" value="" size="20"><br>
 	  <input type="submit">
@@ -293,7 +317,7 @@ Response (on success):
 	
 <li>/moveHtml
 
-      <form method="post" action="game-data/GameService2/moveHtml"
+      <form method="post" action="game-data/GameServiceHtml/moveHtml"
 	 enctype="application/x-www-form-urlencoded">
 	  Episode ID (returned by an earlier newEpisode call): <input name="episode" type="text" size="25"><br>
 	  Piece to move: column=x=<input name="x" type="text" value="1" size="2">,

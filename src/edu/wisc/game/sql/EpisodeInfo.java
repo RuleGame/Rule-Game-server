@@ -158,7 +158,6 @@ public class EpisodeInfo extends Episode {
 	    bonus = EpisodeInfo.this.isBonus();
 	    seriesNo = EpisodeInfo.this.getSeriesNo();
 
-
 	    if (getPlayer()!=null) {
 		PlayerInfo p = getPlayer();
 		episodeNo = p.seriesSize(seriesNo)-1;	    
@@ -168,8 +167,6 @@ public class EpisodeInfo extends Episode {
 		totalRewardEarned = p.getTotalRewardEarned();
 
 		totalBoardsPredicted = p.totalBoardsPredicted();
-		guessSaved =  EpisodeInfo.this.guessSaved;
-		
 		errmsg += "\nDEBUG\n" + getPlayer().report();
 	    }	       
 	}
@@ -193,31 +190,31 @@ public class EpisodeInfo extends Episode {
 	*/
 	int seriesNo;
 	public int getSeriesNo() { return seriesNo; }
-	@XmlElement
-	public void setSeriesNo(int _seriesNo) { seriesNo = _seriesNo; }
+	//	@XmlElement
+	//	public void setSeriesNo(int _seriesNo) { seriesNo = _seriesNo; }
 	
 	/** The number of this episode within the current series (zero-based).
 	    This can also be interpreted as the number of the preceding episodes (completed or given up) in this series.
 	*/
 	int episodeNo;
 	public int getEpisodeNo() { return episodeNo; }
-	@XmlElement
-	public void setEpisodeNo(int _episodeNo) { episodeNo = _episodeNo; }
+	//	@XmlElement
+	//	public void setEpisodeNo(int _episodeNo) { episodeNo = _episodeNo; }
 	
 	/** The number of bonus episodes that have been completed (or given up) prior to
 	    the beginning of this episode. */
 	int bonusEpisodeNo;
 	public int getBonusEpisodeNo() { return bonusEpisodeNo; }
-	@XmlElement
-	public void setBonusEpisodeNo(int _bonusEpisodeNo) { bonusEpisodeNo = _bonusEpisodeNo; }
+	//	@XmlElement
+	//	public void setBonusEpisodeNo(int _bonusEpisodeNo) { bonusEpisodeNo = _bonusEpisodeNo; }
 
 	    /** This is set to true if an "Activate Bonus" button can be displayed,
 	i.e. the player is eligible to start bonus episodes, but has not done that 
 	yet */
 	boolean canActivateBonus;
 	public boolean getCanActivateBonus() { return canActivateBonus; }
-	@XmlElement
-	public void setCanActivateBonus(boolean _canActivateBonus) { canActivateBonus = _canActivateBonus; }
+	//	@XmlElement
+	//	public void setCanActivateBonus(boolean _canActivateBonus) { canActivateBonus = _canActivateBonus; }
 	
 
 	int totalBoardsPredicted;
@@ -227,14 +224,19 @@ public class EpisodeInfo extends Episode {
 	    or until the bonus is earned, if in the bonus subseries).
 	*/
 	public int getTotalBoardsPredicted() { return totalBoardsPredicted; }
-        @XmlElement
-        public void setTotalBoardsPredicted(int _totalBoardsPredicted) { totalBoardsPredicted = _totalBoardsPredicted; }
+	//        @XmlElement
+	//        public void setTotalBoardsPredicted(int _totalBoardsPredicted) { totalBoardsPredicted = _totalBoardsPredicted; }
 
-	boolean guessSaved;
+	boolean guessSaved =  EpisodeInfo.this.guessSaved;
 	public boolean getGuessSaved() { return guessSaved; }
-	public void setGuessSaved(boolean _guessSaved) { guessSaved = _guessSaved; }
-  
-	
+	//	public void setGuessSaved(boolean _guessSaved) { guessSaved = _guessSaved; }
+
+	RuleSet.ReportedSrc rulesSrc = rules.reportSrc();
+	public RuleSet.ReportedSrc getRulesSrc() { return rulesSrc; }
+
+	int ruleLineNo = EpisodeInfo.this.ruleLineNo;
+	public int getRuleLineNo() { return ruleLineNo; }
+   
     }
     
     /** Builds a display to be sent out over the web UI */

@@ -33,10 +33,6 @@ public class PlayerResponse extends ResponseBase {
     @XmlElement
     public void setPlayerInfo(PlayerInfo _playerInfo) { playerInfo = _playerInfo; }
 
-    /** Will be closed in the "finally" clause in the constructor */
-    //    @PersistenceContext
-    //    EntityManager em = Main.getEM();
-
 
     PlayerResponse(String pid) {
 	this(pid, false);
@@ -70,8 +66,6 @@ public class PlayerResponse extends ResponseBase {
 	    e.printStackTrace(System.err);
 	    setError(true);
 	    setErrmsg(e.toString());
-	} finally {
-	    //em.close();
 	}
 	
     }
@@ -83,24 +77,13 @@ public class PlayerResponse extends ResponseBase {
     /** Find the matching record for a player.
 	@return The PlayerInfo object with the matching name, or null if none is found */
    static PlayerInfo findPlayerInfo(String pid) {
-	return findPlayerInfo(null, pid);	
-    }
-
-    /** Looks up a PlayerInfo object for the specified player in the local cache, or
-	if not found, in the MySQL database.
-	@param em The EntityManager, if already created. If one is not available yet, null can be passed; in this case one will be created locally and subsequently closed.
-     */
-    static PlayerInfo findPlayerInfo( EntityManager em, String pid) {
 
 	PlayerInfo x = allPlayers.get(pid);
 	if (x!=null) return x;
 
-	EntityManager lem  = null;
-	if (em==null) em=lem=Main.getEM();
-
+	EntityManager em=Main.getEM();
 	
 	synchronized(em) {
-	try {
 
 	Query q = em.createQuery("select m from PlayerInfo m where m.playerId=:c");
 	q.setParameter("c", pid);
@@ -110,8 +93,6 @@ public class PlayerResponse extends ResponseBase {
 	} else {
 	    return null;
 	}
-	} finally{
-	    //	    if (lem!=null) lem.close();
 	}
 	allPlayers.put(pid,x); // save in a local cache for faster lookup later
 	x.restoreTransientFields(); // make it ready to use
@@ -120,8 +101,7 @@ public class PlayerResponse extends ResponseBase {
 	}
 	return x;
 
-
-	}
+	
     }    
 
     /** Uses the database to balance assignments to different lists fairly precisely.

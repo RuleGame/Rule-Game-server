@@ -13,7 +13,6 @@ import edu.wisc.game.util.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.sql.*;
 
-//@XmlRootElement(name = "NewEpisode") 
 
 /**
 FIXME: need to add periodic purge on episodes 
@@ -22,29 +21,37 @@ public class NewEpisodeWrapper2 extends ResponseBase {
     String episodeId=null;
     
     public String getEpisodeId() { return episodeId; }
-    @XmlElement
-    public void setEpisodeId(String _episodeId) { episodeId = _episodeId; }
+    //    @XmlElement
+    //    public void setEpisodeId(String _episodeId) { episodeId = _episodeId; }
 
    
     ParaSet para;
     public ParaSet getPara() { return para; }
-    @XmlElement
-    public void setPara(ParaSet _para) { para = _para; }
+    //    @XmlElement
+    //    public void setPara(ParaSet _para) { para = _para; }
 
    
     boolean alreadyFinished;
     public boolean getAlreadyFinished() { return alreadyFinished; }
-    @XmlElement
-    public void setAlreadyFinished(boolean _alreadyFinished) { alreadyFinished = _alreadyFinished; }
+    //    @XmlElement
+    //    public void setAlreadyFinished(boolean _alreadyFinished) { alreadyFinished = _alreadyFinished; }
 
     Episode.Display display;
     public Episode.Display getDisplay() { return display; }
-    @XmlElement
-    public void setDisplay(Episode.Display _display) { display = _display; }
+    //    @XmlElement
+    private void setDisplay(Episode.Display _display) { display = _display; }
 
     /** @param existing If true, look for the most recent existing episode (completed or incomplete); if false, return the recent incomplete expisode or create a new one */
     NewEpisodeWrapper2(String pid, boolean existing) {
 	try {
+	    // register the player if he has not been registered
+	    PlayerResponse q =new PlayerResponse(pid);
+	    if (q.error) {
+		setError(true);
+		setErrmsg(q.getErrmsg());
+		return;
+	    }
+
 	    PlayerInfo x = PlayerResponse.findPlayerInfo(pid);
 	    if (x==null) {
 		setError(true);

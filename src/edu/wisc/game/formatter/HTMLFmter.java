@@ -66,15 +66,20 @@ public class HTMLFmter extends Fmter {
     }
 
      
-    public String input(String name, String value) {
+    public String input(String name, String value, int size) {
 	String s = "<input name='" + name + "' type='text'";
 	if (value!=null) s += " value='"+value+"'";
+	if (size>0) s+= " size='"+size+"'";
 	s += ">";
 	return s;
     }
   
+    public String input(String name, String value) { 
+	return input(name, value, 0);
+   }
+
     public String input(String name) {
-	return input(name, null);
+	return input(name, null, 0);
     }
 
     public String hidden(String name, String value) {
