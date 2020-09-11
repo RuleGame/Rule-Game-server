@@ -1,0 +1,189 @@
+<html>
+  <head><title>RESTful API for the use by the Rule Game client - second batch</title>
+  </head>
+<body>
+  <h1>RESTful API for the use by the Rule Game client - second batch</h1>
+
+  <p align="center"><em>Ver 1.011,  2020-09-03</em></p>
+
+  <p>This is the "Second Batch" (prefix=<tt>/GameService2</tt>)  of the Game Service web API calls. They are intended for use with a client app that works with players enrolled in experiments; each player is identified by a player ID, and the server assigns each player to a "trial list" (a particular track in the experiment plan with which this player ID is associated with).</p>
+
+  <p>For calls used by players not enrolled in experiments (e.g. our own team members developing and testing games), see <a href="game-api.html">the First Batch</a>.</P>
+    
+  
+  <ol>
+<li>POST <strong><tt>/startTrial:</tt> Start a player's interaction with the system, and obtain a randomly selected trial list for this player</strong>
+  <form method="post" action="game-data/GameService2/player"
+	 enctype="application/x-www-form-urlencoded">
+     Player ID: <input name="playerId" type="text" size="25" value="AnyText-01">
+	  <input type="submit">
+  </form>
+  <p>The input parameter is the player ID (a string). In the future, the system will determine, based on the player ID, what experiment the person is enrolled into (e.g MTurkers vs. psych students vs. ourselves testing a particular game); at present, the player ID does not really matter, as everybody is considered to be enrolled in the experiment called "default".</P>
+
+  <p>Sample output:
+    <pre>
+      {"errmsg":"Debug:...",
+      "error":false,
+      "newlyRegistered":false,
+      "trialListId":"trial_1"}
+    </pre>
+    
+    In practice, you don't need any of the returned values, other than the error code.</p></li>
+  <li>POST <strong><tt>/newEpisode</tt>: Create a new episode for a specified user:</strong>
+        <form method="post" action="game-data/GameService2/newEpisode"
+	 enctype="application/x-www-form-urlencoded">
+	  Player ID: <input name="playerId" type="text" value="" size="20"><br>
+	  <input type="submit">
+	</form>
+
+      <br>Results:
+<pre>
+  {"errmsg":"Debug...", <em> // either used to describe errors, or contains various status info for debugging.</em>
+  "error":false,   <em> // true if something bad has happened</em>
+  "alreadyFinished":false,  <em> // this will be true if error==true, and the error is caused by the fact that the player has already done all his param sets</em>
+ "board":{"longId":0,"id":0,"value":
+[{"buckets":[0],"color":"RED","id":0,"shape":"STAR","x":3,"y":1},
+{"buckets":[0],"color":"RED","id":0,"shape":"STAR","x":3,"y":5}]},
+<em> // description of the initial board </em>
+"bonus":false,    <em> // true if this episode is part of a bonus subseries</em>
+"bonusEpisodeNo":0, <em> // the number of previous bonus episodes in this series</em>
+"canActivateBonus":false, <em> // true if you can put an "Activate Bonus" button on the screen in this episode</em>
+"episodeId":"20200828-021427-FJRX9J",<em> // Save this and use it in /move calls later!</em>
+"para":
+{"clearing_threshold":1.3,"max_points":10,"b":1.5,"min_points":2,
+"max_colors":1,"f":4,"feedback_switches":"fixed","min_objects":1,"m":9,"n":1,
+"clear_how_many":2,"bonus_extra_pts":3,"rule_id":"TD-02","max_objects":3,
+"grid_memory_show_order":false,"min_shapes":1,"stack_memory_show_order":false,
+"max_shapes":1,"min_colors":1,"stack_memory_depth":6,"max_boards":2,
+"activate_bonus_at":2}, ,<em> // All the parameters from the current param set
+  //  (the current row of the trial list file). Some of them may be used by the
+//GUI tool to control some points of the appearance </em>
+"seriesNo":1, <em> // the 0-based sequential number of this series (= 0-based sequential number of this row of the trial list file).
+// You can increment this number by 1 and display it in a "You are working on Rule No. X" message.</em>
+"episodeNo":0,<em> // the 0-based number of this episode within the series (i.e. among
+// the episodes played under a given rule set).
+// You can increment this number by 1 and display it as Y in a "Rule No. X, Episode No. Y" message.</em>
+"totalRewardEarned":33 <em> // the sum total of rewards earned by this player in all episodes so far</em>
+}
+</pre>
+<p>As of ver. 1.011, in the board description the field <tt>dropped</tt> is shown only in the pieces that have been already removed from the board; the value is the ientifying number (0 thru 3) of the bucket into which the piece has been dropped.</p>
+
+
+  </li>
+  <li>GET <strong><tt>/display</tt>: View the current display:</strong>
+      <form method="get" action="game-data/GameService2/display"
+	 enctype="application/x-www-form-urlencoded">
+	  Episode ID (returned by an earlier newEpisode call): <input name="episode" type="text" size="25"><br>
+	  <input type="submit">
+      </form>
+      <br>Sample output
+<pre>
+  {"board":{"longId":0,"id":0,"value":
+  [{"buckets":[0],"color":"RED","dropped":1,"id":0,"shape":"STAR","x":3,"y":1},
+  {"buckets":[0],"color":"RED","dropped":3,"id":0,"shape":"STAR","x":3,"y":5}]},
+  "bonus":false,  <em> // true if this episode is part of a bonus subseries</em>
+  "code":-8, <em> // It is always -8 on /display calls </em>
+  "errmsg":"Display requested", 
+  "finishCode":1,<em> // Tells if the episode still continues, has stalemated,
+//    has been finished by clearing the board, or has been given up.
+//    For the semantics of the <tt>code</tt> and  <tt>finishCode</tt> fields,
+//    see the entry on the MOVE command in the <a href="package.html#move">documentation on the Captive Game Server</a></em>
+  "numMovesMade":3, <em> // the number of move attempts made so far in this episode</em>
+  "totalRewardEarned":0 <em> // the sum total of rewards earned by this player in all episodes so far</em>
+  }
+</pre>
+      
+ <li>POST <strong><tt>/move</tt>: Make a move:</strong>
+      <form method="post" action="game-data/GameService2/move"
+	 enctype="application/x-www-form-urlencoded">
+	  Episode ID (returned by an earlier newEpisode call): <input name="episode" type="text" size="25"><br>
+	  Piece to move: column=x=<input name="x" type="text" value="1" size="2">,
+	  row=y=<input name="y" type="text" value="1" size="2"> (both ranging 1 thru 6)<br>
+	  Destination bucket (identified by  bucket_column=bx=<input name="bx" type="text" value="7" size="2">,
+	  bucket_row=by=<input name="by" type="text" value="7" size="2"> (possible values are 0 and 7)<br>
+	  Attempted move count so far (the number of previous calls to <strong><tt>move</tt></strong> in this episode. This can also be interpreted as 0-based number of this move attempt) <input name="cnt" type="text" value="0" size="5"><br>
+	  <input type="submit">
+      </form>
+<br>Sample response<pre>
+  {"board":{"longId":0,"id":0,"value":
+  [{"buckets":[1],"color":"BLUE","id":0,"shape":"TRIANGLE","x":4,"y":2},
+  {"buckets":[1],"color":"BLUE","dropped":3,"id":0,"shape":"TRIANGLE","x":2,"y":3}]}, <em> // the board after this move </em>
+  "bonus":false, <em> // true if this episode is part of a bonus subseries</em>
+  "code":4, <em> Outcome of this move.
+    For the semantics of the <tt>code</tt> and  <tt>finishCode</tt> fields,
+    see the entry on the MOVE command in the <a href="package.html#move">documentation on the Captive Game Server</a></em>
+  "errmsg":"...",<em> // either used to describe errors, or contains various status info for debugging.</em>
+  "finishCode":0, <em> Overall state of this episode now.
+    For the semantics of the <tt>code</tt> and  <tt>finishCode</tt> fields,
+    see the entry on the MOVE command in the <a href="package.html#move">documentation on the Captive Game Server</a></em>
+  "numMovesMade":1, <em> // the number of move attempts made so far in this episode</em>
+  "totalRewardEarned":42<em> // the sum total of rewards earned by this player in all episodes so far</em>
+  }
+</pre>
+
+   <p>The finish code reports the current state: 0=can play (there are pieces on the board, and some can be moved), 1=finish (no pieces left on the board), 2=stalemate (there are pieces on the board, but none of them can be moved anymore).</p>
+   </li>
+ 
+	<li>POST <strong><tt>/activateBonus:</tt> Activate the bonus for this player. The current episode (if still active) and all subsequent episode of the same series (i.e. played by the same rule) will constitute the "bonus subseries"</strong>
+  <form method="post" action="game-data/GameService2/activateBonus"
+	 enctype="application/x-www-form-urlencoded">
+     <input name="playerId" type="text" size="25" value="AnyText-01">
+	  <input type="submit">
+  </form>
+  <br>Sample output
+  <pre>
+    {"errmsg":"Bonus activated successfully","error":false}
+  </pre>
+	</li>
+   <p>The finish code reports the current state: 0=can play (there are pieces on the board, and some can be moved), 1=finish (no pieces left on the board), 2=stalemate (there are pieces on the board, but none of them can be moved anymore).</p>
+   </li>
+ 
+	<li>POST <strong><tt>/giveUp:</tt> "Gives up" the current series (i.e. the series played with the current param set), so that the next episode will be run with the next param set.</strong> If this is invoked while an episode is in progress, the episode will be marked as "given up" as well. However, you may choose to only used this call at the end of an episode (that is, give the player an option of switching to the next param set for the next episode, regardless of one's current position in the current series).
+  <form method="post" action="game-data/GameService2/giveUp"
+	 enctype="application/x-www-form-urlencoded">
+Player ID:     <input name="playerId" type="text" size="25" value="AnyText-01">
+Series No.:     <input name="seriesNo" type="text" size="2" value="0">
+	  <input type="submit">
+  </form>
+  <br>The seriesNo value must be exactly the same to which the current (or just completed) episode belongs to, as per the "seriesNo" value obtained in the last /newEpisode call. This is required as a safety check, to ensure that the client and server are on the same page. (If it's an annoyance to have it, I can remove this parameter)
+  <br>Sample output (on success):
+  <pre>
+{"errmsg":"Gave up series 0","error":false}
+  </pre>
+  </li>
+	
+
+
+ <li>POST <strong><tt>/guess:</tt> Recording a guess</strong>
+      <form
+        id="wfForm"
+        class="wfForm"
+	method="post" action="game-data/GameService2/guess"
+	enctype="application/x-www-form-urlencoded">
+
+	  Episode ID (returned by an earlier newEpisode call): <input name="episode" type="text" size="25"><br>
+	
+
+	<br>
+	<textarea id="wf.data" name="data" rows="10" cols="60">
+Please type your guess here (an arbitrary test)
+	</textarea><br>
+	<input type="submit">
+      </form>
+      <br>
+Response (on success):
+      <pre>
+{"error":false,"byteCnt":91,"path":"/opt/tomcat/saved/guesses/qt-01.csv"}
+</pre>
+	
+  <li>GET <strong><tt>/debug</tt></strong>: Same info as given by /player, and some more for a specified user:</strong>
+        <form method="get" action="game-data/GameService2/debug"
+	 enctype="application/x-www-form-urlencoded">
+	  Player ID: <input name="playerId" type="text" value="" size="20"><br>
+	  <input type="submit">
+	</form>
+  
+  </ol>
+
+</body>
+</html>

@@ -1,0 +1,125 @@
+<html>
+  <head><title>Rule Game server data</title>
+  </head>
+<body>
+  <h1>Rule Game server data</h1>
+
+    <p align="center"><em>This was written on 2020-08-21, to answer Jerry Zhu's question</em></p>
+
+<h2>(A) - Creating initial boards</h2>
+
+<p>
+  There are two methods for creating initial boards; they both can be found in  edu.wisc.game.sql.Board, constructors
+  <code>
+    public Board(int randomCnt);
+    </code>
+ and
+  <code>
+  public Board(int randomCnt, int nShapes, int nColors);
+    </code>
+</p>
+
+<p>
+The first constructor only specify the number of pieces; the latter, the number of pieces, the number of shapes, and the number of colors.
+</p>
+
+<p>
+(A.1) - The number of pieces only. This constructor is used in the Captive Game Server (exposed via the command line argument). It will not, however, be used in Mechanical Turk and other human-subject experiments, since Gary has chosen to use the second approach instead.
+
+<p>
+In this approach, we simply create a random subset of randomCnt cells out all N*N=36 cells. Any of the  (N*N)! / ((N*N-randomCnt)! * randomCnt!) such subsets can be selected with equal probability. Once a subset of cells has been selected, one piece is placed into each of these selected cell; for this piece, the color and the shape are selected randomly, uniformly distributed over all 4 possibilities.
+
+<p>
+This means that, among the boards created by this method, the number of colors and the number of shapes have a certain distribution based on simple combinatorics. That is, each of the  4^randomCnt "coloring schemes" (ways to assign colors to randomCnt pieces) has an equal probability of being selected; this means, for example, that for a sufficiently large randomCnt, the probability of all 4 colors being present on the board is much higher than the probability of all pieces having the same color. The same applies to the shapes as well.
+
+<p>
+(A.2) - The second approach will be used in human subject experiments; I also will expose it in the next version of the CGS (1.008). It works as follows:
+
+<p>
+The parameter list file, which controls a series of episodes presented to a player, contains three pairs of parameters, which determine the ranges within which the number of objects (pieces), the number of colors, and the number of shapes may vary. They are:
+<code>
+min_objects,max_objects,
+min_shapes,max_shapes,
+min_colors,max_colors,
+</code>
+For every board to be created, the number of objects (pieces), the number of shapes, and the number of colors are choosen independently within the specified ranges, with a uniform distribution. (Thus, if min_objects=1, max_object=4,  then 20% of all boards will have 1 pece on them, 20% will have 2 pieces, etc).
+
+<p>
+  (We suppose that in any parameter set the configuration parameters obey the inequalities
+  <code>
+  max_colors &le; min_objects,
+  min_shapes &le; min_objects,
+</code>
+which means that the number of colors or the number of shapes may indeed be chosen independently of the number of pieces).
+
+  <p>
+Once the number of pieces, the number of shapes, and the number of colors have been chosen, we call the second constructor. It selects the nPieces positions for the pieces in the same way as the first constructor, i.e. producing any subset of nPieces cells out of all N*N cells with equal  probability. The nPieces pieces are placed in these selected positions, and are then assigned colors and shapes.
+
+ <p>
+The colors and shapes are assigned independently from each other; this is done by the method designatedProps(...).
+
+ <p>
+At some point in the future, I would like to re-write this method so that it would produce every possible color assignment or shape assignment with equal probability. At present, this is's not quite the case. Instead, the color (or shape) assignment is carried out as follows:
+
+<ol>
+<li> One randomly selects a subset S of nColors colors out of all (4) existing colors.
+ <li> A preliminary color assignment is created, by independently assigning a color randomly picked out of S to each piece on the board.
+<li> After this, the above assignment is modified in in order to ensure that all nColors are present in it. To do that, we randomly select nColor pieces out of all nPieces pieceson the board. These nColor selected pieces are then randomly ordered, and a 1:1 mapping to S is establshed, i.e. the first of these selected pieces is given the first color of S, and so on.
+</ol>
+
+<p>
+While the above scheme can produce all possible color assignments that involve exactly nColors, it does not produce each assignment with  equal probability. Specifically, if a given color assignment X can be obtained by applying step (iii) to some color assignment Z that has fewer than nColors colors, this assignment will occur in the output with a higher probability than a color assignment Y that does not have this property.
+
+<p>
+Shapes are assigned by a similar procedure.
+
+<h2>(B) - Trial lists, and the player's sequence of episodes</h2>
+
+<p>
+Trial list files supplied by Gary can be reviewed in the zip file (captive-1.007-2020-08-21.zip) that I sent to Shubham earlier. For each experiment plan (e.g. "The September experiments with Mechanical Turkers"), a directory under game/game-data/trial-lists will be created. Right now, there is only one such experiment plan directory, called "default". When a player first starts to play, he is permanently assigned one of the trial lists associated with his experiment plan. The assignment is done in such a way that the numbers of players associated with each trial list were approximately equal.
+
+<p>
+  A trial list file consists of a number of lines, each line  describing one parameter set. Each player assigned to this trial list will have to play a series of episodes associated with each parameter set, in the order the parameter sets are listed in the trial list file. Some details of the control flow are described in the document called    <a href="https://rulegame.slack.com/files/UKF4M2Y4D/F019E2J188L/points_gameplay.pdf">points_gameplay.pdf</a>, which was posted by Gary to the Slack channel #game_implementation on Aug 20, at 16:37 EDT. (That would be 15:37 CDT):
+
+
+<p>
+Each series is controlled by the parameters of the parameter sets. In particular, the parameters specify the rule set file (the one that contains the rules of the game) and control the possible range of the number of pieces on the board, their colors and shapes, as per (A). The parameters also control the number of episodes to be played under this rule set, and the reward scheme.
+
+<p>
+Below, I outline the episode sequence control as I understand it.
+
+<p>
+The series of episodes played by a given player for a given param set can be divided into 2 subseries: the mandatory <Strong>MAIN SUBSERIES</Strong> and the optional  <Strong>BONUS SUBSERIES</Strong>.
+
+<p>
+The <Strong>MAIN SUBSERIES</Strong> contains at least activate_bonus_at-1 episodes, and no more than max_boards episodes. In each episode, the board is initialized randomly, as per (A); in particular, the number of pieces m is in the range [min_objects, max_objects].
+
+<p>
+To keep playing, the player must complete each episode, i.e. to clear the entire board. There is no limit on how many moves he may attempt in each episode. However, since the player is always told which pieces are movable, and there are only 4 buckets to try, even the simplest strategy (try each 4 buckets in order for each movable piece) is guaranteed to clear the border in no more than 4*m moves (or, more precisely, move attempts).
+
+<p>
+It is expected that the rule sets we use in the experiment with human subjects will never lead to stalemates. For example, we won't have a rule set like this:
+<pre><code>
+(*,star,*,T,[0,1,2,3])
+(*,square,*,B,[0,1,2,3])
+(*,triangle,*,*,[0,1,2,3])
+(*,circle,*,*,[0,1,2,3])
+</code></pre>
+(The above rule set will stalemate if the board contains a square and a star, and the square is located in a higher row than the star. Stars are only moveable from the top row of the current object set, and squares, from the bottom row).
+
+<p>
+After completing each episode in the main subseries, the player receieves a reward that's computed as per the formula in Gary's document, based on the number of moves (move attempts) x that it took the user to clear the board.
+<p>
+
+During the main subseries, in the episode No. activate_bonus_at, a button labeled "Activate bonus" will appear on the screen, and will continue to be present until either the player presses it or until max_board episodes will be played in this param set and the main subseries will end.
+<p>
+If the player presses the "Activate bonus" button, the main subseries ends, and the <Strong>BONUS SUBSERIES</Strong> begins. During the bonus subseries, each episode has a board created by the same process (A), and, for clearing the board, the player receives a reward computed by the same formula as in the main subseries.
+<p>
+During the bonus subseries, the player should strive to clear each board quickly, i.e. within no more than m*clearing_threshold moves. If he quickly clears each of the clear_how_many boards (consecutively, starting at the beginning of the bonus series), he will earn additional reward of bonus_extra_pts points for this series, and the series will end. But if he fails to clear quickly every board presented to him in the bonus series, the series will end after the first "unsuccessful" episode (i.e. an episode with x>m*clearing_threshold).
+<p>
+In addition, there apparently will be a "Give up" button, which will allow the player to interrupt the series (at the end of any episode). I am not sure if it will be present only during the main subseries or during the bonus subseries as well.
+<p>
+After a series is completed (because the main subseries ended without pressing "Activate bonus", or because the bonus series ended successfully or unsuccessfully, or because the "Give up" button was used), the system with proceed with the next param set in the trial list, starting the new series of episode pursuant to the that param set's rules.
+
+</body>
+</html>
