@@ -70,8 +70,101 @@
 
     <h2>Read-and-write data: SQL server tables</h2>
 
+  <p>There are two tables you'll be using, <tt>PlayerInfo</tt> and <tt>Episode</tt>.
+
+    <h3>PlayerInfo</h3>
+
+<p>There is one PlayerInfo entry (table row) for each player.
     
+<pre>
+mysql> describe  PlayerInfo;
++-------------------+--------------+------+-----+---------+----------------+
+| Field             | Type         | Null | Key | Default | Extra          |
++-------------------+--------------+------+-----+---------+----------------+
+| id                | bigint(20)   | NO   | PRI | NULL    | auto_increment |
+| currentSeriesNo   | int(11)      | YES  |     | NULL    |                |
+| date              | datetime     | YES  |     | NULL    |                |
+| inBonus           | bit(1)       | YES  |     | NULL    |                |
+| playerId          | varchar(255) | YES  |     | NULL    |                |
+| totalRewardEarned | int(11)      | YES  |     | NULL    |                |
+| trialListId       | varchar(255) | YES  |     | NULL    |                |
+| experimentPlan    | varchar(255) | YES  |     | NULL    |                |
++-------------------+--------------+------+-----+---------+----------------+
+</pre>
+
+  <p>The meaning of the columns is as follows:
+
+    <ol>
+      <li>id - the internal integer ID used by the MySQL database for the player. It is not to be consfused with the PlayerID (a string). This ID is only used to link entries in the Episode table with those in the PlayerInfo table.
+      <li>currentSeriesNo - an integer indicating which series the player is currently playing, or is about to start playing. The value is 0-based, which means that a player who has not completed any episodes yet, or is still working under the very first of the parameter sets in his trial list, will have currentSeriesNo=0, etc. If a player's trial list has, for example, 4 rows (4 parameter sets), then once the player has completed all his 4 series, he will have currentSeriesNo=0.
+      <li>date - when the player entered the system (started playing)
+      <li>inBonus - a bit value. It starts with false, and becomes true if/when the player activates his bonus. It will stay true while the player plays episodes of the subseries of his current series; it will become false again one the bonus subseries ends (either with earning a bonus, or with a failure, or with "giving up"), and the player switches to the next parameter set's series.
+      <li>playerId - the string playerId, identifies the player
+      <li> totalRewardEarned - the total number of points earned in all episodes so far, including the "base pay" and any bonuses
+      <li>trialListId - a string that identifies the trial list to which the player has been assigned within his experiment plan
+      <li>experimentPlan  - the expeirment plan to which this player belongs
+    </ol>
 
 
+    <h3>Episode</h3>
+
+  <p>The <tt>Episode</tt> table has one entry (row) for each episode played by each player.
+
+<pre><code>
+mysql> describe  Episode;
++-----------------+--------------+------+-----+---------+----------------+
+| Field           | Type         | Null | Key | Default | Extra          |
++-----------------+--------------+------+-----+---------+----------------+
+| id              | bigint(20)   | NO   | PRI | NULL    | auto_increment |
+| attemptCnt      | int(11)      | YES  |     | NULL    |                |
+| cleared         | bit(1)       | YES  |     | NULL    |                |
+| doneMoveCnt     | int(11)      | YES  |     | NULL    |                |
+| episodeId       | varchar(255) | YES  |     | NULL    |                |
+| givenUp         | bit(1)       | YES  |     | NULL    |                |
+| nPiecesStart    | int(11)      | YES  |     | NULL    |                |
+| stalemate       | bit(1)       | YES  |     | NULL    |                |
+| startTime       | datetime     | YES  |     | NULL    |                |
+| DTYPE           | varchar(255) | YES  | MUL | NULL    |                |
+| bonus           | bit(1)       | YES  |     | NULL    |                |
+| earnedBonus     | bit(1)       | YES  |     | NULL    |                |
+| endTime         | datetime     | YES  |     | NULL    |                |
+| finishCode      | int(11)      | YES  |     | NULL    |                |
+| rewardBonus     | int(11)      | YES  |     | NULL    |                |
+| rewardMain      | int(11)      | YES  |     | NULL    |                |
+| seriesNo        | int(11)      | YES  |     | NULL    |                |
+| PLAYER_ID       | bigint(20)   | YES  | MUL | NULL    |                |
+| guessSaved      | bit(1)       | YES  |     | NULL    |                |
+| bonusSuccessful | bit(1)       | YES  |     | NULL    |                |
++-----------------+--------------+------+-----+---------+----------------+
+</code></pre>
+
+ <p>The meaning of the columns is as follows:
+
+    <ol>
+      <li>id - internal episode ID; we can use them to sort episodes in the chronological order, but otherwise we can ignore it.
+      <li>attemptCnt - the number of attempted (successful or unsuccessful) moves
+      <li>cleared - true if the board has been cleared (has no pieces left)
+      <li>doneMoveCnt  - the number of successful moved (i.e. the number of pieces removed from the board)
+      <li>episodeId - a string episode ID used by our system.
+      <li> givenUp - true if the player has explicitly "given up" on this episode, or if it has been found that the episode has been abandoned, and another episode started instead
+      <li>nPiecesStart - the initial number of pieces on the board
+      <li>stalemate - true if the episode has ended in stalemate, i.e. there are some pieces on the board, but none of them can be moved
+      <li>startTime - timestamp
+      <li> DTYPE - ignore this field
+      <li> bonus - true if this episode is part of the bonus series
+      <li> earnedBonus  - true if the bonus reward on completion of this episode.  This typically is the last episode of a successful bonus subseries (i.e. in this series every episode with bonus=true also has bonusSuccessful=true, the number of these episodes is equal to the value of the parameter <tt>clear_how_many</tt>, and this episode is the last one in this subseries).
+      <li> endTime - timestamp
+      <li>finishCode - an integer that summarizes the overall state of the game. The value of 0 means that the episode is still continuing; other values refer to the way in which it has terminated, as per <a href="api/constant-values.html#edu.wisc.game.sql.Episode.FINISH_CODE.FINISH">FINISH_CODE</a>.
+      <li>rewardBonus - the number of bonus points awarded at the completion of this episode. This may be non-zero only if earnedBonus=true.
+      <li>rewardMain - the "base pay" reward, awarded to this episode based on how many moves it took the player to clear the board, according to the formula in Gary's document, <a href="https://rulegame.slack.com/files/UKF4M2Y4D/F019E2J188L/points_gameplay.pdf">points_gameplay.pdf</a>
+	<li>seriesNo - the 0-based number of the current series of episodes played by this user (i.e. the sequential number of the current parameter set in the trial list). After all parameter sets' series have been played, seriesNo is equal to the number of parameter sets in the trial file.
+	  <li>PLAYER_ID - MySQL internal ID of the player; only used to join with the PlayerInfo table
+	  <li>guessSaved - true if the player's guess about the rules has been submitted and recorded at the end of this episode.
+	  <li>bonusSuccessful - true if this was a bonus episode (bonus=true) and the player managed to clear the board sufficiently fast. If a required number of episodes with bonusSuccessful=true is 
+
+    </ol>
+
+<h3> Exporting data from the MySQL database to CSV files</h3>
+    
 </body>
 </html>
