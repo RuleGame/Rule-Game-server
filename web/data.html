@@ -164,7 +164,78 @@ mysql> describe  Episode;
 
     </ol>
 
-<h3> Exporting data from the MySQL database to CSV files</h3>
-    
+    <h3> Exporting data from the MySQL database to CSV files</h3>
+
+ <p>There are many ways to export the content of SQL tables to CSV files. As an example, I have supplied a script that resides on sapir in <code>~vmenkov/w2020/game/sql/export.sh</tt>. In order to be able to use this particular script, you must have possess several qualifications:
+<ul>
+  <li>Be a UNIX user with a membership in <tt>mysql</tt> group. (This is needed to be able to access MySQL's export directory; presently, I set permissions for it with g+rwX).
+  <li>Have a MySQL server account
+  <li>Have password-less access to this account. (This is configured using the <tt>auth_socket</tt> plugin, so that the MySQL server allows you to access the databases based on your UNIX user credentials)
+</ul>
+
+<p>
+Before using the script, switch to your <tt>mysql</tt> group:
+<pre>
+  newgrp mysql
+</pre>
+Then run the script:
+<pre>
+~vmenkov/w2020/game/sql/export.sh
+</pre>
+This will create 2 CSV files, PlayerInfo.csv and Export.csv, in your current directory. There are no header lines in them, but the columns are ordered the same way as described above.
+
+<h2>Write-only data</h2>
+
+<p>At the end of each episode, the Game server saves the essential information about the episode into CSV file. That includes the initial board description, all the attempted moves (successful and unsuccessful), and any guess submitted by the player.
+
+  <h3>The initial board</h3>
+
+  <p>The initial boards are saved in  /opt/tomcat/saved/boards/ , in file names based on the PlayerID + ".board.csv".
+<pre>
+       more /opt/tomcat/saved/boards/qt-07.boards.csv
+#playerId,episodeId,y,x,shape,color
+qt-07,20200910-122815-2S2435,4,1,STAR,BLACK
+qt-07,20200910-122815-2S2435,5,4,STAR,BLACK
+qt-07,20200910-123116-PRDLET,3,1,TRIANGLE,BLACK
+qt-07,20200910-123116-PRDLET,5,1,TRIANGLE,BLACK
+</pre>
+
+
+<p>For each piece, we have it y and x coordinates (y=row, x=column), shape and color.
+
+<h3>The transcript</h3>
+
+ <p>The transripts are saved in  /opt/tomcat/saved/transcripts/ , in file names based on the PlayerID + ".transcript.csv".
+
+<pre>
+more /opt/tomcat/saved/transcripts/qt-07.transcripts.csv 
+#pid,episodeId,moveNo,timestamp,y,x,by,bx,code
+qt-07,20200910-122815-2S2435,0,20200910-122851,4,1,0,0,0
+qt-07,20200910-122815-2S2435,1,20200910-122902,5,4,7,0,0
+qt-07,20200910-123116-PRDLET,0,20200910-123125,3,1,7,7,0
+qt-07,20200910-123116-PRDLET,1,20200910-123151,5,1,7,7,0
+</pre>
+
+<p>For each move, we have the coordinates (y=row, x=column) of the piece that the player tries to move, and of the destination bucket. (The four buckets are supposed to be located in columns 0 and 7, and rows 0 and 7).
+
+<p>The last column, code, contains the server response. The value 0 is on success, positive values on rejection, as per <a href="api/constant-values.html#edu.wisc.game.sql.Episode.CODE.ACCEPT">CODE</a>.
+
+
+<h3>The guess</h3>
+
+
+ <p>The guesses are saved in  /opt/tomcat/saved/guesses/ , in file names based on the PlayerID + ".guess.csv".
+
+<pre>
+more /opt/tomcat/saved/guesses/qt-05.guesses.csv 
+qt-05,20200908-131729-0ILKQD,TD-01,ok
+qt-05,20200908-131908-6SXUPL,TD-01,should give us 2nd bonus episode now!
+qt-05,20200908-131943-MP1B3R,TD-01,must go to next series now
+</pre>
+
+<h2>Working with the data</h2>
+
+<p><em>I will write one more section here, explaining how to put the data together, on a few simple examples.</em></p>
+
 </body>
 </html>

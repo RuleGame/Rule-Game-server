@@ -42,7 +42,7 @@ public class NewEpisodeWrapper extends ResponseBase {
 	    RuleSet rules = AllRuleSets.obtain(ruleSetName);
 
 	    Game game;
-	    if (boardName!=null && boardName.trim().length()>0) {
+	    if (boardName!=null && boardName.trim().length()>0 && !boardName.equalsIgnoreCase("null")) {
 		File base = new File("/opt/tomcat/game-data");
 		base = new File(base, "boards");
 		File bf = new File(base, boardName + ".json");
