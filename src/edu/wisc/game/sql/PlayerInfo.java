@@ -111,7 +111,7 @@ public class PlayerInfo {
 	/** Checks if this player has earned a bonus in this series, and if so, 
 	    attaches it to an appropriate episode, and ends this series */
 	void assignBonus() {
-	    double clearingThreshold = para.getDouble("clearing_threshold");
+	    double clearingThreshold = para.getClearingThreshold();
 	    int cnt=0, deserveCnt=0;
 	    for(EpisodeInfo x: episodes) {
 		if (x.bonus) {
@@ -145,8 +145,8 @@ public class PlayerInfo {
 
     /** Retrieves a link to the currently played series, or null if this player
 	has finihed all his series */
-    private Series getCurrentSeries() {
-	return currentSeriesNo<allSeries.size()? allSeries.get(currentSeriesNo): null;
+    Series getCurrentSeries() {
+	return alreadyFinished()? null: allSeries.get(currentSeriesNo);
     }
 
     public boolean alreadyFinished() {
@@ -242,7 +242,7 @@ public class PlayerInfo {
 	if (ser==null) return false;
 	System.err.println("ser=" + ser+", earned=" +  ser.bonusHasBeenEarned());
 	if (!inBonus || ser.bonusHasBeenEarned()) return false;
-	double clearingThreshold = ser.para.getDouble("clearing_threshold");
+	double clearingThreshold = ser.para.getClearingThreshold();
 	int cnt=0;
 	System.err.println("Have " +  ser.episodes.size() + " episodes to look at");
 	for(EpisodeInfo x: ser.episodes) {
@@ -283,7 +283,7 @@ public class PlayerInfo {
     /** What series will the next episode be a part of? (Or, if the current episode
 	is not completed, what series is it a part of?) */
     private int currentSeriesNo=0;
-     public int getCurrentSeriesNo() { return currentSeriesNo; }
+    public int getCurrentSeriesNo() { return currentSeriesNo; }
 
     /** Will the next episode be a part of a bonus subseries? (Or, if the current 
 	episode is not completed, is it a part of  a bonus subseries?)
@@ -335,8 +335,11 @@ public class PlayerInfo {
     
     /** Returns the currently unfinished last episode to be resumed,
 	or a new episode (in the current series or the next series, as
-	the case may be), or null if this player has finished with all series. */
-    public EpisodeInfo episodeToDo() throws IOException, RuleParseException {
+	the case may be), or null if this player has finished with all
+	series. This is used by the /GameService2/newEpisode web API call. */
+    public synchronized EpisodeInfo episodeToDo() throws IOException, RuleParseException {
+
+	Logging.info("episodeToDo(pid="+playerId+"); cs=" + currentSeriesNo +", finished=" + alreadyFinished());
 
 	while(currentSeriesNo < allSeries.size()) {	    
 	    Series ser=getCurrentSeries();
@@ -354,6 +357,7 @@ public class PlayerInfo {
 			x.giveUp();
 			Main.persistObjects(x);
 		    } else {
+			Logging.info("episodeToDo(pid="+playerId+"): returning existing episode " + x.episodeId);
 			return x;
 		    }
 		}
@@ -368,12 +372,17 @@ public class PlayerInfo {
 
 	    if (x!=null) {
 		ser.episodes.add(x);
-		addEpisode(x);
+		addEpisode(x);	
+		Logging.info("episodeToDo(pid="+playerId+"): returning new episode " + x.episodeId);
 		return x;
-	    }	    	    	    
+	    }
+	    Logging.info("episodeToDo(pid="+playerId+"): nextSeries");
 	    goToNextSeries();
 	}
-	
+
+
+	Logging.info("episodeToDo(pid="+playerId+"): cannot return anything");
+
 	return null;
     }
 
@@ -397,6 +406,7 @@ public class PlayerInfo {
 	and persists this object.
      */
     private void goToNextSeries() {
+	if (alreadyFinished()) return;
 	currentSeriesNo++;
 	inBonus=false;
 	Main.persistObjects(this);
@@ -473,7 +483,7 @@ public class PlayerInfo {
 	    v.add(s);
 	    j++;
 	}
-	v.add("R=$"+getTotalRewardEarned());
+	v.add("curSer="+currentSeriesNo+" b="+inBonus+", R=$"+getTotalRewardEarned());
 	return String.join("\n", v);
     }
 

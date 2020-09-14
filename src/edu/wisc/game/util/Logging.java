@@ -21,21 +21,21 @@ public class Logging {
 
     public static void error(String msg) {
 	Logger logger = Logger.getLogger(NAME);
-	System.err.println("ERROR: " + msg);
+	//System.err.println("ERROR: " + msg);
 	//OnceMessage.add("ERROR: " + msg);
 	logger.severe(msg);
     }
 
     public static void warning(String msg) {
 	Logger logger = Logger.getLogger(NAME);
-	System.err.println("WARNING: " + msg);
+	//System.err.println("WARNING: " + msg);
 	//OnceMessage.add("ERROR: " + msg);
 	logger.warning(msg);
     }
 
     public static void info(String msg) {
 	Logger logger = Logger.getLogger(NAME);
-	System.err.println(msg);
+	//System.err.println("INFO: " +msg);
 	logger.info(msg);
     }
 

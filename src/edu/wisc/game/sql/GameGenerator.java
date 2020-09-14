@@ -8,15 +8,16 @@ import edu.wisc.game.parser.*;
 import edu.wisc.game.engine.*;
 
 
-
-/** This class generates random games based on the provided parameter range specifications */
+/** This class generates random games (with the same rule set and
+    randomly created initial boards) based on the provided parameter
+    range specifications */
 public class GameGenerator {
-
-    final int[] nPiecesRange, nShapesRange, nColorsRange;
-    final RuleSet rules;
 
     /** If this is set, just keep returning the same game every time */
     final Game sameGame;
+
+    final int[] nPiecesRange, nShapesRange, nColorsRange;
+    final RuleSet rules;
 
     /** Creates a trivial generator, which keeps returning the same game */
     public GameGenerator(Game g) {
@@ -48,7 +49,7 @@ public class GameGenerator {
 	nPiecesRange = _nPiecesRange;
 	nShapesRange = _nShapesRange;
 	nColorsRange = _nColorsRange;
-	if (nPiecesRange[0]> nPiecesRange[1] ||
+	if (nPiecesRange[0]>nPiecesRange[1] ||
 	    nShapesRange[0]>nShapesRange[1] ||
 	    nColorsRange[0]>nColorsRange[1])  throw new IOException("GameGenerator: Invalid param range");
 	if (nPiecesRange[0]<=0) throw new IOException("GameGenerator: Number of pieces must be positive");
@@ -57,7 +58,8 @@ public class GameGenerator {
 	rules = _rules;
     }
 
-    
+    /** Generates a game with a random initial board, in accordance with this 
+	generator's parameters */
     public Game nextGame() {
 	if (sameGame!=null) return sameGame;
 	int nPieces = Board.random.getInRange(nPiecesRange);

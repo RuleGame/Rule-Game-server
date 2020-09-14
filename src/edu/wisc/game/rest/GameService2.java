@@ -44,7 +44,7 @@ public class GameService2 {
     @Produces(MediaType.APPLICATION_JSON)
     public NewEpisodeWrapper2
 	mostRecentEpisode(@FormParam("playerId") String playerId) {
-	return new NewEpisodeWrapper2(playerId, true);
+	return new NewEpisodeWrapper2(playerId, true, false, false);
     }
 
 
@@ -56,9 +56,7 @@ public class GameService2 {
 	newEpisode(@FormParam("playerId") String playerId,
 		   @DefaultValue("false") @FormParam("activateBonus") boolean activateBonus,
 		   @DefaultValue("false") @FormParam("giveUp") boolean giveUp) {
-	if (activateBonus) new  ActivateBonusWrapper(playerId);
-	if (giveUp)  new GiveUpWrapper(playerId);
-	return new NewEpisodeWrapper2(playerId, false);
+	return new NewEpisodeWrapper2(playerId, false, activateBonus, giveUp);
     }
 
     
@@ -83,18 +81,22 @@ public class GameService2 {
 				    @FormParam("by") int by,
 				    @FormParam("cnt") int cnt
 				    )   {
-	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
+	Episode.Display rv=null;
+	//EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
+	Episode epi = EpisodeInfo.locateEpisode(episodeId);
 	if (epi==null) return dummyEpisode.new Display(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID: "+episodeId);
 	try {	    
-	    return epi.doMove(y,x,by,bx, cnt);
+	    return rv=epi.doMove(y,x,by,bx, cnt);
 	} catch( Exception ex) {
 	    System.err.print("/move: " + ex);
 	    ex.printStackTrace(System.err);
-	    return epi.new Display(Episode.CODE.INVALID_ARGUMENTS, ex.getMessage());
+	    return rv=epi.new Display(Episode.CODE.INVALID_ARGUMENTS, ex.getMessage());
+	} finally {
+	    Logging.info("move(epi=" +  episodeId +", ("+x+","+y+") to ("+bx+","+by+"), cnt="+cnt+"), return " + JsonReflect.reflectToJSONObject(rv, true));
 	}
     }
 
-    Episode dummyEpisode = new Episode();
+    private static Episode dummyEpisode = new Episode();
 
     @POST
     @Path("/activateBonus") 

@@ -126,6 +126,12 @@ public class ParaSet extends HashMap<String, Object> {
     public String getRuleSetName() {
 	return (String)get("rule_id");
     }
+
+    public double getClearingThreshold() {
+	Double x = getDouble("clearing_threshold");
+	return x;
+    }
+
 	
 }
 			     

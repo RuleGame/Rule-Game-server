@@ -66,7 +66,7 @@ public class GameServiceHtml extends GameService2 {
 
 
 
-	NewEpisodeWrapper2 w = new NewEpisodeWrapper2(playerId, recent);
+	NewEpisodeWrapper2 w = new NewEpisodeWrapper2(playerId, recent, false, false);
 	String episodeId = w.getEpisodeId();
 
 	String head= episodeId +" : "+ (recent? "mostRecentEpisode":"newEpisode");

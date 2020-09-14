@@ -92,8 +92,8 @@ public class EpisodeInfo extends Episode {
 	    nColorsRange = {para.getInt("min_colors"),
 			    para.getInt("max_colors")};
 
-	GameGenerator gg =new 	GameGenerator(ruleSetName, nPiecesRange, nShapesRange,
-					      nColorsRange);    
+	GameGenerator gg =new GameGenerator(ruleSetName, nPiecesRange, nShapesRange,
+					    nColorsRange);    
 	   
 	Game game = gg.nextGame();
 	EpisodeInfo epi = new EpisodeInfo(game);
@@ -109,8 +109,16 @@ public class EpisodeInfo extends Episode {
 	has been completed, and was completed sufficiently quickly */
     boolean deservesBonus(double clearingThreshold ) {
 	bonusSuccessful = bonusSuccessful ||
-	    (bonus && cleared && attemptCnt <= getNPiecesStart() * clearingThreshold);
+	    (bonus && cleared && movesLeftToStayInBonus(clearingThreshold)>=0);
 	return bonusSuccessful;
+    }
+
+    /** The player must clear the board within this many move attempts in
+	order to stay in the bonus series */
+    private Integer movesLeftToStayInBonus(double clearingThreshold) {
+	return bonus?
+	    (int)(getNPiecesStart()*clearingThreshold) -  attemptCnt :
+	    null;
     }
 
     /** An episode was part of a bonus series, but has permanently failed to earn the
@@ -167,6 +175,11 @@ public class EpisodeInfo extends Episode {
 		totalRewardEarned = p.getTotalRewardEarned();
 
 		totalBoardsPredicted = p.totalBoardsPredicted();
+
+		double clearingThreshold = p.getCurrentSeries().para.getClearingThreshold();
+				
+		movesLeftToStayInBonus = EpisodeInfo.this.movesLeftToStayInBonus(clearingThreshold);
+		
 		errmsg += "\nDEBUG\n" + getPlayer().report();
 	    }	       
 	}
@@ -190,32 +203,24 @@ public class EpisodeInfo extends Episode {
 	*/
 	int seriesNo;
 	public int getSeriesNo() { return seriesNo; }
-	//	@XmlElement
-	//	public void setSeriesNo(int _seriesNo) { seriesNo = _seriesNo; }
 	
 	/** The number of this episode within the current series (zero-based).
 	    This can also be interpreted as the number of the preceding episodes (completed or given up) in this series.
 	*/
 	int episodeNo;
 	public int getEpisodeNo() { return episodeNo; }
-	//	@XmlElement
-	//	public void setEpisodeNo(int _episodeNo) { episodeNo = _episodeNo; }
+
 	
 	/** The number of bonus episodes that have been completed (or given up) prior to
 	    the beginning of this episode. */
 	int bonusEpisodeNo;
 	public int getBonusEpisodeNo() { return bonusEpisodeNo; }
-	//	@XmlElement
-	//	public void setBonusEpisodeNo(int _bonusEpisodeNo) { bonusEpisodeNo = _bonusEpisodeNo; }
 
-	    /** This is set to true if an "Activate Bonus" button can be displayed,
+	/** This is set to true if an "Activate Bonus" button can be displayed,
 	i.e. the player is eligible to start bonus episodes, but has not done that 
 	yet */
 	boolean canActivateBonus;
-	public boolean getCanActivateBonus() { return canActivateBonus; }
-	//	@XmlElement
-	//	public void setCanActivateBonus(boolean _canActivateBonus) { canActivateBonus = _canActivateBonus; }
-	
+	public boolean getCanActivateBonus() { return canActivateBonus; }	
 
 	int totalBoardsPredicted;
 	/** Based on the current situation, what is the maximum number
@@ -224,18 +229,18 @@ public class EpisodeInfo extends Episode {
 	    or until the bonus is earned, if in the bonus subseries).
 	*/
 	public int getTotalBoardsPredicted() { return totalBoardsPredicted; }
-	//        @XmlElement
-	//        public void setTotalBoardsPredicted(int _totalBoardsPredicted) { totalBoardsPredicted = _totalBoardsPredicted; }
 
 	boolean guessSaved =  EpisodeInfo.this.guessSaved;
 	public boolean getGuessSaved() { return guessSaved; }
-	//	public void setGuessSaved(boolean _guessSaved) { guessSaved = _guessSaved; }
 
 	RuleSet.ReportedSrc rulesSrc = rules.reportSrc();
 	public RuleSet.ReportedSrc getRulesSrc() { return rulesSrc; }
 
 	int ruleLineNo = EpisodeInfo.this.ruleLineNo;
 	public int getRuleLineNo() { return ruleLineNo; }
+
+	Integer movesLeftToStayInBonus = null;
+	public Integer getMovesLeftToStayInBonus() { return movesLeftToStayInBonus; }
    
     }
     

@@ -12,6 +12,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import edu.wisc.game.util.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.sql.*;
+import edu.wisc.game.reflect.*;
 
 
 /**
@@ -42,7 +43,24 @@ public class NewEpisodeWrapper2 extends ResponseBase {
     private void setDisplay(Episode.Display _display) { display = _display; }
 
     /** @param existing If true, look for the most recent existing episode (completed or incomplete); if false, return the recent incomplete expisode or create a new one */
-    NewEpisodeWrapper2(String pid, boolean existing) {
+    NewEpisodeWrapper2(String pid, boolean existing, boolean activateBonus, boolean giveUp) {
+
+	Logging.info("NewEpisodeWrapper2(pid="+ pid+", existing="+existing+
+		     ", activate="+activateBonus+", gu=" + giveUp);
+	
+	ResponseBase r=null;
+	if (activateBonus) {
+	    r = new  ActivateBonusWrapper(pid);
+	}
+	if (giveUp && (r==null || !r.getError()) )  {
+	    r = new GiveUpWrapper(pid);
+	}
+	if (r!=null && r.getError()) {
+	    setError(true);
+	    setErrmsg(r.getErrmsg());
+	    return;
+	}
+	
 	try {
 	    // register the player if he has not been registered
 	    PlayerResponse q =new PlayerResponse(pid);
@@ -53,6 +71,8 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	    }
 
 	    PlayerInfo x = PlayerResponse.findPlayerInfo(pid);
+	    Logging.info("NewEpisodeWrapper2(pid="+ pid+"): player="+
+			 (x==null? "null" : "\n" + x.report()));
 	    if (x==null) {
 		setError(true);
 		setErrmsg("Player not found: " + pid);
@@ -82,7 +102,11 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	    setErrmsg(ex.getMessage());
 	    System.err.print(ex);
 	    ex.printStackTrace(System.err);
-	}      
+	} finally {
+	    Logging.info("NewEpisodeWrapper2(pid="+ pid+"): returning:\n" +
+			 JsonReflect.reflectToJSONObject(this, true));
+	}
+		     
 	
     }
     

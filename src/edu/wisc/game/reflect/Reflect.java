@@ -189,17 +189,12 @@ public class Reflect {
 		continue;
 	    }
 
-
-
 	    if (e.g.getAnnotation(javax.xml.bind.annotation.XmlTransient.class)!=null) {
 		// This annotation is used to prevent REST from converting a field
 		// to JSON... so we should ignore it to. I use it to prevent
 		// infinite looping on back links
 		continue;
 	    }
-
-
-
 	    
 	    Display anno = (Display)e.f.getAnnotation(Display.class);
 	    e.editable = (anno!=null) && anno.editable(); // default no
@@ -213,7 +208,7 @@ public class Reflect {
 	}
 	entries = v.toArray(new Entry[v.size()]);
 	Arrays.sort(entries);
-	Logging.info("Reflect(" + c +") successful, e.length="+entries.length);	
+	//	Logging.info("Reflect(" + c +") successful, e.length="+entries.length);	
     } 
 
     /** Prints all appropriate fields of the specified object in the default
