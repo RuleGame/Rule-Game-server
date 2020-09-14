@@ -240,6 +240,12 @@ public class EpisodeInfo extends Episode {
 	public int getRuleLineNo() { return ruleLineNo; }
 
 	Integer movesLeftToStayInBonus = null;
+	/**
+<ul>
+<li>If it's not a bonus episode, null is returned.
+<li>If it's a bonus episode, we return the number X such that if, starting from this point, the player must clear the board in no more than X additional moves in order not to be ejected from the bonus series. The number 0, or a negative number, means  that, unless the board has just been cleared, the player will be ejected from the bonus series at the end of the current episode (i.e. once he eventually clears it). A negative number means that the player has already made more move attempts than he's allowed to make in order to stay in the bonus series.
+</ul>
+	 */
 	public Integer getMovesLeftToStayInBonus() { return movesLeftToStayInBonus; }
    
     }

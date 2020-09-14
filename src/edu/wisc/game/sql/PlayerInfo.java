@@ -300,7 +300,21 @@ public class PlayerInfo {
 	}
     }
 
-    /** This method should be called after restoring the object from the SQL database, in order to re-create some of the necessary non-persistent structures. */
+    /** This method should be called after restoring the object from
+      the SQL database, in order to re-create some of the necessary
+      non-persistent structures. Typically, this may be needed if
+      player resumes his activity after the Game Server has been
+      restarted.  In particular, we restore the "series" structure,
+      reloading paramter sets from the disk files and and putting
+      episodes in their series arrays.
+
+      <p>
+      We also review the episodes, and "give up" all incomplete ones, because
+      they don't have their transcripts and rules loaded, and cannot
+      be continued. This may happen only rarely, when an episode
+      had been persisted before beeing completed, and then the server
+      was restarted.     
+    */
     public void restoreTransientFields() {
 	String exp = experimentPlan;
 	// grandfathering older (pre 1.016) entries
@@ -317,9 +331,14 @@ public class PlayerInfo {
 	    Series ser = new Series(para);
 	    allSeries.add(ser);
 	    while(k<allEpisodes.size() && allEpisodes.get(k).seriesNo==j) {
-		ser.episodes.add(  allEpisodes.get(k++));
+		EpisodeInfo epi = allEpisodes.get(k++);
+
+		if (!epi.isCompleted()) epi.giveUp();
+		ser.episodes.add(epi);
 	    }
 	}
+
+	
     }
 
     /** Retrieves the most recent episode, which may be completed or incomplete.
