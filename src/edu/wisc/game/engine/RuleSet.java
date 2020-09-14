@@ -21,7 +21,7 @@ public class RuleSet {
     
     public static class PositionList {
 	/** If true, there is no restriction */
-	final boolean any;
+	private boolean any;
 	Vector<Integer> list1 = new Vector<>();
 	/** The keys can be  PositionSelector names or user-defined order
 	    names */
@@ -37,7 +37,10 @@ public class RuleSet {
 	    
 	    String q[]= new String[]{ Util.joinNonBlank(",", list1),	    
 				      Util.joinNonBlank(",", list2)};
-	    return "[" + Util.joinNonBlank(",", q) + "]";	       
+	    
+	    String s = Util.joinNonBlank(",", q);
+	    if (list1.size()+list2.size()>1) s = "[" + s + "]";	       
+	    return s;
 	}
 
 	
@@ -72,6 +75,7 @@ public class RuleSet {
 	    } else {
 		throw new RuleParseException("Invalid position specifier: " + ex);
 	    }
+	    if (list1.size()==0 && list2.size()==0) throw new RuleParseException("No position list specified! ex=" + ex);
 	}
 
 	/** Does this position list presently allow picking a piece from the
@@ -92,10 +96,16 @@ public class RuleSet {
 	    return false;
 	}
 
-	/** Used when converting Kevin's JSON to our server format */
+	/** Used when converting Kevin's JSON to our server format. Only 
+	    apply the new order to atoms that do not have a position list or
+	    an order already.
+	 */
 	void forceOrder(String orderName) {
-	    if (list1.size()>0 || list2.size()>0) throw new IllegalArgumentException("Cannot force an order on this PositionList, because it is already non-empty");
-	    list2.add(orderName);
+	    if (any) {
+		any = false;
+		if (list1.size()>0 || list2.size()>0) throw new IllegalArgumentException("Cannot force an order on this PositionList, because it is already non-empty");
+		list2.add(orderName);
+	    } 
 	}
 	
     }

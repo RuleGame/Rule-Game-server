@@ -235,6 +235,43 @@ qt-05,20200908-131943-MP1B3R,TD-01,must go to next series now
 
 <h2>Working with the data</h2>
 
+ <p>Below are some examples of how, in general terms, the data can be processed. While the discussion of the data processing in each example is given in general terms, it is not difficult to convert it to specific SQL queries or operations with lists and hash tables in a language such as Perl or Python.
+
+   <h3>Example 1: Identify and analyze all episodes played by the rules of a particular rule set R by players enrolled in a particular experiment plan E</h3>
+
+ <p>This can proceed as follows:</p>
+
+ <ol>
+
+   <li>Scan the trial list files in the directory for experiment plan E, creating a table that indicates, for each trial list name, what position (0-based) in that trial list the rule set R occupies. Let's call this table T1.
+ 
+   <li>From the PlayerInfo table, select the playerId and the internal database id of all players who are enrolled in experiment plan E. One can call the resulting table T2.
+
+   <li>Using table T1, and each player's trial list name (as recorded in the PLayerInfo table) determine, for each of the players identified in the previous step, what is the seriesNo of the series played by rule set R. Let's call the resulting table (mapping the internal database id of the player to the relevant seriesNo) T3.
+
+   <li>Now, look at the Episode table, and use table T3 to retrieve the Episode entries where the player is one of those participating in experiment E, and the rule set is R. Let's call this list of episodes "table T4". 
+
+   <li>By looking at table T3, one can find out all relevant statistics about the episodes under consideration, e.g. how many pieces were initially on the board in each experiment, whether the episode was completed or given up,  and how many moves it took to clear the board.
+
+   <li>Furthermore, if the specific initial board positions and the episode transcripts are of interest, the relevant lines  can be retrieved from the files in the boards and transcripts directories. One needs to look at the files corresponding to the players listed in T1, and from these files, select lines where the episode ID is in the list T4.
+
+     </ol>
+
+
+
+   
+
+     
+       
+
+   
+
+   
+
+   
+   <hr>
+
+
 <p><em>I will write one more section here, explaining how to put the data together, on a few simple examples.</em></p>
 
 </body>
