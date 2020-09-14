@@ -233,7 +233,7 @@ public class EpisodeInfo extends Episode {
 	boolean guessSaved =  EpisodeInfo.this.guessSaved;
 	public boolean getGuessSaved() { return guessSaved; }
 
-	RuleSet.ReportedSrc rulesSrc = rules.reportSrc();
+	RuleSet.ReportedSrc rulesSrc = (rules==null)? null:rules.reportSrc();
 	public RuleSet.ReportedSrc getRulesSrc() { return rulesSrc; }
 
 	int ruleLineNo = EpisodeInfo.this.ruleLineNo;
