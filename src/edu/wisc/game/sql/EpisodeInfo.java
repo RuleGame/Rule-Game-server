@@ -114,7 +114,8 @@ public class EpisodeInfo extends Episode {
     }
 
     /** The player must clear the board within this many move attempts in
-	order to stay in the bonus series */
+	order to stay in the bonus series. This is only defined during
+	bonus episodes. */
     private Integer movesLeftToStayInBonus(double clearingThreshold) {
 	return bonus?
 	    (int)(getNPiecesStart()*clearingThreshold) -  attemptCnt :
@@ -176,9 +177,11 @@ public class EpisodeInfo extends Episode {
 
 		totalBoardsPredicted = p.totalBoardsPredicted();
 
-		double clearingThreshold = p.getCurrentSeries().para.getClearingThreshold();
-				
-		movesLeftToStayInBonus = EpisodeInfo.this.movesLeftToStayInBonus(clearingThreshold);
+		ParaSet para=p.getPara(EpisodeInfo.this);
+		if (para!=null) {
+		    double clearingThreshold = para.getClearingThreshold();
+		    movesLeftToStayInBonus = EpisodeInfo.this.movesLeftToStayInBonus(clearingThreshold);
+		}
 		
 		errmsg += "\nDEBUG\n" + getPlayer().report();
 	    }	       

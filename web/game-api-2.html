@@ -15,7 +15,7 @@
 <li>POST <strong><tt>/startTrial:</tt> Start a player's interaction with the system, and obtain a randomly selected trial list for this player</strong>
   <form method="post" action="game-data/GameService2/player"
 	 enctype="application/x-www-form-urlencoded">
-     Player ID: <input name="playerId" type="text" size="25" value="AnyText-01">
+     Player ID: <input name="playerId" type="text" size="25" value="AnyText01">
 	  <input type="submit">
   </form>
   <p>The input parameter is the player ID (a string). In the future, the system will determine, based on the player ID, what experiment the person is enrolled into (e.g MTurkers vs. psych students vs. ourselves testing a particular game); at present, the player ID does not really matter, as everybody is considered to be enrolled in the experiment called "default".</P>
@@ -219,7 +219,7 @@
 	<li>POST <strong><tt>/activateBonus:</tt> Activate the bonus for this player. The current episode (if still active) and all subsequent episode of the same series (i.e. played by the same rule) will constitute the "bonus subseries"</strong>
   <form method="post" action="game-data/GameService2/activateBonus"
 	 enctype="application/x-www-form-urlencoded">
-     <input name="playerId" type="text" size="25" value="AnyText-01">
+     <input name="playerId" type="text" size="25" value="AnyText01">
 	  <input type="submit">
   </form>
   <br>Sample output
@@ -233,7 +233,7 @@
 	<li>POST <strong><tt>/giveUp:</tt> "Gives up" the current series (i.e. the series played with the current param set), so that the next episode will be run with the next param set.</strong> If this is invoked while an episode is in progress, the episode will be marked as "given up" as well. However, you may choose to only used this call at the end of an episode (that is, give the player an option of switching to the next param set for the next episode, regardless of one's current position in the current series).
   <form method="post" action="game-data/GameService2/giveUp"
 	 enctype="application/x-www-form-urlencoded">
-Player ID:     <input name="playerId" type="text" size="25" value="AnyText-01">
+Player ID:     <input name="playerId" type="text" size="25" value="AnyText01">
 Series No.:     <input name="seriesNo" type="text" size="2" value="0">
 	  <input type="submit">
   </form>
