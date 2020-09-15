@@ -145,6 +145,7 @@ public class RuleSet {
 	    under consideration*/
 	public BitSet destinations( HashMap<String, HashSet<Integer>> varMap) {
 	    BitSet q= new BitSet(Board.buckets.length);
+	    
 	    for(Expression.ArithmeticExpression ae: this) {
 		q.or( Util.toBitSet( ae.evalSet(varMap)));
 	    }

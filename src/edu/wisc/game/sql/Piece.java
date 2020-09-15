@@ -163,5 +163,9 @@ public class Piece  implements Serializable {
     @XmlElement
     public void setBuckets(int[] _buckets) { buckets = _buckets; }
 
+    public String toString() {
+	return "["+color+" " + shape+", x="+x+", y="+y+"]";
+    }
+
     
 }

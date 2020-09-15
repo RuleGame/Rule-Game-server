@@ -63,6 +63,9 @@ public class Episode {
 	int code;
  	public int getCode() { return code; }
 	Date time = new Date();
+	public String toString() {
+	    return "MOVE " + pos + " to B" + bucketNo;
+	}
    }
     
     final RuleSet rules;
@@ -120,13 +123,22 @@ public class Episode {
     }
     
     
-    /** Our interface to the current rule line. When pieces are removed, this
+    /** Our interface to the current rule line. It includes the underlying 
+	rule line and the current counters which indicate how many times
+	the atoms in that line have been used. 	When pieces are removed, this
 	structure updates itself, until it cannot pick any pieces anymore. */
     class RuleLine {
 	final RuleSet.Row row;
 	private int ourGlobalCounter;
 	private int ourCounter[];
 
+	public String toString() {
+	    Vector<String> v = new Vector<>();
+	    for(int k:  ourCounter) v.add("" + k);
+	    return "[RL: " + row.toSrc() + " / " +  ourGlobalCounter + " / " + String.join(",", v) + "]";
+	}
+
+	
 	RuleLine(RuleSet rules, int rowNo) {
 	    if (rowNo < 0 || rowNo >= rules.rows.size()) throw new IllegalArgumentException("Invalid row number");
 	    row = rules.rows.get(rowNo);
@@ -134,6 +146,7 @@ public class Episode {
 	    ourCounter = new int[row.size()];
 	    for(int i=0; i<ourCounter.length; i++) ourCounter[i] = row.get(i).counter;
 	    doneWith = exhausted() || !buildAcceptanceMap();
+	    //	    System.err.println("Constructed "+ this+"; exhausted()=" + exhausted()+"; doneWith =" + doneWith);
 	}
 
 	/** This is set once all counters are exhausted, or no more
@@ -197,6 +210,7 @@ public class Episode {
 	   rule (atom) allows the specified piece to be moved.
 	*/
 	private BitSet[] pieceAcceptance(Piece p) {
+	    //	    System.err.println("pieceAcceptance(p=" +p+")");
 	    if (doneWith) throw new IllegalArgumentException("Forgot to scroll?");
 
 	    if (row.globalCounter>=0 &&  ourGlobalCounter<=0)  throw new IllegalArgumentException("Forgot to set the scroll flag on 0 counter!");
@@ -205,6 +219,9 @@ public class Episode {
 	    BitSet whoAccepts[] = new BitSet[row.size()];
 	    Pos pos = p.pos();
 	    BucketVarMap  varMap = new  BucketVarMap(p);
+
+	    //System.err.println("varMap=" + varMap);
+
 	    
 	    for(int j=0; j<row.size(); j++) {
 		whoAccepts[j] = new BitSet(NBU);
@@ -216,6 +233,7 @@ public class Episode {
 		if (!atom.plist.allowsPicking(pos.num(), eligibleForEachOrder)) continue;
 		BitSet d = atom.bucketList.destinations( varMap);
 		whoAccepts[j].or(d);
+		//	System.err.println("pieceAcceptance(p=" +p+"), dest="+d+", whoAccepts["+j+"]=" + 	whoAccepts[j]);
 	    }
 	    return whoAccepts;
 	}
@@ -224,6 +242,8 @@ public class Episode {
 	/** Request acceptance for this move. Returns result (accept/deny);
 	    in case of acceptance, decrements appropriate counters */
 	int accept(Move move) {
+
+	    //	    System.err.println("Accept: "+this+", move="+ move);
 	    
 	    if (doneWith) throw  new IllegalArgumentException("Forgot to scroll?");
 	    transcript.add(move);
@@ -235,18 +255,30 @@ public class Episode {
 	    
 	    BitSet[] r = acceptanceMap[move.pos];
 	    Vector<Integer> acceptingAtoms = new  Vector<>();
+	    Vector<String> v = new Vector<>();
 	    for(int j=0; j<row.size(); j++) {
 		if (r[j].get(move.bucketNo)) {
+		    v.add("" + j + "(c=" + ourCounter[j]+")");
 		    acceptingAtoms.add(j);
 		    if (ourCounter[j]>0) {
 			ourCounter[j]--;
 		    }
 		}
 	    }
+	    
+	    //	    System.err.println("Acceptors: " + String.join(" ", v));
 	    if (acceptingAtoms.isEmpty()) return  move.code=CODE.DENY;
+
+	    //--- Process the acceptance -------------------------
 	    if (ourGlobalCounter>0) ourGlobalCounter--;
 
 	    doneMoveCnt++;
+
+	    // Remember where this piece was moved
+	    pcMap.put(move.piece.getColor(), move.bucketNo);
+	    psMap.put(move.piece.getShape(), move.bucketNo);
+	    pMap = move.bucketNo;
+	    
 	    removedPieces[move.pos] = pieces[move.pos];
 	    removedPieces[move.pos].setDropped(move.bucketNo);
 	    pieces[move.pos] = null; // remove the piece
@@ -254,22 +286,27 @@ public class Episode {
 	    // Check if this rule can continue to be used, and if so,
 	    // update its acceptance map
 	    doneWith = exhausted() || !buildAcceptanceMap();
-
-	    System.err.println("Episode.accept: move accepted. card=" + onBoard().cardinality());
+	    //System.err.println("doneWith=" + doneWith);
+	    
+	    //System.err.println("Episode.accept: move accepted. card=" + onBoard().cardinality());
 	    cleared = (onBoard().cardinality()==0);
 	    
 	    //	    Logging.info("Accepted, return " + CODE.ACCEPT);
 	    return  move.code=CODE.ACCEPT;
 	}
 
-	/** Is this row of rules "exhausted", based either on the global 
-	    counter for the row, or the individual rules? */
+	/** Is this row of rules "exhausted", based either on the
+	    global counter for the row, or the individual rules?
+	    "Control moves to the next row when either all counters OR
+	    the global counter reach zero", as per Paul's specs.
+	*/
 	boolean exhausted() {
 	    if (row.globalCounter>=0 && ourGlobalCounter==0) return true;
-	    for(int j=0; j<row.size(); j++) {	    
-		if (row.get(j).counter>=0 && ourCounter[j]==0)  return true;
+	    for(int j=0; j<row.size(); j++) {
+		if (row.get(j).counter<0) return false; // "*" cannot be exhaustd
+		if (ourCounter[j]>0) return false;
 	    }
-	    return false;
+	    return true;
 	}
 	
     }
@@ -297,6 +334,17 @@ public class Episode {
 	    put(BucketSelector.Remotest.toString(), pos.remotestBucket());
 	}
 
+
+	public String toString() {
+	    Vector<String> v = new Vector<>();
+	    for(String key: keySet()) {
+		Vector<String> w = new Vector<>();
+		for(int z:  get(key)) w.add("" + z);
+		v.add("["+key+":"+ Util.join(",", w)+ "]");
+	    }
+	    return String.join(" ", v);
+	}
+	
     }
 
     @Transient
@@ -458,17 +506,23 @@ public class Episode {
 	eligibleForEachOrder.update();
 
 	boolean mustUpdateRules = (ruleLine==null || ruleLine.doneWith);
-		
+
+	//System.err.println("doPrep: mustUpdateRules=" + mustUpdateRules +", ruleLineNo="+ ruleLineNo);
+
+
+	
 	if (mustUpdateRules) {
 	    ruleLineNo= (ruleLine==null) ? 0: (ruleLineNo+1) %rules.rows.size();
 	    ruleLine = new RuleLine(rules, ruleLineNo);
+	    //	    System.err.println("doPrep: updated ruleLineNo="+ ruleLineNo+", doneWith=" + ruleLine.doneWith);
+
 	    final int no0 = ruleLineNo;
 	    // if the new rule is exhausted, or allows no pieces to be moved,
 	    // scroll on
 	    //	    System.out.println("# BAM(line " + ruleLineNo + ")");
 	    while( ruleLine.doneWith) {
 		 ruleLineNo=  (ruleLineNo+1) %rules.rows.size();
-		 //	 System.out.println("# BAM(scroll to line " + ruleLineNo + ")");
+		 //		 System.err.println("# BAM(scroll to line " + ruleLineNo + ")");
 		 // If we have checked all lines, and no line contains
 		 // a rule that can move any piece, then it's a stalemate
 		 if (ruleLineNo==no0) {
@@ -587,7 +641,7 @@ public class Episode {
 	return json.toString();
     }
 
-    static final String version = "1.018";
+    static final String version = "1.019";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();
