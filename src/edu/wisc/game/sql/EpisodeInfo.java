@@ -157,9 +157,14 @@ public class EpisodeInfo extends Episode {
 
  
 
-    /** Provides some extra information related to the episode's context
-	within the experiment. The assumption is that this episode 
-	is the most recent ones.
+    /** Provides some extra information related to the episode's
+	context within the experiment. The assumption is that this
+	episode is the most recent ones. This structure is converted
+	to JSON and sent to the GUI client as the response of the
+	/display and /move calls, as well as as one of the components
+	of the responses to the /newEpisode and /mostRecentEpisosde calls.
+	The list of the fields here is based on what Kevin said the 
+	GUI tool needs to render the board and messages around it.
      */
     public class ExtendedDisplay extends Display {
 	ExtendedDisplay(int _code, 	String _errmsg) {
@@ -182,6 +187,10 @@ public class EpisodeInfo extends Episode {
 		    double clearingThreshold = para.getClearingThreshold();
 		    movesLeftToStayInBonus = EpisodeInfo.this.movesLeftToStayInBonus(clearingThreshold);
 		}
+
+		if (finishCode!=FINISH_CODE.NO) {
+		    transitionMap = p.new TransitionMap();
+		}
 		
 		errmsg += "\nDEBUG\n" + getPlayer().report();
 	    }	       
@@ -191,38 +200,39 @@ public class EpisodeInfo extends Episode {
 	}
 
 	boolean bonus;
+	/** True if this episode is part of a bonus subseries. */
 	public boolean isBonus() { return bonus; }
-	@XmlElement
-	public void setBonus(boolean _bonus) { bonus = _bonus; }
+	//	@XmlElement
+	//	public void setBonus(boolean _bonus) { bonus = _bonus; }
 
-	/** Totals for the player; only used in web GUI */
 	int totalRewardEarned=0;
+	/** The total reward earned by this player so far, including the regular rewards and any bonuses, for all episodes. */
 	public int getTotalRewardEarned() { return totalRewardEarned; }
-	@XmlElement
-	public void setTotalRewardEarned(int _totalRewardEarned) { totalRewardEarned = _totalRewardEarned; }
+	//@XmlElement
+	//public void setTotalRewardEarned(int _totalRewardEarned) { totalRewardEarned = _totalRewardEarned; }
 	
+	int seriesNo;
 	/** The number of the current series (zero-based) among all series in the trial list.
 	    This can also be interpreted as the number of the preceding series that have been completed or given up by this player.
 	*/
-	int seriesNo;
 	public int getSeriesNo() { return seriesNo; }
 	
+	int episodeNo;
 	/** The number of this episode within the current series (zero-based).
 	    This can also be interpreted as the number of the preceding episodes (completed or given up) in this series.
 	*/
-	int episodeNo;
 	public int getEpisodeNo() { return episodeNo; }
 
 	
+	int bonusEpisodeNo;
 	/** The number of bonus episodes that have been completed (or given up) prior to
 	    the beginning of this episode. */
-	int bonusEpisodeNo;
 	public int getBonusEpisodeNo() { return bonusEpisodeNo; }
 
-	/** This is set to true if an "Activate Bonus" button can be displayed,
-	i.e. the player is eligible to start bonus episodes, but has not done that 
-	yet */
 	boolean canActivateBonus;
+	/** This is set to true if an "Activate Bonus" button can be
+	displayed now, i.e. the player is eligible to start bonus
+	episodes, but has not done that yet */
 	public boolean getCanActivateBonus() { return canActivateBonus; }	
 
 	int totalBoardsPredicted;
@@ -234,12 +244,18 @@ public class EpisodeInfo extends Episode {
 	public int getTotalBoardsPredicted() { return totalBoardsPredicted; }
 
 	boolean guessSaved =  EpisodeInfo.this.guessSaved;
+	/** True if the player's guess has been recorded at the end of this episode */
 	public boolean getGuessSaved() { return guessSaved; }
 
 	RuleSet.ReportedSrc rulesSrc = (rules==null)? null:rules.reportSrc();
+	/** A structure that describes the rules of the game being played in this episode. */
 	public RuleSet.ReportedSrc getRulesSrc() { return rulesSrc; }
 
 	int ruleLineNo = EpisodeInfo.this.ruleLineNo;
+	/** Zero-based position of the line of the rule set that the
+	    game engine is currently looking at. This line will be the
+	    first line the engine will look at when accepting the
+	    player's next move. */
 	public int getRuleLineNo() { return ruleLineNo; }
 
 	Integer movesLeftToStayInBonus = null;
@@ -250,7 +266,16 @@ public class EpisodeInfo extends Episode {
 </ul>
 	 */
 	public Integer getMovesLeftToStayInBonus() { return movesLeftToStayInBonus; }
-   
+
+
+	PlayerInfo.TransitionMap transitionMap=null;
+	/** Describes the possible transitions (another episode in the
+	    same series, new series, etc) which can be effected after this
+	    episode. This can be used to generate transition buttons.	
+	    This field appears in JSON (i.e. is not null) only if the episode
+	    is finished, i.e. finishCode==0.
+	*/
+	public PlayerInfo.TransitionMap getTransitionMap() { return transitionMap; }
     }
     
     /** Builds a display to be sent out over the web UI */

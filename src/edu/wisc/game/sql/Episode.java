@@ -447,14 +447,14 @@ public class Episode {
 
     public static class FINISH_CODE {
 	public static final int
-	// there are still pieces on the board, and some are moveable
+	/** there are still pieces on the board, and some are moveable */
 	    NO = 0,
-	// no pieces left on the board
+	/** no pieces left on the board */
 	    FINISH = 1,
-	// there are some pieces on the board, but none can be moved anymore
+	/** there are some pieces on the board, but none can be moved anymore */
 	    STALEMATE=2,
-	// The player has said he does not want to play any more. This
-	// may only happen in some GUI versions.
+	/** The player has said he does not want to play any more. This
+	    may only happen in some GUI versions. */
 	    GIVEN_UP =3;
     }
 
@@ -641,7 +641,7 @@ public class Episode {
 	return json.toString();
     }
 
-    static final String version = "1.019";
+    static final String version = "1.020";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();
@@ -654,30 +654,35 @@ public class Episode {
 	int finishCode = Episode.this.getFinishCode();
 	Board board =  getCurrentBoard();
 
-	
+	/** What pieces are on the board now, and what pieces have been removed */
         public Board getBoard() { return board; }
         @XmlElement
         public void setBoard(Board _b) { board = _b; }
 
+	/** Is this episode still continues (code 0), has stalemated (2), or has the board been cleared (4)? */
 	public int getFinishCode() { return finishCode; }
-        //@XmlElement
-        //public void setFinishCode(int _finishCode) { finishCode = _finishCode; }
+    
 	int code;
 	String errmsg;
 
+	/** On a /move call: Has this move been accepted or rejected? (When returned by /display response, the value is -8). */
         public int getCode() { return code; }
         @XmlElement
         public void setCode(int _code) { code = _code; }
+	/** The error or debug messsage, if any */
         public String getErrmsg() { return errmsg; }
         @XmlElement
         public void setErrmsg(String _msg) { errmsg = _msg; }
 
        	int numMovesMade = Episode.this.attemptCnt;
+	/** How many move attempts (successful or not) has been made so far */
         public int getNumMovesMade() { return numMovesMade; }
         @XmlElement
         public void setNumMovesMade(int _numMovesMade) { numMovesMade = _numMovesMade;}
 
 	private Vector<Move> transcript =  Episode.this.transcript;
+	/** The list of all move attempts (successful or not) done so far
+	    in this episode */
 	public Vector<Move> getTranscript() { return transcript; }
 
 

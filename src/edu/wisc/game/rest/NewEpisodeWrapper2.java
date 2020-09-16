@@ -15,21 +15,35 @@ import edu.wisc.game.sql.*;
 import edu.wisc.game.reflect.*;
 
 
-/**
+/** This is an object that's converted to a JSON structure and sent to the client as a repsonse in /GameService2/newEpisode calls.
+<p>
 FIXME: need to add periodic purge on episodes 
  */
 public class NewEpisodeWrapper2 extends ResponseBase {
     String episodeId=null;
-    
+    /** The episode ID of the resumed or newly created episode */
     public String getEpisodeId() { return episodeId; }
-    
+
     ParaSet para;
+    /** The parameter set currently in effect. This comes from the
+	currently active line of the trial list file associated with the
+	player.
+    */
     public ParaSet getPara() { return para; }
     
     boolean alreadyFinished;
+    /** True if this player has finished all episodes he could play.
+	This means that the most recent episode has been completed,
+	and no more new episodes can be created.
+    */
     public boolean getAlreadyFinished() { return alreadyFinished; }
   
     Episode.Display display;
+   /** The structure with a lot of information about the current episode,
+       and its place in the experiment's framework.
+       (See {@link edu.wisc.game.sql.EpisodeInfo.ExtendedDisplay} for the full structure that's
+       actually found here)
+    */
     public Episode.Display getDisplay() { return display; }
     private void setDisplay(Episode.Display _display) { display = _display; }
 

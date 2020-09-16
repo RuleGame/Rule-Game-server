@@ -13,8 +13,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import edu.wisc.game.util.*;
 
-@XmlRootElement(name = "report") 
-
+//@XmlRootElement(name = "report") 
+/** This data structure is converted to JSON and send to the client in response to the /wrietFile web API call. */
 public class FileWriteReport extends ResponseBase {
     String path;
     long byteCnt;

@@ -4,7 +4,7 @@
 <body>
   <h1>RESTful API for the use by the Rule Game client - second batch</h1>
 
-  <p align="center"><em>Ver 1.017,  2020-09-11</em></p>
+  <p align="center"><em>Version 1.020,  2020-09-16</em></p>
 
   <p>This is the "Second Batch" (prefix=<tt>/GameService2</tt>)  of the Game Service web API calls. They are intended for use with a client app that works with players enrolled in experiments; each player is identified by a player ID, and the server assigns each player to a "trial list" (a particular track in the experiment plan with which this player ID is associated with).</p>
 
@@ -58,7 +58,9 @@
 	  <input type="submit">
 	</form>
 
-	<br>Sample output (in ver. 1.014); note that some fields have been moved from X to display.X. The fields within display.{...} are the same as those given by the /display and /move calls.	
+<p>For the meaning of the output fields, see the documentation for <a href="api/edu/wisc/game/rest/NewEpisodeWrapper2.html">NewEpisodeWrapper2</a>. A field named <tt>foo</tt> will be described there under <tt>getFoo()</tt> or (for boolean values) <tt>isFoo()</tt>.
+	
+  <p>Sample output (in ver. 1.014); note that some fields have been moved from X to display.X. The fields within display.{...} are the same as those given by the /display and /move calls.	
 	<pre>
 	  {"errmsg":"Debug:...",
 	  "error":false,
@@ -126,7 +128,10 @@
 	  Episode ID (returned by an earlier newEpisode call): <input name="episode" type="text" size="25"><br>
 	  <input type="submit">
       </form>
-      <br>Sample output (in ver. 1.016). The new fields are ruleSrc and ruleLineNo.
+<p>For the meaning of the output fields, see the documentation for <a href="api/edu/wisc/game/sql/EpisodeInfo.ExtendedDisplay.html">ExtendedDisplay</a>. A field named <tt>foo</tt> will be described there under <tt>getFoo()</tt> or (for boolean values) <tt>isFoo()</tt>.
+
+      
+  <p>Sample output (in ver. 1.016). The new fields are ruleSrc and ruleLineNo.
 <pre>
   {"bonus":false,
   "totalRewardEarned":0,
@@ -196,7 +201,12 @@
 	  Attempted move count so far (the number of previous calls to <strong><tt>move</tt></strong> in this episode. This can also be interpreted as 0-based number of this move attempt) <input name="cnt" type="text" value="0" size="5"><br>
 	  <input type="submit">
       </form>
-<br>Sample response<pre>
+
+   <p>The response structure is nearly identical to that of /move, except that <tt>code</tt> contains a value that describes the accept/deny code to this move.
+For the meaning of the output fields, see the documentation for <a href="api/edu/wisc/game/sql/EpisodeInfo.ExtendedDisplay.html">ExtendedDisplay</a>. A field named <tt>foo</tt> will be described there under <tt>getFoo()</tt> or (for boolean values) <tt>isFoo()</tt>.
+
+      
+<p>Sample response<pre>
   {"board":{"longId":0,"id":0,"value":
   [{"buckets":[1],"color":"BLUE","id":0,"shape":"TRIANGLE","x":4,"y":2},
   {"buckets":[1],"color":"BLUE","dropped":3,"id":0,"shape":"TRIANGLE","x":2,"y":3}]}, <em> // the board after this move </em>
@@ -262,12 +272,14 @@ Please type your guess here (an arbitrary test)
 	</textarea><br>
 	<input type="submit">
       </form>
-      <br>
+      <p>
 Response (on success):
       <pre>
 {"error":false,"byteCnt":91,"path":"/opt/tomcat/saved/guesses/qt-01.csv"}
 </pre>
 
+<p>For the meaning of the output fields, see the documentation for <a href="api/edu/wisc/game/rest/GuessWriteReport.html">GuessWriteReport</a>. A field named <tt>foo</tt> will be described there under <tt>getFoo()</tt> or (for boolean values) <tt>isFoo()</tt>.
+      
    <p>The response contains a structure, <tt>transitionMap</tt>, which can be used to create a set of button offering the player possible further actions. The structure describes buttons in terms of key/value pairs, where the key tells where you'll get if you click the button, and the value tells how you can get there.
      Listed below  are all possible key/value pairs, and their semantics.
 

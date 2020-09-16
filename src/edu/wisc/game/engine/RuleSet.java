@@ -348,13 +348,19 @@ public class RuleSet {
     public ReportedSrc reportSrc() {	return new ReportedSrc();    }
 
 
-    /** This is used for pretty-printing in the GUI client.
+    /** This is used for pretty-printing in the GUI client. It describes
+	a rule set in a way similar to the text format used in the 
+	rule description file.
      */
     public class ReportedSrc {
 	Vector<String> orders=new Vector<>();
 	Vector<String> rows=new Vector<>();
 
+	/** A vector of strings, each of which describes one order defined 
+	    for this rules set */
 	public Vector<String> getOrders() { return orders; }
+	/** A vector of strings, each of which describes one line of 
+	    this rules set */
         public Vector<String> getRows() { return rows; }
 	
 	ReportedSrc() {

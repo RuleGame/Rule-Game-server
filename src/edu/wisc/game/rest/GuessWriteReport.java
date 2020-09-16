@@ -2,25 +2,24 @@ package edu.wisc.game.rest;
 
 import java.io.*;
 import java.util.*;
-//import java.text.*;
-//import java.net.*;
 
 import javax.xml.bind.annotation.XmlElement; 
-//import javax.xml.bind.annotation.XmlRootElement;
-
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.reflect.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
 
-
-
+/** This data structure is converted to JSON and send to the client in response to the /guess web API call. */
 public class GuessWriteReport extends FileWriteReport {
-    PlayerInfo.TransitionMap destinationMap;
-    public PlayerInfo.TransitionMap getTransitionMap() { return destinationMap; }
-    @XmlElement
-    public void setTransitionMap(PlayerInfo.TransitionMap _destinationMap) { destinationMap = _destinationMap; }
+    PlayerInfo.TransitionMap transitionMap;
+    /** Describes the possible transitions (another episode in the
+	same series, new series, etc) which can be effected after this
+	episode. This can be used to generate transition buttons.	
+     */
+    public PlayerInfo.TransitionMap getTransitionMap() { return transitionMap; }
+    //@XmlElement
+    //    void setTransitionMap(PlayerInfo.TransitionMap _destinationMap) { destinationMap = _destinationMap; }
     GuessWriteReport(File f, long _byteCnt) {
 	super(f,  _byteCnt);
     }
@@ -51,7 +50,7 @@ public class GuessWriteReport extends FileWriteReport {
 	    epi.setGuessSaved(true);
 	    Main.persistObjects(epi);
 	    GuessWriteReport g = new	GuessWriteReport(f, f.length());
-	    g.setTransitionMap( x.new TransitionMap());
+	    g.transitionMap = x.new TransitionMap();
 	    return g;
 	} catch(IOException ex) {
 	    return  new	    FileWriteReport(true,ex.getMessage());

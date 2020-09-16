@@ -64,9 +64,9 @@
 
   <p>For the syntax and semantics of the rule sets, see the document <a href="https://docs.google.com/document/d/1z_I1kbu-cocUUxOsoEU0WUK9gd3OZ3KiqisJw_Fn_tw/edit?ts=5f08503a">_0.Semantics2020.07.10.txt</a>.</p>
 
-  <h3>Initial board</h3>
+  <h3>Initial boards</h3>
 
-  <p>When creating an episode, it is possible to load the initial board description from a JSON file. Even though presently (ver 1.016) the trial lists do not have support for specifying pre-created initial boards for the use in experiment, we do have a directory for them, in <tt>/opt/tomcat/game-data/boards</tt>.
+  <p>When creating an episode, it is possible to load the initial board description from a JSON file. Presently (ver 1.016), we only use thus feature in machine-learning experiments, because the schema of the trial lists used in human-subject experiments  does not have support for specifying pre-created initial boards. Nonetheless, we do have a directory for board files, in <tt>/opt/tomcat/game-data/boards</tt>.
 
     <h2>Read-and-write data: SQL server tables</h2>
 
@@ -218,7 +218,7 @@ qt-07,20200910-123116-PRDLET,1,20200910-123151,5,1,7,7,0
 
 <p>For each move, we have the coordinates (y=row, x=column) of the piece that the player tries to move, and of the destination bucket. (The four buckets are supposed to be located in columns 0 and 7, and rows 0 and 7).
 
-<p>The last column, code, contains the server response. The value 0 is on success, positive values on rejection, as per <a href="api/constant-values.html#edu.wisc.game.sql.Episode.CODE.ACCEPT">CODE</a>.
+<p>The last column, <tt>code</tt>, contains the server response. The value of 0 is recorded when the move attempt is successful; positive values (usually 4, sometimes 2) are recorded on rejections, as per <tt><a href="api/constant-values.html#edu.wisc.game.sql.Episode.CODE.ACCEPT">CODE</a></tt>.
 
 
 <h3>The guess</h3>
