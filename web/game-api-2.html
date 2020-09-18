@@ -4,7 +4,7 @@
 <body>
   <h1>RESTful API for the use by the Rule Game client - second batch</h1>
 
-  <p align="center"><em>Version 1.020,  2020-09-16</em></p>
+  <p align="center"><em>Version 1.021,  2020-09-17</em></p>
 
   <p>This is the "Second Batch" (prefix=<tt>/GameService2</tt>)  of the Game Service web API calls. They are intended for use with a client app that works with players enrolled in experiments; each player is identified by a player ID, and the server assigns each player to a "trial list" (a particular track in the experiment plan with which this player ID is associated with).</p>
 
@@ -19,6 +19,9 @@
 	  <input type="submit">
   </form>
   <p>The input parameter is the player ID (a string). In the future, the system will determine, based on the player ID, what experiment the person is enrolled into (e.g MTurkers vs. psych students vs. ourselves testing a particular game); at present, the player ID does not really matter, as everybody is considered to be enrolled in the experiment called "default".</P>
+
+  <p>For the meaning of the output fields, see the documentation for <a href="api/edu/wisc/game/rest/PlayerResponse.html">PlayerResponse</a>. A field named <tt>foo</tt> will be described there under <tt>getFoo()</tt> or (for boolean values) <tt>isFoo()</tt>.
+
 
   <p>Sample output:
     <pre>

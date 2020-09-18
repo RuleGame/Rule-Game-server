@@ -170,13 +170,16 @@ public class PlayerInfo {
     /** @return true if an "Activate Bonus" button can be displayed, i.e. 
 	the player is eligible to start bonus episodes, but has not done that yet */
     public boolean canActivateBonus() {
+	if (inBonus) return false;  // already doing a bonus subseries!
 	Series ser=getCurrentSeries();
 	if (ser==null) return false;
 	int at = ser.para.getInt("activate_bonus_at");
-	// 0-based index of the episode on which activation will be in effect, if
-	// it happens
+	// 0-based index of the episode on which activation will be in
+	// effect, if it happens
 	int nowAt = ser.episodes.size();
-	if (ser.episodes.size()>0 && !ser.episodes.lastElement().isCompleted()) nowAt--;
+	if (ser.episodes.size()>0) {
+	    if (!ser.episodes.lastElement().isCompleted()) nowAt--;
+	}
 	// 1-based
 	nowAt++;
 
@@ -246,7 +249,7 @@ public class PlayerInfo {
 	int cnt=0;
 	System.err.println("Have " +  ser.episodes.size() + " episodes to look at");
 	for(EpisodeInfo x: ser.episodes) {
-	    System.err.println("looking at "+(x.isBonus()? "main" : " bonus")+
+	    System.err.println("looking at "+(x.isBonus()? "bonus":"main")+
 			       " episode " + x.episodeId + ", completed=" + x.isCompleted());
 	    if (x.isBonus()) {
 		cnt++;
@@ -299,6 +302,8 @@ public class PlayerInfo {
 	    allSeries.add(new Series(para));
 	}
     }
+
+    
 
     /** This method should be called after restoring the object from
       the SQL database, in order to re-create some of the necessary
@@ -507,30 +512,56 @@ public class PlayerInfo {
     }
 
 
-    public static enum Transition { MAIN, BONUS, NEXT, END};
-    public static enum Action { DEFAULT, ACTIVATE, GIVE_UP};
+    /** Where can we go from here? */
+    public static enum Transition {
+	/** A main-subseries episode in the same series*/
+	MAIN,
+	/** A bonus episode in the same series */
+	BONUS,
+	/** Start next series (that is, a new param set, with new rules) */
+	NEXT,
+	/** End the interaction with the system, as the player has at
+	    least sampled all param sets, and has completed (or given up
+	    on) all of them */	   
+	END};
+    /** What type of action takes the player to a particular destination? */
+    public static enum Action {
+	/** Default transition -- no special choice */
+	DEFAULT,
+	/** Activate bonus */
+	ACTIVATE,
+	/** Give up */
+	GIVE_UP};
 
-    /** After an episode has been completed, what other episode(s) can follow?
-     */
     public class TransitionMap extends HashMap<Transition,Action> {
+	/** After an episode has been completed, what other episode(s) can follow?
+	    This object is transmitted to the client as JSON, and can be used 
+	    to draw all appropriate transition buttons.
+	    <p>
+	    Note that the map may be empty if no more episodes can be played. 
+	*/
 	public TransitionMap() {
 	    
 	    Series ser = getCurrentSeries();
-	    boolean isLastSeries = (currentSeriesNo + 1 == allSeries.size());
 	    if (ser==null) return;
+	    boolean isLastSeries = (currentSeriesNo + 1 == allSeries.size());
+
+	    // Where do you really get if you are done with this series?
+	    Transition whitherNext = isLastSeries?Transition.END: Transition.NEXT;
+	    
 	    if (inBonus) {
 		if (canHaveAnotherBonusEpisode()) {
 		    put(Transition.BONUS, Action.DEFAULT);
-		    put(isLastSeries?Transition.END: Transition.NEXT, Action.GIVE_UP);
+		    put(whitherNext, Action.GIVE_UP);
 		} else {
-		    put(isLastSeries?Transition.END: Transition.NEXT, Action.DEFAULT);
+		    put(whitherNext, Action.DEFAULT);
 		}
 	    } else {
 		if (ser.episodes.size()<ser.para.getMaxBoards()) {
 		    put(Transition.MAIN, Action.DEFAULT);
-		    put(Transition.NEXT, Action.GIVE_UP);
+		    put(whitherNext, Action.GIVE_UP);
 		} else {
-		    put(isLastSeries?Transition.END: Transition.NEXT, Action.DEFAULT);
+		    put(whitherNext, Action.DEFAULT);
 		}
 
 		if (canActivateBonus())  put(Transition.BONUS, Action.ACTIVATE);

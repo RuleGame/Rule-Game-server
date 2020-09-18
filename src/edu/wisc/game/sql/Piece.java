@@ -6,18 +6,10 @@ import java.text.*;
 import java.net.*;
 import javax.persistence.*;
 
-//import org.apache.openjpa.persistence.jdbc.*;
-
-//import javax.ws.rs.*;
-//import javax.ws.rs.core.*;
-//import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import java.io.Serializable;  
 import javax.xml.bind.annotation.XmlElement; 
 import javax.xml.bind.annotation.XmlRootElement; 
 import javax.xml.bind.annotation.XmlTransient; 
-@XmlRootElement(name = "piece") 
-
 
 
 /** Represents a piece of a specified type at a specified location. Used
@@ -41,17 +33,20 @@ import javax.xml.bind.annotation.XmlTransient;
 //@Embeddable
 public class Piece  implements Serializable {
 
+    /** The color of a piece */
     public enum Color {
 	RED, BLACK, BLUE, YELLOW;
-	/** "r", "b", etc; BLUE becomes "g", as if its GREEN */
+	/** "r" for RED, "b" for BLACK, etc; BLUE becomes "g", as if it's GREEN */
 	public String symbol() {
 	    String s = toString().toLowerCase().substring(0,1);
 	    if (this==BLUE) s = "g";
 	    return s;
 	}
     };
+    /** The shape of a piece */
     public enum Shape {
 	SQUARE, STAR, CIRCLE, TRIANGLE;
+	/** Character to display a piece in ASCII graphics */
 	public String symbol() {
 	    return this==SQUARE? "#":
 		this==STAR? "*":

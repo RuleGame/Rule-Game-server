@@ -36,6 +36,7 @@ public class TrialList extends Vector<ParaSet> {
     }
 
     static File dirForExperiment(String exp) {
+	if (exp==null) throw new IllegalArgumentException("Experiment plan not specified");
 	File base = Files.trialListMainDir();
 	return new File(base, exp);	
     }

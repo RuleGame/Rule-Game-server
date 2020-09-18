@@ -22,9 +22,13 @@ public class PlayerResponse extends ResponseBase {
 
     private String trialListId;
     public String getTrialListId() { return trialListId; }
-    @XmlElement
-    void setTrialListId(String _trialListId) { trialListId = _trialListId; }
+    //    @XmlElement
+    //void setTrialListId(String _trialListId) { trialListId = _trialListId; }
 
+    private TrialList trialList = null;
+    public TrialList getTrialList() { return trialList; }
+ 
+    
     /** Only used in debug mode */
     private PlayerInfo playerInfo=null; 
     public PlayerInfo getPlayerInfo() { return playerInfo; }
@@ -44,14 +48,15 @@ public class PlayerResponse extends ResponseBase {
 	    setErrmsg("Debug: pid="+pid+"; Retrieved x="+x);
 	    setNewlyRegistered(x==null);
 	    if (x!=null) {  // existing player
-		setTrialListId( x.getTrialListId());		
+		trialListId = x.getTrialListId();		
+		trialList  = new TrialList(x.getExperimentPlan(), trialListId);
 	    } else { // new player
 		x = new PlayerInfo();
 		x.setDate( new Date());
 		x.setPlayerId(pid);
 		x.setExperimentPlan( TrialList.extractExperimentPlanFromPlayerId(pid));
 		assignRandomTrialList(x);
-		setTrialListId( x.getTrialListId());
+		trialListId = x.getTrialListId();
 		Main.persistObjects(x);
 		allPlayers.put(pid,x);
 	    }
@@ -132,7 +137,7 @@ public class PlayerResponse extends ResponseBase {
 	}
 
 	x.setTrialListId(minName);
-	TrialList trialList  = new TrialList(exp, minName);
+	trialList  = new TrialList(exp, minName);
 	x.initSeries(trialList);
     }
     

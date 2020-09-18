@@ -355,6 +355,8 @@ public class Episode {
     private final Reader in;
    
     private static DateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
+    /** with milliseconds */
+    private static DateFormat sdf2 = new SimpleDateFormat("yyyyMMdd-HHmmss.SSS");
 
     /** Creates a more or less unique string ID for this Episode object */
     private String buildId() {
@@ -406,22 +408,24 @@ public class Episode {
 	
     }
 
-
+    /** Return codes for the /move and /display API web API calls,
+	and for the MOVE command in the captive game server.
+     */
     public static class CODE {
 	public static final int
-	// move accepted and processed
+	/** move accepted and processed */
 	    ACCEPT = 0,
-	// Move rejected, and no other move is possible
-	// (stalemate). This means that the rule set is bad, and we
-	// owe an apology to the player
+	/** Move rejected, and no other move is possible
+	    (stalemate). This means that the rule set is bad, and we
+	    owe an apology to the player */
 	    STALEMATE=2,
-	// move rejected, because there is no piece in the cell
+	/** move rejected, because there is no piece in the cell */
 	    EMPTY_CELL= 3,
-	// move rejected, because this destination is not allowed
+	/** move rejected, because this destination is not allowed */
 	    DENY = 4,
-	// Exit requested
+	/** Exit requested */
 	    EXIT = 5,
-	// New game requested
+	/** New game requested */
 	    NEW_GAME = 6
 	    ;
 	
@@ -641,7 +645,7 @@ public class Episode {
 	return json.toString();
     }
 
-    static final String version = "1.020";
+    static final String version = "1.021";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();
@@ -870,7 +874,7 @@ public class Episode {
 		v.add(pid);
 		v.add(eid);
 		v.add(""+(k++));
-		v.add( sdf.format(move.time));
+		v.add( sdf2.format(move.time));
 		Board.Pos q = new Board.Pos(move.pos);
 		v.add(""+q.y);
 		v.add(""+q.x);

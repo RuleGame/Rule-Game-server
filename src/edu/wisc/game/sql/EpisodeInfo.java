@@ -87,6 +87,7 @@ public class EpisodeInfo extends Episode {
 	String ruleSetName = para.getRuleSetName();
 	int[] nPiecesRange = {para.getInt("min_objects"),
 			      para.getInt("max_objects")},
+
 	    nShapesRange = {para.getInt("min_shapes"),
 			    para.getInt("max_shapes")},
 	    nColorsRange = {para.getInt("min_colors"),
