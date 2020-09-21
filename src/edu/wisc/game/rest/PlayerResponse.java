@@ -10,6 +10,7 @@ import javax.xml.bind.annotation.XmlElement;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.sql.*;
+import edu.wisc.game.reflect.JsonReflect;
 
 
 /** The HashMap capability is used for debugging info in debug mode */
@@ -32,9 +33,21 @@ public class PlayerResponse extends ResponseBase {
     /** Only used in debug mode */
     private PlayerInfo playerInfo=null; 
     public PlayerInfo getPlayerInfo() { return playerInfo; }
-    @XmlElement
-    void setPlayerInfo(PlayerInfo _playerInfo) { playerInfo = _playerInfo; }
+    //    @XmlElement
+    //    void setPlayerInfo(PlayerInfo _playerInfo) { playerInfo = _playerInfo; }
 
+    boolean alreadyFinished = false;
+    /** True if this player has finished all episodes he could play.
+	This means that the most recent episode has been completed,
+	and no more new episodes can be created.
+    */
+    public boolean getAlreadyFinished() { return alreadyFinished; }
+  
+    
+    private String completionCode = null;
+    public String getCompletionCode() { return completionCode; }
+  
+    
 
     PlayerResponse(String pid) {
 	this(pid, false);
@@ -42,6 +55,9 @@ public class PlayerResponse extends ResponseBase {
     
     PlayerResponse(String pid, boolean debug) {
 	try {
+
+	    Logging.info("PlayerResponse(pid="+ pid+")");
+	    
 	    PlayerInfo x = findPlayerInfo(pid);
 	    if (debug) playerInfo=x;
 	    
@@ -50,6 +66,8 @@ public class PlayerResponse extends ResponseBase {
 	    if (x!=null) {  // existing player
 		trialListId = x.getTrialListId();		
 		trialList  = new TrialList(x.getExperimentPlan(), trialListId);
+		alreadyFinished = x.alreadyFinished();
+		completionCode = x.getCompletionCode();
 	    } else { // new player
 		x = new PlayerInfo();
 		x.setDate( new Date());
@@ -69,8 +87,10 @@ public class PlayerResponse extends ResponseBase {
 	    e.printStackTrace(System.err);
 	    setError(true);
 	    setErrmsg(e.toString());
+	} finally {
+	    Logging.info("PlayerResponse(pid="+ pid+"), returning:\n" +
+			 JsonReflect.reflectToJSONObject(this, true));
 	}
-	
     }
 
     /** Server's local cache, used to reduce database calls */

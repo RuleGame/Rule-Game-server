@@ -15,7 +15,7 @@ import edu.wisc.game.sql.*;
 import edu.wisc.game.reflect.*;
 
 
-/** This is an object that's converted to a JSON structure and sent to the client as a repsonse in /GameService2/newEpisode calls.
+/** This is an object that's converted to a JSON structure and sent to the client as a response in /GameService2/newEpisode calls.
 <p>
 FIXME: need to add periodic purge on episodes 
  */
@@ -37,12 +37,19 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	and no more new episodes can be created.
     */
     public boolean getAlreadyFinished() { return alreadyFinished; }
+
+    private String completionCode;
+    /** The completion code, a string that the player can report as a proof of 
+	his completion of the experiment plan. It is set when the current series
+	number is incremented beyond the last parameter set number.
+     */
+    public String getCompletionCode() { return completionCode; }
+ 
   
     Episode.Display display;
    /** The structure with a lot of information about the current episode,
        and its place in the experiment's framework.
-       (See {@link edu.wisc.game.sql.EpisodeInfo.ExtendedDisplay} for the full structure that's
-       actually found here)
+       (See {@link edu.wisc.game.sql.EpisodeInfo.ExtendedDisplay} for the full structure that's actually found here)
     */
     public Episode.Display getDisplay() { return display; }
     private void setDisplay(Episode.Display _display) { display = _display; }
@@ -84,7 +91,7 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 		return;
 	    } 
 	    alreadyFinished = x.alreadyFinished();
-			    
+	    completionCode = x.getCompletionCode();
 	    EpisodeInfo epi = existing? x.mostRecentEpisode(): x.episodeToDo();
 	    if (epi==null) {
 		setError(true);

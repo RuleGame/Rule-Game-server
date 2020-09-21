@@ -91,6 +91,7 @@ public class Episode {
     boolean stalemate = false;
     boolean cleared = false;
     boolean givenUp = false;
+    boolean lost = false;
     
     /** Which bucket was the last one to receive a piece of a given color? */
     @Transient
@@ -354,9 +355,9 @@ public class Episode {
     @Transient
     private final Reader in;
    
-    private static DateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
+    static final DateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
     /** with milliseconds */
-    private static DateFormat sdf2 = new SimpleDateFormat("yyyyMMdd-HHmmss.SSS");
+    private static final DateFormat sdf2 = new SimpleDateFormat("yyyyMMdd-HHmmss.SSS");
 
     /** Creates a more or less unique string ID for this Episode object */
     private String buildId() {
@@ -459,7 +460,12 @@ public class Episode {
 	    STALEMATE=2,
 	/** The player has said he does not want to play any more. This
 	    may only happen in some GUI versions. */
-	    GIVEN_UP =3;
+	    GIVEN_UP =3,
+	/** This was a bonus round which has been terminated by the 
+	    system because the player has failed to complete it within the 
+	    required number of steps */
+	    LOST = 4
+	    ;
     }
 
     /** Creates a bit set with bits set in the positions where there are
@@ -614,6 +620,7 @@ public class Episode {
 	 return cleared? FINISH_CODE.FINISH :
 	     stalemate? FINISH_CODE.STALEMATE :
 	     givenUp?  FINISH_CODE.GIVEN_UP :
+	     lost?  FINISH_CODE.LOST :
 	     FINISH_CODE.NO;
     }
        
@@ -645,7 +652,7 @@ public class Episode {
 	return json.toString();
     }
 
-    static final String version = "1.021";
+    static final String version = "1.022";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();
@@ -703,7 +710,7 @@ public class Episode {
  
     
     public Display doMove(int y, int x, int by, int bx, int _attemptCnt) throws IOException {
-	if (cleared || stalemate || givenUp) {
+	if (isCompleted()) {
 	    return new Display(CODE.NO_GAME, "No game is on right now (cleared="+cleared+", stalemate="+stalemate+"). Use NEW to start a new game");
 	}
 
@@ -846,11 +853,12 @@ public class Episode {
 
     /** @return true if this episode cannot accept any more move attempts */
     boolean isCompleted() {
-	return cleared || stalemate || givenUp;
+	return cleared || stalemate || givenUp || lost;
     }
 
+    /** Marks this episode as "given up" */
     void giveUp() {
-	if (!cleared && !stalemate) givenUp = true;
+	if (isCompleted()) givenUp = true;
     }
 
    /** Let's just write one file at a time */

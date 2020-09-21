@@ -4,7 +4,7 @@
 <body>
   <h1>RESTful API for the use by the Rule Game client - second batch</h1>
 
-  <p align="center"><em>Version 1.021,  2020-09-17</em></p>
+  <p align="center"><em>Version 1.022,  2020-09-20</em></p>
 
   <p>This is the "Second Batch" (prefix=<tt>/GameService2</tt>)  of the Game Service web API calls. They are intended for use with a client app that works with players enrolled in experiments; each player is identified by a player ID, and the server assigns each player to a "trial list" (a particular track in the experiment plan with which this player ID is associated with).</p>
 
@@ -12,7 +12,7 @@
     
   
   <ol>
-<li>POST <strong><tt>/startTrial:</tt> Start a player's interaction with the system, and obtain a randomly selected trial list for this player</strong>
+<li>POST <strong><tt>/player:</tt> Start a player's interaction with the system, and obtain a randomly selected trial list for this player</strong>
   <form method="post" action="game-data/GameService2/player"
 	 enctype="application/x-www-form-urlencoded">
      Player ID: <input name="playerId" type="text" size="25" value="AnyText01">
@@ -22,7 +22,8 @@
 
   <p>For the meaning of the output fields, see the documentation for <a href="api/edu/wisc/game/rest/PlayerResponse.html">PlayerResponse</a>. A field named <tt>foo</tt> will be described there under <tt>getFoo()</tt> or (for boolean values) <tt>isFoo()</tt>.
 
-
+    <p>Ver. 1.021: added <tt>trialList</tt>, which is a vector with one element per line of the trial list. Can be used to find the total number of rule sets to which a player will be exposed.</p>
+    
   <p>Sample output:
     <pre>
       {"errmsg":"Debug:...",
@@ -293,11 +294,11 @@ Response (on success):
 	   <tr><td>MAIN <td> DEFAULT <td>Next episode <td> Call /newEpisode, which will produce another main-subseries (non-bonus) episode in the same series</tr>
 	   <tr><td>BONUS <td>DEFAULT <td>Next episode <td> Call /newEpisode, which will produce another bonus episode in the same series</tr>
 	   <tr><td>NEXT <td>DEFAULT <td>Next series<td> Call /newEpisode, which will automatically start the first episode of the next series (because no more episodes can be started in the current series)</tr>
-	   <tr><td>END <td>DEFAULT<td>End<td>Say goodbye, as all series have been completed</tr>
+	   <tr><td>END <td>DEFAULT<td>Finish<td>The end of the last series, and of the experiment.     Call /newEpisode. It will return error=true, allFinished=true, and completionCode, which the GUI client can then display to the player</tr>
 	   
 	   <tr><td>BONUS <td> ACTIVATE <td>Activate Bonus<td> Call /activateBonus, followed by /newEpisode (or simply call /newEpisode with activateBonus=true), which will start the first bonus episode in this series</tr>
-	   <tr><td>NEXT <td>GIVE_UP <td>Give up <td> Call /giveUp (which will switch series) followed by /newEpisode.  (Or simply call /newEpisode with giveUp=true). The first episode of the next series will start</tr>
-	   <tr><td>END <td>GIVE_UP<td>Give up (and end the last series)<td>Call /giveUp, and then tell the player goodbye, as he will terminate the last series</tr>
+	   <tr><td>NEXT <td>GIVE_UP <td>Give up (and proceed to the next series) <td> Call /giveUp (which will switch series) followed by /newEpisode.  (Or simply call /newEpisode with giveUp=true). The first episode of the next series will start</tr>
+	   <tr><td>END <td>GIVE_UP<td>Give up (and end the last series, and the experiment)<td>Call /newEpisode with giveUp=true. It will return error=true, allFinished=true, and completionCode, which the GUI client can then display to the player. </tr>
      </table>
 
      <p>A button with value="DEFAULT" is produced after every episode, indicating the default action (continuing in the same series, switching to the next series if the current series is done, or finishing one's work after the last series). A button with value="GIVE_UP" is produced after every episode other than the last episode of a series; it indicates the player's ability to end a series prematurely (and then go to the next series, if available). A button with value="ACTIVATE" is produced after main-subseries episodes if the player is eligibile to switch to ("activate") the bonus subseries.</p>

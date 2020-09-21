@@ -48,6 +48,7 @@ public class GuessWriteReport extends FileWriteReport {
 	    w.close();
 
 	    epi.setGuessSaved(true);
+	    epi.setGuess(text);
 	    Main.persistObjects(epi);
 	    GuessWriteReport g = new	GuessWriteReport(f, f.length());
 	    g.transitionMap = x.new TransitionMap();

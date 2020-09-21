@@ -76,7 +76,15 @@ public class GameServiceHtml extends GameService2 {
 
 	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
 
-	body += moveForm(w.getDisplay(),  episodeId);
+	if (w.getError()) {
+	    if (w.getAlreadyFinished()) {
+		body += fm.para("The player has finished all episodes. Completion code = " +w.getCompletionCode());
+	    } else {
+		body += fm.para("Error: " + w.getErrmsg());
+	    }
+	} else {	
+	    body += moveForm(w.getDisplay(),  episodeId);
+	}
 
 	return fm.html(head, body);	
 	
@@ -196,10 +204,11 @@ public class GameServiceHtml extends GameService2 {
 		v.add(""+key);
 		v.add(""+val);
 
-		if (key==PlayerInfo.Transition.END && val==PlayerInfo.Action.DEFAULT) {
-		    v.add( "All series have been completed. Goodbye!");
-		    v.add("");
-		} else {
+		//		if (key==PlayerInfo.Transition.END && val==PlayerInfo.Action.DEFAULT) {
+		//		    v.add( "All series have been completed. Goodbye!");
+		//		    v.add("");
+		//		} else
+		{
 		    String action="newEpisodeHtml";
 		    String form =  "<form method='post' action='"+action+"'>\n";
 		    form +=  fm.hidden("playerId", x.getPlayerId());
@@ -219,7 +228,7 @@ public class GameServiceHtml extends GameService2 {
 			(val==PlayerInfo.Action.DEFAULT? "Start the next series":
 			 "Give up on this series and start the next"):
 			(key==PlayerInfo.Transition.END)?
-		    	(val==PlayerInfo.Action.DEFAULT? "THE END":
+		    	(val==PlayerInfo.Action.DEFAULT? "Finish":
 			 "Give up on this (last) series and end the expriment"):
 			"Error - unknown action";
 		

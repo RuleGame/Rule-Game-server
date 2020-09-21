@@ -74,11 +74,22 @@ public class EpisodeInfo extends Episode {
     public boolean getGuessSaved() { return guessSaved; }
     public void setGuessSaved(boolean _guessSaved) { guessSaved = _guessSaved; }
 
+    @Basic
+    String guess = null;	
+    public void setGuess(String _guess) { guess = _guess; }
     
-    EpisodeInfo(Game game) {
+    @Transient
+    final private ParaSet para;
+    @Transient
+    final private double clearingThreshold;
+	
+    EpisodeInfo(Game game, ParaSet _para) {
 	super(game, Episode.OutputMode.BRIEF, null, null);
+	para = _para;
+	clearingThreshold = (para==null)? 1.0: para.getClearingThreshold();
     }
-    
+
+
     /** Creates a new episode, whose rules and initial board are based (with 
 	appropriate randomization) on a specified parameter set */
     static EpisodeInfo mkEpisodeInfo(int seriesNo, ParaSet para, boolean bonus)
@@ -97,7 +108,7 @@ public class EpisodeInfo extends Episode {
 					    nColorsRange);    
 	   
 	Game game = gg.nextGame();
-	EpisodeInfo epi = new EpisodeInfo(game);
+	EpisodeInfo epi = new EpisodeInfo(game, para);
 	epi.bonus = bonus;
 	epi.seriesNo = seriesNo;
 
@@ -108,16 +119,16 @@ public class EpisodeInfo extends Episode {
 
     /** An episode deserves a bonus if it was part of the bonus series,
 	has been completed, and was completed sufficiently quickly */
-    boolean deservesBonus(double clearingThreshold ) {
+    boolean deservesBonus() {
 	bonusSuccessful = bonusSuccessful ||
-	    (bonus && cleared && movesLeftToStayInBonus(clearingThreshold)>=0);
+	    (bonus && cleared && movesLeftToStayInBonus()>=0);
 	return bonusSuccessful;
     }
 
     /** The player must clear the board within this many move attempts in
 	order to stay in the bonus series. This is only defined during
 	bonus episodes. */
-    private Integer movesLeftToStayInBonus(double clearingThreshold) {
+    private Integer movesLeftToStayInBonus() {
 	return bonus?
 	    (int)(getNPiecesStart()*clearingThreshold) -  attemptCnt :
 	    null;
@@ -125,12 +136,19 @@ public class EpisodeInfo extends Episode {
 
     /** An episode was part of a bonus series, but has permanently failed to earn the
 	bonus */
-    boolean failedBonus(double clearingThreshold ) {
-	return bonus && (givenUp || stalemate || cleared && !deservesBonus(clearingThreshold));
+    boolean failedBonus() {
+	return bonus && (givenUp || stalemate || lost || cleared && !deservesBonus());
     }
 
+    /** Calls Episode.doMove, and then does various adjustments related to 
+	this episode's role in the experiment plan.
+     */
     public Display doMove(int y, int x, int by, int bx, int _attemptCnt) throws IOException {
 	Display _q = super.doMove(y, x, by, bx, _attemptCnt);
+
+	// failed a bonus episode?
+	lost = bonus && !isCompleted() && movesLeftToStayInBonus()<=0;
+	
 	if (isCompleted() && getPlayer()!=null) {
 	    getPlayer().ended(this);
 	}
@@ -146,6 +164,7 @@ public class EpisodeInfo extends Episode {
 	    (getGuessSaved()? "g" : "") +   	    "; "+
 	    (earnedBonus? "BB" :
 	     bonusSuccessful? "B" :
+	     bonus&lost? "L" :
 	     bonus?"b":"m")+" " +
 	    attemptCnt + "/"+getNPiecesStart()  +
 	    " $"+getTotalRewardEarned()+"]";
@@ -184,11 +203,8 @@ public class EpisodeInfo extends Episode {
 		totalBoardsPredicted = p.totalBoardsPredicted();
 
 		ParaSet para=p.getPara(EpisodeInfo.this);
-		if (para!=null) {
-		    double clearingThreshold = para.getClearingThreshold();
-		    movesLeftToStayInBonus = EpisodeInfo.this.movesLeftToStayInBonus(clearingThreshold);
-		}
-
+		movesLeftToStayInBonus = EpisodeInfo.this.movesLeftToStayInBonus();
+	
 		if (finishCode!=FINISH_CODE.NO) {
 		    transitionMap = p.new TransitionMap();
 		}
@@ -247,6 +263,7 @@ public class EpisodeInfo extends Episode {
 	boolean guessSaved =  EpisodeInfo.this.guessSaved;
 	/** True if the player's guess has been recorded at the end of this episode */
 	public boolean getGuessSaved() { return guessSaved; }
+
 
 	RuleSet.ReportedSrc rulesSrc = (rules==null)? null:rules.reportSrc();
 	/** A structure that describes the rules of the game being played in this episode. */

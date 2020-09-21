@@ -111,12 +111,11 @@ public class PlayerInfo {
 	/** Checks if this player has earned a bonus in this series, and if so, 
 	    attaches it to an appropriate episode, and ends this series */
 	void assignBonus() {
-	    double clearingThreshold = para.getClearingThreshold();
 	    int cnt=0, deserveCnt=0;
 	    for(EpisodeInfo x: episodes) {
 		if (x.bonus) {
 		    cnt++;
-		    if (x.deservesBonus(clearingThreshold ))  deserveCnt++;
+		    if (x.deservesBonus())  deserveCnt++;
 		}
 	    }
 	    if (cnt==deserveCnt && deserveCnt >=  para.getInt("clear_how_many")) {
@@ -149,6 +148,10 @@ public class PlayerInfo {
 	return alreadyFinished()? null: allSeries.get(currentSeriesNo);
     }
 
+    /** Returns true if the current series number is set beyond the possible
+	range, which indicates that it has gone through the last possible
+	increment (and, therefore, the completion code has been set as well).
+    */
     public boolean alreadyFinished() {
 	return currentSeriesNo>=allSeries.size();
     }
@@ -210,8 +213,8 @@ public class PlayerInfo {
 	Main.persistObjects(this); // this saves the new value of inBonus
     }
 
-    /** "Gives up" the current series, i.e. immediately switches the player to the next
-	series (if there is one) */
+    /** "Gives up" the current series, i.e. immediately switches the
+	player to the next series (if there is one). */
     public void giveUp(int seriesNo) {
 	if (seriesNo+1==currentSeriesNo) {
 	    // that series has just ended anyway...
@@ -245,7 +248,6 @@ public class PlayerInfo {
 	if (ser==null) return false;
 	System.err.println("ser=" + ser+", earned=" +  ser.bonusHasBeenEarned());
 	if (!inBonus || ser.bonusHasBeenEarned()) return false;
-	double clearingThreshold = ser.para.getClearingThreshold();
 	int cnt=0;
 	System.err.println("Have " +  ser.episodes.size() + " episodes to look at");
 	for(EpisodeInfo x: ser.episodes) {
@@ -254,7 +256,7 @@ public class PlayerInfo {
 	    if (x.isBonus()) {
 		cnt++;
 		if (!x.isCompleted()) return false;
-		if (x.failedBonus(clearingThreshold)) return false;
+		if (x.failedBonus()) return false;
 		System.err.println("ok bonus episode " + x.episodeId);
 	    } 
 	}
@@ -426,13 +428,41 @@ public class PlayerInfo {
 	return  whoseEpisode(epi).para;
     }
 
-    /** Adjusts the counters/flags indicating what series and subseries we are on,
-	and persists this object.
+
+    private String completionCode;
+    /** The completion code, a string that the player can report as a proof of 
+	his completion of the experiment plan. It is set when the current series
+	number is incremented beyond the last parameter set number.
      */
-    private void goToNextSeries() {
+    public String getCompletionCode() { return completionCode; }
+    public void setCompletionCode(String _completionCode) { completionCode = _completionCode; }
+
+    /** Creates a more or less unique string ID for this Episode object */
+    private String buildCompletionCode() {
+	String s = playerId + "-" + Episode.sdf.format(new Date()) + "-";
+	for(int i=0; i<4; i++) {
+	    int k =  Board.random.nextInt(10 + 'F'-'A'+1);
+	    char c = (k<10) ? (char)('0' + k) : (char)('A' + k-10);
+	    s += c;
+	}
+	return s;
+    } 
+    
+    /** Adjusts the counters/flags indicating what series and
+	subseries we are on, and persists this object. This is the
+	only place in the code where the current series number can be
+	incremented. If the series number reaches the last possible
+	value (the one beyond the range of parameter set numbers, the
+	completion code is set.
+     */
+    synchronized private void goToNextSeries() {
 	if (alreadyFinished()) return;
 	currentSeriesNo++;
 	inBonus=false;
+
+	if (alreadyFinished() && completionCode ==null) {
+	    completionCode = buildCompletionCode();
+	} 
 	Main.persistObjects(this);
     }
 
@@ -484,13 +514,12 @@ public class PlayerInfo {
 	}
 
 	Main.persistObjects(this, epi);
-	//try {
-	    File f =  Files.boardsFile(playerId);
-	    epi.getCurrentBoard(true).saveToFile(playerId, epi.episodeId, f);
-	    f =  Files.transcriptsFile(playerId);
-	    epi.saveTranscriptToFile(playerId, epi.episodeId, f);
+
+	File f =  Files.boardsFile(playerId);
+	epi.getCurrentBoard(true).saveToFile(playerId, epi.episodeId, f);
+	f =  Files.transcriptsFile(playerId);
+	epi.saveTranscriptToFile(playerId, epi.episodeId, f);
 	
-	    //} catch(IOException ex) {	}
     }
 
     /** Generates a concise report on this player's history, handy for
