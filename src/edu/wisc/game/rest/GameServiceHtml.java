@@ -158,7 +158,7 @@ public class GameServiceHtml extends GameService2 {
 	}
 	body += form + fm.hr();
 
-	if (d.getFinishCode()==Episode.FINISH_CODE.FINISH && !d.getGuessSaved()) {
+	if (d.getFinishCode()!=Episode.FINISH_CODE.NO && !d.getGuessSaved()) {
 	    form = "";
 	    form += "episode = " + fm.input("episode", episodeId) + fm.br();
 	    form += "Enter your guess below:" + fm.br() +
