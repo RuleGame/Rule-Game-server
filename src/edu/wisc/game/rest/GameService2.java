@@ -112,7 +112,7 @@ public class GameService2 {
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
     public  GiveUpWrapper
-	activateBonus(@FormParam("playerId") String playerId,
+	giveUp(@FormParam("playerId") String playerId,
 		      @FormParam("seriesNo") int seriesNo) {
 	return new  GiveUpWrapper(playerId);
     }

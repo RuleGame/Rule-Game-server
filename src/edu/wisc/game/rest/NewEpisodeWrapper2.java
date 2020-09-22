@@ -58,7 +58,7 @@ public class NewEpisodeWrapper2 extends ResponseBase {
     NewEpisodeWrapper2(String pid, boolean existing, boolean activateBonus, boolean giveUp) {
 
 	Logging.info("NewEpisodeWrapper2(pid="+ pid+", existing="+existing+
-		     ", activate="+activateBonus+", gu=" + giveUp);
+		     ", activate="+activateBonus+", gu=" + giveUp+")");
 	
 	ResponseBase r=null;
 	if (activateBonus) {

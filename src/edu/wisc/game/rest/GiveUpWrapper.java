@@ -3,11 +3,8 @@ package edu.wisc.game.rest;
 import java.io.*;
 import java.util.*;
 import javax.json.*;
-import javax.persistence.*;
+//import javax.persistence.*;
 
-
-import javax.xml.bind.annotation.XmlElement; 
-import javax.xml.bind.annotation.XmlRootElement;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.engine.*;
@@ -21,6 +18,9 @@ public class GiveUpWrapper extends ResponseBase {
     }
     
     GiveUpWrapper(String pid, int seriesNo) {
+
+	Logging.info("GiveUpWrapper(pid="+ pid+", seriesNo=" + seriesNo+")");
+		
 	try {
 	    PlayerInfo x = PlayerResponse.findPlayerInfo(pid);
 	    if (x==null) {

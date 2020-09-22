@@ -216,8 +216,10 @@ public class PlayerInfo {
     /** "Gives up" the current series, i.e. immediately switches the
 	player to the next series (if there is one). */
     public void giveUp(int seriesNo) {
-	if (seriesNo+1==currentSeriesNo) {
+	Logging.info("giveUp(pid="+playerId+", seriesNo=" + seriesNo +"), currentSeriesNo=" +currentSeriesNo);
+	if (seriesNo+1==currentSeriesNo) {	    
 	    // that series has just ended anyway...
+	    Logging.info("giveUp: ignorable call on the previous series");
 	    return;
 	}
 	if (seriesNo!=currentSeriesNo) throw new IllegalArgumentException("Cannot give up on series " + seriesNo +", because we presently are on series " + currentSeriesNo);
@@ -228,10 +230,14 @@ public class PlayerInfo {
 	    // give up on the currently active episode, if any
 	    if (!epi.isCompleted()) {
 		epi.giveUp();
+		Logging.info("giveUp: episodeId=" + epi.getEpisodeId()+", set givenUp=" + epi.givenUp);
 		Main.persistObjects(epi);
 	    }
 	}
+		   	
 	goToNextSeries();
+	Logging.info("giveUp completed, now currentSeriesNo=" +currentSeriesNo);
+
     }
 
 
@@ -319,7 +325,8 @@ public class PlayerInfo {
       We also review the episodes, and "give up" all incomplete ones, because
       they don't have their transcripts and rules loaded, and cannot
       be continued. This may happen only rarely, when an episode
-      had been persisted before beeing completed, and then the server
+      had been persisted before beeing completed (thru cascading from
+      the player being persisted), and then the server
       was restarted.     
     */
     public void restoreTransientFields() {

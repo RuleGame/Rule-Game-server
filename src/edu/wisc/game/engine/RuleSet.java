@@ -90,6 +90,8 @@ public class RuleSet {
 	    }
 	    for(String orderName: list2) {
 		BitSet eligible =  eligibleForEachOrder.get(orderName);
+
+		
 		if ( eligible == null) throw new IllegalArgumentException("Unknown order name ("+orderName+") - should have been caught before!");
 		if (eligible.get(pos)) return true;
 	    }
