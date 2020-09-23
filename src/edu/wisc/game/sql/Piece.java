@@ -110,7 +110,10 @@ public class Piece  implements Serializable {
     @XmlElement
     public void setShape(Shape _shape) { shape = _shape; }
 
-    
+    public String objectType() {
+	return "" + color + "_" + shape;
+    }
+
     public int getX() { return x; }
     @XmlElement 
     public void setX(int _x) { x = _x; }

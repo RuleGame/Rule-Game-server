@@ -4,7 +4,7 @@
 <body>
   <h1>Rule Game server data</h1>
 
-    <p align="center"><em>Updated for Ver 1.016,  2020-09-09</em></p>
+    <p align="center"><em>Updated for Ver 1.024,  2020-09-23</em></p>
 
 
   <h2>Introduction</h2>
@@ -135,6 +135,8 @@ mysql> describe  Episode;
 | PLAYER_ID       | bigint(20)   | YES  | MUL | NULL    |                |
 | guessSaved      | bit(1)       | YES  |     | NULL    |                |
 | bonusSuccessful | bit(1)       | YES  |     | NULL    |                |
+| lost            | bit(1)       | YES  |     | NULL    |                |
+| guess           | varchar(255) | YES  |     | NULL    |                |
 +-----------------+--------------+------+-----+---------+----------------+
 </code></pre>
 
@@ -161,7 +163,8 @@ mysql> describe  Episode;
 	  <li>PLAYER_ID - MySQL internal ID of the player; only used to join with the PlayerInfo table
 	  <li>guessSaved - true if the player's guess about the rules has been submitted and recorded at the end of this episode.
 	  <li>bonusSuccessful - true if this was a bonus episode (bonus=true) and the player managed to clear the board sufficiently fast. If a required number of episodes with bonusSuccessful=true is 
-
+	  <li>lost - bit flag, set to true if the player fails to clear the board in a bonus episode within a required number of moves. Which this happens, the episode is terminated by the server, and so is series.
+	    <li>guess - the text of the guess submitted by the player at the end of the episode. NULL if no guess has been recorded.
     </ol>
 
     <h3> Exporting data from the MySQL database to CSV files</h3>
@@ -205,7 +208,7 @@ qt-07,20200910-123116-PRDLET,5,1,TRIANGLE,BLACK
 
 <h3>The transcript</h3>
 
- <p>The transripts are saved in  /opt/tomcat/saved/transcripts/ , in file names based on the PlayerID + ".transcript.csv".
+ <p>The transripts are saved in  /opt/tomcat/saved/transcripts/ , in file names based on the PlayerID + ".transcripts.csv".
 
 <pre>
 more /opt/tomcat/saved/transcripts/qt-07.transcripts.csv 
@@ -220,6 +223,13 @@ qt-07,20200910-123116-PRDLET,1,20200910-123151,5,1,7,7,0
 
 <p>The last column, <tt>code</tt>, contains the server response. The value of 0 is recorded when the move attempt is successful; positive values (usually 4, sometimes 2) are recorded on rejections, as per <tt><a href="api/constant-values.html#edu.wisc.game.sql.Episode.CODE.ACCEPT">CODE</a></tt>.
 
+
+  <h3>The detailed transcript</h3>
+
+<p>The detailed transripts are saved in  /opt/tomcat/saved/detailed-transcripts/ , in file names based on the PlayerID + ".-detailed-transcripts.csv".
+
+<p>The schema of these CSV files is as per Aria Duan's request (see  
+<a href="https://rulegame.slack.com/files/U014SRY7Q5Q/F01AX29T9HR/paul01.transcripts_revised.xlsx">paul01.transcripts_revised.xlsx</a> on Slack). All sequential indexes (series No., episode No., move No.) are 0-based.
 
 <h3>The guess</h3>
 

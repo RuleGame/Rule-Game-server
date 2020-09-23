@@ -90,9 +90,9 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 		setErrmsg("Player not found: " + pid);
 		return;
 	    } 
+	    EpisodeInfo epi = existing? x.mostRecentEpisode(): x.episodeToDo();
 	    alreadyFinished = x.alreadyFinished();
 	    completionCode = x.getCompletionCode();
-	    EpisodeInfo epi = existing? x.mostRecentEpisode(): x.episodeToDo();
 	    if (epi==null) {
 		setError(true);
 		String msg = alreadyFinished ?

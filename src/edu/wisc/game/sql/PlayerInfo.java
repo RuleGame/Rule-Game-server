@@ -142,6 +142,10 @@ public class PlayerInfo {
     }
 
 
+    Series getSeries(int k) {
+	return allSeries.get(k);
+    }
+    
     /** Retrieves a link to the currently played series, or null if this player
 	has finihed all his series */
     Series getCurrentSeries() {
@@ -526,6 +530,8 @@ public class PlayerInfo {
 	epi.getCurrentBoard(true).saveToFile(playerId, epi.episodeId, f);
 	f =  Files.transcriptsFile(playerId);
 	epi.saveTranscriptToFile(playerId, epi.episodeId, f);
+	f =  Files.detailedTranscriptsFile(playerId);
+	epi.saveDetailedTranscriptToFile(f);
 	
     }
 

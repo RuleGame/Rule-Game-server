@@ -286,7 +286,8 @@ public class Episode {
 	    pcMap.put(move.piece.getColor(), move.bucketNo);
 	    psMap.put(move.piece.getShape(), move.bucketNo);
 	    pMap = move.bucketNo;
-	    
+
+	    pieces[move.pos].setBuckets(new int[0]); // empty the bucket list for the removed piece
 	    removedPieces[move.pos] = pieces[move.pos];
 	    removedPieces[move.pos].setDropped(move.bucketNo);
 	    pieces[move.pos] = null; // remove the piece
@@ -365,7 +366,7 @@ public class Episode {
    
     static final DateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
     /** with milliseconds */
-    private static final DateFormat sdf2 = new SimpleDateFormat("yyyyMMdd-HHmmss.SSS");
+    static final DateFormat sdf2 = new SimpleDateFormat("yyyyMMdd-HHmmss.SSS");
 
     /** Creates a more or less unique string ID for this Episode object */
     private String buildId() {
@@ -632,7 +633,7 @@ public class Episode {
 	}
 	w.add(div);
 	String s = "#   |";
-	for(int x=1; x<=Board.N; x++) s += "   " + x + " ";
+	for(int x=1; x<=Board.N; x++) s += "  "+(html?"": " ") + x + " ";
 	w.add(s);
 	return String.join("\n", w);
     }
@@ -673,7 +674,7 @@ public class Episode {
 	return json.toString();
     }
 
-    static final String version = "1.023";
+    static final String version = "1.024";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();
@@ -883,9 +884,9 @@ public class Episode {
     }
 
    /** Let's just write one file at a time */
-    static private final String file_writing_lock = "Board file writing lock";
+    static final String file_writing_lock = "Board file writing lock";
 	
-    /* Saves all the recorded moves (the transcript of the episode) in a CSV file.
+    /* Saves all the recorded moves (the transcript of the episode) into a CSV file.
        <pre>
        transcripts/pid.transcript.csv
       pid,episodeId,moveNo,y,x,by,bx,code
@@ -922,8 +923,4 @@ public class Episode {
     }
 
 
-    
-
-
-    
 }

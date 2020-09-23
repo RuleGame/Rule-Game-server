@@ -300,5 +300,87 @@ public class EpisodeInfo extends Episode {
     public Display mkDisplay() {
     	return new ExtendedDisplay(Episode.CODE.JUST_A_DISPLAY, "Display requested");
     }
- 
+
+       
+
+   void saveDetailedTranscriptToFile(File f) {
+
+       final String[] keys = 
+	   { "playerId",
+	     "trialListId",  // string "trial_1"
+	     "seriesNo",  // 0-based
+	     "ruleId", // "TD-5"
+	     "episodeNo", // position of the episode in the series, 0-based
+	     "episodeId",
+	     "moveNo", // 0-based number of the move in the transcript
+	     "timestamp", // YYYYMMDD-hhmmss.sss
+	     "reactionTime", // (* diff ; also use e.startTime)
+	     "objectType", // (yellow_circle)  (join with board.csv)
+	     "objectId", // Typically 0-based index within the episode's object list
+	     "y", "x",
+	     "bucketId", // 0 thru 3
+	     "by", "bx",
+	     "code", 
+	     "objectCnt", // how many pieces are left on the board after this move
+	   };
+
+       HashMap<String, Object> h = new HashMap<>();
+       PlayerInfo x = getPlayer();
+       int moveNo=0;
+       Date prevTime = getStartTime();
+       int objectCnt = getNPiecesStart();
+       Vector<String> lines=new  Vector<String>();
+       for(Move move: transcript) {
+	   h.clear();
+	   h.put( "playerId", x.getPlayerId());
+	   h.put( "trialListId", x.getTrialListId());
+	   h.put( "seriesNo", getSeriesNo());
+	   PlayerInfo.Series ser =  x.getSeries(getSeriesNo());
+	   h.put( "ruleId",  ser.para.getRuleSetName());
+	   h.put( "episodeNo", ser.episodes.indexOf(this));
+	   h.put( "episodeId", getEpisodeId());	   
+	   h.put( "moveNo", moveNo++);
+	   h.put( "timestamp", 	sdf2.format(move.time));
+	   long msec = move.time.getTime() - prevTime.getTime();
+	   h.put(  "reactionTime", "" + (double)msec/1000.0);
+	   prevTime = move.time;
+	   // can be null if the player tried to move a non-existent piece,
+	   // which the GUI normally prohibits
+	   Piece piece = move.piece; 
+	   h.put("objectType", (piece==null? "": move.piece.objectType()));
+	   h.put("objectId",  (piece==null? "": move.piece.getId()));
+	   Board.Pos q = new Board.Pos(move.pos);
+	   h.put("y", q.y);
+	   h.put("x", q.x);
+	   h.put("bucketId", move.bucketNo);
+	   Board.Pos b = Board.buckets[move.bucketNo];
+	   h.put("by", b.y);
+	   h.put("bx", b.x);
+	   h.put("code",move.code);
+	   if (move.code==CODE.ACCEPT) 	   objectCnt--;
+	   h.put("objectCnt",objectCnt);
+	   Vector<String> v = new Vector<>();
+	   for(String key: keys) v.add("" + h.get(key));
+	   lines.add(String.join(",", v));
+       }
+          
+       
+       synchronized(file_writing_lock) {
+	   try {	    
+	       PrintWriter w = new PrintWriter(new	FileWriter(f, true));
+	       if (f.length()==0) w.println("#" + String.join(",", keys));
+	       for(String line: lines) {
+		   w.println(line);
+	       }
+	       w.close();
+	   } catch(IOException ex) {
+	       System.err.println("Error writing the transcript: " + ex);
+	       ex.printStackTrace(System.err);
+	   }	    
+       }
+   }
+	
+
+
+    
 }

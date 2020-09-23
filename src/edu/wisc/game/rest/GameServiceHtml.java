@@ -183,7 +183,12 @@ public class GameServiceHtml extends GameService2 {
 	FileWriteReport _r = GuessWriteReport.writeGuess( episodeId, guessText);
 
 	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
+	if (epi==null) {
+	    String msg = "Episode not loaded: " + episodeId;
+	    return fm.html(msg, msg);	
+	}
 	PlayerInfo x = epi.getPlayer();
+
 	
 	String head= episodeId +" : Guess";
 
