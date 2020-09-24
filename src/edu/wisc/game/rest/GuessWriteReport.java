@@ -33,24 +33,13 @@ public class GuessWriteReport extends FileWriteReport {
 	    }
 	    PlayerInfo x = epi.getPlayer();
 	    String pid = x.getPlayerId();
-
-	    ParaSet para = x.getPara(epi);
-	    String ruleSetName = para.getRuleSetName();
 	    
 	    File f= Files.guessesFile(pid);
-
-	    PrintWriter w = new PrintWriter(new FileWriter(f, true));
-
-	    
-	    String ss[] = { pid, episodeId, ruleSetName, text};
-	    String data = ImportCSV.escape(ss);
-	    w.println(data);
-	    w.close();
-
+	    epi.saveGuessToFile(f, text);
 	    epi.setGuessSaved(true);
 	    epi.setGuess(text);
 	    Main.persistObjects(epi);
-	    GuessWriteReport g = new	GuessWriteReport(f, f.length());
+	    GuessWriteReport g = new GuessWriteReport(f, f.length());
 	    g.transitionMap = x.new TransitionMap();
 	    return g;
 	} catch(IOException ex) {

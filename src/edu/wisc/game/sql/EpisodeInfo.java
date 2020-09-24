@@ -381,6 +381,47 @@ public class EpisodeInfo extends Episode {
    }
 	
 
+    public void saveGuessToFile(File f, String guessText) {
+	     final String[] keys = 
+	   { "playerId",
+	     "trialListId",  // string "trial_1"
+	     "seriesNo",
+	     "ruleId", // "TD-5"
+	     "episodeNo", // position of the episode in the series, 0-based
+	     "episodeId",
+	     "guess" };
+
+       HashMap<String, Object> h = new HashMap<>();
+       PlayerInfo x = getPlayer();
+       int moveNo=0;
+       Date prevTime = getStartTime();
+       int objectCnt = getNPiecesStart();
+       h.clear();
+       h.put( "playerId", x.getPlayerId());
+       h.put( "trialListId", x.getTrialListId());
+       h.put( "seriesNo", getSeriesNo());
+       PlayerInfo.Series ser =  x.getSeries(getSeriesNo());
+       h.put( "ruleId",  ser.para.getRuleSetName());
+       h.put( "episodeNo", ser.episodes.indexOf(this));
+       h.put( "episodeId", getEpisodeId());	   
+       h.put( "guess",   ImportCSV.escape(guessText));
+       Vector<String> v = new Vector<>();
+       for(String key: keys) v.add("" + h.get(key));
+       String line = String.join(",", v);
+
+       synchronized(file_writing_lock) {
+	   try {	    
+	       PrintWriter w = new PrintWriter(new	FileWriter(f, true));
+	       if (f.length()==0) w.println("#" + String.join(",", keys));
+	       w.println(line);
+	       w.close();
+	   } catch(IOException ex) {
+	       System.err.println("Error writing the guess: " + ex);
+	       ex.printStackTrace(System.err);
+	   }	    
+       }
+         
+    }
 
     
 }

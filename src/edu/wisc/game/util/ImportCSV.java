@@ -2,9 +2,6 @@ package edu.wisc.game.util;
 
 import java.io.*;
 import java.util.*;
-//import java.util.regex.*;
-//import java.lang.reflect.*;
-
 
 /** Methods responsible for parsing CSV files.
 
@@ -138,8 +135,8 @@ Empty lines and lines starting with a '#' will be ignored.
 
 	final String q = "\"";
 
-	s = s.replaceAll(q, "'").replaceAll(",", ";");
-
+	s = s.replaceAll(q, "'"); // .replaceAll(",", ";");
+	
 	boolean needQ=(s.indexOf(",")>=0);
 
 	if (s.indexOf("\"")>=0) {
