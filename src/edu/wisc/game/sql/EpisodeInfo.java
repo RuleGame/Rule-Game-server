@@ -73,10 +73,17 @@ public class EpisodeInfo extends Episode {
     boolean guessSaved;
     public boolean getGuessSaved() { return guessSaved; }
     public void setGuessSaved(boolean _guessSaved) { guessSaved = _guessSaved; }
-
+    
     @Basic
     String guess = null;	
+    public String getGuess() { return guess; }
     public void setGuess(String _guess) { guess = _guess; }
+
+    @Basic
+    int guessConfidence;
+    public int getGuessConfidence() { return guessConfidence; }
+    public void setGuessConfidence(int _guessConfidence) { guessConfidence = _guessConfidence; }
+
     
     @Transient
     final private ParaSet para;
@@ -381,7 +388,7 @@ public class EpisodeInfo extends Episode {
    }
 	
 
-    public void saveGuessToFile(File f, String guessText) {
+    public void saveGuessToFile(File f, String guessText, int confidence) {
 	     final String[] keys = 
 	   { "playerId",
 	     "trialListId",  // string "trial_1"
@@ -389,7 +396,9 @@ public class EpisodeInfo extends Episode {
 	     "ruleId", // "TD-5"
 	     "episodeNo", // position of the episode in the series, 0-based
 	     "episodeId",
-	     "guess" };
+	     "guess",
+	     "guessConfidence"
+	   };
 
        HashMap<String, Object> h = new HashMap<>();
        PlayerInfo x = getPlayer();
@@ -405,6 +414,7 @@ public class EpisodeInfo extends Episode {
        h.put( "episodeNo", ser.episodes.indexOf(this));
        h.put( "episodeId", getEpisodeId());	   
        h.put( "guess",   ImportCSV.escape(guessText));
+       h.put( "guessConfidence",   confidence);
        Vector<String> v = new Vector<>();
        for(String key: keys) v.add("" + h.get(key));
        String line = String.join(",", v);

@@ -1,10 +1,10 @@
 <html>
-  <head><title>RESTful API for the use by the Rule Game client - second batch</title>
+  <head><title>Web API for the use by the Rule Game client - second batch</title>
   </head>
 <body>
-  <h1>RESTful API for the use by the Rule Game client - second batch</h1>
+  <h1>Web API for the use by the Rule Game client - second batch</h1>
 
-  <p align="center"><em>Version 1.022 and 1.023,  2020-09-20</em></p>
+  <p align="center"><em>Version 1.025,  2020-09-25</em></p>
 
   <p>This is the "Second Batch" (prefix=<tt>/GameService2</tt>)  of the Game Service web API calls. They are intended for use with a client app that works with players enrolled in experiments; each player is identified by a player ID, and the server assigns each player to a "trial list" (a particular track in the experiment plan with which this player ID is associated with).</p>
 
@@ -15,7 +15,8 @@
 <li>POST <strong><tt>/player:</tt> Start a player's interaction with the system, and obtain a randomly selected trial list for this player</strong>
   <form method="post" action="game-data/GameService2/player"
 	 enctype="application/x-www-form-urlencoded">
-     Player ID: <input name="playerId" type="text" size="25" value="AnyText01">
+     Player ID: <input name="playerId" type="text" size="25" value="AnyText01"><br>
+     Experiment plan (optional, e.g <tt>qt</tt> or <tt>pk1</tt>): <input name="exp" type="text" size="25" value="">
 	  <input type="submit">
   </form>
   <p>The input parameter is the player ID (a string). In the future, the system will determine, based on the player ID, what experiment the person is enrolled into (e.g MTurkers vs. psych students vs. ourselves testing a particular game); at present, the player ID does not really matter, as everybody is considered to be enrolled in the experiment called "default".</P>
@@ -274,6 +275,7 @@ Series No.:     <input name="seriesNo" type="text" size="2" value="0">
 	<textarea id="wf.data" name="data" rows="10" cols="60">
 Please type your guess here (an arbitrary test)
 	</textarea><br>
+	Confidence  <input name="confidence" type="text" size="2" value="5">
 	<input type="submit">
       </form>
       <p>

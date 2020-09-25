@@ -49,14 +49,17 @@ public class PlayerResponse extends ResponseBase {
   
     
 
-    PlayerResponse(String pid) {
-	this(pid, false);
+    PlayerResponse(String pid, String exp) {
+	this(pid, exp, false);
     }
     
-    PlayerResponse(String pid, boolean debug) {
+    PlayerResponse(String pid, String exp, boolean debug) {
+	if (exp!=null && (exp.equals("") || exp.equals("null"))) exp=null;
+
+	
 	try {
 
-	    Logging.info("PlayerResponse(pid="+ pid+")");
+	    Logging.info("PlayerResponse(pid="+ pid+", exp="+exp+")");
 	    
 	    PlayerInfo x = findPlayerInfo(pid);
 	    if (debug) playerInfo=x;
@@ -72,7 +75,8 @@ public class PlayerResponse extends ResponseBase {
 		x = new PlayerInfo();
 		x.setDate( new Date());
 		x.setPlayerId(pid);
-		x.setExperimentPlan( TrialList.extractExperimentPlanFromPlayerId(pid));
+		if (exp==null) exp= TrialList.extractExperimentPlanFromPlayerId(pid);
+		x.setExperimentPlan(exp);
 		assignRandomTrialList(x);
 		trialListId = x.getTrialListId();
 		Main.persistObjects(x);
@@ -88,7 +92,7 @@ public class PlayerResponse extends ResponseBase {
 	    setError(true);
 	    setErrmsg(e.toString());
 	} finally {
-	    Logging.info("PlayerResponse(pid="+ pid+"), returning:\n" +
+	    Logging.info("PlayerResponse(pid="+ pid+", exp="+exp+"), returning:\n" +
 			 JsonReflect.reflectToJSONObject(this, true));
 	}
     }
@@ -97,7 +101,7 @@ public class PlayerResponse extends ResponseBase {
     private static HashMap<String, PlayerInfo> allPlayers = new HashMap<String, PlayerInfo>();
         
 
-    /** Find the matching record for a player.
+    /** Find the matching record for a player. First looks it up in the local cache; then, if not found, in the SQL database.
 	@return The PlayerInfo object with the matching name, or null if none is found */
    static PlayerInfo findPlayerInfo(String pid) {
 

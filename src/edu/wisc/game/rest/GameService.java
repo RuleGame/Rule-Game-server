@@ -230,8 +230,9 @@ public class GameService {
     @Path("/startTrial") 
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
-    public PlayerResponse startTrial(@FormParam("playerId") String playerId){
-	return new PlayerResponse( playerId);
+    public PlayerResponse startTrial(@FormParam("playerId") String playerId,
+				 @DefaultValue("null") @FormParam("exp") String exp){
+	return new PlayerResponse( playerId, exp);
     }
 
 

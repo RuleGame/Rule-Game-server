@@ -162,7 +162,8 @@ public class GameServiceHtml extends GameService2 {
 	    form = "";
 	    form += "episode = " + fm.input("episode", episodeId) + fm.br();
 	    form += "Enter your guess below:" + fm.br() +
-		fm.input("data", null, 80) + fm.br();
+		fm.input("data", null, 80) + fm.br() +
+		"Confidence=" + fm.input("confidence", "5", 2) + fm.br();
 	    form += "<input type='submit'>";	    
 	    form =  fm.wrap("form", "method='post' action='guessHtml'", form);
 	    form = fm.h4("Your guess") + fm.para(form);
@@ -179,8 +180,9 @@ public class GameServiceHtml extends GameService2 {
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.TEXT_HTML)
     public String guessHtml(@FormParam("episode") String episodeId,
-				 @FormParam("data") String guessText) {
-	FileWriteReport _r = GuessWriteReport.writeGuess( episodeId, guessText);
+			    @FormParam("data") String guessText,
+			    @DefaultValue("-1") @FormParam("confidence") int confidence			    ) {
+	FileWriteReport _r = GuessWriteReport.writeGuess( episodeId, guessText, confidence);
 
 	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
 	if (epi==null) {

@@ -62,7 +62,7 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	
 	ResponseBase r=null;
 	if (activateBonus) {
-	    r = new  ActivateBonusWrapper(pid);
+	    r = new ActivateBonusWrapper(pid);
 	}
 	if (giveUp && (r==null || !r.getError()) )  {
 	    r = new GiveUpWrapper(pid);
@@ -75,7 +75,7 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	
 	try {
 	    // register the player if he has not been registered
-	    PlayerResponse q =new PlayerResponse(pid);
+	    PlayerResponse q =new PlayerResponse(pid, null);
 	    if (q.error) {
 		setError(true);
 		setErrmsg(q.getErrmsg());

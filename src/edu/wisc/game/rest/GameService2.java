@@ -34,8 +34,12 @@ public class GameService2 {
     @Path("/player") 
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
-    public PlayerResponse player(@FormParam("playerId") String playerId){
-	return new PlayerResponse( playerId);
+    /** @param exp The experiment plan. If not supplied (null), the experiment
+	plan will be guessed from the playerId.
+     */
+    public PlayerResponse player(@FormParam("playerId") String playerId,
+				 @DefaultValue("null") @FormParam("exp") String exp){
+	return new PlayerResponse( playerId, exp);
     }
 
     @POST
@@ -121,8 +125,9 @@ public class GameService2 {
     @GET
     @Path("/debug") 
     @Produces(MediaType.APPLICATION_JSON)
-    public PlayerResponse debug(@QueryParam("playerId") String playerId){
-	return new PlayerResponse( playerId, true);
+    public PlayerResponse debug(@QueryParam("playerId") String playerId,
+				@DefaultValue("null") @QueryParam("exp") String exp){
+	return new PlayerResponse( playerId, exp, true);
     }
 
 
@@ -132,8 +137,10 @@ public class GameService2 {
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
     public FileWriteReport guess(@FormParam("episode") String episodeId,
-				 @FormParam("data") String text) {
-	return GuessWriteReport.writeGuess( episodeId, text);
+				 @FormParam("data") String text,
+				 @DefaultValue("-1") @FormParam("confidence") int confidence
+				 ) {
+	return GuessWriteReport.writeGuess( episodeId, text, confidence);
     }
 
 

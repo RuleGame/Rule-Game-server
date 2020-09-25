@@ -4,7 +4,7 @@
 <body>
   <h1>Rule Game server data</h1>
 
-    <p align="center"><em>Updated for Ver 1.024,  2020-09-23</em></p>
+    <p align="center"><em>Updated for Ver 1.025,  2020-09-25</em></p>
 
 
   <h2>Introduction</h2>
@@ -137,6 +137,7 @@ mysql> describe  Episode;
 | bonusSuccessful | bit(1)       | YES  |     | NULL    |                |
 | lost            | bit(1)       | YES  |     | NULL    |                |
 | guess           | varchar(255) | YES  |     | NULL    |                |
+| guessConfidence | int(11)      | YES  |     | NULL    |                |
 +-----------------+--------------+------+-----+---------+----------------+
 </code></pre>
 
@@ -164,7 +165,8 @@ mysql> describe  Episode;
 	  <li>guessSaved - true if the player's guess about the rules has been submitted and recorded at the end of this episode.
 	  <li>bonusSuccessful - true if this was a bonus episode (bonus=true) and the player managed to clear the board sufficiently fast. If a required number of episodes with bonusSuccessful=true is 
 	  <li>lost - bit flag, set to true if the player fails to clear the board in a bonus episode within a required number of moves. Which this happens, the episode is terminated by the server, and so is series.
-	    <li>guess - the text of the guess submitted by the player at the end of the episode. NULL if no guess has been recorded.
+	  <li>guess - the text of the guess submitted by the player at the end of the episode. NULL if no guess has been recorded.
+	  <li>guessConfidence - an integer entered by the player in the guess form, to represent his confidence in his guess on a certain numerical scale
     </ol>
 
     <h3> Exporting data from the MySQL database to CSV files</h3>
@@ -259,10 +261,10 @@ qt-02,trial_1,2,TD-03,0,20200923-211954-8M8E8V,1,20200923-212025.978,11.523,RED_
 
 <pre>
 /opt/tomcat/saved/guesses$ cat qt-02.guesses.csv 
-#playerId,trialListId,seriesNo,ruleId,episodeNo,episodeId,guess
-qt-02,trial_1,1,TD-02,2,20200923-211803-VPL2LF,the guess will go hese
-qt-02,trial_1,1,TD-02,3,20200923-211834-AR21RU,this episode will have lost=true
-qt-02,trial_1,2,TD-03,0,20200923-211954-8M8E8V,"here, is also a guess, for the next series maybe"
+#playerId,trialListId,seriesNo,ruleId,episodeNo,episodeId,guess,quessConfidence
+qt-02,trial_1,1,TD-02,2,20200923-211803-VPL2LF,the guess will go here,3
+qt-02,trial_1,1,TD-02,3,20200923-211834-AR21RU,this episode will have lost=true,3
+qt-02,trial_1,2,TD-03,0,20200923-211954-8M8E8V,"here, is also a guess, for the next series maybe",4
 </pre>
 
 
