@@ -2,9 +2,6 @@ package edu.wisc.game.engine;
 
 import java.io.*;
 import java.util.*;
-//import java.lang.reflect.*;
-
-//import javax.json.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.reflect.*;
@@ -88,6 +85,11 @@ public class Captive {
 	ParseConfig ht = new ParseConfig();
 	//System.out.println("output=" +  ht.getOption("output", null));
 	OutputMode outputMode = ht.getOptionEnum(OutputMode.class, "output", OutputMode.FULL);
+
+	long seed = ht.getOptionLong("seed", 0L);
+	if (seed != 0L) Board.initRandom(seed);
+
+
 	
 	//System.out.println("output mode=" +  outputMode);
 	int ja=0;

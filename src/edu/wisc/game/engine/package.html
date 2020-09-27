@@ -3,7 +3,7 @@
   <body>
     <h1>Captive Game Server</h1>
 
-<div align="center"><em>Updated 2020-08-31 for ver 1.009</em></div>
+<div align="center"><em>Updated 2020-09-26 for ver 1.026</em></div>
     
     <h2>What is the Captive Game Server</h2>
 
@@ -88,6 +88,14 @@ This will start a session using the rule description from the specified file; ea
     <p>Presently (ver. 1.009), it is expected that the human-subject experiments will use experiment plans (trial lists) specifying ranges of the number of pieces, the number of shapes, and the number of colors. When the distribution parameters are specified in this way, the captive server uses exactly the same random board generation process as  is used in the human-subject experiments.</p>
     
 
+    <h3>Specifying the random generator seed</h3>
+
+    <p>
+      Starting in ver. 1.026, it is possible to specify the seed of the random number generator, so that the same random boards would be generated on repeated runs. To do that, insert  <tt>-Dseed=N</tt> (where N is a positive integer) into the Java command found in a script such as <tt>captive-full.sh</tt>. For example, you can modify the last line of this script to look as follows:
+<pre>      
+  java -Dseed=1 -Doutput=FULL edu.wisc.game.engine.Captive  $argv[1-]
+</pre></p>    
+    
 <h3>Talking to the CGS from a Java application</h3>
     
     <p>If your ML application is in Java, you can use the <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/ProcessBuilder.html">ProcessBuilder</a> API to spawn child processes and deal with their I/O. You create a <tt>Process</tt> object, write your commands to the stream returned by <tt>Process.getInputStream()</tt>, and read responses from the stream returned by <tt>Process.getOutputStream()</tt></p>

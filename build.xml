@@ -38,9 +38,9 @@
  
 <path id="classpath"
        description="The classpath to use for compiling this app">
-   <fileset dir="${lib}">
+   <!-- fileset dir="${lib}">
      <include name="*.jar"/>
-   </fileset>
+   </fileset -->
    <fileset dir="${main}/../jaxrs-ri/api">
      <include name="*.jar"/>
    </fileset>
@@ -148,8 +148,6 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
     <!-- classpath refid="classpath"/ -->
 
    <classpath>
-      <!-- path refid="entity.cp"/>
-      <path refid="jpa.used.cp"/ -->
       <pathelement location="${classes}"/>
       <path refid="classpath"/>
     </classpath> 
@@ -157,14 +155,14 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
 
     <fileset dir="${classes}/edu/wisc/game/sql">
       <!-- include name="**/*.class"/ -->
-      <include name="Piece.class" />
-      <include name="Board.class" />
+      <!-- include name="Piece.class" />
+      <include name="Board.class" / -->
       <include name="PlayerInfo.class" />
       <include name="EpisodeInfo.class" />
       <include name="Episode.class" />
     </fileset>
-    <fileset dir="${classes}/edu/wisc/game/engine">
-    </fileset>
+    <!-- fileset dir="${classes}/edu/wisc/game/engine">
+    </fileset -->
   </openjpac>
 
 </target>

@@ -181,6 +181,13 @@ public class Board// extends OurTable
 
     static public RandomRG random = new RandomRG();
 
+    /** This can be called on startup (from main()) if we want to initialize
+	the random number generator with a specific seed */
+    static public void initRandom(long seed) {
+	random = new RandomRG(seed);	
+    }
+
+    
     /** The simple constructor */
     public Board(int randomCnt) {
 	setName("Random board with " + randomCnt + " pieces");
