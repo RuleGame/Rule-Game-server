@@ -158,6 +158,8 @@ public class EpisodeInfo extends Episode {
 	
 	if (isCompleted() && getPlayer()!=null) {
 	    getPlayer().ended(this);
+	    // just so that it would get persisted correctly
+	    finishCode = getFinishCode();
 	}
 	// must do ExtendedDisplay after the "ended()" call, to have correct reward!
 	ExtendedDisplay q = new ExtendedDisplay(_q);
@@ -212,7 +214,7 @@ public class EpisodeInfo extends Episode {
 		ParaSet para=p.getPara(EpisodeInfo.this);
 		movesLeftToStayInBonus = EpisodeInfo.this.movesLeftToStayInBonus();
 	
-		if (finishCode!=FINISH_CODE.NO) {
+		if (getFinishCode()!=FINISH_CODE.NO) {
 		    transitionMap = p.new TransitionMap();
 		}
 		

@@ -344,13 +344,17 @@ public class PlayerInfo {
 	allSeries.clear();
 
 	int k = 0;
+
+	System.err.println("Restore: will check " + allEpisodes.size() + " episodes");
 	for(int j=0; j< trialList.size(); j++) {
 	    ParaSet para =trialList.get(j);
 	    Series ser = new Series(para);
 	    allSeries.add(ser);
 	    while(k<allEpisodes.size() && allEpisodes.get(k).seriesNo==j) {
+		System.err.print("Restore: series=" + j +", ae["+k+"]=");
 		EpisodeInfo epi = allEpisodes.get(k++);
-
+		System.err.print(epi.report()+", completed=" + epi.isCompleted());
+		
 		if (!epi.isCompleted()) epi.giveUp();
 		ser.episodes.add(epi);
 	    }
