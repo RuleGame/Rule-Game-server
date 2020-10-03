@@ -351,7 +351,7 @@ public class PlayerInfo {
 	    Series ser = new Series(para);
 	    allSeries.add(ser);
 	    while(k<allEpisodes.size() && allEpisodes.get(k).seriesNo==j) {
-		System.err.print("Restore: series=" + j +", ae["+k+"]=");
+		System.err.println("Restore: check series=" + j +", ae["+k+"]=");
 		EpisodeInfo epi = allEpisodes.get(k++);
 		System.err.print(epi.report()+", completed=" + epi.isCompleted());
 		

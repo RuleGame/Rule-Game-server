@@ -878,9 +878,10 @@ public class Episode {
 	return cleared || stalemate || givenUp || lost;
     }
 
-    /** Marks this episode as "given up" */
+    /** Marks this episode as "given up" (unless it's already marked
+	as completed in some other way) */
     void giveUp() {
-	if (isCompleted()) givenUp = true;
+	if (!isCompleted()) givenUp = true;
     }
 
    /** Let's just write one file at a time */
