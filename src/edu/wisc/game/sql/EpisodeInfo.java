@@ -38,6 +38,7 @@ public class EpisodeInfo extends Episode {
 
     
     Date endTime;
+    /** This is an afterthough, just for saving in SQL server. */	
     int finishCode;
     /** Is this episode part of the bonus series? */
     boolean bonus;

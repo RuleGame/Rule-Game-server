@@ -923,5 +923,13 @@ public class Episode {
 	}  
     }
 
+        /** Concise report, handy for debugging */
+    public String report() {
+	return "["+episodeId+"; FC="+getFinishCode()+
+	    " " +
+	    attemptCnt + "/"+getNPiecesStart()  +
+	    "]";
+    }
+    
 
 }

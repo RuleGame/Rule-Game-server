@@ -7,6 +7,7 @@ import java.net.*;
 import javax.persistence.*;
 
 import org.apache.openjpa.persistence.jdbc.*;
+import edu.wisc.game.util.*;
 
 public class Main {
    /** Finds the process id of the UNIX process for this application.
@@ -99,8 +100,12 @@ public class Main {
 	synchronized(em) {
 	try {
 	    em.getTransaction().begin();
-	    for(Object o: v) {
+	    for(Object o: v) {		
 		em.persist(o);
+		String s = (o instanceof Episode) ?   ((Episode)o).report():
+		    (o instanceof PlayerInfo) ?   ((PlayerInfo)o).report():
+		    o.toString();
+		Logging.info("Persisted " + o.getClass() + ": " + s);
 	    }
 	    em.getTransaction().commit();
 	} finally {

@@ -118,7 +118,7 @@ public class PlayerInfo {
 		    if (x.deservesBonus())  deserveCnt++;
 		}
 	    }
-	    if (cnt==deserveCnt && deserveCnt >=  para.getInt("clear_how_many")) {
+	    if (cnt==deserveCnt && deserveCnt>=para.getInt("clear_how_many")) {
 		// bonus earned; attach it to the last episode in the bonus series,
 		// and end the series
 		int r = 0;
@@ -217,9 +217,9 @@ public class PlayerInfo {
 	Main.persistObjects(this); // this saves the new value of inBonus
     }
 
-    /** "Gives up" the current series, i.e. immediately switches the
+    /** "Gives up" he current series, i.e. immediately switches the
 	player to the next series (if there is one). */
-    public void giveUp(int seriesNo) {
+    public void giveUp(int seriesNo) throws IOException {
 	Logging.info("giveUp(pid="+playerId+", seriesNo=" + seriesNo +"), currentSeriesNo=" +currentSeriesNo);
 	if (seriesNo+1==currentSeriesNo) {	    
 	    // that series has just ended anyway...
@@ -235,7 +235,9 @@ public class PlayerInfo {
 	    if (!epi.isCompleted()) {
 		epi.giveUp();
 		Logging.info("giveUp: episodeId=" + epi.getEpisodeId()+", set givenUp=" + epi.givenUp);
-		Main.persistObjects(epi);
+		//Main.persistObjects(epi);
+		// Persists SQL, and write CSV
+		ended(epi);
 	    }
 	}
 		   	
@@ -351,11 +353,15 @@ public class PlayerInfo {
 	    Series ser = new Series(para);
 	    allSeries.add(ser);
 	    while(k<allEpisodes.size() && allEpisodes.get(k).seriesNo==j) {
-		System.err.println("Restore: check series=" + j +", ae["+k+"]=");
+		System.err.print("Restore: check series=" + j +", ae["+k+"]=");
 		EpisodeInfo epi = allEpisodes.get(k++);
-		System.err.print(epi.report()+", completed=" + epi.isCompleted());
+		System.err.println(epi.report()+", completed=" + epi.isCompleted());
 		
-		if (!epi.isCompleted()) epi.giveUp();
+		if (!epi.isCompleted()) {
+		    epi.giveUp();
+		    // save the "givenUp" flag in the SQL database. No CSV files to write, though.
+		    Main.persistObjects(epi);
+		}
 		ser.episodes.add(epi);
 	    }
 	}
@@ -396,6 +402,8 @@ public class PlayerInfo {
 		if (!x.isCompleted()) {
 		    if (x.isNotPlayable()) {
 			x.giveUp();
+			// we just do SQL persist but don't bother saving CSV, since the data
+			// probably just aren't there anyway
 			Main.persistObjects(x);
 		    } else {
 			Logging.info("episodeToDo(pid="+playerId+"): returning existing episode " + x.episodeId);
@@ -504,8 +512,8 @@ public class PlayerInfo {
     
     
     /** This method is called after an episode completes. It computes
-	rewards (if the board has been cleared), and, if needed,
-	switches the series and subseries. */
+	rewards (if the board has been cleared), calls the SQL persist operations,
+	writes CSV files, and, if needed, switches the series and subseries. */
     void ended(EpisodeInfo epi) throws IOException {
 	Series ser = whoseEpisode(epi);
 	if (ser==null) throw new IllegalArgumentException("Could not figure to which series this episode belongs");
