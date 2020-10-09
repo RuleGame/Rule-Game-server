@@ -46,6 +46,9 @@
         <class>edu.wisc.game.sql.PlayerInfo</class>
         <class>edu.wisc.game.sql.Episode</class>
         <class>edu.wisc.game.sql.EpisodeInfo</class>
+        <class>edu.wisc.game.sql.Test</class>
+        <class>edu.wisc.game.sql.TestParent</class>
+        <class>edu.wisc.game.sql.TestChild</class>
 
         <properties>
             <!--
@@ -79,9 +82,18 @@
 		
 		 --> 
 
+
+<property name="openjpa.Log" value="File=/tmp/org.apache.openjpa.log, DefaultLevel=WARN, Runtime=INFO, Tool=INFO"/>
+	    
 	    <property name="openjpa.Log"
 		 value="DefaultLevel=WARN"/>
 
+
+
+	    <!-- VM: detailed trace -->
+	    <property name="openjpa.Log" value="File=/opt/tomcat/logs/org.apache.openjpa.log, DefaultLevel=WARN, Runtime=INFO, Tool=INFO, SQL=TRACE, Query=TRACE"/>
+
+	    
 	    <!-- property name="openjpa.Log"
 		 value="DefaultLevel=WARN,SQL=TRACE"/ -->
 

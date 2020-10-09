@@ -17,14 +17,15 @@ import edu.wisc.game.sql.*;
 public class ActivateBonusWrapper extends ResponseBase {
   
     ActivateBonusWrapper(String pid) {
+	EntityManager em = Main.getNewEM();
 	try {
-	    PlayerInfo x = PlayerResponse.findPlayerInfo(pid);
+	    PlayerInfo x = PlayerResponse.findPlayerInfo(em, pid);
 	    if (x==null) {
 		setError(true);
 		setErrmsg("Player not found: " + pid);
 		return;
 	    }
-	    x.activateBonus();	   
+	    x.activateBonus(em);	   
 	    setError( false);
 	    setErrmsg("Bonus activated successfully");
 	} catch(Exception ex) {
@@ -32,6 +33,8 @@ public class ActivateBonusWrapper extends ResponseBase {
 	    setErrmsg(ex.getMessage());
 	    System.err.print(ex);
 	    ex.printStackTrace(System.err);
-	}	      	
+	} finally {
+	    try {	    em.close();} catch(Exception ex) {}
+	}     	
     }    
 }

@@ -20,9 +20,8 @@ public class GiveUpWrapper extends ResponseBase {
     GiveUpWrapper(String pid, int seriesNo) {
 
 	Logging.info("GiveUpWrapper(pid="+ pid+", seriesNo=" + seriesNo+")");
-		
 	try {
-	    PlayerInfo x = PlayerResponse.findPlayerInfo(pid);
+	    PlayerInfo x = PlayerResponse.findPlayerInfo(null,pid);
 	    if (x==null) {
 		setError(true);
 		setErrmsg("Player not found: " + pid);

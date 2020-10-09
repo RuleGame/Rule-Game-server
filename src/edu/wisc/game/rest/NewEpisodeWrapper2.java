@@ -72,6 +72,7 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	    setErrmsg(r.getErrmsg());
 	    return;
 	}
+
 	
 	try {
 	    // register the player if he has not been registered
@@ -82,7 +83,9 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 		return;
 	    }
 
-	    PlayerInfo x = PlayerResponse.findPlayerInfo(pid);
+	    // it's ok to user em=null, since the object exists already,
+	    // and we just do a hash table lookup
+	    PlayerInfo x = PlayerResponse.findPlayerInfo(null, pid);
 	    Logging.info("NewEpisodeWrapper2(pid="+ pid+"): player="+
 			 (x==null? "null" : "\n" + x.report()));
 	    if (x==null) {
@@ -91,6 +94,7 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 		return;
 	    } 
 	    EpisodeInfo epi = existing? x.mostRecentEpisode(): x.episodeToDo();
+    
 	    alreadyFinished = x.alreadyFinished();
 	    completionCode = x.getCompletionCode();
 	    if (epi==null) {
@@ -107,6 +111,7 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	    setDisplay(epi.mkDisplay());
 	    
 	    setError( false);
+ 	    
 	} catch(Exception ex) {
 	    setError(true);
 	    String msg = ex.getMessage();

@@ -40,6 +40,10 @@ public class EpisodeInfo extends Episode {
     Date endTime;
     /** This is an afterthough, just for saving in SQL server. */	
     int finishCode;
+    void updateFinishCode() {
+	finishCode = getFinishCode();
+    }
+
     /** Is this episode part of the bonus series? */
     boolean bonus;
     public boolean isBonus() { return bonus; }
@@ -159,9 +163,9 @@ public class EpisodeInfo extends Episode {
 	
 	if (isCompleted() && getPlayer()!=null) {
 	    getPlayer().ended(this);
-	    // just so that it would get persisted correctly
-	    finishCode = getFinishCode();
 	}
+	// just so that it would get persisted correctly
+	updateFinishCode();
 	// must do ExtendedDisplay after the "ended()" call, to have correct reward!
 	ExtendedDisplay q = new ExtendedDisplay(_q);
 	return q;

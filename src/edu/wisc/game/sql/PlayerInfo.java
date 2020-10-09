@@ -191,13 +191,17 @@ public class PlayerInfo {
 	nowAt++;
 
 	boolean answer = (nowAt >= at);
-	System.err.println("canActivateBonus("+playerId+")="+answer+", for series No. "+currentSeriesNo+", size="+ser.episodes.size()+", at="+at);
+	//System.err.println("canActivateBonus("+playerId+")="+answer+", for series No. "+currentSeriesNo+", size="+ser.episodes.size()+", at="+at);
 	return answer;
     } 
 
     /** Switches this player from the main subseries to the bonus subseries, and
-	perisist the information about this fact in the SQL server. */
-    public void activateBonus() {
+	saves the information about this fact in the SQL server.
+	@param em The active EM to use. (We have this because this
+	method is called from a method that has an EM anyway, and this
+	object is NOT detached.)
+    */
+    public void activateBonus(EntityManager em) {
 	if (inBonus) throw new IllegalArgumentException("Bonus already activated in the current series");
 	
 	if (!canActivateBonus()) throw new IllegalArgumentException("Cannot activate bonus in the current series");
@@ -214,7 +218,9 @@ public class PlayerInfo {
 	    }
 	}
 	System.err.println("Bonus activated: player="+playerId+", series No. "+currentSeriesNo+", size="+ser.episodes.size());
-	Main.persistObjects(this); // this saves the new value of inBonus
+	//Main.saveObject(this); // this saves the new value of inBonus
+	em.getTransaction().begin();	    
+	em.getTransaction().commit();	        
     }
 
     /** "Gives up" he current series, i.e. immediately switches the
@@ -352,6 +358,7 @@ public class PlayerInfo {
 	    ParaSet para =trialList.get(j);
 	    Series ser = new Series(para);
 	    allSeries.add(ser);
+	    boolean needSave=false;
 	    while(k<allEpisodes.size() && allEpisodes.get(k).seriesNo==j) {
 		System.err.print("Restore: check series=" + j +", ae["+k+"]=");
 		EpisodeInfo epi = allEpisodes.get(k++);
@@ -360,10 +367,12 @@ public class PlayerInfo {
 		if (!epi.isCompleted()) {
 		    epi.giveUp();
 		    // save the "givenUp" flag in the SQL database. No CSV files to write, though.
-		    Main.persistObjects(epi);
+		    //Main.persistObjects(epi);
+		    needSave=true;
 		}
 		ser.episodes.add(epi);
 	    }
+	    if (needSave) saveMe();
 	}
 
 	
@@ -388,6 +397,8 @@ public class PlayerInfo {
 
 	Logging.info("episodeToDo(pid="+playerId+"); cs=" + currentSeriesNo +", finished=" + alreadyFinished());
 
+	boolean needSave=false;
+	try {
 	while(currentSeriesNo < allSeries.size()) {	    
 	    Series ser=getCurrentSeries();
 	    if (ser!=null && ser.episodes.size()>0) {
@@ -397,39 +408,42 @@ public class PlayerInfo {
 		    continue;
 		}
 		
-		EpisodeInfo x = ser.episodes.lastElement();
+		EpisodeInfo epi = ser.episodes.lastElement();
 		// should we resume the last episode?
-		if (!x.isCompleted()) {
-		    if (x.isNotPlayable()) {
-			x.giveUp();
+		if (!epi.isCompleted()) {
+		    if (epi.isNotPlayable()) {
+			epi.giveUp();			
 			// we just do SQL persist but don't bother saving CSV, since the data
 			// probably just aren't there anyway
-			Main.persistObjects(x);
+			needSave=true;
+			//Main.persistObjects(x);
 		    } else {
-			Logging.info("episodeToDo(pid="+playerId+"): returning existing episode " + x.episodeId);
-			return x;
+			Logging.info("episodeToDo(pid="+playerId+"): returning existing episode " + epi.episodeId);
+			return epi;
 		    }
 		}
 	    }
 	    
-	    EpisodeInfo x = null;
+	    EpisodeInfo epi = null;
 	    if (canHaveAnotherRegularEpisode()) {
-		x = EpisodeInfo.mkEpisodeInfo(currentSeriesNo, ser.para, false);
+		epi = EpisodeInfo.mkEpisodeInfo(currentSeriesNo, ser.para, false);
 	    } else if (canHaveAnotherBonusEpisode()) {
-		x = EpisodeInfo.mkEpisodeInfo(currentSeriesNo, ser.para, true);
+		epi = EpisodeInfo.mkEpisodeInfo(currentSeriesNo, ser.para, true);
 	    }
 
-	    if (x!=null) {
-		ser.episodes.add(x);
-		addEpisode(x);	
-		Logging.info("episodeToDo(pid="+playerId+"): returning new episode " + x.episodeId);
-		return x;
+	    if (epi!=null) {
+		ser.episodes.add(epi);
+		addEpisode(epi);	
+		Logging.info("episodeToDo(pid="+playerId+"): returning new episode " + epi.episodeId);
+		return epi;
 	    }
 	    Logging.info("episodeToDo(pid="+playerId+"): nextSeries");
 	    goToNextSeries();
 	}
-
-
+	} finally {
+	    if (needSave) saveMe();
+	}
+	
 	Logging.info("episodeToDo(pid="+playerId+"): cannot return anything");
 
 	return null;
@@ -486,12 +500,13 @@ public class PlayerInfo {
 	if (alreadyFinished() && completionCode ==null) {
 	    completionCode = buildCompletionCode();
 	} 
-	Main.persistObjects(this);
+	//Main.persistObjects(this);
+	saveMe();
     }
 
     private int totalRewardEarned;
     public int getTotalRewardEarned() {
-	System.err.println("getTotalReward("+playerId+")=" + totalRewardEarned);
+	//System.err.println("getTotalReward("+playerId+")=" + totalRewardEarned);
 	return totalRewardEarned;
     }
     public void setTotalRewardEarned(int _totalRewardEarned) { totalRewardEarned = _totalRewardEarned; }
@@ -536,7 +551,10 @@ public class PlayerInfo {
 	    updateTotalReward();
 	}
 
-	Main.persistObjects(this, epi);
+	epi.updateFinishCode();
+
+	//Main.persistObjects(this, epi);
+	saveMe();
 
 	File f =  Files.boardsFile(playerId);
 	epi.getCurrentBoard(true).saveToFile(playerId, epi.episodeId, f);
@@ -623,5 +641,15 @@ public class PlayerInfo {
 	}
     }
 
+    /** Saves this object (and the associated Episode objects, via
+	cascading) data in the SQL database. The assumption is that 
+	this object is detached, so we call a method which will
+	create a new EM and merge this object to the new persistence context.
+     */
+    public void saveMe() {
+	Main.saveObject(this);
+    }
+
+    
 }
  

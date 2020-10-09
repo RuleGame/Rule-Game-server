@@ -56,12 +56,12 @@ public class PlayerResponse extends ResponseBase {
     PlayerResponse(String pid, String exp, boolean debug) {
 	if (exp!=null && (exp.equals("") || exp.equals("null"))) exp=null;
 
+	EntityManager em = Main.getNewEM();
 	
 	try {
 
 	    Logging.info("PlayerResponse(pid="+ pid+", exp="+exp+")");
-	    
-	    PlayerInfo x = findPlayerInfo(pid);
+	    PlayerInfo x = findPlayerInfo(em, pid);
 	    if (debug) playerInfo=x;
 	    
 	    setErrmsg("Debug: pid="+pid+"; Retrieved x="+x);
@@ -79,7 +79,7 @@ public class PlayerResponse extends ResponseBase {
 		x.setExperimentPlan(exp);
 		assignRandomTrialList(x);
 		trialListId = x.getTrialListId();
-		Main.persistObjects(x);
+		em.persist(x);
 		allPlayers.put(pid,x);
 	    }
 
@@ -92,6 +92,7 @@ public class PlayerResponse extends ResponseBase {
 	    setError(true);
 	    setErrmsg(e.toString());
 	} finally {
+	    try {	    em.close();} catch(Exception ex) {}
 	    Logging.info("PlayerResponse(pid="+ pid+", exp="+exp+"), returning:\n" +
 			 JsonReflect.reflectToJSONObject(this, true));
 	}
@@ -102,13 +103,17 @@ public class PlayerResponse extends ResponseBase {
         
 
     /** Find the matching record for a player. First looks it up in the local cache; then, if not found, in the SQL database.
+	@em The EntityManager to use, if needed. If null is given, the EM will
+	be created when needed, and then closed, so that the returned object will be detached.
+	
 	@return The PlayerInfo object with the matching name, or null if none is found */
-   static PlayerInfo findPlayerInfo(String pid) {
+    static PlayerInfo findPlayerInfo(EntityManager em, String pid) {
 
 	PlayerInfo x = allPlayers.get(pid);
 	if (x!=null) return x;
 
-	EntityManager em=Main.getEM();
+	boolean mustClose=(em==null);
+	if (mustClose) em=Main.getNewEM();
 	
 	synchronized(em) {
 
@@ -121,6 +126,8 @@ public class PlayerResponse extends ResponseBase {
 	    return null;
 	}
 	}
+
+	if (mustClose) { em.close(); em=null; }
 	allPlayers.put(pid,x); // save in a local cache for faster lookup later
 	x.restoreTransientFields(); // make it ready to use
 	for(EpisodeInfo epi: x.getAllEpisodes())  {

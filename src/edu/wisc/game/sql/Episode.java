@@ -674,7 +674,7 @@ public class Episode {
 	return json.toString();
     }
 
-    static final String version = "1.025";
+    static final String version = "1.026";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();

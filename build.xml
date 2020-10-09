@@ -160,6 +160,9 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
       <include name="PlayerInfo.class" />
       <include name="EpisodeInfo.class" />
       <include name="Episode.class" />
+      <include name="Test.class" />
+      <include name="TestParent.class" />
+      <include name="TestChild.class" />
     </fileset>
     <!-- fileset dir="${classes}/edu/wisc/game/engine">
     </fileset -->

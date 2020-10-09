@@ -55,7 +55,9 @@ public class GuessWriteReport extends FileWriteReport {
 	    if (guessConfidence>=0) {
 		epi.setGuessConfidence(guessConfidence);
 	    }
-	    Main.persistObjects(epi);
+	    //Main.persistObjects(epi);
+	    //Main.saveObject(epi); // does this create duplicate Episode rows?
+	    x.saveMe(); 
 	    GuessWriteReport g = new GuessWriteReport(f, f.length());
 	    g.transitionMap = x.new TransitionMap();
 	    return g;
