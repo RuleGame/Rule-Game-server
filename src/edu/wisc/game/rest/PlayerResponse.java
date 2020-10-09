@@ -67,6 +67,7 @@ public class PlayerResponse extends ResponseBase {
 	    setErrmsg("Debug: pid="+pid+"; Retrieved x="+x);
 	    setNewlyRegistered(x==null);
 	    if (x!=null) {  // existing player
+		Logging.info("Found existing player=" + x);
 		trialListId = x.getTrialListId();		
 		trialList  = new TrialList(x.getExperimentPlan(), trialListId);
 		alreadyFinished = x.alreadyFinished();
@@ -79,7 +80,11 @@ public class PlayerResponse extends ResponseBase {
 		x.setExperimentPlan(exp);
 		assignRandomTrialList(x);
 		trialListId = x.getTrialListId();
+		em.getTransaction().begin();
 		em.persist(x);
+		em.flush(); // to get the new ID in
+		em.getTransaction().commit();
+		Logging.info("Persisted new player=" + x);
 		allPlayers.put(pid,x);
 	    }
 

@@ -91,7 +91,7 @@
 
 
 	    <!-- VM: detailed trace -->
-	    <property name="openjpa.Log" value="File=/opt/tomcat/logs/org.apache.openjpa.log, DefaultLevel=WARN, Runtime=INFO, Tool=INFO, SQL=TRACE, Query=TRACE"/>
+	    <!-- property name="openjpa.Log" value="File=/opt/tomcat/logs/org.apache.openjpa.log, DefaultLevel=WARN, Runtime=INFO, Tool=INFO, SQL=TRACE, Query=TRACE"/ -->
 
 	    
 	    <!-- property name="openjpa.Log"

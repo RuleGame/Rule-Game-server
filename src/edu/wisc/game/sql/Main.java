@@ -148,11 +148,13 @@ public class Main {
     }
 
     /** @param o a detached object */
-    static public void saveObject(Object o) {
+    static public <T> void saveObject(T o) {
 	EntityManager em = Main.getNewEM();
-	try {
-	    em.getTransaction().begin();	    
-	    em.merge(o);
+	try {	    
+	    Logging.info("Merging object " + o);
+	    em.getTransaction().begin();
+	    T om = em.merge(o);
+	    Logging.info("Now, o=" + o +", om=" + om);
 	    em.getTransaction().commit();	    
 	} finally {
 	    try {	    em.close();} catch(Exception ex) {}

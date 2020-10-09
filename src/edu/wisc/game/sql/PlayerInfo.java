@@ -218,7 +218,7 @@ public class PlayerInfo {
 	    }
 	}
 	System.err.println("Bonus activated: player="+playerId+", series No. "+currentSeriesNo+", size="+ser.episodes.size());
-	//Main.saveObject(this); // this saves the new value of inBonus
+	// this saves the new value of inBonus
 	em.getTransaction().begin();	    
 	em.getTransaction().commit();	        
     }
@@ -579,7 +579,7 @@ public class PlayerInfo {
 	    v.add(s);
 	    j++;
 	}
-	v.add("curSer="+currentSeriesNo+" b="+inBonus+", R=$"+getTotalRewardEarned());
+	v.add("id="+id+", curSer="+currentSeriesNo+" b="+inBonus+", R=$"+getTotalRewardEarned());
 	return String.join("\n", v);
     }
 
