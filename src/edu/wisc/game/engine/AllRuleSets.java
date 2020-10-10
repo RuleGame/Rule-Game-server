@@ -4,18 +4,10 @@ import java.io.*;
 import java.util.*;
 import java.text.*;
 
-//import javax.json.*;
-//import javax.persistence.*;
-
-//import org.apache.openjpa.persistence.jdbc.*;
-
-
 import edu.wisc.game.util.*;
-//import edu.wisc.game.sql.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.engine.*;
-//import edu.wisc.game.sql.Board.Pos;
-//import edu.wisc.game.engine.RuleSet.BucketSelector;
+import edu.wisc.game.rest.Files;
 
 public class AllRuleSets extends HashMap<String, RuleSet> {
 
@@ -25,17 +17,12 @@ public class AllRuleSets extends HashMap<String, RuleSet> {
 	return new RuleSet(text);
     }
 
-    
+    /** @param  ruleSetName 
+     */
     RuleSet get(String ruleSetName) throws IOException, RuleParseException {
 	RuleSet rules = super.get(ruleSetName);
 	if (rules==null) {
-	    File base = new File("/opt/tomcat/game-data");
-	    base = new File(base, "rules");
-	    String ext = ".txt";
-	    String name = ruleSetName;
-	    if (!name.endsWith(ext)) name += ext;
-
-	    File f = new File(base, name);
+	    File f = Files.rulesFile(ruleSetName);
 	    rules = read(f);
 	    super.put(ruleSetName, rules);
 	}

@@ -134,6 +134,9 @@ public class  Fmter {
     final public  String h4(String text) {
 	return wrap("h4", text) + "\n";
     }
+    final public  String h5(String text) {
+	return wrap("h4", text) + "\n";
+    }
     final public  String pre(String text) {
 	return wrap("pre", text) + "\n";
     }

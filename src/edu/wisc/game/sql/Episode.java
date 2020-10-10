@@ -130,13 +130,24 @@ public class Episode {
 	structure updates itself, until it cannot pick any pieces anymore. */
     class RuleLine {
 	final RuleSet.Row row;
+	/** Negative values mean "no restriction" */
 	private int ourGlobalCounter;
 	private int ourCounter[];
 
-	public String toString() {
+	private String showCounter(int k) {
+	    return k<0? "*" : "" + k;
+	}
+
+	public String explainCounters() {
 	    Vector<String> v = new Vector<>();
-	    for(int k:  ourCounter) v.add("" + k);
-	    return "[RL: " + row.toSrc() + " / " +  ourGlobalCounter + " / " + String.join(",", v) + "]";
+	    for(int k:  ourCounter) v.add(showCounter(k));
+	    return 
+		showCounter(ourGlobalCounter)+ " / " + String.join(",", v);
+	}
+
+	
+	public String toString() {
+	    return "[RL: " + row.toSrc() + " / " + explainCounters() + "]";
 	}
 
 	
@@ -660,7 +671,7 @@ public class Episode {
 	    new Board(pieces, null, ruleLine.moveableTo());
     }
 
-    /** Shows tHe current board (without removed [dropped] pieces) */
+    /** Shows the current board (without removed [dropped] pieces) */
     public Board getCurrentBoard() {
 	return getCurrentBoard(false);
     }
@@ -674,18 +685,19 @@ public class Episode {
 	return json.toString();
     }
 
-    static final String version = "1.026";
+    static final String version = "1.027";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();
 	return r.readLine();
     }
 
-    /** Can be used to display the current state of the episode */
+    /** Can be sent to the web client in JSON format, where it would 
+	be used to display the current state of the episode */
     public class Display     {
 	// The following describe the state of this episode, and are only used in the web GUI
 	int finishCode = Episode.this.getFinishCode();
-	Board board =  getCurrentBoard();
+	Board board =  getCurrentBoard(true);
 
 	/** What pieces are on the board now, and what pieces have been removed */
         public Board getBoard() { return board; }
@@ -717,6 +729,23 @@ public class Episode {
 	/** The list of all move attempts (successful or not) done so far
 	    in this episode */
 	public Vector<Move> getTranscript() { return transcript; }
+
+	RuleSet.ReportedSrc rulesSrc = (rules==null)? null:rules.reportSrc();
+	/** A structure that describes the rules of the game being played in this episode. */
+	public RuleSet.ReportedSrc getRulesSrc() { return rulesSrc; }
+
+	
+	String explainCounters = Episode.this.ruleLine.explainCounters();
+	/** The "explanation" of the current state of the current rule line */
+	public String getExplainCounters() { return explainCounters; }
+	
+
+	int ruleLineNo = Episode.this.ruleLineNo;
+	/** Zero-based position of the line of the rule set that the
+	    game engine is currently looking at. This line will be the
+	    first line the engine will look at when accepting the
+	    player's next move. */
+	public int getRuleLineNo() { return ruleLineNo; }
 
 
 	public Display(int _code, 	String _errmsg) {

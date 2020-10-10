@@ -54,6 +54,30 @@ public class Files {
     static File trialListMainDir() {
 	return new File(inputDir, "trial-lists");
     }
+
+    /** @param  ruleSetName Either a complete absolute path name ("/home/vmenkov/foo.txt") starting with a slash, or just a file name without the extension ("foo"). In the later case, the file is assumed to be in the standard rules directory.
+     */
+    public static File rulesFile(String ruleSetName) throws IOException {
+	if (ruleSetName==null || ruleSetName.equals("")) throw new IOException("Rule set name not specified");
+	return inputFile(ruleSetName, "rules", ".txt");
+   }
+
+    private static File inputFile(String name, String subdir, String ext) throws IOException {
+	if (name==null || name.equals("")) throw new IOException("File name not specified");
+	if (name.startsWith("/")) {
+	    return new File(name);
+	} else {     
+	    File base = new File(inputDir, subdir);
+	    if (!name.endsWith(ext)) name += ext;
+	    return new File(base, name);
+	}
+    }
+
+    
+    public static File initialBoardFile(String boardName ) throws IOException {
+	if (boardName==null || boardName.equals("")) throw new IOException("Board name not specified");
+	return inputFile(boardName, "boards", ".json");
+     }
     
 }
 

@@ -1,10 +1,10 @@
 <html>
-  <head><title>RESTful API for the use by the Rule Game client - first batch</title>
+  <head><title>Web API for the use by the Rule Game client - first batch</title>
   </head>
 <body>
-  <h1>RESTful API for the use by the Rule Game client - first batch</h1>
+  <h1>Web API for the use by the Rule Game client - first batch</h1>
   
-  <p align="center"><em>Ver 1.010, 2020-09-01</em></p>
+  <p align="center"><em>Ver 1.027, 2020-10-09</em></p>
 
 
   <p>The "first batch" (prefix=<tt>/GameService</tt>) of the Rule Game web API consists of calls that can be used for players that do not participate in any experiments (i.e. don't have player IDs, don't have any trial lists associated with them, etc). This is suitable e.g. for the research interface, for the research team members to develop and test rule sets.</p>
@@ -88,7 +88,7 @@
 	  <input type="submit">
 	</form>
 
-	<li>POST <strong><tt>newEpisode</tt> (c): with additional parameters: the number of shapes and the number of colors:</strong>
+	<li>POST <strong><tt>newEpisode</tt> (c): with additional parameters: the initial board:</strong>
      <form method="post" action="game-data/GameService/newEpisode"
 	 enctype="application/x-www-form-urlencoded">
        Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="Rule-001"><br>
@@ -135,7 +135,7 @@
 	  Attempted move count so far (the number of previous calls to <strong><tt>move</tt></strong> in this episode) <input name="cnt" type="text" value="0" size="5"><br>
 	  <input type="submit">
       </form>
-	 <p>The return value is a JSON object which contains:
+	 <p>The return value is a JSON object (<a href="api/edu/wisc/game/sql/Episode.Display.html">Display</a>) which contains:
 	   <ul>
 	     <li>the boolean <tt>error</tt> flag;</li>
 	     <li>the <tt>code</tt> value that may provide more details on the operation results;
@@ -167,9 +167,68 @@ On failure:<pre>
 </p>
 </li>
 
-<li>GET <strong><tt>writeFile</tt>: see <a href="write.jsp">Write file</a> (including append)</li>
-	  
-</ol>
+<li>GET <strong><tt>writeFile</tt></strong>: see <a href="write.jsp">Write file</a> (including append)</li>
+
+   </ol>
+
+
+
+<hr>
+<h3><a name="html">HTML play (for testing individual rule sets directly, without creating player accounts or experiment plans)</a></h3>
+
+
+<p>Note: rule set and board file names can be specified by a complete qualified file name on sapir (with a path beginning with a slash, e.g. <tt>/home/vmenkov/w2020/game/game-data/rules/rules-01.txt</tt>, or <tt>/home/vmenkov/w2020/game/game-data/boards/four-corners.json</tt>), or just by the rule set name or board name (without the directory name and withour extension, e.g.  <tt>rules-01</tt>, or <tt>four-corners</tt>). In the latter case, the data files will be looked by the server in the appropriate subdirectory of  <tt>/opt/tomcat/game-data</tt>.</p>
+  
+<p>
+<ul>
+  <li>POST <strong><tt>/newEpisodeHtml</tt>:
+ (a):  Create a new episode:</strong>
+        <form method="post" action="game-data/GameServiceHtml/newEpisodeHtml"
+	 enctype="application/x-www-form-urlencoded">
+	  Rule set name (given in the param set <tt>rule_id</tt>; refers to a TXT file in <tt>game-data/rules</tt>, without the extension): <input name="rules" type="text" value="Rule-001"><br>
+	  Number of pieces (a number within the [min_objects, max_objects] 
+	  range given in the param set): <input name="pieces" type="text" value="4"><br>
+	  <input type="submit">
+	</form>
+
+	<li>POST <strong><tt>/newEpisodeHtml</tt> (b): with additional parameters: the number of shapes and the number of colors:</strong>
+     <form method="post" action="game-data/GameServiceHtml/newEpisodeHtml"
+	 enctype="application/x-www-form-urlencoded">
+	  Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="Rule-001"><br>
+	  Number of pieces (a number within the [min_objects, max_objects] 
+	  range given in the param set): <input name="pieces" type="text" value="4"><br>
+	  Number of shapes:  <input name="shapes" type="text" value="4"><br>
+	  Number of colors:  <input name="colors" type="text" value="4"><br>
+	  <input type="submit">
+	</form>
+
+	<li>POST <strong><tt>/newEpisodeHtml</tt> (c): with additional parameters: the initial board:</strong>
+     <form method="post" action="game-data/GameServiceHtml/newEpisodeHtml"
+	 enctype="application/x-www-form-urlencoded">
+       Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="Rule-001"><br>
+       Initial board name (refers to a JSON file in <tt>game-data/boards</tt>, without the extension): <input name="board" type="text" value="four-corners"><br>
+       
+	  <input type="submit">
+	</form>
+     
+
+	
+<li>/moveHtml
+
+      <form method="post" action="game-data/GameServiceHtml/moveHtml"
+	 enctype="application/x-www-form-urlencoded">
+	  Episode ID (returned by an earlier newEpisode call): <input name="episode" type="text" size="25"><br>
+	  Piece to move: column=x=<input name="x" type="text" value="1" size="2">,
+	  row=y=<input name="y" type="text" value="1" size="2"> (both ranging 1 thru 6)<br>
+	  Destination bucket (identified by  bucket_column=bx=<input name="bx" type="text" value="7" size="2">,
+	  bucket_row=by=<input name="by" type="text" value="7" size="2"> (possible values are 0 and 7)<br>
+	  Attempted move count so far (the number of previous calls to <strong><tt>move</tt></strong> in this episode. This can also be interpreted as 0-based number of this move attempt) <input name="cnt" type="text" value="0" size="5"><br>
+	  <input type="submit">
+      </form>
+
+</ul>    
+
+  
   </body>
 </html>
   

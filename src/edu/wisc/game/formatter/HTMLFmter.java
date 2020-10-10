@@ -181,4 +181,14 @@ public class HTMLFmter extends Fmter {
 	return wrap("html", wrap("head", wrap("title", title)) + "\n" + wrap("body", body));       
     }
 
+    
+
+    public String a(String url, String text, String extraClauses) {
+	String s= "<a href=\"" + url + "\"";
+	if (extraClauses!=null) s += " " +extraClauses;
+	s += ">" + text + "</a>";
+	return s;
+    }
+
+    
 }

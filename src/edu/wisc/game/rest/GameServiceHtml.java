@@ -23,65 +23,41 @@ import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.formatter.*;
 
-/** The HTML wrapper for the Second Batch calls, to allow for the "HTML Play".
+/** The HTML wrapper for the First Batch calls, to allow for the "HTML Play".
  */
 
 @Path("/GameServiceHtml") 
-public class GameServiceHtml extends GameService2 {
+public class GameServiceHtml extends GameService {
     private static HTMLFmter  fm = new HTMLFmter(null);
-
-    @POST
-    @Path("/mostRecentEpisodeHtml") 
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Produces(MediaType.TEXT_HTML)
-    public String mostRecentEpisodeHtml(@FormParam("playerId") String playerId) {
-	return newOrRecentEpisodeHtml(playerId,true, false, false);
-    }
 
     @POST
     @Path("/newEpisodeHtml") 
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.TEXT_HTML)
-    public String newEpisodeHtml(@FormParam("playerId") String playerId,
-		   @DefaultValue("false") @FormParam("activateBonus") boolean activateBonus,
-		   @DefaultValue("false") @FormParam("giveUp") boolean giveUp) {
-	return newOrRecentEpisodeHtml(playerId,false, activateBonus, giveUp);
-    }
+    public String
+	newEpisodeHtml(@FormParam("rules") String rules,
+		   @DefaultValue("0") @FormParam("pieces") int pieces,
+		   @DefaultValue("0") @FormParam("shapes") int shapes,
+		   @DefaultValue("0") @FormParam("colors") int colors,
+		   @DefaultValue("null") @FormParam("board") String boardName) {
 
-    private String newOrRecentEpisodeHtml( String playerId, boolean recent,
-					    boolean activateBonus, boolean giveUp) {
+	final boolean recent = false;
+	
 	String body = "";
-
-	//String msg = "";
-	if (activateBonus) {
-	    ActivateBonusWrapper w=new  ActivateBonusWrapper(playerId);
-	    body += fm.h4("Activate") + fm.para(""+JsonReflect.reflectToJSONObject(w, true)) + fm.hr();
-	    //msg += " (Activate: " + w.getErrmsg();
-	}
-	if (giveUp) {
-	    GiveUpWrapper w =new  GiveUpWrapper(playerId);
-	    body += fm.h4("Give up") + fm.para(""+JsonReflect.reflectToJSONObject(w, true)) + fm.hr();
-	    //msg += " (Activate: " + w.getErrmsg();
-	}
-
-
-
-	NewEpisodeWrapper2 w = new NewEpisodeWrapper2(playerId, recent, false, false);
+	
+	NewEpisodeWrapper w = new NewEpisodeWrapper(rules, pieces, shapes, colors, boardName);
+	
 	String episodeId = w.getEpisodeId();
 
 	String head= episodeId +" : "+ (recent? "mostRecentEpisode":"newEpisode");
 
-	body +=  fm.h4( "Response")+fm.para(  ""+JsonReflect.reflectToJSONObject(w, true));
+	body +=  fm.h3( "The server response")+fm.para(  ""+JsonReflect.reflectToJSONObject(w, true));
 	body += fm.hr();
 
-	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
+	Episode epi = EpisodeInfo.locateEpisode(episodeId);
 
 	if (w.getError()) {
-	    if (w.getAlreadyFinished()) {
-		body += fm.para("The player has finished all episodes. Completion code = " +w.getCompletionCode());
-	    } else {
-		body += fm.para("Error: " + w.getErrmsg());
-	    }
+	    body += fm.para("Error: " + w.getErrmsg());
 	} else {	
 	    body += moveForm(w.getDisplay(),  episodeId);
 	}
@@ -106,40 +82,53 @@ public class GameServiceHtml extends GameService2 {
 	String head= episodeId +" : MOVE " + x + " " +y + " " + bx + " " + by;
 
 	String body = "";
-	body += fm.h4("Response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true));
+	body += fm.h3("Server esponse") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true));
 	body += fm.hr();
 
 	body += moveForm(d,  episodeId);
 	return fm.html(head, body);	
   }
 
-    static private String showHistoryAndPosition(EpisodeInfo epi) {
-	String body =
-	    (epi==null) ?
-	    fm.para("No episode in memory") :
-	    
-	    fm.h4("Player's history") +
-	    fm.para("All episodes, completed and incomplete, are listed below, one series per line. The format for each episode is:<br>[EpisodeID; FC=finishCode g-if-guess-saved; MainOrBonus; moveCnt/initPieceCnt; $reward]") +
-	    fm.wrap("pre",epi.getPlayer().report())+ fm.hr() +
-	    fm.h4("Current position") + fm.pre( epi.graphicDisplay(true));
+    static private String showHistoryAndPosition(Episode.Display d, Episode epi) {
+	String body = "";
+	if  (epi==null) {
+	    body += fm.para("No episode in memory");
+	} else {
+	    body += fm.h3("The rule set");
+	    RuleSet.ReportedSrc rs = d.getRulesSrc();
+	    Vector<String> orders = rs.getOrders();
+	    Vector<String> rows = rs.getRows();
+	    body += fm.h4("" + orders.size() + " orders");
+	    if (orders.size()>0) {
+		body += fm.wrap("ol", "\n<li>" + String.join("\n<li>", orders));
+	    }
+	    Vector<String> v = new Vector<String>();
+	    for(int j=0; j<rows.size(); j++) {
+		String s = rows.get(j);
+		if (j==d.getRuleLineNo()) {
+		    s += fm.br() + fm.em("[Current counters: " + d.getExplainCounters()+"]");
+		    s= fm.colored("red", s);
+		}
+		v.add(fm.wrap("li", s));
+	    }	    
+	    body += fm.h4("" + rows.size() + " rule lines") + fm.wrap("ol", String.join("\n", v));
+	    body += fm.hr();
+	    body += fm.h3("The current board position") +fm.pre( epi.graphicDisplay(true));
+	    body += fm.para( fm.a(     "../../help-display.html", "[Help]"));
+	}
 	return body + fm.hr();
 	
    }
 
     
+    
     /** Generates a /moveHtml form, if the episode is not completed,
      or a /guess form if it's time for a guess */
-    static private String moveForm(Episode.Display _d, String  episodeId) {
-
-	if (!(_d instanceof EpisodeInfo.ExtendedDisplay)) {
-	    return fm.para("Cannot cast to  EpisodeInfo.ExtendedDisplay");
-	}
-    
-	EpisodeInfo.ExtendedDisplay d = (EpisodeInfo.ExtendedDisplay)_d;
+    static private String moveForm(Episode.Display d, String  episodeId) {
 
 	String body = "";
-	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
-	body += showHistoryAndPosition(epi);
+	Episode epi = EpisodeInfo.locateEpisode(episodeId);
+	body += showHistoryAndPosition(d, epi);
 
 
 	String form = "";
@@ -152,108 +141,13 @@ public class GameServiceHtml extends GameService2 {
 	    form += "Don't modify this field: cnt = " + fm.input("cnt", ""+d.getNumMovesMade()) + fm.br();
 	    form += "<input type='submit'>";
 	    form = fm.wrap("form", "method='post' action='moveHtml'", form);
-	    form = fm.h4( "Your next move") + fm.para(form);
+	    form = fm.h3( "Your next move") + fm.para(form);
 	} else {
-	    form = fm.para("Game over - no move possible");
+	    form = fm.para("Game over - no move possible. The finish code is " + d.getFinishCode());
 	}
-	body += form + fm.hr();
-
-	if (d.getFinishCode()!=Episode.FINISH_CODE.NO && !d.getGuessSaved()) {
-	    form = "";
-	    form += "episode = " + fm.input("episode", episodeId) + fm.br();
-	    form += "Enter your guess below:" + fm.br() +
-		fm.input("data", null, 80) + fm.br() +
-		"Confidence=" + fm.input("confidence", "5", 2) + fm.br();
-	    form += "<input type='submit'>";	    
-	    form =  fm.wrap("form", "method='post' action='guessHtml'", form);
-	    form = fm.h4("Your guess") + fm.para(form);
-	    body += form + fm.hr();
-	}
-	
-	
+	body += form + fm.hr();	
 	return body;
     }
 
-
-    @POST 
-    @Path("/guessHtml")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Produces(MediaType.TEXT_HTML)
-    public String guessHtml(@FormParam("episode") String episodeId,
-			    @FormParam("data") String guessText,
-			    @DefaultValue("-1") @FormParam("confidence") int confidence			    ) {
-	FileWriteReport _r = GuessWriteReport.writeGuess( episodeId, guessText, confidence);
-
-	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
-	if (epi==null) {
-	    String msg = "Episode not loaded: " + episodeId;
-	    return fm.html(msg, msg);	
-	}
-	PlayerInfo x = epi.getPlayer();
-
-	
-	String head= episodeId +" : Guess";
-
-	String body = "";
-	body += fm.h4("Response") + fm.para(  ""+JsonReflect.reflectToJSONObject(_r, true));
-	body += fm.hr();
-	body += fm.h4("What the player can do next");
-	
-	if (_r instanceof GuessWriteReport && epi!=null) {
-	    GuessWriteReport r = (GuessWriteReport)_r;
-	    PlayerInfo.TransitionMap map = r.getTransitionMap();	    
-
-	    Vector<String> rows= new Vector<>();
-
-	    for(PlayerInfo.Transition key: map.keySet()) {
-		PlayerInfo.Action val =map.get(key);
-		Vector<String> v = new Vector<>();
-		v.add(""+key);
-		v.add(""+val);
-
-		//		if (key==PlayerInfo.Transition.END && val==PlayerInfo.Action.DEFAULT) {
-		//		    v.add( "All series have been completed. Goodbye!");
-		//		    v.add("");
-		//		} else
-		{
-		    String action="newEpisodeHtml";
-		    String form =  "<form method='post' action='"+action+"'>\n";
-		    form +=  fm.hidden("playerId", x.getPlayerId());
-    
-		    if (val==PlayerInfo.Action.ACTIVATE) {
-			form += fm.hidden("activateBonus", "true");
-		    } else if (val==PlayerInfo.Action.GIVE_UP) {
-			form += fm.hidden("giveUp", "true");
-		    } 
-
-		    String text =
-			(key==PlayerInfo.Transition.MAIN) ? "Next episode (non-bonus)":
-			(key==PlayerInfo.Transition.BONUS)?
-			(val==PlayerInfo.Action.ACTIVATE? "Activate Bonus":
-			 "Next bonus episode"):
-			(key==PlayerInfo.Transition.NEXT)?
-			(val==PlayerInfo.Action.DEFAULT? "Start the next series":
-			 "Give up on this series and start the next"):
-			(key==PlayerInfo.Transition.END)?
-		    	(val==PlayerInfo.Action.DEFAULT? "Finish":
-			 "Give up on this (last) series and end the expriment"):
-			"Error - unknown action";
-		
-		    form += "<input type='submit'></form>\n";
-		    v.add(text);
-		    v.add(form);
-		}
-		rows.add(fm.row(v));
-	    }
-	    body += fm.wrap("table", "border=1", String.join("\n",rows)) +fm.br();
-
-	}
-	return fm.html(head, body);	
-
-    }
-
-    private String transitionButton(String action, String episodeId, String text) {
-	return "<form method='post' action='"+action+"'><strong>"+text+"</strong><input type='submit'></form>";
-    }
 
 }

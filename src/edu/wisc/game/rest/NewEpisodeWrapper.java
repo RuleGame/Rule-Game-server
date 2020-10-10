@@ -23,6 +23,15 @@ public class NewEpisodeWrapper extends ResponseBase {
     public Board getBoard() { return board; }
     @XmlElement
     public void setBoard(Board _b) { board = _b; }
+
+     Episode.Display display;
+   /** The structure with a lot of information about the current episode,
+       and its place in the experiment's framework.
+       (See {@link edu.wisc.game.sql.Episode.Display} for the full structure that's actually found here)
+    */
+    public Episode.Display getDisplay() { return display; }
+    private void setDisplay(Episode.Display _display) { display = _display; }
+
     
     NewEpisodeWrapper(String ruleSetName, int nPieces,   int nShapes,  int nColors,
 		      String boardName) {
@@ -37,15 +46,14 @@ public class NewEpisodeWrapper extends ResponseBase {
 	    }
 	    */
 	    if (ruleSetName==null ||ruleSetName.trim().equals("")) throw new IOException("No rules set specified");
+	    ruleSetName = ruleSetName.trim();
 	    
-
 	    RuleSet rules = AllRuleSets.obtain(ruleSetName);
 
 	    Game game;
 	    if (boardName!=null && boardName.trim().length()>0 && !boardName.equalsIgnoreCase("null")) {
-		File base = new File("/opt/tomcat/game-data");
-		base = new File(base, "boards");
-		File bf = new File(base, boardName + ".json");
+		boardName = boardName.trim();
+		File bf = Files.initialBoardFile(boardName);
 		if (!bf.canRead())  throw new IOException("Cannot read board file: " +bf);
 		Board board = Board.readBoard(bf);
 		game = new Game(rules, board);
@@ -60,7 +68,8 @@ public class NewEpisodeWrapper extends ResponseBase {
 	    board = epi.getCurrentBoard();
 	    
 	    EpisodeInfo.globalAllEpisodes.put( episodeId = epi.episodeId, epi);
-	    
+	    setDisplay(epi.mkDisplay());
+
 	    setError( false);
 	
 	} catch(Exception ex) {

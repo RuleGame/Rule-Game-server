@@ -278,18 +278,6 @@ public class EpisodeInfo extends Episode {
 	/** True if the player's guess has been recorded at the end of this episode */
 	public boolean getGuessSaved() { return guessSaved; }
 
-
-	RuleSet.ReportedSrc rulesSrc = (rules==null)? null:rules.reportSrc();
-	/** A structure that describes the rules of the game being played in this episode. */
-	public RuleSet.ReportedSrc getRulesSrc() { return rulesSrc; }
-
-	int ruleLineNo = EpisodeInfo.this.ruleLineNo;
-	/** Zero-based position of the line of the rule set that the
-	    game engine is currently looking at. This line will be the
-	    first line the engine will look at when accepting the
-	    player's next move. */
-	public int getRuleLineNo() { return ruleLineNo; }
-
 	Integer movesLeftToStayInBonus = null;
 	/**
 <ul>

@@ -317,16 +317,17 @@ Response (on success):
 <hr>
 <h3><a name="html">HTML play (for testing)</a></h3>
 
+<p>
 <ul>
 <li>POST <strong><tt>/mostRecentEpisodeHtml</tt>: Look up the most recent episode for a specified user:</strong>
-        <form method="post" action="game-data/GameServiceHtml/mostRecentEpisodeHtml"
+        <form method="post" action="game-data/GameService2Html/mostRecentEpisodeHtml"
 	 enctype="application/x-www-form-urlencoded">
 	  Player ID: <input name="playerId" type="text" value="" size="20"><br>
 	  <input type="submit">
 	</form>
 
 <li>POST <strong><tt>/newEpisodeHtml</tt>: Create a new episode for a specified user:</strong>
-        <form method="post" action="game-data/GameServiceHtml/newEpisodeHtml"
+        <form method="post" action="game-data/GameService2Html/newEpisodeHtml"
 	 enctype="application/x-www-form-urlencoded">
 	  Player ID: <input name="playerId" type="text" value="" size="20"><br>
 	  <input type="submit">
@@ -335,7 +336,7 @@ Response (on success):
 	
 <li>/moveHtml
 
-      <form method="post" action="game-data/GameServiceHtml/moveHtml"
+      <form method="post" action="game-data/GameService2Html/moveHtml"
 	 enctype="application/x-www-form-urlencoded">
 	  Episode ID (returned by an earlier newEpisode call): <input name="episode" type="text" size="25"><br>
 	  Piece to move: column=x=<input name="x" type="text" value="1" size="2">,
