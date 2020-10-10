@@ -169,6 +169,11 @@ On failure:<pre>
 
 <li>GET <strong><tt>writeFile</tt></strong>: see <a href="write.jsp">Write file</a> (including append)</li>
 
+
+<li>GET <strong><tt><a href="game-data/GameService/listRules">/listRules</a></tt></strong>: lists rule sets files in the standard input directory (/opt/tomcat/game-data/rules) on the server. Any of the returned values can be used as the name=... parameter in /newEpisode. </li>
+
+     <li>GET <strong><tt><a href="game-data/GameService/listInitialBoards">/listInitialBoards</a></tt></strong>: lists initial board  files in the standard input directory (/opt/tomcat/game-data/boards) on the server. Any of the returned values can be used as the board=... parameter in /newEpisode.  </li>
+
    </ol>
 
 
@@ -206,7 +211,7 @@ On failure:<pre>
      <form method="post" action="game-data/GameServiceHtml/newEpisodeHtml"
 	 enctype="application/x-www-form-urlencoded">
        Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="Rule-001"><br>
-       Initial board name (refers to a JSON file in <tt>game-data/boards</tt>, without the extension): <input name="board" type="text" value="four-corners"><br>
+       Initial board name (either refers to a JSON file in <tt>game-data/boards</tt>, without the extension, or is a complete path name): <input name="board" type="text" value="four-corners"><br>
        
 	  <input type="submit">
 	</form>

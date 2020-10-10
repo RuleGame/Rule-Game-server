@@ -62,6 +62,11 @@ public class Files {
 	return inputFile(ruleSetName, "rules", ".txt");
    }
 
+    public static File initialBoardFile(String boardName ) throws IOException {
+	if (boardName==null || boardName.equals("")) throw new IOException("Board name not specified");
+	return inputFile(boardName, "boards", ".json");
+    }
+
     private static File inputFile(String name, String subdir, String ext) throws IOException {
 	if (name==null || name.equals("")) throw new IOException("File name not specified");
 	if (name.startsWith("/")) {
@@ -73,11 +78,21 @@ public class Files {
 	}
     }
 
-    
-    public static File initialBoardFile(String boardName ) throws IOException {
-	if (boardName==null || boardName.equals("")) throw new IOException("Board name not specified");
-	return inputFile(boardName, "boards", ".json");
-     }
+    /** Lists all rules files, or boards files, etc in a directory, without 
+     extensions. */
+    static Vector<String> listInputs( String subdir, String ext) throws IOException {
+	File d = new File(inputDir, subdir);
+
+	File[] files = d.listFiles();
+	Vector<String> v = new Vector<String>();
+	for(File cf: files) {
+	    if (!cf.isFile()) continue;
+	    String fname = cf.getName();
+	    if (!fname.endsWith(ext)) continue;
+	    v.add( fname.substring(0, fname.length()-ext.length()));
+	}
+	return v;	
+    }
     
 }
 

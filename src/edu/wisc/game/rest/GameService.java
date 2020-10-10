@@ -228,7 +228,31 @@ public class GameService {
 	return new PlayerResponse( playerId, exp);
     }
 
+    
+    @GET
+    @Path("/listRules")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Vector<String> 	listRules() {
+	try {
+	    return Files.listInputs("rules", ".txt");
+	} catch(IOException ex) {
+	    return null;
+	}
+    }
 
+ 
+    @GET
+    @Path("/listInitialBoards")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Vector<String> 	listInitialBoards() {
+	try {
+	    return Files.listInputs("boards", ".json");
+	} catch(IOException ex) {
+	    return null;
+	}
+    }
+
+    
     /**------------------- Just testing ------------------------*/
     /** Gets the entire parameter set, identified by name */
     @GET 
