@@ -1,0 +1,2 @@
+#-- Different shapes go to different buckets; only pick from top or bottom row
+(*,circle,*,[T,B],[0]) (*,star,*,[T,B],[2]) (*,triangle,*,[T,B],[2]) (*,square,*,[T,B],[2]) 
