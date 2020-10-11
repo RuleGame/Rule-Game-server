@@ -1,6 +1,6 @@
 rule_id,max_boards,min_points,max_points,activate_bonus_at,min_objects,max_objects,min_shapes,max_shapes,min_colors,max_colors,f,m,n,b,clear_how_many,bonus_extra_pts,clearing_threshold,feedback_switches,stack_memory_depth,stack_memory_show_order,grid_memory_show_order
-TD-05,5,2,10,3,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,FALSE,FALSE
-TD-04,5,2,10,3,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,FALSE,FALSE
-TD-03,5,2,10,3,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,FALSE,FALSE
-TD-02,5,2,10,3,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,FALSE,FALSE
-TD-01,5,2,10,3,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,FALSE,FALSE
+TD-05,5,2,10,3,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,TRUE,TRUE
+TD-04,5,2,10,3,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,TRUE,TRUE
+TD-07,5,2,10,3,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,TRUE,TRUE
+TD-02,5,2,10,3,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,TRUE,TRUE
+TD-01,5,2,10,3,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,TRUE,TRUE
