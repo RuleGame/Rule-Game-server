@@ -1,10 +1,10 @@
 <html>
-  <head><title>Rule Game server data</title>
+  <head><title>Rule Game control flow</title>
   </head>
 <body>
-  <h1>Rule Game server data</h1>
+  <h1>Rule Game control flow</h1>
 
-    <p align="center"><em>This was written on 2020-08-21, to answer Jerry Zhu's question</em></p>
+    <p align="center"><em>This was written on 2020-08-21, to answer Jerry Zhu's question. Updated 2020-10-09.</em></p>
 
 <h2>(A) - Creating initial boards</h2>
 
@@ -115,9 +115,11 @@ During the main subseries, in the episode No. activate_bonus_at, a button labele
 <p>
 If the player presses the "Activate bonus" button, the main subseries ends, and the <Strong>BONUS SUBSERIES</Strong> begins. During the bonus subseries, each episode has a board created by the same process (A), and, for clearing the board, the player receives a reward computed by the same formula as in the main subseries.
 <p>
-During the bonus subseries, the player should strive to clear each board quickly, i.e. within no more than m*clearing_threshold moves. If he quickly clears each of the clear_how_many boards (consecutively, starting at the beginning of the bonus series), he will earn additional reward of bonus_extra_pts points for this series, and the series will end. But if he fails to clear quickly every board presented to him in the bonus series, the series will end after the first "unsuccessful" episode (i.e. an episode with x>m*clearing_threshold).
+During the bonus subseries, the player should strive to clear each board quickly, i.e. within no more than m*clearing_threshold moves. If he quickly clears each of the required number (<tt>clear_how_many boards</tt>) boards (consecutively, starting at the beginning of the bonus series), he will earn additional reward of <tt>bonus_extra_pts</tt> points for this series, and the series will then end. But if the player fails to clear a board presented to him in the bonus series within the required maximum number of moves, the episode will be terminated by the server, and the series will end right away. In this case, the player will not get any (regular) reward for this episode, and of course won't get any bonus for the series.
+
 <p>
-In addition, there apparently will be a "Give up" button, which will allow the player to interrupt the series (at the end of any episode). I am not sure if it will be present only during the main subseries or during the bonus subseries as well.
+In addition, there will be a "Give up" button, which will allow the player to interrupt the series (at the end of any episode). I am not sure if it will be present only during the main subseries or during the bonus subseries as well.
+
 <p>
 After a series is completed (because the main subseries ended without pressing "Activate bonus", or because the bonus series ended successfully or unsuccessfully, or because the "Give up" button was used), the system with proceed with the next param set in the trial list, starting the new series of episode pursuant to the that param set's rules.
 

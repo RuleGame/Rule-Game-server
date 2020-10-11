@@ -35,11 +35,12 @@
 
   <h2><a name="players">The meaning of PlayerId</a></h2>
 
-  <p>At present (ver. 1.016, 2020-09-10), the Rule Game web server associates players with expreriment plans based on the PlayerId.  The assignment rules are as follows:
+  <p>At present (ver. 1.027, 2020-10-09), the Rule Game web server associates players with expreriment plans based on the explicit assignment at the start URL, or on the PlayerId.  The assignment rules are as follows:
 
     <ul>
-      <li>If the PlayerId has no hyphens in it, it is associated with the experiment plan <tt>default</tt>.
-      <li>If the PlayerId has a hyphen in it, the part of the PlayerID preceding the hyphen (or preceding the first hyphen, if there are several) is taken to be the name of the experiment plan. For example, if PlayerId=<tt>qt-01-a</tt>, it will be considered belonging to experiment plan <tt>qt</tt>.
+      <li>A PlayerId can be explicitly assigned to any expriment plan if the parameter <tt>exp</tt> is used in the URL at which the player starts his interaction with the system. E.g. the start URL was <tt>http://sapir.psych.wisc.edu/rule-game/prod/?exp=qt&workerId=vm001</tt>, then the PlayerId <tt>vm001</tt> will be  associated with the experiment plan <tt>qt</tt>.
+      <li>In the absence of an explicit assignment, if the PlayerId has no hyphens in it, it is associated with the experiment plan <tt>default</tt>.
+      <li>In the absence of an explicit assignment, if the PlayerId has a hyphen in it, the part of the PlayerID preceding the hyphen (or preceding the first hyphen, if there are several) is taken to be the name of the experiment plan. For example, if PlayerId=<tt>qt-01-a</tt>, it will be considered belonging to experiment plan <tt>qt</tt>.
     </ul>
   </p>
   
