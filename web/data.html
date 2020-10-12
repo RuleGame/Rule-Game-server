@@ -69,6 +69,10 @@
 
   <p>When creating an episode, it is possible to load the initial board description from a JSON file. Presently (ver 1.016), we only use thus feature in machine-learning experiments, because the schema of the trial lists used in human-subject experiments  does not have support for specifying pre-created initial boards. Nonetheless, we do have a directory for board files, in <tt>/opt/tomcat/game-data/boards</tt>.
 
+    <h3>Modifying input files</h3>
+
+  <p>It is preferable that you don't modify the data files directly in  <tt>/opt/tomcat/game-data</tt>, since if you do that, your updates may be lost later. Instead, it is better to modify the files in your working directory, and deploy from there. Also, check in your work to Github. For details, see the <a href="deploy.html">Deployment Guide</a>.
+    
     <h2>Read-and-write data: SQL server tables</h2>
 
   <p>There are two tables you'll be using, <tt>PlayerInfo</tt> and <tt>Episode</tt>.
