@@ -527,14 +527,17 @@ public class PlayerInfo {
     
     
     /** This method is called after an episode completes. It computes
-	rewards (if the board has been cleared), calls the SQL persist operations,
-	writes CSV files, and, if needed, switches the series and subseries. */
+	rewards (if the board has been cleared), calls the SQL persist
+	operations, writes CSV files, and, if needed, switches the
+	series and subseries. The formula for the reward computation is 
+	at https://www.desmos.com/calculator/9nyuxjy7ri .
+    */
     void ended(EpisodeInfo epi) throws IOException {
 	Series ser = whoseEpisode(epi);
 	if (ser==null) throw new IllegalArgumentException("Could not figure to which series this episode belongs");
 	epi.endTime=new Date();
 	
-	if (epi.stalemate) {
+	if (epi.stalemate) {	    
 	    // The experimenters should try to design rule sets so that stalemates
 	    // do not happen; but if one does, let just finish this series
 	    // to avoid extra annoyance for the player
@@ -552,10 +555,9 @@ public class PlayerInfo {
 	}
 
 	epi.updateFinishCode();
-
-	//Main.persistObjects(this, epi);
+	// save the data in the SQL server
 	saveMe();
-
+	// save the data in the CSV files
 	File f =  Files.boardsFile(playerId);
 	epi.getCurrentBoard(true).saveToFile(playerId, epi.episodeId, f);
 	f =  Files.transcriptsFile(playerId);
