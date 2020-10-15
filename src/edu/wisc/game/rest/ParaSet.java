@@ -67,18 +67,17 @@ public class ParaSet extends HashMap<String, Object> {
 	    put(key, val);
     }
 
-    /** Reads a ParaSet from a CSV file with key-val columns */
+    /** Reads a ParaSet from a CSV file with key-val columns.
+	This method is obsolete now, since we read parameters from
+	trial list files instead.
+     */
     ParaSet(String name) {
 	put("error", false);
 	put("errmsg", "No error");
 	put("name", name);
-	//put("true-flag", new Boolean(true));
-	//	put("seven-field", new Integer(7));
 	try {
-
 	    if (name==null) throw new IOException("File name not specified");
-	    File base = new File("/opt/tomcat/game-data");
-	    base = new File(base, "param");
+	    File base = new File(Files.inputDir, "param");
 	    String ext = ".csv";
 	    if (!name.endsWith(ext)) name += ext;
 	    File f= new File(base, name);
@@ -91,8 +90,6 @@ public class ParaSet extends HashMap<String, Object> {
 		if (val==null) continue;
 		typedPut(key, val);		    
 	    }
-
-
 	} catch(Exception ex) {
 	    put("error", true);
 	    put("errmsg", ex.getMessage());

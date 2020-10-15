@@ -183,7 +183,10 @@ On failure:<pre>
 
 
 <p>Note: rule set and board file names can be specified by a complete qualified file name on sapir (with a path beginning with a slash, e.g. <tt>/home/vmenkov/w2020/game/game-data/rules/rules-01.txt</tt>, or <tt>/home/vmenkov/w2020/game/game-data/boards/four-corners.json</tt>), or just by the rule set name or board name (without the directory name and withour extension, e.g.  <tt>rules-01</tt>, or <tt>four-corners</tt>). In the latter case, the data files will be looked by the server in the appropriate subdirectory of  <tt>/opt/tomcat/game-data</tt>.</p>
-  
+
+<p>You can have subdirectories in the rule directory or the board directory. For example, if the board name is specified as <tt>project1/foo</tt>, the server will look for r <tt>/home/vmenkov/w2020/game/game-data/boards/project1/foo.json</tt>
+</p>
+
 <p>
 <ul>
   <li>POST <strong><tt>/newEpisodeHtml</tt>:

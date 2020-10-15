@@ -10,11 +10,13 @@ public class Files {
     static final File savedDir = new File("/opt/tomcat/saved");
     static final File inputDir = new File("/opt/tomcat/game-data");
 
-    static private void testDir(File d) throws IOException {
+    /** Checks the existence of a directory, and, if necessary, tries
+	to create it */
+    static void testWriteDir(File d) throws IOException {
 	if (d.exists()) {
 	    if (!d.isDirectory() || !d.canWrite())  throw new IOException("Not a writeable directory: " + d);
-	} else {
-	    if (!d.mkdirs())  throw new IOException("Failed to create directory: " + d);
+	} else if (!d.mkdirs()) {
+	    throw new IOException("Failed to create directory: " + d);
 	}
     }
 
@@ -22,7 +24,7 @@ public class Files {
     public static File guessesFile(String playerId) throws IOException {
 
 	File d = new File(savedDir, "guesses");
-	testDir(d);
+	testWriteDir(d);
 	File f= new File(d, playerId + ".guesses.csv");
 	return f;
     }
@@ -31,7 +33,7 @@ public class Files {
     public static File boardsFile(String playerId) throws IOException {
 
 	File d = new File(savedDir, "boards");
-	testDir(d);
+	testWriteDir(d);
 	File f= new File(d, playerId + ".boards.csv");
 	return f;
     }
@@ -39,13 +41,13 @@ public class Files {
     
     public static File transcriptsFile(String playerId) throws IOException {
 	File d = new File(savedDir, "transcripts");
-	testDir(d);
+	testWriteDir(d);
 	return new File(d, playerId + ".transcripts.csv");
     }
 
     public static File detailedTranscriptsFile(String playerId) throws IOException {
 	File d = new File(savedDir, "detailed-transcripts");
-	testDir(d);
+	testWriteDir(d);
 	return new File(d, playerId + ".detailed-transcripts.csv");
     }
 

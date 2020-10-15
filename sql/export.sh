@@ -27,5 +27,6 @@ mysql game < $h/export.sql
 #-- process bit fields and NULL values for readability
 perl $h/post-export.pl /var/lib/mysql-files/tmp-PlayerInfo.csv > PlayerInfo.csv
 perl $h/post-export.pl /var/lib/mysql-files/tmp-Episode.csv > Episode.csv
+perl $h/post-export.pl /var/lib/mysql-files/tmp-Episode-2.csv > Episode-2.csv
 
 

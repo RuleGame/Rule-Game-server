@@ -137,9 +137,8 @@ public class GameService {
 	    if (file.length()==0) throw new IOException("Empty file name");
 	    if (data==null) throw new IOException("No data supplied");
 	    
-	    File base = new File("/opt/tomcat/saved");
 	    String [] pp = (dir==null)? new String[0]: dir.trim().split("/");
-	    File d = base;
+	    File d = Files.savedDir;
 	    if (pp.length>0) {
 		for(String p:pp) {
 		    if (p.length()==0) continue;
@@ -147,11 +146,9 @@ public class GameService {
 		    d = new File(d, p);
 		}
 	    }
-	    if (d.exists()) {
-		if (!d.isDirectory() || !d.canWrite())  throw new IOException("Not a writeable directory: " + d);
-	    } else {
-		if (!d.mkdirs())  throw new IOException("Failed to create directory: " + d);
-	    }
+
+	    Files.testWriteDir(d);
+	    
 	    File f= new File(d, file);	    
 	    if (f.exists() && !append) throw new IOException("File already exists, and append="+append+": " + f);
 	    PrintWriter w = new PrintWriter(new FileWriter(f, append));
