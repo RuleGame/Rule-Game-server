@@ -2,7 +2,6 @@ package edu.wisc.game.rest;
 
 import java.io.*;
 import java.util.*;
-//import javax.servlet.http.HttpServletResponse;
 import javax.json.*;
 
 
@@ -88,6 +87,7 @@ public class ParaSet extends HashMap<String, Object> {
 		String key = e.getKey();
 		String val = ((CsvData.BasicLineEntry)e).getCol(1);
 		if (val==null) continue;
+		val = val.trim();
 		typedPut(key, val);		    
 	    }
 	} catch(Exception ex) {

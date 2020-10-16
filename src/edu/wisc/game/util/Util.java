@@ -47,7 +47,19 @@ public class Util {
 	return join(sep, w);
     }
 
-    public static <T> String joinNonBlank(String sep, String[] z) {
+    public static <T> String joinNonBlank(String sep, T[] z) {
+	Vector<String> w = new Vector<>();
+	for(T _q: z)  {
+	    if (_q==null) continue;
+	    String q = _q.toString();
+	    q = q.trim();
+	    if (q.length()==0) continue;
+	    w.add(q);
+	}
+	return join(sep, w);  
+    }
+    /*
+   public static <T> String joinNonBlank(String sep, String[] z) {
 	Vector<String> w = new Vector<>();
 	for(String q: z)  {
 	    if (q==null) continue;
@@ -57,7 +69,7 @@ public class Util {
 	}
 	return join(sep, w);  
     }
-
+    */
 
     
     public static <T> String join(String sep, Vector<T> v) {

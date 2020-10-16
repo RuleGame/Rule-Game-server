@@ -69,6 +69,19 @@ public class Files {
 	return inputFile(boardName, "boards", ".json");
     }
 
+    /** A subdirectory of the input boards directory, for use in a param
+	set with initial boards */
+    public static File inputBoardSubdir(String boardSubdirName ) throws IOException {
+	if (boardSubdirName.startsWith("/")) {
+	    return new File(boardSubdirName);
+	} else {
+	    File d = new File(inputDir, "boards");
+	    return new File(d, boardSubdirName);
+	}
+    }
+
+
+    
     private static File inputFile(String name, String subdir, String ext) throws IOException {
 	if (name==null || name.equals("")) throw new IOException("File name not specified");
 	if (name.startsWith("/")) {

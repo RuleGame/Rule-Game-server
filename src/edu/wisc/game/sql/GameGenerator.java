@@ -4,70 +4,72 @@ import java.io.*;
 import java.util.*;
 import java.text.*;
 
+import edu.wisc.game.rest.Files;
+import edu.wisc.game.util.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.engine.*;
+import edu.wisc.game.rest.ParaSet;
 
 
 /** This class generates random games (with the same rule set and
     randomly created initial boards) based on the provided parameter
     range specifications */
-public class GameGenerator {
+abstract public class GameGenerator {
 
-    /** If this is set, just keep returning the same game every time */
-    final Game sameGame;
+    //    final int[] nPiecesRange, nShapesRange, nColorsRange;
+    //    final RuleSet rules;
 
-    final int[] nPiecesRange, nShapesRange, nColorsRange;
-    final RuleSet rules;
+    /** How many boards has it produced so far? */
+    int produceCnt=0;
 
-    /** Creates a trivial generator, which keeps returning the same game */
-    public GameGenerator(Game g) {
-	sameGame = g;
-	rules=null;
-	nPiecesRange=null;
-	nShapesRange=null;
-	nColorsRange=null;
+    /** Only used by subclasses */
+    GameGenerator() {
     }
 
-    GameGenerator(String ruleSetName, int[] _nPiecesRange, int[] _nShapesRange,
-		  int[] _nColorsRange) throws IOException, RuleParseException {
-	this(AllRuleSets.obtain(ruleSetName), _nPiecesRange,  _nShapesRange,
-	     _nColorsRange);
+    /** Generates the next game to play */
+    abstract public Game nextGame();
 
-    }
-
-    public GameGenerator(File ruleSetFile, int[] _nPiecesRange, int[] _nShapesRange,
-		  int[] _nColorsRange) throws IOException, RuleParseException {
-	this(AllRuleSets.read(ruleSetFile), _nPiecesRange,  _nShapesRange,
-	     _nColorsRange);
-
-    }
-
-
-    GameGenerator(RuleSet _rules, int[] _nPiecesRange, int[] _nShapesRange,
-		  int[] _nColorsRange) throws IOException, RuleParseException {
-	sameGame = null;
-	nPiecesRange = _nPiecesRange;
-	nShapesRange = _nShapesRange;
-	nColorsRange = _nColorsRange;
-	if (nPiecesRange[0]>nPiecesRange[1] ||
-	    nShapesRange[0]>nShapesRange[1] ||
-	    nColorsRange[0]>nColorsRange[1])  throw new IOException("GameGenerator: Invalid param range");
-	if (nPiecesRange[0]<=0) throw new IOException("GameGenerator: Number of pieces must be positive");
-
-	if (nPiecesRange[1]>Board.N * Board.N) throw new IOException("GameGenerator: more pieces than cells: #pieces=" + nPiecesRange[1]);
-	rules = _rules;
-    }
-
+    
     /** Generates a game with a random initial board, in accordance with this 
 	generator's parameters */
-    public Game nextGame() {
-	if (sameGame!=null) return sameGame;
-	int nPieces = Board.random.getInRange(nPiecesRange);
-	int nShapes = Board.random.getInRange(nShapesRange);
-	int nColors = Board.random.getInRange(nColorsRange);
-
-	Game game = new  Game(rules, nPieces, nShapes, nColors);
-	return game;
+    void next() {
+	produceCnt++;
     }
 
+    /** Advances the counter. This can be used to resume an interrupted series */
+    public void advance(int n) {
+	if (n<0) throw new IllegalArgumentException("Negative n");
+	for(int k=0; k<n; k++) nextGame();
+    }
+
+    static GameGenerator mkGameGenerator(ParaSet para) throws IOException, RuleParseException, IllegalInputException, ReflectiveOperationException {
+
+	String ruleSetName = para.getRuleSetName();
+
+	String initial_boards = (String)para.get("initial_boards");
+	String initial_boards_order = (String)para.get("initial_boards_order");
+
+	GameGenerator gg;
+	if (initial_boards!=null && initial_boards.length()>0) {
+	    if (initial_boards_order==null ||initial_boards_order.length()==0) throw new  IllegalInputException("Parameter sets specifies initial_boards, but not initial_boards_order");
+	    File boardDir = Files.inputBoardSubdir(initial_boards);
+	    gg = new PredefinedBoardGameGenerator(ruleSetName,  boardDir, initial_boards_order);
+	} else {
+
+	    int[] nPiecesRange = {para.getInt("min_objects"),
+				  para.getInt("max_objects")},
+		nShapesRange = {para.getInt("min_shapes"),
+				para.getInt("max_shapes")},
+		nColorsRange = {para.getInt("min_colors"),
+				para.getInt("max_colors")};
+
+	    gg =new RandomGameGenerator(ruleSetName, nPiecesRange, nShapesRange,
+					nColorsRange);
+	}
+
+
+	return gg;
+    }
+	   
+    
 }

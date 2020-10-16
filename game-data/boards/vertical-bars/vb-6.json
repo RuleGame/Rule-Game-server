@@ -1,0 +1,9 @@
+{"id":"vb",
+ "value":[{"color":"red","shape":"square","id":"1","x":6,"y":1},
+	  {"color":"black","shape":"circle","id":"2","x":6,"y":2},
+	  {"color":"yellow","shape":"star","id":"3","x":6,"y":3},
+	  {"color":"yellow","shape":"square","id":"4","x":6,"y":4},
+	  {"color":"red","shape":"circle","id":"5","x":6,"y":5},
+	  {"color":"black","shape":"star","id":"6","x":6,"y":6}
+	 ],
+ "name":"A vertical bar"}

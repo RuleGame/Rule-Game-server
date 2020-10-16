@@ -104,20 +104,8 @@ public class EpisodeInfo extends Episode {
 
     /** Creates a new episode, whose rules and initial board are based (with 
 	appropriate randomization) on a specified parameter set */
-    static EpisodeInfo mkEpisodeInfo(int seriesNo, ParaSet para, boolean bonus)
+    static EpisodeInfo mkEpisodeInfo(int seriesNo, GameGenerator gg, ParaSet para, boolean bonus)
 	throws IOException, RuleParseException {
-
-	String ruleSetName = para.getRuleSetName();
-	int[] nPiecesRange = {para.getInt("min_objects"),
-			      para.getInt("max_objects")},
-
-	    nShapesRange = {para.getInt("min_shapes"),
-			    para.getInt("max_shapes")},
-	    nColorsRange = {para.getInt("min_colors"),
-			    para.getInt("max_colors")};
-
-	GameGenerator gg =new GameGenerator(ruleSetName, nPiecesRange, nShapesRange,
-					    nColorsRange);    
 	   
 	Game game = gg.nextGame();
 	EpisodeInfo epi = new EpisodeInfo(game, para);

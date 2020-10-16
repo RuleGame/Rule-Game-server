@@ -54,7 +54,10 @@ public class NewEpisodeWrapper extends ResponseBase {
 	    if (boardName!=null && boardName.trim().length()>0 && !boardName.equalsIgnoreCase("null")) {
 		boardName = boardName.trim();
 		File bf = Files.initialBoardFile(boardName);
-		if (!bf.canRead())  throw new IOException("Cannot read board file: " +bf);
+		if (!bf.canRead()) {
+		    //		    Logging.errror("Cannot read board file: " +bf);
+		    throw new IOException("Cannot read board file: " +bf);
+		}
 		Board board = Board.readBoard(bf);
 		game = new Game(rules, board);
 	    } else {

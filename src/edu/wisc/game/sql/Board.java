@@ -188,7 +188,8 @@ public class Board// extends OurTable
     }
 
     
-    /** The simple constructor */
+    /** The simple constructor, creates a random board with a given number  
+     of pieces. */
     public Board(int randomCnt) {
 	setName("Random board with " + randomCnt + " pieces");
 	Piece.Shape[] shapes = 	Piece.Shape.values();
@@ -361,8 +362,5 @@ public class Board// extends OurTable
 	}	    
 	}  
     }
-
-    
-    //    static public void main(String[] argv) throws IOException {    }
-    
+  
 }

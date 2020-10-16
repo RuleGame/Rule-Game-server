@@ -11,6 +11,7 @@ import javax.xml.bind.annotation.XmlElement;
 import edu.wisc.game.util.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.reflect.JsonReflect;
+import edu.wisc.game.parser.RuleParseException;
 
 
 /** The HashMap capability is used for debugging info in debug mode */
@@ -112,8 +113,7 @@ public class PlayerResponse extends ResponseBase {
 	be created when needed, and then closed, so that the returned object will be detached.
 	
 	@return The PlayerInfo object with the matching name, or null if none is found */
-    static PlayerInfo findPlayerInfo(EntityManager em, String pid) {
-
+    static PlayerInfo findPlayerInfo(EntityManager em, String pid) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
 	PlayerInfo x = allPlayers.get(pid);
 	if (x!=null) return x;
 
@@ -145,7 +145,7 @@ public class PlayerResponse extends ResponseBase {
 	This is done when a player is first entering the system.
 	@param x It already has the experiment plan set, but the specific trial list within that experiment needs to be choosen and set now
      */
-    private void assignRandomTrialList(PlayerInfo x) throws IOException {
+    private void assignRandomTrialList(PlayerInfo x) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
 	String exp = x.getExperimentPlan();
 	Vector<String> lists = TrialList.listTrialLists(x.getExperimentPlan());
 	if (lists.size()==0)  throw new IOException("Found no CSV files in the trial list directory for experiment plan=" + exp);
