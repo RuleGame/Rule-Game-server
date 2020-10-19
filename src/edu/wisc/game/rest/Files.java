@@ -62,8 +62,19 @@ public class Files {
     public static File rulesFile(String ruleSetName) throws IOException {
 	if (ruleSetName==null || ruleSetName.equals("")) throw new IOException("Rule set name not specified");
 	return inputFile(ruleSetName, "rules", ".txt");
-   }
+    }
 
+    /** Can the game server cache this rule set? The convention is, names not
+	starting with a slash refer to files in the tomcat directory,
+	whose content is supposed to be stabled; therefore, they can be
+	cached in the web app. Names starting with a slash are interpreted
+	as absolute paths of files, presumably belonging to developers
+	and thus possibly not stable; so the game servr does not cache those.
+     */
+    public static boolean rulesCanBeCached(String ruleSetName) {
+	return !ruleSetName.startsWith("/");
+    }
+    
     public static File initialBoardFile(String boardName ) throws IOException {
 	if (boardName==null || boardName.equals("")) throw new IOException("Board name not specified");
 	return inputFile(boardName, "boards", ".json");
@@ -81,7 +92,18 @@ public class Files {
     }
 
 
-    
+    /**
+       @param name If it starts with a "/", it is understand as an
+       absolute path, which is handy for development (to point to
+       files in researchers' home directories); in this case, it is
+       also expected to already have an extension. Otherwise, it is
+       understood as to refer to files in the Tomcat game data
+       directory; in this case, an extension will be added.
+       @param subdir The subdirectory of the  Tomcat game data directory
+       where we will look for the file.
+       @param ext The extension (e.g. ".txt" or ".json") that we will
+       add to the name.
+     */    
     private static File inputFile(String name, String subdir, String ext) throws IOException {
 	if (name==null || name.equals("")) throw new IOException("File name not specified");
 	if (name.startsWith("/")) {

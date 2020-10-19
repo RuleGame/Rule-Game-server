@@ -36,12 +36,20 @@ abstract public class GameGenerator {
 	produceCnt++;
     }
 
-    /** Advances the counter. This can be used to resume an interrupted series */
+    /** Advances the counter. This can be used to resume an interrupted series,
+	so that e.g. a predefined board from the correct position in the list
+	would be used next.
+	@param n advance the counter as if n games have been created
+     */
     public void advance(int n) {
 	if (n<0) throw new IllegalArgumentException("Negative n");
 	for(int k=0; k<n; k++) nextGame();
     }
 
+    /** Creates a GameGenerator based on a parameter set. Depending on
+	which parameters are set, a PredefinedBoardGameGenerator or a
+	RandomGameGenerator may be returned.
+     */
     static GameGenerator mkGameGenerator(ParaSet para) throws IOException, RuleParseException, IllegalInputException, ReflectiveOperationException {
 
 	String ruleSetName = para.getRuleSetName();
