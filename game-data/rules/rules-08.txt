@@ -1,0 +1,5 @@
+# Different shapes go to different buckets.
+# First, pick two pieces from the leftmost column, then one piece from the
+# rightmost column, etc
+2 (*,circle,*,L,[0]) (*,triangle,*,L,[1])  (*,square,*,L,[2])  (*,star,*,L,[3])
+1 (*,circle,*,R,[0]) (*,triangle,*,R,[1])  (*,square,*,R,[2])  (*,star,*,R,[3])
