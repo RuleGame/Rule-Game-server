@@ -320,7 +320,7 @@ public class EpisodeInfo extends Episode {
        Date prevTime = getStartTime();
        int objectCnt = getNPiecesStart();
        Vector<String> lines=new  Vector<String>();
-       for(Move move: transcript) {
+       for(Pick move: transcript) {
 	   h.clear();
 	   h.put( "playerId", x.getPlayerId());
 	   h.put( "trialListId", x.getTrialListId());
@@ -342,10 +342,20 @@ public class EpisodeInfo extends Episode {
 	   Board.Pos q = new Board.Pos(move.pos);
 	   h.put("y", q.y);
 	   h.put("x", q.x);
-	   h.put("bucketId", move.bucketNo);
-	   Board.Pos b = Board.buckets[move.bucketNo];
-	   h.put("by", b.y);
-	   h.put("bx", b.x);
+
+	   if (move instanceof Move) { // a real move with a destination
+	       Move m = (Move)move;
+	       h.put("bucketId", m.bucketNo);	   
+	       Board.Pos b = Board.buckets[m.bucketNo];
+	       h.put("by", b.y);
+	       h.put("bx", b.x);	       
+	   } else { // just a pick -- no destination
+	       h.put("bucketId", "");
+	       h.put("by", "");
+	       h.put("bx", "");	       
+	   }
+
+	   
 	   h.put("code",move.code);
 	   if (move.code==CODE.ACCEPT) 	   objectCnt--;
 	   h.put("objectCnt",objectCnt);
