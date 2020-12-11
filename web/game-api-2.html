@@ -4,7 +4,7 @@
 <body>
   <h1>Web API for the use by the Rule Game client - second batch</h1>
 
-  <p align="center"><em>Version 1.025,  2020-09-25</em></p>
+  <p align="center"><em>Version 1.028,  2020-12-10</em></p>
 
   <p>This is the "Second Batch" (prefix=<tt>/GameService2</tt>)  of the Game Service web API calls. They are intended for use with a client app that works with players enrolled in experiments; each player is identified by a player ID, and the server assigns each player to a "trial list" (a particular track in the experiment plan with which this player ID is associated with).</p>
 
@@ -203,7 +203,7 @@
 	  row=y=<input name="y" type="text" value="1" size="2"> (both ranging 1 thru 6)<br>
 	  Destination bucket (identified by  bucket_column=bx=<input name="bx" type="text" value="7" size="2">,
 	  bucket_row=by=<input name="by" type="text" value="7" size="2"> (possible values are 0 and 7)<br>
-	  Attempted move count so far (the number of previous calls to <strong><tt>move</tt></strong> in this episode. This can also be interpreted as 0-based number of this move attempt) <input name="cnt" type="text" value="0" size="5"><br>
+	  Attempted move and pick count so far (the number of previous calls to <strong><tt>move</tt></strong> and <strong><tt>pick</tt></strong> in this episode. This can also be interpreted as the 0-based sequential number of this pick or move attempt) <input name="cnt" type="text" value="0" size="5"><br>
 	  <input type="submit">
       </form>
 
@@ -230,6 +230,21 @@ For the meaning of the output fields, see the documentation for <a href="api/edu
 
    <p>The finish code reports the current state: 0=can play (there are pieces on the board, and some can be moved), 1=finish (no pieces left on the board), 2=stalemate (there are pieces on the board, but none of them can be moved anymore).</p>
    </li>
+
+
+ <li>POST <strong><tt>/pick</tt>: Pick a piece:</strong>
+      <form method="post" action="game-data/GameService2/pick"
+	 enctype="application/x-www-form-urlencoded">
+	  Episode ID (returned by an earlier newEpisode call): <input name="episode" type="text" size="25"><br>
+	  Piece to move: column=x=<input name="x" type="text" value="1" size="2">,
+	  row=y=<input name="y" type="text" value="1" size="2"> (both ranging 1 thru 6)<br>	
+	  Attempted move and pick count so far (the number of previous calls to <strong><tt>move</tt></strong> and <strong><tt>pick</tt></strong> in this episode. This can also be interpreted as the 0-based sequential number of this pick or move attempt) <input name="cnt" type="text" value="0" size="5"><br>
+	  <input type="submit">
+      </form>
+
+The arguments to the <tt>/pick</tt> call are similar to those used in a /move call, except that there are no bucket coordinates. Unlike /move, a /pick call merely asks whether the piece in question can be moved to <em>any</em> position, but does not actually move it to anywhere.   The return value is the same JSON structure as a move call would return; look at the <tt>code</tt> field, with the same ACCEPT/DENY semantics. Here, ACCEPT (code 0) means that the piece can be moved to at least one bucket; DENY (code 4) indicates that the piece cannot be moved to any bucket.
+ </li>
+
  
 	<li>POST <strong><tt>/activateBonus:</tt> Activate the bonus for this player. The current episode (if still active) and all subsequent episode of the same series (i.e. played by the same rule) will constitute the "bonus subseries"</strong>
   <form method="post" action="game-data/GameService2/activateBonus"

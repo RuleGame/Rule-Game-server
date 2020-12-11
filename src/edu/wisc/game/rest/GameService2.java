@@ -79,14 +79,13 @@ public class GameService2 {
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
     public Episode.Display move(@FormParam("episode") String episodeId,
-				    @FormParam("x") int x,
-				    @FormParam("y") int y,
-				    @FormParam("bx") int bx,
-				    @FormParam("by") int by,
-				    @FormParam("cnt") int cnt
-				    )   {
+				@FormParam("x") int x,
+				@FormParam("y") int y,
+				@FormParam("bx") int bx,
+				@FormParam("by") int by,
+				@FormParam("cnt") int cnt
+				)   {
 	Episode.Display rv=null;
-	//EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
 	Episode epi = EpisodeInfo.locateEpisode(episodeId);
 	if (epi==null) return dummyEpisode.new Display(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID: "+episodeId);
 	try {	    
@@ -100,6 +99,30 @@ public class GameService2 {
 	}
     }
 
+    @POST
+    @Path("/pick") 
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Episode.Display move(@FormParam("episode") String episodeId,
+				@FormParam("x") int x,
+				@FormParam("y") int y,
+				@FormParam("cnt") int cnt
+				)   {
+	Episode.Display rv=null;
+	Episode epi = EpisodeInfo.locateEpisode(episodeId);
+	if (epi==null) return dummyEpisode.new Display(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID: "+episodeId);
+	try {	    
+	    return rv=epi.doPick(y,x, cnt);
+	} catch( Exception ex) {
+	    System.err.print("/pick: " + ex);
+	    ex.printStackTrace(System.err);
+	    return rv=epi.new Display(Episode.CODE.INVALID_ARGUMENTS, ex.getMessage());
+	} finally {
+	    Logging.info("pick(epi=" +  episodeId +", ("+x+","+y+"), cnt="+cnt+"), return " + JsonReflect.reflectToJSONObject(rv, true));
+	}
+    }
+
+    
     private static Episode dummyEpisode = new Episode();
 
     @POST
