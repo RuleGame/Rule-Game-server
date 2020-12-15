@@ -54,12 +54,21 @@
   <p>The trial list files are in subdirectories of the main trial list directory, <tt>/opt/tomcat/game-data</tt>. For each experiment plan, the subdirectory name is identical to that of the experiment plan; so, for example, the trial list files for the experiment plan <tt>default</tt>, sent by Gary in mid-August 2020, are in <tt>/opt/tomcat/game-data/default</tt>.
   </p>
 
-  <p>When a player first enters the system, the server figures what experiment plan the player is associated with (as per <a href="#players">The meaning of PlayerId</a>, above). Among all the trial list files located in that experiment's trial list, the server picks one  trial list file more or less at random, the main consideration being to assign approximately equal number of players to each trial list. Once the assignment has been completed, it is permanently recorded in the <a  href="#PlayerInfo">table</a>, for use in all episodes played by this player.</p>
+  <p>Trial list files should have extension <tt>.csv</tt>. For example, if your experiment plant has 3 trial lists, named <tt>list_A</tt>, <tt>list_B</tt>, and <tt>list_C</tt>, these lists shoud be described in files named <tt>list_A.csv</tt>, <tt>list_B.csv</tt>, and <tt>list_C.csv</tt>. Please make sure not to name any of your trial lists <tt>defect</tt>, because the file name <tt>defect.csv</tt> is reserved, and is used for the <a href="#defect">defect file.</tt>
+  
+  <p>When a player first enters the system, the server figures what experiment plan the player is associated with (as per <a href="#players">The meaning of PlayerId</a>, above). Among all the trial list files located in that experiment's directory, the server picks one  trial list file based on the <a href="balancing.html">balancing algorithm</a>, the main consideration being to assign approximately equal number of "usable" players to each trial list. Once the assignment has been completed, it is permanently recorded in the <a  href="#PlayerInfo">table</a>, for use in all episodes played by this player.</p>
+
 
   <p>Each row of the trial list file contains a parameter set. The meaning of parameters is explained briefly in the following document compiled by Paul:
-  <a href="https://docs.google.com/spreadsheets/d/1KoYdi0i_toN29hhPiOVA-teX1jjo6WlJs7wL6Oz0AzM/edit#gid=0">_0.GameParameters</a>. However, parameters <tt>n</tt> and  <tt>b</tt> mentioned in that document are not actually used. See  the document on <a href="control-flow.html">Control flow</a> for additional discussion of how some parameters are used by the server when directing a player's activities and playing games.</P>
+    <a href="https://docs.google.com/spreadsheets/d/1KoYdi0i_toN29hhPiOVA-teX1jjo6WlJs7wL6Oz0AzM/edit#gid=0">_0.GameParameters</a>. However, parameters <tt>n</tt> and  <tt>b</tt> mentioned in that document are not actually used. See  the document on <a href="control-flow.html">Control flow</a> for additional discussion of how some parameters are used by the server when directing a player's activities and playing games.</P>
+
+  <h3><a name="defect">The defect file</a></h3>
+
+<p>Optionally, you can create a <em>defect file</em>, named <tt>defect.csv</tt> in an experiment's trial list directory, to influence the  <a href="balancing.html">balancing algorithm</a> assigning new players to trial lists. For details on this files syntax and semantics, see <a href="balancing.html#defect">The defect file</a> in the balancing algorithm write-up.</p>
+
+<p>Note that because the name <tt>defect.csv</tt> is reserved for the defect file, it cannot be used for a trial list file, you therefore must not name any of your trial lists  <tt>defect</tt>.
     
-   <h3>Rule sets</h3>
+  <h3>Rule sets</h3>
 
   <p>Each line of a trial list file, i.e. each parameter set, contains parameter <tt>rule_id</tt>, which refers to a particular set of rules for playing the game. The rule set files are all in  <tt>/opt/tomcat/game-data/rules</tt>; the name of each file consists of the value of the  <tt>rule_id</tt> parameter and the extension  <tt>.txt</tt>.</p>
 
@@ -233,7 +242,7 @@ where e.PLAYER_ID=p.id and p.playerId= 'vm012' order by startTime;
 
     e.startTime> '2020-10-10' order by startTime;
     
-    <h3> Exporting data from the MySQL database to CSV files</h3>
+    <h3><a name="export">Exporting data from the MySQL database to CSV files</a></h3>
 
  <p>There are many ways to export the content of SQL tables to CSV files. As an example, I have supplied a script that resides on sapir in <code>~vmenkov/w2020/game/sql/export.sh</code>. In order to be able to use this particular script, you must have possess several qualifications:
 <ul>

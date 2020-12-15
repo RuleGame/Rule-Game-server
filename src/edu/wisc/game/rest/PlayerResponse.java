@@ -147,15 +147,29 @@ public class PlayerResponse extends ResponseBase {
      */
     private void assignRandomTrialList(PlayerInfo x) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
 	String exp = x.getExperimentPlan();
-	Vector<String> lists = TrialList.listTrialLists(x.getExperimentPlan());
+
+	String minName=chooseRandomTrialList(exp, 1.0, false);
+	x.setTrialListId(minName);
+	trialList  = new TrialList(exp, minName);
+	x.initSeries(trialList);
+    }
+    
+    /** Picks a suitable trial list for a new player in a given experiment plan 
+     */
+    private static synchronized String chooseRandomTrialList(String exp, double hrs, boolean debug) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
+	Vector<String> lists = TrialList.listTrialLists(exp);
 	if (lists.size()==0)  throw new IOException("Found no CSV files in the trial list directory for experiment plan=" + exp);
 	HashMap<String,Integer> names = new HashMap<>();
 	for(String key: lists) names.put(key,0);
 
+	long msecAgo = (long)(hrs * 3600.0 * 1000.0);
+	Date recent = new Date(  (new Date()).getTime() - msecAgo);
+
 	EntityManager em  = Main.getEM();
 	synchronized(em) {
-	    Query q = em.createQuery("select x.trialListId, count(x) from PlayerInfo x where x.experimentPlan=:e  group by x.trialListId");
+	    Query q = em.createQuery("select p.trialListId, count(p) from PlayerInfo p where p.experimentPlan=:e and (p.completionCode is not null or p.date > :recent) group by p.trialListId");
 	    q.setParameter("e", exp);
+	    q.setParameter("recent", recent);
 	    List list = q.getResultList();
 	    for(Object o: list) {
 		Object[] z = (Object[]) o;
@@ -163,18 +177,46 @@ public class PlayerResponse extends ResponseBase {
 		if (names.containsKey(name)) {
 		    int cnt = (int)((Long)(z[1])).longValue();
 		    names.put(name,cnt);
+		    if (debug) System.out.println("C+R for (" +name+")=" + cnt);
 		}		
 	    }
+	}
+
+	HashMap<String,Integer> defects = TrialList.readDefects(exp);
+	if (debug) System.out.println("Read "+defects.size()+" entries from the defect file");
+	
+	// The defect table may tell us to ignore a certain number
+	// of "completers" in some trial lists
+	for(String name: defects.keySet()) {
+	    int d = defects.get(name);
+	    if (names.containsKey(name)) {
+		int cnt = names.get(name) - d;
+		names.put(name, cnt);
+		if (debug) System.out.println("C+R-D for (" +name+")=" + cnt);
+	    } else {
+		System.err.println("Ignoring defect(" +name+")=" + d +"; non-existent trial list name!");		
+	    }		      
 	}
 	
 	String minName=null;
 	for(String name: lists) {
 	    if (minName==null || names.get(name)<names.get(minName)) minName=name;
 	}
+	return minName;
+    }
 
-	x.setTrialListId(minName);
-	trialList  = new TrialList(exp, minName);
-	x.initSeries(trialList);
+
+    /** Handy testing */
+    public static void main(String[] argv) throws Exception {
+	double hrs = Double.parseDouble(argv[0]);
+	System.out.println("Looking back at hrs=" + hrs);
+	for(int j=1; j<argv.length; j++) {
+	    String exp = argv[j];
+	    System.out.println("Plan=" +exp);
+	    String minName=chooseRandomTrialList(exp, hrs, true);
+	    System.out.println("If a player were to register now, it would be assigned to trialList=" + minName);
+	}
+	
     }
     
 }

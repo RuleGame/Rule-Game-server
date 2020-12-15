@@ -1,0 +1,199 @@
+<html>
+  <head><title>Assignment of players to trial lists</title>
+  </head>
+<body>
+  <h1>Assignment of players to trial lists</h1>
+
+<div align="center"><em>Updated for ver. 1.092. 2020-12-14</em></div>
+
+<h2>Background</h2>
+  <p>When a new player joins an experiment, he is assigned to one of the trial lists associated with this experiment. This document describes the process (known as "balancing") used for this assignment, and explains how an experiment manager can control it.
+
+  <p>Initially (summer 2020), the goals of balancing were formulated simply as ensuring that an approximately equal number of players is  associated with each trial list. Accordingly, a very simlpe balancing process was used. The system kept track of the number of plaers in each trial list of each experiment plan (SQL table PlayerInfo), and, every time a player joined an experiment, he was put into a trial list that, at the moment, had the smallest number of players associated with it. In practice, that meant that, for example, for 3 trial lists named TL1, TL2, TL3, the player assignment was cyclical: TL1, TL2, TL3, TL1, TL2, TL3, etc.
+
+  <p>In December 2020, Gary and Aria reported that despite an equal number of players being assigned to each list (e.g. we had 12 to 13 players registered in each of the 4 lists in the experiment plan <tt>pilot04</tt>, the number of players who produced a game record usable for the experiment's purposes varied significantly between lists (from the low of 4 to the high of 9). A "usable" record was one that resulted from the games of a player who has completed the experiment (and received a completion code) and satisfied certain additional data quality criteria.
+
+    <p>Accordingly, a new balancing scheme was implemented, as outlined below.
+
+      <h2>Definitions</h2>
+
+    <p>Similarly to the original balancing scheme, the new balancing scheme makes decisions dynamically, i.e. based on the data available at the time when a player is registered. The following numbers, for each trial list in the experiment, are used:
+
+      <ul>
+	<li><strong><tt>C</tt></strong> = the number of <strong>completers</strong>: the players who have been assigned to the trial list in question, have played a required number of episodes in each parameter set, and received a completion code.
+	  
+	<li><strong><tt>Q</tt></strong> = the number of <strong>quitters</strong>: the players  who have been assigned to the trial list in question more than a specified amount of time <em>T</em> ago (currently, <em>T</em>=1 hour), but have never received a completion code. It is considered very unlikely that any of them will ever receive a completion code in the future. The choice of the value of <em>T</em> is based on the <a name="stat">accumulated statistics</a>.
+
+	<li><strong><tt>R</tt></strong> = the number of <strong>players-in-progress</strong>. This includes all players not included into <tt>C+T</tt>, i.e. the players who have been registered in this trial list less than <em>T</em> (= 1 hour) ago, but have not received a completion code so far. It is considered that they still have a potential for completing the game and receiving a completion code.
+
+	<li><strong><tt>D</tt></strong> = the <strong><em>defect</em></strong>. This is the number of players included in <tt>C</tt> whose data our research team has determined not to be worthy for being included into the analysis. For all we know, those players may have just been trained hamsters. The experiment manager (Aria) needs to inform the system about the defect numbers via the <a href="#defect">defect file</a>.
+	  
+      </ul>
+
+
+      <h2>Balancing</h2>
+
+    <p>The balancing process works as follows: every time a new player joins the experiment, the system computes the estimating number of "usable" players in each trial list as
+      <div align="center"><em>
+	  E=C+R-D,
+	  </em></div>
+      and assigns the player to the list (or one of the lists) with the smalled <em>E</em>.<p>
+
+  <p>Let's analyse this algorithm, disregarding the rare possibility that a "quitter" becomes a "completer" by finishing his series of episodes more than 1 hour after the registration, and assuming that  there is no defect file.
+
+  <p>In the simplest case -- when players join the system at a rate not exceeding 1 per hour -- this scheme will ensure the numbers of completers in different trial list will never differ by more than one. If up to <em>r &gt;&gt: 1</em> players per hour join the experiment with <em>n</em> trial lists, then the difference between the number of completers in different trial list won't exceed ca. <em>r/n</em>. (This assumes the worst case when all of the <em>r/n</em> players assigned during an hour to list A completed the required series of games, while none of the  <em>r/n</em> players assigned during that hour to list B complete their series).
+      
+    <h2><a name="defect">The defect file</a></h2>
+
+  <p>The defect file serves as a tool for the experiment manager to tell the system: <em>"Even though a certain number of players formally completed their required series of episodes and received a completion code, we don't want to use them in our analysis, and there for they should not be counted among 'completers' during the balancing process."</em>  For example, suppose in experiment <tt>pilot04</tt> you have a situation described by the following table:
+    <table border="1">
+      <tr><th>Trial list<th>Number of players with a completion code
+	<th>How many players with a completion code are good enough to be included in the analysis
+	<th>The "defect": players with a completion code, but with unusuable data
+<tr><td> clock_broad_shape <td>      9 <td> 9 <td> 0 
+<tr><td> clock_specific_shape         <td>             9 <td> 7 <td> 2
+<tr><td> counterClock_broad_shape     <td>             7 <td> 7 <td> 2
+    <tr><td> counterClock_specific_shape  <td>             4 <td> 4 <td> 0
+    </table>
+
+    <p>
+      In this case, a file named <tt>defect.csv</tt> should be created in this experiment plan's directory (<tt>/opt/tomcat/game-data/trial-lists/pilot04</tt>) with the following two lines:
+<pre>
+clock_specific_shape,2	
+counterClock_broad_shape,2
+</pre>
+The file can include lines for other trial lists of this experiment plan as well, but the defect values in them should be zeros, e.g.
+<pre>
+clock_broad_shape,0	
+</pre>
+
+    <p>The defect file, of course, can be used to manage the player assignment based on other considerations too. For example, if you want 20 extra players (beyond what the standard balancing process would consider appropriate) to be assigned to <tt>trial_list_A</tt>, you can simply write
+<pre>
+trial_list_A,20
+</pre>  
+Conversely, if you want <tt>trial_list_B</tt> to have 10 players fewer than the "balanced" numbers would justify (e.g. because you already have 10 records for an identical trial list accumulated a different experiment plan, and plan to add them to your analysis), you can use a negative defect value and write
+<pre>
+trial_list_B,-10
+</pre>
+
+<h2><a name="sql">Viewing the balancer's statistics</a></h2>
+
+    <p>If you are working with the Rule Game server's data, you probably can obtain the numbers you want (how many players have been assigned to each trial list, how many of them have received completion code, etc) by looking at CSV files   <a href="data.html#export">exported from the server</a> and making appropriate calculations. However, you can also see these numbers by directly entering a SQL query, e.g.
+      <pre>
+use game;
+	
+select p.trialListId, count(*) from PlayerInfo p
+where p.experimentPlan='pilot04' and
+(p.completionCode  is not null or TIMESTAMPDIFF(minute, p.date, now())<60)
+group by p.trialListId;
+	
++-----------------------------+----------+
+| trialListId                 | count(*) |
++-----------------------------+----------+
+| clock_broad_shape           |        9 |
+| clock_specific_shape        |        9 |
+| counterClock_broad_shape    |        7 |
+| counterClock_specific_shape |        4 |
++-----------------------------+----------+
+</pre>
+
+      <P>The value reported for each trial list here is <em>C+R</em>, i.e. "completers" + "players in progress". You can vary the time cut-off value (60 min the sample query above) to see how R would change if you used a longer or shorter value. 
+      
+<h2><a name="testing">Testing</a></h2>
+
+      <p>The balancer unit of the game server re-reads the experiment's defect file (if it exists) every time a new player registers; any error messages go to the server log, <tt>/opt/tomcat/logs/catalina.out</tt>. If you want to see how the balancer would assign a new player, if one were to register right now, you can use the auxiliary script <tt>scripts/test-balancing.sh</tt> that comes with the application <a href="deploy.html">server code distribution</a>. The script takes two arguments:<ul>
+	  <li>the width of the window (in hours) within which a new player is considered to be "in progress"; use 1 to emulate the balancer inside the server.
+	  <li>the name of the experiment plan
+	</ul>
+	For example:</p>
+	    	
+	<pre>
+~vmenkov/w2020/game/scripts/test-balancing.sh 1 default
+Looking back at hrs=1.0
+Plan=default
+Dec 14, 2020 8:09:25 PM edu.wisc.game.util.Logging info
+INFO: EM created, flushMode=AUTO
+Read 2 entries from the defect file
+C+R-D for (trial_1)=-1
+C+R-D for (trial_3)=1
+If a player were to register now, it would be assigned to trialList=trial_1
+</pre>
+
+
+  <h2><a name="stat">Appendix: statistics</a></h2>
+  
+  <p>To get a better idea on how players behave, we carried out some measurements on players that had registered in all <tt>pilot*</tt> experiment plans, as of 2020-12-13.
+
+  <p>The numbers below were obtained using SQL scripts <tt>sql/timing.sql</tt> and <tt>sql/episode-length.sql</tt>.
+
+    
+<p>(A) How much time it took for "completers" to get from registration to the end of their last episode? The 77 players are divided into groups based on the time rounded up to multiples of 10 min:
+  <pre>
++---------+------------------+
+| minutes | Completers count |
++---------+------------------+
+|      10 |                1 |
+|      20 |               23 |
+|      30 |               37 |
+|      40 |                7 |
+|      50 |                7 |
+|      60 |                1 |
+|      70 |                1 |
++---------+------------------+</pre>
+We see that 76 "completers" out of 77 achieved completion within 60 min since registration.
+
+<p>(B) How soon after registration did "quitters" end working?
+  <pre>
++---------+-----------------+
+| minutes | Quitters  count |
++---------+-----------------+
+|      10 |              12 |
+|      20 |               7 |
+|      30 |               1 |
+|      40 |               2 |
+|      50 |               1 |
+|      60 |               1 |
+|      80 |               2 |
++---------+-----------------+  </pre>
+  Out of 26 people, 24 ended their participation within 60 min since registration.
+
+<p>(C) How closely are a player's episodes spaced? For each episode played by the players in these experiment plans, we measured either:  <ul>
+    <li>The time from registration to the end of the first episode;
+    <li>The time from the end of the previous episode to the end of this episode.
+  </ul>
+  Therefore, the time measured represents the time taken by playing an episode, plus the length of any break the player may have taken between the end of the episdoe and the beginning of this one.</p>
+
+  <p>
+  Rounded up to whole minutes, the times are distributed as follows:
+  <pre>
++---------+----------------+
+| minutes | Episodes count |
++---------+----------------+
+|       1 |            989 |
+|       2 |            571 |
+|       3 |            139 |
+|       4 |             41 |
+|       5 |             23 |
+|       6 |             16 |
+|       7 |              4 |
+|       8 |              2 |
+|       9 |              1 |
+|      10 |              1 |
+|      11 |              2 |
+|      12 |              3 |
+|      13 |              1 |
+|      14 |              1 |
+|      16 |              1 |
+|      19 |              1 |
+|      21 |              1 |
+|      24 |              1 |
+|      32 |              1 |
+|      33 |              1 |
+|      47 |              1 |
+|      51 |              1 |
++---------+----------------+ </pre>
+  While there are some people who may have taken close to an hour to complete an episode, 99% of all episodes took less than 10 minutes. This indicates that one can discriminate  "quitters" vs. "players in progress" somewhat more precisely by looking at the time since last activity vs. time since registration.
+</body>
+</html>
+
+  

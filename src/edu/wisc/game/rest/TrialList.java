@@ -52,6 +52,7 @@ public class TrialList extends Vector<ParaSet> {
 	    File f = new File(base, s);		
 	    if (!f.isFile()) continue;
 	    if (!s.endsWith(suff)) continue;
+	    if (s.equals(defectFileName)) continue;
 	    String key=s.substring(0, s.length()-suff.length());
 	    names.add(key);
 	}
@@ -59,7 +60,29 @@ public class TrialList extends Vector<ParaSet> {
     }
 
 
-    
+    /** The "defect file", which the experiment manager can use to tell the
+	system that a certain number of "completers" in some trial lists
+	should not be taken into account during load balancing.
+     */
+    static final String defectFileName = "defect.csv";
+    public static HashMap<String,Integer> readDefects(String exp) {
+	HashMap<String,Integer> h = new HashMap<>();
+	File f = new File(dirForExperiment(exp), defectFileName);
+	if (!f.exists()) return h;
+	try {
+	    CsvData csv = new CsvData(f, true, false, null);	
+	    for(CsvData.LineEntry _e: csv.entries) {
+		CsvData.BasicLineEntry e= (CsvData.BasicLineEntry)_e;
+		String key = e.getKey();
+		Integer val = new Integer(e.getCol(1));
+		if (val!=null) h.put(key, val);
+	    }		
+	} catch(Exception ex) {
+	    System.err.println("Failed to process defect file '"+f+"'. Exception: " + ex);
+	}
+	return h;	
+    }
+
 
     /** The error object  */
     TrialList(boolean _error, String _errmsg) {
