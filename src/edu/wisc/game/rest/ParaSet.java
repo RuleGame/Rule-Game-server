@@ -9,22 +9,42 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import edu.wisc.game.util.*;
+import edu.wisc.game.sql.Piece;
 
 @XmlRootElement(name = "ParaSet") 
 
-/** <pre>
-rule_id,max_boards,min_points,max_points,activate_bonus_at,min_objects,max_objects,min_shapes,max_shapes,min_colors,max_colors,f,m,n,b,clear_how_many,bonus_extra_pts,clearing_threshold,feedback_switches,stack_m
-emory_depth,stack_memory_show_order,grid_memory_show_order
+/** A parameter sets contains the top-level information needed to configure a series of episodes, including a reference to the rule set, the rules for generating initial boards, and various control options and display options. It is initialized from one line of the trial list file.
+
+<pre>
+rule_id,max_boards,min_points,max_points,activate_bonus_at,min_objects,max_objects,min_shapes,max_shapes,min_colors,max_colors,f,m,n,b,clear_how_many,bonus_extra_pts,clearing_threshold,feedback_switches,stack_memory_depth,stack_memory_show_order,grid_memory_show_order
 TD-01,5,2,10,2,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,FALSE,FALSE
 TD-02,5,2,10,2,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,FALSE,FALSE
 TD-03,5,2,10,2,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,FALSE,FALSE
 TD-04,5,2,10,2,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,FALSE,FALSE
 TD-05,5,2,10,2,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,FALSE,FALSE
 </pre>
+Additional columns
+<pre>
+colors
+RED;PINK;ORANGE,
+</pre>
 */
     
 public class ParaSet extends HashMap<String, Object> {
 
+    /** Will be set as appropriate if specified in the CSV file "colors" column */
+    public Piece.Shape[] shapes = Piece.Shape.legacyShapes;
+    public Piece.Color[] colors = Piece.Color.legacyColors;
+
+
+    /** For JSON */
+    public String getColors() {
+	return Util.joinNonBlank(";", colors);
+    }
+     public String getShapes() {
+	return Util.joinNonBlank(";", shapes);
+    }
+    
     /*
    private int x;
  
@@ -50,8 +70,54 @@ public class ParaSet extends HashMap<String, Object> {
 	int nCol=header.nCol();
 	if (nCol!=line.nCol()) throw new  IOException("Column count mismatch:\nHEADER=" + header + ";\nLINE=" + line);
 	for(int k=0; k<nCol; k++) {
-	    typedPut(header.getCol(k), line.getCol(k));		    	    
+	    String key =header.getCol(k);
+	    String val = line.getCol(k);
+	    if (key.equals("colors") && val!=null) {
+		String[] ss = val.split(";");
+		if (ss.length>0) {
+		    colors = new Piece.Color[ss.length];
+		    for(int j=0; j<ss.length;j++) {
+			String s = ss[j].trim();
+			if (!isGoodColorName(s)) throw new IOException("Invalid color name '"+s+"'");
+			Piece.Color c = Piece.Color.findColor(s);
+			colors[j] = c;
+		    }
+		    //Logging.info("ParaSet: loaded " + colors.length + " custom colors");
+		}
+	    } else if (key.equals("shapes") && val!=null) {
+		String[] ss = val.split(";");
+		if (ss.length>0) {
+		    shapes = new Piece.Shape[ss.length];
+		    for(int j=0; j<ss.length;j++) {
+			String s = ss[j].trim();
+			if (!isGoodColorName(s)) throw new IOException("Invalid shape name '"+s+"'");
+			Piece.Shape c = Piece.Shape.findShape(s);
+			shapes[j] = c;
+		    }
+		    //Logging.info("ParaSet: loaded " + shapes.length + " custom shapes");
+		}
+	    } else typedPut(key, val);
 	}
+    }
+
+    private boolean isRegular(char c) {
+	return (Character.isLetterOrDigit(c) || c=='_');
+    }
+
+    /** Color names should be alphanumeric, with "-" and "/" allowed
+	in reasonable positions (between regular chars). */
+    private boolean isGoodColorName(String s) {
+	if (s.length()==0) return false;
+	boolean wasRegular = false;
+	for(int j=0; j<s.length(); j++) {
+	    char c = s.charAt(j);
+	    boolean isRegular =  isRegular(c);
+	    boolean ok = isRegular ||
+		(c=='-' || c=='/') && wasRegular && j+1<s.length();
+	    if (!ok) return false;
+	    wasRegular=isRegular;
+	}
+	return true;
     }
 
     /** Converts the value to an object of a (likely) proper type, and 

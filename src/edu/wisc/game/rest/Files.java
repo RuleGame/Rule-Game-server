@@ -57,6 +57,10 @@ public class Files {
 	return new File(inputDir, "trial-lists");
     }
 
+    static File shapesDir() {
+	return new File(inputDir, "shapes");
+    }
+
     /** @param  ruleSetName Either a complete absolute path name ("/home/vmenkov/foo.txt") starting with a slash, or just a file name without the extension ("foo"). In the later case, the file is assumed to be in the standard rules directory.
      */
     public static File rulesFile(String ruleSetName) throws IOException {

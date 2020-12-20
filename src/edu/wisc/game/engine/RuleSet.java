@@ -203,7 +203,7 @@ public class RuleSet {
 		shape = null;
 	    } else if (g instanceof Expression.Id) {
 		String s = ((Expression.Id)g).sVal;
-		shape = (Piece.Shape)Enum.valueOf(Piece.Shape.class, s.toUpperCase());
+		shape = Piece.Shape.findShape(s);
 	    } else  {
 		throw new RuleParseException("Invalid shape ("+g+") in: " + pex);
 	    }
@@ -212,7 +212,7 @@ public class RuleSet {
 		color = null;
 	    } else if (g instanceof Expression.Id) {
 		String s = ((Expression.Id)g).sVal;
-		color = (Piece.Color)Enum.valueOf(Piece.Color.class, s.toUpperCase());
+		color = Piece.Color.findColor(s);
 	    } else  {
 		throw new RuleParseException("Invalid color ("+g+") in: " + pex);
 	    }

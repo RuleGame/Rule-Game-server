@@ -72,7 +72,7 @@ abstract public class GameGenerator {
 				para.getInt("max_colors")};
 
 	    gg =new RandomGameGenerator(ruleSetName, nPiecesRange, nShapesRange,
-					nColorsRange);
+					nColorsRange, para.shapes, para.colors);
 	}
 
 

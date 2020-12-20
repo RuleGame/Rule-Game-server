@@ -189,11 +189,11 @@ public class Board// extends OurTable
 
     
     /** The simple constructor, creates a random board with a given number  
-     of pieces. */
+     of pieces, using the 4 legacy colors. */
     public Board(int randomCnt) {
 	setName("Random board with " + randomCnt + " pieces");
-	Piece.Shape[] shapes = 	Piece.Shape.values();
-	Piece.Color[] colors = 	Piece.Color.values();
+	Piece.Shape[] shapes = 	Piece.Shape.legacyShapes;
+	Piece.Color[] colors = 	Piece.Color.legacyColors;
 	if (randomCnt>N*N) throw new IllegalArgumentException("Cannot fit " + randomCnt + " pieces on an "+ N + " square board!");
 
 	Vector<Integer> w  = random.randomSubsetOrdered(N*N, randomCnt); 
@@ -201,8 +201,8 @@ public class Board// extends OurTable
 	for(int i=0; i<randomCnt; i++) {
 	    Pos pos = new Pos(w.get(i)+1);
 	    
-	    Piece p =new Piece( random.getEnum(Piece.Shape.class),
-				random.getEnum(Piece.Color.class),
+	    Piece p =new Piece( shapes[random.nextInt(shapes.length)],
+				colors[random.nextInt(colors.length)],
 				pos.x, pos.y);
 	    p.setId(i);
 	    value.add(p);
@@ -212,7 +212,7 @@ public class Board// extends OurTable
     /** Fills the array results[] with random values from allProps[], ensuring that results will contain exactly nProp distinct values. 
 	@param nProp If 0 is given, each object is assigned properties independently from the entire available range; so the resulting scheme may have any number of distinct properties. If non-zero is given, this will be the exact number of distinct values in the resulting scheme.
      */
-    private void designatedProps(Enum[] allProps, Enum results[], int nProp) {
+    private void designatedProps(Object[] allProps, Object results[], int nProp) {
 	if (nProp < 0 || nProp>allProps.length) throw new IllegalArgumentException("Illegal number of values ("+nProp+") to pick out of "+allProps.length);
 	final int m = results.length;
 	if (nProp==0) {
@@ -248,13 +248,11 @@ public class Board// extends OurTable
 	@param nShapes required number of shapes. If 0 is passed, there is no restriction (independent decision is made for each piece)
 	@param nColors required number of colors. If 0 is passed, there is no restriction (independent decision is made for each piece)
      */
-    public Board(int randomCnt, int nShapes, int nColors) {
+    public Board(int randomCnt, int nShapes, int nColors, Piece.Shape[] allShapes, Piece.Color[] allColors) {
 	setName("Random board with " + randomCnt + " pieces, "+nShapes+" shapes, and " + nColors+" colors");
-	Piece.Shape[] allShapes = 	Piece.Shape.values();
-	Piece.Color[] allColors = 	Piece.Color.values();
 	if (randomCnt>N*N) throw new IllegalArgumentException("Cannot fit " + randomCnt + " pieces on an "+ N + " square board!");
 	if (nShapes<0 || nShapes>allShapes.length) throw new IllegalArgumentException("Invalid number of shapes: " + nShapes);
-	if (nColors<0 || nColors>allColors.length) throw new IllegalArgumentException("Invalid number of shapes: " + nColors);
+	if (nColors<0 || nColors>allColors.length) throw new IllegalArgumentException("Invalid number of colors: " + nColors);
 	
 	Vector<Integer> w  = random.randomSubsetOrdered(N*N, randomCnt); 
 
@@ -274,7 +272,8 @@ public class Board// extends OurTable
     }
     
 
-    /** Creates a board object to be sent out (as JSON) to the player's client.
+    /** Creates a board object to be sent out (as JSON) to the player's client,
+	based on the current state of the episode.
 	@param pieces The pieces still on the board. (An array of N^2 elements,
 	with nulls)
 	@param removedPieces If not null, these pieces will also be included
@@ -351,8 +350,8 @@ public class Board// extends OurTable
 		v.add(eid);
 		v.add(""+p.getY());
 		v.add(""+p.getX());
-		v.add(""+p.getShape());
-		v.add(""+p.getColor());
+		v.add(""+p.xgetShape());
+		v.add(""+p.xgetColor());
 		w.println(String.join(",", v));
 	    }
 	    w.close();

@@ -166,6 +166,16 @@ public class GameService2 {
 	return GuessWriteReport.writeGuess( episodeId, text, confidence);
     }
 
+    /** Returns a hash map that maps each color name (in upper case)
+	to a vector of 3 integers, representing RGB values. The data 
+	come from the file in game-data/colors
+    */
+    @GET
+    @Path("/colorMap") 
+    @Produces(MediaType.APPLICATION_JSON)
+    public ColorMap  colorMap() {
+	return new ColorMap();
+    }
 
     
 }

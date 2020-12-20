@@ -103,7 +103,9 @@ class GameSocketServerThread extends Thread {
 			respond(out, Episode.CODE.INVALID_RULES, "Must specify a positive number of pieces");
 			return;
 		    }
-		    Game game = new Game(rules, nPieces);	   	    
+		    Game game = new Game(rules, nPieces,
+					 Piece.Shape.legacyShapes,
+					 Piece.Color.legacyColors);  
 
 		    OutputMode outputMode = OutputMode.STANDARD;
 		    while(true) {

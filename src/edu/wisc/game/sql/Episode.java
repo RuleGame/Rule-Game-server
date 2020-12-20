@@ -262,8 +262,8 @@ public class Episode {
 		whoAccepts[j] = new BitSet(NBU);
 		RuleSet.Atom atom = row.get(j);
 		if (atom.counter>=0 && ourCounter[j]==0) continue;
-		if (atom.shape!=null && atom.shape!=p.getShape()) continue;
-		if (atom.color!=null && atom.color!=p.getColor()) continue;
+		if (atom.shape!=null && atom.shape!=p.xgetShape()) continue;
+		if (atom.color!=null && atom.color!=p.xgetColor()) continue;
 		//System.err.println("Atom " +j+" shape and color OK");
 		if (!atom.plist.allowsPicking(pos.num(), eligibleForEachOrder)) continue;
 		//System.err.println("Atom " +j+" allowsPicking ok");
@@ -321,8 +321,8 @@ public class Episode {
 	    doneMoveCnt++;
 
 	    // Remember where this piece was moved
-	    pcMap.put(move.piece.getColor(), move.bucketNo);
-	    psMap.put(move.piece.getShape(), move.bucketNo);
+	    pcMap.put(move.piece.xgetColor(), move.bucketNo);
+	    psMap.put(move.piece.xgetShape(), move.bucketNo);
 	    pMap = move.bucketNo;
 
 	    pieces[move.pos].setBuckets(new int[0]); // empty the bucket list for the removed piece
@@ -374,8 +374,8 @@ public class Episode {
 	/** Puts together the values of the variables that may be used in 
 	    finding the destination buckets */
 	BucketVarMap(Piece p) {    
-	    if (pcMap.get(p.getColor())!=null) pu(BucketSelector.pc, pcMap.get(p.getColor()));
-	    if (psMap.get(p.getShape())!=null) pu(BucketSelector.ps, psMap.get(p.getShape()));
+	    if (pcMap.get(p.xgetColor())!=null) pu(BucketSelector.pc, pcMap.get(p.xgetColor()));
+	    if (psMap.get(p.xgetShape())!=null) pu(BucketSelector.ps, psMap.get(p.xgetShape()));
 	    if (pMap!=null) pu(BucketSelector.p, pMap);
 	    Pos pos = p.pos();
 	    put(BucketSelector.Nearby.toString(), pos.nearestBucket());
@@ -446,7 +446,7 @@ public class Episode {
 	
 	rules = game.rules;
 	Board b =  game.initialBoard;
-	if (b==null) b = new Board( game.randomObjCnt, game.nShapes, game.nColors);
+	if (b==null) b = new Board( game.randomObjCnt, game.nShapes, game.nColors, game.allShapes, game.allColors);
 	nPiecesStart = b.getValue().size();
 	for(Piece p: b.getValue()) {
 	    Pos pos = p.pos();
@@ -657,10 +657,10 @@ public class Episode {
 		String z = html? "." :   " .";
 		if (pieces[pos]!=null) {
 		    Piece p = pieces[pos];
-		    z = p.getShape().symbol();
+		    z = p.xgetShape().symbol();
 		    z =  html?
-			fm.wrap("strong",fm.colored( p.getColor().toString().toLowerCase(), z)) :
-			p.getColor().symbol() + z;
+			fm.wrap("strong",fm.colored( p.xgetColor().toString().toLowerCase(), z)) :
+			p.xgetColor().symbol() + z;
 		}
 
 		z = (lastMove!=null && lastMove.pos==pos) ?    "[" + z + "]" :
@@ -764,7 +764,9 @@ public class Episode {
 	public RuleSet.ReportedSrc getRulesSrc() { return rulesSrc; }
 
 	
-	String explainCounters = Episode.this.ruleLine.explainCounters();
+	String explainCounters =
+	    Episode.this.ruleLine==null? null:
+	    Episode.this.ruleLine.explainCounters();
 	/** The "explanation" of the current state of the current rule line */
 	public String getExplainCounters() { return explainCounters; }
 	

@@ -26,7 +26,7 @@
  <property name="build.tmp" location="/tmp"/>
 
  <property name="our.jar" value="game.jar"/>
- <property name="dist.war"       value="w2020.war"/>
+ <property name="dist.war"       value="w2020-dev.war"/>
 
 
 <!-- where to look for OpenJPA -->

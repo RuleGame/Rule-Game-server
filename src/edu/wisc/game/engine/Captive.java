@@ -108,10 +108,11 @@ public class Captive {
 	    if (nPiecesRange[0] <= 0) usage("The number of pieces must be positive");
 
 	    int[] zeros = {0,0};
-	    int[] nShapesRange=(ja<argv.length)? range(argv[ja++], Piece.Shape.class) : zeros;
-	    int[] nColorsRange=(ja<argv.length)? range(argv[ja++], Piece.Color.class) : zeros;
+	    int[] nShapesRange=(ja<argv.length)? range(argv[ja++]) : zeros;
+	    //int[] nColorsRange=(ja<argv.length)? range(argv[ja++], Piece.Color.class) : zeros;
+	    int[] nColorsRange=(ja<argv.length)? range(argv[ja++]) : zeros;
 
-	    gg =new RandomGameGenerator(f, nPiecesRange, nShapesRange, nColorsRange);    
+	    gg =new RandomGameGenerator(f, nPiecesRange, nShapesRange, nColorsRange, Piece.Shape.legacyShapes, Piece.Color.legacyColors);    
 	}
 	       
 	int gameCnt=0;

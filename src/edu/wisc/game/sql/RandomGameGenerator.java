@@ -15,29 +15,34 @@ import edu.wisc.game.rest.ParaSet;
 public class RandomGameGenerator extends GameGenerator {
 
     final int[] nPiecesRange, nShapesRange, nColorsRange;
+    final Piece.Shape[] allShapes;// = 	Piece.Shape.legacyShapes;
+    final Piece.Color[] allColors;// = 	Piece.Color.legacyColors;
+  
     final RuleSet rules;
     
     RandomGameGenerator(String ruleSetName, int[] _nPiecesRange, int[] _nShapesRange,
-		  int[] _nColorsRange) throws IOException, RuleParseException {
+			int[] _nColorsRange,  Piece.Shape[] _allShapes, Piece.Color[] _allColors) throws IOException, RuleParseException {
 	this(AllRuleSets.obtain(ruleSetName), _nPiecesRange,  _nShapesRange,
-	     _nColorsRange);
+	     _nColorsRange, _allShapes, _allColors);
 
     }
 
     public RandomGameGenerator(File ruleSetFile, int[] _nPiecesRange, int[] _nShapesRange,
-		  int[] _nColorsRange) throws IOException, RuleParseException {
+		  int[] _nColorsRange,  Piece.Shape[] _allShapes, Piece.Color[] _allColors) throws IOException, RuleParseException {
 	this(AllRuleSets.read(ruleSetFile), _nPiecesRange,  _nShapesRange,
-	     _nColorsRange);
+	     _nColorsRange, _allShapes, _allColors);
 
     }
 
 
     RandomGameGenerator(RuleSet _rules, int[] _nPiecesRange, int[] _nShapesRange,
-		  int[] _nColorsRange) throws IOException, RuleParseException {
+		  int[] _nColorsRange,  Piece.Shape[] _allShapes, Piece.Color[] _allColors) throws IOException, RuleParseException {
 	super();
 	nPiecesRange = _nPiecesRange;
 	nShapesRange = _nShapesRange;
 	nColorsRange = _nColorsRange;
+	allShapes =  _allShapes;
+	allColors = _allColors;
 	if (nPiecesRange[0]>nPiecesRange[1] ||
 	    nShapesRange[0]>nShapesRange[1] ||
 	    nColorsRange[0]>nColorsRange[1])  throw new IOException("GameGenerator: Invalid param range");
@@ -54,7 +59,7 @@ public class RandomGameGenerator extends GameGenerator {
 	int nShapes = Board.random.getInRange(nShapesRange);
 	int nColors = Board.random.getInRange(nColorsRange);
 
-	Game game = new Game(rules, nPieces, nShapes, nColors);
+	Game game = new Game(rules, nPieces, nShapes, nColors,allShapes,allColors);
 	next();
 	return game;
     }

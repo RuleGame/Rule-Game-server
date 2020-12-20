@@ -11,7 +11,6 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement; 
 import javax.xml.bind.annotation.XmlTransient; 
 
-
 /** Represents a piece of a specified type at a specified location. Used
     in board description.
 
@@ -34,19 +33,97 @@ import javax.xml.bind.annotation.XmlTransient;
 public class Piece  implements Serializable {
 
     /** The color of a piece */
+    /*
     public enum Color {
 	RED, BLACK, BLUE, YELLOW;
-	/** "r" for RED, "b" for BLACK, etc; BLUE becomes "g", as if it's GREEN */
+	// "r" for RED, "b" for BLACK, etc; BLUE becomes "g", as if it's GREEN
 	public String symbol() {
 	    String s = toString().toLowerCase().substring(0,1);
 	    if (this==BLUE) s = "g";
 	    return s;
 	}
     };
+    */
+
+    /** A flexible replacement for an Enum */
+    public static class PseudoEnum  {
+	final String name;
+	PseudoEnum(String _name) {
+	    name=_name.toUpperCase();
+	}
+	public int hashCode() { return name.hashCode(); }
+	public String toString() { return name; }	
+
+    }
+    
+    public static class Color extends PseudoEnum {
+	private Color(String _name) {
+	    super(_name);
+	}
+
+	public boolean equals(Object o) {
+	    return (o instanceof Color) && ((Color)o).name.equals(name);
+	}
+
+
+	private static HashMap<String,Color> allColors = new HashMap<>();
+	
+	static synchronized public Color findColor(String s) {
+	    s = s.toUpperCase();
+	    Color c = allColors.get(s);
+	    if (c==null) allColors.put(s, c=new Color(s));
+	    return c;	    
+	}
+	static final public  Color RED=findColor("RED"), BLACK=findColor("BLACK"),
+	    BLUE=findColor("BLUE"), YELLOW=findColor("YELLOW");
+	// "r" for RED, "b" for BLACK, etc; BLUE becomes "g", as if it's GREEN
+	public String symbol() {
+	    String s = toString().toLowerCase().substring(0,1);
+	    if (this==BLUE) s = "g";
+	    return s;
+	}
+
+	/** The four original colors, inherited from Game Engine 1.0, and
+	    used for compatibility with old trial list files. */
+	static public final Piece.Color[] legacyColors = {RED, BLACK, BLUE, YELLOW};
+	
+    };
+
+    public static class Shape extends PseudoEnum {
+	private Shape(String _name) {
+	    super(_name);
+	}
+
+	public boolean equals(Object o) {
+	    return (o instanceof Shape) && ((Shape)o).name.equals(name);
+	}
+
+	private static HashMap<String,Shape> allShapes = new HashMap<>();
+	
+	static synchronized public Shape findShape(String s) {
+	    s = s.toUpperCase();
+	    Shape c = allShapes.get(s);
+	    if (c==null) allShapes.put(s, c=new Shape(s));
+	    return c;	    
+	}
+	static final public Shape SQUARE=findShape("SQUARE"), STAR=findShape("STAR"), CIRCLE=findShape("CIRCLE"), TRIANGLE=findShape("TRIANGLE");
+
+	static public final Piece.Shape[] legacyShapes = {SQUARE, STAR, CIRCLE, TRIANGLE};
+	public String symbol() {
+	    return this==SQUARE? "#":
+		this==STAR? "*":
+		this==CIRCLE? "O":
+		this==TRIANGLE? "T":
+		""+name.charAt(0);
+	}
+	
+    };
+ 
+    
     /** The shape of a piece */
-    public enum Shape {
+    /*    public enum Shape {
 	SQUARE, STAR, CIRCLE, TRIANGLE;
-	/** Character to display a piece in ASCII graphics */
+	// Character to display a piece in ASCII graphics 
 	public String symbol() {
 	    return this==SQUARE? "#":
 		this==STAR? "*":
@@ -54,7 +131,8 @@ public class Piece  implements Serializable {
 		this==TRIANGLE? "T":
 		"?";
 	}
-    };
+	static public final Piece.Shape[] legacyShapes = {SQUARE, STAR, CIRCLE, TRIANGLE};
+	}; */
     
     private static final long serialVersionUID = 1L;
 
@@ -76,7 +154,8 @@ public class Piece  implements Serializable {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY) 
     private long id;
-    
+
+    @XmlTransient // we return ColorName instead!
     private Color color; 
     private Shape shape;  
 
@@ -88,28 +167,21 @@ public class Piece  implements Serializable {
     Integer dropped=null;
     
     public long getId() { return id; }
-  @XmlElement 
+    @XmlElement 
     public void setId(long _id) { id = _id; }
     
+    @XmlTransient // we return ColorName instead!
+    public Color xgetColor() { return color; }
 
-    /*
-    public String getColor() { return color; }
-  @XmlElement 
-    public void setColor(String _color) { color = _color; }
-    
-    
-    public String getShape() { return shape; }
-  @XmlElement 
-    public void setShape(String _shape) { shape = _shape; }
-    */
-    
-   public Color getColor() { return color; }
-   @XmlElement
-   public void setColor(Color _color) { color = _color; }
-    public Shape getShape() { return shape; }
-    @XmlElement
-    public void setShape(Shape _shape) { shape = _shape; }
+    /** This method is used just for Jersey/REST, to simplify JSON output
+	structure, making it similar to that used in Game Engine 1.0 */
+    public String getColor() { return color.toString(); }
 
+    /** For JSON */
+    public String getShape() { return shape.toString(); }
+    /** For use in our application */
+    public Shape xgetShape() { return shape; }
+  
     public String objectType() {
 	return "" + color + "_" + shape;
     }

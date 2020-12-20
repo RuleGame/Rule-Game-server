@@ -64,7 +64,9 @@ public class NewEpisodeWrapper extends ResponseBase {
 	
 		if (nPieces<=0 || nPieces>Board.N * Board.N) throw new IOException("Invalid #pieces=" + nPieces);
 
-		game = new  Game(rules, nPieces, nShapes, nColors);
+		game = new  Game(rules, nPieces, nShapes, nColors,
+					 Piece.Shape.legacyShapes,
+					 Piece.Color.legacyColors);
 	    }
 	    Episode epi = new Episode(game, Episode.OutputMode.BRIEF, null, null); //in, out);
 
