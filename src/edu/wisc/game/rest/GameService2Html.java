@@ -121,7 +121,9 @@ public class GameService2Html extends GameService2 {
 	    fm.h4("Player's history") +
 	    fm.para("All episodes, completed and incomplete, are listed below, one series per line. The format for each episode is:<br>[EpisodeID; FC=finishCode g-if-guess-saved; MainOrBonus; moveCnt/initPieceCnt; $reward]") +
 	    fm.wrap("pre",epi.getPlayer().report())+ fm.hr() +
-	    fm.h4("Current position") + fm.pre( epi.graphicDisplay(true));
+	    fm.h4("Current position") +
+	    //fm.pre( epi.graphicDisplay(true));
+	    fm.para(epi.graphicDisplay(true));
 	return body + fm.hr();
 	
    }

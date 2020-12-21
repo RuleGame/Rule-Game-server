@@ -13,6 +13,7 @@ import edu.wisc.game.reflect.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.sql.Board.Pos;
+import edu.wisc.game.rest.ColorMap;
 import edu.wisc.game.engine.RuleSet.BucketSelector;
 import edu.wisc.game.formatter.*;
 
@@ -638,10 +639,56 @@ public class Episode {
     
     public String graphicDisplay(boolean html) {
 
+	if (isNotPlayable() || !html) return graphicDisplayAscii(html);
+
+	String result="";
+
+	result += fm.para("Notation: (X) - a movable piece; [X] - the position to which the last move attempt (whether successful or not) was applied");
+	
+	ColorMap cm = new ColorMap();
+ 	
+	Vector<String> rows = new Vector<>();
+	
+	Vector<String> v = new Vector<>();
+	v.add(fm.td(""));
+	for(int x=1; x<=Board.N; x++) v.add(fm.td("align='center'", "" + x));
+	String topRow = fm.tr(String.join("", v));
+	rows.add(topRow);
+	
+	
+	for(int y=Board.N; y>0; y--) {
+	    v.clear();
+	    v.add(fm.td(""+y));
+
+	    for(int x=1; x<=Board.N; x++) {
+		int pos = (new Pos(x,y)).num();
+		String sh = "BLANK";
+		String hexColor = "#FFFFFF";
+
+		if (pieces[pos]!=null) {
+		    Piece p = pieces[pos];
+		    sh = p.xgetShape().toString();
+		    hexColor = "#" + cm.getHex(p.xgetColor(), true);
+		}
+		String z = "<img src=\"../../admin/getSvg.jsp?shape="+sh+"\">";
+		z = (lastMove!=null && lastMove.pos==pos) ?    "[" + z + "]" :
+		    ruleLine.isMoveable[pos]?     "(" + z + ")" :
+		    "&nbsp;" + z + "&nbsp;";		
+		v.add(fm.td("bgcolor=\"" + hexColor+"\"", z));
+	    }
+	    rows.add(fm.tr(String.join("", v)));
+	}
+	rows.add(topRow);
+	result+= fm.table("border='1'", rows);
+	return result; 
+    }
+
+    /** Retired */
+      public String graphicDisplayAscii(boolean html) {
+
 	if (isNotPlayable()) {
 	    return "This episode must have been restored from SQL server, and does not have the details necessary to show the board";
 	}
-
 	
 	Vector<String> w = new Vector<>();
 

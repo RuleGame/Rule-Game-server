@@ -189,6 +189,7 @@ public class HTMLFmter extends Fmter {
 	s += ">" + text + "</a>";
 	return s;
     }
-
     
+    public static Fmter htmlFmter = new HTMLFmter(null);
+ 
 }

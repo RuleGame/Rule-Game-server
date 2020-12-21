@@ -106,6 +106,9 @@ public class  Fmter {
     final public  String td(String text) {
 	return wrap("td", text) + "\t";
     }
+    final public  String th(String text) {
+	return wrap("th", text) + "\t";
+    }
 
     final public  String td(String extra, String text) {
 	return wrap("td", extra, text) + "\t";
@@ -162,8 +165,6 @@ public class  Fmter {
 	return text;
     }
 
-    //    public static Fmter plaintText = new Fmter();
-
     public String row(Vector<String>  cols) {
 	return row(cols.toArray(new String[0]));
     }
@@ -175,5 +176,9 @@ public class  Fmter {
 	for(String col: cols) s +=  td(col);
 	return tr(s);
     }
+
+    //    public static Fmter plaintText = new Fmter();
+
+
     
 }

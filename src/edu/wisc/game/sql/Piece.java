@@ -175,10 +175,15 @@ public class Piece  implements Serializable {
 
     /** This method is used just for Jersey/REST, to simplify JSON output
 	structure, making it similar to that used in Game Engine 1.0 */
-    public String getColor() { return color.toString(); }
+    public String getColor() { return color==null? null: color.toString(); }
+    /** Used when loading a board from a JSON file */
+    @XmlElement 
+    public void setColor(String x) { color=Piece.Color.findColor(x); }
 
     /** For JSON */
-    public String getShape() { return shape.toString(); }
+    public String getShape() { return shape==null? null: shape.toString(); }
+    @XmlElement 
+    public void setShape(String x) { shape=Piece.Shape.findShape(x); }
     /** For use in our application */
     public Shape xgetShape() { return shape; }
   
