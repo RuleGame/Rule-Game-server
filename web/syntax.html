@@ -1,0 +1,86 @@
+<html>
+  <head><title>Rule file syntax and semantics</title>
+  </head>
+<body>
+  <h1>Rule file syntax and semantics</h1>
+
+  <div align="center"><em>Updated for ver. 1.029. 2020-12-15</em></div>
+
+  <h2>General concepts</h2>
+
+  <p>
+    The game is played on an NxN (N=6) board; each board position can be described by its row and column number (both of which range from 1 thru 6) or by a single sequential number. The sequential numbers, 1 thru N*N, are used to number cells by rows, from left to right within row, the rows ordered from the bottom to the top:
+    
+    <table border="1">
+      <tr><td><td colspan="6">Columns
+	  <tr><td><th>1<th>2<th>3<th>4<th>5<th>6
+	      <tr><th>Row 6 <td> 31 <td>32<td>33<td>34<td>35<td>36
+	      <tr><th>Row 5 <td> 25 <td>26<td>27<td>28<td>29<td>30
+	      <tr><th>Row 4 <td> 19 <td>20<td>21<td>22<td>23<td>24
+	      <tr><th>Row 3 <td> 13 <td>14<td>15<td>16<td>17<td>18
+	      <tr><th>Row 2 <td> 7 <td>8<td>9<td>10<td>11<td>12
+	      <tr><th>Row 1 <td> 1 <td>2<td>3<td>4<td>5<td>6
+    </table>
+
+  <p>The four <em>buckets</em> are located outside the board, next to its corners. The buckets are numbered clockwise, starting from the one in the top left corner. The bucket's notional (row,column) coordinates are as follows:
+<table>
+      <tr><td>Bucket No. 0: (7,0)
+      <tr><td>Bucket No. 1: (7,7)
+      <tr><td>Bucket No. 2: (0,7)
+      <tr><td>Bucket No. 3: (0,0)
+   </table>
+
+  <p>At the begining of an episode, <em>objects</em>, or <em>game pieces</em> are located in some of the cells of the board, no more than one piece per cell. Each piece is described by its immutable properties ( <em>shape</em> and  <em>color</em>), and by its position on the border (either in terms of the row and column, or in terms of the sequential number of the cell).
+
+  <p>Each move of the game consist of the player attempting to pick one of the pieces and to drop it into one the buckets. The rules of the game, described by a <em>rule file</em>, determine which pieces can be dropped into which buckets; this may depend on the location and properties of the piece itself, the other pieces on the board, and on the previous successful moves in this episode.
+
+  <h2>The structure of a rule file</h2>
+    
+  <p>The rules used in a particular episode are defined by a rule file. The file consists of two sections: the optional <strong>Order definition section</strong>, followed by the <strong>Rule section</strong>. The rule file may also contain comment lines
+
+    <h2>Comment lines</h2>
+
+<p>The rule file may contain comment lines beginning with a <tt>#</tt> character. These lines can be found anywhere in the file. They are only intended for a human reader, and are ignored by the game engine.
+
+    <h2>The order definition section</h2>
+
+    <p>
+The rules may be preceded with the order definition section. This section defines one or several orders. Each order defines a way to order the numbers 1 thru 36 (representing the cells of the board), possibly with ties (i.e. several elements having the same rank). An order without ties is simply a permutation. For example, the line
+
+<pre>
+Order Manchu=[31, 25, 19, 13, 7, 1, 32, 26, 20, 14, 8, 2, ....]
+</pre>
+
+defines an order in which the 36 cells are ordered like characters in a Manchu text, i.e. by columns, from top to bottom in each column, the columns being ordered from left to right.
+
+<p>
+An order may have ties. E.g.
+<pre>
+Order FromBottomLeftCorner=[ 1, [2,7], [3,8,13], …]
+</pre>
+orders the 36 cells by the <em>L</em><sub>1</sub> norm (the Manhattan norm) distance to the bottom left corner. Thus the cell no. 1 (the one at (1,1)) is the first one, followed by cells 2 and 7 which are equally ranked, and so on.
+
+<p>Orders defined in the order section in order to be used in some of the rules in the rules section. There are also severl <strong>built-in orders</strong>, which you can  used in rules without having to explicitly define them in the order definition section. The built-in rules include the following:
+  <ul>
+    ....
+  </ul>
+
+  <h2>The rule section</h2>
+
+  <p>
+  The rule file must contain at least one <strong>rule line</strong>. All rule lines together form the rule section, which is  located after the order section, if there is one.
+
+  <P>Each rule line consists of an optional <strong>global counter</strong>, followed by one or several  <strong>atoms</strong>:
+  <pre>
+    &left;rule_line&right; ::= 
+  
+  
+
+<h2>See also</h2>
+
+<ul>
+  <li>The original write-up on the rules: <a href="https://docs.google.com/document/d/1z_I1kbu-cocUUxOsoEU0WUK9gd3OZ3KiqisJw_Fn_tw/edit?usp=sharing">_0.Semantics2020.07.10.txt</a>
+</ul>
+
+</body>
+</html>

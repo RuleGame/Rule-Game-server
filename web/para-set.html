@@ -1,0 +1,66 @@
+<html>
+  <head><title>Notes on Rule Game Server parameter sets</title>
+  </head>
+<body>
+  <h1>Notes on Rule Game Server parameter sets</h1>
+
+    <p align="center"><em>Updated for Ver 2.000,  2020-12-22</em></p>
+
+    <p>This document provides additional comments to the summary of the Rule Game Server paramters found in a Google spreadsheet,  <a href="https://docs.google.com/spreadsheets/d/1KoYdi0i_toN29hhPiOVA-teX1jjo6WlJs7wL6Oz0AzM/edit#gid=0">_0.GameParameters</a></a>
+    
+    <h2>Introduction</h2>
+
+<p>As discussed in the Rule Game Server Data Guide (the section on <a href="data.html#trialList">Trial list files</a>), each Rule Game player is automatically assigned to one of the trial lists provided in the trial list directory for the experiment plan associated with this player. A trial list consists of a header line (listing the column names), and one or several data lines. Each data line contains a <strong>parameter set</strong>, which describes the specifics of one of the series of episodes that the player will have to play.
+
+<p>The columns may appear in the file in any order; the header line specifies the order that must be followed in the subsequent data lines.
+  
+<p>While most of the parameters are described sufficiently completely in the Google spreadshet created by Paul (see the link at the top of this document), this document provides additional, more detailed notes on some groups of parameters.
+
+   <h2>Using prefedined initial boards</h2>
+
+<p>Most commonly, a series of episodes is played on randomly generated initial boards; the appropriate parameter set needs to contain the parameters of this random distribution, such as the min and max number of objects, shapes, and colors.
+
+<p>However, it is also possible for the experiment manager to create a set of JSON files   <a href="data.html#defineBoard">specifying initial boards</a>, and   a parameter set using those initial boards instead of random boards.
+
+<p>The relevant parameters are as follows:
+
+  <ul>
+
+
+<li><tt>initial_boards</tt> : if this column is absent, or if the corresponding cell in a given row is empty, it  is disregarded.
+Otherwise, it should contain a non-empty string which will be
+interpreted as a directory name under <tt>/opt/tomcast/game-data/boards</tt>. This is the directory from which initial board files will be taken. If this column
+contains a non-empty string, then the 6 columns specifying the random
+  distribution of board parameters (<tt>min_objects</tt>, <tt>max_objects</tt>, <tt>min_shapes</tt> etc) must be either absent or be empty in this row.
+
+<li><tt>initial_boards_order</tt>: this column may contain a non-empty string
+  only if <tt>initial_boards</tt> does. The allowed values are:
+  <ul>
+    <li><tt>random</tt> -- means that the boards from the specified directory will be picked in a random order  (without replacement). If the number of
+episodes played by a given player in this series exceeds the number of
+files in this directory, a new random sequence is started, again  covering all listed boards.
+    <li><tt>alpha</tt> -- means the the boards will be offered in the order
+corresponding to the lexicographic ordering of their file names. (This
+means, incidentally, that if you have more than 9 boards, you'd want to
+number them x_01, x_02, ..., x_09, x_10, etc, rather than x_1, ...,
+      x_9, x_10 etc). If the player plays more episodes than there are files, the boards will be repeated in the same order.
+    <li>a file name, with a <tt>.csv</tt> extension and no directory name. The
+server will look for that file in the directory given by the
+<tt>initial_boards_order</tt> parameters. The file must contain a list of board
+names (i.e. board file names without the extension), one per line. The server
+will use those boards in the order specified, looping if the player
+plays more episodes than there are lines in this file.
+  </ul>
+
+  <p>
+For all values of  initial_boards_order, if the  the number of
+episodes played by a given player in this series exceeds the number of
+boards provided by this ordering (i.e. the number of JSON files in the
+directory in the <tt>random</tt> or <tt>alpha</tt> options, or the number of lines in the CSV file in the file name option), then the server repeats the
+process, i.e. either creating a new random sequence, or literally
+repeating the deterministic sequence, as the case may be.
+
+  
+
+</body>
+</html>

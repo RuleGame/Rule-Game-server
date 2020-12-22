@@ -4,7 +4,7 @@
 <body>
   <h1>Rule Game server data</h1>
 
-    <p align="center"><em>Updated for Ver 1.025,  2020-09-25</em></p>
+    <p align="center"><em>Updated for Ver 2.000,  2020-12-22</em></p>
 
 
   <h2>Introduction</h2>
@@ -20,6 +20,8 @@
     </ol>
   </p>
 
+<p>This document is written as a guide for the experiment manager, i.e. a researcher who design new experiment plans and processes the data accumulated in the experiments.
+  
   <h2>Main concepts: players, experiment plans, trial lists, series, episodes</h2>
 
   <p>A  <strong>player</strong> is a human being participating in our experiments pursuant to a particular experiment plans. A player is identified by a string 
@@ -49,7 +51,7 @@
 
     <h2><a name="in">Read-only data: input files</a></h2>
 
-    <h3>Trial list files</h3>
+    <h3><a name="trialList">Trial list files</a></h3>
 
   <p>The trial list files are in subdirectories of the main trial list directory, <tt>/opt/tomcat/game-data</tt>. For each experiment plan, the subdirectory name is identical to that of the experiment plan; so, for example, the trial list files for the experiment plan <tt>default</tt>, sent by Gary in mid-August 2020, are in <tt>/opt/tomcat/game-data/default</tt>.
   </p>
@@ -60,7 +62,7 @@
 
 
   <p>Each row of the trial list file contains a parameter set. The meaning of parameters is explained briefly in the following document compiled by Paul:
-    <a href="https://docs.google.com/spreadsheets/d/1KoYdi0i_toN29hhPiOVA-teX1jjo6WlJs7wL6Oz0AzM/edit#gid=0">_0.GameParameters</a>. However, parameters <tt>n</tt> and  <tt>b</tt> mentioned in that document are not actually used. See  the document on <a href="control-flow.html">Control flow</a> for additional discussion of how some parameters are used by the server when directing a player's activities and playing games.</P>
+    <a href="https://docs.google.com/spreadsheets/d/1KoYdi0i_toN29hhPiOVA-teX1jjo6WlJs7wL6Oz0AzM/edit#gid=0">_0.GameParameters</a>, with     <a href="para-set.html">additional notes</a> elsewhere. However, parameters <tt>n</tt> and  <tt>b</tt> mentioned in that document are not actually used. See  the document on <a href="control-flow.html">Control flow</a> for additional discussion of how some parameters are used by the server when directing a player's activities and playing games.</P>
 
   <h3><a name="defect">The defect file</a></h3>
 
@@ -74,10 +76,36 @@
 
   <p>For the syntax and semantics of the rule sets, see the document <a href="https://docs.google.com/document/d/1z_I1kbu-cocUUxOsoEU0WUK9gd3OZ3KiqisJw_Fn_tw/edit?ts=5f08503a">_0.Semantics2020.07.10.txt</a>.</p>
 
-  <h3>Initial boards</h3>
+  <h3><a name="defineBoard">Definining initial boards</a></h3>
 
   <p>When creating an episode, it is possible to load the initial board description from a JSON file. Presently (ver 1.016), we only use thus feature in machine-learning experiments, because the schema of the trial lists used in human-subject experiments  does not have support for specifying pre-created initial boards. Nonetheless, we do have a directory for board files, in <tt>/opt/tomcat/game-data/boards</tt>.
 
+    <p>FIXME: it is possible to do it in HS expeirments now; explain!</a>
+
+    <h3><a name="color">Color map (GE 2.*)</a></h3>
+
+    <p>
+      While Game Server 1.* had just 4 built-in colors, Game Server 2.* allows the experiment manager to use arbitrary user-defined colors. While the colors used in the Game Server are identified by name, they are not necessarily the same as any of the 16 colors supported in <a href="https://www.w3.org/TR/html4/types.html#h-6.5">HTML 4 standard</a>, or any of the more numrours <a href="https://drafts.csswg.org/css-color/#named-color">named colors</a> of the CSS. Instead, the colors used in the Game Server are entirely user defined, as described below.</p>
+
+<P>A single file, <tt>/opt/tomcat/game-data/colors/colors.csv</tt> is used by the Game Server to define all colors used in all experiment plans. (Therefore, it is not possible for the same name -- e.g. <tt>RED</tt> to refer to different colors in different experiment plans). The file content may look as follows:
+<pre>    
+#color_name,R,G,B
+BLUE,30,90,210
+RED,220,20,0
+YELLOW,250,240,0
+BLACK,0,0,0
+GREEN,0,250,0
+PINK,220,100,100
+PURPLE,200,0,200
+... ... ...
+</pre>
+Each line  consists of 4 fields. The first field is the color name, writen using upper-case English characters; optionally, digits, dashes, and underscores may also be included in a color name. The following 3 colors contain decimal numbers, in the range 0 thru 255, representing the R, G, and B components of the color representation in the standard RGB model.
+
+<p>The experiment manager may add invent any color he or she can think of, but s/he should make sure that each color name is unique. Every color used in your experiment (and other experiments) should be listed in the color map file; otherwise, the GUI client will have trouble displaying the game pieces on the board properly.
+
+<p>Note that since Game Server 2.* does not really have built-in default colors anymore, it is desireable that the color map file contains at the very least the definitions of the four "legacy" colors, i.e. BLACK, RED, YELLOW, and BLUE.
+  
+    
     <h3>Modifying input files</h3>
 
   <p>It is preferable that you don't modify the data files directly in  <tt>/opt/tomcat/game-data</tt>, since if you do that, your updates may be lost later. Instead, it is better to modify the files in your working directory, and deploy from there. Also, check in your work to Github. For details, see the <a href="deploy.html">Deployment Guide</a>.

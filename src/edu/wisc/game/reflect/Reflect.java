@@ -5,13 +5,10 @@ import java.text.*;
 import java.lang.reflect.*;
 import javax.persistence.*;
 
-//import javax.json.*;
-
 import edu.wisc.game.util.Logging;
-import edu.wisc.game.sql.Role;
 
 /** A bunch of methods to figure what fields a class has, and how to
- * print them out in a more or less sensible way.
+    print them out in a more or less sensible way.
  */
 @SuppressWarnings("unchecked")
 public class Reflect {
@@ -32,13 +29,16 @@ public class Reflect {
     }
 
     /** An entry describes one field of the class, complete with its
-     * access methods and the display hints
+	access methods (getter and setter) and the display hints
      */
     static public class Entry implements Comparable {
 	public String name;
 	public boolean editable, rp, payment;
 	public Field f;
-	public Method g, s;
+	/** The getter method for the field. Always present (because fields w/o the getter don't get Entry objects created for them) */
+	public Method g;
+	/** The setter method for the field. May or may not be present. */
+	public Method s;
 	double order;
 	public int 	compareTo(Object _o) {
 	    if (!(_o instanceof Entry)) throw new IllegalArgumentException();
@@ -101,7 +101,9 @@ public class Reflect {
 	    return f.getDeclaringClass().getSimpleName()+"."+ f.getName();
 	}
 	
-	
+	public String toString() {
+	    return "[Reflect.Entry: name="+name+", f=" + f +", g="+g +", s=" + s+"]";
+	}
 
     }
 
@@ -134,7 +136,7 @@ public class Reflect {
 	@param c Class to analyze. We reduce it to an existing basic
 	class, if possible (in case it is of an automatically derived
 	type, such as
-	org.apache.openjpa.enhance.edu.wisc.game.sql$Respondent$pcsubclass
+	org.apache.openjpa.enhance.edu.wisc.game.rest$Respondent$pcsubclass
 	)
     */
     static public synchronized Reflect getReflect(Class c) {
@@ -191,15 +193,14 @@ public class Reflect {
 
 	    if (e.g.getAnnotation(javax.xml.bind.annotation.XmlTransient.class)!=null) {
 		// This annotation is used to prevent REST from converting a field
-		// to JSON... so we should ignore it to. I use it to prevent
-		// infinite looping on back links
+		// to JSON... so we should ignore this field too.
+		// I use it to prevent infinite looping on back links
 		continue;
 	    }
 	    
 	    Display anno = (Display)e.f.getAnnotation(Display.class);
 	    e.editable = (anno!=null) && anno.editable(); // default no
 	    e.rp = (anno!=null) && anno.rp(); // default no
-	    e.payment = (anno!=null) && anno.payment(); // default no
 	    e.order = (anno==null) ? 0 : anno.order();
 	    v.addElement(e);
 	    entryTable.put(e.name, e);
@@ -241,7 +242,6 @@ public class Reflect {
 	Reflect r = Reflect.getReflect(  o.getClass());
 	//Logging.info("Reflecting on " + o.getClass() +"; reflect=" + r + ", has " + r.entries.length + " entries");
 	for(Reflect.Entry e: r.entries) {
-	    if (o instanceof OurTable &&((OurTable)o).ignores(e.name)) continue;
 	    Object val = null;
 	    try {
 		val = e.g.invoke(o);
@@ -266,7 +266,6 @@ public class Reflect {
 
 	// the rest of the fields
 	for(Reflect.Entry e: r.entries) {
-	    if (o instanceof OurTable &&((OurTable)o).ignores(e.name)) continue;
 	    Object val = null;
 	    try {
 		val = e.g.invoke(o);
@@ -414,8 +413,7 @@ public class Reflect {
 	}
 
 	String s;
-	if (val instanceof OurTable) s = "" + ((OurTable)val).getLongId();
-	else if (val instanceof Date) {
+	if (val instanceof Date) {
 	    s =  sqlDf.format((Date)val);
 	} else if (val instanceof String) {
 	    s = (String) val;
@@ -442,8 +440,7 @@ public class Reflect {
 			oc = (oc==null) ? o.getClass() : 
 			    commonParent(oc, o.getClass());
 			printable = printable &&
-			    (o instanceof Enum || o instanceof Number || o instanceof Boolean || o instanceof String ||
-			     o instanceof Role);
+			    (o instanceof Enum || o instanceof Number || o instanceof Boolean || o instanceof String);
 		    }
 		    if (printable) {
 			q += (q.length()>0? " ":"") + formatAsString(o,  quote);
@@ -565,7 +562,6 @@ public class Reflect {
 
 	    // the name of SQL table column
 	    String name = e.name;
-	    if (val instanceof OurTable) name += "_id";
 	    names.append(name);
 
 	    boolean needQuotes = 
@@ -576,8 +572,7 @@ public class Reflect {
 
 	    if (needQuotes) values.append("'");
 	    String s;
-	    if (val instanceof OurTable) s = "" + ((OurTable)val).getLongId();
-	    else if (val instanceof Number) s = val.toString();
+	    if (val instanceof Number) s = val.toString();
 	    else if (val instanceof Boolean) s = ((Boolean)val).booleanValue()? "1":"0";
 	    else if (val instanceof Enum) {
 		s = e.enumAsString()? val.toString() : ""+((Enum)val).ordinal();
