@@ -31,6 +31,60 @@ public class GameService2Html extends GameService2 {
     private static HTMLFmter  fm = new HTMLFmter(null);
 
     @POST
+    @Path("/playerHtml") 
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.TEXT_HTML)
+    /** @param exp The experiment plan. If not supplied (null), the experiment
+	plan will be guessed from the playerId.
+     */
+    public String playerHtml(@FormParam("playerId") String playerId,
+			  @DefaultValue("null") @FormParam("exp") String exp){
+	
+	PlayerResponse pr = new PlayerResponse( playerId, exp);
+
+	Vector<String> v = new Vector<>();
+	boolean canPlay = false;
+
+	v.add("Response: " + fm.para(  ""+JsonReflect.reflectToJSONObject(pr, true)));
+
+	String title = "?";
+
+	
+	if (pr.getError()) {
+	    v.add(fm.para("Error happened: " + pr.getErrmsg()));
+	    title="Error";
+	} else if (pr.getNewlyRegistered()) {
+	    v.add(fm.para("Successfully registered new player"));
+	    canPlay = true;
+	    title="Registered player " + playerId;
+	} else if (pr.getExperimentPlan().equals(exp)  && !pr.getAlreadyFinished()) {
+	    v.add(fm.para("This player already exists, but it is associated with the same experiment plan, and you can play more episodes"));
+	    canPlay = true;
+	    title="Reusing player " + playerId;
+	} else {
+	    v.add(fm.para("A player with this name already exists; experimentPlan=" +
+			  pr.getExperimentPlan() +"; alreadyFinished=" + pr.getAlreadyFinished()));
+	    title="Player " + playerId + " already exists";
+	}
+		
+	if (canPlay) {
+	    String form = "Now, you can start (or resume) playing!<br>";
+	    form += fm.hidden("playerId",playerId) + fm.br();
+	    form += "<button type='submit'>Play an episode!</button>";
+	    form = fm.wrap("form", "method='post' action='newEpisodeHtml'", form);
+
+	    v.add(fm.para(form));
+	}
+
+	String body = String.join("\n", v);
+	    
+
+	return fm.html(title, body);	
+	
+    }
+   
+    
+    @POST
     @Path("/mostRecentEpisodeHtml") 
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.TEXT_HTML)

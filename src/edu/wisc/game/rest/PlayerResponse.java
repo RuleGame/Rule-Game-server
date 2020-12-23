@@ -47,8 +47,13 @@ public class PlayerResponse extends ResponseBase {
     
     private String completionCode = null;
     public String getCompletionCode() { return completionCode; }
-  
-    
+
+    /** This is mostly used so that the caller can check if a re-used
+	player is in the right plan */
+    private String experimentPlan;
+    public String getExperimentPlan() { return experimentPlan; }
+ 
+
 
     PlayerResponse(String pid, String exp) {
 	this(pid, exp, false);
@@ -62,6 +67,7 @@ public class PlayerResponse extends ResponseBase {
 	try {
 
 	    Logging.info("PlayerResponse(pid="+ pid+", exp="+exp+")");
+	    if (pid==null || pid.equals("null")) throw new IOException("Missing or invalid playerId");
 	    PlayerInfo x = findPlayerInfo(em, pid);
 	    if (debug) playerInfo=x;
 	    
@@ -88,7 +94,7 @@ public class PlayerResponse extends ResponseBase {
 		Logging.info("Persisted new player=" + x);
 		allPlayers.put(pid,x);
 	    }
-
+	    experimentPlan = x.getExperimentPlan();
 	    setError(false);
 	    setErrmsg("Debug:\n" + x.report());
 

@@ -23,6 +23,7 @@
 The first constructor only specify the number of pieces; the latter, the number of pieces, the number of shapes, and the number of colors.
 </p>
 
+<h3>Number of pieces only</h3>
 <p>
 (A.1) - The number of pieces only. This constructor is used in the Captive Game Server (exposed via the command line argument). It will not, however, be used in Mechanical Turk and other human-subject experiments, since Gary has chosen to use the second approach instead.
 
@@ -32,8 +33,9 @@ In this approach, we simply create a random subset of randomCnt cells out all N*
 <p>
 This means that, among the boards created by this method, the number of colors and the number of shapes have a certain distribution based on simple combinatorics. That is, each of the  4^randomCnt "coloring schemes" (ways to assign colors to randomCnt pieces) has an equal probability of being selected; this means, for example, that for a sufficiently large randomCnt, the probability of all 4 colors being present on the board is much higher than the probability of all pieces having the same color. The same applies to the shapes as well.
 
+<h3><a name="randomSix">Six-parameter distribution</a></h3>
 <p>
-(A.2) - The second approach will be used in human subject experiments; I also will expose it in the next version of the CGS (1.008). It works as follows:
+(A.2) - The second approach will be used in human subject experiments; it is also exposed in the Captive Game Server (1.008). It works as follows:
 
 <p>
 The parameter list file, which controls a series of episodes presented to a player, contains three pairs of parameters, which determine the ranges within which the number of objects (pieces), the number of colors, and the number of shapes may vary. They are:

@@ -10,14 +10,53 @@
 
   <p>The original Game Server 1.*, and Kevin GUI client that worked with it, restricted the experiment designer to the 4 built-in shapes and 4 built-in colors. These restrictions have been removed in Game Server 2.*. This document is intended to familiarize the experiment manager with the procedures he or she needs to use to create an experiment plan that uses pieces of arbitrary custom shapes and colors.
 
-    <h2>Defining Colors</h2>
+    <h2>Colors</h2>
+    <h3><a name="map">Defining Colors</a></h3>
 
   <p>You can use arbitrary colors in Game Server 2.*. Once you have decided what colors will be used for game pieces (objects) in your new experiment (e.g. <tt>SIENNA</tt>, <tt>TERRA_COTTA</tt>, and <tt>UMBER</tt>), add the definitions of your chosen colors <strong><a href="data.html#color">to the color map file</a></strong> on the server. After this is done, you can refer to these colors in the game rule files (just like you used the 4 legacy colors in Game Server 1.*), in the (<a name="data.html#defineBoard">definitions of predefined initial boards</a>  and in the list of colors for random board generation (see below).</p>
  
-  <h2>Colors in board generation</h2>
+  <h3>Colors in predefined boards</h3>
 
-  <p>....parameter file ...
+  <p>If your experiment plan makes use of  <a href="para-set.html#defineBoard">predefined initial boards</a>, you can use any colors (defined in the color map) in your initial boards, just like you used the 4 "legacy colors" in Game Server 1.*.
+
+  <h3>Colors in board generation</h3>
+
+  <p>If your experiment plan makes use of randomly generated initial boards, you should use the  <tt>colors</tt> parameter in your parameter set to specify the set from which colors are to be drawn. Please see the discussion of   <a href="para-set.html#randomBoard">parameters for board generation</a> for the syntax details.
+
+    <h3>Colors in rule set files</h3>
+
+  <p>You can refer to your custom colors in the rule set files the same way the rule set files in Game Server 1.* referred to the four legacy colors.
+
+  <h2>Shapes</h2>
+
+  <h3><a name="svg">SVG files</a></h3>
+
+  <p>For every shape you want to use in your experiment plan, an SVG file with a matching name should be placed in the shape file directory,    
+    <tt>/opt/tomcat/game-data/shapes</tt>. Please see   <A href="data.html#shape">Shape files</a> for details.
 
 
+ <h3>Using custom shapes</h3>
+
+  <p>Custom shapes are used in a way analogous to that used for the colors, i.e. you use them rule set files and board definition files in the same way you used the 4 legacy colors in Game Server 1.*.
+
+  <p>In the trial list files, you need to use the  <tt>colors</tt> parameter in each  parameter set which does not simply rely on the 4 legacy colors. See    <a href="para-set.html#randomBoard">parameters for board generation</a> for the syntax details.
+
+ <h2>Validation</h2>
+
+  <p>.... One more section will go here, on the validation tool ...</p>
+
+  <h2>HTML play</h2>
+
+  <p>Eventually, the GUI client app will be updated to make use of Game Server 2.*. At present (2020-12-23) the GUI client is not available yet; but you can create player accounts and play games using the "HTML play" interface in your web browser. This is how:
+
+    <ul>
+      <li>Go to the <a href="game-api-2.html#html">HTML play</a> page.
+      <li>In the /playerHtml form, enter a player ID you would like to use (e.g. FirstNameLastNameYYYYMMDD_001, or something shorter; it does not matter), and the name of the experiment plan to use (this could be an experiment plan you have just created, or <tt>vmColorTest</tt>, which is a recently created plan for color and shape testing). Click on Submit.
+      <li>If the player creation is successful, you'll get to a screen with an appropriate report, and a "Play an episode" button which will take you to the beginning of the first episode.
+      <li>During the play, the current board will be shown on the screen, and you can enter your moves by specifying the (x,y) coordinates of the piece to be moved and of the destination bucket (e.g. moving the piece at x=6 y=6 to the corner bucket at x=7 y=7).
+    </ul>
+	
+  
+    
 </BODY>
 </HTML>
