@@ -195,6 +195,21 @@ public class ParaSet extends HashMap<String, Object> {
 	return x;
     }
 
-	
+    public void checkColors(ColorMap cm) throws IOException {
+	for( Piece.Color color: colors) {
+	    if (!cm.hasColor(color)) throw new IOException("Color " + color + " is not in the color map");
+	}
+
+    }
+    
+    public void checkShapes() throws IOException {
+	for( Piece.Shape shape: shapes) {
+	    File f = Files.getSvgFile(shape);
+	    if (!f.canRead())  throw new IOException("For shape "+shape+",  Cannot read shape file: " + f);
+	}
+
+    }
+
+    
 }
 			     

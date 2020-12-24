@@ -165,6 +165,7 @@ public class  Fmter {
 	return text;
     }
 
+
     public String row(Vector<String>  cols) {
 	return row(cols.toArray(new String[0]));
     }

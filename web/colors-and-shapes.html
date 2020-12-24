@@ -27,6 +27,8 @@
 
   <p>You can refer to your custom colors in the rule set files the same way the rule set files in Game Server 1.* referred to the four legacy colors.
 
+  <p>Note that it is not illegal for a rule to refer to a color that's not present on any border during the experiment (because that color does not appear in any initial board). This simply mean that the rule (or the part of the rule that refers to that color) won't ever apply to any piece.
+
   <h2>Shapes</h2>
 
   <h3><a name="svg">SVG files</a></h3>
@@ -40,6 +42,8 @@
   <p>Custom shapes are used in a way analogous to that used for the colors, i.e. you use them rule set files and board definition files in the same way you used the 4 legacy colors in Game Server 1.*.
 
   <p>In the trial list files, you need to use the  <tt>colors</tt> parameter in each  parameter set which does not simply rely on the 4 legacy colors. See    <a href="para-set.html#randomBoard">parameters for board generation</a> for the syntax details.
+
+    <p>As with colors, it is not illegal for a rule set to refer to a shape that's not present on any board in the experiment; it simply means that this rule (or the relevant part of the rule) won't apply to any piece.
 
  <h2>Validation</h2>
 
@@ -56,7 +60,5 @@
       <li>During the play, the current board will be shown on the screen, and you can enter your moves by specifying the (x,y) coordinates of the piece to be moved and of the destination bucket (e.g. moving the piece at x=6 y=6 to the corner bucket at x=7 y=7).
     </ul>
 	
-  
-    
 </BODY>
 </HTML>

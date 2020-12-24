@@ -81,5 +81,10 @@ public class ColorMap extends HashMap<String, Object> {
 	out.flush();
 	return baos.toString();
     }
+
+    public boolean hasColor(Piece.Color color) {
+	Object o = get(color.toString());
+	return o!=null && o instanceof Vector;
+    }
     
 }

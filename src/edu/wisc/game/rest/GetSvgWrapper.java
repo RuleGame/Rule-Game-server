@@ -20,7 +20,7 @@ public class GetSvgWrapper {
 	   if (shape==null) throw new IllegalArgumentException("Must specify shape=...");
        
 	   
-	   File f = new File(Files.shapesDir(), shape.toLowerCase() + ".svg");
+	   File f = Files.getSvgFile(shape);
 	   if (!f.canRead())  throw new IOException("Cannot read file: " + f);
 	   
 	   response.setContentType("image/svg+xml");   

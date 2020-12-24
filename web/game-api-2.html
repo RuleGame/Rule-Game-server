@@ -361,6 +361,8 @@ Response (on success):
 
 <p>The "HTML play" can be used to play some episodes in the web browser, without the use of the client GUI app. This allows to test the Game Server functionality separately from that of the client GUI app.
 
+<p>Note: for technical reasons, in the HTML play the game pieces are drawn in black, and their assigned color (slightly "watered down", for better visibility) is indicated by the background of the cell. This is different from how the pieces appear in the GUI client.
+    
 
 <p>
   <ul>
@@ -404,14 +406,26 @@ Response (on success):
       </form>
 
       
-</ul>    
+  </ul>
 
-<h3>Where are the input files?</h3>
+  <hr>
+  
+  <h2><a name="checkPlan">Check your experiment plan</a></h2>
+  
+   <form method="post" action="game-data/CheckPlanService/checkPlan"
+	 enctype="application/x-www-form-urlencoded">
+     Experiment plan (e.g <tt>vmColorTest</tt> or <tt>default</tt>): <input name="exp" type="text" size="25" value="">
+     <input type="submit">
+   </form>
+  
+<hr>
+
+<h2>Where are the input files?</h2>
 
 <p>In /opt/tomcat/game-data
   </p>
 
-<h3>Where are the output files?</h3>
+<h2>Where are the output files?</h2>
 
 <p>In /opt/tomcat/saved
   </p>

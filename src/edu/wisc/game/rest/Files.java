@@ -3,6 +3,7 @@ package edu.wisc.game.rest;
 import java.io.*;
 import java.util.*;
 
+import edu.wisc.game.sql.Piece;
 
 /** Information about the data files the Rule Game web server reads and writes */
 public class Files {
@@ -136,8 +137,13 @@ public class Files {
     }
 
 
+    static public File getSvgFile(Piece.Shape shape) {
+	return  getSvgFile(shape.toString());
+    }
+    static public File getSvgFile(String shape) {
+	return new File(shapesDir(), shape.toLowerCase() + ".svg");
+    }
 	
-
     
 }
 

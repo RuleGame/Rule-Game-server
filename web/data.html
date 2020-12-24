@@ -131,7 +131,9 @@ Each line  consists of 4 fields. The first field is the color name, writen using
 
   <p>At present, shape names are case-insensitive, but the SVG file names are expected to be in the lower case. E.g. if your trial list file, rule set file, or initial board file refers to a shape <tt>STAR</tt> or  <tt>star</tt>, the corresponding file should be named  <tt>star.svg</tt>.
 
-<p>At the minimum, the shape file directory must contain at least the four files for the four "legacy shapes": <tt>circle.svg</tt>, <tt>square.svg</tt>.<tt>star.svg</tt>, <tt>triangle.svg</tt>.
+  <p>At the minimum, the shape file directory must contain at least the four files for the four "legacy shapes": <tt>circle.svg</tt>, <tt>square.svg</tt>.<tt>star.svg</tt>, <tt>triangle.svg</tt>.
+
+    <p>Additionally, the file named <tt>blank.svg</tt> should be kept in the shape file directory; it is used for blank squared in the <a href="game-api-2.html#html">HTML play</a>. For this reason, one should not use a shape named <tt>BLANK</tt>, because if you do, you won't be able to see the pieces of this shape very well on the board.
 
   
 <p>To better manage shape files, it is also possible to create subdirectories in the shape directory. For example, you have decided to create a game with the game piece shapes named <tt>AU/KANGAROO</tt>, <tt>AU/KOALA</tt>,  <tt>AU/BOOMERANG</tt>, and  <tt>AU/WOOMERA</tt>; the slash in the names of the shapes indicates that the files <tt>kangaroo.svg</tt>,  <tt>koala.svg</tt>,  <tt>boomerang.svg</tt>, and  <tt>woomera.svg</tt>, should go into a new subdirectory, <tt>/opt/tomcat/game-data/shapes/au</tt>.

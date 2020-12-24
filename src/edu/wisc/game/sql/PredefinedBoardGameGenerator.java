@@ -8,6 +8,7 @@ import edu.wisc.game.util.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.rest.ParaSet;
+import edu.wisc.game.rest.ColorMap;
 
 
 /** This class generates games based on a set of predefined initial boards */
@@ -90,5 +91,10 @@ public class PredefinedBoardGameGenerator extends GameGenerator {
 	for(File bf: fv) boards[j++] = Board.readBoard(bf);	    	
     }
     
+    public void checkShapesAndColors(ColorMap cm) throws IOException {
+	for(Board b: boards) {
+	    b.checkShapesAndColors(cm);
+	}
+    }
 
 }

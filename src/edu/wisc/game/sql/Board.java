@@ -16,6 +16,8 @@ import org.apache.openjpa.persistence.jdbc.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.reflect.*;
+import edu.wisc.game.rest.ColorMap;
+import edu.wisc.game.rest.Files;
 
 @XmlRootElement(name = "board") 
 
@@ -361,5 +363,18 @@ public class Board// extends OurTable
 	}	    
 	}  
     }
+
+    /** Checking that a board description does not include any colors
+	or shapes that cannot be displayed */
+    public void checkShapesAndColors(ColorMap cm) throws IOException {
+	for(Piece p: value) {
+	    Piece.Color color =p.xgetColor();
+	    if (!cm.hasColor(color)) throw new IOException("Color " + color + " is not in the color map");
+	    Piece.Shape shape =p.xgetShape();
+	    File f = Files.getSvgFile(shape);
+	    if (!f.canRead())  throw new IOException("For shape "+shape+",  Cannot read shape file: " + f);
+	}
+    }
+    
   
 }

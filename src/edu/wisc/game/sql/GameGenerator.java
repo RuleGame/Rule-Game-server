@@ -50,7 +50,7 @@ abstract public class GameGenerator {
 	which parameters are set, a PredefinedBoardGameGenerator or a
 	RandomGameGenerator may be returned.
      */
-    static GameGenerator mkGameGenerator(ParaSet para) throws IOException, RuleParseException, IllegalInputException, ReflectiveOperationException {
+    public static GameGenerator mkGameGenerator(ParaSet para) throws IOException, RuleParseException, IllegalInputException, ReflectiveOperationException {
 
 	String ruleSetName = para.getRuleSetName();
 
