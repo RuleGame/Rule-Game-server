@@ -4,7 +4,7 @@
 <body>
   <h1>Web API for the use by the Rule Game client - second batch</h1>
 
-  <p align="center"><em>Version 2.000,  2020-12-19 (a)</em></p>
+  <p align="center"><em>Version 2.000,  2020-12-23</em></p>
 
   <p>This is the "Second Batch" (prefix=<tt>/GameService2</tt>)  of the Game Service web API calls. They are intended for use with a client app that works with players enrolled in experiments; each player is identified by a player ID, and the server assigns each player to a "trial list" (a particular track in the experiment plan with which this player ID is associated with).</p>
 
@@ -346,7 +346,7 @@ Response (on success):
 	</pre>
 	The hash table may also contain fields "error" and "errmsg". If an error has happened (e.g. the color map file on server could not be parsed), the error field will be set to true, and errmsg will contain an explanation of sorts.
 
-<li>Get SVG page:
+<li>GET <strong><tt>admin/getSvg.jsp</tt></strong> -- Get SVG file:
   <form method="get" action="admin/getSvg.jsp">
     <input type="text" name="shape" value="STAR" size="20">
     <input type="submit">

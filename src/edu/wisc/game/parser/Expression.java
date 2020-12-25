@@ -86,11 +86,15 @@ public interface Expression {
 	public HashSet<String> listAllVars() { return new HashSet<String>(); }
     }
 
-    /** A variable */
+    /** A variable. In GS 2.0. a STRING is treated as a variable name as 
+	well, in order to deal with quoted shape names such as "au/kangaroo".
+     */
     public static class Id implements ArithmeticExpression  {
 	final public String sVal;
 	Id(Token t) throws RuleParseException {
-	    if (t.type!=Token.Type.ID) throw new  RuleParseException("Not an id");
+	    if (t.type!=Token.Type.ID &&
+		t.type!=Token.Type.STRING)
+		throw new  RuleParseException("Not an id");
 	    sVal = t.sVal;
 	}
 	public Integer eval(HashMap<String, Integer> h) {
@@ -259,8 +263,8 @@ public interface Expression {
 	
     }
 
-    /** The expression is simply "*". (Used in rule description for counters, or
-	to mean "Any"). */
+    /** A Star expression is simply "*". (Used in rule description for
+	counters, or to mean "Any"). */
     public static class Star  implements Expression {
 	public String toString() {
 	    return "*";
@@ -339,6 +343,11 @@ public interface Expression {
 	Token a = tokens.firstElement();
 	Vector<Expression> v = new Vector<>();
 	if (a.type == Token.Type.ID) {
+	    tokens.remove(0);
+	    return new Id(a);
+	} else if (a.type == Token.Type.STRING) {
+	    // in GS 2.0, quoted shapes ("au/crocodile") are allowed, and
+	    // are intepreted as IDs.
 	    tokens.remove(0);
 	    return new Id(a);
 	} else if (a.type == Token.Type.NUMBER) {

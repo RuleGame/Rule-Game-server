@@ -96,8 +96,12 @@ public class Episode {
     @Transient
     private Piece[] removedPieces = new Piece[Board.N*Board.N + 1];
 
-    /** The count of all attempts done so far, including successful and unsuccessful */
+    /** The count of all attempts (move and pick) done so far, including successful and unsuccessful ones. */
     int attemptCnt=0;
+    /** The total cost of all attempts (move and pick) done so far,
+	including successful and unsuccessful ones. If cost_pick!=1,
+	this value may be different from attemptCnt. */
+    double attemptCost=0;
     /** All successful moves so far */
     int doneMoveCnt;
     @Transient
@@ -263,8 +267,7 @@ public class Episode {
 		whoAccepts[j] = new BitSet(NBU);
 		RuleSet.Atom atom = row.get(j);
 		if (atom.counter>=0 && ourCounter[j]==0) continue;
-		if (atom.shape!=null && atom.shape!=p.xgetShape()) continue;
-		if (atom.color!=null && atom.color!=p.xgetColor()) continue;
+		if (!atom.acceptsColorAndShape(p)) continue;
 		//System.err.println("Atom " +j+" shape and color OK");
 		if (!atom.plist.allowsPicking(pos.num(), eligibleForEachOrder)) continue;
 		//System.err.println("Atom " +j+" allowsPicking ok");
@@ -276,10 +279,11 @@ public class Episode {
 	}
 
 
-	/** Request acceptance for this move or pick. Returns result
-	    (accept/deny). In case of acceptance of a move (not just a
-	    pick), decrements appropriate counters, and removes the 
-	    piece from the board.
+	/** Requests acceptance for this move or pick. In case of
+	    acceptance of an actual move (not just a pick), decrements
+	    appropriate counters, and removes the piece from the
+	    board.
+	    @return result  (accept/deny)
 	*/
 	int accept(Pick pick) {
 
@@ -288,6 +292,7 @@ public class Episode {
 	    if (doneWith) throw  new IllegalArgumentException("Forgot to scroll?");
 	    transcript.add(pick);
 	    attemptCnt++;
+	    attemptCost+=1.0; // FIXME: need pickCost
 
 	    pick.piece =pieces[pick.pos];
 	    if (pick.piece==null) return pick.code=CODE.EMPTY_CELL;	    
@@ -436,7 +441,10 @@ public class Episode {
 
 
     /** Creates a new Episode for a given Game (which defines rules and the 
-	properties of the initial board). */
+	properties of the initial board). 
+	@param _in The input stream for commands; it will be null in the web app
+	@param _out Will be null in the web app.
+    */
     public Episode(Game game, OutputMode _outputMode, Reader _in, PrintWriter _out) {
 	startTime = new Date();    
 	in = _in;

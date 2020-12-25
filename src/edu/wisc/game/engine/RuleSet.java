@@ -130,6 +130,10 @@ public class RuleSet {
 	    }
 	}
 
+	BucketList( Expression.Num num)  {
+	    add(num);
+	}
+
 	public String toString() {
 	    return "[" + Util.joinNonBlank(",",this)  + "]";	       
 	}
@@ -165,24 +169,39 @@ public class RuleSet {
 	/** -1 means "no limit" */
 	public final int counter;
 	/** null means "no restriction" */
-	public final Piece.Shape shape;
+	public final Piece.Shape[] shapes;
 	//final
-	public Piece.Color color;
+	/** null means "no restriction" */
+	public Piece.Color[] colors;
 	public PositionList plist;       	
 	public BucketList bucketList;
 
 
 	public String toString() {
-	    return "(" + counter + ","  +shape + "," + color+","+
+	    return "(" + counter + ","  +showList(shapes) + "," + showList(colors)+","+
 		plist +  "," + bucketList + ")";	       
+	}
+
+
+	private static <T> String showList(T [] v) {
+	    if (v==null) return "*";
+	    Vector<String> w = new Vector<>();
+	    for(T t: v) {
+		String s = t.toString();
+		if (s.indexOf("/")>=0) s="\"" + s + "\"";
+		w.add(s);
+	    }
+	    String q = String.join(",", w);
+	    if (v.length!=1) q = "["+q+"]";
+	    return q;		
 	}
 	
 	/** Format as the source code of the rules set */
 	public String toSrc() {
 	    return "(" +  (counter<0? "*" : ""+counter) +
-		","  +(shape==null?"*":shape.toString().toLowerCase()) +
-		"," + (color==null?"*":color.toString().toLowerCase()) +
-		","+ plist.toSrc() +  "," + bucketList.toSrc() + ")";	       
+		"," + showList(shapes) +
+		"," + showList(colors) +
+		"," + plist.toSrc() +  "," + bucketList.toSrc() + ")";
 	}
 	
 	/** Syntax:(counter,shape,color,position,bucketFunctions)     */
@@ -199,27 +218,55 @@ public class RuleSet {
 	    }
 
 	    g = pex.get(1); // shape
+	    // System.out.println("Setting shapes from " + g);
 	    if (g instanceof Expression.Star) {
-		shape = null;
+		shapes = null;
 	    } else if (g instanceof Expression.Id) {
 		String s = ((Expression.Id)g).sVal;
-		shape = Piece.Shape.findShape(s);
+		shapes = new Piece.Shape[] { Piece.Shape.findShape(s)};
+	    } else if (g instanceof Expression.BracketList) {
+		Vector<Piece.Shape> w = new Vector();
+		for(Expression h: (Expression.BracketList)g) {
+		    if (h instanceof Expression.Id) {
+			String s = ((Expression.Id)h).sVal;
+			w.add(Piece.Shape.findShape(s));
+		    } else  {
+			throw new RuleParseException("Invalid shape ("+h+") in: " + pex);
+		    }
+		}
+		shapes = w.toArray(new Piece.Shape[0]);
 	    } else  {
 		throw new RuleParseException("Invalid shape ("+g+") in: " + pex);
 	    }
+	    //System.out.println("shapes=" + showList(shapes));
 	    g = pex.get(2); // color
 	    if (g instanceof Expression.Star) {
-		color = null;
+		colors = null;
 	    } else if (g instanceof Expression.Id) {
 		String s = ((Expression.Id)g).sVal;
-		color = Piece.Color.findColor(s);
+		colors = new Piece.Color[]{ Piece.Color.findColor(s)};
+	    } else if (g instanceof Expression.BracketList) {
+		Vector<Piece.Color> w = new Vector();
+		for(Expression h: (Expression.BracketList)g) {
+		    if (h instanceof Expression.Id) {
+			String s = ((Expression.Id)h).sVal;
+			w.add(Piece.Color.findColor(s));
+		    } else  {
+			throw new RuleParseException("Invalid color ("+h+") in: " + pex);
+		    }
+		}
+		colors = w.toArray(new Piece.Color[0]);
 	    } else  {
 		throw new RuleParseException("Invalid color ("+g+") in: " + pex);
 	    }
+	    //System.out.println("colors=" + showList(colors));
 	    g = pex.get(3); // position
 	    plist = new PositionList(g, orders);
+	    //System.out.println("plist=" + plist);
 	    g = pex.get(4); // buckets
-	    if (g instanceof Expression.BracketList) {
+	    if (g instanceof Expression.Num)  {
+		bucketList = new BucketList((Expression.Num)g);
+	    } else if (g instanceof Expression.BracketList) {
 		bucketList = new BucketList((Expression.BracketList)g);
 	    } else if (g instanceof Expression.Star) {
 		// for compatibility with Kevin's syntax
@@ -235,6 +282,29 @@ public class RuleSet {
 	    plist.forceOrder(orderName);
 	}
 
+
+	boolean acceptsShape(Piece.Shape x) {
+	    if (shapes==null) return true;
+	    for(Piece.Shape y: shapes) {
+		if (x==y) return true;
+	    }
+	    return false;	  
+	}
+	boolean acceptsColor(Piece.Color x) {
+	    if (colors==null) return true;
+	    for(Piece.Color y: colors) {
+		if (x==y) return true;
+	    }
+	    return false;	  
+	}
+
+	/** Does this atom accept a specified piece, based on its
+	    shape and color? */
+	public boolean acceptsColorAndShape(Piece p) {
+	    return acceptsShape(p.xgetShape()) &&
+		acceptsColor(p.xgetColor());
+	}
+
     }
 
     
@@ -244,6 +314,10 @@ public class RuleSet {
     public static class Row extends Vector<Atom> {
 	/** The default value, 0, means that there is no global limit in this row */
 	public final int globalCounter;
+	/** Creates a row of the rule set from a parsed line of the rule set file.
+	    @param tokens One line of the rule set file, parsed into tokens
+	    @param orders Contains all existing orderings
+	 */
 	Row(Vector<Token> tokens, TreeMap<String, Order> orders)
 	    throws RuleParseException {
 	    
@@ -298,6 +372,7 @@ public class RuleSet {
 	this( ruleText.split("\n"));
     }
 
+    /** @param rr The lines  from the rule set file */
     public RuleSet(String[] rr) throws RuleParseException {
 	for(String r: rr) {
 	    r = r.trim();

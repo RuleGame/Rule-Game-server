@@ -135,8 +135,12 @@ Each line  consists of 4 fields. The first field is the color name, writen using
 
     <p>Additionally, the file named <tt>blank.svg</tt> should be kept in the shape file directory; it is used for blank squared in the <a href="game-api-2.html#html">HTML play</a>. For this reason, one should not use a shape named <tt>BLANK</tt>, because if you do, you won't be able to see the pieces of this shape very well on the board.
 
-  
-<p>To better manage shape files, it is also possible to create subdirectories in the shape directory. For example, you have decided to create a game with the game piece shapes named <tt>AU/KANGAROO</tt>, <tt>AU/KOALA</tt>,  <tt>AU/BOOMERANG</tt>, and  <tt>AU/WOOMERA</tt>; the slash in the names of the shapes indicates that the files <tt>kangaroo.svg</tt>,  <tt>koala.svg</tt>,  <tt>boomerang.svg</tt>, and  <tt>woomera.svg</tt>, should go into a new subdirectory, <tt>/opt/tomcat/game-data/shapes/au</tt>.
+      <h4>Subdirectories for shapes</h4>
+    <p>To better manage shape files, it is also possible to create subdirectories in the shape directory. For example, you have decided to create a game with the game piece shapes named <tt>AU/KANGAROO</tt>, <tt>AU/KOALA</tt>,  <tt>AU/BOOMERANG</tt>, and  <tt>AU/WOOMERA</tt>; the slash in the names of the shapes indicates that the files <tt>kangaroo.svg</tt>,  <tt>koala.svg</tt>,  <tt>boomerang.svg</tt>, and  <tt>woomera.svg</tt>, should go into a new subdirectory, <tt>/opt/tomcat/game-data/shapes/au</tt>.
+
+    <p>If you use shape subdirectories, you must surround shape names with double quotes when using them <em>in rule set files</em> (e.g. <tt>"au/kangaroo"</tt>). This requirement exists because the syntax of the rule sets is quite complex (and, potentially, it may be expanded in the future), and using double quotes ensures correct parsing.
+
+      <p>Note that double quotes around individual shape names should not be used when defining the set of shapes in the 
 
     <h3>Modifying input files</h3>
 

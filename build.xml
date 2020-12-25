@@ -115,7 +115,7 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
         description="Compile the source code" >
   <!-- Compile the java code from ${src} into ${classes} -->
   <javac srcdir="${src}" destdir="${classes}"
-	 includes="edu/**,com/**"  optimize="on"
+	 includes="edu/**"  optimize="on"
 	 debug="on" debuglevel="lines,vars,source"	 
 	 includeantruntime="false"
 	 target="1.8" source="1.8"

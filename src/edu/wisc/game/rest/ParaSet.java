@@ -25,8 +25,8 @@ TD-05,5,2,10,2,4,6,4,4,3,4,4,9,1,1.5,2,3,1.3,fixed,6,FALSE,FALSE
 </pre>
 Additional columns
 <pre>
-colors
-RED;PINK;ORANGE,
+colors,shapes,pick_cost
+RED;PINK;ORANGE,SUN;MOON;STAR,0.5
 </pre>
 */
     
@@ -170,8 +170,19 @@ public class ParaSet extends HashMap<String, Object> {
     }
 
     public double getDouble(String key) {
+	return getDouble(key, false, 0);
+    }
+
+    /**
+       @param optional If true, this method will not throw an exception, and will return defaultValue, if the parameter is absent in the set
+       @param defaultValue Only used if optional==true
+     */
+    public double getDouble(String key, boolean optional, double defaultValue) {
 	Object o = get(key);
-	if (o==null) throw new IllegalArgumentException("Parameter set has no variable named "+key);
+	if (o==null) {
+	    if (optional) return defaultValue;
+	    else throw new IllegalArgumentException("Parameter set has no variable named "+key);
+	}
 	if (o instanceof Integer) {
 	    Integer q = (Integer)get(key);	    
 	    return q.intValue();
@@ -192,6 +203,12 @@ public class ParaSet extends HashMap<String, Object> {
 
     public double getClearingThreshold() {
 	Double x = getDouble("clearing_threshold");
+	return x;
+    }
+
+    /** The cost of a pick attempt, in terms of the cost of a move. The default is 1.0. */
+    public double getPickCost() {
+	Double x = getDouble("pick_cost", true, 1.0);
 	return x;
     }
 
