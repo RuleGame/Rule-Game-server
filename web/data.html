@@ -101,10 +101,10 @@
 In the example above, the color and shape names are given in lower case, but in reality they are case-insensitivity. Internally they are represented in upper case, and are mapped to upper-case entries in the color map file and to lower-case file names of the SVG shape files.
 
   
-    <h3><a name="color">Color map (GE 2.*)</a></h3>
+    <h3><a name="color">Color map (GS 2.*)</a></h3>
 
     <p>
-      While Game Server 1.* had just 4 built-in colors, Game Server 2.* allows the experiment manager to use arbitrary user-defined colors. While the colors used in the Game Server are identified by name, they are not necessarily the same as any of the 16 colors supported in <a href="https://www.w3.org/TR/html4/types.html#h-6.5">HTML 4 standard</a>, or any of the more numrours <a href="https://drafts.csswg.org/css-color/#named-color">named colors</a> of the CSS. Instead, the colors used in the Game Server are entirely user defined, as described below.</p>
+      While Game Server 1.* had just 4 built-in colors, Game Server 2.* allows the experiment manager to use arbitrary user-defined colors. While the colors used in the Game Server are identified by name, they are not necessarily the same as any of the 16 colors supported in <a href="https://www.w3.org/TR/html4/types.html#h-6.5">HTML 4 standard</a>, or any of the more numerous <a href="https://drafts.csswg.org/css-color/#named-color">named colors</a> of the CSS. Instead, the colors used in the Game Server are entirely user defined, as described below.</p>
 
 <P>A single file, <tt>/opt/tomcat/game-data/colors/colors.csv</tt> is used by the Game Server to define all colors used in all experiment plans. (Therefore, it is not possible for the same name -- e.g. <tt>RED</tt> to refer to different colors in different experiment plans). The file content may look as follows:
 <pre>    
@@ -127,7 +127,7 @@ Each line  consists of 4 fields. The first field is the color name, writen using
   <h3><A name="shape">Shape files</a></h3>
 
   <p>
-    While Game Server 1.* only allowed to use four "legacy shapes" of game pieces, in Game Server 2.* you can use arbitrary shapes. For every shape you use, you must obtain a SVG file representing it (e.g., download one from the icon collection at <a href="https://react-icons.github.io/react-icons/icons?name=fi">the Feather collection</a>, or create one by hand), and place it into the Game Server's <em>shape file directory</em>, <tt>/opt/tomcat/game-data/shapes</tt>.
+    While Game Server 1.* only allowed to use the four "legacy shapes" of game pieces, in Game Server 2.* you can use arbitrary shapes. For every shape you use, you must obtain a SVG file representing it (e.g., download one from the icon collection at <a href="https://react-icons.github.io/react-icons/icons?name=fi">the Feather collection</a>, or create one by hand), and place it into the Game Server's <em>shape file directory</em>, <tt>/opt/tomcat/game-data/shapes</tt>.
 
   <p>At present, shape names are case-insensitive, but the SVG file names are expected to be in the lower case. E.g. if your trial list file, rule set file, or initial board file refers to a shape <tt>STAR</tt> or  <tt>star</tt>, the corresponding file should be named  <tt>star.svg</tt>.
 
@@ -138,25 +138,29 @@ Each line  consists of 4 fields. The first field is the color name, writen using
       <h4>Subdirectories for shapes</h4>
     <p>To better manage shape files, it is also possible to create subdirectories in the shape directory. For example, you have decided to create a game with the game piece shapes named <tt>AU/KANGAROO</tt>, <tt>AU/KOALA</tt>,  <tt>AU/BOOMERANG</tt>, and  <tt>AU/WOOMERA</tt>; the slash in the names of the shapes indicates that the files <tt>kangaroo.svg</tt>,  <tt>koala.svg</tt>,  <tt>boomerang.svg</tt>, and  <tt>woomera.svg</tt>, should go into a new subdirectory, <tt>/opt/tomcat/game-data/shapes/au</tt>.
 
-    <p>If you use shape subdirectories, you must surround shape names with double quotes when using them <em>in rule set files</em> (e.g. <tt>"au/kangaroo"</tt>). This requirement exists because the syntax of the rule sets is quite complex (and, potentially, it may be expanded in the future), and using double quotes ensures correct parsing.
+    <p>If you use shape subdirectories, you must surround shape names with double quotes (e.g. <tt>"au/kangaroo"</tt>) <em>when referring to them in rule set files</em>. This requirement exists because the syntax of the rule sets is quite complex (and, potentially, it may be expanded in the future), and using double quotes ensures correct parsing.
 
-      <p>Note that double quotes around individual shape names should not be used when defining the set of shapes in the 
+      <p>Note that double quotes around individual shape names should not be used when defining the set of shapes in the trial list file. (There, the entire list of shapes can be double-quoted, if desired, but that's not necessary).
 
     <h3>Modifying input files</h3>
 
-<p>It is preferable that you don't modify the data files directly in  <tt>/opt/tomcat/game-data</tt>, since if you do that, your updates may be lost later. Instead, it is better to modify the files in your working directory, and deploy from there. Also, check in your work to Github. For details, see the <a href="deploy.html">Deployment Guide</a>.
+<p>It is preferable that you don't modify the data files directly in  <tt>/opt/tomcat/game-data</tt>, since if you do that, your updates may be lost later. Instead, it is better to modify the files in your working directory, and deploy from there. Also, you may considering checking in your work to your repository in Github. For details, see the <a href="deploy.html">Deployment Guide</a>.
 
-  <h3>Placing files to other locations than /opt/tomcat/game-data</h3>
+  <h3>Can you place files to my own directory, instead of /opt/tomcat/game-data</h3>
 
 <p>For development and testing purposes, it is possible to make Game Server work with rule files and initial board files located in your home directory, rather than in the <tt>/opt/tomcat/game-data</tt> tree.
 
-  <p>  Whenever a rule name, initial boards directory, or a boards order file mentioned in a trial list file starts with a slash ("/"), it will be interpreted not as a reference to an entity under <tt>/opt/tomcat/game-data</tt>, but as an actual path of an arbitrary file or directory on sapir (e.g. <TT>/home/kantorp/some-rule.txt</tt>,  <TT>/home/kantorp/my-boards/some-board-dir</tt>,  <TT>/home/kantorp/board-list.csv</tt>). In this way, once an experiment plan with such rules and board directories are created, you can just edit the rules and board files in your own directory on sapir, and whenever a new player is created within that experiment plan, it will use those current rules and boards of yours. (Of course, this activity will mean that a later analysis of the experimental data recorded for these players would make no sense, but one can simply delete those players' data from the database later).
+<p>  Whenever a rule name, initial boards directory, or a boards order file mentioned in a trial list file starts with a slash ("<tt>/</tt>"), it will be interpreted not as a reference to an entity under <tt>/opt/tomcat/game-data</tt>, but as an actual path of an arbitrary file or directory on sapir (e.g. <TT>/home/kantorp/some-rule.txt</tt>,  <TT>/home/kantorp/my-boards/some-board-dir</tt>,  <TT>/home/kantorp/board-list.csv</tt>). In this way, once an experiment plan with such rules and board directories are created, you can just edit the rules and board files in your own directory on sapir, and whenever a new player is created within that experiment plan, it will use those current rules and boards of yours. (Of course, this activity will mean that a later analysis of the experimental data recorded for these players would make no sense, but one can simply delete those players' data from the database later).
+
+<p>Note that the trial list files for your experiment plan still must be located in an appropriate subdirectory under the main <a href="#trialList">trial list directory</a>.
     
   <h2>Read-and-write data: SQL server tables</h2>
 
-  <p>There are two tables you'll be using, <tt>PlayerInfo</tt> and <tt>Episode</tt>.
+<p>We're using a database named <tt>game</tt> in the MySQL server on sapir.
+  
+<p>There are two tables in this database that contain data of importance to  you: <tt>PlayerInfo</tt> and <tt>Episode</tt>.
 
-    <h3><a name="PlayerInfo">PlayerInfo<></h3>
+    <h3><a name="PlayerInfo">PlayerInfo</a></h3>
 
 <p>There is one PlayerInfo entry (table row) for each player.
     
