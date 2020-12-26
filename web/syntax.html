@@ -4,22 +4,24 @@
 <body>
   <h1>Rule file syntax and semantics</h1>
 
-  <div align="center"><em>Updated for ver. 1.029. 2020-12-15</em></div>
+  <div align="center"><em>Updated for ver. 2.001. 2020-12-25</em></div>
 
-  <h2>General concepts</h2>
+  <h2><a name="general">General concepts</a></h2>
 
   <p>
-    The game is played on an NxN (N=6) board; each board position can be described by its row and column number (both of which range from 1 thru 6) or by a single sequential number. The sequential numbers, 1 thru N*N, are used to number cells by rows, from left to right within row, the rows ordered from the bottom to the top:
+    The game is played on an NxN (N=6) board; each board position can be described by its row and column number (both of which range from 1 thru 6) or by a single <em>sequential number</em>. The sequential numbers, 1 thru N*N, are used to number cells by rows, from left to right within row, the rows ordered from the bottom to the top:
     
     <table border="1">
-      <tr><td><td colspan="6">Columns
-	  <tr><td><th>1<th>2<th>3<th>4<th>5<th>6
+      <tr><td><td colspan="6">Columns<td>
+	  <tr><td>(Bucket 0)<th>1<th>2<th>3<th>4<th>5<th>6 <td>(Bucket 1)
 	      <tr><th>Row 6 <td> 31 <td>32<td>33<td>34<td>35<td>36
 	      <tr><th>Row 5 <td> 25 <td>26<td>27<td>28<td>29<td>30
 	      <tr><th>Row 4 <td> 19 <td>20<td>21<td>22<td>23<td>24
 	      <tr><th>Row 3 <td> 13 <td>14<td>15<td>16<td>17<td>18
 	      <tr><th>Row 2 <td> 7 <td>8<td>9<td>10<td>11<td>12
-	      <tr><th>Row 1 <td> 1 <td>2<td>3<td>4<td>5<td>6
+  	    <tr><th>Row 1 <td> 1 <td>2<td>3<td>4<td>5<td>6
+  	    <tr><td>(Bucket 3)<td colspan="6">  <td>(Bucket 2)
+			  
     </table>
 
   <p>The four <em>buckets</em> are located outside the board, next to its corners. The buckets are numbered clockwise, starting from the one in the top left corner. The bucket's notional (row,column) coordinates are as follows:
@@ -36,16 +38,24 @@
 
   <h2>The structure of a rule file</h2>
     
-  <p>The rules used in a particular episode are defined by a rule file. The file consists of two sections: the optional <strong>Order definition section</strong>, followed by the <strong>Rule section</strong>. The rule file may also contain comment lines
+  <p>The rules used in a particular episode are defined by a rule file. The file consists of two sections: the optional <strong>Order definition section</strong>, followed by the <strong>Rule section</strong>. The rule file may also contain comment lines and blank lines..
 
-    <h2>Comment lines</h2>
+    <h3>Comment lines</h3>
 
-<p>The rule file may contain comment lines beginning with a <tt>#</tt> character. These lines can be found anywhere in the file. They are only intended for a human reader, and are ignored by the game engine.
+  <p>The rule file may contain comment lines beginning with a <tt>#</tt> character. These lines can be found anywhere in the file. They are only intended for a human reader, and are ignored by the game engine.
 
-    <h2>The order definition section</h2>
+    <p>Blank lines are also permitted anywhere in the file, and are ignored by the parser. They server purely for readability.
+
+    <h2>Notation</h2>
+
+<P>In this document, we use italics for meta-text, with square brackets to indicate optional parts, e.g. <tt><em>[integer] string [string ...]</em></tt> means "an integer, followed by one or more strings". The straight roman text is for literals (including square brackets), e.g.  <tt>[integer <em>[</em>, <integer> <em>...]</em>]</tt> means, "one or several integers, separated by commas, and surrounded by square brackets".
+
+<p>White space <em>within lines</em> is allowed in the rule file in roughly the same way as it is in a file in a typical shell scripting language or a programming language. That is, any amount of white space can be put between tokens (number, identifiers, punctuation); it will not affect the meaning. <em>Line breaks</em>, however, matter: each order definition, or each "rule line" must occupy one line of the file, with no line breaks within it allowed.
+
+    <h2><a name="order">The order definition section</a></h2>
 
     <p>
-The rules may be preceded with the order definition section. This section defines one or several orders. Each order defines a way to order the numbers 1 thru 36 (representing the cells of the board), possibly with ties (i.e. several elements having the same rank). An order without ties is simply a permutation. For example, the line
+The rules may be preceded with the order definition section. This section defines one or several <strong>custom orders</strong>. Each order defines a way to order the numbers 1 thru 36 (representing the cells of the board), possibly with ties (i.e. several elements having the same rank). An order without ties is simply a permutation. For example, the line
 
 <pre>
 Order Manchu=[31, 25, 19, 13, 7, 1, 32, 26, 20, 14, 8, 2, ....]
@@ -60,21 +70,193 @@ Order FromBottomLeftCorner=[ 1, [2,7], [3,8,13], …]
 </pre>
 orders the 36 cells by the <em>L</em><sub>1</sub> norm (the Manhattan norm) distance to the bottom left corner. Thus the cell no. 1 (the one at (1,1)) is the first one, followed by cells 2 and 7 which are equally ranked, and so on.
 
-<p>Orders defined in the order section in order to be used in some of the rules in the rules section. There are also severl <strong>built-in orders</strong>, which you can  used in rules without having to explicitly define them in the order definition section. The built-in rules include the following:
+<p>
+  If an order definition does not include all 36 cells, it is understood as if it is ended with a tied group that includes all cells not otherwise listed.
+  <!-- In other words, if no objects remain in any of the cells explicitly listed in this order, then all remaining objects can be picked. -->
+
+
+<p>Orders defined in the order section in order to be used in some of the rules in the rules section. There are also severl <strong>built-in orders</strong>, which you can  use in rules without having to explicitly define them in the order definition section. The built-in rules include the following:
   <ul>
-    ....
+
+    <li><tt><strong>L1</strong>=[31, 32, ..., 36, 25, 26, ..., 30, ..., 1, 2, ..., 6]</tt>,
+      "English reading order" (left-to-right by row, rows ordered from top to bottom).</li>
+
+<li><tt><strong>L2</strong>=[36, 35, ..., 31, 30, 29, ..., 6, 5, ..., 1]</tt>, "Hebrew reading order" (right-to-left by row, rows ordered from top to bottom).</li>
+
+<li><tt><strong>L3</strong>=[36, 30, 24, 18, 12, 6, 35, 29, ...,7, 1]</tt>, "Chinese reading order" (top-to-bottom by column, columns ordered from right to left).</li>
+
+<li><tt><strong>L4</strong>=[36, 30, 24, 18, 12, 6, ..., 31, 25, 19, 13, 7, 1]</tt>, "Manchu reading order" (top-to-bottom by column, columns ordered from left to right).</li>
+
+<li><tt><strong>T</strong>=[[31, 32, ..., 36], [25, 26, ..., 30], ..., [1, 2, ..., 6]]</tt>, "from the top", by row from top to bottom, with a tie within each row. (This is similar to <tt>L1</tt>, but with a tie within each row) </li>
+
+<li><tt><strong>B</strong>=[[1, 2, ..., 6]
+    ...,
+    [25, 26, ..., 30],
+    [31, 32, ..., 36]]</tt>, "from the bottom", by row from bottom to top, with a tie within each row. (This is the reverse of <tt>T</tt>.) </li>
+
+<li><tt><strong>R</strong>=[[36, 30, 24, 18, 12, 6], [35, 29, ..., 5], ..., [31, ..., 7, 1]]</tt>, "from the right", by column from right to left, with a tie within each column.</li>
+
+<li><tt><strong>L</strong>=[[31, ..., 7, 1],
+     ...,
+    [35, 29, ..., 5],
+    [36, 30, 24, 18, 12, 6]]</tt>, "from the left", by column from left to right, with a tie within each column. (This is the reverse of <tt>R</tt>.)</li>
+
+    <li><tt><strong>NearestObject</strong>=[[1,6,31,36],...,[15,16,21,22]]</tt>. The cells are ranked by the Euclidean distance to the nearest bucket.  
+      (The coordinates of the cells and buckets are defined in the <a href="#general">General concepts</a> section).</li>
+
+    <li><tt><strong>Farthest</strong>=[[15,16,21,22],...,[1,6,31,36]]</tt>. The top-ranked are the cells that are maximally distant from their nearest buckets. (This is the reverse of <tt>Farthest</tt>).
+      
   </ul>
 
   <h2>The rule section</h2>
 
+  <h3>Syntax</h3>
   <p>
   The rule file must contain at least one <strong>rule line</strong>. All rule lines together form the rule section, which is  located after the order section, if there is one.
 
-  <P>Each rule line consists of an optional <strong>global counter</strong>, followed by one or several  <strong>atoms</strong>:
+  <P>Each <strong>rule line</strong> in one line of text. It consists of an optional <strong>global counter</strong>, followed by one or several  <strong>atoms</strong>:
   <pre>
-    &left;rule_line&right; ::= 
+    <em>[global_count]  atom [atom ...]</em> 
+  </pre>
+
+  <p><em>global_count</em> is either a star (<tt>*</tt>) or a positive integer.
+
+    <p>If the rule line has no <em>global_count</em>, or <em>global_count</em> is <tt>*</tt>, we call the rule line "unmetered"; this means that no restriction on the number it can be used is imposed, beyond what's imposed by the counters in individual atoms (see below). If a <em>global_count</em> is given, the rule line is "metered", and the value of the <em>global_count</em> given in this line of the rule file is used to initialize the rule's <em>global counter</em> every time this rule line is reset. 
+
+
+  <p>Each <em>atom</em> has the following structure:
+    <pre>
+      (<em>count</em>, <em>shapes</em>, <em>colors</em>, <em>positions</em>, <em>buckets</em>)
+    </pre>
+
+  <p>The five components of the atom have the following syntax:
+
+    <ol>
+      <li>
+      <em>count</em> is either a star (<tt>*</tt>) or a positive integer.
+
+      <p>If the atom's   <em>count</em> is <tt>*</tt>, we call the atom "unmetered"; this means that no restriction on the number it can be used is imposed. If a <em>count</em> is given, the atom is "metered", and the <em>count</em> is used to initialize the <em>atom's counter</em> every time this rule line is reset. 
+      
+      <li><em>shapes</em> describes a list of shapes, in any of the 3 forms:
+	<pre>*
+<em>shape</em>
+[<em>shape [, ...]</em>]	</pre>
+	A star (<tt>*</tt>) means "any shape". A single <em>shape</em> is synonymous to <tt>[<em>shape</em>]</tt>, i.e. is  a shorthand for a list consisting of one shape.  A comma-separated list in square brackets describes a list consisting of one, or more shapes. Each <em>shape</em> must be either an <em>identifier</em> (consisting of English letter, digits, and underscores, similar to an identifier in a programming language, e.g. <tt>SQUARE</tt>), or a double-quoted string of a form that could be legal as a UNIX file path (<tt>"vm/arrows/up_arrow"</tt>). <br>
+	Shapes are presently not case-sensitive; for each shape that is used in your rules, an <A href="data.html#shape">appropriately named SVG file</a> should exist in your shape file directory (or its subdirectory). For consistency, you may choose to use the same case (or case combination) in the names of the shapes in the rule set files as you use for the names of their SVG files.
+
+    <li><em>colors</em> describes a list of colors. Similarly to the list of shapes, it can have any of the 3 forms, with analogous semantics:
+	<pre>*
+<em>color</em>
+[<em>color [, ...]</em>]	</pre>
+	Each <em>color</em> should be a an identifier listed in the  <A href="data.html#color">color map file</a>
+
+    <li><em>positions</em>  describes a set of positions (cells) on the board. Similarly to the lists of shapes or colors, it can have any of the 3 forms:
+      <pre>*
+<em>positionSpecifier</em>
+[<em>positionSpecifier [, ...]</em>]	</pre>
+Each <em>positionSpecifier</em> must be either an integer number in the range 1..36,
+      representing a <a href="#general">sequential number</a> of a cell, or the name of one of the <a href="#order">built-in or custom orders</a>.
+
+     <li><em>positions</em>  describes a set of positions (cells) on the board. Similarly to the list of shapes or colors, it can have any of the 3 forms:
+      <pre>*
+<em>positionSpecifier</em>
+[<em>positionSpecifier [, ...]</em>]	</pre>
+Each position specifier must be either an integer number in the range 1..36,
+      representing a <a href="#general">sequential number</a> of a cell, or the name of one of the <a href="#order">built-in or custom orders</a>.
+       
+      <li><em>buckets</em>  describes a set of buckets. Similarly to the lists of shapes or colors, it can have any of the 3 forms:
+      <pre>*
+<em>bucket</em>
+[<em>bucket [, ...]</em>]	</pre>
+      Each <em>bucket</em> must be either an integer number in the range 0..3, or an arithmetic expression. An arithmetic expression may include the special variable names <tt>p</tt>, <tt>pc</tt>, and <tt>ps</tt>, integers (literals), arithmetic operators (<tt>+, -, *, /, %</tt>), and round parentheses. The three special variables are interpreted during the evaluation of the expression as follows:
+      <ul>
+	<li>p = most recent bucket that has accepted anything 
+	<li>pc = most recent bucket that has accepted this color
+	<li>ps = most recent bucket that has accepted this shape
+      </ul>
+    </ol>
+    These variable are nor defined before the first relevant actions have occured (i.e. <tt>p</tt> is not defined before the first successful move;  <tt>pc</tt> is not defined in the context of an attempt to move a triangle, is not defined unless a triangel has been previously successfully moved; etc). When any variable occurring in an expression is not defined during a move attempt, the expression is simply ignored, i.e. does not provide any destination.
   
-  
+    <h2>Semantics</h2>
+
+  <p>At any time during the episode, one of the rule lines is currently active. When the episode starts, the first rule line is made active; the episode progresses, the control may be passed from the first rule line to the second, and so on, cyclically, under the rules discussed below.
+
+    <p>Whenever a rule line becomes active (the first time, or any subsequent time), all applicable counters associated with the rule line and its atoms are set to their initial values given in the rule file. (This includes the counters for all metered atoms, and, if the rule line itself is metered, its global counter).
+<h3>Acceptance of a move by a rule line</h3>
+    
+  <p>When the player attempts to move a piece <em>G</em>  from position <em>a</em> to bucket <em>b</em>, the move attempt is <em>accepted</em> by the currently active rule line <em>R</em> if both clauses below are true:
+    <ul>
+      <li>The rule line is unmetered, or the current value of its global counter is positive;
+      <li>At least one atom of the rule line currently accepts the move.
+    </ul>
+
+    <p>An atom accepts a move of game piece <em>G</em>  from position <em>a</em> to bucket <em>b</em>, if everything  below is true:
+      <ul>
+	<li>The atom is unmetered, or the current value of the atom's counter is positive.
+	<li>The atom accepts the shape of the piece being moved, i.e. either the atom's shape list is <tt>*</tt>, or the atom's shape list includes the shape of the piece.
+	<li>The atom accepts the color of the piece being moved, i.e. either the atom's color list is <tt>*</tt>, or the atom's color list includes the color of the piece.
+	<li>The atom accepts the position  <em>a</em> of the piece being moved. This means that either the atom's position list  is <tt>*</tt>; or the position list contains the literal integer value of the piece's cell number; or the position list contains some order <em>Q</em> such that no presently-occupied cell of the board precedes <em>a</em> in this ranking. (E.g. if <em>Q</em>=T and all board cells above <em>G</em>'s row are currently empty).
+	<li>The atom accepts the destination bucket <em>b</em>. This means that either the atom's bucket list is <tt>*</tt>, or at list one of the constants the list contains is equal to <em>b</em>, or one of the expression contained in the list currently evaluates to <em>b</em>. For example, if the last time when a red piece was successfully moved off the board it went to bucket No. 3, and the atom's bucket list contains the expression <tt>(pc+1)%4</tt>, then <em>b</em>=0 will be an accepted destination.
+      </ul>
+
+      If the rule line has accepted a move, all applicable counters are decremented by 1. This includes:
+      <ul>
+	<li>the counters of all metered atoms in this line that have accepted the move, <li>the global counter of the rule line itself, if it is metered.
+      </ul>
+
+      <h3>Transfer of control between rule lines</h3>
+
+<p>If the currently active rule line has accepted a move, the control stays with this line, and the Game Server removes the game piece from the board, placing it into the requested destination bucket. If no pieces remain on the board, the episode is finished; if there are still pieces, the Game Engine will be ready to process the player's next move attempt.
+      
+    <p>If a rule line has refused to accept a move, the Game Engine checks whether the control should be transferred to the next rule line (or, if we are at the last line, to the first rule line again). This is done in any of the following cases:
+      <ol>
+	<li>The rule line is metered, and its global counter has been reduced to 0.
+	<li>All atoms of the rule line are metered, and the counter of each of them has been reduced to 0 (i.e. every atom has been "exhausted").
+	<li>At present (i.e. only using the atoms that are either unmetered or metered but not yet exhausted), no move of any piece presently still on the board to any bucket could be accepted by this rule line.
+      </ol>
+
+<p>(We will say that a rule line is "exhausted" if either (1) or (2) above is the case).
+      
+    <p>If any of the above criteria applies, the control is tranferred to the next rule line, its counters are reset to the initial values, and the Rule Engine checks whether to apply that rule line to the move. This process may be repeated until either of the following happens:
+      <ul>
+	<li>The now-current rule line has accepted the move. The Game Engine then reports the acceptance of the move.
+	<li>The now-current rule line has rejected the move, but there is no need to transfer control to the next line. (I.e. the rule line is not exhausted, and it is capable of accepting some other move). The Game Engine then reports the rejection of the move.
+	<li>While processing a given move, the control has shifted through every rule line, came back to the line that was active when the Game Engine started to test this move for acceptance, and then passed to the next line <em>again</em>, even though all of the counters in all rule lines have been reset. This indicates that no rule line can accept any move with any of the pieces currently on the board. The  Game Engine then reports the rejection of the current move and a stalemate, i.e. the end of the game due to the impossibility of any moves.   
+      </ul>
+
+<h2>Examples</h2>
+
+<p>Example 1:
+
+<pre>
+1 (*,*,RED,T,0) (*,*,GREEN,T,1)
+1 (*,*,BLACK,T,2) (*,*,YELLOW,T,3)
+</pre>
+
+<ul>
+  <li>(1) If there are any green or red pieces in the topmost non-empty row of the board, this rule set will allow you to pick any of these pieces, and put it to bucket 0 if red or to bucket 1 if green.
+  <li>(2) After that one piece is picked, or if there are no green or red pieces in the  topmost non-empty row of the board to begin with, then, if there are any black or yellow piec in  the  topmost non-empty row, you can pick that piece  and put it to bucket 2 (if black) or to bucket 3 (if yellow).
+  <li>(3)Go back to (1) and repeat.
+</ul>
+
+<p>This rule set is guaranteed to complete if the board has no pieces of  colors other than red, green, black, or yellow. But if any such piece exists, a stalemate will occurr as soon as all pieces above, or in the same rows as, that piece, are removed.
+
+<p>Example 2:
+<pre>
+* (*,CRANE,*,T,0)  (*,PELICAN,*,T,1)
+* (*,SHARK,*,B,2)  (*,CRAB,*,B,3)
+</pre>
+
+<p>Here, the top rule and its atoms are unmetered. So one can first remove all cranes and pelicans as long as they are in the currently topmost occupied row. After that, one can remove all sharks and crabs as long as they are in the currently bottommost occupied row. After that, if any pieces still remain on the board (i.e. you have a shark or crab on top, and a crane or pelican below), stalemate will occur.
+
+<p>Example 3:
+<pre>
+* (2,*,YELLOW,*,[0,1]) (2,*,RED,*,[2,3])
+* (*,*,*,*,(p+2)%4) 
+</pre>
+
+The first rule line allows moving up to 2 yellow pieces to buckets 0 or 1, and up to two red pieces to buckets 2 or 3. The control shifts from this line once each atom is either exhausted or has no applicable pieces (i.e. after you have removed 2 yellow pieces, or no yellow pieces are left; AND you have removed and 2  red pieces, or no red pieces are left). After this point, the control will stay with the second line until the end of the game. It will allow you to pick any piece, and move it to the bucket opposite of the last bucket used while the first line was in control; after that, you will be able to put pieces one by one, alternatingly, into two opposite buckets (e.g. 1 and 3).
+
 
 <h2>See also</h2>
 

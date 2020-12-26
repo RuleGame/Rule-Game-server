@@ -330,7 +330,10 @@ public class RuleSet {
 
 		if (first) {
 		    first=false;
-		    if (ex instanceof Expression.Num) {
+		    if (ex instanceof Expression.Star) {
+			gc = -1;
+			continue;
+		    } else if (ex instanceof Expression.Num) {
 			gc = ((Expression.Num)ex).nVal;
 			continue;
 		    } 
