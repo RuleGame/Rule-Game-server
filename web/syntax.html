@@ -6,10 +6,12 @@
 
   <div align="center"><em>Updated for ver. 2.001. 2020-12-25</em></div>
 
+<p>This document describes the syntax of rule files used by the Game Engine (the main component of the Rule Game Server), and the way these rules are interepreted, i.e. their semantics.
+
   <h2><a name="general">General concepts</a></h2>
 
   <p>
-    The game is played on an NxN (N=6) board; each board position can be described by its row and column number (both of which range from 1 thru 6) or by a single <em>sequential number</em>. The sequential numbers, 1 thru N*N, are used to number cells by rows, from left to right within row, the rows ordered from the bottom to the top:
+    The game is played on an NxN (N=6) board; each board position can be described by its row and column number (both of which range from 1 thru N=6) or by a single <em>sequential number</em>. The sequential numbers, 1 thru N*N, are used to number cells by rows, from left to right within row, the rows ordered from the bottom to the top:
     
     <table border="1">
       <tr><td><td colspan="6">Columns<td>
@@ -179,7 +181,7 @@ Each position specifier must be either an integer number in the range 1..36,
   
     <h2>Semantics</h2>
 
-  <p>At any time during the episode, one of the rule lines is currently active. When the episode starts, the first rule line is made active; the episode progresses, the control may be passed from the first rule line to the second, and so on, cyclically, under the rules discussed below.
+  <p>At any time during the episode, one of the rule lines is currently active (AKA "in control"). When the episode starts, the first rule line is made active; as the episode progresses, the control may be passed from the first rule line to the second, and so on, cyclically, under the rules discussed below.
 
     <p>Whenever a rule line becomes active (the first time, or any subsequent time), all applicable counters associated with the rule line and its atoms are set to their initial values given in the rule file. (This includes the counters for all metered atoms, and, if the rule line itself is metered, its global counter).
 <h3>Acceptance of a move by a rule line</h3>
@@ -206,13 +208,13 @@ Each position specifier must be either an integer number in the range 1..36,
 
       <h3>Transfer of control between rule lines</h3>
 
-<p>If the currently active rule line has accepted a move, the control stays with this line, and the Game Server removes the game piece from the board, placing it into the requested destination bucket. If no pieces remain on the board, the episode is finished; if there are still pieces, the Game Engine will be ready to process the player's next move attempt.
+<p>If the currently active rule line has accepted a move, the control stays with this line, and the Game Engine removes the game piece from the board, placing it into the requested destination bucket. If no pieces remain on the board, the episode is finished; if there are still pieces, the Game Engine will be ready to process the player's next move attempt.
       
     <p>If a rule line has refused to accept a move, the Game Engine checks whether the control should be transferred to the next rule line (or, if we are at the last line, to the first rule line again). This is done in any of the following cases:
       <ol>
 	<li>The rule line is metered, and its global counter has been reduced to 0.
 	<li>All atoms of the rule line are metered, and the counter of each of them has been reduced to 0 (i.e. every atom has been "exhausted").
-	<li>At present (i.e. only using the atoms that are either unmetered or metered but not yet exhausted), no move of any piece presently still on the board to any bucket could be accepted by this rule line.
+	<li>At present (i.e. only using the atoms that are either unmetered, or metered but not yet exhausted), no move of any piece presently still on the board to any bucket could be accepted by this rule line.
       </ol>
 
 <p>(We will say that a rule line is "exhausted" if either (1) or (2) above is the case).
