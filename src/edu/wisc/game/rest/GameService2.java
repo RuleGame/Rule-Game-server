@@ -177,5 +177,12 @@ public class GameService2 {
 	return new ColorMap();
     }
 
+    @GET
+    @Path("/listShapes") 
+    @Produces(MediaType.APPLICATION_JSON)
+    public  ListShapesWrapper listShapes() {
+	return new ListShapesWrapper();
+    }
+
     
 }

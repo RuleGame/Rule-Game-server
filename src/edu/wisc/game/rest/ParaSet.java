@@ -206,9 +206,9 @@ public class ParaSet extends HashMap<String, Object> {
 	return x;
     }
 
-    /** The cost of a pick attempt, in terms of the cost of a move. The default is 1.0. */
+    /** The cost of a pick attempt, in terms of the cost of a move. The default is 1.0. An early proposal called this param "pick_cost", but then I realized that Paul had planned for it all along, under a different name. */
     public double getPickCost() {
-	Double x = getDouble("pick_cost", true, 1.0);
+	Double x = getDouble("free_wrong_cost", true, 1.0);
 	return x;
     }
 
@@ -225,6 +225,14 @@ public class ParaSet extends HashMap<String, Object> {
 	    if (!f.canRead())  throw new IOException("For shape "+shape+",  Cannot read shape file: " + f);
 	}
 
+    }
+
+    /** True if the player is not told which pieces are movable.
+	(free = no objects are marked with X. Seeking to move an object is counted as some fraction of a move.)
+    */
+    public boolean isFeedbackSwitchesFree() {
+	String s = get("feedback_switches").toString();
+	return s!=null && s.startsWith("free");
     }
 
     

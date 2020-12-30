@@ -58,10 +58,9 @@ public class EpisodeInfo extends Episode {
     episode. This typically is the last episode of a successful
     bonus subseries. */     
     boolean earnedBonus;
-    /** The standard reward that has been given for this episode.  */
+    /** The standard reward that has been given for this episode. It is assigned for every episode that has been completed (board cleared) */
     int rewardMain;
-    /** The bonus reward that has been given for this episode. This episode 
-	has earnedBonus=true */
+    /** The bonus reward that has been given for this episode. At most one episode in a series (namely, the last episode of a successful bonus subseries) may have this reward; this episode is marked with earnedBonus=true */
     int rewardBonus;
 
     /** The total reward earned in this episode */
@@ -92,6 +91,12 @@ public class EpisodeInfo extends Episode {
     
     @Transient
     final private ParaSet para;
+    
+    double xgetPickCost() {
+	return para.getPickCost();
+    }
+
+    
     @Transient
     final private double clearingThreshold;
 	
@@ -128,10 +133,17 @@ public class EpisodeInfo extends Episode {
     /** The player must clear the board within this many move attempts in
 	order to stay in the bonus series. This is only defined during
 	bonus episodes. */
-    private Integer movesLeftToStayInBonus() {
-	return bonus?
-	    (int)(getNPiecesStart()*clearingThreshold) -  attemptCnt :
-	    null;
+    private Double  movesLeftToStayInBonus() {
+	if (!bonus) return null;
+	double x = (getNPiecesStart()*clearingThreshold) - attemptSpent;
+	if (!para.isFeedbackSwitchesFree()) { // all int
+	    x = (int)x;
+	}
+	return new Double(x);
+	
+	//	return bonus?
+	//	    (int)(getNPiecesStart()*clearingThreshold) -  attemptCnt :
+	//	    null;
     }
 
     /** An episode was part of a bonus series, but has permanently failed to earn the
@@ -266,14 +278,14 @@ public class EpisodeInfo extends Episode {
 	/** True if the player's guess has been recorded at the end of this episode */
 	public boolean getGuessSaved() { return guessSaved; }
 
-	Integer movesLeftToStayInBonus = null;
+	Double movesLeftToStayInBonus = null;
 	/**
 <ul>
 <li>If it's not a bonus episode, null is returned.
 <li>If it's a bonus episode, we return the number X such that if, starting from this point, the player must clear the board in no more than X additional moves in order not to be ejected from the bonus series. The number 0, or a negative number, means  that, unless the board has just been cleared, the player will be ejected from the bonus series at the end of the current episode (i.e. once he eventually clears it). A negative number means that the player has already made more move attempts than he's allowed to make in order to stay in the bonus series.
 </ul>
 	 */
-	public Integer getMovesLeftToStayInBonus() { return movesLeftToStayInBonus; }
+	public Double getMovesLeftToStayInBonus() { return movesLeftToStayInBonus; }
 
 
 	PlayerInfo.TransitionMap transitionMap=null;

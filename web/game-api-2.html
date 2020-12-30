@@ -4,7 +4,7 @@
 <body>
   <h1>Web API for the use by the Rule Game client - second batch</h1>
 
-  <p align="center"><em>Version 2.000,  2020-12-23</em></p>
+  <p align="center"><em>Version 2.002,  2020-12-29</em></p>
 
   <p>This is the "Second Batch" (prefix=<tt>/GameService2</tt>)  of the Game Service web API calls. They are intended for use with a client app that works with players enrolled in experiments; each player is identified by a player ID, and the server assigns each player to a "trial list" (a particular track in the experiment plan with which this player ID is associated with).</p>
 
@@ -346,6 +346,23 @@ Response (on success):
 	</pre>
 	The hash table may also contain fields "error" and "errmsg". If an error has happened (e.g. the color map file on server could not be parsed), the error field will be set to true, and errmsg will contain an explanation of sorts.
 
+<li>GET <strong><tt>/listShapes</tt></strong>: shows the currently supported shapes.
+
+        <form method="get" action="game-data/GameService2/listShapes"
+	 enctype="application/x-www-form-urlencoded">
+	  <input type="submit">
+	</form>
+	This should return a structure with the field named <tt>value</tt> whose value is a list of shapes. E.g.:<pre>
+{"error":false,
+"values":["cloud-lightning","moon","blank","cloud-off","sun","cloud","cloud-rain","cloud-drizzle","triangle","star","cloud-snow","arrows/arrow-up","arrows/arrow-left","arrows/arrow-down-left","arrows/arrow-down-right","arrows/arrow-up-left","arrows/arrow-right","arrows/arrow-up-right","arrows/arrow-down","square","circle"]}
+	  </pre>
+The shape names are given using the same case as in the file names. They are not case-sensitive, though.
+	<br>
+	If an error happens, a structure with an error field is returned instead:
+	<pre>
+{"error":true, "errmsg": "And this is why: ..."}
+	  </pre>
+	
 <li>GET <strong><tt>admin/getSvg.jsp</tt></strong> -- Get SVG file:
   <form method="get" action="admin/getSvg.jsp">
     <input type="text" name="shape" value="STAR" size="20">

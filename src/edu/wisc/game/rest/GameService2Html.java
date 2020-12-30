@@ -167,17 +167,24 @@ public class GameService2Html extends GameService2 {
 	return fm.html(head, body);	
   }
 
-    static private String showHistoryAndPosition(EpisodeInfo epi) {
-	String body =
-	    (epi==null) ?
-	    fm.para("No episode in memory") :
-	    
+    static private String showHistoryAndPosition(EpisodeInfo epi, EpisodeInfo.ExtendedDisplay d) {
+	String body;
+	if (epi==null) {
+	    body = fm.para("No episode in memory");
+	} else {
+	    body =	    
 	    fm.h4("Player's history") +
 	    fm.para("All episodes, completed and incomplete, are listed below, one series per line. The format for each episode is:<br>[EpisodeID; FC=finishCode g-if-guess-saved; MainOrBonus; moveCnt/initPieceCnt; $reward]") +
 	    fm.wrap("pre",epi.getPlayer().report())+ fm.hr() +
 	    fm.h4("Current position") +
 	    //fm.pre( epi.graphicDisplay(true));
 	    fm.para(epi.graphicDisplay(true));
+	    if (epi.isBonus()) {
+		body += fm.para("Move left: " + d.getMovesLeftToStayInBonus());
+	    }
+	}
+
+	
 	return body + fm.hr();
 	
    }
@@ -195,7 +202,7 @@ public class GameService2Html extends GameService2 {
 
 	String body = "";
 	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
-	body += showHistoryAndPosition(epi);
+	body += showHistoryAndPosition(epi,  d);
 
 
 	String form = "";

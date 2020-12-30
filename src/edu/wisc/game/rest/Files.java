@@ -3,6 +3,7 @@ package edu.wisc.game.rest;
 import java.io.*;
 import java.util.*;
 
+import edu.wisc.game.util.*;
 import edu.wisc.game.sql.Piece;
 
 /** Information about the data files the Rule Game web server reads and writes */
@@ -143,7 +144,31 @@ public class Files {
     static public File getSvgFile(String shape) {
 	return new File(shapesDir(), shape.toLowerCase() + ".svg");
     }
-	
+
+    static Vector<String> listAllShapesRecursively() throws IOException {
+	return listAllShapesRecursively("", shapesDir());
+    }
+
+    /** @param prefix May be "", or "parent/", or "parent1/parent2/" etc
+     */
+    static Vector<String> listAllShapesRecursively(String prefix, File dir)  throws IOException {
+	//	File d = new File(inputDir, subdir);
+	final String ext = ".svg";
+	Vector<String> v =new Vector<>();
+	if (!dir.canRead()) throw new IOException("Directory not readable: " + dir);
+	Logging.info("Reading dir: " + dir);
+	File[] files = dir.listFiles();
+	for(File cf: files) {
+	    String fname = cf.getName();
+	    if (cf.isDirectory()) {
+		v.addAll(listAllShapesRecursively(prefix+fname+"/",cf));
+	    } else if (cf.isFile() && fname.endsWith(ext)) {
+		v.add( prefix+fname.substring(0, fname.length()-ext.length()));
+	    }
+	}
+	return v;	
+    }
+
     
 }
 

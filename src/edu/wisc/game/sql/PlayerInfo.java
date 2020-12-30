@@ -531,10 +531,11 @@ public class PlayerInfo {
     
     
     /** This method is called after an episode completes. It computes
-	rewards (if the board has been cleared), calls the SQL persist
-	operations, writes CSV files, and, if needed, switches the
-	series and subseries. The formula for the reward computation is 
-	at https://www.desmos.com/calculator/9nyuxjy7ri .
+	the applicable rewards (if the board has been cleared), calls
+	the SQL persist operations, writes CSV files, and, if needed,
+	switches the series and subseries. The formula for the reward
+	computation is at https://www.desmos.com/calculator/9nyuxjy7ri
+	.
     */
     void ended(EpisodeInfo epi) throws IOException {
 	Series ser = whoseEpisode(epi);
@@ -550,7 +551,7 @@ public class PlayerInfo {
 	    double smax = ser.para.getDouble("max_points");
 	    double smin = ser.para.getDouble("min_points");
 	    double b = ser.para.getDouble("b");
-	    int d = epi.attemptCnt - epi.getNPiecesStart();
+	    double d = epi.attemptSpent - epi.getNPiecesStart();
 	    epi.rewardMain = (int)Math.round( smin + (smax-smin)/(1.0 + Math.exp(b*(d-2))));
 	    if (epi.bonus) {
 		ser.assignBonus();

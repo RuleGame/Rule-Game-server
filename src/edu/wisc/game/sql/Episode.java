@@ -7,7 +7,6 @@ import java.text.*;
 import javax.json.*;
 import javax.persistence.*;
 
-
 import edu.wisc.game.util.*;
 import edu.wisc.game.reflect.*;
 import edu.wisc.game.engine.*;
@@ -18,12 +17,12 @@ import edu.wisc.game.engine.RuleSet.BucketSelector;
 import edu.wisc.game.formatter.*;
 
 import javax.xml.bind.annotation.XmlElement; 
-//import javax.xml.bind.annotation.XmlRootElement;
 
-
-/** An Episode is a single instance of a Game played by a person or machine 
-    with our game server. It describes the current state of the game, and has methods
-    for processing player's actions.
+/** An Episode is a single instance of a Game played by a person or
+    machine with our game server. It describes the current state of
+    the game, and has methods for processing player's actions. The
+    episode object contains the top-level controls describing the 
+    current state of the rule set associated with this episode.
 */
 @Entity
 public class Episode {
@@ -96,12 +95,17 @@ public class Episode {
     @Transient
     private Piece[] removedPieces = new Piece[Board.N*Board.N + 1];
 
+    /** The cost of a pick in terms of the cost of a move. EpisodeInfo 
+	overrides this method, making use of ParaSet */
+    double xgetPickCost() { return 1.0;}
+
+    
     /** The count of all attempts (move and pick) done so far, including successful and unsuccessful ones. */
     int attemptCnt=0;
     /** The total cost of all attempts (move and pick) done so far,
 	including successful and unsuccessful ones. If cost_pick!=1,
 	this value may be different from attemptCnt. */
-    double attemptCost=0;
+    double attemptSpent=0;
     /** All successful moves so far */
     int doneMoveCnt;
     @Transient
@@ -292,7 +296,8 @@ public class Episode {
 	    if (doneWith) throw  new IllegalArgumentException("Forgot to scroll?");
 	    transcript.add(pick);
 	    attemptCnt++;
-	    attemptCost+=1.0; // FIXME: need pickCost
+	    attemptSpent += xgetPickCost();
+
 
 	    pick.piece =pieces[pick.pos];
 	    if (pick.piece==null) return pick.code=CODE.EMPTY_CELL;	    
@@ -430,7 +435,7 @@ public class Episode {
 	out=null;
 	in=null;
 	nPiecesStart = 0;
-	startTime = new Date();    
+	startTime = new Date();
     };
 
     /** The initial number of pieces on the board */
@@ -450,7 +455,6 @@ public class Episode {
 	in = _in;
 	out = _out;
 	outputMode = _outputMode;
-
 	episodeId = buildId();
 	
 	rules = game.rules;
@@ -769,7 +773,7 @@ public class Episode {
 	return json.toString();
     }
 
-    static final String version = "2.001";
+    static final String version = "2.002";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();
@@ -808,7 +812,7 @@ public class Episode {
         public int getNumMovesMade() { return numMovesMade; }
         @XmlElement
         public void setNumMovesMade(int _numMovesMade) { numMovesMade = _numMovesMade;}
-
+	
 	private Vector<Pick> transcript =  Episode.this.transcript;
 	/** The list of all move attempts (successful or not) done so far
 	    in this episode */

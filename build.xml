@@ -26,7 +26,8 @@
  <property name="build.tmp" location="/tmp"/>
 
  <property name="our.jar" value="game.jar"/>
- <property name="dist.war"       value="w2020-dev.war"/>
+ <property name="dist.war"       value="w2020.war"/>
+ <property name="dist-dev.war"       value="w2020-dev.war"/>
 
 
 <!-- where to look for OpenJPA -->
@@ -217,14 +218,14 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
   <lib dir="${main}/../jaxrs-ri/lib">    <include name="*.jar"/> </lib>
   <lib dir="${main}/../jaxb-ri/mod">    <include name="*.jar"/> </lib>
   <lib dir="${openjpa}">  <include name="*.jar"/> </lib>
-
-  <!-- lib dir="${tomcat.lib.copy2}"> <include name="*.jar"/> </lib -->
   <webinf dir="WEB-INF"/>
-  <!-- webinf dir="."><include name="osmot.conf"/></webinf -->
   <metainf dir="META-INF"/>
 </war>
 </target>
 
+<target name="war-dev" depends="war">
+  <move file="../${dist.war}" tofile="../${dist-dev.war}"/>
+</target>
 
 </project>
 

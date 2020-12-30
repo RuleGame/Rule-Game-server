@@ -50,6 +50,7 @@ Besides <tt>git</tt>, there are various other command-line and visual client app
 	     <li><tt>src</tt> - server source code
 	   </ul>
 	 </li>
+	 <br>
 	 
 	 <li><strong>(b) Check in.</strong> Once you have done some work in your working directory (either on your home computer (2) or on sapir (3)), you may want to send your updated files to the Github repository, so that you or other contributors can continue working with them on other machines. Do it as follows:
 	   <ol>
@@ -65,18 +66,26 @@ Besides <tt>git</tt>, there are various other command-line and visual client app
   git commit -a	     
   git push origin 	     </pre>
 </ol>
-	 <li><strong>(c) Deploy code.</strong> If you have modified the server code and want to deploy it to the "live" server, you can do it as follows:
+	 <li><strong>(c) Deploy code to production server.</strong> If you have modified the server code and want to deploy it to the "live" production server, you can do it as follows:
 	   <ol>
 	     <li>Make sure that the directory <tt>/opt/ant/bin</tt> has been added to your PATH on sapir (edit your <tt>.cshrc</tt>, <tt>.login</tt>, or what have you).
 	     <li>Make sure that the working directory on sapir contains the current version of the code (it is current because you have either just modified it right here, or have pulled the current version from Github, as per (a)).
 	       <li>Execute the following commands:
-	   <pre>
+		 <pre>
   cd ~/w2020/game
   ant clean javadoc war
-  sudo cp ../w2020.war /opt/tomcat/webapps	     </pre>
-	   The <tt>ant</tt> command above compiles the source code, and packs the compiled code, along with the documentation and third-party libraries, into a large file in <a href="https://en.wikipedia.org/wiki/WAR_(file_format)">WAR</a> format. The <tt>sudo cp</tt> command above copies that WAR file to a directory from which the Apache Tomcat server will automatically pick it and deploy it to the server web application directory, updating all necessary files in <tt>/opt/tomcat/webapps/w2020</tt>.
+  cp ../w2020.war /opt/tomcat/webapps	     </pre>
+		 The <tt>ant</tt> command above compiles the source code, and packs the compiled code, along with the documentation and third-party libraries, into a large file in <a href="https://en.wikipedia.org/wiki/WAR_(file_format)">WAR</a> format. The <tt>sudo cp</tt> command above copies that WAR file to a directory from which the Apache Tomcat server will automatically pick it and deploy it to the server web application directory, updating all necessary files in <tt>/opt/tomcat/webapps/w2020</tt>. Your applications will then be visible at the web server, at a URL such as <tt>http://localhost:8080/w2020/</tt> or <tt>http://sapir.psych.wisc.edu:7150/w2020/</tt> (depending on what host you are deploying it at, and what port the Tomcat server on that host is using).<br>
+		 If the <tt>cp</tt> command above fails because you don't have the right permissions, see the <a href="#permissions">permissions section</a> below; or, if you are very impatient, just repeat the command with <tt>sudo</tt>, i.e.
+<pre>sudo cp ../w2020.war /opt/tomcat/webapps	     </pre>
 	   </ol>
-	   Note that the above only deploys the code, but not the data; to deploy the data, use (d) below instead.
+	   Note that the above only deploys the code, but not the data; to deploy the data, use (d) below instead.<br><br>
+
+<li><strong>(c') Deploy code to development server.</strong> Along with the main (production) web application, <tt>w2020</tt>, your Tomcat server can also run a development web applicatin, <tt>w2020-dev</tt>. To deploy your code as the development application, run <tt>ant</tt> with the target   <tt>war-dev</tt>, rather than  <tt>war</tt>. That will produce a differently-named WAR files, for you to install in the webapps directory:
+  		 <pre>
+  cd ~/w2020/game
+  ant clean javadoc war-dev
+  cp ../w2020-dev.war /opt/tomcat/webapps	     </pre>
 
 
 	 <li><strong>(d) Deploy data.</strong>  For your convenience, the data files are deployed separately from the code. The simplest way to do it is to copy the entire data directory to the server location (5):
@@ -86,12 +95,37 @@ Besides <tt>git</tt>, there are various other command-line and visual client app
   sudo chown -R tomcat.tomcat /opt/tomcat/game-data	   </pre>
 	   The <tt>chown</tt> command above, while not always necessary, will ensure that the deployed files are owned by user <tt>tomcat</tt>, which is the user that runs the Apache Tomcat server, and therefore will guarantee that the server won't have any problems reading the data files.<br>
 
-	   In general, you don't need to copy the entire input data directory; if you know what you are doing, you can just copy individual files or subdirectories from <tt>~/w2020/game/game-data</tt> to the corresponding locations under <tt>/opt/tomcat/game-data</tt>.
-	  
+	   In general, you don't need to copy the entire input data directory; if you know what you are doing, you can just copy individual files or subdirectories from <tt>~/w2020/game/game-data</tt> to the corresponding locations under <tt>/opt/tomcat/game-data</tt>.<br>
+
+	   As with deploying the application, it would be better if instead of using <tt>sudo</tt> when working with the files in the <tt>game-data</tt> tree, you use <tt>newgrp tomcat</tt>. See  <a href="#permissions">permissions section</a> for details.
+
        </ul>
 </p>
 
 
+<h2>Production server vs. development server</h2>
+
+<p>As discussed above ((c) vs. (c')), the two are implemented as two web apps within the same Tomcat server. Both presently (ver. 2.001) use the same data files and the same MySQL database. This normally should not cause problems, unless you make the kind of change (in dev vs prod) that requires a change in the database schema.
+
+  <h2><a name="permissions">File ownership and permissions</a></h2>
+
+<p>On a Linux system, every file and directory is owned by a specific user account, and is assigned to a specific UNIX user group. Most of the files under <tt>/opt/tomcat/webapps</tt> on sapir are owned by user <tt>tomcat</tt>, group <tt>tomcat</tt>, and it's a good idea to keep it this way, or as close to it as possible. Therefore, one of the two ways of copying your WAR file to that directory is encouraged.
+
+  <h3>Being a member of group <tt>tomcat</tt></h3>
+
+<p>Presently, most team members have been enrolled into the UNIX group <tt>tomcat</tt>. If you are one of those, then, when you log in to sapir, just type
+  <pre>newgrp tomcat</pre>
+  and all your subsequent interactions with the system will be as a member of that group. So you should be able to copy files to  <tt>/opt/tomcat/webapps</tt>, since that directory is group-writeable.
+
+  <h3>Using <tt>sudo</tt></h3>
+
+  <p>
+If you have <tt>sudo</tt> rights, you of course can copy WAR files to the webapps directory using sudo. But if you do that, do a nice thing and change their ownership to <tt>tomcat.tomcat</tt> thereafter, so that they won't be in the way of other people:
+  <pre>sudo cp ../w2020.war /opt/tomcat/webapps
+sudo chown tomcat.tomcat      /opt/tomcat/webapps/w2020.war
+  </pre>
+
+  
 <h2>Client code</h2>
 
   <p>The client (the TypeScript/React/JavaScript application that runs inside the web browser) has its own Github repository,    <a href="https://github.com/lupyanlab/Rule-Game">Rule-Game</a>. Kevin can provide more details on the deployment process.
