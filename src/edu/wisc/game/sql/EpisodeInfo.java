@@ -91,7 +91,8 @@ public class EpisodeInfo extends Episode {
     
     @Transient
     final private ParaSet para;
-    
+    public ParaSet xgetPara() { return para;}
+	
     double xgetPickCost() {
 	return para.getPickCost();
     }
@@ -130,13 +131,20 @@ public class EpisodeInfo extends Episode {
 	return bonusSuccessful;
     }
 
+    /** We tell the player where all movable pieces are, unless the 
+	para set mandates "free" mode.
+     */
+    boolean weShowAllMovables() {
+	return !para.isFeedbackSwitchesFree();
+    }
+    
     /** The player must clear the board within this many move attempts in
 	order to stay in the bonus series. This is only defined during
 	bonus episodes. */
     private Double  movesLeftToStayInBonus() {
 	if (!bonus) return null;
 	double x = (getNPiecesStart()*clearingThreshold) - attemptSpent;
-	if (!para.isFeedbackSwitchesFree()) { // all int
+	if (!para.isFeedbackSwitchesFree() || para.pickCostIsInt()) { // all int
 	    x = (int)x;
 	}
 	return new Double(x);
@@ -152,14 +160,18 @@ public class EpisodeInfo extends Episode {
 	return bonus && (givenUp || stalemate || lost || cleared && !deservesBonus());
     }
 
+    /** An allowance for rounding */
+    private static final double eps = 1e-6;
+
     /** Calls Episode.doMove, and then does various adjustments related to 
 	this episode's role in the experiment plan.
      */
     public Display doMove(int y, int x, int by, int bx, int _attemptCnt) throws IOException {
 	Display _q = super.doMove(y, x, by, bx, _attemptCnt);
 
-	// failed a bonus episode?
-	lost = bonus && !isCompleted() && movesLeftToStayInBonus()<=0;
+	// The player fails a bonus episode if there are still pieces on
+	// the board, but less than 1 move left in the budget.
+	lost = bonus && !isCompleted() && movesLeftToStayInBonus()< 1.0-eps;
 	
 	if (isCompleted() && getPlayer()!=null) {
 	    getPlayer().ended(this);
@@ -167,6 +179,25 @@ public class EpisodeInfo extends Episode {
 	// just so that it would get persisted correctly
 	updateFinishCode();
 	// must do ExtendedDisplay after the "ended()" call, to have correct reward!
+	ExtendedDisplay q = new ExtendedDisplay(_q);
+	return q;
+    }
+
+    
+    public Display doPick(int y, int x, int _attemptCnt) throws IOException {
+	Display _q = super.doPick(y, x, _attemptCnt);
+
+	// The player fails a bonus episode if there are still pieces on
+	// the board, but less than 1 move left in the budget.
+	lost = bonus && !isCompleted() && movesLeftToStayInBonus()< 1.0-eps;
+	
+	if (isCompleted() && getPlayer()!=null) {
+	    getPlayer().ended(this);
+	}
+	// just so that it would get persisted correctly
+	updateFinishCode();
+
+	// must convert to ExtendedDisplay to get params such as "moves left"
 	ExtendedDisplay q = new ExtendedDisplay(_q);
 	return q;
     }

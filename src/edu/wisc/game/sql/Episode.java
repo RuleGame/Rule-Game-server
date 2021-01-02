@@ -296,8 +296,7 @@ public class Episode {
 	    if (doneWith) throw  new IllegalArgumentException("Forgot to scroll?");
 	    transcript.add(pick);
 	    attemptCnt++;
-	    attemptSpent += xgetPickCost();
-
+	    attemptSpent += (pick instanceof Move) ? 1.0: xgetPickCost();
 
 	    pick.piece =pieces[pick.pos];
 	    if (pick.piece==null) return pick.code=CODE.EMPTY_CELL;	    
@@ -620,7 +619,7 @@ public class Episode {
 	return true;
     }
 
-    /** The last pick or move (successful or attempt) */
+    /** The last pick or move (successful or failed attempt) */
     @Transient
     private Pick lastMove = null;
     
@@ -641,6 +640,14 @@ public class Episode {
 	return code;
     }
 
+    /** The basic mode tells the player where all movable pieces are, 
+	but EpisodeInfor will override it if the para set mandates "free" mode.
+     */
+    boolean weShowAllMovables() {
+	return true;
+    }
+ 
+
     private static HTMLFmter fm = new HTMLFmter(null);
 
 
@@ -655,7 +662,11 @@ public class Episode {
 
 	String result="";
 
-	result += fm.para("Notation: (X) - a movable piece; [X] - the position to which the last move attempt (whether successful or not) was applied");
+	String s = 
+	    fm.wrap("li", "(X) - a movable piece" +
+		     (!weShowAllMovables()? " (only marked on the last touched piece)": "")) +
+	    fm.wrap("li","[X] - the position to which the last move or pick attempt (whether successful or not) was applied");
+	result += fm.para( "Notation: " + fm.wrap("ul",s));
 	
 	ColorMap cm = new ColorMap();
  	
@@ -683,9 +694,24 @@ public class Episode {
 		    hexColor = "#" + cm.getHex(p.xgetColor(), true);
 		}
 		String z = "<img src=\"../../admin/getSvg.jsp?shape="+sh+"\">";
-		z = (lastMove!=null && lastMove.pos==pos) ?    "[" + z + "]" :
-		    ruleLine.isMoveable[pos]?     "(" + z + ")" :
-		    "&nbsp;" + z + "&nbsp;";		
+		//z = (lastMove!=null && lastMove.pos==pos) ?    "[" + z + "]" :
+		//    ruleLine.isMoveable[pos]?     "(" + z + ")" :
+		//    "&nbsp;" + z + "&nbsp;";
+
+		boolean isLastMovePos =  (lastMove!=null && lastMove.pos==pos);
+		boolean padded=true;
+		
+		if (ruleLine.isMoveable[pos] && (weShowAllMovables() || isLastMovePos)) {
+		    z="(" + z + ")";
+		    padded=true;
+		}
+
+		if (isLastMovePos) {
+		    z="[" + z + "]";
+		    padded=true;
+		}
+
+		if (!padded) z = "&nbsp;" + z + "&nbsp;";
 		v.add(fm.td("bgcolor=\"" + hexColor+"\"", z));
 	    }
 	    rows.add(fm.tr(String.join("", v)));
@@ -1014,7 +1040,9 @@ public class Episode {
 	// Two-line response on MOVE; human-readable comments
 	FULL}; 
 
-    /** @return true if this episode cannot accept any more move attempts */
+    /** @return true if this episode cannot accept any more move attempts,
+	for any reason.
+     */
     boolean isCompleted() {
 	return cleared || stalemate || givenUp || lost;
     }

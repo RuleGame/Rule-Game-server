@@ -212,6 +212,13 @@ public class ParaSet extends HashMap<String, Object> {
 	return x;
     }
 
+    /** Is the cost of a pick attempt an integer? */    
+    public boolean  pickCostIsInt() {
+	double x = getPickCost();
+	return x == (double)(int)x;
+    }
+    
+
     public void checkColors(ColorMap cm) throws IOException {
 	for( Piece.Color color: colors) {
 	    if (!cm.hasColor(color)) throw new IOException("Color " + color + " is not in the color map");
@@ -235,6 +242,5 @@ public class ParaSet extends HashMap<String, Object> {
 	return s!=null && s.startsWith("free");
     }
 
-    
 }
 			     

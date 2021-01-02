@@ -121,6 +121,9 @@ public class  Fmter {
     /** Generates a TABLE ... /TABLE structure.
 	@param rows Each one is a TR ... /TR
      */
+    final public  String table(String extra, String... rows) {
+	return wrap("table", extra, String.join("\n", rows)) + "\n";
+    }
     final public  String table(String extra, Vector<String> rows) {
 	return wrap("table", extra, String.join("\n", rows)) + "\n";
     }
@@ -169,12 +172,21 @@ public class  Fmter {
     public String row(Vector<String>  cols) {
 	return row(cols.toArray(new String[0]));
     }
+    public String rowExtra(String extra, Vector<String>  cols) {
+	return rowExtra(extra,cols.toArray(new String[0]));
+    }
 
     
     /** Generates a table row (a TR element) */
     public String row(String... cols) {
 	String s = "";
 	for(String col: cols) s +=  td(col);
+	return tr(s);
+    }
+
+    public String rowExtra(String extra, String... cols) {
+	String s = "";
+	for(String col: cols) s +=  td(extra, col);
 	return tr(s);
     }
 

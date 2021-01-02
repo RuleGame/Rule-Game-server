@@ -2,6 +2,7 @@ package edu.wisc.game.rest;
 
 import java.io.*;
 import java.util.*;
+import java.text.*;
 import javax.servlet.http.HttpServletResponse;
 import javax.json.*;
 
@@ -160,14 +161,38 @@ public class GameService2Html extends GameService2 {
 	String head= episodeId +" : MOVE " + x + " " +y + " " + bx + " " + by;
 
 	String body = "";
+	body += fm.h1(head);
 	body += fm.h4("Response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true));
 	body += fm.hr();
 
 	body += moveForm(d,  episodeId);
 	return fm.html(head, body);	
-  }
+    }
 
-    static private String showHistoryAndPosition(EpisodeInfo epi, EpisodeInfo.ExtendedDisplay d) {
+    @POST
+    @Path("/pickHtml") 
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.TEXT_HTML)
+    public String pickHtml(@FormParam("episode") String episodeId,
+				    @FormParam("x") int x,
+				    @FormParam("y") int y,
+				    @FormParam("cnt") int cnt)   {
+	Episode.Display d=move(episodeId,x,y,cnt);
+	
+	String head= episodeId +" : PICK " + x + " " +y;
+
+	String body = "";
+	body += fm.h1(head);
+	body += fm.h4("Response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true));
+	body += fm.hr();
+
+	body += moveForm(d,  episodeId);
+	return fm.html(head, body);	
+    }
+
+    static private String showHistoryAndPosition(EpisodeInfo epi,
+						 EpisodeInfo.ExtendedDisplay d
+						 ) {
 	String body;
 	if (epi==null) {
 	    body = fm.para("No episode in memory");
@@ -180,7 +205,8 @@ public class GameService2Html extends GameService2 {
 	    //fm.pre( epi.graphicDisplay(true));
 	    fm.para(epi.graphicDisplay(true));
 	    if (epi.isBonus()) {
-		body += fm.para("Move left: " + d.getMovesLeftToStayInBonus());
+		final NumberFormat df = new DecimalFormat("#.##");
+		body += fm.para("Moves left: " + df.format(d.getMovesLeftToStayInBonus()));
 	    }
 	}
 
@@ -205,24 +231,41 @@ public class GameService2Html extends GameService2 {
 	body += showHistoryAndPosition(epi,  d);
 
 
-	String form = "";
 	if (d.getFinishCode()==Episode.FINISH_CODE.NO) {
-	    form += "episode = " + fm.input("episode", episodeId) + fm.br();
-	    form += "x = " + fm.input("x", null, 2) + 
+	    Vector<String> cells = new Vector<>();
+	    String formA="";
+	    formA += fm.hidden("episode", episodeId);
+	    formA += fm.hidden("cnt", ""+d.getNumMovesMade());
+	    formA += "x = " + fm.input("x", null, 2) + 
 		"; y = " + fm.input("y", null, 2) + fm.br();
+
+	    String form = formA;
 	    form += "Bucket x = " + fm.input("bx", null, 2) + 
 		"; Bucket y = " + fm.input("by", null, 2) + fm.br();
-	    form += "Don't modify this field: cnt = " + fm.input("cnt", ""+d.getNumMovesMade()) + fm.br();
 	    form += "<input type='submit'>";
 	    form = fm.wrap("form", "method='post' action='moveHtml'", form);
 	    form = fm.h4( "Your next move") + fm.para(form);
+	    cells.add(form);
+
+	    if (epi.xgetPara().isFeedbackSwitchesFree()) {
+		 form = formA;
+		 form += "<input type='submit'>";
+		 form = fm.wrap("form", "method='post' action='pickHtml'", form);
+		 form = fm.h4( "or, Try to pick a piece to see if it's moveable") + fm.para(form);
+		 cells.add(form);
+		 
+	    }
+	    
+	    
+	    body += fm.table("border='1'", fm.rowExtra("valign='top'",cells));
+	    
 	} else {
-	    form = fm.para("Game over - no move possible");
+	    body += fm.para("Game over - no move possible. Finish code=" + d.getFinishCode());
 	}
-	body += form + fm.hr();
+	body += fm.hr();
 
 	if (d.getFinishCode()!=Episode.FINISH_CODE.NO && !d.getGuessSaved()) {
-	    form = "";
+	    String form = "";
 	    form += "episode = " + fm.input("episode", episodeId) + fm.br();
 	    form += "Enter your guess below:" + fm.br() +
 		fm.input("data", null, 80) + fm.br() +
@@ -232,7 +275,6 @@ public class GameService2Html extends GameService2 {
 	    form = fm.h4("Your guess") + fm.para(form);
 	    body += form + fm.hr();
 	}
-	
 	
 	return body;
     }
