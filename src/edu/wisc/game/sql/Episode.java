@@ -799,7 +799,7 @@ public class Episode {
 	return json.toString();
     }
 
-    static final String version = "2.002";
+    static final String version = "2.003";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();
@@ -1041,7 +1041,7 @@ public class Episode {
 	FULL}; 
 
     /** @return true if this episode cannot accept any more move attempts,
-	for any reason.
+	for any reason (board cleared, stalemate, given up, lost).
      */
     boolean isCompleted() {
 	return cleared || stalemate || givenUp || lost;

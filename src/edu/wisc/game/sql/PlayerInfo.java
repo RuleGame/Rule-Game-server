@@ -112,12 +112,12 @@ public class PlayerInfo {
 
 	/** Checks if this player has earned a bonus in this series, and if so, 
 	    attaches it to an appropriate episode, and ends this series */
-	void assignBonus() {
+	private void assignBonus() {
 	    int cnt=0, deserveCnt=0;
 	    for(EpisodeInfo x: episodes) {
 		if (x.bonus) {
 		    cnt++;
-		    if (x.deservesBonus())  deserveCnt++;
+		    if (x.bonusSuccessful)  deserveCnt++;
 		}
 	    }
 	    if (cnt==deserveCnt && deserveCnt>=para.getInt("clear_how_many")) {
@@ -276,7 +276,7 @@ public class PlayerInfo {
 	    if (x.isBonus()) {
 		cnt++;
 		if (!x.isCompleted()) return false;
-		if (x.failedBonus()) return false;
+		if (!x.bonusSuccessful) return false;
 		System.err.println("ok bonus episode " + x.episodeId);
 	    } 
 	}
@@ -536,6 +536,8 @@ public class PlayerInfo {
 	switches the series and subseries. The formula for the reward
 	computation is at https://www.desmos.com/calculator/9nyuxjy7ri
 	.
+	@param epi An episode that's just completed; so all data are in memory 
+	now.
     */
     void ended(EpisodeInfo epi) throws IOException {
 	Series ser = whoseEpisode(epi);

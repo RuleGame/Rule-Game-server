@@ -125,11 +125,11 @@ public class EpisodeInfo extends Episode {
 
     /** An episode deserves a bonus if it was part of the bonus series,
 	has been completed, and was completed sufficiently quickly */
-    boolean deservesBonus() {
-	bonusSuccessful = bonusSuccessful ||
-	    (bonus && cleared && movesLeftToStayInBonus()>=0);
-	return bonusSuccessful;
-    }
+    //    boolean deservesBonus() {
+    //	bonusSuccessful = bonusSuccessful ||
+    //	    (bonus && cleared && movesLeftToStayInBonus()>=0);
+    //	return bonusSuccessful;
+    //    }
 
     /** We tell the player where all movable pieces are, unless the 
 	para set mandates "free" mode.
@@ -156,53 +156,63 @@ public class EpisodeInfo extends Episode {
 
     /** An episode was part of a bonus series, but has permanently failed to earn the
 	bonus */
-    boolean failedBonus() {
-	return bonus && (givenUp || stalemate || lost || cleared && !deservesBonus());
-    }
+    //    boolean failedBonus() {
+    //	return bonus && (givenUp || stalemate || lost || cleared && !deservesBonus());
+    //    }
 
     /** An allowance for rounding */
     private static final double eps = 1e-6;
 
     /** Calls Episode.doMove, and then does various adjustments related to 
-	this episode's role in the experiment plan.
+	this episode's role in the experiment plan.  If the player has
+	failed to complete a bonus episode on time, this is the place
+	that sets the "lost" flag.
      */
     public Display doMove(int y, int x, int by, int bx, int _attemptCnt) throws IOException {
 	Display _q = super.doMove(y, x, by, bx, _attemptCnt);
+	return processMove(_q);
+    }
 
-	// The player fails a bonus episode if there are still pieces on
-	// the board, but less than 1 move left in the budget.
-	lost = bonus && !isCompleted() && movesLeftToStayInBonus()< 1.0-eps;
-	
+    public Display doPick(int y, int x, int _attemptCnt) throws IOException {
+	Display _q = super.doPick(y, x, _attemptCnt);
+	return processMove(_q);
+    }
+
+    /** The common part of doMove and doPick: after a move or pick has
+	been completed, see how it affects the current state of the
+	episode.  
+
+	The player fails a bonus episode if there are still
+	pieces on the board, but less than 1 move left in the budget.
+ */
+    private Display processMove(Display _q) throws IOException  {
+
+	if (bonus) {
+	    if (isCompleted()) {
+		if (movesLeftToStayInBonus()< -eps) { // has run out of moves
+		    lost=true;		    
+		    bonusSuccessful = false;
+		} else { 
+		    lost=false;		    
+		    bonusSuccessful = cleared;  // can stay in bonus if cleared
+		}
+	    } else {  // there are still pieces of the board...
+		// so the player has lost if less than 1 move left
+		lost = movesLeftToStayInBonus()< 1.0-eps;
+	    }
+	}
+	    	
 	if (isCompleted() && getPlayer()!=null) {
 	    getPlayer().ended(this);
 	}
 	// just so that it would get persisted correctly
 	updateFinishCode();
 	// must do ExtendedDisplay after the "ended()" call, to have correct reward!
-	ExtendedDisplay q = new ExtendedDisplay(_q);
-	return q;
-    }
-
-    
-    public Display doPick(int y, int x, int _attemptCnt) throws IOException {
-	Display _q = super.doPick(y, x, _attemptCnt);
-
-	// The player fails a bonus episode if there are still pieces on
-	// the board, but less than 1 move left in the budget.
-	lost = bonus && !isCompleted() && movesLeftToStayInBonus()< 1.0-eps;
-	
-	if (isCompleted() && getPlayer()!=null) {
-	    getPlayer().ended(this);
-	}
-	// just so that it would get persisted correctly
-	updateFinishCode();
-
 	// must convert to ExtendedDisplay to get params such as "moves left"
 	ExtendedDisplay q = new ExtendedDisplay(_q);
 	return q;
     }
-    
-    
+
     /** Concise report, handy for debugging */
     public String report() {
 	return "["+episodeId+"; FC="+getFinishCode()+
