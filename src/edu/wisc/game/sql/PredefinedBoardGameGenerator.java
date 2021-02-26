@@ -13,8 +13,6 @@ import edu.wisc.game.rest.ColorMap;
 
 /** This class generates games based on a set of predefined initial boards */
 public class PredefinedBoardGameGenerator extends GameGenerator {
-    /** The rule set */
-    final RuleSet rules;
     /** The list of boards, either in the order they will be served, or (for the RANDOM mode) in any order */
     final Board[] boards;
     /** For RANDOM mode, the list of indexes of boards yet-to-be-presented, in the order they will be presented */
@@ -45,8 +43,7 @@ public class PredefinedBoardGameGenerator extends GameGenerator {
     }
     
     PredefinedBoardGameGenerator(String ruleSetName, File boardDir, String modeString) throws  IOException, IllegalInputException, RuleParseException, ReflectiveOperationException {
-	super();
-	rules = AllRuleSets.obtain(ruleSetName); 
+	super( AllRuleSets.obtain(ruleSetName)); 
 	File orderFile = null;
 	Mode _mode;
 	try {

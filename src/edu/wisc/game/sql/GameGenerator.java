@@ -17,13 +17,17 @@ import edu.wisc.game.rest.ParaSet;
 abstract public class GameGenerator {
 
     //    final int[] nPiecesRange, nShapesRange, nColorsRange;
-    //    final RuleSet rules;
+
+    /** The rule set */
+    final RuleSet rules;
+    public RuleSet getRules() {return rules;}
 
     /** How many boards has it produced so far? */
     int produceCnt=0;
 
     /** Only used by subclasses */
-    GameGenerator() {
+    GameGenerator(RuleSet _rules) {
+	rules = _rules;
     }
 
     /** Generates the next game to play */

@@ -21,8 +21,6 @@
 
  <property name="classes" location="${main}/classes"/>
  <property name="lib" location="${main}/lib"/>
- <property name="out.doc" location="${main}/out.doc"/>
- <property name="enapp.api" location="${out.doc}/html/api"/>
  <property name="build.tmp" location="/tmp"/>
 
  <property name="our.jar" value="game.jar"/>
@@ -89,8 +87,6 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
     <!-- Create the build directory structure used by compile -->
     <mkdir dir="${lib}"/>
     <mkdir dir="${classes}"/>
-    <mkdir dir="${out.doc}"/>
-    <mkdir dir="${enapp.api}"/>
     <mkdir dir=""/>
 </target>
 

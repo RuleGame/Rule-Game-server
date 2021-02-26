@@ -193,7 +193,7 @@ public class Order extends Vector<Vector<Integer>> {
 
     /** In the present board configuration, which piece(s) would be eligible
 	to be picked right now under this order?
-	@param pieces An array of N*N elements (some may be nulls) */
+	@param onBoard indicates which of the N*N cells are occupied. */
     public BitSet findEligiblePieces(BitSet onBoard) {
 	BitSet result = new BitSet();
 	for(Vector<Integer> v: this) {

@@ -41,7 +41,7 @@ public class JsonToJava {
     */
     
     /** Fills the fields of Java object dest from JSON structure jo.
-	@param A JSON object (e.g. read from disk, or received via internet)
+	@param jo A JSON object (e.g. read from disk, or received via internet)
 	@param dest A Java object  whose fields will be set, recursively,
 	from the JSON objects. This will be done by invoking the appropriate
 	setter methods of the relevant fields. 

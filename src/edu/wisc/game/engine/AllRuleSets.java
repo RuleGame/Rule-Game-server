@@ -9,7 +9,10 @@ import edu.wisc.game.parser.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.rest.Files;
 
-/** Stores rule sets, and allows lookup by name. */
+/** Stores rule sets, and allows lookup by name. 
+    FIXME: need a web UI for calling clear() on this table, whenever
+    a new version of the same rule set file is created.
+*/
 public class AllRuleSets extends HashMap<String, RuleSet> {
 
     public static RuleSet read(File f) throws IOException, RuleParseException {
@@ -41,6 +44,10 @@ public class AllRuleSets extends HashMap<String, RuleSet> {
 	return allRuleSets.get(ruleSetName);
     }
 
+    /** Can be used to ensure that the rule sets will be reloaded */
+    public static void clearAll() {
+	allRuleSets.clear();
+    }
     
     private static  AllRuleSets allRuleSets = new  AllRuleSets();
 }

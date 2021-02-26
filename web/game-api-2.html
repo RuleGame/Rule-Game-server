@@ -427,6 +427,15 @@ The shape names are given using the same case as in the file names. They are not
 
   <hr>
   
+  <h2><a name="clear">Clear tables</a></h2>
+
+<p>For efficiency sakes, the Game Service tends to cache certain data, such as parsed rule sets. If you modify a trial list file or a rule set file that already exists under /opt/tomcat/game-data, you may want to force the server to purge its stored tables, to ensure that your updated files will be re-read.
+
+  <form method="post" action="game-data/CheckPlanService/clearTables"
+	 enctype="application/x-www-form-urlencoded">    
+     <button type="submit">Clear tables!</button>
+   </form> 
+  
   <h2><a name="checkPlan">Validate your experiment plan</a></h2>
 
 <P>You can use this form to check your experiment plan's input files for errors (syntax errors, references to non-existent files, attempts to generate boards with non-existence colors or shapes, etc). Just enter the name of your experiment plan and click on "Submit".

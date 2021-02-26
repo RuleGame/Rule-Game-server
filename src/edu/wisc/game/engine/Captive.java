@@ -8,10 +8,13 @@ import edu.wisc.game.reflect.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.sql.Episode.OutputMode;
+import edu.wisc.game.rest.ParaSet;
+import edu.wisc.game.rest.Files;
 
 /** The main class for the Captive Game Server */
 public class Captive {
 
+    /** Produces a single-line or multi-line comment to be used in stdout */
     static String asComment(String s) {
 	String[] v = s.split("\n");
 	for(int i=0; i<v.length; i++) v[i] = "#" + v[i];
@@ -26,8 +29,8 @@ public class Captive {
     static private void usage(String msg) {
 	System.err.println("Usage:\n");
 	System.err.println("  java [options]  edu.wisc.game.engine.Captive game-rule-file.txt board-file.json");
-	System.err.println("  java [options]  edu.wisc.game.engine.Captive game-rule-file.txt pieces [shapes colors]");
-	System.err.println("Each of 'pieces', 'shapes', and 'colors' is either 'n' (for a single value) or 'n1:n2' (for a range). '0' means 'any'");
+	System.err.println("  java [options]  edu.wisc.game.engine.Captive game-rule-file.txt npieces [nshapes ncolors]");
+	System.err.println("Each of 'npieces', 'nshapes', and 'ncolors' is either 'n' (for a single value) or 'n1:n2' (for a range). '0' means 'any'");
 	if (msg!=null) 	System.err.println(msg + "\n");
 	System.exit(1);
     }
@@ -54,8 +57,8 @@ public class Captive {
     }
     */
 
-
-   static private int[] range(String x) {
+    /** "3" to {3,3}; "3:5" to {3,5} */
+    static private int[] range(String x) {
 	String v[] = x.split(":");
 	if (v.length==1) {
 	    int n=Integer.parseInt(v[0]);	    
@@ -79,17 +82,25 @@ public class Captive {
 	return z;
     }
 
-
+    /** A complete CGS sesseion. Creates a game generator, creates a
+	game, plays one or several episodes, and exits.
+     */
     public static void main(String[] argv) throws IOException,  RuleParseException, ReflectiveOperationException { 
 
 	ParseConfig ht = new ParseConfig();
+
+	// allows colors=.... etc among argv
+	argv = ht.enrichFromArgv(argv);
+
+	
 	//System.out.println("output=" +  ht.getOption("output", null));
 	OutputMode outputMode = ht.getOptionEnum(OutputMode.class, "output", OutputMode.FULL);
 
 	long seed = ht.getOptionLong("seed", 0L);
 	if (seed != 0L) Board.initRandom(seed);
 
-
+	String inputDir=ht.getOption("inputDir", null);
+	if (inputDir!=null) Files.setInputDir(inputDir);
 	
 	//System.out.println("output mode=" +  outputMode);
 	int ja=0;
@@ -112,7 +123,16 @@ public class Captive {
 	    //int[] nColorsRange=(ja<argv.length)? range(argv[ja++], Piece.Color.class) : zeros;
 	    int[] nColorsRange=(ja<argv.length)? range(argv[ja++]) : zeros;
 
-	    gg =new RandomGameGenerator(f, nPiecesRange, nShapesRange, nColorsRange, Piece.Shape.legacyShapes, Piece.Color.legacyColors);    
+
+	    //System.out.println("#option shapes=" + ht.getOption("shapes",null));
+	    //System.out.println("#option colors=" + ht.getOption("colors",null));
+	    Piece.Shape[] shapes = ParaSet.parseShapes(ht.getOption("shapes",null));
+	    if (shapes==null) shapes = Piece.Shape.legacyShapes;	    
+	    Piece.Color[] colors =  ParaSet.parseColors(ht.getOption("colors",null));
+	    if (colors==null) colors = Piece.Color.legacyColors;
+
+	    
+	    gg =new RandomGameGenerator(f, nPiecesRange, nShapesRange, nColorsRange, shapes, colors);    
 	}
 	       
 	int gameCnt=0;

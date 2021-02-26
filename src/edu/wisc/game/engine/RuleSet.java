@@ -364,6 +364,23 @@ public class RuleSet {
 	    for(Atom atom: this) atom.forceOrder(orderName);
 	}
 
+	/** Lists all shapes used in this row. */
+	HashSet<Piece.Shape> listAllShapes() {
+	    HashSet<Piece.Shape> h = new HashSet<>();
+	    for(Atom atom: this) {
+		for(Piece.Shape shape: atom.shapes) h.add(shape);
+	    }
+	    return h;
+	}
+	/** Lists all colors used in this row. */
+	HashSet<Piece.Color> listAllColors() {
+	    HashSet<Piece.Color> h = new HashSet<>();
+	    for(Atom atom: this) {
+		for(Piece.Color color: atom.colors) h.add(color);
+	    }
+	    return h;
+	}
+	
     }
 
     /** All orders */
@@ -459,6 +476,20 @@ public class RuleSet {
 	for(Row row: rows) row.forceOrder(orderName);
     }
 
+    /** Lists all shapes used in this rule set. */
+    public HashSet<Piece.Shape> listAllShapes() {
+	HashSet<Piece.Shape> h = new HashSet<>();
+	for(Row row: rows) h.addAll(row.listAllShapes());
+	return h;
+    }
+    
+    /** Lists all colors used in this rule set. */
+    public HashSet<Piece.Color> listAllColors() {
+	HashSet<Piece.Color> h = new HashSet<>();
+	for(Row row: rows) h.addAll(row.listAllColors());
+	return h;
+    }
+	
     
     public static void main(String[] argv) throws IOException,  RuleParseException {
 	System.out.println("Have " + argv.length + " files to read");

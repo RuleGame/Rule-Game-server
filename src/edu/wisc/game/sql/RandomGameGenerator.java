@@ -18,7 +18,7 @@ public class RandomGameGenerator extends GameGenerator {
     final Piece.Shape[] allShapes;// = 	Piece.Shape.legacyShapes;
     final Piece.Color[] allColors;// = 	Piece.Color.legacyColors;
   
-    final RuleSet rules;
+    //final RuleSet rules;
     
     RandomGameGenerator(String ruleSetName, int[] _nPiecesRange, int[] _nShapesRange,
 			int[] _nColorsRange,  Piece.Shape[] _allShapes, Piece.Color[] _allColors) throws IOException, RuleParseException {
@@ -37,7 +37,7 @@ public class RandomGameGenerator extends GameGenerator {
 
     RandomGameGenerator(RuleSet _rules, int[] _nPiecesRange, int[] _nShapesRange,
 		  int[] _nColorsRange,  Piece.Shape[] _allShapes, Piece.Color[] _allColors) throws IOException, RuleParseException {
-	super();
+	super(_rules);
 	nPiecesRange = _nPiecesRange;
 	nShapesRange = _nShapesRange;
 	nColorsRange = _nColorsRange;
@@ -49,7 +49,6 @@ public class RandomGameGenerator extends GameGenerator {
 	if (nPiecesRange[0]<=0) throw new IOException("GameGenerator: Number of pieces must be positive");
 
 	if (nPiecesRange[1]>Board.N * Board.N) throw new IOException("GameGenerator: more pieces than cells: #pieces=" + nPiecesRange[1]);
-	rules = _rules;
     }
 
     /** Generates a game with a random initial board, in accordance with this 

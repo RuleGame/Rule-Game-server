@@ -226,6 +226,7 @@ mysql> describe  Episode;
 | lost            | bit(1)       | YES  |     | NULL    |                |
 | guess           | varchar(255) | YES  |     | NULL    |                |
 | guessConfidence | int(11)      | YES  |     | NULL    |                |
+| attemptSpent    | double       | YES  |     | NULL    |                |
 +-----------------+--------------+------+-----+---------+----------------+
 </code></pre>
 
@@ -233,7 +234,7 @@ mysql> describe  Episode;
 
     <ol>
       <li>id - internal episode ID; we can use them to sort episodes in the chronological order, but otherwise we can ignore it.
-      <li>attemptCnt - the number of attempted (successful or unsuccessful) moves
+      <li>attemptCnt - the number of attempted (successful or unsuccessful) moves. In a game where the player does not know whether a piece is movable until he tries, this also includes attempts to move immovable pieces.
       <li>cleared - true if the board has been cleared (has no pieces left)
       <li>doneMoveCnt  - the number of successful moved (i.e. the number of pieces removed from the board)
       <li>episodeId - a string episode ID used by our system.
@@ -255,6 +256,7 @@ mysql> describe  Episode;
 	  <li>lost - bit flag, set to true if the player fails to clear the board in a bonus episode within a required number of moves. Which this happens, the episode is terminated by the server, and so is series.
 	  <li>guess - the text of the guess submitted by the player at the end of the episode. NULL if no guess has been recorded.
 	  <li>guessConfidence - an integer entered by the player in the guess form, to represent his confidence in his guess on a certain numerical scale
+	    <li>attemptSpent - the total cost of all moves (or move attempts) made by the player in this episode. This is only introduced in GS 2.003. Typically, the value is the same as attemptCnt, but if the param set requires that the player make "touch" attempts to identify movable pieces, and those "touch" attempts cost less than one move (<tt>free_wrong_cost</tt> &lt; 1.0), then attemptSpent will be smaller than attemptCnt.
     </ol>
 
     <h3> SQL commands examples</h3>

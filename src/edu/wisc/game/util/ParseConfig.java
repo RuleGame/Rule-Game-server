@@ -2,6 +2,7 @@ package edu.wisc.game.util;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.*;
 import java.text.*;
 
 
@@ -365,6 +366,28 @@ public final class ParseConfig extends Hashtable<String,Object> {
 	    return getOptionEnum(retType, name, defVal);
 	}
 
+
+    /** Scans the argv array, identifying all elements of the form X=Y.
+        For each such element, adds the (key,value) pair (X,Y) to this
+	ParseConfig table.
+	@return An array that contains all other elements from argv
+	(those not of the form X=Y).
+     */
+    public String[] enrichFromArgv(String [] argv) {
+	Vector<String> v = new Vector<>();
+	Pattern p = Pattern.compile("([a-zA-Z_][a-zA_Z_\\.]*)=(.*)");
+	for(String s: argv) {
+	    Matcher m = p.matcher(s.trim());
+	    if (m.matches()) {
+		String key=m.group(1), val=m.group(2);
+		put(key, val);
+	    } else {
+		v.add(s);
+	    }
+	}
+	return v.toArray(new String[0]);
+    }
+    
 
 	/** 
 	 * Purely for testing.

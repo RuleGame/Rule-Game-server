@@ -721,7 +721,7 @@ public class Episode {
 	return result; 
     }
 
-    /** Retired */
+    /** Retired from the web game server; still used in Captive Game Server. */
       public String graphicDisplayAscii(boolean html) {
 
 	if (isNotPlayable()) {
@@ -799,7 +799,7 @@ public class Episode {
 	return json.toString();
     }
 
-    static final String version = "2.003";
+    static final String version = "2.004";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();

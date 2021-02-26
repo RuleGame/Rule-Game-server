@@ -10,8 +10,22 @@ import edu.wisc.game.sql.Piece;
 public class Files {
 
     static final File savedDir = new File("/opt/tomcat/saved");
-    static final File inputDir = new File("/opt/tomcat/game-data");
+    static File inputDir = new File("/opt/tomcat/game-data");
 
+    /** Sets the path to the input directory, which is the root
+	of the tree that contains the experiment control files.
+	You only need to use this method if you want trial list 
+	files, rule set files, etc. to be read from directories
+	in a directory tree other than the default ("/opt/tomcat/game-data").
+	So, for example, the Captive Game Server may use this method. If you use
+	it, do so early in your application.
+	@param path E.g. "/opt/tomcat/game-data" 
+    */
+    static public void setInputDir(String path) {
+	inputDir = new File(path);
+    }
+
+    
     /** Checks the existence of a directory, and, if necessary, tries
 	to create it */
     static void testWriteDir(File d) throws IOException {
@@ -141,6 +155,10 @@ public class Files {
     static public File getSvgFile(Piece.Shape shape) {
 	return  getSvgFile(shape.toString());
     }
+    /** @param shape Case-insensitive shape name, e.g. "circle", or
+	"arrows/up". To obtain the SVG file name, the shape name
+	is converted to lower case, and ".svg" is added.
+    */
     static public File getSvgFile(String shape) {
 	return new File(shapesDir(), shape.toLowerCase() + ".svg");
     }

@@ -14,8 +14,8 @@ import javax.persistence.*;
 
 
 // test
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
+//import javax.ws.rs.client.Entity;
+//import javax.ws.rs.core.MediaType;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.reflect.*;
@@ -23,9 +23,7 @@ import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.formatter.*;
 
-/** The "Check my experiment plan" service
- */
-
+/** The "Check my experiment plan" service. */
 @Path("/CheckPlanService") 
 public class CheckPlanService extends GameService2 {
     private static HTMLFmter  fm = new HTMLFmter(null);
@@ -34,9 +32,10 @@ public class CheckPlanService extends GameService2 {
     @Path("/checkPlan") 
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.TEXT_HTML)
-    /** @param exp The experiment plan. 
+    /** The "Check my experiment plan" service. It can be used by the expeiment manager to ensure that the experiment plan (the trial list files, as well as the rules set files and the initial board files referred from them) do not contain obvious errors.
+	@param exp The experiment plan. 
      */
-    public String playerHtml( @FormParam("exp") String exp){
+    public String checkPlanHtml( @FormParam("exp") String exp){
 	exp = exp.trim();
 	Vector<String> v = new Vector<>();
 	int errcnt=0;
@@ -80,19 +79,38 @@ public class CheckPlanService extends GameService2 {
 		for( ParaSet para: trialList) {
 		    j++;
 		    v.add(fm.para("Checking para set no. " + j + " out of "+npara+"..."));
+		    //-- Checking the values of "shapes" and "colors" params
 		    para.checkColors(cm);
-		    
+		    para.checkShapes();
+
+
+		    //-- Parsing the rule sets (errors can cause exceptions)
 		    GameGenerator gg = GameGenerator.mkGameGenerator(para);
 		    Game game = gg.nextGame();
-		    //allSeries.add(new Series(para));
 
+		    //-- Checking initial boards
 		    if (gg instanceof PredefinedBoardGameGenerator) {
 			v.add(fm.para("Checking predefined boards..."));
 			((PredefinedBoardGameGenerator)gg).checkShapesAndColors(cm);
-		    }	    
+		    }
+		    //-- checking the rule files for colors and shapes
+		    RuleSet rules = gg.getRules();
+		    for(Piece.Shape shape:  rules.listAllShapes()) {
+			File f = Files.getSvgFile(shape);
+			if (!f.canRead())  {
+			    //throw new IOException("Cannot read file: " + f);
+			    v.add(fm.para("Warning: Rule set " + para.getRuleSetName() + " mentions shape " + shape +", for which no SVG file exists. Was a different shape intended?"));
+			    errcnt ++;
+			}
+		    }
+		    for(Piece.Color color:  rules.listAllColors()) {
+			if (!cm.hasColor(color))  {
+			    v.add(fm.para("Warning: Rule set " + para.getRuleSetName() + " mentions color " + color +", which is not listed in the color map file. Was a different color intended?"));
+			    errcnt ++;
+			}
+		    }
 		}
-   
-	       
+
 	    }
 
 	} catch(Exception ex) {
@@ -116,7 +134,25 @@ public class CheckPlanService extends GameService2 {
 
     }
 
-    
+   
+    @POST
+    @Path("/clearTables") 
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.TEXT_HTML)
+    /** Clears various tables with pre-loaded and pre-compiled data.
+	This call should be used after you have modified some trial list
+	files, rules set files, etc, in order to ensure that the modified
+	files are reloaded and used going forward.
+     */
+    public String clearTables(){
+	AllRuleSets.clearAll();
+	String title = "Clearing server tables";
+	
+	Vector<String> v = new Vector<>();
+	v.add(fm.para("Rule table cleared"));
+ 	String body = String.join("\n", v);
+	return fm.html(title, body);	
+   }
 
 }
 	

@@ -44,6 +44,46 @@ public class ParaSet extends HashMap<String, Object> {
      public String getShapes() {
 	return Util.joinNonBlank(";", shapes);
     }
+
+    /** Parses a semicolon-separated list of shapes.
+	@val A semicolon-separated list of shapes. A null, or an empty string, are allowed as well.
+	@return An array of Shape values, or null if val is null or empty.
+	@throws IOException On a parsing problem (invalid shape names)
+     */
+    public static Piece.Shape[] parseShapes(String val) throws IOException {
+	if (val==null) return null;
+	val = val.trim();
+    	String[] ss = val.split(";");
+	if (ss.length>0) {
+	    Vector<Piece.Shape> shapes = new Vector<>();
+	    for(int j=0; j<ss.length;j++) {
+		String s = ss[j].trim();
+		if (!isGoodColorName(s)) throw new IOException("Invalid shape name '"+s+"'");
+		Piece.Shape c = Piece.Shape.findShape(s);
+		shapes.add(c);
+	    }
+	    //Logging.info("ParaSet: loaded " + shapes.length + " custom shapes");
+	    return shapes.toArray(new Piece.Shape[0]);
+	} else return null;
+    }
+
+    public static Piece.Color[] parseColors(String val) throws IOException {
+	if (val==null) return null;
+	val = val.trim();
+	String[] ss = val.split(";");
+	if (ss.length>0) {
+	    Piece.Color[] colors = new Piece.Color[ss.length];
+	    for(int j=0; j<ss.length;j++) {
+		String s = ss[j].trim();
+		if (!isGoodColorName(s)) throw new IOException("Invalid color name '"+s+"'");
+		Piece.Color c = Piece.Color.findColor(s);
+		colors[j] = c;
+	    }
+	    //Logging.info("ParaSet: loaded " + colors.length + " custom colors");
+	    return colors;
+	} else  return null;
+    }
+
     
     /*
    private int x;
@@ -73,40 +113,23 @@ public class ParaSet extends HashMap<String, Object> {
 	    String key =header.getCol(k);
 	    String val = line.getCol(k);
 	    if (key.equals("colors") && val!=null) {
-		String[] ss = val.split(";");
-		if (ss.length>0) {
-		    colors = new Piece.Color[ss.length];
-		    for(int j=0; j<ss.length;j++) {
-			String s = ss[j].trim();
-			if (!isGoodColorName(s)) throw new IOException("Invalid color name '"+s+"'");
-			Piece.Color c = Piece.Color.findColor(s);
-			colors[j] = c;
-		    }
-		    //Logging.info("ParaSet: loaded " + colors.length + " custom colors");
-		}
+		Piece.Color[] _colors = parseColors(val);
+		if (_colors != null) colors = _colors;	
 	    } else if (key.equals("shapes") && val!=null) {
-		String[] ss = val.split(";");
-		if (ss.length>0) {
-		    shapes = new Piece.Shape[ss.length];
-		    for(int j=0; j<ss.length;j++) {
-			String s = ss[j].trim();
-			if (!isGoodColorName(s)) throw new IOException("Invalid shape name '"+s+"'");
-			Piece.Shape c = Piece.Shape.findShape(s);
-			shapes[j] = c;
-		    }
-		    //Logging.info("ParaSet: loaded " + shapes.length + " custom shapes");
-		}
+		Piece.Shape[] _shapes = parseShapes(val);
+		if (_shapes!=null) shapes = _shapes;			
 	    } else typedPut(key, val);
 	}
     }
 
-    private boolean isRegular(char c) {
+    private static boolean isRegular(char c) {
 	return (Character.isLetterOrDigit(c) || c=='_');
     }
 
-    /** Color names should be alphanumeric, with "-" and "/" allowed
-	in reasonable positions (between regular chars). */
-    private boolean isGoodColorName(String s) {
+    /** Color names and shape names should be alphanumeric, with "-"
+	and "/" allowed in reasonable positions (between regular
+	chars). */
+    private static boolean isGoodColorName(String s) {
 	if (s.length()==0) return false;
 	boolean wasRegular = false;
 	for(int j=0; j<s.length(); j++) {
@@ -219,6 +242,9 @@ public class ParaSet extends HashMap<String, Object> {
     }
     
 
+    /** Makes sure that this parameter set's color list (used for generating
+	random boards) only contains valid colors (present in the color map)
+     */
     public void checkColors(ColorMap cm) throws IOException {
 	for( Piece.Color color: colors) {
 	    if (!cm.hasColor(color)) throw new IOException("Color " + color + " is not in the color map");
@@ -226,6 +252,9 @@ public class ParaSet extends HashMap<String, Object> {
 
     }
     
+   /** Makes sure that this parameter set's shape list (used for generating
+	random boards) only contains valid shapes (for which SVG files exist)
+     */
     public void checkShapes() throws IOException {
 	for( Piece.Shape shape: shapes) {
 	    File f = Files.getSvgFile(shape);

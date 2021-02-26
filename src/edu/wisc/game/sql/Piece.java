@@ -99,7 +99,14 @@ public class Piece  implements Serializable {
 	}
 
 	private static HashMap<String,Shape> allShapes = new HashMap<>();
+
+	/** Lists all shapes known to the system so far */
+	public Collection<Shape> listAllShapes() {
+	    return allShapes.values();
+	}
 	
+	/** Finds an already existing Shape object with a specified name,
+	    or creates a new one */
 	static synchronized public Shape findShape(String s) {
 	    s = s.toUpperCase();
 	    Shape c = allShapes.get(s);
@@ -109,12 +116,14 @@ public class Piece  implements Serializable {
 	static final public Shape SQUARE=findShape("SQUARE"), STAR=findShape("STAR"), CIRCLE=findShape("CIRCLE"), TRIANGLE=findShape("TRIANGLE");
 
 	static public final Piece.Shape[] legacyShapes = {SQUARE, STAR, CIRCLE, TRIANGLE};
+
+	/** A human-readable representation of the shape, for use in ASCII graphics */
 	public String symbol() {
 	    return this==SQUARE? "#":
 		this==STAR? "*":
 		this==CIRCLE? "O":
 		this==TRIANGLE? "T":
-		""+name.charAt(0);
+		""+name; // .charAt(0);
 	}
 	
     };
