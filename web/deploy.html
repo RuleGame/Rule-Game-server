@@ -41,6 +41,9 @@
 	   <pre>
   cd ~/w2020/game	     
   git pull origin master	   </pre>
+	   This is something you may want to do every time when you think that other team members may have checked in their updates. This will ensure that their updates will propagate to your working version, and will reduce the chance of edit conflicts.
+
+	   <p>
 Besides <tt>git</tt>, there are various other command-line and visual client applications that work with Github (e.g. <tt>svn</tt>). If you use one of those, modify the above commands as appropriate for your client.
 	   <br>
 	   Various subdirectories of <tt>game</tt> containing the following materials:
@@ -88,7 +91,10 @@ Besides <tt>git</tt>, there are various other command-line and visual client app
   cp ../w2020-dev.war /opt/tomcat/webapps	     </pre>
 
 
-	 <li><strong>(d) Deploy data.</strong>  For your convenience, the data files are deployed separately from the code. The simplest way to do it is to copy the entire data directory to the server location (5):
+<li><strong>(d) Deploy data.</strong>
+<div style="color:red;">The paragraph below is not current; presently (Feb 2021), a different repository is being set up for the data. Ask Vladimir or Aria for details.</div>
+
+  For your convenience, the data files are deployed separately from the code. The simplest way to do it is to copy the entire data directory to the server location (5):
 	   <pre>
   cd ~/w2020/game
   sudo cp game-data /opt/tomcat/game-data

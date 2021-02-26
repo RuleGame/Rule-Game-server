@@ -108,7 +108,7 @@ public class TrialList extends Vector<ParaSet> {
 
     
     /** Reads a trial list from the specified file. */
-    TrialList(File f) {
+    public TrialList(File f) {
 	this(false, "No error");
 	setPath(f.getPath());
 	try {

@@ -13,7 +13,7 @@ public class TrivialGameGenerator extends GameGenerator {
     
     /** Creates a trivial generator, which keeps returning the same game */
     public TrivialGameGenerator(Game g) {
-	super();
+	super(g.rules);
 	sameGame = g;
     }
 

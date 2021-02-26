@@ -8,8 +8,8 @@ import edu.wisc.game.reflect.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.sql.Episode.OutputMode;
-import edu.wisc.game.rest.ParaSet;
-import edu.wisc.game.rest.Files;
+import edu.wisc.game.rest.*;
+
 
 /** The main class for the Captive Game Server */
 public class Captive {
@@ -85,7 +85,7 @@ public class Captive {
     /** A complete CGS sesseion. Creates a game generator, creates a
 	game, plays one or several episodes, and exits.
      */
-    public static void main(String[] argv) throws IOException,  RuleParseException, ReflectiveOperationException { 
+    public static void main(String[] argv) throws IOException,  RuleParseException, ReflectiveOperationException, IllegalInputException{ 
 
 	ParseConfig ht = new ParseConfig();
 
@@ -108,15 +108,23 @@ public class Captive {
 	File f = new File(argv[ja++]);
 	if (!f.canRead()) usage("Cannot read file " + f);
 
+	String b = argv[ja++];
 	GameGenerator gg;
-	String a = argv[ja++];
-	if (a.indexOf(".")>=0) {
-	    File bf = new File(a);
+
+	if (f.getName().endsWith(".csv")) { // Trial list file + row number
+	    TrialList trialList = new TrialList(f);
+	    int rowNo = Integer.parseInt(b);
+	    if (rowNo<=0 || rowNo> trialList.size())  usage("Invalid row number (" + rowNo+ "). Row numbers should be positive, and should not exceed the size of the trial list ("+trialList.size()+")");
+	    ParaSet para = trialList.elementAt(rowNo-1);
+	    gg = GameGenerator.mkGameGenerator(para);
+
+	} else if (b.indexOf(".")>=0) { // Rule file + initial board file
+	    File bf = new File(b);
 	    Board board = Board.readBoard(bf);
 	    gg = new TrivialGameGenerator(new Game(AllRuleSets.read(f), board));
-	} else {
-	    int[] nPiecesRange = range(a);
-	    if (nPiecesRange[0] <= 0) usage("The number of pieces must be positive");
+	} else { // Rule file + numeric params
+	    int[] nPiecesRange = range(b);
+	    if (nPiecesRange[0] <= 0) usage("Invalid number of pieces ("+b+"); The number of pieces must be positive");
 
 	    int[] zeros = {0,0};
 	    int[] nShapesRange=(ja<argv.length)? range(argv[ja++]) : zeros;
