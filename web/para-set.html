@@ -22,6 +22,7 @@
 
 <P>In Game Server 2.*, additional parameter, <tt>colors</tt> has been introduced. Its value is a <em>color set</em> to use in the random board generator, i.e. a list of color names (each of them should be defined in the <a href="data.html#color">color map file</a>), separated by <em>semicolons</em>. Similarly, the <tt>shapes</tt> parameter specifies the list of shapes to use,  separated by <em>semicolons</em> as well.  
 
+  <p>
   For example, if your parameter set contains the following parameters:
 
   <table border="1">
@@ -31,10 +32,13 @@
     </tr>
     <tr><th>min_shapes<th>max_shapes<th>shapes
     </tr>
-    <tr><td>2 <td>3 <td>KANGAROO; KOALA; QUOKKA; PLATYPUS; ECHIDNA
+    <tr><td>2 <td>3 <td>kangaroo;koala;quokka;echidna
     </tr>
   </table>
   then every randomly created board will contain from 2 to 4 different colors from the specified color list, and 2 or 3 shapes from the specified shape list.
+
+<p>For the <tt>shapes</tt> parameter, the shorthand using <tt>*</tt> is supported. It is used to refer to all shapes whose SVG files are found in a particular directory under the main shapes directory (<tt>/opt/tomcat/game-data/shapes</tt>) on your server. For example, the value <tt>arrows/*</tt> means "every shape for which an SVG file exists in the directory <tt>/opt/tomcat/game-data/shapes/arrows</tt>. If you use this shorthand syntax, make sure to use the lower case for the shape names and shape subdirectory names.
+  
 
 <p>If parameters <tt>min_colors</tt> and <tt>max_colors</tt> have the same value, and this value is equal to the number of colors in your color set (the number of color names in parameters <tt>colors</tt>), then every initial board will use all of these colors, with at least one piece of each color. The same applies to the shapes.
 

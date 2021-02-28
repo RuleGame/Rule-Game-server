@@ -138,9 +138,11 @@ public class Files {
     /** Lists all rules files, or boards files, etc in a directory, without 
      extensions. */
     static Vector<String> listInputs( String subdir, String ext) throws IOException {
-	File d = new File(inputDir, subdir);
-
-	File[] files = d.listFiles();
+	return listInputs(new File(inputDir, subdir), ext);
+    }
+    
+    static Vector<String> listInputs( File dir, String ext) throws IOException {
+	File[] files = dir.listFiles();
 	Vector<String> v = new Vector<String>();
 	for(File cf: files) {
 	    if (!cf.isFile()) continue;

@@ -71,10 +71,34 @@ class GameSocketServerThread extends Thread {
 		    return;
 		} else if (cmd.equals("GAME")) {
 		    // GAME "rule-file.json" n
-		    if (tokens.size()!=3) {
-			respond(out, Episode.CODE.INVALID_RULES, "No rule file or piece count specified");			       
+		    if (tokens.size()<2) {
+			respond(out, Episode.CODE.INVALID_RULES, "No rule file or trial list file specified");			       
 			return;
 		    }
+
+		    String[] argv = new String[tokens.size()-1];
+		    for(int j=0; j<argv.length; j++) argv[j]=tokens.get(j+1).toArgv();
+		    ParseConfig ht = new ParseConfig();
+		    // allows colors=.... etc among argv.
+		    // (Cannot set inputDir though, since it's static and
+		    // shared by all threads)
+		    argv = ht.enrichFromArgv(argv);
+		    GameGenerator gg;
+		    try {
+			gg = Captive.buildGameGenerator(ht, argv);
+		    } catch(Exception ex) {
+			respond(out, Episode.CODE.INVALID_RULES, "Exception: " + ex.getMessage());
+			return;		
+		    }
+
+		    OutputMode outputMode = OutputMode.STANDARD;
+		    while(true) {
+			gameCnt++;
+			Game game = gg.nextGame();
+			Episode epi = new Episode(game, outputMode, in, out);
+			if (!epi.playGame(gameCnt)) return;
+		    }
+		    /*
 		    if (tokens.get(1).type!=Token.Type.STRING ||
 			tokens.get(2).type!=Token.Type.NUMBER) {
 			respond(out, CODE.INVALID_RULES, "# Expected double-quoted string and a number after the GAME command, found: " + tokens.get(1) + " " + tokens.get(2));
@@ -113,7 +137,7 @@ class GameSocketServerThread extends Thread {
 			Episode epi = new Episode(game, outputMode, in, out);
 			if (!epi.playGame(gameCnt)) return;
 		    }
-		    
+		    */		    
 		} else {
 		    respond(out, Episode.CODE.INVALID_COMMAND, "Invalid command " + cmd);
 		    return;

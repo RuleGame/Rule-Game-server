@@ -81,27 +81,10 @@ public class Captive {
 	if (z[1]>nProp) throw new IllegalArgumentException("Illegal value ("+z[1]+") for the number of " +p+ " properties");
 	return z;
     }
-
-    /** A complete CGS sesseion. Creates a game generator, creates a
-	game, plays one or several episodes, and exits.
-     */
-    public static void main(String[] argv) throws IOException,  RuleParseException, ReflectiveOperationException, IllegalInputException{ 
-
-	ParseConfig ht = new ParseConfig();
-
-	// allows colors=.... etc among argv
-	argv = ht.enrichFromArgv(argv);
-
-	
-	//System.out.println("output=" +  ht.getOption("output", null));
-	OutputMode outputMode = ht.getOptionEnum(OutputMode.class, "output", OutputMode.FULL);
-
-	long seed = ht.getOptionLong("seed", 0L);
-	if (seed != 0L) Board.initRandom(seed);
-
-	String inputDir=ht.getOption("inputDir", null);
-	if (inputDir!=null) Files.setInputDir(inputDir);
-	
+    
+    /** Creates a GameGenerator based on the parameters found in the command
+	line */
+    static GameGenerator buildGameGenerator(ParseConfig ht, String[] argv) throws IOException,  RuleParseException, ReflectiveOperationException, IllegalInputException{ 
 	//System.out.println("output mode=" +  outputMode);
 	int ja=0;
 	if (argv.length<2) usage();
@@ -109,19 +92,18 @@ public class Captive {
 	if (!f.canRead()) usage("Cannot read file " + f);
 
 	String b = argv[ja++];
-	GameGenerator gg;
 
 	if (f.getName().endsWith(".csv")) { // Trial list file + row number
 	    TrialList trialList = new TrialList(f);
 	    int rowNo = Integer.parseInt(b);
 	    if (rowNo<=0 || rowNo> trialList.size())  usage("Invalid row number (" + rowNo+ "). Row numbers should be positive, and should not exceed the size of the trial list ("+trialList.size()+")");
 	    ParaSet para = trialList.elementAt(rowNo-1);
-	    gg = GameGenerator.mkGameGenerator(para);
+	    return  GameGenerator.mkGameGenerator(para);
 
 	} else if (b.indexOf(".")>=0) { // Rule file + initial board file
 	    File bf = new File(b);
 	    Board board = Board.readBoard(bf);
-	    gg = new TrivialGameGenerator(new Game(AllRuleSets.read(f), board));
+	    return new TrivialGameGenerator(new Game(AllRuleSets.read(f), board));
 	} else { // Rule file + numeric params
 	    int[] nPiecesRange = range(b);
 	    if (nPiecesRange[0] <= 0) usage("Invalid number of pieces ("+b+"); The number of pieces must be positive");
@@ -140,9 +122,33 @@ public class Captive {
 	    if (colors==null) colors = Piece.Color.legacyColors;
 
 	    
-	    gg =new RandomGameGenerator(f, nPiecesRange, nShapesRange, nColorsRange, shapes, colors);    
+	    return new RandomGameGenerator(f, nPiecesRange, nShapesRange, nColorsRange, shapes, colors);    
 	}
+    }
 	       
+
+
+    /** A complete CGS session. Creates a game generator, creates a
+	game, plays one or several episodes, and exits.
+     */
+    public static void main(String[] argv) throws IOException,  RuleParseException, ReflectiveOperationException, IllegalInputException{ 
+
+	ParseConfig ht = new ParseConfig();
+
+	// allows colors=.... etc among argv
+	argv = ht.enrichFromArgv(argv);
+
+	//System.out.println("output=" +  ht.getOption("output", null));
+	OutputMode outputMode = ht.getOptionEnum(OutputMode.class, "output", OutputMode.FULL);
+
+	long seed = ht.getOptionLong("seed", 0L);
+	if (seed != 0L) Board.initRandom(seed);
+
+	String inputDir=ht.getOption("inputDir", null);
+	if (inputDir!=null) Files.setInputDir(inputDir);
+	
+	GameGenerator gg = buildGameGenerator(ht, argv);
+	        	
 	int gameCnt=0;
 
 	while(true) {

@@ -40,6 +40,16 @@ public class Token {
 	     ""+cVal;
     }   
 
+    /** Re-imagines the token as an element of a command line. Used 
+	for compatibility purposes in the Captive Game Server. */
+    public String toArgv() {
+	 return
+	     (type == Type.NUMBER) ? ""+nVal:
+	     (type == Type.ID) ? sVal:
+	     (type == Type.STRING) ? sVal:
+	     ""+cVal;
+    }   
+
     /** Init based on the first character */
     private Token(char c) throws RuleParseException {
 	type =

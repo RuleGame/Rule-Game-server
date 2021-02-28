@@ -98,7 +98,7 @@
     <li>color (in Game Server 1.*, one of the four legacy colors; in Game Server 2.*, any color defined in the global <a href="#color">color map</a>)
     <li>shape
   </ul>
-In the example above, the color and shape names are given in lower case, but in reality they are case-insensitivity. Internally they are represented in upper case, and are mapped to upper-case entries in the color map file and to lower-case file names of the SVG shape files.
+  In the example above, the color  and shape names are given in lower case, but in reality they are case-insensitive. Internally they are represented in upper case, and are mapped to upper-case entries in the color map file and to lower-case file names of the SVG shape files. So when working with shapes, it's safer to only use the lower case throughout.
 
   
     <h3><a name="color">Color map (GS 2.*)</a></h3>
@@ -129,11 +129,11 @@ Each line  consists of 4 fields. The first field is the color name, writen using
   <p>
     While Game Server 1.* only allowed to use the four "legacy shapes" of game pieces, in Game Server 2.* you can use arbitrary shapes. For every shape you use, you must obtain a SVG file representing it (e.g., download one from the icon collection at <a href="https://react-icons.github.io/react-icons/icons?name=fi">the Feather collection</a>, or create one by hand), and place it into the Game Server's <em>shape file directory</em>, <tt>/opt/tomcat/game-data/shapes</tt>.
 
-  <p>At present, shape names are case-insensitive, but the SVG file names are expected to be in the lower case. E.g. if your trial list file, rule set file, or initial board file refers to a shape <tt>STAR</tt> or  <tt>star</tt>, the corresponding file should be named  <tt>star.svg</tt>.
+  <p>At present, shape names are case-insensitive, but <strong>the SVG directory and file names are expected to be in the lower case.</strong> E.g. if your trial list file, rule set file, or initial board file refers to a shape <tt>STAR</tt> or  <tt>star</tt>, the corresponding file should be named  <tt>star.svg</tt>. If you use shape subdirectories, it may reduce confusion that you always use the lower case both in the subdirectory names, and when referring to shapes in trial set files and rule files.
 
   <p>At the minimum, the shape file directory must contain at least the four files for the four "legacy shapes": <tt>circle.svg</tt>, <tt>square.svg</tt>.<tt>star.svg</tt>, <tt>triangle.svg</tt>.
 
-    <p>Additionally, the file named <tt>blank.svg</tt> should be kept in the shape file directory; it is used for blank squared in the <a href="game-api-2.html#html">HTML play</a>. For this reason, one should not use a shape named <tt>BLANK</tt>, because if you do, you won't be able to see the pieces of this shape very well on the board.
+    <p>Additionally, the file named <tt>blank.svg</tt> should be kept in the shape file directory; it is used for blank squares in the <a href="game-api-2.html#html">HTML play</a>. For this reason, one should not use a shape named <tt>BLANK</tt>, because if you do, you won't be able to see the pieces of this shape very well on the board.
 
       <h4>Subdirectories for shapes</h4>
     <p>To better manage shape files, it is also possible to create subdirectories in the shape directory. For example, you have decided to create a game with the game piece shapes named <tt>AU/KANGAROO</tt>, <tt>AU/KOALA</tt>,  <tt>AU/BOOMERANG</tt>, and  <tt>AU/WOOMERA</tt>; the slash in the names of the shapes indicates that the files <tt>kangaroo.svg</tt>,  <tt>koala.svg</tt>,  <tt>boomerang.svg</tt>, and  <tt>woomera.svg</tt>, should go into a new subdirectory, <tt>/opt/tomcat/game-data/shapes/au</tt>.

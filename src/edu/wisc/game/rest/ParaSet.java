@@ -58,9 +58,24 @@ public class ParaSet extends HashMap<String, Object> {
 	    Vector<Piece.Shape> shapes = new Vector<>();
 	    for(int j=0; j<ss.length;j++) {
 		String s = ss[j].trim();
-		if (!isGoodColorName(s)) throw new IOException("Invalid shape name '"+s+"'");
-		Piece.Shape c = Piece.Shape.findShape(s);
-		shapes.add(c);
+		if (s.endsWith("/*")) { // every file in a directory
+		    String base = s.substring(0, s.length()-2);
+		    if (!isGoodColorName(base)) throw new IOException("Invalid shape subdirectory name '"+base+"', in '"+s+"'");
+		    File d = new File(Files.shapesDir(), base);
+		    if (!d.exists() || !d.isDirectory() || !d.canRead()) {
+			throw new IOException("Cannot look for shapes in " + d +", because there is no such directory, or it is not readable");
+		    }
+
+		    for(String z: Files.listInputs(d, ".svg")) {
+			Piece.Shape c = Piece.Shape.findShape(base+"/" + z);
+			shapes.add(c);			
+		    }
+		    
+		} else {
+		    if (!isGoodColorName(s)) throw new IOException("Invalid shape name '"+s+"'");
+		    Piece.Shape c = Piece.Shape.findShape(s);
+		    shapes.add(c);
+		}
 	    }
 	    //Logging.info("ParaSet: loaded " + shapes.length + " custom shapes");
 	    return shapes.toArray(new Piece.Shape[0]);
