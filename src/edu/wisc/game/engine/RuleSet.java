@@ -326,7 +326,8 @@ public class RuleSet {
 	    
 	    // fixme: keep using ex!
 	    while(tokens.size()>0) {
-		Expression ex = Expression.mkExpression(tokens);
+		//Expression ex = Expression.mkExpression(tokens);
+		Expression ex = Expression.mkCounterOrAtom( tokens);
 
 		if (first) {
 		    first=false;
@@ -402,16 +403,18 @@ public class RuleSet {
 	    Vector<Token> tokens= Token.tokenize(r);
 	    if (tokens.size()==0) throw new RuleParseException("No data found in the line: " + r);
 	    if (rows.size()==0 && tokens.get(0).type==Token.Type.ID &&
-		tokens.get(0).sVal.equalsIgnoreCase("Order")) { // order line
+		tokens.get(0).sVal.equalsIgnoreCase("Order")) { // order line:
+		// Order Name=[1,2,3,....]
 		tokens.remove(0);
 		if (tokens.size()==0 || tokens.get(0).type!=Token.Type.ID )  throw new RuleParseException("Missing order name in an order line: " + r);
 		String name = tokens.get(0).sVal;
 		tokens.remove(0);
 		if (tokens.size()==0 ||  tokens.get(0).type!=Token.Type.EQUAL)  throw new RuleParseException("Missing equal sign in an order line: " + r);
 		tokens.remove(0);
-		Expression ex = Expression.mkExpression(tokens);
-		if (!(ex instanceof Expression.BracketList) || tokens.size()>0) throw new RuleParseException("Invalid order description: " +r);	
-		orders.put(name, new Order((Expression.BracketList)ex));
+		// Expects a bracket list of integers
+		Expression.BracketList ex = Expression.mkBracketList(tokens);
+		if (tokens.size()>0) throw new RuleParseException("Invalid order description: " +r);	
+		orders.put(name, new Order(ex));
 		continue;
 	    }
 		

@@ -4,14 +4,14 @@
 <body>
   <h1>Rule file syntax and semantics</h1>
 
-  <div align="center"><em>Updated for ver. 2.001. 2020-12-25</em></div>
+  <div align="center"><em>Updated for ver. 2.005. 2021-03-02</em></div>
 
 <p>This document describes the syntax of rule files used by the Game Engine (the main component of the Rule Game Server), and the way these rules are interepreted, i.e. their semantics.
 
   <h2><a name="general">General concepts</a></h2>
 
   <p>
-    The game is played on an NxN (N=6) board; each board position can be described by its row and column number (both of which range from 1 thru N=6) or by a single <em>sequential number</em>. The sequential numbers, 1 thru N*N, are used to number cells by rows, from left to right within row, the rows ordered from the bottom to the top:
+    The game is played on an <em>N</em>x<em>N</em> board (currently, <em>N</em>=6). Each board position can be described by its row and column number (both of which range from 1 thru <em>N</em>=6) or by a single <em>sequential number</em>. The sequential numbers, 1 thru <em>N</em><sup>2</sup>=36, are used to number cells by rows, from left to right within row, the rows ordered from the bottom to the top:
     
     <table border="1">
       <tr><td><td colspan="6">Columns<td>
@@ -28,13 +28,13 @@
 
   <p>The four <em>buckets</em> are located outside the board, next to its corners. The buckets are numbered clockwise, starting from the one in the top left corner. The bucket's notional (row,column) coordinates are as follows:
 <table>
-      <tr><td>Bucket No. 0: (7,0)
-      <tr><td>Bucket No. 1: (7,7)
-      <tr><td>Bucket No. 2: (0,7)
+      <tr><td>Bucket No. 0: (<em>N</em>+1, 0)
+      <tr><td>Bucket No. 1: (<em>N</em>+1, <em>N</em>+1)
+      <tr><td>Bucket No. 2: (0, <em>N</em>+1)
       <tr><td>Bucket No. 3: (0,0)
    </table>
 
-  <p>At the begining of an episode, <em>objects</em>, or <em>game pieces</em> are located in some of the cells of the board, no more than one piece per cell. Each piece is described by its immutable properties ( <em>shape</em> and  <em>color</em>), and by its position on the border (either in terms of the row and column, or in terms of the sequential number of the cell).
+  <p>At the begining of an episode, <em>objects</em> (also known as <em>game pieces</em>) are located in some of the cells of the board, with no more than one piece per cell. Each piece is described by its immutable properties ( <em>shape</em> and  <em>color</em>), and by its position on the border (either in terms of the row and column, or in terms of the sequential number of the cell).
 
   <p>Each move of the game consists of the player attempting to pick one of the pieces and to drop it into one the buckets. The rules of the game, described by a <em>rule file</em>, determine which pieces can be dropped into which buckets; this may depend on the location and properties of the piece itself, the other pieces on the board, and on the previous successful moves in this episode.
 
@@ -57,23 +57,23 @@
     <h2><a name="order">The order definition section</a></h2>
 
     <p>
-The rules may be preceded with the order definition section. This section defines one or several <strong>custom orders</strong>. Each order defines a way to order the numbers 1 thru 36 (representing the cells of the board), possibly with ties (i.e. several elements having the same rank). An order without ties is simply a permutation. For example, the line
+The rules may be preceded with the order definition section. This section defines one or several <strong>custom orders</strong>. Each order defines a way to order the numbers 1 thru <em>N</em><sup>2</sup>=36 (representing the cells of the board), possibly with ties (i.e. several elements having the same rank). An order without ties is simply a permutation. For example, the line
 
 <pre>
 Order Manchu=[31, 25, 19, 13, 7, 1, 32, 26, 20, 14, 8, 2, ....]
 </pre>
 
-defines an order in which the 36 cells are ordered like characters in a Manchu text, i.e. by columns, from top to bottom in each column, the columns being ordered from left to right.
+defines an order in which the <em>N</em><sup>2</sup> cells are ordered like characters in a Manchu text, i.e. by columns, from top to bottom in each column, the columns being ordered from left to right.
 
 <p>
 An order may have ties. E.g.
 <pre>
 Order FromBottomLeftCorner=[ 1, [2,7], [3,8,13], …]
 </pre>
-orders the 36 cells by the <em>L</em><sub>1</sub> norm (the Manhattan norm) distance to the bottom left corner. Thus the cell no. 1 (the one at (1,1)) is the first one, followed by cells 2 and 7 which are equally ranked, and so on.
+orders the <em>N</em><sup>2</sup> cells by the <em>L</em><sub>1</sub> norm (the Manhattan norm) distance to the bottom left corner. Thus the cell no. 1 (the one at (1,1)) is the first one, followed by cells 2 and 7 which are equally ranked, and so on.
 
 <p>
-  If an order definition does not include all 36 cells, it is understood as if it is ended with a tied group that includes all cells not otherwise listed.
+  If an order definition does not include all  <em>N</em><sup>2</sup> cells, it is understood as if it is ended with a tied group that includes all cells not otherwise listed.
   <!-- In other words, if no objects remain in any of the cells explicitly listed in this order, then all remaining objects can be picked. -->
 
 
@@ -156,14 +156,14 @@ orders the 36 cells by the <em>L</em><sub>1</sub> norm (the Manhattan norm) dist
       <pre>*
 <em>positionSpecifier</em>
 [<em>positionSpecifier [, ...]</em>]	</pre>
-Each <em>positionSpecifier</em> must be either an integer number in the range 1..36,
+Each <em>positionSpecifier</em> must be either an integer number in the range 1..<em>N</em><sup>2</sup>,
       representing a <a href="#general">sequential number</a> of a cell, or the name of one of the <a href="#order">built-in or custom orders</a>.
 
      <li><em>positions</em>  describes a set of positions (cells) on the board. Similarly to the list of shapes or colors, it can have any of the 3 forms:
       <pre>*
 <em>positionSpecifier</em>
 [<em>positionSpecifier [, ...]</em>]	</pre>
-Each position specifier must be either an integer number in the range 1..36,
+Each position specifier must be either an integer number in the range 1..<em>N</em><sup>2</sup>,
       representing a <a href="#general">sequential number</a> of a cell, or the name of one of the <a href="#order">built-in or custom orders</a>.
        
       <li><em>buckets</em>  describes a set of buckets. Similarly to the lists of shapes or colors, it can have any of the 3 forms:
