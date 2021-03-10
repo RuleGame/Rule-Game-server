@@ -11,6 +11,8 @@ import edu.wisc.game.parser.*;
 /** A RuleSet describes the rules of a game. */
 public class RuleSet {
 
+    /** The list of variables that can be used in the bucket
+	expression */
     public enum BucketSelector {
 	p, pc, ps,
 	//Nearby= into the nearest bucket
@@ -377,6 +379,7 @@ public class RuleSet {
 	HashSet<Piece.Color> listAllColors() {
 	    HashSet<Piece.Color> h = new HashSet<>();
 	    for(Atom atom: this) {
+		if (atom.colors==null) continue;
 		for(Piece.Color color: atom.colors) h.add(color);
 	    }
 	    return h;

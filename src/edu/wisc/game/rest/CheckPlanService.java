@@ -67,6 +67,7 @@ public class CheckPlanService extends GameService2 {
 
 	//-- trial list
 	v.add(fm.h2("Checking the trial lists"));
+	String info = null;
 	try {
 	    Vector<String> lists = TrialList.listTrialLists(exp);
 	    v.add(fm.para("Found " + lists.size() + " trial lists for experiment plan " + fm.tt(exp)));
@@ -85,7 +86,9 @@ public class CheckPlanService extends GameService2 {
 
 
 		    //-- Parsing the rule sets (errors can cause exceptions)
+		    info = "The rule set name = " + para.getRuleSetName();
 		    GameGenerator gg = GameGenerator.mkGameGenerator(para);
+		    info = null;
 		    Game game = gg.nextGame();
 
 		    //-- Checking initial boards
@@ -114,7 +117,12 @@ public class CheckPlanService extends GameService2 {
 	    }
 
 	} catch(Exception ex) {
+	    if (info != null) v.add(fm.para(info));
 	    v.add(fm.para("Error: " + ex));
+	    StringWriter sw = new StringWriter();
+	    ex.printStackTrace(new PrintWriter(sw));
+	    String s = fm.pre(sw.toString());
+	    v.add(fm.para(fm.wrap("small", "Details:"  + s)));
 	    errcnt ++;
 	}
 
