@@ -371,6 +371,7 @@ public class RuleSet {
 	HashSet<Piece.Shape> listAllShapes() {
 	    HashSet<Piece.Shape> h = new HashSet<>();
 	    for(Atom atom: this) {
+		if (atom.shapes==null) continue;
 		for(Piece.Shape shape: atom.shapes) h.add(shape);
 	    }
 	    return h;
@@ -396,11 +397,14 @@ public class RuleSet {
 	this( ruleText.split("\n"));
     }
 
-    /** @param rr The lines  from the rule set file */
+    /** Creates a RuleSet based on the content of a rule set file. 
+	The file may contain some (optional) custom order definition
+	lines, followed by one or more rule lines.
+	@param rr The lines  from the rule set file */
     public RuleSet(String[] rr) throws RuleParseException {
 	for(String r: rr) {
 	    r = r.trim();
-	    if (r.startsWith("#") || r.length()==0) continue;
+	    if (r.startsWith("#") || r.length()==0) continue; // skip comment lines and blank lines
 
 
 	    Vector<Token> tokens= Token.tokenize(r);

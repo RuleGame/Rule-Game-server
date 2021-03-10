@@ -108,7 +108,7 @@ public class Token {
 	private Token currentToken=null;
 
 	Tokenizer(String x) throws RuleParseException {
-	    for(int i=0; i<x.length(); i++) {
+	    for(int i=0; i<x.length() && !commentHasStarted; i++) {		
 		addC(x.charAt(i));
 	    }
 	    flush();
@@ -121,6 +121,8 @@ public class Token {
 	    currentToken = null;	
 	}
 
+	private boolean commentHasStarted = false;
+	
 	private void  addC(char c) throws RuleParseException {
 	    if (currentToken!=null) {
 		if (Character.isDigit(c) && currentToken.type==Type.NUMBER ||
@@ -146,6 +148,9 @@ public class Token {
 	    }
 	    if (Character.isWhitespace(c)) {
 		flush();
+		return;
+	    } else if (c=='#') { // comment ends the line
+		commentHasStarted = true;
 		return;
 	    }
 	    currentToken= new Token(c);	
