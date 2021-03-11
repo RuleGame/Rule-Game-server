@@ -154,7 +154,9 @@ public class GameService2 {
     }
 
 
-
+    /** Records a player's guess about the rules. This is typically used at the
+	end of an episode.
+    */
     @POST 
     @Path("/guess")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -168,7 +170,9 @@ public class GameService2 {
 
     /** Returns a hash map that maps each color name (in upper case)
 	to a vector of 3 integers, representing RGB values. The data 
-	come from the file in game-data/colors
+	come from the file in game-data/colors. Note that calling this method
+	causes the system to re-read the file; so the client may
+	want to cache the data.
     */
     @GET
     @Path("/colorMap") 
@@ -177,11 +181,20 @@ public class GameService2 {
 	return new ColorMap();
     }
 
+    /** Lists the names of all shapes. This can be used e.g. in a board editor. */
     @GET
     @Path("/listShapes") 
     @Produces(MediaType.APPLICATION_JSON)
     public  ListShapesWrapper listShapes() {
 	return new ListShapesWrapper();
+    }
+
+    /** Reports the current version of the server */
+    @GET
+    @Path("/getVersion") 
+    @Produces(MediaType.APPLICATION_JSON)
+    public  String getVersion() {
+	return Episode.version;
     }
 
     

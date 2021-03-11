@@ -190,6 +190,6 @@ public class HTMLFmter extends Fmter {
 	return s;
     }
     
-    public static Fmter htmlFmter = new HTMLFmter(null);
+    public static HTMLFmter htmlFmter = new HTMLFmter(null);
  
 }

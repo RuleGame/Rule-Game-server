@@ -37,7 +37,7 @@ public class Util {
     */
 
     /** Only uses non-null non-blank strings */
-    public static <T> String joinNonBlank(String sep, Vector<T> v) {
+    public static <T> String joinNonBlank(String sep, Collection<T> v) {
 	Vector<String> w = new Vector<>();
 	for(T q: v)  {
 	    if (q==null) continue;

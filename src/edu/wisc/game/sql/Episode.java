@@ -46,7 +46,7 @@ public class Episode {
     public void setStartTime(Date _startTime) { startTime = _startTime; }
 
     // The number of buckets
-    static final int NBU = Board.buckets.length; // 4
+    static public final int NBU = Board.buckets.length; // 4
 
     /** A Pick instance describes the act of picking a piece, without 
 	specifying its destination */
@@ -799,7 +799,7 @@ public class Episode {
 	return json.toString();
     }
 
-    static final String version = "2.005";
+    public static final String version = "2.005";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();
