@@ -62,6 +62,8 @@ public class ArithmeticResult      extends ResponseBase  {
 		   v.add(key+"=[" + Util.joinNonBlank(", ",hh.get(key))+"]");
 	       }
 	   }
+
+	   v.add("Expression to process: " + exp);
 	   
 	   Vector<Token> tokens= Token.tokenize(exp);
 	   v.add("Expression tokenized: " + Token.toString(tokens));
@@ -74,6 +76,8 @@ public class ArithmeticResult      extends ResponseBase  {
 	   if (ex instanceof Expression.ArithmeticExpression) {
 	       Expression.ArithmeticExpression ae = (Expression.ArithmeticExpression)ex;
 	       HashSet<Integer> hv = ae.evalSet(hh);
+	       hv = Expression.moduloNB(hv);
+
 	       v.add(fmt.wrap("strong","Expression evaluates to [" +Util.joinNonBlank(", ",hv)+"]"));
 
 	   } else {

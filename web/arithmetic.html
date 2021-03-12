@@ -1,0 +1,153 @@
+<html>
+  <head><title>Bucket expression arithmetic</title>
+  </head>
+<body>
+  <h1>Bucket expression arithmetic</h1>
+
+  <div align="center"><em>Updated for ver. 2.006. 2021-03-11</em></div>
+
+  <p>This document describes in detail the syntax and semantics of expressions used in determining the set of buckets into which a piece can be moved. These expressions appear as the last field of each "atom" in <a href="syntax.html">rule sets.</a>
+
+    <h2>Set-based evaluation</h2>
+
+  <p>Whenever a given "atom" of a rule matches the position, shape, and color of a piece which the player attempts to move, the game engine evaluates the expression in the "bucket" field of the atom, obtaining the list of buckets into which this piece can be moved. The move is allowed only if the destination  bucket chosen by the player is among the buckets on this list.
+
+  <p>The expression in the bucket list is always evaluated to a set. It can be an empty set (which means that the piece cannot be moved), a set with one element (i.e. there is only one possible destination), or a set with several elements.
+
+    <h2>Syntax</h2>
+
+    <p>Formally, the syntax of the expression in the bucket field can be described by the following grammar:
+<ul>
+  <li>Any expression:<br>
+    <em>E</em> ::= <em>E<sub>5</sub></em>
+    
+  <li>A logical expression can be composed of 2 additive expressions:<br>
+    <em>E<sub>5</sub></em> ::= <em>E<sub>4</sub></em> | <em>E<sub>4</sub></em><tt>==</tt> <em>E<sub>4</sub></em>
+    
+  <li>An additive expression can be composed of any number of multiplicative expressions:<br>
+    <em>E<sub>4</sub></em> ::= <em>E<sub>3</sub></em> |
+  <em>E<sub>4</sub> additiveOp E<sub>3</sub></em>
+  <li><em>additiveOp</em> ::= <tt>+</tt>  | <tt>-</tt>
+    
+  <li>A multiplicative expression can be composed of any number of elementary expressions:<br>
+    <em>E<sub>3</sub></em> ::= <em>E<sub>2</sub></em> |
+  <em>E<sub>3</sub> multOp E<sub>2</sub></em>
+  <li><em>multOp</em> ::= <tt>*</tt>  | <tt>/</tt>   | <tt>%</tt>
+
+  <li>A unary expression consists of a unary operator (of which we have only one, the negation) preceding an elementary expression or a  unary expression:<br>
+    <em>E<sub>2</sub></em> ::= <em>E<sub>1</sub></em> |
+   <em>unaryOp E<sub>2</sub></em>
+  <li><em>unaryOp</em> ::= <tt>!</tt>
+    
+  <li>An elementary expression is an ID, a Number, a parenthesized expression, or a bracket list:<br>
+    <em>E<sub>1</sub></em> ::=
+        <em>ID</em> | <em>Number</em> | <tt>[</tt><em>E<sub>4</sub> {, E<sub>4</sub>}<sup>+</sup> </em>   <tt>]</tt> | <tt>(</tt><em>E<sub>4</sub></em><tt>)</tt>
+   
+  <li>An ID is one of the 5 predefined variable names (case-sensitive):<br>
+    <em>ID</em>  ::= <tt>p</tt> |<tt>pc</tt> |<tt>ps</tt> |<tt>Nearby</tt> |<tt>Remotest</tt>    
+  <li>A Number is a non-negative integer number, written as a sequnce of decimal digits:<br>
+    <em>Number</em> ::= <em>digit<sup>+</sup></em>
+    <li> <em>digit</em> := 0|1|2|3|4|5|6|7|8|9
+</ul> 
+
+    <p>The table above also shows the precedence of operators (i.e. the order of execution): operators composing any <em>E<sub>1</sub></em>-type expressions have the highest precedence, following by those composing  <em>E<sub>2</sub></em>-type expressions, etc.
+      
+      <p>As in most languages, additive and multiplicative expressions are evaluated from the left to the right, i.e. <tt>p-pc+ps-3</tt> is the same as <tt>(((p-pc)+ps)-3)</tt>
+
+<h2>Semantics</h2>
+
+      <p>The arithmetic is performed on sets, but, as long as all sets involved have exactly one value, the process looks entirely like the evaluation of an expression in a language such as Java or C++, with an exception for the equality and negation operations (discussed below).
+	
+
+<ul>
+  <li>A number (a numerical constant) represents a set of one value.
+  <li>An ID may be evaluated to an empty set (e.g. for <tt>p</tt>, <tt>pc</tt>, or <tt>ps</tt> early in the episode), a set of one value (usually), or (potentially, in the future) to a set of several values  (e.g. <tt>Nearby</tt> or <tt>Remotest</tt> for some cells on an odd-sized board)
+  <li>A parenthesized expression evaluates to whatever the expression inside the parentheses evaluates; the parentheses simply serve to control the order of operations.
+  <li>A bracket list is evaluated to the union of the sets to which the elements are evaluated. E.g. <tt>[[0, 2], [2, 3], 0]</tt> evaluates to <tt>[0, 2, 3</tt>.
+  <li>An additive or multiplicative operation on set-valued arguments produces a cross-product. E.g. <em>S<sub>1</sub></em><tt>+</tt><em>S<sub>2</sub></em> produces a set that includes every value <em>x<sub>1</sub></em><tt>+</tt><em>x<sub>2</sub></em> with an  <em>x<sub>1</sub></em> in  <em>S<sub>1</sub></em> and   <em>x<sub>2</sub></em> in  <em>S<sub>21</sub></em>.    For example, [1,2,10]*[5,10] = [5,10,20,50,100];  [0,1,2]+[0] = [0,1,2];  [0,1,2]+[] = [].
+  <li>The division (/) and the remainder operation (%) are performed like integer operatins in Java or C, with rounding toward zero. For example, [2,5,10]/[3] = [0,1,3];  [-4,4]%[3]=[-1,1].
+  <li>A division by zero (or remainder from division by zero) produces no result; in other words,  no expression for the pair involved is included into the result set. For example,  [7]/[0,2] = [3]; [0]/[0]=[].
+  <li>Unlike C++ or Java, the equality operation  <em>S<sub>1</sub></em><tt>+</tt><em>S<sub>2</sub></em>  is also computed as a crossproduct, producing an empty set if  <em>S<sub>1</sub></em> has not a single element that's equal to an element from <em>S<sub>2</sub></em>, or a set with one element, [1], if  <em>S<sub>1</sub></em> has an element that's equal to an element from <em>S<sub>2</sub></em>. For example, [0,2]==[1,3] produces [], while [0,2,3]==[3]  produces [1]. Somewhat counterintuitively, []==[] produces [] as well.
+    <li>The negation operator works as follows: if <em>E</em> is an empty set, <tt>!</tt><em>E</em> evaluates to [1]; otherwise, to [].
+</ul>
+
+<p>As in most programming languages, one can insert additional (unnecessary) parentheses around high-precedence subexpressions without affecting their meaning. So, for example, !!p  has the same meaning as (!(!(p))), and 2*3-1, as ((2*3)-1).
+
+<h2>Final modulo-4 processing</h2>
+
+    <p>Since buckets are numbered 0 thru 3, a bucket number outside of this range makes no sense. Therefore, after the bucket expression is computed, every memeber of the resulting set is translated to the [0..3] range by a modulo-4 transformation, i.e. <em>n := ((n%4)+4)%4</em>.  (It is not simply (n%4) because the % operation in Java or C, or in our language, produces a negative result on a negative argument; e.g. (-5)%4=(-1)). Therefore, it is safely, for example, to write simply  <tt>p+1</tt>, instead of <tt>(p+1)%4</tt>, to mean "the next bucket (in the clockwise order) after the bucket into which accepted the previous moved piece".
+
+      <h2>Examples</h2>
+
+      <table border="1">
+	<tr>
+	  <td>Top left bucket
+	  <td>0
+	<tr>
+	  <td>Top left bucket or top right bucket
+	  <td>[0,1]
+	<tr>
+	  <td>	    
+	    The same bucket into which the last piece of the same color was put, or the opposite bucket
+	  <td>	  
+	    [pc,pc+2]
+	<tr>
+	  <td>
+	    Any bucket along the same horizontal edge of the board as the previously used bucket. (That is, if the previous bucket was at the top edge of the board (0 or 1), then you can use 0 or 1 now; if  the previous bucket was at the bottom edge of the board (2 or 3), then you can use 2 or 3 now).
+	  <td>[(p/2)*2, (p/2)*2+1]
+	</tr>
+	    <tr>
+	      <td>Ditto
+	      <td> [(p==[0,1])*[0,1], (p==[2,3])*[2,3]]
+	    </tr>
+	   <tr>
+	     <td>If pc is defined (i.e. if any piece of this color has been put into a bucket already), then [0,1]; otherwise, empty set [].       
+	     <td> (pc==[0,1,2,3])*[0,1]
+	   <tr>
+	     <td>Ditto
+	     <td> !!pc*[0,1]
+	    
+	    <tr>
+	      <td>If p is defined (i.e. at least one piece has been picked), you can pick any pieces in the quadrant of the board that's closest to the most recently used bucket. Otherwise (i.e. if it's the first move of the game), no piece can be picked.
+	      <td> (p==Nearby)*Nearby
+	    </tr>
+	       <tr><td>If p is defined, then empty set []; otherwise, [1]
+		 <td>!p
+	       <tr><td>If p is defined, then [1]; otherwise, []
+		 <td>!!p
+	       <tr><td>Ditto
+		 <td>(p==[0,1,2,3])*1
+	       </tr>
+		   <tr><td>If p is defined, you then p-1 (modulo 4); otherwise, [0,1,2,3]. In other words, if no piece has been put into a bucket yet, you can use any bucket; otherwise, you must use the bucket that's next in the counterclockwise order to the last bucket that was used.
+		       <td>
+			 [!p*[0,1,2,3], !!p*(p-1)]
+	</table>
+
+<h2>Rule set examples</h2>
+
+<h3>Example 1</h3>
+<pre>
+(1,*,*,*,[!p*[0,1,2,3], !!p*(p-1)])
+(*,*,*,*,(p==Nearby)*p)
+</pre>
+<ul>
+  <li>
+    The first piece can be put into any bucket. (First line, where !p evaluates to [1]).
+  <li>After that, the second line becomes active; the player then must pick every piece in the quadrant of the board adjacent to the bucket that was used for the first piece, and put them into the same bucket.
+  <li>After that, the control reverts to the first line, where !!p evaluates to [1], which means that the player can put any piece and put it the bucket that is the next one, in counterclockwise order, to the first used bucket.
+  <li>Contol goes to the second line again; the player now must pick all pieces in the quadrant adjacent to the last-used bucket, and put them into that bucket. Etc.
+    </ul>
+
+      
+<h2>Try it!</h2>
+
+<p>You can test your arithmetic in this form: 
+<a href="arithmetic-form.jsp">Expression entry form</a>.
+
+
+<hr>
+[<a href="syntax.jsp">Rule set syntax</a>]
+[<a href="index.html">Main page</a>]
+
+</body>
+</html>

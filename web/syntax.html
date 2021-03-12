@@ -4,7 +4,7 @@
 <body>
   <h1>Rule file syntax and semantics</h1>
 
-  <div align="center"><em>Updated for ver. 2.005. 2021-03-02</em></div>
+  <div align="center"><em>Updated for ver. 2.005. 2021-03-10</em></div>
 
 <p>This document describes the syntax of rule files used by the Game Engine (the main component of the Rule Game Server), and the way these rules are interepreted, i.e. their semantics.
 
@@ -46,11 +46,13 @@
 
   <p>The rule file may contain comment lines beginning with a <tt>#</tt> character. These lines can be found anywhere in the file. They are only intended for a human reader, and are ignored by the game engine.
 
-    <p>Blank lines are also permitted anywhere in the file, and are ignored by the parser. They server purely for readability.
+  <p>Blank lines are also permitted anywhere in the file, and are ignored by the parser. They server purely for readability.
+
+    <p>As of ver 2.005 it is also possible to put a comment at the end of any "meaningful" line of the rule set file. The comment should start with a  a <tt>#</tt> character.
 
     <h2>Notation</h2>
 
-<P>In this document, we use italics for meta-text, with square brackets to indicate optional parts, e.g. <tt><em>[integer] string [string ...]</em></tt> means "an integer, followed by one or more strings". The straight roman text is for literals (including square brackets), e.g.  <tt>[integer <em>[</em>, <integer> <em>...]</em>]</tt> means, "one or several integers, separated by commas, and surrounded by square brackets".
+    <P>In this document, we use italics for meta-text, with square brackets to indicate optional parts, e.g. <tt><em>[integer] string [string ...]</em></tt> means "an integer, followed by one or more strings". The straight roman text is for literals (including square brackets), e.g.  <tt>[<em>integer [</em>, <integer> <em>...]</em>]</tt> means, "one or several integers, separated by commas, and surrounded by square brackets".
 
 <p>White space <em>within lines</em> is allowed in the rule file in roughly the same way as it is in a file in a typical shell scripting language or a programming language. That is, any amount of white space can be put between tokens (number, identifiers, punctuation); it will not affect the meaning. <em>Line breaks</em>, however, matter: each order definition, or each "rule line" must occupy one line of the file, with no line breaks within it allowed.
 
@@ -170,15 +172,22 @@ Each position specifier must be either an integer number in the range 1..<em>N</
       <pre>*
 <em>bucket</em>
 [<em>bucket [, ...]</em>]	</pre>
-      Each <em>bucket</em> must be either an integer number in the range 0..3, or an arithmetic expression. An arithmetic expression may include the special variable names <tt>p</tt>, <tt>pc</tt>, and <tt>ps</tt>, integers (literals), arithmetic operators (<tt>+, -, *, /, %</tt>), and round parentheses. The three special variables are interpreted during the evaluation of the expression as follows:
+      Each <em>bucket</em> must be either an integer number in the range 0..3, or an arithmetic expression (possibly set-valued). An arithmetic expression may include the special variable names <tt>p</tt>, <tt>pc</tt>, and <tt>ps</tt>, integers (literals), arithmetic operators (<tt>+, -, *, /, %</tt>), the equality operator (<tt>==</tt>), bracket lists (<tt>[....]</tt>), and round parentheses. The 5 special variables are interpreted during the evaluation of the expression as follows:
       <ul>
-	<li>p = most recent bucket that has accepted anything 
-	<li>pc = most recent bucket that has accepted this color
-	<li>ps = most recent bucket that has accepted this shape
+	<li><tt>p</tt> = most recent bucket that has accepted anything 
+	<li><tt>pc</tt> = most recent bucket that has accepted this color
+	<li><tt>ps</tt> = most recent bucket that has accepted this shape
+	<li><tt>Nearby</tt> = the bucket nearest to the location of the piece being picked
+	<li><tt>Remotest</tt> = the bucket nearest to the location of the piece being picked
       </ul>
     </ol>
-    These variable are nor defined before the first relevant actions have occured (i.e. <tt>p</tt> is not defined before the first successful move;  <tt>pc</tt> is not defined in the context of an attempt to move a triangle, is not defined unless a triangel has been previously successfully moved; etc). When any variable occurring in an expression is not defined during a move attempt, the expression is simply ignored, i.e. does not provide any destination.
-  
+    <p>
+    The variables <tt>p</tt>, <tt>pc</tt>, <tt>ps</tt> are nor defined before the first relevant actions have occured (i.e. <tt>p</tt> is not defined before the first successful move;  <tt>pc</tt> is not defined in the context of an attempt to move a triangle, unless a triangle has been previously successfully moved; etc). When any variable occurring in an expression is not defined during a move attempt, the expression is simply ignored, i.e. does not provide any destination.
+
+    <p> The values of the variables <tt>Nearby</tt> and <tt>Remotest</tt> are based on the position of the piece one attempts to move. E.g. for a piece located in the bottom left corner of our 6x6 board (1 &le; row &le; 3, 1 &le; column &le; 3), <tt>Nearby</tt>=3 and  <tt>Remotest</tt>=1. If we had a board with an even number of rows or columns (e.g. <em>N</em>=7), then for a piece located on the "central meridian" or the "equator" of the board (column=(N+1)/2, or row=(N+1)/2) these variables would be set-valued, with 2 values each; for a piece located in the central cell of the board, each of these variables would have the entire set [0,1,2,3] as its value.
+
+      <p>For more details on expressions, please see <a href="arithmetic.html">Bucket expression arithmetic</a>.
+    
     <h2>Semantics</h2>
 
   <p>At any time during the episode, one of the rule lines is currently active (AKA "in control"). When the episode starts, the first rule line is made active; as the episode progresses, the control may be passed from the first rule line to the second, and so on, cyclically, under the rules discussed below.

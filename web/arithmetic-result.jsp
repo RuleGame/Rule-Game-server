@@ -22,6 +22,7 @@ for(String s: main.v) {
 
 <hr>
 [<a href="arithmetic-form.jsp">Back to the expression entry form</a>]
+[<a href="arithmetic.html">Bucket expression arithmetic</a>]
 [<a href="index.html">Main page</a>]
 
 

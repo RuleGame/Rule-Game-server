@@ -212,8 +212,8 @@ public class Episode {
 	    return q;	    
 	}
 	
-	/** For each piece currently on the board, find which rules
-	    allow it to be moved, and to where
+	/** For each piece currently on the board, find which rules in the 
+	    current rule line allow this piece to be moved, and to which buckets.
 	    @return true if at least one piece can be moved
 	*/
 	private boolean buildAcceptanceMap() {
@@ -248,7 +248,7 @@ public class Episode {
 	}
 
 	
-	/**
+	/** Into which buckets, if any, can the specified piece be moved?
 	   @return result[j] is the set of buckets into which the j-th
 	   rule (atom) allows the specified piece to be moved.
 	*/
@@ -799,7 +799,7 @@ public class Episode {
 	return json.toString();
     }
 
-    public static final String version = "2.005";
+    public static final String version = "2.006";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();

@@ -11,7 +11,7 @@ public class Token {
     
     //static void foo1(){};
 
-    public enum Type { NUMBER, ID, STRING, COMMA, MULT_OP, ADD_OP, EQQ /* == */, OPEN, CLOSE, EQUAL /* = */};
+    public enum Type { NUMBER, ID, STRING, COMMA, MULT_OP, ADD_OP, EQQ /* == */, UNARY_OP, OPEN, CLOSE, EQUAL /* = */};
     public final Type type;
     public char cVal=0;
     public String sVal=null;
@@ -62,6 +62,7 @@ public class Token {
 	    c==','? Type.COMMA:
 	    c=='+' || c=='-'? Type.ADD_OP:
 	    c=='*' || c=='/' || c=='%' ? Type.MULT_OP:
+	    c=='!' ? Type.UNARY_OP:
 	    c=='(' || c=='['? Type.OPEN:
 	    c==')' || c==']'? Type.CLOSE:
 	    c=='"' ? Type.STRING:
@@ -86,6 +87,7 @@ public class Token {
     }
     
     static final Token EQQ = new Token(Type.EQQ, "==");
+    static final Token BANG = wrapToken('!');
     static final Token STAR = wrapToken('*');
     
     /** Sets other fields based on type and sVal */

@@ -114,6 +114,9 @@ public class RuleSet {
 	
     }
 
+    /** A BucketList represents the information about the destination
+	buckets given in the "buckets" field of an atom.
+    */
     public static class BucketList extends Vector<Expression.ArithmeticExpression>{
 	/** Star is allowed in Kevin's syntax, and means "any bucket" */
 	BucketList( Expression.Star star) throws RuleParseException {
@@ -121,7 +124,8 @@ public class RuleSet {
 		add(new Expression.Num(j));
 	    }
 	}
-	
+
+	/*
 	BucketList( Expression.BracketList bex) throws RuleParseException {
 	    for(Expression ex: bex) {
 		if (!(ex instanceof Expression.ArithmeticExpression)) 	throw new RuleParseException("Invalid bucket specifier (not a symbol or an arithmetic expression): " + ex);
@@ -131,8 +135,9 @@ public class RuleSet {
 		add(g);
 	    }
 	}
-
-	BucketList( Expression.Num num)  {
+	*/
+	
+	BucketList(Expression.ArithmeticExpression num)  {
 	    add(num);
 	}
 
@@ -145,17 +150,21 @@ public class RuleSet {
 	    for(Expression.ArithmeticExpression ex: this) {
 		v.add(ex.toSrc());
 	    }
-	    return "[" + String.join(",",v)  + "]";	       
+	    String s = String.join(",",v);
+	    if (v.size()>0) s = "[" +s+ "]";
+	    return s;
 	}
 
-	/** To which destinations a piece can be taken?
+	/** To which destinations can a piece be taken?
 	    @param varMap Information about p, ps, pc, Nearby etc for the piece
 	    under consideration*/
 	public BitSet destinations( HashMap<String, HashSet<Integer>> varMap) {
 	    BitSet q= new BitSet(Board.buckets.length);
 	    
 	    for(Expression.ArithmeticExpression ae: this) {
-		q.or( Util.toBitSet( ae.evalSet(varMap)));
+		Set<Integer> h = ae.evalSet(varMap);
+		h = Expression.moduloNB(h);
+		q.or( Util.toBitSet(h));
 	    }
 	    return q;
 	}
@@ -266,10 +275,10 @@ public class RuleSet {
 	    plist = new PositionList(g, orders);
 	    //System.out.println("plist=" + plist);
 	    g = pex.get(4); // buckets
-	    if (g instanceof Expression.Num)  {
-		bucketList = new BucketList((Expression.Num)g);
-	    } else if (g instanceof Expression.BracketList) {
-		bucketList = new BucketList((Expression.BracketList)g);
+	    if (g instanceof Expression.ArithmeticExpression)  {
+		bucketList = new BucketList((Expression.ArithmeticExpression)g);
+		// } else if (g instanceof Expression.BracketList) {
+		//bucketList = new BucketList((Expression.BracketList)g);
 	    } else if (g instanceof Expression.Star) {
 		// for compatibility with Kevin's syntax
 		bucketList = new BucketList((Expression.Star)g);
