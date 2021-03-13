@@ -1,0 +1,67 @@
+<html>
+  <head><title>Standard Operating Procedures: Preparing and running an experiment with the Rule Game Server</title>
+  </head>
+<body>
+  <h1>Standard Operating Procedures: Preparing and running an experiment with the Rule Game Server</h1>
+
+    <p align="center"><em>Updated 2021-03-13 for Game Server ver. 2.006</em></p>
+
+    <h2>Preparing the experiment control files</h2>
+
+    <h3>The control files</h3>
+  <p>As discussed in the <a href="data.html">Rule Game server data guide</a>, a number of files need to prepared in the <strong>server's game data directory</strong> (/opt/tomcat/game-data) in order to control the players' experience during your experiment. At a minimum, this should include:
+    <ul>
+      <li>The experiment plan directory (a subdirectory under /opt/tomcat/game-data/trial-lists), containing one or several trial list files. The server will <a href="balancing.html">pseudo-randomly assign</a> players, in a balanced manner, to different trial lists, so each of the trial list files will be the top-level file defining the experiences of a particulalry (randomly selected) subgroup of the participants of your experiment.
+      <li>For each rule set mentioned in the trial list files, a rule set file must be created in the rules directory, /opt/tomcat/game-data/rules. If you are creating a group of rule set files to be used in just one experiment, or in some series of experiments, it would make sense to place them into a new, specially created subdirectory under the rules directory. This will make it easier to manage rule set files.
+    </ul>
+
+  <p>Depending on the design of your experiment, you may also need to create or modify other files:
+    <ul>
+      <li>If your trial lists refer to pre-created initial boards, you need to create the board files.
+      <li>If your experiment intends to use custom shapes (as reflected in the trial list files or rule sets), you need to make sure you have the SVG files for all shapes at the appropriate locations. (See: <a href="colors-and-shapes.html">Using custom shapes and colors in Rule Game Server 2.*</a>)
+      <li>If your experiment intends to use custom colors (as reflected in the trial list files or rule sets), make sure you have those colors defined in the  <a href="colors-and-shapes.html#map">color map file</a>
+    </ul>
+
+    <h3>Using a GitHub repository</h3>
+
+  <p>As discussed in an email message dated 2021-02-17, it probably would be a good idea to ensure that the "history" of  the experiment control files is fully reflected in a GitHub repository. One approach to this would be to edit the experiment control files not in the server's game data directory, but in one's development directory (somewhere under one's home directory), which is linked to the  GitHub repository. When the files are updated, one copies them from the development directory to the server's game data directory, and simultaneously commits them to the GitHub repository. (Or at least make sure to commit everything before actually running the experiment with "real" players). This procedure will ensure that one could have a reliable way in the future to see what set of control files was deployed to the server during the experiment.
+
+        <h3>Validating your plan</h3>
+  <p>Once you have prepared your trial list files, rule set files, and any other data you need, you should validate your experiment plan. Go to the <a href="game-api-2.html#checkPlan">Validate your plan</a> link, and enter the name of your experiment plan. The validation tool will read the trial list files for your experiment, and various other files (rule sets etc) they refer to, and will check them for syntax errors, references to non-existing resources, etc. Please review the validator's report; if any deficiencies are reported, try to correct them, <a href="game-api-2.html#clear">clear the server tables</a>, and validate your plan again.
+
+ 
+    
+    <h3>Testing your plan</h3>
+  <p>One can do this with the GUI client or with the <a href="game-api-2.html#html">HTML play interface</a>.
+
+    <p>If you realize that your rules need to be corrected, and edit your trial list files or rule set files, <strong>you should <a href="game-api-2.html#clear">clear the server tables</a> before playing again (with another player ID).</strong> This will ensure that the server will remove the earlier version of the rule sets from its memory.
+
+      <h2>Keeping track of what was done</h2>
+
+    <p>For any later analysis to be valid, it is important that complete information were kept about the experimental environment, which includes both the control files and the software version.
+
+      <ul>
+	<li>Once you have developed and extensively tested your experiment plan, you open your experiment to real players (e.g. those coming from Amazon's Mechanical Turk). After this has been done, it would be a very good idea to never modify the experiment's trial list files and the files it refers to (rule set files etc). This will ensure that all participants have a comparable experience, and hat the collected data could be properly analyzed in the future. If you want to modify your rules, or the order in which they are presented to players, it is much better to create a new experiment plan.
+
+	<li>Make a record of what set of control files was deployed. If you make sure to always have the current set of files in the GitHub repository, it is, in principle, sufficient to know when the experiment was run, and you would be able to find the appropriately timed snapshot of the control files in the repository. However, you may also want to make a "snapshot" of the server's game data directory before the experiment starts, e.g. by making a zip file:
+	  <pre>
+	    cd /opt/tomcat
+	    zip -r ~/game-data-`date -Idate`.zip game-data
+	  </pre>
+	  This will produce a file with a name such as game-data-2021-03-15.zip in your home directory.
+
+	<li>Make a record of what version of the GUI client is used, and what version of the Game Server it uses. (<em>Exact instructions are to be added here</em>).
+	  
+      </ul>
+
+      <h2>Data processing</h2>
+
+    <p>See the <a href="data.html#export">section on exporting data from the Game Srever's SQL tables</a>, and the <a href="data.html#saved">section on files saved by the Game Server</a> in the Data Guide for guidance on what data are recorded during the experiment, and how they can be extracted from the server.
+
+    
+<hr>
+[<a href="index.html">Main page</a>]
+[<a href="data.html">Rule Game Server data guide</a>]
+  
+</body>
+</html>

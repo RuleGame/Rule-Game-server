@@ -17,6 +17,7 @@ public class AllRuleSets extends HashMap<String, RuleSet> {
 
     public static RuleSet read(File f) throws IOException, RuleParseException {
 	if (!f.canRead())  throw new IOException("Cannot read rule file: " + f);
+	Logging.info("Reading rule set file " + f);
 	String text = Util.readTextFile(f);
 	return new RuleSet(text);
     }
