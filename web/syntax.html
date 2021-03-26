@@ -40,7 +40,7 @@
 
   <h2>The structure of a rule file</h2>
     
-  <p>The rules used in a particular episode are defined by a rule file. The file consists of two sections: the optional <strong>Order definition section</strong>, followed by the <strong>Rule section</strong>. The rule file may also contain comment lines and blank lines..
+  <p>The rules used in a particular episode are defined by a rule file. The file consists of two sections: the optional <strong>Order definition section</strong>, followed by the <strong>Rule section</strong>. The rule file may also contain comment lines and blank lines.
 
     <h3>Comment lines</h3>
 
@@ -59,7 +59,7 @@
     <h2><a name="order">The order definition section</a></h2>
 
     <p>
-The rules may be preceded with the order definition section. This section defines one or several <strong>custom orders</strong>. Each order defines a way to order the numbers 1 thru <em>N</em><sup>2</sup>=36 (representing the cells of the board), possibly with ties (i.e. several elements having the same rank). An order without ties is simply a permutation. For example, the line
+The rules may be preceded with the order definition section. This section defines one or several <strong>custom orders</strong>. Each order defines a way to order the numbers 1 thru <em>N</em><sup>2</sup>=36 (representing the cells of the board), possibly with ties (i.e. several elements having the same rank). An order without ties is simply a permutation, written as a list of numbers surrounded by square brackets. For example, the line
 
 <pre>
 Order Manchu=[31, 25, 19, 13, 7, 1, 32, 26, 20, 14, 8, 2, ....]
@@ -70,7 +70,7 @@ defines an order in which the <em>N</em><sup>2</sup> cells are ordered like char
 <p>
 An order may have ties. E.g.
 <pre>
-Order FromBottomLeftCorner=[ 1, [2,7], [3,8,13], …]
+Order FromBottomLeftCorner=[ 1, [2,7], [3,8,13], ....]
 </pre>
 orders the <em>N</em><sup>2</sup> cells by the <em>L</em><sub>1</sub> norm (the Manhattan norm) distance to the bottom left corner. Thus the cell no. 1 (the one at (1,1)) is the first one, followed by cells 2 and 7 which are equally ranked, and so on.
 
@@ -108,26 +108,28 @@ orders the <em>N</em><sup>2</sup> cells by the <em>L</em><sub>1</sub> norm (the 
     <li><tt><strong>NearestObject</strong>=[[1,6,31,36],...,[15,16,21,22]]</tt>. The cells are ranked by the Euclidean distance to the nearest bucket.  
       (The coordinates of the cells and buckets are defined in the <a href="#general">General concepts</a> section).</li>
 
-    <li><tt><strong>Farthest</strong>=[[15,16,21,22],...,[1,6,31,36]]</tt>. The top-ranked are the cells that are maximally distant from their nearest buckets. (This is the reverse of <tt>Farthest</tt>).
+    <li><tt><strong>Farthest</strong>=[[15,16,21,22],...,[1,6,31,36]]</tt>. The top-ranked are the cells that are maximally distant from their nearest buckets. (This is the reverse of <tt>NearestObject</tt>).
       
   </ul>
 
+  <p>You can find the list of correctly spelled names of all build-in orders in the API page for the class <a href="api/edu/wisc/game/engine/Order.PositionSelector.html">Order.PositionSelector</a>.
+  
   <h2>The rule section</h2>
 
   <h3>Syntax</h3>
   <p>
   The rule file must contain at least one <strong>rule line</strong>. All rule lines together form the rule section, which is  located after the order section, if there is one.
 
-  <P>Each <strong>rule line</strong> in one line of text. It consists of an optional <strong>global counter</strong>, followed by one or several  <strong>atoms</strong>:
+  <P>Each <strong>rule line</strong> is one line of text. It consists of an optional <strong>global counter</strong>, followed by one or several  <strong>atoms</strong>:
   <pre>
     <em>[global_count]  atom [atom ...]</em> 
   </pre>
 
   <p><em>global_count</em> is either a star (<tt>*</tt>) or a positive integer.
 
-    <p>If the rule line has no <em>global_count</em>, or <em>global_count</em> is <tt>*</tt>, we call the rule line "unmetered"; this means that no restriction on the number it can be used is imposed, beyond what's imposed by the counters in individual atoms (see below). If a <em>global_count</em> is given, the rule line is "metered", and the value of the <em>global_count</em> given in this line of the rule file is used to initialize the rule's <em>global counter</em> every time this rule line is reset. 
+    <p>If the rule line has no <em>global_count</em>, or <em>global_count</em> is <tt>*</tt>, we call the rule line "unmetered"; this means that no additional restriction is imposed on the number of times it can be used, beyond what's imposed by the counters in individual atoms (see below). If a <em>global_count</em> is given, the rule line is "metered", and the value of the <em>global_count</em> given in this line of the rule file is used to initialize the rule's <em>global counter</em> every time this rule line is reset.  (For more details on counters, see <a href="#transfer">Transfer of control between rule lines</a>, under Semantics).
 
-
+      
   <p>Each <em>atom</em> has the following structure:
     <pre>
       (<em>count</em>, <em>shapes</em>, <em>colors</em>, <em>positions</em>, <em>buckets</em>)
@@ -168,7 +170,7 @@ Each <em>positionSpecifier</em> must be either an integer number in the range 1.
 Each position specifier must be either an integer number in the range 1..<em>N</em><sup>2</sup>,
       representing a <a href="#general">sequential number</a> of a cell, or the name of one of the <a href="#order">built-in or custom orders</a>.
        
-      <li><em>buckets</em>  describes a set of buckets. Similarly to the lists of shapes or colors, it can have any of the 3 forms:
+      <li><em>buckets</em>  describes a set of buckets into which a game piece can be put. Similarly to the lists of shapes or colors, it can have any of the 3 forms:
       <pre>*
 <em>bucket</em>
 [<em>bucket [, ...]</em>]	</pre>
@@ -184,7 +186,7 @@ Each position specifier must be either an integer number in the range 1..<em>N</
     <p>
     The variables <tt>p</tt>, <tt>pc</tt>, <tt>ps</tt> are nor defined before the first relevant actions have occured (i.e. <tt>p</tt> is not defined before the first successful move;  <tt>pc</tt> is not defined in the context of an attempt to move a triangle, unless a triangle has been previously successfully moved; etc). When any variable occurring in an expression is not defined during a move attempt, the expression is simply ignored, i.e. does not provide any destination.
 
-    <p> The values of the variables <tt>Nearby</tt> and <tt>Remotest</tt> are based on the position of the piece one attempts to move. E.g. for a piece located in the bottom left corner of our 6x6 board (1 &le; row &le; 3, 1 &le; column &le; 3), <tt>Nearby</tt>=3 and  <tt>Remotest</tt>=1. If we had a board with an even number of rows or columns (e.g. <em>N</em>=7), then for a piece located on the "central meridian" or the "equator" of the board (column=(N+1)/2, or row=(N+1)/2) these variables would be set-valued, with 2 values each; for a piece located in the central cell of the board, each of these variables would have the entire set [0,1,2,3] as its value.
+    <p> The values of the variables <tt>Nearby</tt> and <tt>Remotest</tt> are based on the position of the piece the player attempts to move. E.g. for a piece located in the bottom left corner of our 6x6 board (1 &le; row &le; 3, 1 &le; column &le; 3), <tt>Nearby</tt>=3 and  <tt>Remotest</tt>=1. If we had a board with an even number of rows or columns (e.g. <em>N</em>=7), then for a piece located on the "central meridian" or the "equator" of the board (column=(N+1)/2, or row=(N+1)/2) these variables would be set-valued, with 2 values each; for a piece located in the central cell of the board, each of these variables would have the entire set [0,1,2,3] as its value.
 
       <p>For more details on expressions, please see <a href="arithmetic.html">Bucket expression arithmetic</a>.
     
@@ -215,7 +217,7 @@ Each position specifier must be either an integer number in the range 1..<em>N</
 	<li>the counters of all metered atoms in this line that have accepted the move, <li>the global counter of the rule line itself, if it is metered.
       </ul>
 
-      <h3>Transfer of control between rule lines</h3>
+      <h3><a name="transfer">Transfer of control between rule lines</a></h3>
 
 <p>If the currently active rule line has accepted a move, the control stays with this line, and the Game Engine removes the game piece from the board, placing it into the requested destination bucket. If no pieces remain on the board, the episode is finished; if there are still pieces, the Game Engine will be ready to process the player's next move attempt.
       

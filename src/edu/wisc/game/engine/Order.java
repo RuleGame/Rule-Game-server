@@ -9,10 +9,12 @@ import edu.wisc.game.sql.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.sql.Board.Pos;
 
-
+/** An Order object describe a built-in or custom ordering of     
+ */
 public class Order extends Vector<Vector<Integer>> {
 
-    static enum PositionSelector {
+    /** Names of built-in (predefined) orders */
+    public static enum PositionSelector {
 	L1,L2,L3,L4,
 	T,B,R,L,
 	NearestObject, Farthest;
