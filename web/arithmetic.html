@@ -41,7 +41,7 @@
     
   <li>An elementary expression is an ID, a Number, a parenthesized expression, or a bracket list:<br>
     <em>E<sub>1</sub></em> ::=
-        <em>ID</em> | <em>Number</em> | <tt>[</tt><em>E<sub>4</sub> {, E<sub>4</sub>}<sup>+</sup> </em>   <tt>]</tt> | <tt>(</tt><em>E<sub>4</sub></em><tt>)</tt>
+        <em>ID</em> | <em>Number</em> | <tt>[</tt><em>E<sub>5</sub> {, E<sub>5</sub>}<sup>+</sup> </em>   <tt>]</tt> | <tt>(</tt><em>E<sub>5</sub></em><tt>)</tt>
    
   <li>An ID is one of the 5 predefined variable names (case-sensitive):<br>
     <em>ID</em>  ::= <tt>p</tt> |<tt>pc</tt> |<tt>ps</tt> |<tt>Nearby</tt> |<tt>Remotest</tt>    
@@ -67,7 +67,7 @@
   <li>An additive or multiplicative operation on set-valued arguments produces a cross-product. E.g. <em>S<sub>1</sub></em><tt>+</tt><em>S<sub>2</sub></em> produces a set that includes every value <em>x<sub>1</sub></em><tt>+</tt><em>x<sub>2</sub></em> with an  <em>x<sub>1</sub></em> in  <em>S<sub>1</sub></em> and   <em>x<sub>2</sub></em> in  <em>S<sub>21</sub></em>.    For example, [1,2,10]*[5,10] = [5,10,20,50,100];  [0,1,2]+[0] = [0,1,2];  [0,1,2]+[] = [].
   <li>The division (/) and the remainder operation (%) are performed like integer operatins in Java or C, with rounding toward zero. For example, [2,5,10]/[3] = [0,1,3];  [-4,4]%[3]=[-1,1].
   <li>A division by zero (or remainder from division by zero) produces no result; in other words,  no expression for the pair involved is included into the result set. For example,  [7]/[0,2] = [3]; [0]/[0]=[].
-  <li>Unlike C++ or Java, the equality operation  <em>S<sub>1</sub></em><tt>+</tt><em>S<sub>2</sub></em>  is also computed as a crossproduct, producing an empty set if  <em>S<sub>1</sub></em> has not a single element that's equal to an element from <em>S<sub>2</sub></em>, or a set with one element, [1], if  <em>S<sub>1</sub></em> has an element that's equal to an element from <em>S<sub>2</sub></em>. For example, [0,2]==[1,3] produces [], while [0,2,3]==[3]  produces [1]. Somewhat counterintuitively, []==[] produces [] as well.
+  <li>Unlike C++ or Java, the equality operation  <em>S<sub>1</sub></em><tt>==</tt><em>S<sub>2</sub></em>  is also computed as a crossproduct, producing an empty set if  <em>S<sub>1</sub></em> has not a single element that's equal to an element from <em>S<sub>2</sub></em>, or a set with one element, [1], if  <em>S<sub>1</sub></em> has an element that's equal to an element from <em>S<sub>2</sub></em>. For example, [0,2]==[1,3] produces [], while [0,2,3]==[3]  produces [1]. Somewhat counterintuitively, []==[] produces [] as well.
     <li>The negation operator works as follows: if <em>E</em> is an empty set, <tt>!</tt><em>E</em> evaluates to [1]; otherwise, to [].
 </ul>
 

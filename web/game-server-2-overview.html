@@ -1,0 +1,190 @@
+<html>
+<head>
+<style type="text/css">h2 {page-break-before:always}</style>
+</head>
+<body>
+  <h1>Rule Game Server Update</h1>
+  <div align="center">March 29, 2021</div>
+
+<p>
+       Documentation: <ul>
+	 <li> http://sapir.psych.wisc.edu:7150/w2020  -- Prodution (v 1.*)
+	 <li> http://sapir.psych.wisc.edu:7150/w2020-dev -- Development (v 2.*)
+       </ul>
+
+ 
+  
+  <h2>Overall Game Server Architecture</h2>
+
+       <img height=600 src="img/architecture.png">
+       
+  <h2>What's new in Game Server 2.*</h2>
+  
+<ul>
+    <li>Custom colors
+    <li>Custom shapes
+    <li>Subdirectories
+    <li>"Pick" operation
+    <li>New balancer
+    <li>Rule syntax enhancements
+    <li>Experiment plan validator
+    <li>Version check
+    <li>Backward compatibility
+    <li>Captive Game Server can emulate Web Game Server more closely
+  </ul>
+
+  <h2>Custom colors and shapes</h2>
+
+  <ul>
+    <li><a href="colors-and-shapes.html">Use arbitrary colors names</a>
+    <li>List colors in the color map file
+    <li><a href="colors-and-shapes.html">Use arbitrary shape names</a> (subdir OK)
+    <li>Provide an SVG file for each shape (maybe in a subdir)
+  </ul>
+ 
+  
+  <h2>Structure of an <a href="data.html">experiment plan</a></h2>
+
+  <p>
+  Experiment control files:
+  <p>
+  
+       <img height=600 src="img/experiment-plan-files.png">
+
+
+   <h2>You can use subdirectories</h2>
+   <ul>
+     <li>For each kind of files, a directory under <tt>/opt/tomcat/game-data</tt>:
+       <ul>
+	 <li><tt>trial-lists</tt>
+	 <li><tt>rules</tt>
+	 <li><tt>boards</tt>
+	 <li><tt>shapes</tt>
+       </ul>
+     <li>For each experiment, you can use an experiment-specific subdirectory for...
+       <ul>
+	 <li>rule set files
+	 <li>initial board files
+	 <li>shape files	  
+       </ul>
+     <li>A single color map file for all colors, though
+     <li>More manageable data for multiple experiments
+   </ul>
+  
+   <h2>"Pick" operation</h2>
+
+   <ul>
+     <li>New trial list parameters to control user experience:
+       <ul>
+	 <li><tt>feedback_switches=fixed</tt>: the player sees which game pieces are movable
+	 <li><tt>feedback_switches=free</tt>: the player does not know which pieces are movable until he tries
+	 <li><tt>free_wrong_cost=<em>0.3</em></tt>: the cost of a move attempt ("pick") on an immovable piece
+       </ul>
+     <li>I believe the new version of GUI client supports this (need to check)
+   </ul>
+   
+
+   <h2>New balancer</h2>
+
+   <ul>
+     <li>Automatic "balancing" when assigning new players to trial lists
+     <li>Old: goal = equalize the number of players initially assigned to each trial list
+     <li>New: goal = equalize the number of players "active" in each trial list
+     <li>"Active player" = either
+       <ul>
+	 <li>Received a completion code
+	 <li>Very recently registered, and, hopefully, still playing
+       </ul>
+       <li>Experiment manager can create a "defect file" to e.g. account for players who received a completion code, but should be ignored
+   </ul>
+ 
+
+   <h2><a href="syntax.html">Rule syntax</a> enhancements</h2>
+
+   <p>An <em>atom</em> of a rule line:
+   <pre>
+      (<em>count</em>, <em>shapes</em>, <em>colors</em>, <em>positions</em>, <em>buckets</em>)
+    </pre>
+
+   <p>
+   All-new destination bucket arithmetic:
+   <ul>
+     <li>Set arithmetic: every expression is interpreted as a set
+     <li>Variables such as <em>p,pc,ps</em> evaluate to an empty set [] or a set of 1 element
+     <li>Set union: [S1, S2]
+     <li>Arithmetic on sets produces a cross product:<ul>
+	 <li>       [] + [x,y] = []
+	 <li>       [a] + [x,y] = [a+x,a+y]
+	 <li>       [a,b] + [x,y] = [a+x,a+y,b+x,b+y]
+       </ul>
+     <li>Equality operation: [x1,x2,...]==[y1,y2,...] gives:
+       <ul><li> empty set [] (if the two sets have no elements in common);
+	 <li>[1] (if the two sets have at least one common element).
+       </ul>
+     <li>Negation:
+       <ul>
+	 <li> ![] gives [1];</li>
+	 <ii> ![any non-empty set] gives [].</li>
+       </ul>
+     <li>Modulo-4 postprocessing
+     <li>Can do fairly complex logic, e.g.<ul>
+	 <li>[!p*[0,1,2,3], !!p*(p+1)] : start with any bucket, then continue clockwise
+       </ul>
+   </ul>
+   
+   <h2>Backward compatibility</h2>
+   <ul>
+     <ii>An older version of the GUI client will still work with the new (2.*) Game Server
+       <li>An older experiment plan (from the 1.* era) will still work correctly with the 2.* Game Server
+   </ul>
+
+   <hr>
+   <ul>
+     <li>Prod: 
+       <ul>
+	 <li>Client:  <tt>http://sapir.psych.wisc.edu/rule-game/prod/ </tt>
+	 <li>Server: <tt>http://sapir.psych.wisc.edu:7150/w2020 </tt>
+       </ul>
+     <li>Dev: 
+       <ul>
+	 <li>Client:  <tt>http://sapir.psych.wisc.edu/rule-game/dev/ </tt>
+	 <li>Server: <tt>http://sapir.psych.wisc.edu:7150/w2020-dev </tt>
+       </ul>
+   </ul>    
+   
+
+  <h2>Let's promote dev to prod</h2>
+
+  <ul>
+    <li>Let's do a bit of testing on dev...
+    <li>and then promote it to prod!
+  </ul>
+  
+     <h2>New in the Captive Game Server</h2>
+
+       <img height=460 src="img/captive.png">     
+    <br> 
+     <ul>
+       <li>Better compatibility with the human subject experience
+       <li>Can feed a trial list file to the Captive Game Server, and tell it to play as per
+	 the parameter set in a specific line.</li>
+       <ii>Not trying to emulate the flow control of human-subjects experiments:
+	   <ul>
+	     <li>transition between normal series and bonus series;
+	     <li>ending normal or bonus series
+	     <li>rewards
+	   </ul>
+       </li>
+     </ul>
+     
+<!--
+   * New load balancer (assigning players to different trial lists based on how many players actually completed the experiment in each list, instead of based on how many have been assigned to each list);
+* Various extensions of the rule syntax;
+* The /CheckPlanService call, allowing an experiment designer to check in advance that his experiment plan (as defined by the trial list files, rule set files, initial board files) does not contain detectable errors. Such a tool has become more necessary as the syntax of of trial lists and rule set files has been expanded.
+* Expanded documentation.
+* Enhancements to the Captive Game Server, enabling the Machine Learning team to more closely simulate the experiene of human players.
+-->
+
+  
+</body>
+<html>
