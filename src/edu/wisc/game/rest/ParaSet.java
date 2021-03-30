@@ -283,7 +283,7 @@ public class ParaSet extends HashMap<String, Object> {
     */
     public boolean isFeedbackSwitchesFree() {
 	String s = get("feedback_switches").toString();
-	return s!=null && s.startsWith("free");
+	return s!=null && s.toLowerCase().startsWith("free");
     }
 
 }
