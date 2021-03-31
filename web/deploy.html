@@ -8,28 +8,35 @@
 
 <h2>Maintaining and deploying server code and server data</h2>
 
-<p>The Game Server source code (including documentation web pages) and the <a href="data.html#in">read-only data</a> (CSV files which control the experiments) are handled as outlined in the chart below:</p>
+<p>The Game Server source code (including documentation web pages) and the <a href="data.html#in">experiment control files (read-only data)</a> (CSV files which control the experiments) are handled as outlined in the chart below:</p>
 
 <a href="img/deploy.svg"><img src="img/deploy.png" height="600"></a>
 
   <p>The chart includes the following locations:
 
     <ul>
-      <li><strong>1. The GitHub repository</strong> is the place where the "master code" of the server code and read-only data is stored. The location is as follows: <a href="https://github.com/vmenkov/Rule-Game-server">Rule-Game-server</a>. If you need access to this project, send your Github account name to Vladimir, and ask to add you to the list of contributors.
+      <li><strong>1. The GitHub repository for the code</strong> is the place where the "master copy" of the server code is stored. The location is as follows: <a href="https://github.com/vmenkov/Rule-Game-server">Rule-Game-server</a>. If you need access to this project, send your Github account name to Vladimir, and ask to add you to the list of contributors.
 
-      <li><strong>2. Your work directory on your home of office computer.</strong> You can create and modify code and data files on any computer which is convenient for you to use, such as your home or office computer. For illustration, let's assume that the place where you work on this project is <tt>~/w2020</tt>.
+      <li><strong>2. Your work directory, for working on server code, on your home of office computer.</strong> You can create and modify code and data files on any computer which is convenient for you to use, such as your home or office computer. For illustration, let's assume that the place where you work on this project is <tt>~/w2020</tt>.
 	
       <li><strong>3. Your work directory on <tt>sapir</tt>.</strong> <tt>Sapir</tt> is just a Linux machine, and is as good as any place to work on editing more files. However, your work directory on sapir (let's assume it's also  <tt>~/w2020</tt>) is a particularly important place, since from there you can deploy code and data to the server directory.
 
       <li><strong>4. "live" code.</strong> The "running" Web Rule Game server's code is located in <tt>/opt/tomcat/webapps/w2020</tt>. You don't touch this directory directly, but deploy code there using the procedure outlioned in (c) below.
 
-      <li><strong>5. "live" data.</strong>  The "running" Web Rule Game server reads its read-only data from CSV files that are located under  <tt>/opt/tomcat/game-data</tt>. In order to ensure that your files don't just disappear after a subsequent deployment, it is preferably that you don't edit data files directly in this directory. Instead, deploy data  files to here from your sapir working directory (3) using the deployment procedure described in (d) below.
+      <li><strong>5. The GitHub repository for the data</strong> is the place where the "master copy" of the server's read-only data, i.e. the experiment control files,  is stored. The location is as follows:
+		 <a href="https://github.com/lupyanlab/Rule-Game-game-data">Rule-Game-game-data</a>  (To see this page, you must be an authorized user at <a href="https://github.com/lupyanlab">Lupyan Lab</a>, and you must be currently logged in to GitHub. Otherwise, you'll just see Error 404. If you need access to this project, send your Github account name to Kevin, and ask to add you to the list of contributors.)
+
+
+   <li><strong>6. Your work directory, for working on server data on any computer.</strong> You can create and modify code and data files on any computer which is convenient for you to use, such as your home or office computer, or sapir. For illustration, let's assume that the place where you work on this project is <tt>~/w2020</tt>.
+   	
+
+      <li><strong>7. "Live" data.</strong>  The "running" Web Rule Game server reads its experiment control files (read-only data) from CSV, TXT, and SVG files that are located under  <tt>/opt/tomcat/game-data</tt>. In order to ensure that your files don't just disappear after a subsequent deployment, you should not edit data files directly in this directory. 
     </ul>
   </p>
   
-<p>You may carry out the following procedures:
+<p>Staff who work with the server code may carry out the following procedures:
        <ul>
-	 <li><strong>(a) Check out.</strong> Before you start working on the serve code and data, either on your home computer (2) or on sapir (3), you need to get the current version of the project's files from the GitHub server. You can do it as follows:
+	 <li><strong>(a) Check out code.</strong> Before you start working on the server code, either on your home computer (2) or on sapir (3), you need to get the current version of the project's files from the GitHub server. You can do it as follows:
 	   <pre>
   cd ~/w2020	     
   mkdir game
@@ -48,21 +55,19 @@ Besides <tt>git</tt>, there are various other command-line and visual client app
 	   <br>
 	   Various subdirectories of <tt>game</tt> containing the following materials:
 	   <ul>
-	     <li><tt>game-data</tt> - read-only data files (rule sets, experiment plans, etc). See the <a href="data.html#in">Data Guide</a> for more info).
+	     <li><tt>game-data</tt> - read-only data files (rule sets, experiment plans, etc). See the <a href="data.html#in">Data Guide</a> for more info). <strong>Don't use this subdirectory -- it's superseded by a new, separate repository!.</strong>
 	     <li><tt>web</tt> - documentation
 	     <li><tt>src</tt> - server source code
 	   </ul>
 	 </li>
 	 <br>
 	 
-	 <li><strong>(b) Check in.</strong> Once you have done some work in your working directory (either on your home computer (2) or on sapir (3)), you may want to send your updated files to the Github repository, so that you or other contributors can continue working with them on other machines. Do it as follows:
+	 <li><strong>(b) Check in code.</strong> Once you have done some work in your working directory (either on your home computer (2) or on sapir (3)), you may want to send your updated files to the Github repository, so that you or other contributors can continue working with them on other machines. Do it as follows:
 	   <ol>
-	     <li>If you have created any new files or directories, make sure that they are tracked by the version control. For example, if you have created a new experiment plan named <tt>MyPlan</tt> and the rule sets named <tt>My-Rule-01.txt</tt> thru
- <tt>My-Rule-01.txt</tt>, you can "register" them with the version control with
+	     <li>If you have created any new files or directories, make sure that they are tracked by the version control. For example, if you have created a new document named <tt>foo.html</tt>, you can "register" them with the version control with
 	       <pre>
   cd ~/w2020/game
-  cd game-data
-  git add trial-lists/MyPlan rules/My-Rule-*.txt	       </pre>
+  git add web/foo.html	       </pre>
 	       <li>Send all new and updated files to the Github repository:
 	       <pre>
   cd ~/w2020/game
@@ -89,22 +94,49 @@ Besides <tt>git</tt>, there are various other command-line and visual client app
   cd ~/w2020/game
   ant clean javadoc war-dev
   cp ../w2020-dev.war /opt/tomcat/webapps	     </pre>
+       </ul>
 
 
-<li><strong>(d) Deploy data.</strong>
-<div style="color:red;">The paragraph below is not current; presently (Feb 2021), a different repository is being set up for the data. Ask Vladimir or Aria for details.</div>
-
-  For your convenience, the data files are deployed separately from the code. The simplest way to do it is to copy the entire data directory to the server location (5):
+<p>Staff working with experiment control files may carry out the following operations.
+       
+       <ul>
+	 <li><strong>(d) Check out the data.</strong> Before you start working on the server data, in the work directory (6), either on your home computer or on sapir, you need to get the current version of the project's files from the GitHub server. You can do it as follows:
 	   <pre>
-  cd ~/w2020/game
-  sudo cp game-data /opt/tomcat/game-data
-  sudo chown -R tomcat.tomcat /opt/tomcat/game-data	   </pre>
-	   The <tt>chown</tt> command above, while not always necessary, will ensure that the deployed files are owned by user <tt>tomcat</tt>, which is the user that runs the Apache Tomcat server, and therefore will guarantee that the server won't have any problems reading the data files.<br>
+  cd ~/w2020	     
+  mkdir game-data
+  cd game-data
+  git init
+  git remote add origin https://github.com/lupyanlab/Rule-Game-game-data.git
+  git pull origin master	   </pre>	   
+	   Later, you can update the files in your working directory from the Github repository every now and then as follows:
+	   <pre>
+  cd ~/w2020/game-data	     
+  git pull origin master	   </pre>
+	   This is something you may want to do every time when you think that other team members may have checked in their updates. This will ensure that their updates will propagate to your working version, and will reduce the chance of edit conflicts.
 
-	   In general, you don't need to copy the entire input data directory; if you know what you are doing, you can just copy individual files or subdirectories from <tt>~/w2020/game/game-data</tt> to the corresponding locations under <tt>/opt/tomcat/game-data</tt>.<br>
+	   <p>
+Besides <tt>git</tt>, there are various other command-line and visual client applications that work with Github (e.g. <tt>svn</tt>). If you use one of those, modify the above commands as appropriate for your client.
+	   <br>
+	   Various subdirectories of <tt>game-data</tt> contain a variety of data files, as per the <a href="data.html#in">Data Guide</a>.
+	 </li>
+	 <br>
+	 
+	 <li><strong>(e) Check in the data and automatically deploy them to the server.</strong> Once you have done some work in your working directory, you may want to send your updated files to the Github repository, so that you or other contributors can continue working with them on other machines. Do it as follows:
+	   <ol>
+	     <li>If you have created any new files or directories, make sure that they are tracked by the version control. For example, if you have created a new experiment plan named <tt>MyPlan</tt> and the rule sets named <tt>My-Rule-01.txt</tt> thru
+ <tt>My-Rule-01.txt</tt>, you can "register" them with the version control with
+	       <pre>
+  cd ~/w2020/game-data
+  git add trial-lists/MyPlan rules/My-Rule-*.txt	       </pre>
+	       <li>Send all new and updated files to the Github repository:
+	       <pre>
+  cd ~/w2020/game-data
+  git commit -a	     
+  git push origin 	     </pre>
+	   </ol>
 
-	   As with deploying the application, it would be better if instead of using <tt>sudo</tt> when working with the files in the <tt>game-data</tt> tree, you use <tt>newgrp tomcat</tt>. See  <a href="#permissions">permissions section</a> for details.
-
+	   <p>Kevin has set up the repository in such a way when you check your local copy of the data (with <tt>git push ...</tt>), the data are immediately automatically deployed to the server. If you log in to sapir, go to <tt>/opt/tomcat/game-data</tt> and check the time stamp and ownership of a file you have recently added and pushed to the repository, you will see that it will have a recent time stamp, and will be owned by user <tt>kmui</tt>.
+	   
        </ul>
 </p>
 
