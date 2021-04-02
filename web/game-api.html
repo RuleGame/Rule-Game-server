@@ -7,10 +7,10 @@
   <p align="center"><em>Ver 1.027, 2020-10-09</em></p>
 
 
-  <p>The "first batch" (prefix=<tt>/GameService</tt>) of the Rule Game web API consists of calls that can be used for players that do not participate in any experiments (i.e. don't have player IDs, don't have any trial lists associated with them, etc). This is suitable e.g. for the research interface, for the research team members to develop and test rule sets.</p>
+  <p>The "first batch" (prefix=<tt>/GameService</tt>) of the Rule Game web API consists of calls that can be used for players that do not participate in any experiment (i.e. don't have player IDs, don't have any trial lists associated with them, etc). This is suitable e.g. for the research interface, for the research team members to develop and test rule sets.</p>
 
 <p>This API includes several HTTP request/response pairs that can be used by the TypeScript/React GUI. Conceptually, its functionality is fairly similar to that of the 
-<a href="package.html">Captive Game Server</a> (used by the ML programs), but is customized for the needs of a GUI app used by human players. And, of course, the client communicates with it over HTTP, instead of pipes or the socket level.</p>
+<a href="captive.html">Captive Game Server</a> (used by the ML programs), but is customized for the needs of a GUI app used by human players. And, of course, the client communicates with it over HTTP, instead of pipes or the socket level.</p>
 
 <h3>Deprecated methods for players enrolled in experiments</h3>
 
@@ -71,7 +71,7 @@
      <li>POST <strong><tt>newEpisode</tt> (a):  Create a new episode:</strong>
         <form method="post" action="game-data/GameService/newEpisode"
 	 enctype="application/x-www-form-urlencoded">
-	  Rule set name (given in the param set <tt>rule_id</tt>; refers to a TXT file in <tt>game-data/rules</tt>, without the extension): <input name="rules" type="text" value="Rule-001"><br>
+	  Rule set name (given in the param set <tt>rule_id</tt>; refers to a TXT file in <tt>game-data/rules</tt>, without the extension): <input name="rules" type="text" value="rules-01"><br>
 	  Number of pieces (a number within the [min_objects, max_objects] 
 	  range given in the param set): <input name="pieces" type="text" value="4"><br>
 	  <input type="submit">
@@ -80,7 +80,7 @@
 	<li>POST <strong><tt>newEpisode</tt> (b): with additional parameters: the number of shapes and the number of colors:</strong>
      <form method="post" action="game-data/GameService/newEpisode"
 	 enctype="application/x-www-form-urlencoded">
-	  Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="Rule-001"><br>
+	  Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="rules-01"><br>
 	  Number of pieces (a number within the [min_objects, max_objects] 
 	  range given in the param set): <input name="pieces" type="text" value="4"><br>
 	  Number of shapes:  <input name="shapes" type="text" value="4"><br>
@@ -91,7 +91,7 @@
 	<li>POST <strong><tt>newEpisode</tt> (c): with additional parameters: the initial board:</strong>
      <form method="post" action="game-data/GameService/newEpisode"
 	 enctype="application/x-www-form-urlencoded">
-       Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="Rule-001"><br>
+       Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="rules-01"><br>
        Initial board name (refers to a JSON file in <tt>game-data/boards</tt>, without the extension): <input name="board" type="text" value="four-corners"><br>
        
 	  <input type="submit">
@@ -144,7 +144,7 @@
 	     <li>The value <tt>attemptCnt</tt> is incremented by one on each valid request (regardless of whether the piece requested was moved or not). Therefore, when calling <tt>move</tt>, the supplied value of the <tt>attemptCnt</tt> parameter should be 0 on the first move;   on subsequent calls, it should be equal to the value of attemptCnt returned by the previous <tt>move</tt> call.</p>
 	 </ul>
 
-	 <P>For the semantics of the <tt>code</tt> and  <tt>finishCode</tt> fields, see the entry on the MOVE command in the <a href="package.html#move">documentation on the Captive Game Server</a>.
+	 <P>For the semantics of the <tt>code</tt> and  <tt>finishCode</tt> fields, see the entry on the MOVE command in the <a href="captive.html#move">documentation on the Captive Game Server</a>.
 
 	  <p>A typical return value: on success	 <pre>
 {"attemptCnt":1,
@@ -193,7 +193,7 @@ On failure:<pre>
  (a):  Create a new episode:</strong>
         <form method="post" action="game-data/GameServiceHtml/newEpisodeHtml"
 	 enctype="application/x-www-form-urlencoded">
-	  Rule set name (given in the param set <tt>rule_id</tt>; refers to a TXT file in <tt>game-data/rules</tt>, without the extension): <input name="rules" type="text" value="Rule-001"><br>
+	  Rule set name (given in the param set <tt>rule_id</tt>; refers to a TXT file in <tt>game-data/rules</tt>, without the extension): <input name="rules" type="text" value="rules-01"><br>
 	  Number of pieces (a number within the [min_objects, max_objects] 
 	  range given in the param set): <input name="pieces" type="text" value="4"><br>
 	  <input type="submit">
@@ -202,7 +202,7 @@ On failure:<pre>
 	<li>POST <strong><tt>/newEpisodeHtml</tt> (b): with additional parameters: the number of shapes and the number of colors:</strong>
      <form method="post" action="game-data/GameServiceHtml/newEpisodeHtml"
 	 enctype="application/x-www-form-urlencoded">
-	  Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="Rule-001"><br>
+	  Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="rules-01"><br>
 	  Number of pieces (a number within the [min_objects, max_objects] 
 	  range given in the param set): <input name="pieces" type="text" value="4"><br>
 	  Number of shapes:  <input name="shapes" type="text" value="4"><br>
@@ -213,7 +213,7 @@ On failure:<pre>
 	<li>POST <strong><tt>/newEpisodeHtml</tt> (c): with additional parameters: the initial board:</strong>
      <form method="post" action="game-data/GameServiceHtml/newEpisodeHtml"
 	 enctype="application/x-www-form-urlencoded">
-       Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="Rule-001"><br>
+       Rule set name (given in the param set <tt>rule_id</tt>): <input name="rules" type="text" value="rules-01"><br>
        Initial board name (either refers to a JSON file in <tt>game-data/boards</tt>, without the extension, or is a complete path name): <input name="board" type="text" value="four-corners"><br>
        
 	  <input type="submit">

@@ -1,0 +1,134 @@
+<html>
+<head>
+  <!-- style type="text/css">h2 {page-break-before:always}</style -->
+  <title>Wildcard syntax for a wider object space</title>
+</head>
+<body>
+  <h1>Proposal: wildcard syntax for a wider object space</h1>
+  <div    align="center">April 1, 2021</div>
+
+<h2>Game Engine 1.* and 2.*: objects with exactly two properties</h2>
+  
+  <P>The original set of object (game pieces) supported by Rule Game Engine 1.* was very simple: it was a fixed set of 16 objects, understood as a cross product of the legacy color set with 4 elements and the legacy shape set with 4 elements.
+
+  <p>In Rule Game Engine 2.*, the object set is customized by the experiment designer, but it is still understood and handled as a cross product of a color set and shape set, both of which can be defined by the experiment designer as desired.
+
+  <p>In both cases, the Rule Game rule syntax allows one to handle objects based on their 2 properties, color and shape, instead of having to refer to each object type by its unique individual name. Why is this important?
+
+    <ul>
+      <li>
+    First, obviously, it allows one to write a single rule, e.g. "any triangle can be put into bucket 0" in a concise form,
+    <pre>
+      (*,triangle,*,*,0)
+    </pre>
+instead of what would be necessary if every object type were to be handled separately, i.e.
+    <pre>
+      (*,red-triangle,*,0) (*,black-triangle,*,0) (*,blue-triangle,*,0) (*,yellow-triangle,*,0)
+    </pre>
+In the above example, where every atom is "unemetered" (i.e. has a <tt>*</tt> for the counter), the ability to refer to an entire class of objects just by the color is merely syntactic sugar, since the former line is entirely equivalent to the latter.
+
+      <li>More importantly, the ability to refer to a category of objects is essential to be able to express rules such as "move 3 triangles, of any corners, to bucket 0, and then proceed to the next line or the rule set":
+    <pre>
+      (3,triangle,*,*,0)
+    </pre>
+    </ul>
+
+    <h2>Going forward: differently configured object spaces</h2>
+
+<p>Should a future version of the Game Engine (v. 3.*?)  accommodate more complex object spaces? Three possible approaches are described below.
+    
+    <h3>Directory trees</h3>
+
+  <p>One way to look at a more complicated set of objects is by having a tree-like hierarchical structure. E.g. imagine this directory tree with SVG files:
+    <pre>
+      animals/
+      animals/tigers/
+      animals/tigers/crouching/
+      animals/tigers/crouching/tiger1.svg
+      animals/tigers/crouching/tiger2.svg
+      animals/tigers/running/
+      animals/tigers/running/tiger3.svg
+      animals/tigers/running/tiger4.svg
+      animals/tigers/running/tiger5.svg
+      animals/tigers/leaping/
+      animals/tigers/leaping/tiger6.svg
+      animals/tigers/leaping/tiger7.svg
+    </pre>
+One could then address a group of objects by referring to a specific subtree, using syntax such as <pre>animals/tigers/*</pre> or  <pre>animals/tigers/running/*</pre>
+
+    <h3>Ordered properties</h3>
+
+  <p>The "subdirectory" approach may not be flexible enough if one wants to use different criteria to select groups of objects to use in rules. This can be handled by using, within each particular experiment, a standard scheme for naming objects. For example, one can combine using subdirectories for grouping objects with respect to one hierarchy, and hyphenated names for identifying objects' other properties that may also be used for grouping. For example, in a particular experiment, the experiment designer may choose to use the pattern <em>species-posture-orientation-colorOrBrightness</em> for naming images in some directory.
+
+    <pre>  
+      animals/
+      animals/tigers/tiger-running-right-bright-01.svg
+      animals/tigers/tiger-running-right-faded-02.svg
+      animals/tigers/tiger-running-left-bright-01.svg
+      animals/tigers/tiger-running-left-bright-02.svg
+      animals/tigers/tiger-leaping-right-faded-01.svg
+      animals/tigers/tiger-leaping-left-bright-01.svg
+      animals/tigers/tiger-crouching-left-bright-01.svg
+      animals/weasels/weasel-leaping-left-black-01.svg
+      animals/weasels/weasel-leaping-left-pink-01.svg
+    </pre>
+
+  <p>One can then allow wildcard expressions with stars in arbitrary positions, e.g.  <tt>animals/tigers/*</tt> will match all tigers;   <tt>animals/tigers/tiger-*-right-*</tt> will match all right-facing tigers; <tt>animals/*/*-leaping-*</tt> will match all leaping animals.
+    
+    <h3>Named properties</h3>
+
+  <p>An even more general, but also more laborious approach, could involve explicitly annotating every object definition with its properties. If this technique is adopted, the experiment designer would create, for a particular experiment or for a particular directory of images (an <strong>object table</strong>), a data file describing image properties. For example, it could be in CSV format, looking something like this:
+    <pre>
+#name,species,posture,orientation,color,brightness
+tiger-01,tiger,crouching,right,,bright
+tiger-02,tiger,crouching,left,,bright
+tiger-03,tiger,crouching,right,,faded
+tiger-04,tiger,crouching,right,,faded
+tiger-05,tiger,leaping,right,,bright
+tiger-06,tiger,leaping,left,,bright
+lion-01,lion,rampant,left,yellow,
+lion-02,lion,rampant,left,red,
+lion-03,lion,rampant,left,black,
+weasel-01,weasel,sitting,left,pink,
+weasel-02,weasel,sitting,right,black,
+weasel-03,weasel,running,right,*,
+....
+    </pre>
+    The set of properties here is custom-defined (given in the first line of the file). Not all objects have to have all properties. If an object does not have a particular property set, the appropriate cell of the CSV file is left empty; in that case, the object won't match any selection based on that property. Alternatively, one could put a <tt>*</tt> into a column, in which case the object will match every selection on this property.
+
+  <p>
+    Instead of having a fixed 5-tuple format,
+     <pre>
+      (<em>count</em>, <em>shapes</em>, <em>colors</em>, <em>positions</em>, <em>buckets</em>)
+    </pre>
+     atoms could have an extensible format, as follows:
+     <pre>
+           (<em>count</em>, <em>property1:valueList1 [, property2:valueList2]</em>,  <em>positions</em>, <em>buckets</em>)
+     </pre>
+     So, for example, an atom
+     <pre>
+       (*, species:tiger, brightness:bright, *, 0)
+     </pre>
+     will allow the player to pick all bright tigers and put them into bucket 0.
+     (If a particular properties is not expliitly listed in an atom, it means that there is no restriction on this property). An atom
+    <pre>
+       (3, color:black, T, 1)
+    </pre>
+    will allow the player to pick 3 objects whose color is black from the top occupied row of the board, and put them into bucket 1. In the table above, the matching objects for this atom will include our black lion, black weasel, and the "color-inclusive" weasel:
+ <pre>
+  lion-03,lion,rampant,left,black,
+  weasel-02,weasel,sitting,right,black,
+  weasel-03,weasel,running,right,*,
+ </pre>
+
+  <p>One could also use lists of values, e.g. the atom
+    <pre>
+      (2, species:[tiger,lion], direction:right, *, 0)
+    </pre>
+    will allow the player to pick 2 right-facing tigers or lions.
+
+    <p>If this last approach is chosen, measures will be taken to provide for backward compatibility. This can be done, for example, by requiring an additional column, <tt>objectType</tt> in the trial list file; the default value for that field would be <tt>legacy</tt>, which would mean that the Game Engine expects the traditional 5-element items with colors and shapes. Another value of that field would tell the Game Engine to expect a new-fangled rule set with an object table. The object table itself can be located in a specially-named file in the experiment plan directory. It can also be used as the list of object types for the random board generator, in combination with the min_objects and max_objects paramters. The other four "legacy" distribution parameters -- min_colors, max_colors, min_shapes, max_shapes -- can then be ignored.
+
+ 
+</body>
+</html>
