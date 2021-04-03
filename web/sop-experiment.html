@@ -1,15 +1,16 @@
 <html>
   <head><title>Standard Operating Procedures: Preparing and running an experiment with the Rule Game Server</title>
+   <link rel="stylesheet" type="text/css" href="css/rule-game.css"/>
   </head>
 <body>
   <h1>Standard Operating Procedures: Preparing and running an experiment with the Rule Game Server</h1>
 
-    <p align="center"><em>Updated 2021-03-15 for Game Server ver. 2.006</em></p>
+    <p align="center"><em>Updated 2021-04-02 for Game Server ver. 2.006</em></p>
 
     <h2>Preparing the experiment control files</h2>
 
     <h3>The control files</h3>
-  <p>As discussed in the <a href="data.html">Rule Game server data guide</a>, a number of files need to prepared in the <strong>server's game data directory</strong> (/opt/tomcat/game-data) in order to control the players' experience during your experiment. At a minimum, this should include:
+  <p>As discussed in the <a href="data.html">Rule Game server data guide</a>, a number of files need to be prepared in the <strong>server's game data directory</strong> (/opt/tomcat/game-data) in order to control the players' experience during your experiment. At a minimum, this should include:
     <ul>
       <li>The experiment plan directory (a subdirectory under /opt/tomcat/game-data/trial-lists), containing one or several trial list files. The server will <a href="balancing.html">pseudo-randomly assign</a> players, in a balanced manner, to different trial lists, so each of the trial list files will be the top-level file defining the experiences of a particulalry (randomly selected) subgroup of the participants of your experiment.
       <li>For each rule set mentioned in the trial list files, a  <a href="syntax.html">rule set file</a> must be created in the rules directory, /opt/tomcat/game-data/rules. If you are creating a group of rule set files to be used in just one experiment, or in some series of experiments, it would make sense to place them into a new, specially created subdirectory under the rules directory. This will make it easier to manage rule set files.
@@ -17,19 +18,23 @@
 
   <p>Depending on the design of your experiment, you may also need to create or modify other files:
     <ul>
-      <li>If your trial lists refer to pre-created initial boards, you need to create the board files.
+      <li>If your trial lists refer to pre-created initial boards, you need to create the initial board directory, which will contains the initial border files, and, possibly, an ordering control file.
       <li>If your experiment intends to use custom shapes (as reflected in the trial list files or rule sets), you need to make sure you have the SVG files for all shapes at the appropriate locations. (See: <a href="colors-and-shapes.html">Using custom shapes and colors in Rule Game Server 2.*</a>)
       <li>If your experiment intends to use custom colors (as reflected in the trial list files or rule sets), make sure you have those colors defined in the  <a href="colors-and-shapes.html#map">color map file</a>
     </ul>
 
     <h3>Using a GitHub repository</h3>
+    
 
-  <p>As discussed in an email message dated 2021-02-17, it probably would be a good idea to ensure that the "history" of  the experiment control files is fully reflected in a GitHub repository. One approach to this would be to edit the experiment control files not in the server's game data directory, but in one's development directory (somewhere under one's home directory), which is linked to the  GitHub repository. When the files are updated, one copies them from the development directory to the server's game data directory, and simultaneously commits them to the GitHub repository.
-
-    <p>
-      A simple approach would be to to create and modify control files in your own directory on sapir, copy them to the server directory every time you want to try them out, and finally commit everything to GitHub before actually running the experiment with "real" players.
-
-      <p>Either procedure will ensure that one could have a reliable way in the future to see what set of control files was deployed to the server during the experiment.
+  <p>One should not try to  edit the experiment control files directly in the server's game data directory. Instead, one should follow the procedures outlined in the <a href="deploy.html">Deployment SOP</a> (in that document, you only need to look at <span class="yellow">the sections written on yellow background</span>). In a nutshell:
+    <ul>
+      <li>The "master copy" of the experiment control files (the entire content of the /opt/tomcat/game-data directory tree) is kept in a GitHub repository;
+      <li>You can "check out" these files to your working directory, either on your home PC or on sapir;
+      <li>You can edit the files in your working directory as desired, adding new subdirectories and files as needed;
+      <li>Once done, you can check in your work into the repository; that will result in the updated files being automatically deployed to the  /opt/tomcat/game-data directory tree on sapir.
+	</ul>
+	
+      <p>This procedure ensures that at any point in the future we will have a reliable to see, by examining the repository's history, what set of control files was deployed to the server during any particular experiment.
 
         <h3>Checking your math</h3>
 

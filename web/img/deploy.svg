@@ -23,6 +23,14 @@
    inkscape:export-ydpi="96">
   <defs
      id="defs2">
+    <linearGradient
+       id="linearGradient1043"
+       osb:paint="solid">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop1041" />
+    </linearGradient>
     <marker
        inkscape:stockid="Arrow1Lstart"
        orient="auto"
@@ -56,7 +64,7 @@
        id="linearGradient6450"
        osb:paint="solid">
       <stop
-         style="stop-color:#ffe1eb;stop-opacity:1;"
+         style="stop-color:#ffe1da;stop-opacity:1;"
          offset="0"
          id="stop6448" />
     </linearGradient>
@@ -210,7 +218,7 @@
        x2="76.729164"
        y2="43.264584"
        gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(2.1615683,0,0,1.4407787,34.465378,-13.778442)" />
+       gradientTransform="matrix(2.1349739,0,0,1.440852,43.915708,-13.517029)" />
     <linearGradient
        inkscape:collect="always"
        xlink:href="#linearGradient4552"
@@ -260,8 +268,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="494.57039"
-     inkscape:cy="724.01835"
+     inkscape:cx="535.71565"
+     inkscape:cy="472.28519"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -304,7 +312,7 @@
          sodipodi:role="line"
          id="tspan9236">Rule-Game-server</tspan><tspan
          sodipodi:role="line"
-         id="tspan9238"></tspan></text>
+         id="tspan9238" /></text>
     <rect
        style="fill:url(#linearGradient4554);fill-opacity:1;stroke:#000000;stroke-width:0.21088338;stroke-opacity:1"
        id="rect4548"
@@ -547,24 +555,28 @@
          id="tspan7266"
          x="171.1078"
          y="150.52225"
-         style="stroke-width:0.30916825"></tspan></text>
+         style="stroke-width:0.30916825" /></text>
     <ellipse
        id="path3713-9"
-       style="fill:url(#linearGradient4524-7);fill-opacity:1;stroke:#000000;stroke-width:0.46692336;stroke-opacity:1"
-       ry="28.209248"
-       rx="42.893623"
-       cy="48.556252"
-       cx="157.42708" />
+       style="fill:url(#linearGradient4524-7);fill-opacity:1;stroke:#000000;stroke-width:0.46405393;stroke-opacity:1"
+       ry="28.210682"
+       rx="42.365891"
+       cy="48.820835"
+       cx="165.36458" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.05555556px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332;"
-       x="118.21674"
-       y="45.920753"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.05555534px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="125.62508"
+       y="46.714504"
        id="text4530-7"><tspan
          sodipodi:role="line"
-         id="tspan9230">5.GitHub repository</tspan><tspan
+         id="tspan9230"
+         x="125.62508"
+         y="46.714504">5.GitHub repository</tspan><tspan
          sodipodi:role="line"
-         id="tspan9232">Rule-Game-game-data</tspan></text>
+         id="tspan9232"
+         x="125.62508"
+         y="55.533947">Rule-Game-game-data</tspan></text>
     <rect
        style="fill:url(#linearGradient4554-2-1);fill-opacity:1;stroke:#000000;stroke-width:0.22888803;stroke-opacity:1"
        id="rect4548-4-5"
@@ -587,8 +599,8 @@
          sodipodi:role="line"
          id="tspan6543">computer</tspan></text>
     <path
-       style="fill:none;stroke:#000000;stroke-width:0.26858631;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker3152-8)"
-       d="m 173.59791,74.621751 c 12.20528,32.635599 12.20528,32.635599 12.20528,32.635599"
+       style="fill:none;stroke:#000000;stroke-width:0.26249123;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker3152-8)"
+       d="m 173.59791,76.086159 c 12.20528,31.171191 12.20528,31.171191 12.20528,31.171191"
        id="path4626-2-6"
        inkscape:connector-curvature="0" />
     <text
@@ -614,9 +626,37 @@
          x="205.55539"
          y="72.450386">(e) check in</tspan></text>
     <path
-       style="fill:none;stroke:#000000;stroke-width:0.2557404;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker3152-86)"
-       d="M 179.20387,107.6973 C 167.87979,75.806296 167.87979,75.806296 167.87979,75.806296"
+       style="fill:none;stroke:#000000;stroke-width:0.2515735;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker3152-86)"
+       d="M 179.207,107.7095 C 167.87663,76.866392 167.87663,76.866392 167.87663,76.866392"
        id="path4626-2-4"
        inkscape:connector-curvature="0" />
+    <rect
+       style="fill:none;fill-opacity:0.96818177;stroke:#000000;stroke-width:0.30000001;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.00990098"
+       id="rect961"
+       width="30.1625"
+       height="27.516666"
+       x="77.258331"
+       y="-14.150001" />
+    <rect
+       style="fill:#e4dc00;fill-opacity:0.17272728;stroke:#ffffa9;stroke-width:0.22639428;stroke-opacity:0.6"
+       id="rect4548-4-5-7"
+       width="87.017792"
+       height="262.31335"
+       x="121.90091"
+       y="17.419338" />
+    <rect
+       style="fill:none;fill-opacity:0.96818177;stroke:#ffffa9;stroke-width:0.30000001;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.6"
+       id="rect1051"
+       width="25.929167"
+       height="3.175"
+       x="121.70833"
+       y="162.0625" />
+    <rect
+       style="fill:#e4dc00;fill-opacity:0.22727272;stroke:#ffffa9;stroke-width:0.30000001;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.6"
+       id="rect1055"
+       width="15.875"
+       height="0.52916664"
+       x="162.98334"
+       y="32.416664" />
   </g>
 </svg>

@@ -1,11 +1,14 @@
 <html>
   <head><title>Standard Operating Procedures: Building and deploying the Game Server</title>
+    <link rel="stylesheet" type="text/css" href="css/rule-game.css"/>
   </head>
 <body>
   <h1>Standard Operating Procedures: Building and deploying the Game Server</h1>
 
-    <p align="center"><em>Updated 2021-03-31</em></p>
+    <p align="center"><em>Updated 2021-04-02.</em></p>
 
+<p class="yellow">Note: in this document, sections of importance for experiment designers (Aria, Ellise, Gary...) are in yellow. The rest is primarily of importance only to those who work with the server code.</p>
+    
 <h2>Maintaining and deploying server code and server data</h2>
 
 <p>The Game Server source code (including documentation web pages) and the <a href="data.html#in">experiment control files (read-only data)</a> (CSV files which control the experiments) are handled as outlined in the chart below:</p>
@@ -23,17 +26,18 @@
 
       <li><strong>4. "live" code.</strong> The "running" Web Rule Game server's code is located in <tt>/opt/tomcat/webapps/w2020</tt>. You don't touch this directory directly, but deploy code there using the procedure outlioned in (c) below.
 
-      <li><strong>5. The GitHub repository for the data</strong> is the place where the "master copy" of the server's read-only data, i.e. the experiment control files,  is stored. The location is as follows:
+	
+      <li class="yellow"><strong>5. The GitHub repository for the data</strong> is the place where the "master copy" of the server's read-only data, i.e. the experiment control files,  is stored. The location is as follows:
 		 <a href="https://github.com/lupyanlab/Rule-Game-game-data">Rule-Game-game-data</a>  (To see this page, you must be an authorized user at <a href="https://github.com/lupyanlab">Lupyan Lab</a>, and you must be currently logged in to GitHub. Otherwise, you'll just see Error 404. If you need access to this project, send your Github account name to Kevin, and ask to add you to the list of contributors.)
 
 
-   <li><strong>6. Your work directory, for working on server data on any computer.</strong> You can create and modify code and data files on any computer which is convenient for you to use, such as your home or office computer, or sapir. For illustration, let's assume that the place where you work on this project is <tt>~/w2020</tt>.
+   <li class="yellow"><strong>6. Your work directory, for working on server data on any computer.</strong> You can create and modify code and data files on any computer which is convenient for you to use, such as your home or office computer, or sapir. For illustration, let's assume that the place where you work on this project is <tt>~/w2020</tt>.
    	
 
-      <li><strong>7. "Live" data.</strong>  The "running" Web Rule Game server reads its experiment control files (read-only data) from CSV, TXT, and SVG files that are located under  <tt>/opt/tomcat/game-data</tt>. In order to ensure that your files don't just disappear after a subsequent deployment, you should not edit data files directly in this directory. 
+   <li class="yellow"><strong>7. "Live" data.</strong>  The "running" Web Rule Game server reads its experiment control files (read-only data) from CSV, TXT, and SVG files that are located under  <tt>/opt/tomcat/game-data</tt>. In order to ensure that your files don't just disappear after a subsequent deployment, you should not edit data files directly in this directory.
     </ul>
   </p>
-  
+
 <p>Staff who work with the server code may carry out the following procedures:
        <ul>
 	 <li><strong>(a) Check out code.</strong> Before you start working on the server code, either on your home computer (2) or on sapir (3), you need to get the current version of the project's files from the GitHub server. You can do it as follows:
@@ -97,7 +101,8 @@ Besides <tt>git</tt>, there are various other command-line and visual client app
        </ul>
 
 
-<p>Staff working with experiment control files may carry out the following operations.
+<div class="yellow">  
+<p>Staff working with the experiment control files may carry out the following operations:
        
        <ul>
 	 <li><strong>(d) Check out the data.</strong> Before you start working on the server data, in the work directory (6), either on your home computer or on sapir, you need to get the current version of the project's files from the GitHub server. You can do it as follows:
@@ -141,6 +146,7 @@ Besides <tt>git</tt>, there are various other command-line and visual client app
 	   
        </ul>
 </p>
+</div>  
 
 
 <h2>Production server vs. development server</h2>
