@@ -7,7 +7,7 @@
   <div align="center">March 29 - April 5, 2021</div>
 
 <p>
-       Documentation: <ul>
+       <a href="index.html">Documentation</a>: <ul>
 	 <li> http://sapir.psych.wisc.edu:7150/w2020/  -- Production (v 1.*)
 	 <li> http://sapir.psych.wisc.edu:7150/w2020-dev/ -- Development (v 2.*)
        </ul>
@@ -70,6 +70,13 @@
      <li>A single color map file for all colors, though
      <li>More manageable data for multiple experiments
    </ul>
+
+   
+  <p>Very limited use of wwildcards: In trial list files, to use all shapes from a directory:
+    <pre>
+      ...,shapes,...
+      ...,tigers/*,...
+    </pre>
   
    <h2>"Pick" operation</h2>
 
@@ -80,7 +87,7 @@
 	 <li><tt>feedback_switches=free</tt>: the player does not know which pieces are movable until he tries
 	 <li><tt>free_wrong_cost=<em>0.3</em></tt>: the cost of a move attempt ("pick") on an immovable piece
        </ul>
-     <li>I believe the new version of GUI client supports this (need to check)
+     <li>The new version of GUI client supports this.
    </ul>
    
 
@@ -126,13 +133,37 @@
 	 <li> ![] gives [1];</li>
 	 <ii> ![any non-empty set] gives [].</li>
        </ul>
-     <li>Modulo-4 postprocessing
+     <li>Modulo-4 postprocessing:
+       <ul>
+	 <li><tt>Nearby+[1,3]</tt> : identify the bucket X closest to the object; use eithers of the two buckets closest to X
+       </ul>
      <li>Can do fairly complex logic, e.g.<ul>
-	 <li>[!p*[0,1,2,3], !!p*(p+1)] : start with any bucket, then continue clockwise
+	 <li><tt>[!p*[0,1,2,3], !!p*(p+1)]</tt> : start with any bucket, then continue clockwise
        </ul>
    </ul>
    
-   <h2>Backward compatibility</h2>
+   <h2>Experiment plan validator</h2>
+
+   <p>You have created an experiment plan?</p>
+
+  <p><a href="game-api-2.html#checkPlan">Test it!</a></p>
+
+  <p>The validator checks the presence of all files, rule syntax, etc</p>
+
+  <h2>Version check</h2>
+
+  <p>You can check what version you're using</p>
+  
+  <a href="http://sapir.psych.wisc.edu/rule-game/dev/?version=true">http://sapir.psych.wisc.edu/rule-game/dev/?version=true</a>
+
+<pre>Client Version [environment-commitHash]: dev-f6639a9edaaf6dd6fa2c07ba8bf95bb8abe96c96
+Server URL: http://sapir.psych.wisc.edu:7150/w2020-dev
+Server Version: 2.006
+  </pre>
+  
+ 
+
+  <h2>Backward compatibility</h2>
    <ul>
      <ii>An older version of the GUI client will still work with the new (2.*) Game Server
        <li>An older experiment plan (from the 1.* era) will still work correctly with the 2.* Game Server
@@ -186,15 +217,15 @@
 	   </ul>
        </li>
      </ul>
-     
-<!--
-   * New load balancer (assigning players to different trial lists based on how many players actually completed the experiment in each list, instead of based on how many have been assigned to each list);
-* Various extensions of the rule syntax;
-* The /CheckPlanService call, allowing an experiment designer to check in advance that his experiment plan (as defined by the trial list files, rule set files, initial board files) does not contain detectable errors. Such a tool has become more necessary as the syntax of of trial lists and rule set files has been expanded.
-* Expanded documentation.
-* Enhancements to the Captive Game Server, enabling the Machine Learning team to more closely simulate the experiene of human players.
--->
 
+     <h2>What's next in Game Server 3.*?</h2>
+
+     Looking for input on ...
+     <ul>
+       <a href="proposal-wildcards.html">Wildcard syntax for a wider object space</a> - rules based on multiple features of objects
+     </ul>
+
+     
   
 </body>
 <html>
