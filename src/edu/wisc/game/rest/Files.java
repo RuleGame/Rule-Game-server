@@ -86,10 +86,10 @@ public class Files {
 
     /** Can the game server cache this rule set? The convention is, names not
 	starting with a slash refer to files in the tomcat directory,
-	whose content is supposed to be stabled; therefore, they can be
+	whose content is supposed to be stable; therefore, they can be
 	cached in the web app. Names starting with a slash are interpreted
 	as absolute paths of files, presumably belonging to developers
-	and thus possibly not stable; so the game servr does not cache those.
+	and thus possibly not stable; so the game server does not cache those.
      */
     public static boolean rulesCanBeCached(String ruleSetName) {
 	return !ruleSetName.startsWith("/");
