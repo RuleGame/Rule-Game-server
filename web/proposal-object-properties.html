@@ -1,0 +1,179 @@
+<html>
+<head>
+  <!-- style type="text/css">h2 {page-break-before:always}</style -->
+  <title>Image-and-property-based description of object</title>
+</head>
+<body>
+  <h1>Proposal: image-and-property-based description of objects</h1>
+  <div    align="center">Draft: April 12, 2021</div>
+
+<p>This is a more detailed development of an earlier proposal, <a href="proposal-wildcards.html">Wildcard syntax for a wider object space</a> (2021-04-01). It describes the proposed approach to defining and handling objects (game pieces) in Game Engine 3.*.
+  
+  <h2>Notation</h2>
+
+<p>For conciseness, in this document I will use the term "object" to refer to a class of identically looking entities, e.g. "black square(s)". The term "game piece" will refer to an individual object at a particular location on the board.
+  
+  <h2>Defining object types</h2>
+
+<P>There will be two ways of defining objects in Game Engine 3.*.
+
+<p>For compatibiliy with  Game Engine 1.* and 2.*, it still will be possible to define an object as a  <a href="colors-and-shapes.html">combination of a color (defined by an entry in the shared color map) and a shape (defined by a color-less SVG file)</a>; e.g. a black square is defined by its color (black) and shape (square, referring to <tt>square.svg</tt> in the shape directory). We will refer to such traditional objects as <strong>shape+color tuple objects</strong>, or <strong>SCT objects</strong>.
+
+<p>In addition, a new way of defining object types will be introduced. In this approach, each object will be defined by an image file (SVG, PNG, JPEG...) which already contains the desired coloring of the objects, and a list of properties, which represent some concepts with which humans can reason about objects. We will  refer to this new type of objects as 
+  <strong>image-and-properties-based objects</strong>, or 
+    <strong>IPB objects</strong>.
+
+<p>Since multiple experiments with different sets of objects can be carried out on the game server, it will be expected that the IPB object descriptions will be located in multiple directories under the <em>main shape directory</em>, <tt>/opt/tomcat/game-data/shapes</tt>. For example, if an experiment designer has named a particular experiment <tt>exp-20210501-a</tt> and decided to use two groups of objects, heraldic animals and arrows, as game pieces in that experiment, he may want to put them into new directories,  <tt>/opt/tomcat/game-data/shapes/exp-20210501-a/animals</tt> and  <tt>/opt/tomcat/game-data/shapes/exp-20210501-a/arrows</tt>. (Of course, the experimenters may decide to use the same group of images in multiple experiments, so maybe one of the directories will be simply named  <tt>/opt/tomcat/game-data/shapes/arrows</tt>, or whatever.
+
+  <p>Each directory containing image files (unless it only contains colorless SVG images for use in GS 2.*-style experiments) will need to contain a <em>properties file</em>, named <tt>properties.csv</tt>, which will contain the descriptions of all objects defined in that directory. This CSV file, therefore, will need to contain 1 line of text per each image file in the directory, in addition to the header line on top.  For example, it may look something like this:
+    <pre>
+#image,name,species,posture,orientation,color,brightness
+tiger-01.svg,tiger-01,tiger,crouching,right,,bright
+tiger-02.svg,tiger-02,tiger,crouching,left,,bright
+tiger-03.svg,tiger-03,tiger,crouching,right,,faded
+tiger-04.svg,tiger-04,tiger,crouching,right,,faded
+tiger-05.svg,tiger-05,tiger,leaping,right,,bright
+tiger-06.svg,tiger-06,tiger,leaping,left,,bright
+lion-01.png,lion-01,lion,rampant,left,yellow,
+lion-02.png,lion-02,lion,rampant,left,red,
+lion-03.png,lion-03,lion,rampant,left,black,
+weasel-01.jpg,weasel-01,weasel,sitting,left,pink,
+weasel-02.jpg,weasel-01.jpg,weasel-02,weasel,sitting,right,black,
+weasel-03.jpg,weasel-03,weasel,running,right,*,
+....
+    </pre>
+    In the table, above:
+    <ul>
+	 <li>
+	   The first column (<tt>image</tt>) is the only mandatory one. It contains the exect name (case-sensitive) of the image file used to display the object, complete with the extension (such as .svg, .jpg, or .png).
+	 <li>The next column, <tt>name</tt>, is optional. If supplied, it is recommended that it contains a unique value in each row; this value may, for example, be the same as that of the image file, but without the extenstion. The idea is that the value in that column can be used to write rules that apply only to objects of this specific kind.
+	 <li>All other columns contain whatever properties you want to assign to your objects in order to be able to use them in rules. The column names (i.e. property names) are arbitrary, and are up to the experiment designer For example, with a table such as the one described above, you will be able to create rules that distinguish objects based on the species of the animal (tiger vs. lion vs. weasel), their posture (rampant vs. seating vs. walking), the color of the image etc.
+    </ul>
+
+  <p>Property names should be written using lower case Latin letters; they may also contain the underscore character (_) and digits, but not in the first position.
+
+  <p>If, for a particular object, the cell corresponding to property X is empty (contains an empty string), this means that property X is not defined for that object (e.g., all our tigers are striped, and we don't associate a color property with them). This means that any rule atom that only select objects with property X having a particular value won't select this object.
+
+    <p>It is also possible for an object to contain an * in the column for property X. This object will match any X-based selector.
+    
+      <h3>Reserved names</h3>
+
+    <p>One should not use the following words for property names: <tt>image, pos</tt>.
+
+    <p>The property names <tt>shape</tt> and <tt>color</tt> are perfectly legal to use in a property file. The Game Server software and the GUI client will know that the objects involved are IPB objects, rather than as shape-color tuples, and will handle them accordingly.
+
+      <h3>Automatic generation of images and property files.</h3>
+
+    <p>It is expected than in many cases, both a group of object images and the property file describing them will be generating programmatically, by means of a customized program or shell script. For example, if one wants to create a directory with 24 images of arrows, consisting of red, green, and yellow arrows pointing in 8 directions (N, NE, E, SE, etc), one can manually create a single image (in an image editing program such as Inkscape, Gimp, or Microsoft Paint), and then have a script produce multiple images by rotating the original image and changing its color, using a command-line image manipulation utility such as <a href="https://imagemagick.org/">ImageMagick</a>.
+
+      <p>If you need some help with generating a series of images with an accompanying property file, contact Vladimir.
+      
+  <h2>Controlling the initial board generation</h2>
+
+  <p>In GS 1.* and 2.*, there were two methods for a parameter set (a line of a trial list file) to specify the process how boards initialized during the episodes played pursuant to this parameter set. In a given parameter set, one can either <a href="para-set.html#defineBoard">describe a sequence of prefedined initial boards</a>, or <a href="para-set.html#randomBoard">specify the parameters of a random initial board generator</a>.
+
+  <p>Both of these methods exist in GS 3.* as well, and support not only traditional shape+color tuple objects but also new IPB objects.
+
+    <h3>When using predefined initial boards</h3>
+    
+  <p>If your parameter set uses predefined initial boards, there is not much difference from GS 2.*. The way the parameter set <a href="para-set.html#defineBoard">specifies the location and ordering of prefedined initial boards</a> is exactly the same; any of the initial board files themselves may contain either SCT objects, or IPB objects, or any combination of both types of objects.
+
+        <h3>When using a random generator</h3>
+
+  <p>In GS 2.*, a parameter set could specify the parameters of the random board genrator, i.e. the min and max number of pieces on the board, the min and max number of colors and shapes, as well as the set of shapes and the set of colors from which the shapes and colors of all pieces are drawn. (If those two sets are not specified in the parameter set, the legacy 4-shape and 4-color sets are used as the defaults).
+
+  <p>In GS 3.*, if you want to generate random boards using IPB objects, you need to first specify the set from which these objects are drawn, by using the <tt>images</tt> parameters. You also need to provide the <tt>min_objects</tt> and <tt>max_objects</tt>, same as for the traditional SCT objects. You don't need the 
+ <tt>min_shapes</tt>, <tt>max_shapes</tt>,
+ <tt>min_colors</tt>, <tt>max_colors</tt> any more, since they are not applicable in the IPB context.
+
+  <p><strong><em>Question for discussion: if using IPBs, do you still feel that there is a need to provide something analogous to <tt>min_shapes</tt>, <tt>max_shapes</tt>, <tt>min_colors</tt>, <tt>max_colors</tt>? That is, an ability to specify that the objects of your set have property X (e.g. <tt>posture</tt>), and you want every board to have objects with no fewer than <em>n1</em> and no more than  <em>n2</em> different postures? If needed, I can work on a syntax for this feature, although it likely will be rather cumbersome.</em></strong>
+
+  <p>The value in the  <tt>images</tt> parameter, is essentially, a list of image files, with <tt>*</tt>-based and <tt>?</tt>-based
+<a href="linfo.org/wildcard.html">wildcard expressions</a> allowed, and the <tt>[x,y,...]</tt> notation for lists. The file locations can be relative (interpreted as relative to the server's shape directory) or absolute.  For example,
+    <pre>
+      [exp-20210501-a/animals/*,exp-20210501-a/arrows/*,legacy/black-square,/home/vmenkov/photos/tortoise.jpg]
+      </pre>
+will include all image files from 
+    <tt>/opt/tomcat/game-data/shapes/exp-20210501-a/animals</tt> and  <tt>/opt/tomcat/game-data/shapes/exp-20210501-a/arrows</tt>, as well as  <tt>/opt/tomcat/game-data/legacy/black-square.svg</tt> and <tt>/home/vmenkov/photos/tortoise.jpg</tt>. (For compatibility with GS 2.*, the <tt>.svg</tt> extension can be omitted for brevity; however, other extensions, such as  <tt>.jpg</tt> or  <tt>.png</tt>, should not be omitted when specifying individual files).
+
+    <p>
+	Note that, if you are using a random board generator in your parameter set, <strong>it cannot combine SCT objects and IPB objects in the same parameter set</strong>. If you want your random boards to contain, for example, both black squares and rampant lions, you have to create a directory in which shape-and-color tuples are defined as IPB objects, i.e. with an individual image file for each object  (<tt>black-suqare.svg</tt> etc)
+
+<H2>Writing rules</h2>
+
+
+  <p>
+    In addition to the "legacy" fixed 5-tuple format for <a href="syntax.html">rule atoms</a>,
+     <pre>
+      (<em>count</em>, <em>shapes</em>, <em>colors</em>, <em>positions</em>, <em>buckets</em>)
+     </pre>
+     , Game Engine 3.* will also have an extensible format, as follows:
+     <pre>
+           (<em>count</em>, <em>property1:valueList1 [, property2:valueList2]</em>  <em>[pos:positions,]</em>, <em>buckets</em>)
+     </pre>
+     As it is the case with the "legacy" atoms, each new-style atom can be understood as a conjunction. That is, for an atom to allow moving a game piece to a bucket, each part of the atom, viewed as a condition, must yield true on this game piece.
+
+     <p>  For example, an atom
+     <pre>
+       (*, species:tiger, brightness:bright, 0)
+     </pre>
+     will allow the player to pick all bright tigers and put them into bucket 0.
+     (If a particular property is not expliitly listed in an atom, it means that there is no restriction on this property). An atom
+    <pre>
+       (3, color:black, pos:T, 1)
+    </pre>
+    will allow the player to pick 3 objects whose color is black from the top occupied row of the board, and put them into bucket 1. In the table above, the matching objects for this atom will include our black lion, black weasel, and the "color-inclusive" weasel:
+ <pre>
+  lion-03,lion,rampant,left,black,
+  weasel-02,weasel,sitting,right,black,
+  weasel-03,weasel,running,right,*,
+ </pre>
+
+  <p>One could also use lists of values, e.g. the atom
+    <pre>
+      (2, species:[tiger,lion], direction:right, 0)
+    </pre>
+    will allow the player to pick 2 right-facing tigers or lions.
+
+    <h2>Game transcripts and other output files</h2>
+
+<p>The introduction of the IPB objects will necessitate some changes to the <a name="data.html#saved">CSV data files</a> written by the Game Server for subsequent analysis.
+
+   <h3>The initial board</h3>
+
+<p>In GS 1.* and 2.*, the initial board file describes each game piece by two columns, <tt>shape</tt> and <tt>color</tt>. In GS 3.*, we will add one more column, <tt>image</tt>. The traditional SCT objects will use the two old columns, and leave <tt>image</tt> empty; the new IPB objects will leave the  <tt>shape</tt> and <tt>color</tt> columns empty, while the  <tt>image</tt> column will contain the path to the image file (either relative to the server's shape directory, or absolute, as appropriate).
+  
+<h3>The transcript</h3>
+
+<p>The transcript files won't be affected, as they identify game pieces by their positions on the board.
+
+<h3>The detailed transcript</h3>
+
+<p>When the detailed transcript format was first introduced in GS 1.*, Aria wisely requested that a field named <tt>objectType</tt> be provided. In GS 1.* and 2.*, the value of this field is created from the color and shape properties of the object, and then capitalized, e.g. <tt>BLACK_CIRCLE</tt>. In GS 3.*, we will write the same value in this field for SCT objects, while for the new IPB objects the image path will be written into this field, e.g. <tt>/opt/tomcat/game-data/shapes/exp-20210501-a/animals/rampant-lion-03.jpg</tt>.
+  
+    <h2>Compatibility with Game Engine 1.* and 2.*</h2>
+
+    <p>All old (GS 1.* and 2.*) experiment control files (trial list files, rule sets files, initial board files) will continue to be usable in GS 3.*, with the same effect (behavior of the system) as in GS 2.*.
+
+<p>A JSON structure describing a board (such as an initial board file, or a JSON structure sent by the Game Server to the GUI client in response to a <tt>/display</tt> API call) may contain both GS 2.* legacy pieces (described by a <tt>shape</tt> and <tt>color</tt> and GS 3.* IPB objects.
+
+<p>A trial list file may also contain both parameter sets using the tradition SCT objects and those making use of the new IPB objects. As mentioned above, however, one cannot combine both types of objects in the random board generator within a single parameter set.
+
+<p>A single rule set file may also have atoms with the legacy 5-tuple structure, and atoms in the new format. Internally, an SCT object is handled the same way as an IPB object that has exactly 2 properties defined (shape and color), and a 5-tuple rule atom has the same effect as a new-format rule that explicitly refers to these two properties.
+
+
+
+
+    <!--
+    
+    <p>If this last approach is chosen, measures will be taken to provide for backward compatibility. This can be done, for example, by requiring an additional column, <tt>objectType</tt> in the trial list file; the default value for that field would be <tt>legacy</tt>, which would mean that the Game Engine expects the traditional 5-element items with colors and shapes. Another value of that field would tell the Game Engine to expect a new-fangled rule set with an object table. The object table itself can be located in a specially-named file in the experiment plan directory. It can also be used as the list of object types for the random board generator, in combination with the min_objects and max_objects paramters. The other four "legacy" distribution parameters -- min_colors, max_colors, min_shapes, max_shapes -- can then be ignored.
+-->
+  
+    <hr>
+
+    <div align="center">
+      [<a href="index.html">DOCS HOME</a>]
+      </div>
+  
+</body>
+</html>
