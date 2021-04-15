@@ -249,6 +249,11 @@ public class EpisodeInfo extends Episode {
 
 	    if (getPlayer()!=null) {
 		PlayerInfo p = getPlayer();
+
+
+		trialListId = p.getTrialListId();
+
+		
 		episodeNo = p.seriesSize(seriesNo)-1;	    
 		bonusEpisodeNo = bonus? p.countBonusEpisodes(seriesNo)-1 : 0;
 
@@ -258,6 +263,7 @@ public class EpisodeInfo extends Episode {
 		totalBoardsPredicted = p.totalBoardsPredicted();
 
 		ParaSet para=p.getPara(EpisodeInfo.this);
+		ruleSetName = para.getRuleSetName();
 		movesLeftToStayInBonus = EpisodeInfo.this.movesLeftToStayInBonus();
 	
 		if (getFinishCode()!=FINISH_CODE.NO) {
@@ -337,6 +343,11 @@ public class EpisodeInfo extends Episode {
 	    is finished, i.e. finishCode==0.
 	*/
 	public PlayerInfo.TransitionMap getTransitionMap() { return transitionMap; }
+
+	String trialListId;
+	String ruleSetName;
+	public String getTrialListId() { return trialListId; }
+        public String getRuleSetName() { return ruleSetName; }
     }
     
     /** Builds a display to be sent out over the web UI */
