@@ -207,8 +207,13 @@
 
 <p>Two more fields added in ver. 2.007:
 <pre>
-"trialListId":"trial_list_1", <em> Which trial list from the current experiment plan has been chosen for this player?</em>
-"ruleSetName":"TD-03",   <em> The name of the rule set contained in the current parameter set. This is a file path name, relative to the main rule set directory</em>
+"trialListId":"trial_list_1", //<em> Which trial list from the current experiment plan has been chosen for this player?</em>
+"ruleSetName":"TD-03",  //doc <em> The name of the rule set contained in the current parameter set. This is a file path name, relative to the main rule set directory</em>
+</pre>
+
+If the rule set file was specified in the param set as an absolute path, that's what you'll see here as well:
+<pre>
+"ruleSetName":"/home/vmenkov/test/rules/rule-a.txt",
 </pre>
       
  <li>POST <strong><tt>/move</tt>: Make a move:</strong>
