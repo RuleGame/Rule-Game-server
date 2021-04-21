@@ -13,7 +13,7 @@ import edu.wisc.game.util.*;
 /** Returns the content of the SVG file for the specified shape */
 public class GetSvgWrapper {
   
-   public GetSvgWrapper( HttpServletRequest request, HttpServletResponse response){
+    public GetSvgWrapper( HttpServletRequest request, HttpServletResponse response, Writer outw){
 
        try {
 	   String shape = request.getParameter("shape");
@@ -25,7 +25,8 @@ public class GetSvgWrapper {
 	   
 	   response.setContentType("image/svg+xml");   
 	   //response.setHeader("Content-Disposition","attachment; filename=\"" + f.getName() + "\"");   
-  
+
+	   /* // should not do response.getOutputStream() inside JSP!
 	   FileInputStream fileInputStream=new FileInputStream(f);
 	   ServletOutputStream out = response.getOutputStream();
 	   int i;   
@@ -34,6 +35,16 @@ public class GetSvgWrapper {
 	   }   
 	   fileInputStream.close();
 	   out.close();
+	   */
+
+	   FileReader r= new FileReader(f);
+	   int x;
+	   while((x = r.read()) != -1) {
+	       outw.write(x);
+	   }
+	   r.close();
+	   
+	   
        } catch(Exception ex) {
 	   try {
 	       response.setContentType("text/html");
