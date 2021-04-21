@@ -60,11 +60,19 @@
       <h2>The front-end (GUI) tools, from Kevin</h2>
       <ul>
 	<li><a href="http://sapir.psych.wisc.edu/rule-game-board-builder/dev/">Board builder</a> (dev)
-	<li>GUI play (prod), with 
+	<li><strong>GUI play (prod)</strong>, with 
 	  <form method="get"
 		action="http://sapir.psych.wisc.edu/rule-game/prod/">
-	    exp=<input type="text" name="exp" size="30" value="vmColorTest">,
-	    workerId=<input type="text" name="workerId" size="30" value="testing123kevinshapecolor">
+	    <table>
+	      <tr><td>
+		  exp=<input type="text" name="exp" size="30" value="vmColorTest">
+		  <td>
+<input type="radio" name="intro" value="true" checked>Show intro
+<tr><td>
+    workerId=<input type="text" name="workerId" size="30" value="testing123kevinshapecolor">
+    <td>
+<input type="radio" name="intro" value="false">Skip intro
+</table>
 	    <button type="submit">Play!</button>
 	      </form>
 	      
@@ -73,6 +81,11 @@
 		action="http://sapir.psych.wisc.edu/rule-game/dev/">
 	    exp=<input type="text" name="exp" size="30" value="vmColorTest">,
 	    workerId=<input type="text" name="workerId" size="30" value="testing123kevinshapecolor">
+	    
+	    <input type="radio" name="intro" value="true" checked>Show intro
+	    <input type="radio" name="intro" value="false">Skip intro
+
+	    
 	    <button type="submit">Play!</button>
 	      </form>
 	      

@@ -5,7 +5,7 @@
 </head>
 <body>
   <h1>Proposal: image-and-property-based description of objects</h1>
-  <div    align="center">Draft: April 13, 2021</div>
+  <div    align="center">Draft -- updated: April 20, 2021</div>
 
 <p>This is a more detailed development of an earlier proposal, <a href="proposal-wildcards.html">Wildcard syntax for a wider object space</a> (2021-04-01). It describes the proposed approach to defining and handling objects (game pieces) in Game Engine 3.*.
   
@@ -50,7 +50,7 @@ weasel-03.jpg,weasel-03,weasel,running,right,*,
 	 <li>All other columns contain whatever properties you want to assign to your objects in order to be able to use them in rules. The column names (i.e. property names) are arbitrary, and are up to the experiment designer For example, with a table such as the one described above, you will be able to create rules that distinguish objects based on the species of the animal (tiger vs. lion vs. weasel), their posture (rampant vs. seating vs. walking), the color of the image etc.
     </ul>
 
-  <p>Property names should be written using lower case Latin letters; they may also contain the underscore character (_) and digits, but not in the first position.
+  <p>Property names should be written using lower case Latin letters; they may also contain the underscore character (<tt>_</tt>) and digits, but not in the first position.
 
   <p>If, for a particular object, the cell corresponding to property X is empty (contains an empty string), this means that property X is not defined for that object (e.g., all our tigers are striped, and we don't associate a color property with them). This means that any rule atom that only select objects with property X having a particular value won't select this object.
 
@@ -66,15 +66,16 @@ weasel-03.jpg,weasel-03,weasel,running,right,*,
 
     <p>It is expected than in many cases, both a group of object images and the property file describing them will be generating programmatically, by means of a customized program or shell script. For example, if one wants to create a directory with 24 images of arrows, consisting of red, green, and yellow arrows pointing in 8 directions (N, NE, E, SE, etc), one can manually create a single image (in an image editing program such as Inkscape, Gimp, or Microsoft Paint), and then have a script produce multiple images by rotating the original image and changing its color, using a command-line image manipulation utility such as <a href="https://imagemagick.org/">ImageMagick</a>.
 
-      <p>If you need some help with generating a series of images with an accompanying property file, contact Vladimir.
-      
+    <p>In a more sophisticated example, you can have a 3D model of solid structure, such as a statue (e.g. in VRML or <a href="https://en.wikipedia.org/wiki/X3D">X3D</a> format), and a program that rotates it in various ways and saves various 2-D projections (equivalent to views from different directions) as separate images; for each image it will create an entry in the properties file describing the direction from which the statue is viewed (e.g. using spherical coordinates).
+     
+    <p>If you need some help with generating a series of images along with an accompanying property file, contact Vladimir.      
 
 	
   <h2>Controlling the initial board generation</h2>
 
   <p>In GS 1.* and 2.*, there were two methods for a parameter set (a line of a trial list file) to specify the process how boards initialized during the episodes played pursuant to this parameter set. In a given parameter set, one can either <a href="para-set.html#defineBoard">describe a sequence of prefedined initial boards</a>, or <a href="para-set.html#randomBoard">specify the parameters of a random initial board generator</a>.
 
-  <p>Both of these methods exist in GS 3.* as well, and support not only traditional shape+color tuple objects but also new IPB objects.
+  <p>Both of these methods exist in GS 3.* as well, and support not only traditional SC objects but also new IPB objects.
 
     <h3>When using predefined initial boards</h3>
     
@@ -89,6 +90,8 @@ weasel-03.jpg,weasel-03,weasel,running,right,*,
  <tt>min_colors</tt>, <tt>max_colors</tt> any more, since they are not applicable in the IPB context.
 
   <p><strong><em>Question for discussion: if using IPBs, do you still feel that there is a need to provide something analogous to <tt>min_shapes</tt>, <tt>max_shapes</tt>, <tt>min_colors</tt>, <tt>max_colors</tt>? That is, an ability to specify that the objects of your set have property X (e.g. <tt>posture</tt>), and you want every board to have objects with no fewer than <em>n1</em> and no more than  <em>n2</em> different postures? If needed, I can work on a syntax for this feature, although it likely will be rather cumbersome.</em></strong>
+
+     <p><strong><em>Answer (decidesd at 2021-04-19 meeting): no, we don't need that. If the experiment need this kind of distribution (or any other specialized distribution), they can write their own script to create a large set of initial boards, and then, in the parameter set, specify random selection from that set.</em></strong>
 
   <p>The value in the  <tt>images</tt> parameter, is essentially, a list of image files, with <tt>*</tt>-based and <tt>?</tt>-based
 <a href="linfo.org/wildcard.html">wildcard expressions</a> allowed, and the <tt>[x,y,...]</tt> notation for lists. The file locations can be relative (interpreted as relative to the server's shape directory) or absolute.  For example,
@@ -113,6 +116,13 @@ will include all image files from
      <pre>
            (<em>count</em>, <em>property1:valueList1 [, property2:valueList2]</em>  <em>[pos:positions,]</em>, <em>buckets</em>)
      </pre>
+
+     
+     For readability, one is also allowed to explicitly mark the count and buckets elements as such,
+       <pre>
+           (count:<em>count</em>, <em>property1:valueList1 [, property2:valueList2]</em>  <em>[pos:positions,]</em>, bucket:<em>buckets</em>)
+       </pre>
+       
      As it is the case with the "legacy" atoms, each new-style atom can be understood as a conjunction. That is, for an atom to allow moving a game piece to a bucket, each part of the atom, viewed as a condition, must yield true on this game piece.
 
      <p>  For example, an atom
@@ -131,12 +141,47 @@ will include all image files from
   weasel-03,weasel,running,right,*,
  </pre>
 
-  <p>One could also use lists of values, e.g. the atom
+  <p>Just like one could do it with shapes and colors in GS 1.* and 2.*, one will also be able to use lists of values with IBP objects. E.g. the atom
     <pre>
       (2, species:[tiger,lion], direction:right, 0)
     </pre>
     will allow the player to pick 2 right-facing tigers or lions.
 
+    <h3>Value ranges</h3>
+
+  <p>A new feature in GS 3.* will be value ranges.
+
+  <p>Suppose the property <tt>angle</tt> is integer-valued, with values ranges from 0 to 360; it is used to describe the orientation of objects (the rotation angle from some initial position). For example, suppose the experiment desisgner uses this property to indicate the angle by which an arrow is rotated, counterclockwise, from the direction "east" (X axis):
+    <pre>
+      image,color,angle
+      arrow-b-0,black,0
+      arrow-b-10,black,10
+      arrow-b-20,black,20
+      arrow-b-30,black,30
+      ...
+      arrow-b-350,black,350
+      arrow-r-0,red,0
+      ...
+ </pre>
+    In this case, it is legal to use the value range syntax, <tt>val1..val2</tt>
+    in the conditions applied to property  <tt>angle</tt>. For example, we can have the rule line
+    <pre>
+(count:*, angle:[0..45,315..360], bucket:[1,2])  (count:*, angle:45..135, bucket:[0,1]) (count:*, angle:135..225, bucket:[3,0])  (count:*, angle:135..225, bucket:[2,3])
+</pre>      
+    This rules means that e.g. every arrow pointing to an approximately northern direction (between angle 45 = NE and angle 135 = NW) can be put into the NE or NW buckets (buckets 2 and 1), etc.
+
+    <p>When creating a rule with a range for some property, the experiment designer should ensure that all objects for which this property is defined contain eiher a numerical value for this propery, or the special value * (which matches all selectors).
+    
+    <h3>Effect on the <em>buckets</em> statement</h3>
+
+  <p>As of GS 2.*, the <a href="arithmetic.html">expression</a> used as the last element of the atom makes use of the variables <tt>ps</tt> and <tt>pc</tt>, which refer to "the most recent bucket into which an object of this shape was put" and  "the most recent bucket into which an object of this shape was put". In GS 3.*, we need to extend this syntax to apply to IPB objects, so that we could express concepts such as e.g. "the most recent bucket into which an object with this orientation was put". I propose to use the following syntax:
+    <pre>
+      p.<em>property</em>
+    </pre>
+    where <em>property</em> is the name of the property in question. So, for example, if our objects have the property <tt>species</tt>, the variable named
+<tt>p.species</tt> will refer to  "the most recent bucket into which an object sof this species was put".
+
+    
     <h2><a name="json">Describing a board as a JSON structure</a></h2>
 
 <p>The Game Engine exports the informastion about the current state of the board in JSON format when the Web-based Game Server transmits this information to the GUI client, or when the Captive Game Server sends this information to the ML program that has spawned the CGS.
