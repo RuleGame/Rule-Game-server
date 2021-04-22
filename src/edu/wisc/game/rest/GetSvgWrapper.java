@@ -37,8 +37,9 @@ public class GetSvgWrapper {
 	   out.close();
 	   */
 
-	   FileReader r= new FileReader(f);
+	   //	   FileReader r= new FileReader(f);
 	   int x;
+	   FileInputStream r=new FileInputStream(f);
 	   while((x = r.read()) != -1) {
 	       outw.write(x);
 	   }
