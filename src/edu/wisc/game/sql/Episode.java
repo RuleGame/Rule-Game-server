@@ -83,7 +83,13 @@ public class Episode {
 	}
    }
     
-    final RuleSet rules;
+    //final
+    RuleSet rules;
+    /** Only used for Episodes restored from the SQL server, 
+	just to keep the GUI client from crashing */
+    void setRules(RuleSet _rules) { rules = _rules; }
+
+    
     /** The current board: an array of N*N+1 elements (only positions
 	[1..N*N] are used), with nulls for empty cells and non-nulls
 	for positions where pieces currently are. */
@@ -427,7 +433,10 @@ public class Episode {
 	return s;
     }
 
-    /** Dummy constructor; only used for error code production */
+    /** Dummy constructor; only used for error code production, and maybe
+	also by JPA when restoring a player's info (with all episodes)
+	from the database.
+    */
     public Episode() {
 	episodeId=null;
 	rules=null;

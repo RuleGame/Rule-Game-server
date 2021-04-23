@@ -13,6 +13,8 @@ import edu.wisc.game.parser.*;
 import edu.wisc.game.rest.ParaSet;
 import edu.wisc.game.rest.TrialList;
 import edu.wisc.game.rest.Files;
+import edu.wisc.game.engine.RuleSet;
+import edu.wisc.game.engine.AllRuleSets;
 
 /** Information about a player (what trial list he's in, what episodes he's done etc) stored in the SQL database.
  */
@@ -316,7 +318,7 @@ public class PlayerInfo {
     private boolean inBonus;
 
     
-    /** This is usesd when a player is first registered and a PlayerInfo object is firesst created */
+    /** This is usesd when a player is first registered and a PlayerInfo object is first created */
     public void initSeries(TrialList trialList) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
 
 	if (allSeries.size()>0) throw new IllegalArgumentException("Attempt to initialize PlayerInfor.allSeries again");
@@ -359,6 +361,10 @@ public class PlayerInfo {
 	System.err.println("Restore: will check " + allEpisodes.size() + " episodes");
 	for(int j=0; j< trialList.size(); j++) {
 	    ParaSet para =trialList.get(j);
+	    String ruleSetName = para.getRuleSetName();
+	    RuleSet rules = AllRuleSets.obtain(ruleSetName);
+
+	    
 	    Series ser = new Series(para);
 	    allSeries.add(ser);
 	    boolean needSave=false;
@@ -366,6 +372,10 @@ public class PlayerInfo {
 		System.err.print("Restore: check series=" + j +", ae["+k+"]=");
 		EpisodeInfo epi = allEpisodes.get(k++);
 		System.err.println(epi.report()+", completed=" + epi.isCompleted());
+
+		epi.setRules(rules); // just in case the GUI client needs them
+		// for some display
+		    
 		
 		if (!epi.isCompleted()) {
 		    epi.giveUp();
