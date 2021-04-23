@@ -83,6 +83,7 @@ public class Episode {
 	}
    }
     
+     @Transient
     //final
     RuleSet rules;
     /** Only used for Episodes restored from the SQL server, 
