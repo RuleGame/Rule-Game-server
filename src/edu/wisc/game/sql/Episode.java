@@ -779,10 +779,17 @@ public class Episode {
     }    
     
 
+    /** Returns the current board, or, on a restored-from-SQL-server episodes,
+	null (or empty board, to keep the client from crashing).
+    */
     Board getCurrentBoard(boolean showRemoved) {
-	return ruleLine==null? null:
-	    showRemoved? new Board(pieces, removedPieces, ruleLine.moveableTo()): 
-	    new Board(pieces, null, ruleLine.moveableTo());
+	if (isNotPlayable()) {
+	    return cleared? new Board() : null;
+	} else {
+	    return new Board(pieces,
+			     (showRemoved?removedPieces:null),
+			     ruleLine.moveableTo());
+	}
     }
 
     /** Shows the current board (without removed [dropped] pieces) */
