@@ -2,10 +2,11 @@
 <head>
   <!-- style type="text/css">h2 {page-break-before:always}</style -->
   <title>Image-and-property-based description of object</title>
-</head>
+   <link rel="stylesheet" type="text/css" href="css/rule-game.css"/>
+ </head>
 <body>
   <h1>Proposal: image-and-property-based description of objects</h1>
-  <div    align="center">Draft -- updated: April 20, 2021</div>
+  <div    align="center">Draft -- updated: April 23, 2021</div>
 
 <p>This is a more detailed development of an earlier proposal, <a href="proposal-wildcards.html">Wildcard syntax for a wider object space</a> (2021-04-01). It describes the proposed approach to defining and handling objects (game pieces) in Game Engine 3.*.
   
@@ -104,7 +105,7 @@ will include all image files from
     <p>
 	Note that, if you are using a random board generator in your parameter set, <strong>it cannot combine SC objects and IPB objects in the same parameter set</strong>. If you want your random boards to contain, for example, both black squares and rampant lions, you have to create a directory in which shape-and-color tuples are defined as IPB objects, i.e. with an individual image file for each object  (<tt>black-suqare.svg</tt> etc)
 
-<H2>Rule set files</h2>
+<H2><a name="rules">Rule set files</a></h2>
 
 
   <p>
@@ -117,24 +118,60 @@ will include all image files from
            (<em>count</em>, <em>property1:valueList1 [, property2:valueList2]</em>  <em>[pos:positions,]</em>, <em>buckets</em>)
      </pre>
 
-     
-     For readability, one is also allowed to explicitly mark the count and buckets elements as such,
+      <div class="yellow"><p>
+	<!-- For readability, one is also allowed to explicitly mark the count and buckets elements as such, -->
+	An alternative proposal is for a format where every field in the atom has to be explicitly labeled, and no field is mandatory:
        <pre>
            (count:<em>count</em>, <em>property1:valueList1 [, property2:valueList2]</em>  <em>[pos:positions,]</em>, bucket:<em>buckets</em>)
        </pre>
-       
-     As it is the case with the "legacy" atoms, each new-style atom can be understood as a conjunction. That is, for an atom to allow moving a game piece to a bucket, each part of the atom, viewed as a condition, must yield true on this game piece.
+       An absent field is equivalent to a present field with the value <tt>*</tt>, i.e. "anything is allowed, as far as this type of condition is concerned".
 
+       <p>       
+     As it is the case with the "legacy" atoms, each new-style atom can be understood as a conjunction. That is, for an atom to allow moving a game piece to a bucket, each part of the atom, viewed as a condition, must yield true on this game piece. The possible conditions include:
+	<li>an optional condition on the number of times the atom can be used until the rule line needs to be reset;
+	 <li>zero, one, or several conditions applied to various properties of the game piece the player wants to move. (No more than one condition per property);
+	 <li>an  optional condition on the position of the game piece to be moved;
+	 <li>an  optional condition on the choice of the destination bucket
+	   
+       </ul>
+       Thus, the simplest atom,
+      <pre>
+()
+       </pre>
+      is the trivial conjunction of no conditions -- so it means, "take any number of pieces and put them into any  buckets". If for example, the condition specifies <tt>count</tt> and the property <tt>species</tt>, e.g.
+           <pre>
+(count:3 species:[lion,mouse])
+	   </pre>
+	   it means, "take 3 pieces that are lions or mice, and put them into any buckets". The atom  
+        <pre>
+	  (species:tiger color[pink:blue] pos:T bucket:[0,1])	  
+	</pre>
+	means, "take any number of pink or blue tigers from the top occupied row of the board, and put them to bucket 0 or 1".
+</P>
+      </div>
+       
+       
      <p>  For example, an atom
      <pre>
        (*, species:tiger, brightness:bright, 0)
      </pre>
+    <div class="yellow">or in the alternative format,
+     <pre>
+       (species:tiger, brightness:bright, bucket:0)
+     </pre>
+    </div>
+    
      will allow the player to pick all bright tigers and put them into bucket 0.
-     (If a particular property is not expliitly listed in an atom, it means that there is no restriction on this property). An atom
+     (If a particular property is not explicitly listed in an atom, it means that there is no restriction on this property). An atom
     <pre>
        (3, color:black, pos:T, 1)
     </pre>
-    will allow the player to pick 3 objects whose color is black from the top occupied row of the board, and put them into bucket 1. In the table above, the matching objects for this atom will include our black lion, black weasel, and the "color-inclusive" weasel:
+   <div class="yellow">or 
+     <pre>
+       (count:3, color:black, pos:T, bucket:1)
+     </pre>
+    </div>
+     will allow the player to pick 3 objects whose color is black from the top occupied row of the board, and put them into bucket 1. In the table above, the matching objects for this atom will include our black lion, black weasel, and the "color-inclusive" weasel:
  <pre>
   lion-03,lion,rampant,left,black,
   weasel-02,weasel,sitting,right,black,
@@ -145,7 +182,12 @@ will include all image files from
     <pre>
       (2, species:[tiger,lion], direction:right, 0)
     </pre>
-    will allow the player to pick 2 right-facing tigers or lions.
+  <div class="yellow">or 
+     <pre>
+       (count:2, species:[tiger,lion], direction:right, bucket:0)
+     </pre>
+    </div>
+      will allow the player to pick 2 right-facing tigers or lions.
 
     <h3>Value ranges</h3>
 
@@ -212,6 +254,11 @@ will include all image files from
 
   <p>Recently (2021-04-13) on Slack Jerry <a href="https://rulegame.slack.com/archives/CKF4M34DB/p1618365633052100">apparently suggested</a> that they can use :"deep net feature representation" to anlyze the images. If something like this can be tried, then perhaps a ML program could try to play against the the Captive Game Server without being explicitly supplied features, just like a human would...
 
+<div class="yellow">
+    <P><strong>Based on Jerry's and Shubham's input at the 2021-04-19 meeting, it was understood that the ML team indeed intends to use image recognition. So their ML application can get the SVG or JPEG file based on the <tt>image</tt> attribute of each object. They don't need to use the explciti property information, so the captive server may choose not to supply it. However, I may also provide an option for the captive server to include it, so that the ML team can have an easier time in some experiments.
+</strong>
+</div>
+      
 </em>
   
     <h2>Game transcripts and other output files</h2>
