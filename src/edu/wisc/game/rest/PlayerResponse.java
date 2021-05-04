@@ -125,7 +125,7 @@ public class PlayerResponse extends ResponseBase {
 
 	boolean mustClose=(em==null);
 	if (mustClose) em=Main.getNewEM();
-	
+	try {
 	synchronized(em) {
 
 	Query q = em.createQuery("select m from PlayerInfo m where m.playerId=:c");
@@ -137,8 +137,9 @@ public class PlayerResponse extends ResponseBase {
 	    return null;
 	}
 	}
-
-	if (mustClose) { em.close(); em=null; }
+	} finally {
+	    if (mustClose) { em.close(); em=null; }
+	}
 	allPlayers.put(pid,x); // save in a local cache for faster lookup later
 	x.restoreTransientFields(); // make it ready to use
 	for(EpisodeInfo epi: x.getAllEpisodes())  {

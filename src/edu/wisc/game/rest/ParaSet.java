@@ -42,7 +42,7 @@ public class ParaSet extends HashMap<String, Object> {
     public Piece.Shape[] shapes = Piece.Shape.legacyShapes;
     public Piece.Color[] colors = Piece.Color.legacyColors;
     /** Will be set as appropriate if specified in the CSV file "images" column */
-    public String[] images={};
+    public String[] images=null;
     
 
     /** For JSON */
@@ -52,8 +52,8 @@ public class ParaSet extends HashMap<String, Object> {
      public String getShapes() {
 	return Util.joinNonBlank(";", shapes);
     }
-     public String getImages() {
-	return Util.joinNonBlank(";", images);
+    public String getImages() {
+	return images==null? null: Util.joinNonBlank(";", images);
     }
 
     /** Parses a semicolon-separated list of shapes.

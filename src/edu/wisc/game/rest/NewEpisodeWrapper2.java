@@ -76,15 +76,16 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	
 	try {
 	    // register the player if he has not been registered
+	    /*
 	    PlayerResponse q =new PlayerResponse(pid, null);
+
 	    if (q.error) {
 		setError(true);
 		setErrmsg(q.getErrmsg());
 		return;
 	    }
+	    */
 
-	    // it's ok to user em=null, since the object exists already,
-	    // and we just do a hash table lookup
 	    PlayerInfo x = PlayerResponse.findPlayerInfo(null, pid);
 	    Logging.info("NewEpisodeWrapper2(pid="+ pid+"): player="+
 			 (x==null? "null" : "\n" + x.report()));

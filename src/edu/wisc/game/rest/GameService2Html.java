@@ -119,8 +119,6 @@ public class GameService2Html extends GameService2 {
 	    //msg += " (Activate: " + w.getErrmsg();
 	}
 
-
-
 	NewEpisodeWrapper2 w = new NewEpisodeWrapper2(playerId, recent, false, false);
 	String episodeId = w.getEpisodeId();
 

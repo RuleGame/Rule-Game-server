@@ -69,6 +69,7 @@ abstract public class GameGenerator {
 	    File boardDir = Files.inputBoardSubdir(initial_boards);
 	    gg = new PredefinedBoardGameGenerator(ruleSetName,  boardDir, initial_boards_order);
 	} else if  (para.images!=null) {
+	    
 	    int[] nPiecesRange = {para.getInt("min_objects"),
 				  para.getInt("max_objects")};
 	    gg =new RandomImageGameGenerator(ruleSetName, nPiecesRange, para.images);
