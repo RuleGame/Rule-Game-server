@@ -382,16 +382,26 @@ The shape names are given using the same case as in the file names. They are not
 	If an error happens, a structure with an error field is returned instead:
 	<pre>
 {"error":true, "errmsg": "And this is why: ..."}
-	  </pre>
+	</pre>
+
+<li><a name="GetImageServlet">(Effective ver. 3.0)</a> GET <strong><tt>GetImageServlet</tt></strong> -- Get an image file:
+  <form method="get" action="GetImageServlet">
+    <input type="text" name="shape" value="star.svg" size="20">
+    <input type="submit">
+  </form>
+
+  This should return an image file (in SVG, PNG, JPEG, or GIF format, e.g. /opt/tomcat/game-data/shapes/star.svg), with the content type as approprite for the file type (<tt>image/svg+xml, image/jpeg</tt> etc). In the case of an error (e.g. no such file), error code 404 will be returned.
+  
 	
-<li>GET <strong><tt>admin/getSvg.jsp</tt></strong> -- Get SVG file:
+<li>(Obsolete as of ver. 3.0)<strike>GET <strong><tt>admin/getSvg.jsp</tt></strong> -- Get SVG file:
   <form method="get" action="admin/getSvg.jsp">
     <input type="text" name="shape" value="STAR" size="20">
     <input type="submit">
   </form>
 
   This should return an SVG file (e.g. /opt/tomcat/game-data/shapes/star.svg for argument STAR), with content type image/svg+xml. In the case of an error (e.g. no such file), error code 404 will be returned.
-	
+  </strike>
+  
   </ol>
 
 <hr>

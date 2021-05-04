@@ -16,7 +16,8 @@ public class Game {
 
     final Piece.Shape[] allShapes;
     final Piece.Color[] allColors;
-    
+    /** A game with IPB pieces have allImages!=non-null, while allShapes and allColors are both nulls; a color-and-shape game will have allImages==null */
+    final String[] allImages;
     
     public Game(RuleSet _rules, Board _initialBoard) {
 	rules = _rules;
@@ -24,17 +25,30 @@ public class Game {
 	randomObjCnt = 0;
 	allShapes=null;
 	allColors=null;
+	allImages=null;
     }
     public Game(RuleSet _rules, int _randomObjCnt, Piece.Shape[] _allShapes,    Piece.Color[] _allColors) {
 	rules = _rules;
 	randomObjCnt = _randomObjCnt;
 	allShapes =_allShapes;
 	allColors =_allColors;
+	allImages=null;
     }
+    /** A game with shape-and-color objects used as game pieces */
     public Game(RuleSet _rules, int _randomObjCnt, int _nShapes, int _nColors,
 		Piece.Shape[] _allShapes,    Piece.Color[] _allColors ) {
 	this(_rules,  _randomObjCnt, _allShapes,_allColors);
 	nShapes =  _nShapes;
 	nColors  = _nColors;
     }
+    /** A game with image-and-properties-based objects used as game pieces */
+    public Game(RuleSet _rules, int _randomObjCnt, String[] _allImages) {
+	rules = _rules;
+	randomObjCnt = _randomObjCnt;
+	allShapes = null;
+	allColors = null;
+	allImages = _allImages;
+    }
+
+    
 }

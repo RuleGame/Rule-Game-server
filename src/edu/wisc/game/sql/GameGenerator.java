@@ -53,6 +53,8 @@ abstract public class GameGenerator {
     /** Creates a GameGenerator based on a parameter set. Depending on
 	which parameters are set, a PredefinedBoardGameGenerator or a
 	RandomGameGenerator may be returned.
+	@param para The parameter set for which we will create a suitable
+	GameGenerator
      */
     public static GameGenerator mkGameGenerator(ParaSet para) throws IOException, RuleParseException, IllegalInputException, ReflectiveOperationException {
 
@@ -66,6 +68,10 @@ abstract public class GameGenerator {
 	    if (initial_boards_order==null ||initial_boards_order.length()==0) throw new  IllegalInputException("Parameter sets specifies initial_boards, but not initial_boards_order");
 	    File boardDir = Files.inputBoardSubdir(initial_boards);
 	    gg = new PredefinedBoardGameGenerator(ruleSetName,  boardDir, initial_boards_order);
+	} else if  (para.images!=null) {
+	    int[] nPiecesRange = {para.getInt("min_objects"),
+				  para.getInt("max_objects")};
+	    gg =new RandomImageGameGenerator(ruleSetName, nPiecesRange, para.images);
 	} else {
 
 	    int[] nPiecesRange = {para.getInt("min_objects"),

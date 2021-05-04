@@ -58,6 +58,22 @@
       <url-pattern>/game-data/*</url-pattern> 
     </servlet-mapping>
 
+
+    <servlet>
+    <servlet-name>GetImageServlet</servlet-name>
+    <description>
+      Test
+    </description>
+    <servlet-class>edu.wisc.game.rest.GetImageServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>GetImageServlet</servlet-name>
+    <url-pattern>/GetImageServlet</url-pattern>
+    <url-pattern>/GetImageServlet/*</url-pattern>
+  </servlet-mapping>
+
+
      <security-role>
       <description>
         Admins can do anything, including user administration

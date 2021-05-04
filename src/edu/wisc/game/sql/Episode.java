@@ -468,7 +468,13 @@ public class Episode {
 	
 	rules = game.rules;
 	Board b =  game.initialBoard;
-	if (b==null) b = new Board( game.randomObjCnt, game.nShapes, game.nColors, game.allShapes, game.allColors);
+	if (b==null) {
+	    if (game.allImages!=null) {
+		b = new Board( game.randomObjCnt,  game.allImages);
+	    } else { 
+		b = new Board( game.randomObjCnt, game.nShapes, game.nColors, game.allShapes, game.allColors);
+	    }
+	}
 	nPiecesStart = b.getValue().size();
 	for(Piece p: b.getValue()) {
 	    Pos pos = p.pos();
@@ -697,13 +703,16 @@ public class Episode {
 		int pos = (new Pos(x,y)).num();
 		String sh = "BLANK";
 		String hexColor = "#FFFFFF";
-
+		ImageObject io = null;
+		
 		if (pieces[pos]!=null) {
 		    Piece p = pieces[pos];
-		    sh = p.xgetShape().toString();
-		    hexColor = "#" + cm.getHex(p.xgetColor(), true);
+		    io = p.getImageObject();		    
+		    sh = (io!=null) ? io.key : p.xgetShape().toString();
+		    hexColor = "#"+ (io!=null? "FFFFFF" : cm.getHex(p.xgetColor(), true));
 		}
-		String z = "<img src=\"../../admin/getSvg.jsp?shape="+sh+"\">";
+		
+		String z = "<img width='80' src=\"../../GetImageServlet?image="+sh+"\">";
 		//z = (lastMove!=null && lastMove.pos==pos) ?    "[" + z + "]" :
 		//    ruleLine.isMoveable[pos]?     "(" + z + ")" :
 		//    "&nbsp;" + z + "&nbsp;";
@@ -722,7 +731,10 @@ public class Episode {
 		}
 
 		if (!padded) z = "&nbsp;" + z + "&nbsp;";
-		v.add(fm.td("bgcolor=\"" + hexColor+"\"", z));
+		String td = (io!=null)?
+		    fm.td( z):
+		    fm.td("bgcolor=\"" + hexColor+"\"", z);
+		v.add(td);
 	    }
 	    rows.add(fm.tr(String.join("", v)));
 	}
@@ -816,7 +828,7 @@ public class Episode {
 	return json.toString();
     }
 
-    public static final String version = "2.007";
+    public static final String version = "3.000";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();

@@ -175,6 +175,7 @@ public class Board// extends OurTable
 	for(Piece p: _value) addPiece(p);
     }
 
+    /** Creates an empty board */
     public Board() {
 	setName("Sample board");
 	setId(0);
@@ -245,10 +246,12 @@ public class Board// extends OurTable
     }
     
     
-    /** The main constructor for a random initial board.
+    /** The main constructor for a random initial board in GS 2.*.
 	@param randomCnt required number of pieces. 
 	@param nShapes required number of shapes. If 0 is passed, there is no restriction (independent decision is made for each piece)
 	@param nColors required number of colors. If 0 is passed, there is no restriction (independent decision is made for each piece)
+	@param allShapes the set from which shapes are drawn
+	@param allColors the set from which colors are drawn
      */
     public Board(int randomCnt, int nShapes, int nColors, Piece.Shape[] allShapes, Piece.Color[] allColors) {
 	setName("Random board with " + randomCnt + " pieces, "+nShapes+" shapes, and " + nColors+" colors");
@@ -268,6 +271,26 @@ public class Board// extends OurTable
 	    Pos pos = new Pos(w.get(i)+1);
 	    
 	    Piece p = new Piece( useShapes[i], useColors[i],  pos.x, pos.y);
+	    p.setId(i);
+	    value.add(p);
+	}
+    }
+
+      /** The main constructor for a random image-and-property-based initial board in GS 3.*.
+	@param randomCnt required number of pieces. 
+	@param allImages the set from which images are drawn
+     */
+    public Board(int randomCnt, String[] allImages) {
+	setName("Random board with " + randomCnt + " pieces, drawn from a set of "+allImages.length+" images");
+	if (randomCnt>N*N) throw new IllegalArgumentException("Cannot fit " + randomCnt + " pieces on an "+ N + " square board!");
+	
+	Vector<Integer> w  = random.randomSubsetOrdered(N*N, randomCnt); 
+
+	
+	for(int i=0; i<randomCnt; i++) {
+	    Pos pos = new Pos(w.get(i)+1);
+	    String image = allImages[random.nextInt(allImages.length)];
+	    Piece p = new Piece(image,  pos.x, pos.y);
 	    p.setId(i);
 	    value.add(p);
 	}

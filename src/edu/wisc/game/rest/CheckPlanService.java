@@ -13,10 +13,6 @@ import javax.ws.rs.core.*;
 import javax.persistence.*;
 
 
-// test
-//import javax.ws.rs.client.Entity;
-//import javax.ws.rs.core.MediaType;
-
 import edu.wisc.game.util.*;
 import edu.wisc.game.reflect.*;
 import edu.wisc.game.sql.*;
@@ -69,21 +65,70 @@ public class CheckPlanService extends GameService2 {
 	v.add(fm.h2("Checking the trial lists"));
 	String info = null;
 	try {
-	    Vector<String> lists = TrialList.listTrialLists(exp);
+	    Vector<String> lists = TrialList.listTrialLists(exp);	    
 	    v.add(fm.para("Found " + lists.size() + " trial lists for experiment plan " + fm.tt(exp)));
 	    for(String key: lists) {
 		v.add(fm.para("Checking trial list " + fm.tt(key)));
 		TrialList trialList  = new TrialList(exp, key);
+		if (trialList.error) {
+		    v.add(fm.para("Error: failed to create trial list <tt>" + key + "</tt>. Error=" + trialList.errmsg));
+		    errcnt ++;
+		    continue;
+		}
+
+		
 		int npara= trialList.size();
 		v.add(fm.para("... the trial list has " + npara + " parameter sets"));
 		int j=0;
 		for( ParaSet para: trialList) {
 		    j++;
 		    v.add(fm.para("Checking para set no. " + j + " out of "+npara+"..."));
-		    //-- Checking the values of "shapes" and "colors" params
-		    para.checkColors(cm);
-		    para.checkShapes();
 
+		    para.checkImages();
+		    if (para.images!=null) {
+			v.add(fm.para("This is an image-and-properties-based para set, which uses "+para.images.length+" images:"));
+			rows = new Vector<>();
+			for(String k: para.images) {
+			    String z = "<img width='80' src=\"../../GetImageServlet?image="+k+"\">";
+			    rows.add(fm.tr(fm.td(k) + fm.td(z)));
+			}
+			v.add( fm.table("border='1'", rows));
+			
+		    } else {
+			v.add(fm.para("Images are not used in this para set, which means that this is a shapes-and-colors para set"));
+
+			//-- Checking the values of "shapes" and "colors" params
+			para.checkColors(cm);
+			if (para.colors==null) {
+			    v.add(fm.para("Colors are not used in this para set"));
+			} else {
+			    v.add(fm.para("Para set uses "+para.colors.length+" colors:"));
+			    rows = new Vector<>();
+			    for( Piece.Color color: para.colors) {
+				String hexColor = "#" + cm.getHex(color,false);
+				//String hex1 = "#" + cm.getHex(key,true);
+				rows.add(fm.tr(fm.td(color.toString()) + fm.td("bgcolor=\"" + hexColor+"\"", fm.space(10))));
+			    }
+			    v.add( fm.table("border='1'", rows));
+			}
+			
+			
+			para.checkShapes();
+			if (para.shapes==null) {
+			    v.add(fm.para("Shapes are not used in this para set"));
+			} else {
+			    v.add(fm.para("Para set uses "+para.shapes.length+" shapes:"));
+			    rows = new Vector<>();
+			    for( Piece.Shape shape: para.shapes) {
+				String sh = shape.toString();
+				String z = "<img width='80' src=\"../../GetImageServlet?image="+sh+"\">";
+				rows.add(fm.tr(fm.td(sh) + fm.td(z)));
+			    }
+			    v.add( fm.table("border='1'", rows));
+			}
+		    }
+		    
+		    
 
 		    //-- Parsing the rule sets (errors can cause exceptions)
 		    info = "The rule set name = " + para.getRuleSetName();
@@ -154,6 +199,7 @@ public class CheckPlanService extends GameService2 {
      */
     public String clearTables(){
 	AllRuleSets.clearAll();
+	ImageObject.clearTable();
 	String title = "Clearing server tables";
 	
 	Vector<String> v = new Vector<>();

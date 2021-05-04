@@ -10,6 +10,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.sql.Piece;
+import edu.wisc.game.sql.ImageObject;
 
 @XmlRootElement(name = "ParaSet") 
 
@@ -28,6 +29,11 @@ Additional columns
 colors,shapes,pick_cost
 RED;PINK;ORANGE,SUN;MOON;STAR,0.5
 </pre>
+or
+<pre>
+images
+animals/*;weapons/boomerang-*
+</pre>
 */
     
 public class ParaSet extends HashMap<String, Object> {
@@ -35,7 +41,9 @@ public class ParaSet extends HashMap<String, Object> {
     /** Will be set as appropriate if specified in the CSV file "colors" column */
     public Piece.Shape[] shapes = Piece.Shape.legacyShapes;
     public Piece.Color[] colors = Piece.Color.legacyColors;
-
+    /** Will be set as appropriate if specified in the CSV file "images" column */
+    public String[] images={};
+    
 
     /** For JSON */
     public String getColors() {
@@ -43,6 +51,9 @@ public class ParaSet extends HashMap<String, Object> {
     }
      public String getShapes() {
 	return Util.joinNonBlank(";", shapes);
+    }
+     public String getImages() {
+	return Util.joinNonBlank(";", images);
     }
 
     /** Parses a semicolon-separated list of shapes.
@@ -99,6 +110,29 @@ public class ParaSet extends HashMap<String, Object> {
 	} else  return null;
     }
 
+    /** Parses the content of the "images" column. It may contain a
+	semicolon-separated list of wildcard expressions.
+     */
+    public static String[] parseImages(String val) throws IOException {
+	if (val==null) return null;
+	val = val.trim();
+	String[] ss = val.split(";");
+	Vector<String> w = new Vector<>();
+	if (ss.length>0) {
+	    HashSet<String> h = new HashSet<>();
+	    for(String s: ss) {
+		Vector<ImageObject> v = ImageObject.obtainImageObjects(s);
+		for(ImageObject io: v) {
+		    String z = io.key;
+		    if (h.contains(z)) continue;
+		    h.add(z);
+		    w.add(z);
+		}
+	    }
+	}
+	return w.size()>0? w.toArray(new String[0]): null;
+    }
+
     
     /*
    private int x;
@@ -127,12 +161,20 @@ public class ParaSet extends HashMap<String, Object> {
 	for(int k=0; k<nCol; k++) {
 	    String key =header.getCol(k);
 	    String val = line.getCol(k);
+
+	    System.out.println("DEBUG: column key=" + key+", val=" + val);
+
 	    if (key.equals("colors") && val!=null) {
 		Piece.Color[] _colors = parseColors(val);
 		if (_colors != null) colors = _colors;	
 	    } else if (key.equals("shapes") && val!=null) {
+		System.out.println("DEBUG: parseShapes(" + val+")");
 		Piece.Shape[] _shapes = parseShapes(val);
+		System.out.println("DEBUG: parseShapes(" + val+") done");
 		if (_shapes!=null) shapes = _shapes;			
+	    } else if (key.equals("images") && val!=null) {
+		String[] _images = parseImages(val);
+		if (_images !=null) images = _images;
 	    } else typedPut(key, val);
 	}
     }
@@ -261,6 +303,7 @@ public class ParaSet extends HashMap<String, Object> {
 	random boards) only contains valid colors (present in the color map)
      */
     public void checkColors(ColorMap cm) throws IOException {
+	if (colors==null) return;
 	for( Piece.Color color: colors) {
 	    if (!cm.hasColor(color)) throw new IOException("Color " + color + " is not in the color map");
 	}
@@ -271,6 +314,7 @@ public class ParaSet extends HashMap<String, Object> {
 	random boards) only contains valid shapes (for which SVG files exist)
      */
     public void checkShapes() throws IOException {
+	if (colors==null) return;
 	for( Piece.Shape shape: shapes) {
 	    File f = Files.getSvgFile(shape);
 	    if (!f.canRead())  throw new IOException("For shape "+shape+",  Cannot read shape file: " + f);
@@ -278,6 +322,15 @@ public class ParaSet extends HashMap<String, Object> {
 
     }
 
+
+    public void checkImages() throws IOException {
+	if (images==null) return;
+	for(String key: images) {
+	    ImageObject io = ImageObject.obtainImageObjectPlain(null, key, false);
+	}
+    }
+
+    
     /** True if the player is not told which pieces are movable.
 	(free = no objects are marked with X. Seeking to move an object is counted as some fraction of a move.)
     */

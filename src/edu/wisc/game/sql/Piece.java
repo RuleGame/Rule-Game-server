@@ -178,13 +178,36 @@ public class Piece  implements Serializable {
     public long getId() { return id; }
     @XmlElement 
     public void setId(long _id) { id = _id; }
+
+    /** Exists on IPB objects; null on SC objects */
+    private String image;
+    public String getImage() { return image; }
+    @XmlElement
+    public void setImage(String _image) { image = _image; }
+
+    /** Empty in  SC objects; contains properties in IPB objects */
+    //    HashMap<String,String> properties = new HashMap<String,String>();
+
+    public String getProperty(String name) {
+	ImageObject io=getImageObject();
+    	return io==null? null: io.get(name);
+    }
+
+    public ImageObject getImageObject() {
+	return image==null? null: ImageObject.obtainImageObjectPlain(null, image, false);
+    }
+  
+    
     
     @XmlTransient // we return ColorName instead!
     public Color xgetColor() { return color; }
 
     /** This method is used just for Jersey/REST, to simplify JSON output
 	structure, making it similar to that used in Game Engine 1.0 */
-    public String getColor() { return color==null? null: color.toString(); }
+    public String getColor() {
+	return color==null? getProperty("color"): color.toString();
+    }
+
     /** Used when loading a board from a JSON file */
     //@XmlElement 
     //public void setColor(String x) { color=Piece.Color.findColor(x); }
@@ -192,7 +215,9 @@ public class Piece  implements Serializable {
     public void setColor(Color x) { color=x; }
 
     /** For JSON */
-    public String getShape() { return shape==null? null: shape.toString(); }
+    public String getShape() {
+	return shape==null? getProperty("shape"): shape.toString();
+    }
     //    @XmlElement 
     //    public void setShape(String x) { shape=Piece.Shape.findShape(x); }
     /** This is how it used by our JsonToJava */
@@ -223,9 +248,21 @@ public class Piece  implements Serializable {
 	//	id = ""+_id;
 	shape = _shape;//.toString().toLowerCase();
 	color = _color;//.toString().toLowerCase();
+	image = null;
 	x = _x;
 	y = _y;
     }
+
+    public Piece(String _image, int _x, int _y) {
+	//	id = ""+_id;
+	image = _image;
+	shape = null;
+	color = null;
+	x = _x;
+	y = _y;
+    }
+
+    
 
     @Override
     public boolean equals(Object o) {

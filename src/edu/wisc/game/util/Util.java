@@ -28,6 +28,12 @@ public class Util {
 	return h;
     }
 
+    public static <T> Vector<T> array2vector(T... a) {
+	Vector<T> v = new  Vector<>();
+	for(T x:a) v.add(x);
+	return v;  	
+    }
+    
     /*
     public static HashSet<String> array2set(String[] a) {
 	HashSet<String> h = new HashSet<String>();
