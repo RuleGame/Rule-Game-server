@@ -3,6 +3,7 @@ package edu.wisc.game.parser;
 import java.io.*;
 import java.util.*;
 import java.text.*;
+import edu.wisc.game.util.Util;
 import edu.wisc.game.sql.Episode;
 
 public interface Expression {
@@ -121,11 +122,15 @@ public interface Expression {
      */
     public static class Id implements ArithmeticExpression  {
 	final public String sVal;
+	/** Set to true in those rare cases when we use Id to represent
+	    a quoted string (used for shapes in GS2) */
+	final boolean quoted;
 	Id(Token t) throws RuleParseException {
 	    if (t.type!=Token.Type.ID &&
 		t.type!=Token.Type.STRING)
 		throw new  RuleParseException("Not an id");
 	    sVal = t.sVal;
+	    quoted = (t.type==Token.Type.STRING);
 	}
 
 	public HashSet<Integer> evalSet(HashMap<String, HashSet<Integer>> h) {
@@ -135,15 +140,27 @@ public interface Expression {
 	public String toString() {
 	    return sVal;
 	}
-	public String toSrc() { return toString(); }
+	public String toSrc() {
+	    return quoted? "\""+toString()+"\"" : toString();
+	}
 	public HashSet<String> listAllVars() {
 	    HashSet<String> h = new HashSet<String>();
-	    h.add(sVal);
+	    h.add(toString());
 	    return h;
 	}
     }
-  
 
+    /** A.B */
+    public static class QualifiedId extends Id {
+	final public Id prefix;
+	QualifiedId(Token t1, Token t2) throws RuleParseException  {
+	    super(t2);
+	    prefix = new Id(t1);	    
+	}
+	public String toString() {
+	    return prefix.toString() + "." + super.toString();
+	}  
+    }
 
     /** !E evaluates to [1] if E is an empty set, or to [] otherwise */
     static class NegationExpression implements ArithmeticExpression {
@@ -293,6 +310,35 @@ public interface Expression {
 	}
     }
 
+    /** Id:ArithmeticExpression; used in GS 3 */
+    public static class ColonExpression implements Expression  {
+	public final Id prefix;
+	public final Expression arex;
+	ColonExpression (Id _prefix, Expression _arex) {
+	    prefix=_prefix;
+	    arex=_arex;
+	}
+	public String toSrc() {
+	    return prefix.toSrc() + ":" + arex.toSrc();
+	}
+	public String toString() {
+	    return prefix.toString() + ":" + arex.toString();
+	}
+
+    }
+
+    /** [Num..Num] */
+    public static class RangeExpression implements Expression  {
+	public final Num a0, a1;
+	RangeExpression(Num _a0, Num _a1) {
+	    a0=_a0;
+	    a1=_a1;
+	}
+	public String toSrc() {
+	    return "[" + a0.toSrc() + ".." + a1.toSrc() + "]";
+	}
+    }
+    
     /** A Star expression is simply "*". (Used in rule description for
 	counters, or to mean "Any"). */
     public static class Star  implements Expression {
@@ -305,38 +351,47 @@ public interface Expression {
     };
 
     final Star STAR = new Star();
-
+    
     /** Extracts one of the sections of a rule line: either the leading
 	counter (int or star), or one of the atoms (paren lists that
 	may include arithmetic expressions or stars)
      */
     static Expression mkCounterOrAtom(Vector<Token> tokens) throws RuleParseException {
 	if (tokens.size()==0) throw new RuleParseException("Unexpected end of expression");
-
-	Token a = tokens.firstElement();
-
+	System.out.println("DEBUG: mkCounterOrAtom, tokens={" + Util.joinNonBlank(" ", tokens) + "}");
+	Token a = tokens.remove(0);
+	System.out.println("DEBUG: poppped a=" +a);
+	
 	if (a.equals(Token.STAR)) {
-	    tokens.remove(0);
 	    return STAR;
 	} else if (a.type==Token.Type.NUMBER) {
-	    tokens.remove(0);
 	    return new Num(a);	    
 	} else if (a.type==Token.Type.OPEN && a.cVal=='(') {
-	    tokens.remove(0);
+	    // Now, expect a comma-separated list of ArEx or ColonEx
 	    Vector<Expression> v = new Vector<>();
-	    while(tokens.size()>0) {
-		a = tokens.firstElement();
+	    while(!tokens.isEmpty()) {
+		a = tokens.get(0);
 		Expression z;
 		if (a.equals(Token.STAR)) {
 		    tokens.remove(0);
 		    z = new Star();
+		} else if (tokens.size()>=2 &&
+			   a.type==Token.Type.ID &&
+			   tokens.get(1).type==Token.Type.COLON) {
+		    Id prefix = new Id(a);
+		    tokens.remove(0); // prefix 
+		    tokens.remove(0); // :
+		    System.out.println("DEBUG: Found prefix " + prefix + ":, rest={" + Util.joinNonBlank(" ", tokens) + "}");
+		    Expression y = mkRangeExpression(tokens);
+		    if (y==null) y = mkLongestArithmeticExpression(tokens);		    System.out.println("DEBUG: Found CE=" + prefix + ":" + y +", rest={" + Util.joinNonBlank(" ", tokens) + "}");
+		    z = new ColonExpression(prefix, y);
 		} else {
 		    z = mkLongestArithmeticExpression(tokens);
 		}
 		v.add(z);
 		
-		if (tokens.size()==0) throw new  RuleParseException("Unexpected end of a paren list expression");
-		Token b = tokens.firstElement();
+		if (tokens.isEmpty()) throw new  RuleParseException("Unexpected end of a paren list expression");
+		Token b = tokens.get(0);
 		if (b.type==Token.Type.COMMA) {
 		    tokens.remove(0);
 		    continue;
@@ -353,6 +408,25 @@ public interface Expression {
 	}
     }
 
+
+    /** If the given sequence of tokens starts with a range expression,
+	extracts it; otherwise, returns null */
+    private static RangeExpression mkRangeExpression(Vector<Token> tokens) throws RuleParseException {
+	if (tokens.size()<5) return null;
+	if (!(tokens.get(0).type==Token.Type.OPEN && tokens.get(0).cVal=='[')) return null;
+	if (tokens.get(1).type!=Token.Type.NUMBER) return null;
+	if (!tokens.get(2).equals(Token.DOTDOT)) return null;
+	if (tokens.get(3).type!=Token.Type.NUMBER) return null;
+	if (!(tokens.get(4).type==Token.Type.CLOSE && tokens.get(4).cVal==']')) return null;
+	tokens.remove(0);
+	Num a0 = new Num(tokens.remove(0));
+	tokens.remove(0);
+	Num a1 = new Num(tokens.remove(0));
+	tokens.remove(0);
+	return new RangeExpression(a0,a1);
+    }
+
+    
     /** Creates the longest ArithmeticExpression starting at the beginning of the tokens array. 
 	<pre>
 	E := E5
@@ -360,7 +434,7 @@ public interface Expression {
 	E4 :=  E3  |  E3+E3+...
 	E3 :=  E2  |  E2*E2...
 	E2 :=  E1  |  !E2
-	E1 :=  (E)  |  Id  | Num |  [E4,E4,...]
+	E1 :=  (E)  |  Id.Id | Id  | Num |  [E4,E4,...]
     */
     static ArithmeticExpression mkLongestArithmeticExpression(Vector<Token> tokens) throws RuleParseException {
 	return mkLongestE5( tokens);
@@ -415,14 +489,21 @@ public interface Expression {
 	    return mkLongestE1(tokens);
 	}
     }
-   /** 	E1 :=  (E)  |  Id  | Num |  [E,E,...] */ 
+   /** 	E1 :=  (E) | Id.Id |  Id  | Num |  [E,E,...] */ 
     static ArithmeticExpression mkLongestE1(Vector<Token> tokens) throws RuleParseException {
 	if (tokens.size()==0) throw new RuleParseException("Unexpected end of line. (Expected an E1-type arithmetic expression)");
 	Token a = tokens.firstElement();
 
 	if (a.type == Token.Type.ID) {
 	    tokens.remove(0);
-	    return new Id(a);
+	    if (tokens.size()>=2 && tokens.get(0).type==Token.Type.DOT && tokens.get(0).type == Token.Type.ID) {
+		tokens.remove(0);
+		Token b = tokens.firstElement();
+		tokens.remove(0);
+		return new QualifiedId(a,b);
+	    } else {
+		return new Id(a);
+	    }
 	} else if (a.type == Token.Type.STRING) {
 	    // quoted strings are allowed, as if they were IDs, to better handle the "shape" column
 	    tokens.remove(0);

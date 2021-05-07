@@ -226,7 +226,7 @@ public class Piece  implements Serializable {
     public Shape xgetShape() { return shape; }
   
     public String objectType() {
-	return "" + color + "_" + shape;
+	return (image!=null)? image : "" + color + "_" + shape;
     }
 
     public int getX() { return x; }

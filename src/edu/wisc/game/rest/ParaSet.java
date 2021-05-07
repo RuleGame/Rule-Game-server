@@ -130,7 +130,10 @@ public class ParaSet extends HashMap<String, Object> {
 		}
 	    }
 	}
-	return w.size()>0? w.toArray(new String[0]): null;
+	if (w.size()==0) return null;
+	String q[] =  w.toArray(new String[0]);
+	Arrays.sort(q);
+	return q;
     }
 
     

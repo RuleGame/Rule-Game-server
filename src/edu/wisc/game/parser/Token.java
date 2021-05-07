@@ -11,7 +11,7 @@ public class Token {
     
     //static void foo1(){};
 
-    public enum Type { NUMBER, ID, STRING, COMMA, MULT_OP, ADD_OP, EQQ /* == */, UNARY_OP, OPEN, CLOSE, EQUAL /* = */};
+    public enum Type { NUMBER, ID, STRING, COMMA, MULT_OP, ADD_OP, EQQ /* == */, UNARY_OP, OPEN, CLOSE, EQUAL /* = */, COLON, DOT, DOTDOT};
     public final Type type;
     public char cVal=0;
     public String sVal=null;
@@ -60,6 +60,8 @@ public class Token {
 	    Character.isDigit(c)? Type.NUMBER:
 	    Character.isJavaIdentifierStart(c)? Type.ID:
 	    c==','? Type.COMMA:
+	    c==':'? Type.COLON:
+	    c=='.'? Type.DOT:
 	    c=='+' || c=='-'? Type.ADD_OP:
 	    c=='*' || c=='/' || c=='%' ? Type.MULT_OP:
 	    c=='!' ? Type.UNARY_OP:
@@ -87,6 +89,7 @@ public class Token {
     }
     
     static final Token EQQ = new Token(Type.EQQ, "==");
+    static final Token DOTDOT = new Token(Type.DOTDOT, "..");
     static final Token BANG = wrapToken('!');
     static final Token STAR = wrapToken('*');
     
@@ -95,7 +98,8 @@ public class Token {
 	if (type==Type.NUMBER) {
 	    nVal = Integer.parseInt(sVal);
 	    cVal=0;
-	} else if (type==Type.ID || type==Type.STRING || type==Type.EQQ) {
+	} else if (type==Type.ID || type==Type.STRING
+		   || type==Type.EQQ || type==Type.DOTDOT ) {
 	    cVal=0;
 	} else {
 	    cVal=sVal.charAt(0);
@@ -104,11 +108,12 @@ public class Token {
 
     
     //--- Used by the tokenizer
-    static class Tokenizer {
-	final Vector<Token> result = new Vector<>();
+    private static class Tokenizer {
+	private final Vector<Token> result = new Vector<>();
 
 	private Token currentToken=null;
 
+	/** Tokenizes a line of text */
 	Tokenizer(String x) throws RuleParseException {
 	    for(int i=0; i<x.length() && !commentHasStarted; i++) {		
 		addC(x.charAt(i));
@@ -142,6 +147,11 @@ public class Token {
 		} else if (currentToken.type==Type.EQUAL && c=='=') {
 		    // Instead of EQUAL '=' it is now EQQ '=='		    
 		    currentToken=EQQ;
+		    flush();
+		    return;
+		} else if (currentToken.type==Type.DOT && c=='.') {
+		    // Instead of DOT '.' it is now DOTDOT '..'		    
+		    currentToken=DOTDOT;
 		    flush();
 		    return;
 		} else {

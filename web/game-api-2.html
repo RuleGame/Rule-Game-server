@@ -4,7 +4,7 @@
 <body>
   <h1>Web API for the use by the Rule Game client - second batch</h1>
 
-  <p align="center"><em>Version 2.007,  2021-04-15</em></p>
+  <p align="center"><em>Version 3.001,  2021-05-06</em></p>
 
   <p>This is the "Second Batch" (prefix=<tt>/GameService2</tt>)  of the Game Service web API calls. They are intended for use with a client app that works with players enrolled in experiments; each player is identified by a player ID, and the server assigns each player to a "trial list" (a particular track in the experiment plan with which this player ID is associated with).</p>
 
@@ -460,7 +460,7 @@ The shape names are given using the same case as in the file names. They are not
   
   <h2><a name="clear">Clear tables</a></h2>
 
-<p>For efficiency sakes, the Game Service tends to cache certain data, such as parsed rule sets. If you modify a trial list file or a rule set file that already exists under /opt/tomcat/game-data, you may want to force the server to purge its stored tables, to ensure that your updated files will be re-read.
+<p>For efficiency's sake, the Game Service tends to cache certain data, such as parsed rule sets or object property tables. If you modify a trial list file or a rule set file that already exists under <tt>/opt/tomcat/game-data</tt>, you may want to force the server to purge its stored tables, to ensure that your updated files will be re-read. If any players are playing at this time, clearing the table may cause a slight delay for them (as all necessary tables are re-read), but no disruption of their games.
 
   <form method="post" action="game-data/CheckPlanService/clearTables"
 	 enctype="application/x-www-form-urlencoded">    

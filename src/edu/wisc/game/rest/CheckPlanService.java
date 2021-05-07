@@ -88,6 +88,8 @@ public class CheckPlanService extends GameService2 {
 		    if (para.images!=null) {
 			v.add(fm.para("This is an image-and-properties-based para set, which uses "+para.images.length+" images:"));
 			rows = new Vector<>();
+			
+			
 			for(String k: para.images) {
 			    String z = "<img width='80' src=\"../../GetImageServlet?image="+k+"\">";
 			    rows.add(fm.tr(fm.td(k) + fm.td(z)));

@@ -267,7 +267,7 @@ will include all image files from
 
    <h3>The initial board</h3>
 
-<p>In GS 1.* and 2.*, the initial board file describes each game piece by two columns, <tt>shape</tt> and <tt>color</tt>. In GS 3.*, we will add one more column, <tt>image</tt>. The traditional SC objects will use the two old columns, and leave <tt>image</tt> empty; the new IPB objects will leave the  <tt>shape</tt> and <tt>color</tt> columns empty, while the  <tt>image</tt> column will contain the path to the image file (either relative to the server's shape directory, or absolute, as appropriate).
+<p>In GS 1.* and 2.*, the initial board file describes each game piece by two columns, <tt>shape</tt> and <tt>color</tt>. In GS 3.*, we will add one more column, <tt>objectType</tt>. The traditional SC objects will continue to be described primarily by the two old columns, while the <tt>objectType</tt> column will contain something like <tt>BLACK_SQUARE</tt> empty; the new IPB objects will leave the  <tt>shape</tt> and <tt>color</tt> columns empty (or write <tt>null</tt> to them), while the  <tt>objectType</tt> column will contain the path to the image file (either relative to the server's shape directory, or absolute, as appropriate).
 
   <p><strong><em>Note that we don't explicitly write the properties of IPB objects to the saved initial board file. The researchers can combine each game piece's image name from this file with the data from the properties file in the directory where the image is located in order to find out the object's properties. If this is an issue for Aria or Ellise, please let me (Vladimir) know!</em></strong>
   

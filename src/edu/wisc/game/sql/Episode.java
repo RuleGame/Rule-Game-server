@@ -278,7 +278,7 @@ public class Episode {
 		whoAccepts[j] = new BitSet(NBU);
 		RuleSet.Atom atom = row.get(j);
 		if (atom.counter>=0 && ourCounter[j]==0) continue;
-		if (!atom.acceptsColorAndShape(p)) continue;
+		if (!atom.acceptsColorShapeAndProperties(p)) continue;
 		//System.err.println("Atom " +j+" shape and color OK");
 		if (!atom.plist.allowsPicking(pos.num(), eligibleForEachOrder)) continue;
 		//System.err.println("Atom " +j+" allowsPicking ok");

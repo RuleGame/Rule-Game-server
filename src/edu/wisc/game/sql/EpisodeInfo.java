@@ -369,7 +369,7 @@ public class EpisodeInfo extends Episode {
 	     "moveNo", // 0-based number of the move in the transcript
 	     "timestamp", // YYYYMMDD-hhmmss.sss
 	     "reactionTime", // (* diff ; also use e.startTime)
-	     "objectType", // (yellow_circle)  (join with board.csv)
+	     "objectType", // "yellow_circle" in GS 1&2; image.png for image-based objects in GS 3
 	     "objectId", // Typically 0-based index within the episode's object list
 	     "y", "x",
 	     "bucketId", // 0 thru 3

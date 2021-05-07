@@ -65,7 +65,7 @@ public class RuleSet {
 	    } else if (ex instanceof Expression.Num) {
 		list1.add( ((Expression.Num)ex).nVal);
 	    } else if (ex instanceof Expression.Id) {
-		String s = ((Expression.Id)ex).sVal;
+		String s = ex.toString();
 		// validate as the name of a predefined or custom order 
 		if (!orders.containsKey(s)) {
 		    if (Order.predefinedOrders.containsKey(s)) {
@@ -171,6 +171,54 @@ public class RuleSet {
 	
     }
 
+    /** a0 &le; x &le; a1 */
+    private static class Range {
+	int a0, a1;
+	Range(int _a0, int _a1) {
+	    a0 = _a0;
+	    a1 = _a1;
+	}
+	boolean contains(int x) {
+	    return a0<=x && x<=a1;
+	}
+	public String toString() {
+	    return "[" + a0 + ".." + a1 + "]";
+	}
+    }
+    
+    /** A  PropertyCondition object describes the set of restrictions
+	imposed on a particular property of an image-and-property-based
+	object.
+     */
+    private static class PropertyCondition {
+	HashSet<String> acceptedValues = new HashSet<>();
+	HashSet<Range> acceptedRanges = new HashSet<>();
+	boolean accepts(String s) {
+	    if (s.equals("*") || acceptedValues.contains(s)) return true;
+	    try {
+		int x = Integer.parseInt(s);
+		for(Range r: acceptedRanges) {
+		    if (r.contains(x)) return true;
+		}
+	    } catch( NumberFormatException ex) {}
+	    return false;
+	}
+	void add(String s) {
+	    acceptedValues.add(s);
+	}
+ 	void addRange(int a0, int a1) {
+	    acceptedRanges.add(new Range(a0,a1));
+	}
+	public String toString() {
+	    Vector<String> v = new Vector<>();
+	    v.addAll(acceptedValues);
+	    for(Range r: acceptedRanges) v.add(r.toString());
+	    String s=String.join(", ", v);
+	    if (v.size()!=1) s = "["+s+"]";
+	    return s;    
+	}	
+    }
+
     
     /** Syntax:(counter,shape,color,position,bucketFunctions)
 	<p>
@@ -179,14 +227,14 @@ public class RuleSet {
     public static class Atom {
 	/** -1 means "no limit" */
 	public final int counter;
-	/** null means "no restriction" */
+	/** For shape-and-color pieces, determines acceptable shapes. Null means "no restriction" */
 	public final Piece.Shape[] shapes;
 	//final
-	/** null means "no restriction" */
+	/** For shape-and-color pieces, determines acceptable colors. Null means "no restriction" */
 	public Piece.Color[] colors;
 	public PositionList plist;       	
-	public BucketList bucketList;
-
+	public BucketList bucketList;	
+	HashMap<String,PropertyCondition> propertyConditions=new HashMap<>();
 
 	public String toString() {
 	    return "(" + counter + ","  +showList(shapes) + "," + showList(colors)+","+
@@ -206,21 +254,71 @@ public class RuleSet {
 	    if (v.length!=1) q = "["+q+"]";
 	    return q;		
 	}
+
+	/** Does this atom have some conditions related to properties
+	    other than shape and color? */
+	private boolean hasNonSCCond() {
+	    for(String key: propertyConditions.keySet()) {
+		if (!key.equals("shape") && !key.equals("color")) return true;
+	    }
+	    return false;
+	}
+
 	
 	/** Format as the source code of the rules set */
 	public String toSrc() {
-	    return "(" +  (counter<0? "*" : ""+counter) +
-		"," + showList(shapes) +
-		"," + showList(colors) +
-		"," + plist.toSrc() +  "," + bucketList.toSrc() + ")";
+	    if (hasNonSCCond()) {
+		Vector<String> v = new Vector<>();
+		v.add("count:" +  (counter<0? "*" : ""+counter));
+		for(String key: propertyConditions.keySet()) {
+		    v.add(key + ":" + propertyConditions.get(key));
+		}
+	
+		v.add("pos:" + plist.toSrc());
+		v.add("bucket:"+ bucketList.toSrc());
+		return "(" + String.join(", ", v) + ")";
+	    } else {
+		return "(" +  (counter<0? "*" : ""+counter) +
+		    "," + showList(shapes) +
+		    "," + showList(colors) +
+		    "," + plist.toSrc() +  "," + bucketList.toSrc() + ")";
+	    }
 	}
 	
-	/** Syntax:(counter,shape,color,position,bucketFunctions)     */
+	/** Syntax: either (counter,shape,color,position,bucketFunctions)  
+	    or (domain:value, domain:value, ....)
+	 */
 	Atom(Expression.ParenList pex, TreeMap<String, Order> orders) throws RuleParseException {
-	    if (pex.size()!=5)  throw new RuleParseException("Expected a tuple with 5 elements; found "+ pex.size() +": " + pex);
+	    int colonCnt=0;
+	    for(Expression g: pex) {
+		if (g instanceof Expression.ColonExpression) colonCnt++;
+	    }
 
-	    Expression g = pex.get(0); // count
-	    if (g instanceof Expression.Star) {
+	    boolean colonized=(colonCnt==pex.size());
+
+	    HashMap<String, Expression> arms=new HashMap<>();
+	    
+	    if (colonized) {
+		for(Expression _g: pex) {
+		    Expression.ColonExpression g = (Expression.ColonExpression)_g;
+		    String key=g.prefix.toString();
+		    if (arms.get(key)!=null)  throw new RuleParseException("An atom has multiple clauses with the same prefix '" + key+"'");
+		    arms.put(key, g.arex);			
+		}
+	    } else {
+		if (colonCnt>0) throw new RuleParseException("An atom must not combine colon-based and colon-less clauses: size="+ pex.size() +": " + pex);
+	    
+		if (pex.size()!=5)  throw new RuleParseException("Expected either a 'colonized' tuple or a tuple with 5 elements; found "+ pex.size() +": " + pex);
+		arms.put("count", pex.get(0));
+		arms.put("shape", pex.get(1));
+		arms.put("color", pex.get(2));
+		arms.put("pos",   pex.get(3));
+		arms.put("bucket", pex.get(4));
+	    }
+	    
+
+	    Expression g = arms.remove("count"); // count
+	    if (g==null || g instanceof Expression.Star) {
 		counter = -1;
 	    } else if (g instanceof Expression.Num) {
 		counter = ((Expression.Num)g).nVal;
@@ -228,18 +326,21 @@ public class RuleSet {
 		throw new RuleParseException("Counter is not a star or number: " + pex);
 	    }
 
-	    g = pex.get(1); // shape
+	    
+	    g = arms.remove("shape"); // shape
 	    // System.out.println("Setting shapes from " + g);
-	    if (g instanceof Expression.Star) {
+	    if (g==null || g instanceof Expression.Star) {
 		shapes = null;
 	    } else if (g instanceof Expression.Id) {
-		String s = ((Expression.Id)g).sVal;
+		if (g instanceof Expression.QualifiedId) throw new RuleParseException("Cannot use Id.Id ("+g+")  for shapes");
+		String s = g.toString();
 		shapes = new Piece.Shape[] { Piece.Shape.findShape(s)};
 	    } else if (g instanceof Expression.BracketList) {
 		Vector<Piece.Shape> w = new Vector();
 		for(Expression h: (Expression.BracketList)g) {
 		    if (h instanceof Expression.Id) {
-			String s = ((Expression.Id)h).sVal;
+			if (h instanceof Expression.QualifiedId) throw new RuleParseException("Cannot use Id.Id ("+h+") for shapes");
+			String s = h.toString();
 			w.add(Piece.Shape.findShape(s));
 		    } else  {
 			throw new RuleParseException("Invalid shape ("+h+") in: " + pex);
@@ -250,19 +351,19 @@ public class RuleSet {
 		throw new RuleParseException("Invalid shape ("+g+") in: " + pex);
 	    }
 	    //System.out.println("shapes=" + showList(shapes));
-	    g = pex.get(2); // color
-	    if (g instanceof Expression.Star) {
+	    g = arms.remove("color");// color
+	    if (g==null || g instanceof Expression.Star) {
 		colors = null;
 	    } else if (g instanceof Expression.Id) {
-		String s = ((Expression.Id)g).sVal;
+		String s = g.toString();
 		colors = new Piece.Color[]{ Piece.Color.findColor(s)};
 	    } else if (g instanceof Expression.BracketList) {
 		Vector<Piece.Color> w = new Vector();
 		for(Expression h: (Expression.BracketList)g) {
 		    if (h instanceof Expression.Id) {
-			String s = ((Expression.Id)h).sVal;
+			String s = h.toString();
 			w.add(Piece.Color.findColor(s));
-		    } else  {
+			} else  {
 			throw new RuleParseException("Invalid color ("+h+") in: " + pex);
 		    }
 		}
@@ -270,20 +371,45 @@ public class RuleSet {
 	    } else  {
 		throw new RuleParseException("Invalid color ("+g+") in: " + pex);
 	    }
+
 	    //System.out.println("colors=" + showList(colors));
-	    g = pex.get(3); // position
+	    g = arms.remove("pos"); // position
 	    plist = new PositionList(g, orders);
 	    //System.out.println("plist=" + plist);
-	    g = pex.get(4); // buckets
+	    g = arms.remove("bucket"); // bucket
 	    if (g instanceof Expression.ArithmeticExpression)  {
 		bucketList = new BucketList((Expression.ArithmeticExpression)g);
-		// } else if (g instanceof Expression.BracketList) {
-		//bucketList = new BucketList((Expression.BracketList)g);
 	    } else if (g instanceof Expression.Star) {
 		// for compatibility with Kevin's syntax
 		bucketList = new BucketList((Expression.Star)g);
 	    } else {
 		throw new RuleParseException("Buckets must be specified by a bracket list. Instead, found "+g+" in: " + pex);
+	    }
+
+	    // Properties...
+	    for(String key: arms.keySet()) {
+		g = arms.get(key);
+		if (g instanceof Expression.Star) continue;
+		PropertyCondition cond = new PropertyCondition();
+		if (g instanceof Expression.Id || g instanceof Expression.Num) {
+		    if (g instanceof Expression.QualifiedId) throw new RuleParseException("Cannot use Id.Id ("+g+") for prop values");
+		    cond.add( g.toString());
+		} else if (g instanceof Expression.BracketList) {
+		    for(Expression h: (Expression.BracketList)g) {
+			if (h instanceof Expression.Id || h instanceof Expression.Num) {
+			    if (h instanceof Expression.QualifiedId) throw new RuleParseException("Cannot use Id.Id ("+h+") for shapes");
+			    cond.add( h.toString());
+			} else  {
+			    throw new RuleParseException("Invalid value list element ("+h+") for property "+key+" in: " + pex);
+			}
+		    }
+		} else if (g instanceof Expression.RangeExpression) {
+		    Expression.RangeExpression r=(Expression.RangeExpression)g;
+		    cond.addRange( r.a0.nVal, r.a1.nVal);		    
+		} else {
+		    throw new RuleParseException("Invalid value ("+g+") for property "+key+" in: " + pex);
+		}		      
+		propertyConditions.put(key, cond);
 	    }
 		      
 	}
@@ -311,9 +437,20 @@ public class RuleSet {
 
 	/** Does this atom accept a specified piece, based on its
 	    shape and color? */
-	public boolean acceptsColorAndShape(Piece p) {
-	    return acceptsShape(p.xgetShape()) &&
-		acceptsColor(p.xgetColor());
+	public boolean acceptsColorShapeAndProperties(Piece p) {
+	    ImageObject io = p.getImageObject();
+	    if (io==null) { // shape-and-color tuple object
+		return acceptsShape(p.xgetShape()) &&
+		    acceptsColor(p.xgetColor());
+	    } else { // image-and-property-based object
+		for(String key:  propertyConditions.keySet()) {
+		    PropertyCondition cond = propertyConditions.get(key);
+		    String s = io.get(key);
+		    if (s==null || !cond.accepts(s)) return false;	 
+		}
+		return true;
+	    }
+	       
 	}
 
     }
@@ -417,19 +554,19 @@ public class RuleSet {
 
 
 	    Vector<Token> tokens= Token.tokenize(r);
-	    if (tokens.size()==0) throw new RuleParseException("No data found in the line: " + r);
-	    if (rows.size()==0 && tokens.get(0).type==Token.Type.ID &&
-		tokens.get(0).sVal.equalsIgnoreCase("Order")) { // order line:
+	    if (tokens.isEmpty()) throw new RuleParseException("No data found in the line: " + r);
+	    Token a=tokens.get(0);
+	    if (rows.size()==0 && a.type==Token.Type.ID &&
+		a.sVal.equalsIgnoreCase("Order")) { // order line:
 		// Order Name=[1,2,3,....]
 		tokens.remove(0);
-		if (tokens.size()==0 || tokens.get(0).type!=Token.Type.ID )  throw new RuleParseException("Missing order name in an order line: " + r);
-		String name = tokens.get(0).sVal;
-		tokens.remove(0);
-		if (tokens.size()==0 ||  tokens.get(0).type!=Token.Type.EQUAL)  throw new RuleParseException("Missing equal sign in an order line: " + r);
+		if (tokens.isEmpty() || tokens.get(0).type!=Token.Type.ID )  throw new RuleParseException("Missing order name in an order line: " + r);
+		String name = tokens.remove(0).sVal;
+		if (tokens.isEmpty() ||  tokens.get(0).type!=Token.Type.EQUAL)  throw new RuleParseException("Missing equal sign in an order line: " + r);
 		tokens.remove(0);
 		// Expects a bracket list of integers
 		Expression.BracketList ex = Expression.mkBracketList(tokens);
-		if (tokens.size()>0) throw new RuleParseException("Invalid order description: " +r);	
+		if (!tokens.isEmpty()) throw new RuleParseException("Invalid order description: " +r);	
 		orders.put(name, new Order(ex));
 		continue;
 	    }

@@ -204,9 +204,19 @@ public class ImageObject extends HashMap<String,String> {
 	return v;
     }
 
-    /** Ignore this file when encountering it in directory listings */
+
+    private static HashSet<String> nonImageExtensions = Util.array2set(new String[] {
+	    "csv", "sh", "bat"	    
+	});
+    
+    
+    /** Ignore this file when encountering it in directory listings, because
+	it is either the properties file (CSV), or other known non-image file.
+     */
     private static boolean isIgnorableFile(String x) {
-	return x.endsWith(".csv");
+	String[] v = x.split("\\.");
+	String q = v[v.length-1].toLowerCase();
+	return x.endsWith("~") || nonImageExtensions.contains(q);
     }
     
     private static boolean mayBeWild(String x) {
@@ -228,55 +238,6 @@ public class ImageObject extends HashMap<String,String> {
 	return Pattern.compile(b.toString());
     }
 
-    /*
-    private static boolean wildCardMatch(String wild, String s) {
-	while(true) {
-	    if (wild.equals(s)) return true;
-	    if (wild.length()==0 || s.length()==0) return false;
-	    char w0 = wild.characteAt(0);
-	    String w1 = wild.substring(1);
-	    char c0 = s.characteAt(0);
-	    String c1 = s.substring(1);
-	    if (w0 == '?' || w0==c0)  {
-		wild=w1;
-		s=c1;
-		continue;
-	    } else if (w0 == '*') {
-		for(int k=0; k<=s.length; k++) {
-		    if (wildCardMatch
-		}
-	    }
-    }
-    */
-
-
-  
-    /** Reads a properties file. */
-    /*
-    public readPropertiesFile(File dir) {
-	File f = new File(dir, "properties.csv");
-	try {
-
-	    if (!f.exists()) throw new IOException("File does not exist: " + f);
-	    if (!f.canRead()) throw new IOException("Cannot read file: " + f);
-	    CsvData csv = new CsvData(f, true, false, null);
-	    if (csv.entries.length<2) throw new IOException("No data found in file: " + f);
-	    CsvData.BasicLineEntry header =  (CsvData.BasicLineEntry)csv.entries[0];
-	    //int nCol = header.nCol();
-
-	    for(int j=1; j<csv.entries.length; j++) {
-		CsvData.BasicLineEntry line = (CsvData.BasicLineEntry)csv.entries[j];
-		add(new ParaSet( header, line));
-	    }
-
-
-	} catch(Exception ex) {
-	    setError(true);
-	    setErrmsg( ex.getMessage());
-	}
-
-    }
-    */
-    
+ 
     
 }

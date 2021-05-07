@@ -360,14 +360,14 @@ public class Board// extends OurTable
     /* Saves this board in CSV file.
        <pre>
       boards/pid.board.csv
-      pid,episode-id,y,x,shape,color
+      pid,episode-id,y,x,shape,color,image
 </pre>
     */    
     void saveToFile(String pid, String eid, File f) {
 	synchronized(file_writing_lock) {
 	try {	    
 	    PrintWriter w = new PrintWriter(new	FileWriter(f, true));
-	    if (f.length()==0) w.println("#playerId,episodeId,y,x,shape,color");
+	    if (f.length()==0) w.println("#playerId,episodeId,y,x,shape,color,objectType");
 	    Vector<String> v = new Vector<>();
 	    for(Piece p: value) {
 		v.clear();
@@ -377,6 +377,7 @@ public class Board// extends OurTable
 		v.add(""+p.getX());
 		v.add(""+p.xgetShape());
 		v.add(""+p.xgetColor());
+		v.add(""+p.objectType());
 		w.println(String.join(",", v));
 	    }
 	    w.close();

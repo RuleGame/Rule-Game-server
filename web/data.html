@@ -4,7 +4,7 @@
 <body>
   <h1>Rule Game server data</h1>
 
-    <p align="center"><em>Updated for Ver 2.000,  2020-12-22</em></p>
+    <p align="center"><em>Updated for Ver 3.001,  2021-05-06</em></p>
 
   <h2>Introduction</h2>
 
@@ -346,7 +346,7 @@ This will create 2 CSV files, PlayerInfo.csv and Export.csv, in your current dir
 
   <h3>The initial board</h3>
 
-  <p>The initial boards are saved in  /opt/tomcat/saved/boards/ , in file names based on the PlayerID + ".board.csv".
+  <p>The initial boards are saved in  /opt/tomcat/saved/boards/ , in file names based on the PlayerID + ".board.csv".  The GS 1.* and 2.* format:
 <pre>
        more /opt/tomcat/saved/boards/qt-07.boards.csv
 #playerId,episodeId,y,x,shape,color
@@ -355,7 +355,12 @@ qt-07,20200910-122815-2S2435,5,4,STAR,BLACK
 qt-07,20200910-123116-PRDLET,3,1,TRIANGLE,BLACK
 qt-07,20200910-123116-PRDLET,5,1,TRIANGLE,BLACK
 </pre>
-
+In the GS 3.*, one more column, <tt>objectType</tt> is added to identify image-and-property-based objects (for which the <tt>shape</tt> and  <tt>color</tt> columns contains the  <tt>null</tt> value); for such objects, this column contains an identifying string for the image. For the traditional shape-and-color-tuple objects, the  <tt>objectType</tt> column contains a string based on the shape and color, e.g. <tt>RED_STAR</tt> (analogously to the <tt>objectType</tt> column that has existed in he detailed transcripts file since GS 1.*).
+<pre>
+#playerId,episodeId,y,x,shape,color
+qt-07,20200910-122815-2S2435,4,1,null,null,vm/image_test_01/cat-01.png
+....
+</pre>
 
 <p>For each piece, we have it y and x coordinates (y=row, x=column), shape and color.
 
@@ -404,6 +409,8 @@ qt-02,trial_1,2,TD-03,0,20200923-211954-8M8E8V,1,20200923-212025.978,11.523,RED_
 <p>Note that even though the name of the experiment plan to which a player belongs is not explicitly listed as a separate column; however, it can be extracted from the player Id.
 
 <p>One may also "join" this information with information from the Episode table if, for example, one wants to look at the finishCode column.
+
+<p>The <tt>objectType</tt> column contains, for the traditional shape-and-color-tuple objects, a value such as <tt>BLACK_SQUARE</tt>. For the image-and-properties-based objects in GS 3, this column contains the same value as the <tt>image</tt> column of the initial boards CSV files, e.g. <tt>vm/image_test_01/cat-01.png</tt>.
 
 <h3>The guess</h3>
 
