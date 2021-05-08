@@ -288,8 +288,15 @@ public class RuleSet {
 	    }
 	}
 	
-	/** Syntax: either (counter,shape,color,position,bucketFunctions)  
-	    or (domain:value, domain:value, ....)
+	/** Syntax: either
+	    (counter,shape,color,position,bucketFunctions) or
+	    (domain:value, domain:value, ....).  Note that since GS
+	    3.000, the constructor processes the properties "shape"
+	    and "color" twice, putting them both into the main
+	    property table (which will be applied to any IPB objects)
+	    and into the original (GS 1) "colors" and "shapes" lists
+	    (which will be applied to the traditional shape-and-color
+	    objects).
 	 */
 	Atom(Expression.ParenList pex, TreeMap<String, Order> orders) throws RuleParseException {
 	    int colonCnt=0;
@@ -330,6 +337,45 @@ public class RuleSet {
 	    }
 
 	    
+	    g = arms.remove("pos"); // position
+	    plist = new PositionList(g, orders);
+	    //System.out.println("plist=" + plist);
+	    g = arms.remove("bucket"); // bucket
+	    if (g instanceof Expression.ArithmeticExpression)  {
+		bucketList = new BucketList((Expression.ArithmeticExpression)g);
+	    } else if (g instanceof Expression.Star) {
+		// for compatibility with Kevin's syntax
+		bucketList = new BucketList((Expression.Star)g);
+	    } else {
+		throw new RuleParseException("Buckets must be specified by a bracket list. Instead, found "+g+" in: " + pex);
+	    }
+
+	    // Properties...
+	    for(String key: arms.keySet()) {
+		g = arms.get(key);
+		if (g instanceof Expression.Star) continue;
+		PropertyCondition cond = new PropertyCondition();
+		if (g instanceof Expression.Id || g instanceof Expression.Num) {
+		    if (g instanceof Expression.QualifiedId) throw new RuleParseException("Cannot use Id.Id ("+g+") for prop values");
+		    cond.add( g.toString());
+		} else if (g instanceof Expression.BracketList) {
+		    for(Expression h: (Expression.BracketList)g) {
+			if (h instanceof Expression.Id || h instanceof Expression.Num) {
+			    if (h instanceof Expression.QualifiedId) throw new RuleParseException("Cannot use Id.Id ("+h+") for shapes");
+			    cond.add( h.toString());
+			} else  {
+			    throw new RuleParseException("Invalid value list element ("+h+") for property "+key+" in: " + pex);
+			}
+		    }
+		} else if (g instanceof Expression.RangeExpression) {
+		    Expression.RangeExpression r=(Expression.RangeExpression)g;
+		    cond.addRange( r.a0.nVal, r.a1.nVal);		    
+		} else {
+		    throw new RuleParseException("Invalid value ("+g+") for property "+key+" in: " + pex);
+		}		      
+		propertyConditions.put(key, cond);
+	    }
+
 	    g = arms.remove("shape"); // shape
 	    // System.out.println("Setting shapes from " + g);
 	    if (g==null || g instanceof Expression.Star) {
@@ -376,45 +422,9 @@ public class RuleSet {
 	    }
 
 	    //System.out.println("colors=" + showList(colors));
-	    g = arms.remove("pos"); // position
-	    plist = new PositionList(g, orders);
-	    //System.out.println("plist=" + plist);
-	    g = arms.remove("bucket"); // bucket
-	    if (g instanceof Expression.ArithmeticExpression)  {
-		bucketList = new BucketList((Expression.ArithmeticExpression)g);
-	    } else if (g instanceof Expression.Star) {
-		// for compatibility with Kevin's syntax
-		bucketList = new BucketList((Expression.Star)g);
-	    } else {
-		throw new RuleParseException("Buckets must be specified by a bracket list. Instead, found "+g+" in: " + pex);
-	    }
 
-	    // Properties...
-	    for(String key: arms.keySet()) {
-		g = arms.get(key);
-		if (g instanceof Expression.Star) continue;
-		PropertyCondition cond = new PropertyCondition();
-		if (g instanceof Expression.Id || g instanceof Expression.Num) {
-		    if (g instanceof Expression.QualifiedId) throw new RuleParseException("Cannot use Id.Id ("+g+") for prop values");
-		    cond.add( g.toString());
-		} else if (g instanceof Expression.BracketList) {
-		    for(Expression h: (Expression.BracketList)g) {
-			if (h instanceof Expression.Id || h instanceof Expression.Num) {
-			    if (h instanceof Expression.QualifiedId) throw new RuleParseException("Cannot use Id.Id ("+h+") for shapes");
-			    cond.add( h.toString());
-			} else  {
-			    throw new RuleParseException("Invalid value list element ("+h+") for property "+key+" in: " + pex);
-			}
-		    }
-		} else if (g instanceof Expression.RangeExpression) {
-		    Expression.RangeExpression r=(Expression.RangeExpression)g;
-		    cond.addRange( r.a0.nVal, r.a1.nVal);		    
-		} else {
-		    throw new RuleParseException("Invalid value ("+g+") for property "+key+" in: " + pex);
-		}		      
-		propertyConditions.put(key, cond);
-	    }
-		      
+
+	    
 	}
 	
 	/** Used when converting Kevin's JSON to our server format */

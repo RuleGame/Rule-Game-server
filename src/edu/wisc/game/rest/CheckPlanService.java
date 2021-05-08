@@ -43,7 +43,7 @@ public class CheckPlanService extends GameService2 {
 
 	//---- color map 
 	v.add(fm.h2("Checking the color map"));
-	v.add(fm.para("Note: the same global color map is used for all experiment plans"));
+	v.add(fm.para("Note: the same global color map is used for shape-and-color-tuple objects in all experiment plans. It is ignored as far as image-and-properties-based objects are concerned."));
 	ColorMap cm = new ColorMap();
 
 	Object o = cm.get("error");
@@ -68,7 +68,7 @@ public class CheckPlanService extends GameService2 {
 	    Vector<String> lists = TrialList.listTrialLists(exp);	    
 	    v.add(fm.para("Found " + lists.size() + " trial lists for experiment plan " + fm.tt(exp)));
 	    for(String key: lists) {
-		v.add(fm.para("Checking trial list " + fm.tt(key)));
+		v.add(fm.h3("Checking trial list " + fm.tt(key)));
 		TrialList trialList  = new TrialList(exp, key);
 		if (trialList.error) {
 		    v.add(fm.para("Error: failed to create trial list <tt>" + key + "</tt>. Error=" + trialList.errmsg));
@@ -106,7 +106,7 @@ public class CheckPlanService extends GameService2 {
 			    
 			}
 			v.add( fm.table("border='1'", rows));
-			v.add( fm.para("All properties used by the objects, and all their values, are listed in the following table:"));
+			v.add( fm.para("All properties used by the objects involved in this trial list, and all values found for these properties, are listed in the following table:"));
 			rows.clear();
 			rows.add(fm.tr(fm.th("Property") + fm.th("Values")));
 			for(String p: propValues.keySet()) {
@@ -162,6 +162,9 @@ public class CheckPlanService extends GameService2 {
 		    }
 		    //-- checking the rule files for properties and their values, or for colors and shapes, as the case may be
 		    RuleSet rules = gg.getRules();
+		    v.add(fm.para("The rules have been compiled as follows:"));
+		    v.add(fm.para(fm.tt(rules.toSrc().replaceAll("\n","<br>"))));
+
 		    if (ipb) {
 			TreeMap<String,TreeSet<String>> w = rules.listAllPropValues();
 			for(String p: w.keySet()) {

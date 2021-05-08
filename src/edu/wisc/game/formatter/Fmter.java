@@ -147,7 +147,6 @@ public class  Fmter {
 	return wrap("pre", text) + "\n";
     }
 
-
     /** A dummy plain text formatter. This can be used whenever you
 	want plain-text formatting */
     static public Fmter dummy = new Fmter();
