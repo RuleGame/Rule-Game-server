@@ -238,6 +238,14 @@ public class ImageObject extends HashMap<String,String> {
 	return Pattern.compile(b.toString());
     }
 
- 
+    public String listProperties() {
+	String[] keys = keySet().toArray(new String[0]);
+	Arrays.sort(keys);
+	Vector<String> v = new Vector<>();
+	for(String key: keys) {
+	    v.add(key + ":" + get(key));
+	}
+ 	return String.join(", ", v);
+    }
     
 }

@@ -20,7 +20,9 @@ public class RuleSet {
 	//Remotest=into the farthest bucket
 	Remotest}
 
-    
+
+    /** Represents the restrictions on the positions from which game pieces
+	can be picked */
     public static class PositionList {
 	/** If true, there is no restriction */
 	private boolean any;
@@ -51,11 +53,12 @@ public class RuleSet {
 	    list1.addAll(q.list1);
 	    list2.addAll(q.list2);
 	}
+	
 	/** @param ex A parsed expression, which may be "*", a or "L1", or contain some numerical positions or order name.
 	    @param The dictionary of all known orders
 	 */
 	PositionList(Expression ex, TreeMap<String, Order> orders)  throws RuleParseException {
-	    any = (ex instanceof Expression.Star);
+	    any = (ex==null || ex instanceof Expression.Star);
 	    if (any) return;
 			    
 	    if (ex instanceof Expression.BracketList) {
@@ -151,7 +154,7 @@ public class RuleSet {
 		v.add(ex.toSrc());
 	    }
 	    String s = String.join(",",v);
-	    if (v.size()>0) s = "[" +s+ "]";
+	    if (v.size()>1) s = "[" +s+ "]";
 	    return s;
 	}
 
@@ -531,6 +534,29 @@ public class RuleSet {
 	    }
 	    return h;
 	}
+	/** Lists all properties, and all property values, used in this row.
+	    This is primarily used for correctness checking during 
+	    experiment plan validation.
+	 */
+	TreeMap<String,TreeSet<String>> listAllPropValues() {
+	    TreeMap<String,TreeSet<String>> propValues = new TreeMap<>();
+	    for(Atom atom: this) {
+		for(String p: atom.propertyConditions.keySet()) {
+		    TreeSet<String> h = propValues.get(p);
+		    if (h==null) propValues.put(p, h=new TreeSet<String>());
+		    PropertyCondition cond = atom.propertyConditions.get(p);
+		    h.addAll( cond.acceptedValues);
+		    /*
+		    for(Range r: cond.acceptedRanges) {
+			for(int x=r.a0; x<=r.a1; x++) {
+			    h.add("" + x);
+			}
+		    }
+		    */
+		}
+	    }
+	    return propValues;
+	}
 	
     }
 
@@ -645,8 +671,24 @@ public class RuleSet {
 	for(Row row: rows) h.addAll(row.listAllColors());
 	return h;
     }
-	
     
+    /** Lists all properties, and all property values, used in this rule set. 
+	This is primarily used for correctness checking during 
+	the experiment plan validation.
+    */
+    public TreeMap<String,TreeSet<String>> listAllPropValues() {
+	TreeMap<String,TreeSet<String>> propValues = new TreeMap<>();
+	for(Row row: rows) {
+	    TreeMap<String,TreeSet<String>> w =  row.listAllPropValues();
+	    for(String p: w.keySet()) {
+		TreeSet<String> h = propValues.get(p);
+		if (h==null) propValues.put(p, h=new TreeSet<String>());
+		h.addAll(w.get(p));
+	    }
+	}
+	return propValues;
+    }
+
     public static void main(String[] argv) throws IOException,  RuleParseException {
 	System.out.println("Have " + argv.length + " files to read");
 	for(String a: argv) {

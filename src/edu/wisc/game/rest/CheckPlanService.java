@@ -85,17 +85,34 @@ public class CheckPlanService extends GameService2 {
 		    v.add(fm.para("Checking para set no. " + j + " out of "+npara+"..."));
 
 		    para.checkImages();
-		    if (para.images!=null) {
+		    boolean ipb = (para.images!=null);
+		    // All values of all properties occurring in our objects
+		    TreeMap<String,TreeSet<String>> propValues=new TreeMap<>();
+		    if (ipb) {
 			v.add(fm.para("This is an image-and-properties-based para set, which uses "+para.images.length+" images:"));
+		
 			rows = new Vector<>();
-			
-			
 			for(String k: para.images) {
 			    String z = "<img width='80' src=\"../../GetImageServlet?image="+k+"\">";
-			    rows.add(fm.tr(fm.td(k) + fm.td(z)));
+			    ImageObject io = ImageObject.obtainImageObjectPlain(null, k, false);
+  
+			    
+			    rows.add(fm.tr(fm.td(k) + fm.td(z) + fm.td(io.listProperties())));
+			    for(String p: io.keySet()) {
+				TreeSet<String> h = propValues.get(p);
+				if (h==null) propValues.put(p, h=new TreeSet<String>());
+				h.add(io.get(p));
+			    }
+			    
 			}
 			v.add( fm.table("border='1'", rows));
-			
+			v.add( fm.para("All properties used by the objects, and all their values, are listed in the following table:"));
+			rows.clear();
+			rows.add(fm.tr(fm.th("Property") + fm.th("Values")));
+			for(String p: propValues.keySet()) {
+			    rows.add(fm.tr(fm.td(p) + fm.td( Util.joinNonBlank(", ",propValues.get(p)))));
+			}
+			v.add( fm.table("border='1'", rows));
 		    } else {
 			v.add(fm.para("Images are not used in this para set, which means that this is a shapes-and-colors para set"));
 
@@ -143,20 +160,38 @@ public class CheckPlanService extends GameService2 {
 			v.add(fm.para("Checking predefined boards..."));
 			((PredefinedBoardGameGenerator)gg).checkShapesAndColors(cm);
 		    }
-		    //-- checking the rule files for colors and shapes
+		    //-- checking the rule files for properties and their values, or for colors and shapes, as the case may be
 		    RuleSet rules = gg.getRules();
-		    for(Piece.Shape shape:  rules.listAllShapes()) {
-			File f = Files.getSvgFile(shape);
-			if (!f.canRead())  {
-			    //throw new IOException("Cannot read file: " + f);
-			    v.add(fm.para("Warning: Rule set " + para.getRuleSetName() + " mentions shape " + shape +", for which no SVG file exists. Was a different shape intended?"));
-			    errcnt ++;
+		    if (ipb) {
+			TreeMap<String,TreeSet<String>> w = rules.listAllPropValues();
+			for(String p: w.keySet()) {
+			    TreeSet<String> h = propValues.get(p);
+			    if (h==null) {
+				v.add(fm.para("Warning: Rule set " + para.getRuleSetName() + " makes use of property <tt>" + p +"</tt>, which does not appear in any of the image-based objects of this parameter set. Therefore, any references to this property in the rule set won't affect the game."));
+			    }
+			    TreeSet<String> z= new TreeSet<>();
+			    z.addAll(w.get(p));
+			    z.removeAll(h);
+			    if (!z.isEmpty()) {
+				v.add(fm.para("Warning: When rule set " + para.getRuleSetName() + " has conditions referring to property <tt>" + p +"</tt>, it makes use of "+z.size()+" values of this property (<tt>" + Util.joinNonBlank(", ", z) +"</tt>), which do not appear in any of the image-based objects of this parameter set."));
+			    }
 			}
-		    }
-		    for(Piece.Color color:  rules.listAllColors()) {
-			if (!cm.hasColor(color))  {
-			    v.add(fm.para("Warning: Rule set " + para.getRuleSetName() + " mentions color " + color +", which is not listed in the color map file. Was a different color intended?"));
-			    errcnt ++;
+
+		    } else {
+			for(Piece.Shape shape:  rules.listAllShapes()) {
+			    File f = Files.getSvgFile(shape);
+			    if (!f.canRead())  {
+				//throw new IOException("Cannot read file: " + f);
+				v.add(fm.para("Warning: Rule set " + para.getRuleSetName() + " mentions shape " + shape +", for which no SVG file exists. Was a different shape intended?"));
+				errcnt ++;
+			    }
+			}
+			for(Piece.Color color:  rules.listAllColors()) {
+			    if (!cm.hasColor(color))  {
+		    
+				v.add(fm.para("Warning: Rule set " + para.getRuleSetName() + " mentions color " + color +", which is not listed in the color map file. Was a different color intended?"));
+				errcnt ++;
+			    }
 			}
 		    }
 		}

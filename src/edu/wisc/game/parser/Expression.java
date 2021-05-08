@@ -9,6 +9,8 @@ import edu.wisc.game.sql.Episode;
 public interface Expression {
 
     public String toSrc();
+    /** Can be overridden as needed */
+    //    public String toString() { return toSrc(); }
 
     abstract static class ExList extends Vector<Expression> implements Expression {
 	ExList( Vector<Expression> v) {
@@ -337,6 +339,7 @@ public interface Expression {
 	public String toSrc() {
 	    return "[" + a0.toSrc() + ".." + a1.toSrc() + "]";
 	}
+	public String toString() { return toSrc(); }
     }
     
     /** A Star expression is simply "*". (Used in rule description for
