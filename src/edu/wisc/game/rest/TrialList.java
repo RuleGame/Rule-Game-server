@@ -42,7 +42,10 @@ public class TrialList extends Vector<ParaSet> {
     }
 
     public static Vector<String> listTrialLists(String exp) throws IOException {
-	File base = dirForExperiment(exp);
+	return listTrialLists(dirForExperiment(exp));
+    }
+	
+    public static Vector<String> listTrialLists(File base) throws IOException {
 	//try {
 	if (!base.isDirectory()) throw new IOException("No experiment plan directory exists: " + base);
 	if (!base.canRead()) throw new IOException("Cannot read experiment plan directory: " + base);
@@ -90,6 +93,7 @@ public class TrialList extends Vector<ParaSet> {
 	setErrmsg(_errmsg);
     }
 
+    /** Trial list file names must end with this suffix */
     static final String suff = ".csv";
 
     /** Reads a trial list from the  file that corresponds to a given

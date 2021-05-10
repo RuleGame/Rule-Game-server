@@ -203,6 +203,44 @@ public class Files {
 	return v;	
     }
 
+    /** List all existing experiment plans (based on the directory
+	names in the appropriate tree) */
+    public static String[] listSAllExperimentPlans()  throws IOException{
+	String[] a = listAllExperimentPlanDirsInTree( trialListMainDir());
+	Arrays.sort(a);
+	return a;	
+    }
+
+    private static String[] listAllExperimentPlanDirsInTree(File root) throws IOException {
+	File[] files = root.listFiles();
+	Vector<String> v = new Vector<>();
+
+	for(File cf: files) {	    
+	    if (cf.isDirectory()) {
+		String fname = cf.getName();
+		if (TrialList.listTrialLists(cf).size()>0) {
+		    v.add(fname);
+		}
+		
+		for(String x: listAllExperimentPlanDirsInTree(cf)) {
+		    v.add(fname + File.separator + x);
+		}
+	    }
+	}
+	return v.toArray( new String[0]);
+    }
+
+    /** Creates an HTML snippet (to be used inside a FORM) listing
+	all currently existing experiment plans.
+     */
+    public static String listSAllExperimentPlansHtml()  throws IOException{
+	Vector<String> v=new Vector<>();
+	for(String exp: listSAllExperimentPlans()) {
+	    v.add( Tools.radio("exp", exp, exp, false));
+	}
+	return String.join("<br>\n", v);
+    }
+
     
 }
 

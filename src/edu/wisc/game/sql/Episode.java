@@ -12,6 +12,7 @@ import edu.wisc.game.reflect.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.sql.Board.Pos;
+import edu.wisc.game.sql.ImageObject;
 import edu.wisc.game.rest.ColorMap;
 import edu.wisc.game.engine.RuleSet.BucketSelector;
 import edu.wisc.game.formatter.*;
@@ -130,6 +131,11 @@ public class Episode {
     /** Which bucket was the last  one to receive a piece of a given shape? */
     @Transient
     private HashMap<Piece.Shape, Integer> psMap = new HashMap<>();
+
+     /** Which bucket was the last  one to receive a piece with a given value of each property? (get(propName).get(propValue)==bucket) */
+    @Transient
+    private HashMap<String, HashMap<String, Integer>> propMap = new HashMap<>();
+  
     /** Which bucket was the last one to receive a piece? */
     @Transient
     private Integer pMap=null;
@@ -340,6 +346,15 @@ public class Episode {
 	    // Remember where this piece was moved
 	    pcMap.put(move.piece.xgetColor(), move.bucketNo);
 	    psMap.put(move.piece.xgetShape(), move.bucketNo);
+
+	    ImageObject io = move.piece.getImageObject();
+	    if (io!=null) {
+		for(String key: io.keySet()) {
+		    HashMap<String, Integer> h=propMap.get(key);
+		    if (h==null) propMap.put(key,h=new HashMap<>());
+		    h.put(io.get(key), move.bucketNo);
+		}
+	    }
 	    pMap = move.bucketNo;
 
 	    pieces[move.pos].setBuckets(new int[0]); // empty the bucket list for the removed piece
@@ -381,19 +396,27 @@ public class Episode {
     /** Contains the values of various variables that may be used in 
 	finding the destination buckets for a given piece */
     class BucketVarMap extends HashMap<String, HashSet<Integer>> {
-	
-	private void pu( BucketSelector key, int k) {
+
+	/** @param key A variable name, such as "p", "pc", "ps", or "propName.propValue" */
+	private void pu( String /*BucketSelector*/ key, int k) {
 	    HashSet<Integer> h = new  HashSet<>();
 	    h.add(k);
-	    put(key.toString(), h);
+	    put(key/*.toString()*/, h);
 	}
 	
 	/** Puts together the values of the variables that may be used in 
 	    finding the destination buckets */
 	BucketVarMap(Piece p) {    
-	    if (pcMap.get(p.xgetColor())!=null) pu(BucketSelector.pc, pcMap.get(p.xgetColor()));
-	    if (psMap.get(p.xgetShape())!=null) pu(BucketSelector.ps, psMap.get(p.xgetShape()));
-	    if (pMap!=null) pu(BucketSelector.p, pMap);
+	    if (pcMap.get(p.xgetColor())!=null) pu(BucketSelector.pc.toString(), pcMap.get(p.xgetColor()));
+	    if (psMap.get(p.xgetShape())!=null) pu(BucketSelector.ps.toString(), psMap.get(p.xgetShape()));
+	    if (pMap!=null) pu(BucketSelector.p.toString(), pMap);
+	    ImageObject io = p.getImageObject();
+	    if (io!=null) {
+		for(String key: io.keySet()) {
+		    String val = io.get(key);
+		    pu("p."+key, propMap.get(key).get(val));
+		}
+	    }
 	    Pos pos = p.pos();
 	    put(BucketSelector.Nearby.toString(), pos.nearestBucket());
 	    put(BucketSelector.Remotest.toString(), pos.remotestBucket());

@@ -499,7 +499,7 @@ public interface Expression {
 
 	if (a.type == Token.Type.ID) {
 	    tokens.remove(0);
-	    if (tokens.size()>=2 && tokens.get(0).type==Token.Type.DOT && tokens.get(0).type == Token.Type.ID) {
+	    if (tokens.size()>=2 && tokens.get(0).type==Token.Type.DOT && tokens.get(1).type == Token.Type.ID) {
 		tokens.remove(0);
 		Token b = tokens.firstElement();
 		tokens.remove(0);

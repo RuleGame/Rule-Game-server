@@ -78,7 +78,7 @@ public class CheckPlanService extends GameService2 {
 
 		
 		int npara= trialList.size();
-		v.add(fm.para("... the trial list has " + npara + " parameter sets"));
+		v.add(fm.para("... the trial list has " + npara + " parameter set(s)"));
 		int j=0;
 		for( ParaSet para: trialList) {
 		    j++;
