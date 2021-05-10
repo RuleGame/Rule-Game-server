@@ -121,7 +121,7 @@ public class CheckPlanService extends GameService2 {
 			if (para.colors==null) {
 			    v.add(fm.para("Colors are not used in this para set"));
 			} else {
-			    v.add(fm.para("Para set uses "+para.colors.length+" colors:"));
+			    v.add(fm.para("Para set uses "+para.colors.length+" color(s):"));
 			    rows = new Vector<>();
 			    for( Piece.Color color: para.colors) {
 				String hexColor = "#" + cm.getHex(color,false);
@@ -136,7 +136,7 @@ public class CheckPlanService extends GameService2 {
 			if (para.shapes==null) {
 			    v.add(fm.para("Shapes are not used in this para set"));
 			} else {
-			    v.add(fm.para("Para set uses "+para.shapes.length+" shapes:"));
+			    v.add(fm.para("Para set uses "+para.shapes.length+" shape(s):"));
 			    rows = new Vector<>();
 			    for( Piece.Shape shape: para.shapes) {
 				String sh = shape.toString();
