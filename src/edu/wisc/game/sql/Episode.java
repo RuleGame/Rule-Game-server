@@ -406,15 +406,18 @@ public class Episode {
 	
 	/** Puts together the values of the variables that may be used in 
 	    finding the destination buckets */
-	BucketVarMap(Piece p) {    
-	    if (pcMap.get(p.xgetColor())!=null) pu(BucketSelector.pc.toString(), pcMap.get(p.xgetColor()));
-	    if (psMap.get(p.xgetShape())!=null) pu(BucketSelector.ps.toString(), psMap.get(p.xgetShape()));
+	BucketVarMap(Piece p) {
+	    Integer z = (p.xgetColor()==null)? null: pcMap.get(p.xgetColor());
+	    if (z!=null) pu(BucketSelector.pc.toString(), z);
+	    z = (p.xgetShape()==null)? null: psMap.get(p.xgetShape());
+	    if (z!=null) pu(BucketSelector.ps.toString(), z);
 	    if (pMap!=null) pu(BucketSelector.p.toString(), pMap);
 	    ImageObject io = p.getImageObject();
 	    if (io!=null) {
 		for(String key: io.keySet()) {
 		    String val = io.get(key);
-		    pu("p."+key, propMap.get(key).get(val));
+		    z = (propMap.get(key)==null)?null:propMap.get(key).get(val);
+		    if (z!=null) pu("p."+key, z);
 		}
 	    }
 	    Pos pos = p.pos();
