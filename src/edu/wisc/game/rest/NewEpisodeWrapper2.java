@@ -112,7 +112,7 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	    setDisplay(epi.mkDisplay());
 	    
 	    setError( false);
- 	    
+
 	} catch(Exception ex) {
 	    setError(true);
 	    String msg = ex.getMessage();

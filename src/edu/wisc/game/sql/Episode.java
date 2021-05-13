@@ -879,6 +879,14 @@ public class Episode {
 	int code;
 	String errmsg;
 
+	/** A kludgy attempt to get the client not to display the board when
+	    the episode is not playable */
+	boolean error=false;
+	public boolean getError() { return error; }
+	@XmlElement
+	public void setError(boolean _error) { error = _error; }
+ 
+	
 	/** On a /move call: Has this move been accepted or rejected? (When returned by /display response, the value is -8). */
         public int getCode() { return code; }
         @XmlElement

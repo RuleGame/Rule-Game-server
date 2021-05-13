@@ -271,6 +271,14 @@ public class EpisodeInfo extends Episode {
 		}
 		
 		errmsg += "\nDEBUG\n" + getPlayer().report();
+
+
+		if (EpisodeInfo.this.isNotPlayable()) {
+		    String msg = "Sadly, you cannot continue playing, because the server has been restarted since the last episode, and the board has been purged out of the server memory. This problem could perhaps have been prevented if the client had made a /newEpisode call, rather than /display, after the last /mostRecentEpisode.";
+		    setErrmsg(msg);
+		    setError( true);		
+		}
+		
 	    }	       
 	}
 	ExtendedDisplay(Display d) {

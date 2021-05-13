@@ -74,7 +74,7 @@ public class PlayerResponse extends ResponseBase {
 	    setErrmsg("Debug: pid="+pid+"; Retrieved x="+x);
 	    setNewlyRegistered(x==null);
 	    if (x!=null) {  // existing player
-		Logging.info("Found existing player=" + x +", with plan=" + x.getExperimentPlan());
+		Logging.info("Found existing player=" + x + ", with plan=" + x.getExperimentPlan());
 		trialListId = x.getTrialListId();		
 		trialList  = new TrialList(x.getExperimentPlan(), trialListId);
 		alreadyFinished = x.alreadyFinished();
