@@ -126,7 +126,7 @@ public class TrialList extends Vector<ParaSet> {
 
 	    for(int j=1; j<csv.entries.length; j++) {
 		CsvData.BasicLineEntry line = (CsvData.BasicLineEntry)csv.entries[j];
-		System.out.println("DEBUG: TL(f=" + f+"), adding para set " + j);
+		//System.out.println("DEBUG: TL(f=" + f+"), adding para set " + j);
 		add(new ParaSet( header, line));
 	    }
 

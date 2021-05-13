@@ -74,12 +74,12 @@ public class PlayerResponse extends ResponseBase {
 	    setErrmsg("Debug: pid="+pid+"; Retrieved x="+x);
 	    setNewlyRegistered(x==null);
 	    if (x!=null) {  // existing player
-		Logging.info("Found existing player=" + x);
+		Logging.info("Found existing player=" + x +", with plan=" + x.getExperimentPlan());
 		trialListId = x.getTrialListId();		
 		trialList  = new TrialList(x.getExperimentPlan(), trialListId);
 		alreadyFinished = x.alreadyFinished();
 		completionCode = x.getCompletionCode();
-		if (exp!=null && !exp.equals("") && x.getExperimentPlan().equals(exp)) {
+		if (exp!=null && !exp.equals("") && !x.getExperimentPlan().equals(exp)) {
 		    String msg = "Cannot play experiment plan '" + exp + "' with playerId=" + pid + ", because that playerId already belongs to expeirment plan '" + x.getExperimentPlan() +"'";
 		    Logging.error(msg);
 		    setError(true);
