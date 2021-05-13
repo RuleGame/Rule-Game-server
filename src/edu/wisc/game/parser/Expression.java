@@ -361,9 +361,9 @@ public interface Expression {
      */
     static Expression mkCounterOrAtom(Vector<Token> tokens) throws RuleParseException {
 	if (tokens.size()==0) throw new RuleParseException("Unexpected end of expression");
-	System.out.println("DEBUG: mkCounterOrAtom, tokens={" + Util.joinNonBlank(" ", tokens) + "}");
+	//	System.out.println("DEBUG: mkCounterOrAtom, tokens={" + Util.joinNonBlank(" ", tokens) + "}");
 	Token a = tokens.remove(0);
-	System.out.println("DEBUG: poppped a=" +a);
+	//System.out.println("DEBUG: poppped a=" +a);
 	
 	if (a.equals(Token.STAR)) {
 	    return STAR;
@@ -384,9 +384,10 @@ public interface Expression {
 		    Id prefix = new Id(a);
 		    tokens.remove(0); // prefix 
 		    tokens.remove(0); // :
-		    System.out.println("DEBUG: Found prefix " + prefix + ":, rest={" + Util.joinNonBlank(" ", tokens) + "}");
+		    //System.out.println("DEBUG: Found prefix " + prefix + ":, rest={" + Util.joinNonBlank(" ", tokens) + "}");
 		    Expression y = mkRangeExpression(tokens);
-		    if (y==null) y = mkLongestArithmeticExpression(tokens);		    System.out.println("DEBUG: Found CE=" + prefix + ":" + y +", rest={" + Util.joinNonBlank(" ", tokens) + "}");
+		    if (y==null) y = mkLongestArithmeticExpression(tokens);
+		    //System.out.println("DEBUG: Found CE=" + prefix + ":" + y +", rest={" + Util.joinNonBlank(" ", tokens) + "}");
 		    z = new ColonExpression(prefix, y);
 		} else {
 		    z = mkLongestArithmeticExpression(tokens);

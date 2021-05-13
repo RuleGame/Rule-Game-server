@@ -165,15 +165,15 @@ public class ParaSet extends HashMap<String, Object> {
 	    String key =header.getCol(k);
 	    String val = line.getCol(k);
 
-	    System.out.println("DEBUG: column key=" + key+", val=" + val);
+	    //System.out.println("DEBUG: column key=" + key+", val=" + val);
 
 	    if (key.equals("colors") && val!=null) {
 		Piece.Color[] _colors = parseColors(val);
 		if (_colors != null) colors = _colors;	
 	    } else if (key.equals("shapes") && val!=null) {
-		System.out.println("DEBUG: parseShapes(" + val+")");
+		//System.out.println("DEBUG: parseShapes(" + val+")");
 		Piece.Shape[] _shapes = parseShapes(val);
-		System.out.println("DEBUG: parseShapes(" + val+") done");
+		//System.out.println("DEBUG: parseShapes(" + val+") done");
 		if (_shapes!=null) shapes = _shapes;			
 	    } else if (key.equals("images") && val!=null) {
 		String[] _images = parseImages(val);

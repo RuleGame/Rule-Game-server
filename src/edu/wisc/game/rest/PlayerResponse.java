@@ -67,7 +67,7 @@ public class PlayerResponse extends ResponseBase {
 	try {
 
 	    Logging.info("PlayerResponse(pid="+ pid+", exp="+exp+")");
-	    if (pid==null || pid.equals("null")) throw new IOException("Missing or invalid playerId");
+	    if (pid==null || pid.trim().equals("") || pid.equals("null")) throw new IOException("Missing or invalid playerId");
 	    PlayerInfo x = findPlayerInfo(em, pid);
 	    if (debug) playerInfo=x;
 	    
@@ -79,6 +79,15 @@ public class PlayerResponse extends ResponseBase {
 		trialList  = new TrialList(x.getExperimentPlan(), trialListId);
 		alreadyFinished = x.alreadyFinished();
 		completionCode = x.getCompletionCode();
+		if (exp!=null && !exp.equals("") && x.getExperimentPlan().equals(exp)) {
+		    String msg = "Cannot play experiment plan '" + exp + "' with playerId=" + pid + ", because that playerId already belongs to expeirment plan '" + x.getExperimentPlan() +"'";
+		    Logging.error(msg);
+		    setError(true);
+		    setErrmsg(msg);
+		    return;
+		}
+
+		
 	    } else { // new player
 		x = new PlayerInfo();
 		x.setDate( new Date());
