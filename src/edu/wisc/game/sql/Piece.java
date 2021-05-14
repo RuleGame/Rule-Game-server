@@ -289,7 +289,7 @@ public class Piece  implements Serializable {
     public void setBuckets(int[] _buckets) { buckets = _buckets; }
 
     public String toString() {
-	return "["+color+" " + shape+", x="+x+", y="+y+"]";
+	return "["+objectType()+", x="+x+", y="+y+"]";
     }
 
     

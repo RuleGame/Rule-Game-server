@@ -159,6 +159,11 @@ public interface Expression {
 	    super(t2);
 	    prefix = new Id(t1);	    
 	}
+	public HashSet<Integer> evalSet(HashMap<String, HashSet<Integer>> h) {
+	    HashSet<Integer> q= h.get(prefix + "."+ sVal);
+	    return q==null? new HashSet<Integer>() : q;
+	}
+
 	public String toString() {
 	    return prefix.toString() + "." + super.toString();
 	}  

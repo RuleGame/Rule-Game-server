@@ -165,7 +165,9 @@ public class RuleSet {
 	    BitSet q= new BitSet(Board.buckets.length);
 	    
 	    for(Expression.ArithmeticExpression ae: this) {
+		//		System.out.println("DEBUG: EVAL " + ae + " for vars=" + varMap);
 		Set<Integer> h = ae.evalSet(varMap);
+		//		System.out.println("DEBUG: RESULT=(" + Util.joinNonBlank(",", h));
 		h = Expression.moduloNB(h);
 		q.or( Util.toBitSet(h));
 	    }

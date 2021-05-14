@@ -80,7 +80,7 @@ public class PlayerResponse extends ResponseBase {
 		alreadyFinished = x.alreadyFinished();
 		completionCode = x.getCompletionCode();
 		if (exp!=null && !exp.equals("") && !x.getExperimentPlan().equals(exp)) {
-		    String msg = "Cannot play experiment plan '" + exp + "' with playerId=" + pid + ", because that playerId already belongs to expeirment plan '" + x.getExperimentPlan() +"'";
+		    String msg = "Cannot play experiment plan '" + exp + "' with playerId=" + pid + ", because that playerId already belongs to experiment plan '" + x.getExperimentPlan() +"'";
 		    Logging.error(msg);
 		    setError(true);
 		    setErrmsg(msg);
