@@ -247,5 +247,12 @@ public class ImageObject extends HashMap<String,String> {
 	}
  	return String.join(", ", v);
     }
+
+    /** For use in ASCII graphics */
+    public String symbol() {
+	String[] w = key.split("/");
+	return w[w.length-1].substring(0,1);
+    }
+	
     
 }

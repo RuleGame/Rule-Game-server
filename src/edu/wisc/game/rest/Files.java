@@ -23,6 +23,7 @@ public class Files {
     */
     static public void setInputDir(String path) {
 	inputDir = new File(path);
+	System.out.println("DEBUG: inputDir := " + inputDir);
     }
 
     
@@ -125,12 +126,14 @@ public class Files {
        add to the name.
      */    
     private static File inputFile(String name, String subdir, String ext) throws IOException {
+	System.out.println("DEBUG: inputFile(name=" +name+", subdir=" + subdir+", ext=" + ext+")");
 	if (name==null || name.equals("")) throw new IOException("File name not specified");
 	if (name.startsWith("/")) {
 	    return new File(name);
 	} else {     
 	    File base = new File(inputDir, subdir);
 	    if (!name.endsWith(ext)) name += ext;
+	    System.out.println("DEBUG: result=" + new File(base, name));
 	    return new File(base, name);
 	}
     }
