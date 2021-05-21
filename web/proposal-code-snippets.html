@@ -1,0 +1,261 @@
+<html>
+<head>
+  <title>
+On using code snippets in Rule Game rules
+  </title>
+</head>
+<body>
+
+<h1>
+On using code snippets in Rule Game rules
+</h1>
+      <div align="center"><em>Draft 2021-05-20</em></div>
+      
+					    
+      <p>
+It has been suggested by Jerry that we introduce the capability for using code snippets in Rule Game rules, which can potentially significantly expand the universe of possible rule sets. In this document I discuss a possible way of doing that, in what likely will become Game Server 4.*.
+
+<h2>Use cases</h2>
+
+<p>
+One can imagine several use cases for that:
+
+<ul>
+<li> Researchers using the "code snippet" syntax when creating rule sets off-line, for subsequent deployment to the system.
+
+<li> (Paul's suggestion): Psychology students proposing new rules using a verbal description in English, and engineering students coding them in our syntax (where the code snippet syntax can compliment our current syntax)
+
+<li> (Jerry's suggestion): Students (or M-Turkers etc) creating their own rules using the "code snippet" syntax. Unlike the other two use cases, this one calls for setting up a convenient software system for students doing rule creation online
+</ul>
+  
+<h2>Using code snippets</h2>
+
+<h3>Rule processing in GS 1.* thru GS 3.*</h3>
+  
+<p>Both in the original GS 1.* syntax and in the expanded GS 3.* syntax, the operation of rule sets can be described as follows:
+  <ul>
+    <li>The <strong>rule set file</strong> consists of one or several <strong>rule lines</strong>; the game engine manages the transfer of control between those lines based on the acceptance decisions made by individual lines, and the values of the lines' <strong>counter variables</strong>. (The rule lines may be preceded by order definition lines, but we can ignore them for the purpose of this discussion).
+
+    <li>Each  <strong>rule line</strong> consists of an optional <strong>global conter</strong> and one or several <strong>rule atoms</strong>. When the player tries to make a move, the rule line currently in control makes  a boolean <strong>acceptance decision</strong>, which is computed as a disjunction of the acceptance decisions made by all atoms of the line. (That is, the rule line accepts a move if at least one atom does). If the acceptance decision is positive, the rule line increments its counter variable; if the rule line is "metered" (has a global counter), it compares the counter variables against the global counter, and, if they are equal, transfers control to the next rule line, resetting the line's global counter variable and all atoms' counter variables to zero. Additionally, whenever the rule line receives control from the previous line, or whenever a game piece is removed pursuant to this line's owns accpetance decision, the game engine checks whether at this point this rule line is capable of any positive acceptance decisions at all (that is, whether it would accept the move attempt of at least one of the remaining pieces to at least one bucket). If this is not the case, then the control is transferred to the next rule line, and all counter variables of this line are reset to zero.
+      
+      <li>A  <strong>rule atom</strong> consists of an optional  <strong>[atom's] counter</strong> and several <strong>condition</strong>  which may be related to the properties and location of the game piece to be picked, and to the identity of the destination bucket. The rule atom makes it acceptance decision as a conjunction of the values yielded by the conditions. (That is, all conditions must be satisified in order for the atom to accept a move). If the atom is metered (has a counter), its counter variable is incremented after each acceptance; once the counter variable has reached, the atom becomes disabled until the control shifts to the next line and the counters are reset.
+
+  </ul>
+
+  <h3>The place for code snippets in the overall logic</h3>
+
+  <p>In order to simplify the use of code snippets, we propose that code snippets be used as <strong>condition within rule atoms</strong>. Each code snippet will have the form of the body of a method (function) in some popular programming language (to be decided upon later), e.g. a function expected to return a "boolean-interpreted" value (0 or 1) in Perl, or a method with a boolean return value in Java. The job of the code snippet would be compute this return value; higher-level logic (the conjunction of this return value with any other components of the atom to obtain the atom's acceptance decision; disjunction of the atom's acceptance decision with those of other atoms in the line; managing all counter variables; transfer control between rule lines) will remain the responsibility of the game engine.
+
+  <p>To do useful work, the code snippet will, of course, need access to some data about the current board state and the intended move. We will discuss this later in this document.
+
+    <h3>Choice of the language</h3>
+
+  <p>At this point, I have not committed to any specific language that can be used in the snippets. It's likely that eventually the choice will be for Java syntax, since the Game Engine is written in Java, and the Java enviroment provides access to some tools for compiling additional Java code.
+
+    <p>
+    For illustrative purposes, most of the exaxmples below will use Perl syntax.
+    
+
+<h2>Rewriting the rules of our current syntax as code snippets</h2>
+
+<p>Regardless of the language used for the snippet, an important queston to ask is: What kind of data we would need to make available to the "code snippets" in order for the snippets to be able to describe all the currently (GS 3.*) expressable rules? And what data would we need to make available to the "code snippets"  in order for the snippets to be able to describe a much wider, but still sensible, universe or rules?
+
+<p>Let's answer the fiest question first, i.e. what data snippets would need to be able to access in order to express all rules expressable in GS 3.*?
+  
+  <a>An atom of GS 3.* rules, in the GS 3.* syntax, can be written as
+      <pre>
+           (count:<em>count</em>, property1:<em>valueList1</em>, property2:<em>valueList2</em>, ..., pos:<em>positionList</em>, bucket:<em>bucketList</em>)
+     </pre>
+      , with all fields being optional. The <em>bucketList</em> may contain an arbitrary set-arithmetic expression involving several variables. This atom encodes a conjunction of expressions, each of which applies to a single property, or a single variable. So, for example, an atom
+      <pre>
+	(count:4, species:[rabbit,hare], color:white, pos:T, bucket:p.species)
+      </pre>
+      can be rewritten in the following was with a code snippet (written as a function body in a Perl-like language):
+      <pre><code>
+(count:4, code:{my $accepted =
+ ($prop{'species'} eq 'rabbit' || $prop{'species'} eq 'hare') &&
+ ($prop{'color'} eq 'white') &&
+ &isLeading( $predefinedOrderings{'T'}, $pos) &&
+ ($bucket == $lastBucket{'species'}{$prop{'species'}});   
+return $accepted;})	   
+      </code></pre>
+(For readability, line breaks are introduced in the code snippet.  There is no explicit reference to the counter in the snippet because the counter testing and incrmenting will be performed by the game engine after the code snippet returns it return value). The code snippet above has access to the following built-in variables and functions:
+<ul>
+  <li><code>%prop</code> -- an associative array (hash table) that contains the values of all defined properties of the game piece the player wants to move;
+  <li><code>$pos</code> -- an integer variable (in the range 1 to 36) indicating the board position of the game piece the player wants to move;    
+  <li><code>$bucket</code> -- an integer variable (in the range 0 to 4) indicating the bucket to which the player wants to move the game piece;
+  <li><code>&isLeading($ordering,$pos)</code> -- a function which tests whether the specified position (<code>$pos</code>) on the board is the first (or one of the first) occupied positions with respect to the specified ordering. The argument <code>$ordering</code> is described as a one-dimensional or two-dimensional array of integers (so that orderings with ties could be supported);
+  <li>A number of predefined orderings, such as <code>$T = [[31,32,33,34,35,36], [25,26,27,28,29,30], ...]</code>;
+  <li><code>%lastBucket</code> -- an associative array (hash table) that contains, for each property name <em>p</em> and each possible  value  <em>v</em> of that property, the number of the bucket into which a piece with the appropriate value of that property was most recently placed. E.g. <code>$lastBucket{'shape'}{'black'}</code> contains the number of the bucket that received the black square most recently removed from the board.
+  </ul>
+
+    <p>It appears that access to the above-listed variables and functions is sufficient for code snippets to express the semantics of any atom supported in GS 3.*. If that's all we wanted to support, the snippets themselves won't need any "memory" capacity, i.e. a snippet won't need to "remember" anything about previous calls to the same snippet. In other words, snippets can be stateless.
+
+    <p>While it appears from the example above that an atom with a code snippet is more cumbersome than an equivalent atom in the traditional format, one can see that a single code snippet can replace mutltiple atom. Consider, for example, a rule line with the following functionality (on a board with objects of  GS 1.* legacy shapes and colors):
+      <blockquote><p><em>
+	    Pick 5 squares, of any colors, and put them into buckets in accordance with their colors (buckets 0, 1, 2, 3 taking colors black, red, blue, and yellow, respectively).
+     </em></p>
+  </blockquote>
+      One can express this by a rule line of 4 atoms, with a global counter:
+      <pre><code>
+5 (shape:square, color:black, bucket:0) (shape:square, color:red, bucket:1) (shape:square, color:blue, bucket:2) (shape:square, color:yellow, bucket:3)
+      </code></pre>
+On the other hand, this can be written in a single atom with a snippet:
+      <pre><code>
+5 (code:{my %h=('black'=>0, 'red'=>1, 'blue'=>2, 'yellow'=>3); return ($prop{'shape'} eq 'square') && ($bucket==$h{$prop{'color'}})})
+      </code></pre>
+
+      Furthermore, even with only the limited capabilities allowed in this section, code snippets can be used to express some rules not expressable with the traditional syntax. In the traditional syntax, for example, there seems to be no way to write a rule line with the following functionality:
+        <blockquote><p><em>
+	    Pick up to 3 squares and up to 2 triangles, of any colors, and in any order, and put them into buckets in accordance with their colors (buckets 0, 1, 2, 3 taking colors black, red, blue, and yellow, respectively). After that, go to the next rule line.
+     </em></p>
+  </blockquote>
+With snippets, this is doable:
+    <pre><code>
+(count:3 code:{my %h=('black'=>0, 'red'=>1, 'blue'=>2, 'yellow'=>3); return ($prop{'shape'} eq 'square') && ($bucket==$h{$prop{'color'}})}) \
+  (count:2 code:{my %h=('black'=>0, 'red'=>1, 'blue'=>2, 'yellow'=>3); return ($prop{'shape'} eq 'triangle') && ($bucket==$h{$prop{'color'}})})
+      </code></pre>
+(For readability, we use the backslash character as the line continuation character. The text above form a single rule line).
+	
+  <h2>Towards a more general universe of rules</h2>
+
+<p>Some of the motivation for using code snippets is that they could allow describing game rules that are not expressable in the current syntax (that of GS 3.*). Those are not necessarily "more complex" rules -- some of them may be intuitively simple rules (so they can, for example, be thought up by students or M-Turkers participating in the experiments), but they are outside the universe of rules supported by the GS 3.* rule syntax.
+
+<p>For example, on  2021-02-28 (email Subject: Can one code a certain concept in the Rule Game),  Paul described the following rule:
+  <blockquote><p><em>
+     At move 1, the player may put anything anywhere. Say he puts a blue square in the top left. After that, he has to put all the squares in the top row, and all the blue things on the  left side, but either bucket on the given edge is allowed.</em></p>
+  </blockquote>
+  We can formalize this rule as follows:
+  <blockquote><p><em>
+	If the player wants to move piece Q with color Q.color and shape Q.shape, find out what was the first successfully moved piece A with the matching shape, and what was the first successfully moved piece B with matching color. If A exists, then Q can be received in the same bucket in which A was received, or the other bucket in the same row; if B exists, then Q can be also received in the same bucket in which B was received, or the other bucket in the same column. If neither A nor B exist, then Q can be received in any bucket.
+</em></p>
+  </blockquote>
+In other words, as the player goes along, each color become  permanently associated either with the buckets on the left side of the board or those on the right side, and each shape becomes permanently associated  either with the buckets on the upper edge of the board or those on the bottom edge. The player can create arbitrary associations whenever he picks a piece neither whose shape nor whose color have been previously assigned.
+
+<p>To implement this rule, the code snippet would need to access to some historical information that is not supplied to the rule atoms in the current syntax.
+
+<p>Generally, what kind of information would we want to make available to code snippets to provide for a wide, but still fairly sensible, universe of rules?
+
+  <ul>
+    <li>The initial board. (I.e. the positions and properties of all game pieces that were on the board at the beginning of the episode).
+    <li>The sequence of successful moves, i.e. what pieces were moved to which buckets, and in what order.
+  </ul>
+
+<p>The above collection of information can, of course, be also described in a slightly different away; e.g., instead of "the initial board + the history of successful moves" one can give the snippet access to "the current  board + the history of successful moves". The two collections of information provide equivalent knowledge.
+  
+<p>In addition, if one desires to code stochastic (non-deterministic) rules, the code snippets may have access to a random number generator, as provided by the appropriate APIs of the snippet language (e.g. <code>java.util.Random</code> in Java).
+
+<p>In this proposal, I suggest that we <strong>do not</strong> give the snippets access to the following data:
+
+  <ul>
+    <li>Information about previous episodes in the same series. Therefore, it will not be possible to fomulate rules that look, say, like this: "In Episode 1, put all game pieces to bucket 0. In Episode 2,  put all game pieces to bucket 1. Etc, clockwise, in cycles of four episodes".
+    <li>Information about previous unsuccessful move attempts in the current episode. Therefore, it won't be possible to  fomulate rules that look, say, like this: "Pick a piece, and try to put it to any bucket. This will fail. Then try to do it again, and it will fail too. But when you make the third attempt to put the same piece to the same bucket, it will succeed". (Note though that if we allow snippets to have state variables, as discussed below, they <em>will</em> be able to implement this kind of rules).
+  </ul>
+
+<p>The information that we do want to provide to the snippet can be packed in various  data structures. E.g. in Java, one can have the current board as a 2-D array of <code>Piece</code> objects, each <code>Piece</code> containing the property information; the history of moves can be in an array of <code>Move</code> objects, each one containing information about the piece being removed and its destination bucket. Similar structures exist in Perl as well. Based on those structures, the snippet can obtain all information it needs. As an example, the snippet to implement the rules suggested by Paul on 2021-02-28, may look as follows (in Perl syntax):
+  <pre><code>{
+   my %h = (); #-- the set of accepting buckets for this move
+   for my $move ($moves) {  #-- scan the history
+   my $moved = $move->{'moved'}; #-- the piece that was moved
+   if ($moved->{'shape'} eq $prop{'shape'}) {  #-- was same color as current piece?
+             my $b = int($moved->{'bucket'}/2) * 2;
+             $h{$b} = 1;   #-- add buckets in the same row
+             $h{$b+1} = 1;
+    }   
+    if ($moved->{'color'} eq $prop{'color'}) {  #-- was same color as current piece?
+             my $b = int(($moved->{'bucket'}+1)/2) * 2;
+             $h{$b % 4} = 1;  #-- add buckets in the same column
+             $h{($b+3)%4} = 1;
+   }
+   if (scalar(%h)==0) { for my $j (0..3) { $h{$j}=1;}}
+   return (%h{$bucket}? 1 : 0);      
+}
+      </code></pre>
+Here, in addition to the variables we have introduced in the previous section, the code snippet has access to the array <code>@moves</code>, representing the history of successful moves, in chronological order. 	 
+
+<p>For the next two examples, we will work with the set of objects representing  playing cards,  with the properties <tt>suit</tt> (the values being <tt>hearts</tt>,   <tt>spades</tt>, etc) and <tt>value</tt> (the values being integers from 1 (for the ace) to 13 (for the king). 
+
+<P>We illsutrate the use of the current board information (accessible as <code>@board</code>, with <code>$board[$row][$col]</code> referring to the piece in the appropriate row and column) in the following example, where the rules are as follows:
+  <blockquote><p><em>
+A card can only be moved if it has the highest value in its column. Such a card can be moved to any bucket.</em>
+  </blockquote>
+The appropriate snippet may look as follows:
+  <pre><code>{
+   my $val = $prop{'value'};
+   my $row = 1+int(($pos-1)/6), $col= 1+(($pos-1) % 6);
+   for my $y (1..6) {
+       if (defined ($board[$row][$y]) && $board[$row][$y]->{'value'} > $val) { return 0; }
+   }
+   return 1;
+}
+</code></pre>
+
+<P>In the following example, the rules are as follows:
+  <blockquote><p><em>
+	The player's task is to sort the cards by the suit into the four buckets, placing the cards of each suit in the increasing-value order (i.e., a higher-value card may only be put in the bucket after a lower-value card).</em>
+  </blockquote>
+  Note a difference from the universe of the currently allowed rules. In the current rule universe, for a given set of rules and given initial board, one of the two always holds: either the game is not solvable (that is, there is no sequence of move attempts that will clear the board), or it is always solvable (that is, even if the player knows nothing about the rules, and regardless of the moves he has already made, he can clear the board by a simple pre-defined strategy, e.g. trying to move every piece into every bucket, cyclically). With a rule such as given above, for every initial board there is a way to clear it, but also there may be sequences of moves which will prevent the player from ever completing the clearing. For example, if the board has a queen of spades and the king of spades, and the player removed the king first, there is no way for him to ever remove the queen thereafter.
+
+<p>A snippet implementing the above rule can be written just using the history array (<code>@moves</code>):
+<pre><code>{
+    my $suite = $prop{'suite'};
+    my %acceptingBuckets = ('hearts'=>0, 'spades'=>1, 'clubs'=>2, 'diamonds'=>3);
+    my $b = $acceptingBuckets{$suite};
+    if ($bucket ne $b) { return false; } #-- wrong destination bucket
+    #-- find the topmost card in the destination bucket
+    my $lastCardVal= undef;
+    for(my $j = $#moves; $j>=0; $j--) {
+       if ($moves[$j]->{'bucket'} == $b) {
+          $lastCardVal = $moves[$j]->{'value'}; break;
+       }
+    }
+    if (!defined $lastCardVal) { return 1; } #-- the bucket is still empty
+    return ($lastCardVal <= $prop{'value'}) ? 1 : 0;
+}
+			    </code></pre>
+
+
+<h2>Randomness</h2>
+
+<p>With the use of random number generators available in programming languages such as Perl or Java, the code snippets would be able to create non-deterministic rules. In the following example, the code snippet randomly picks one bucket as an allowed destination at every move attempt:
+
+  <pre><code>{
+    my $b = int(rand()*4);
+    return ($b == $bucket) ? 1 : 0;
+}
+  </code></pre>
+  To play this game, the player can simply keep trying to put the same game piece into any bucket (say, bucket 0), until it is accepted. On average, 1 out of 4 attempts will succeed, which means that the player will need, on average, 2.5 attempts to remove a piece.
+
+<h2>Stateful snippets with static variables</h2>
+
+<h3>Stateful snippets</h3>
+<p>All the above examples were <strong>stateless</strong>: while they knew something about the history of the episode, all historical information was supplied by the game engine via a certain number of variables. Thus, the game engine strictly controlled what the snippet was allowed to know about its history.
+
+<p>We can allow the game designer to overcome this restriction by allowing him to use state variables which preserve their value between invocation of snippets. Those exist in many languages, such as <code>own</code> variables in Algol-60, local <code>static</code>  variables in PL/1, C, and C++, or <a href="https://perldoc.perl.org/functions/state"><code>state</code></a> variables in Perl.
+
+<p>Java does not have static local variables, but an equivalent functionality can be achieved by declaring e.g. an instance variable in the class into which the game engine will wrap the game-designer-created snippet and allowing the player to use that variable in the snippet; if the game engine calls the snippet from the same instance of the class during a given episode, its values will be preserved between snippet invocations. The variable can be declared as e.g. a <code>HashMap<String,Object></code>, so that the snippet can use it for storing arbitrary data. One can also make a distinction between such variables only accessible within a given snippet, and those shared between snippets. In the latter case, the game designer can create its own custom functionality of the kind that's available in the array <code>%lastBucket</code> introduced earlier in this documenty (the code-snippet equivalent of <tt>pc</tt> and <tt>ps</tt> of GS 1.*).
+    
+<p>Use of such static variables has a practical advantage, in that in some cases it allows the game designer to express the same rules in more concise way. On the other hand, it will also allow to design games that make use not only the history of successful moves, but that of unsuccessful moves as well. So this will, for example, allow to create a snippet implementing the following rule:
+   <blockquote><p><em>
+	The player must pick a piece and attempt to place it into the same bucket 3 times in a row; only then will it be accepted.</em>
+  </blockquote>
+   <pre><code>{
+       state lastTryPos = undef, lastTryBucket=undef, tryCnt=0;
+       if (!defined $lasTryBucket) ....
+       
+    my $b = int(rand()*4);
+    return ($b == $bucket) ? 1 : 0;
+}
+  </code></pre>
+
+<p>Additionally, if game designers are allowed to use static variables, they can, in principle, completely obviate the use of the high-level flow control provided by the game engine (counter variable management and transfer of control between rule lines), but, instead, put all functionality into one large snippet, with static variables used to manage the change of the snippet's behavior between invocations.
+   
+<p>
+   I will leave it to the PIs to decide if we want the "stateful snippet" capability.
+
+<h3>Sharing information between snippets</h3>   
+
+<p>If desired, it is also possible to enable game designers to use static variables shared by multiple snippets within the same rule set, or possibly even define functions that can be used in multiple snippets. One use of this feature may be fairly trivial, e.g. to avoid duplicating the same code in several snippets. However, it can also be used to provide a way to write more interesting snippets.
+
+    </body>
+    </html>
