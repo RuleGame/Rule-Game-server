@@ -9,7 +9,7 @@ On using code snippets in Rule Game rules
 <h1>
 On using code snippets in Rule Game rules
 </h1>
-      <div align="center"><em>Draft 2021-05-20</em></div>
+      <div align="center"><em>Draft updated 2021-05-24</em></div>
       
 					    
       <p>
@@ -215,6 +215,66 @@ The appropriate snippet may look as follows:
 			    </code></pre>
 
 
+<p>This code can be made a bit shorter if we provide code snippet authors with an API that will allow them to do certain commonly needed by operations with a single function call, rather than e.g. looping through a data structure.
+
+<h3><a name="gary-2021-04-24-a">Example: monotonic vs. non-monotonic rows</a></h3>
+For the next example, consider the rules proposed by Gary on 2021-04-24 (as relayed by Paul):
+<blockquote><p><em>
+      Suppose we have families that can contain as many as 6 images which form a "natural graded sequence." Examples might be circles of increasing size, or squares of increasing opacity. We may suppose that the names of the images include their sequence numbers. However, we might want a rule such as: if the objects in a row are in monotonic order, that row should be cleared to the right; but if they are not in monotonic order, they should be cleared to the left..</em>
+  </blockquote>
+
+Let's assume that the property whose monotonicity the palyer needs to notice is named <tt>value</tt>, similar to our playing card examples.
+
+<p>
+These rules can be formulated with a reference to the history of successful moves. Every time the player wants to remove a game piece from row $r$, the code snippet invoked by the  game engine checks whether the episode's history contains any moves of pieces from row $r$. If no such moves has been recorded, the code examines all pieces in row  $r$, and, dependent of whether their <tt>value</tt>s form a monotonice sequence; depening on that, the code will only accept the current move attempt if the piece currently being moved is the leftmost or rightmost (as appropriate) piece in row  $r$. On the other hand, if some pieces from  row  $r$ have already been removed, we know that the remaining peices may only be removed in the same order, which allows us to know whether the leftmost or rightmost piece is to be picked now.
+<pre><code>{
+    my $N=6;
+    my $row = int(($pos-1)/$N);
+    my $col = ($pos-1)%$N + 1;
+    #-- Does the piece being moved happen to be leftmost or rightmost or neither?
+    my $leftMost=1, $rightMost=1;
+    for my $c (1..$N) {
+      if (defined $board[$row][$c]) {  #-- there is a piece at (row,c)
+         if ($c<$col) { $leftMost=0; }
+         elsif ($c>$col) { $rightMost=0; }
+      }
+    }
+    #-- have any pieces been removed in this row yet?
+    my $fromLeft= 0, $fromRight=0;
+    for(my $j = $#moves; $j>=0; $j--) {
+      my $moved = $move->{'moved'}; #-- the piece that was moved
+      my $p = $moved->{'pos'};
+      my $r = int(($p-1)/$N);
+      if ($r == $row) {
+         my $c = ($p-1)%$N + 1;
+         if ($c < $col) { $fromLeft=1;}
+         elsif ($c > $col) { $fromRight=1;}
+      }
+    }
+    if (!$fromLeft && !$fromRight) {  #-- still-untouched row. Is it monotonic?
+       my $lastVal = undef, $lastD = undef, $isMono = 1;	
+       for my $c (1..$N) {
+          if (defined $board[$row][$c]) {  #-- there is a piece at (row,c)
+             my $v = $board[$row][$c]->{'value'};
+	     if (defined $lastVal) {
+	        my $d = $v-$lastVal;
+	        if (defined $lastD) {
+	           $mono = $mono && ($d * $lastD >= 0);
+	        }
+	        $lastD = $d;
+	     }
+	     $lastVal = $v;
+	  }
+        }
+        if ($mono) { $fromLeft=1;}
+        else { $fromRight=1;}
+    }
+    return $fromLeft? $leftMost : $rightMost;	
+}
+			    </code></pre>
+
+
+
 <h2>Randomness</h2>
 
 <p>With the use of random number generators available in programming languages such as Perl or Java, the code snippets would be able to create non-deterministic rules. In the following example, the code snippet randomly picks one bucket as an allowed destination at every move attempt:
@@ -235,7 +295,10 @@ The appropriate snippet may look as follows:
 
 <p>Java does not have static local variables, but an equivalent functionality can be achieved by declaring e.g. an instance variable in the class into which the game engine will wrap the game-designer-created snippet and allowing the player to use that variable in the snippet; if the game engine calls the snippet from the same instance of the class during a given episode, its values will be preserved between snippet invocations. The variable can be declared as e.g. a <code>HashMap<String,Object></code>, so that the snippet can use it for storing arbitrary data. One can also make a distinction between such variables only accessible within a given snippet, and those shared between snippets. In the latter case, the game designer can create its own custom functionality of the kind that's available in the array <code>%lastBucket</code> introduced earlier in this documenty (the code-snippet equivalent of <tt>pc</tt> and <tt>ps</tt> of GS 1.*).
     
-<p>Use of such static variables has a practical advantage, in that in some cases it allows the game designer to express the same rules in more concise way. On the other hand, it will also allow to design games that make use not only the history of successful moves, but that of unsuccessful moves as well. So this will, for example, allow to create a snippet implementing the following rule:
+<p>Use of such static variables has a practical advantage, in that in some cases it allows the game designer to express the same rules in more concise or more logical way, or it allows to avoid repeating some computations. (E.g., the 
+  <a href="#gary-2021-04-24-a">monotonic vs. non-monotonic rows</a> example above can be re-written in an easier-to-understand way with static variables).
+
+  <p>On the other hand, unrestricted use of static variables will also allow to design games that make use not only the history of successful moves, but that of unsuccessful moves as well. So this will, for example, allow to create a snippet implementing the following rule:
    <blockquote><p><em>
 	The player must pick a piece and attempt to place it into the same bucket 3 times in a row; only then will it be accepted.</em>
   </blockquote>
