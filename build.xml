@@ -39,7 +39,9 @@
        description="The classpath to use for compiling this app">
    <!-- fileset dir="${lib}">
      <include name="*.jar"/>
-   </fileset -->
+     </fileset -->
+
+     <!-- Obtained from https://mvnrepository.com/artifact/org.glassfish.jersey.bundles -->
    <fileset dir="${main}/../jaxrs-ri/api">
      <include name="*.jar"/>
    </fileset>
@@ -50,6 +52,13 @@
      <include name="*.jar"/>
    </fileset>
    <fileset dir="${main}/../jaxb-ri/mod">
+     <include name="*.jar"/>
+   </fileset>
+   <!--includes  jersey-media-multipart-3.0.2.jar from https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-multipart/3.0.2 ; jakarta.ws.rs-api-3.0.0.jar   from 
+https://mvnrepository.com/artifact/jakarta.ws.rs/jakarta.ws.rs-api/3.0.0
+
+   -->
+   <fileset dir="${main}/../other-lib">
      <include name="*.jar"/>
    </fileset>
   <fileset dir="${openjpa}">
@@ -213,6 +222,7 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
   <lib dir="${main}/../jaxrs-ri/ext">    <include name="*.jar"/> </lib>
   <lib dir="${main}/../jaxrs-ri/lib">    <include name="*.jar"/> </lib>
   <lib dir="${main}/../jaxb-ri/mod">    <include name="*.jar"/> </lib>
+  <lib dir="${main}/../other-lib">     <include name="*.jar"/>   </lib>
   <lib dir="${openjpa}">  <include name="*.jar"/> </lib>
   <webinf dir="WEB-INF"/>
   <metainf dir="META-INF"/>

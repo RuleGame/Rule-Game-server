@@ -328,6 +328,18 @@ public class Board// extends OurTable
 	}
     }
 
+
+    /** Produces an array of pieces with N*N elements, with nulls
+	for empty cells. Used in BoardDisplayService only. */
+    public Piece[] asBoardPieces() {
+	Piece[] pieces = new Piece[N*N + 1];
+	for(Piece p: value) {
+	    pieces[p.pos().num()] =p;
+	}
+	return pieces;
+    }
+
+    
     /** We aren't actually using SQL server to store boards, even though we 
 	have support for this */
     public long persistNewBoard() {
@@ -341,7 +353,16 @@ public class Board// extends OurTable
     /** Reads a board description from a JSON file */
     public static Board readBoard(File f) throws IOException, ReflectiveOperationException { 
 	//System.err.println("ReadBoard " + f);
-	JsonReader jsonReader = Json.createReader(new FileReader(f));
+	return readBoard(new FileReader(f));
+    }
+
+    public static Board readBoardFromString(String jsonText) throws IOException, ReflectiveOperationException {
+	return readBoard(new StringReader(jsonText));
+    }
+    
+    public static Board readBoard(Reader r) throws IOException, ReflectiveOperationException { 
+	//System.err.println("ReadBoard " + f);
+	JsonReader jsonReader = Json.createReader(r);
 	JsonObject obj = jsonReader.readObject();
 	jsonReader.close();
 

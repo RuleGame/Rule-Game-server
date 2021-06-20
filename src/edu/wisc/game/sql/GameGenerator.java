@@ -64,6 +64,10 @@ abstract public class GameGenerator {
 	String initial_boards_order = (String)para.get("initial_boards_order");
 
 	GameGenerator gg;
+
+	//System.out.println("mkGameGenerator: para=" +para);
+
+	
 	if (initial_boards!=null && initial_boards.length()>0) {
 	    if (initial_boards_order==null ||initial_boards_order.length()==0) throw new  IllegalInputException("Parameter sets specifies initial_boards, but not initial_boards_order");
 	    File boardDir = Files.inputBoardSubdir(initial_boards);

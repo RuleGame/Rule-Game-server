@@ -699,7 +699,7 @@ public class Episode {
     }
 
     /** The basic mode tells the player where all movable pieces are, 
-	but EpisodeInfor will override it if the para set mandates "free" mode.
+	but EpisodeInfo will override it if the para set mandates "free" mode.
      */
     boolean weShowAllMovables() {
 	return true;
@@ -713,18 +713,34 @@ public class Episode {
     public String graphicDisplay() {
 	return graphicDisplay(false);
     }
-    
-    public String graphicDisplay(boolean html) {
 
+    /** Generates an HTML table displaying the current board state,
+	@param html If false, call the ASCII-graphics routine instead (for
+	printing on terminal, instead of a web browser)
+    */
+    public String graphicDisplay(boolean html) {
 	if (isNotPlayable() || !html) return graphicDisplayAscii(html);
 
-	String result="";
+	int lastMovePos =  (lastMove==null)? -1:  lastMove.pos;
+	//	private boolean[] isMoveable = new boolean[Board.N*Board.N+1];
+	boolean[] isMoveable = ruleLine.isMoveable;
 
 	String s = 
 	    fm.wrap("li", "(X) - a movable piece" +
-		     (!weShowAllMovables()? " (only marked on the last touched piece)": "")) +
+		    (!weShowAllMovables()? " (only marked on the last touched piece)": "")) +
 	    fm.wrap("li","[X] - the position to which the last move or pick attempt (whether successful or not) was applied");
-	result += fm.para( "Notation: " + fm.wrap("ul",s));
+	String result = fm.para( "Notation: " + fm.wrap("ul",s));
+	
+	result+=doHtmlDisplay(pieces, lastMovePos,  weShowAllMovables(), isMoveable);
+	return result;
+
+    }
+    
+    public static String doHtmlDisplay(Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveable) {
+
+
+	String result="";
+
 	
 	ColorMap cm = new ColorMap();
  	
@@ -759,10 +775,10 @@ public class Episode {
 		//    ruleLine.isMoveable[pos]?     "(" + z + ")" :
 		//    "&nbsp;" + z + "&nbsp;";
 
-		boolean isLastMovePos =  (lastMove!=null && lastMove.pos==pos);
+		boolean isLastMovePos =  (lastMovePos==pos);
 		boolean padded=true;
 		
-		if (ruleLine.isMoveable[pos] && (weShowAllMovables() || isLastMovePos)) {
+		if (isMoveable[pos] && (weShowAllMovables || isLastMovePos)) {
 		    z="(" + z + ")";
 		    padded=true;
 		}
@@ -876,7 +892,7 @@ public class Episode {
 	return json.toString();
     }
 
-    public static final String version = "3.001";
+    public static final String version = "3.002";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();

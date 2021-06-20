@@ -1,0 +1,78 @@
+<html>
+  <head><title>Display a board</title>
+  </head>
+<body>
+  <h1>Display a board</h1>
+
+  <p align="center"><em>Version 3.002,  2021-06-20</em></p>
+
+<P><strong>Display a single board</strong></p>
+  
+  <form method="post" action="game-data/BoardDisplayService/displayBoard"
+	enctype="application/x-www-form-urlencoded">
+    Please enter a JSON element in the box below<br>
+	<textarea id="board.data" name="boardJson" rows="10" cols="70">
+	</textarea><br>
+
+    
+	  <input type="submit">
+	</form>
+
+<p>
+
+  <p>
+  Or you can upload a JSON file (as an example, you can pick anything from under <tt>/opt/tomcat/game-data/boards/</tt>) :<br>
+  <form  enctype="multipart/form-data"
+  	 action="game-data/BoardDisplayService/displayBoardFile"
+	 method="post">
+<input type="file" size="80" name="file">
+<button type="submit">Upload JSON file</button>
+</form>
+
+  
+  <p>
+    A sample board JSON element (using legacy shapes and colors) may look like this:
+    <pre>
+      {"id":"it-does-not-matter-what-goes-here",
+      "value":[
+      {"color":"yellow","shape":"square","id":"1","x":1,"y":1},
+      {"color":"black","shape":"square","id":"6","x":6,"y":1},
+      {"color":"red","shape":"square","id":"31","x":1,"y":6},
+      {"color":"blue","shape":"square","id":"36","x":6,"y":6}],
+ "name":"Four squares in corners"}
+    </pre>
+  
+<P><strong>Display a list of boards</strong></p>
+  
+  <form method="post" action="game-data/BoardDisplayService/displayBoardList"
+	enctype="application/x-www-form-urlencoded">
+    Please enter a JSON element in the box below<br>
+	<textarea id="board.data" name="boardListJson" rows="10" cols="70">
+	</textarea><br>
+
+    
+	  <input type="submit">
+	</form>
+
+  <p>Example:
+    <pre>
+      {"boards":[
+      {"id":"Board 1",
+      "value":[
+      {"color":"yellow","shape":"square","id":"1","x":1,"y":1},
+      {"color":"black","shape":"square","id":"6","x":6,"y":1},
+      {"color":"red","shape":"square","id":"31","x":1,"y":6},
+      {"color":"blue","shape":"square","id":"36","x":6,"y":6}],
+      "name":"Four squares in corners"},
+  {"id":"Board 2",
+      "value":[
+      {"color":"yellow","shape":"square","id":"1","x":2,"y":2},
+      {"color":"black","shape":"square","id":"6","x":5,"y":2},
+      {"color":"red","shape":"square","id":"31","x":2,"y":5},
+      {"color":"blue","shape":"square","id":"36","x":5,"y":5}],
+      "name":"Four squares in corners"} ]}
+    </pre>
+<p>
+
+</body>
+</html>

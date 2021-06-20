@@ -342,5 +342,13 @@ public class ParaSet extends HashMap<String, Object> {
 	return s!=null && s.toLowerCase().startsWith("free");
     }
 
+    public String toString() {
+	Vector<String> v= new Vector<>();
+	for(String key: keySet()) {
+	    v.add(key +": "+get(key));
+	}
+	return "ParaSet{\n" + String.join("\n", v) + "\n}";
+    }
+    
 }
 			     
