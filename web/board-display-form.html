@@ -41,6 +41,16 @@
       {"color":"blue","shape":"square","id":"36","x":6,"y":6}],
  "name":"Four squares in corners"}
     </pre>
+    You can copy and paste one from the output of the Game Server, if you use the Captive Game Server or HTML Play in the web server.
+    
+  <p>
+  You can have boards with images too, e.g.:
+    <pre>
+      {"id":0,"x":4,"y":3,"image":"vm/image_test_01/cat-07.png","buckets":[]},
+      {"id":1,"x":1,"y":4,"image":"vm/image_test_01/cat-03.png","buckets":[]},
+      {"id":2,"x":1,"y":5,"image":"vm/image_test_01/cat-03.png","buckets":[]},
+      {"id":3,"x":6,"y":6,"image":"vm/image_test_01/cat-13.png","buckets":[0]}]}
+</pre>
   
 <P><strong>Display a list of boards</strong></p>
   
@@ -70,9 +80,18 @@
       {"color":"black","shape":"square","id":"6","x":5,"y":2},
       {"color":"red","shape":"square","id":"31","x":2,"y":5},
       {"color":"blue","shape":"square","id":"36","x":5,"y":5}],
-      "name":"Four squares in corners"} ]}
+      "name":"Four squares near corners"} ]}
     </pre>
-<p>
+  
+     <p>
+  Or you can upload a JSON file with a list of boards,  as per the example above.
+  <form  enctype="multipart/form-data"
+  	 action="game-data/BoardDisplayService/displayBoardListFile"
+	 method="post">
+<input type="file" size="80" name="file">
+<button type="submit">Upload JSON file</button>
+</form>
+
 
 </body>
 </html>

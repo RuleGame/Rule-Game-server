@@ -70,7 +70,7 @@ public class BoardDisplayService {
 
     }
 
-    private String doBoard(Board board) {	    
+    private static String doBoard(Board board) {	    
 	Piece[] pieces= board.asBoardPieces();
 	boolean[] isMoveable = new boolean[Board.N*Board.N+1];	
 	return Episode.doHtmlDisplay(pieces, -1, false, isMoveable);
@@ -131,6 +131,18 @@ public class BoardDisplayService {
 
 	return boardList;
     }
+
+	String htmlFormat() {
+	    String body="";
+	    int cnt=0;
+	    for(Board board: getBoards()) {
+		String s = doBoard(board);
+		cnt++;		
+		body += fm.para("Board no. " + cnt +";id="+board.getId()+", name=" +board.getName());		
+		body += fm.para(s);
+	    }
+	    return body;
+	}
 	
     }
 
@@ -151,16 +163,7 @@ public class BoardDisplayService {
 	    
 	    BoardList boardList = BoardList.readBoardList(new StringReader(boardListJsonText));
 	    title ="Board list display";
-	    body += fm.para(boardListJsonText);
-	    int cnt=0;
-	    for(Board board: boardList.getBoards()) {
-		String s = doBoard(board);
-		cnt++;
-		
-		body += fm.para("Board no. " + cnt);
-		
-		body += fm.para(s);
-	    }
+	    body += fm.para(boardListJsonText) +boardList.htmlFormat();
 
 	} catch(Exception ex) {
 	    title ="Error";
@@ -169,5 +172,30 @@ public class BoardDisplayService {
 	return fm.html(title, body);	
 
     }
-    
+
+
+    @Path("/displayBoardListFile")
+    @POST
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.TEXT_HTML)
+    public String  displayBoardListFile(
+				    @FormDataParam("file") InputStream file,
+                @FormDataParam("file") FormDataContentDisposition fileDisposition			      ) {
+	String title="", body="";
+	try {
+	    if (file==null) {
+		throw new IllegalInputException("No board description JSON supplied");		
+	    }
+	    
+	    BoardList boardList = BoardList.readBoardList(new  InputStreamReader(file));
+	    title ="Board list display";
+	    body += boardList.htmlFormat();
+
+	} catch(Exception ex) {
+	    title ="Error";
+	    body = ex.toString();
+	}
+	return fm.html(title, body);	
+
+    }
 }

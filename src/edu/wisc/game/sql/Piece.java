@@ -194,7 +194,9 @@ public class Piece  implements Serializable {
     }
 
     public ImageObject getImageObject() {
-	return image==null? null: ImageObject.obtainImageObjectPlain(null, image, false);
+	ImageObject x= image==null? null: ImageObject.obtainImageObjectPlain(null, image, false);
+	//System.out.println("DEBUG:  getImageObject,image="+image+", return="+x);
+	return x;
     }
   
     
