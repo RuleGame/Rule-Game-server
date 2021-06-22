@@ -31,7 +31,14 @@
     <p>
 In this way CGS can find relevant JAR files (used for handling JSON) in <tt>../jaxrs-ri/ext/*.jar</tt>, relative to the directory  where the scripts are. This is how the class path is set in the shell scripts (specifically, in <tt>set-var-captive.sh</tt>, which is included into <tt>captive-brief.sh</tt> and other scripts).</p>
 
-      
+    <p>other-lib :
+      <a href="https://mvnrepository.com/artifact/org.jvnet.mimepull/mimepull">
+      MIME Streaming Extension</a>
+
+    (I used <a href="https://mvnrepository.com/artifact/org.jvnet.mimepull/mimepull/1.9.14">mimepull-1.9.14.jar</a>)
+
+
+    
     <h2>Starting the Captive Game Server</h2>
 
     <p>The CGS is presently installed on sapir, in the directory <tt>/home/vmenkov/captive.</tt> The CGS can play one game at a time; to choose a game, one needs to provide the CGS with a game rule file (a few of which can be found in  /home/vmenkov/captive/game/rules/ ) and the initial number of pieces. 

@@ -48,7 +48,8 @@ public class BoardDisplayService {
     @Produces(MediaType.TEXT_HTML)
     /** @param boardJsonText a JSON element describing a board 
      */
-    public String displayBoard(@FormParam("boardJson") String boardJsonText
+    public String displayBoard(@FormParam("boardJson") String boardJsonText,
+			       @DefaultValue("80") @FormParam("cellWidth") int cellWidth
 			  ){
 	String title="", body="";
 	try {
@@ -57,7 +58,7 @@ public class BoardDisplayService {
 	    }
 	    
 	    Board board = Board.readBoardFromString(boardJsonText);
-	    String s = doBoard(board);
+	    String s = doBoard(board, cellWidth);
 	    title ="Board display";
 	    body += fm.para(boardJsonText);
 	    body += fm.para(s);
@@ -70,10 +71,10 @@ public class BoardDisplayService {
 
     }
 
-    private static String doBoard(Board board) {	    
+    private static String doBoard(Board board,  int cellWidth) {	    
 	Piece[] pieces= board.asBoardPieces();
 	boolean[] isMoveable = new boolean[Board.N*Board.N+1];	
-	return Episode.doHtmlDisplay(pieces, -1, false, isMoveable);
+	return Episode.doHtmlDisplay(pieces, -1, false, isMoveable, cellWidth);
     }
    
     @Path("/displayBoardFile")
@@ -82,7 +83,9 @@ public class BoardDisplayService {
     @Produces(MediaType.TEXT_HTML)
     public String  displayBoardFile(
 				    @FormDataParam("file") InputStream file,
-                @FormDataParam("file") FormDataContentDisposition fileDisposition			      ) {
+				    @FormDataParam("file") FormDataContentDisposition fileDisposition,
+				    @DefaultValue("80") @FormDataParam("cellWidth") int cellWidth
+				    ) {
 
 	String title="", body="";
 	try {
@@ -91,7 +94,7 @@ public class BoardDisplayService {
 	    }
 	    
 	    Board board = Board.readBoard(new InputStreamReader(file));
-	    String s = doBoard(board);
+	    String s = doBoard(board, cellWidth);
 	    title ="Board display";
 	    //body += fm.para(boardJsonText);
 	    body += fm.para(s);
@@ -132,15 +135,37 @@ public class BoardDisplayService {
 	return boardList;
     }
 
-	String htmlFormat() {
+	String htmlFormat(int cellWidth,int ncol) {
+	    if (ncol<1) ncol=1;
 	    String body="";
 	    int cnt=0;
+
+	    Vector<String> cells = new Vector<>();
+	    String table="";
+	    
 	    for(Board board: getBoards()) {
-		String s = doBoard(board);
-		cnt++;		
-		body += fm.para("Board no. " + cnt +";id="+board.getId()+", name=" +board.getName());		
-		body += fm.para(s);
+		String s = doBoard(board, cellWidth);
+		cnt++;
+		//String msg = "Board no. " + cnt +";id="+board.getId()+", name=" +board.getName();
+		String msg = "" + cnt +") " +board.getName();
+		if (ncol==1) {
+		    body += fm.h3(msg);
+		    body += fm.para(s);
+		} else{
+		    String z=fm.h3(msg)+ s;
+		    cells.add( fm.wrap("td",z));
+		    if (cells.size()==ncol) {
+			table +=fm.wrap("tr",String.join("",cells));
+			cells.clear();
+		    }
+		}
 	    }
+	    if (cells.size()>0) {
+		table +=fm.wrap("tr",String.join("",cells));
+		cells.clear();
+	    }
+	    if (!table.equals("")) body +=fm.wrap("table", table);
+	    
 	    return body;
 	}
 	
@@ -153,8 +178,9 @@ public class BoardDisplayService {
     @Produces(MediaType.TEXT_HTML)
     /** @param boardListJsonText a JSON element describing a BoardList
      */
-    public String displayBoardList(@FormParam("boardListJson") String boardListJsonText
-			  ){
+    public String displayBoardList(@FormParam("boardListJson") String boardListJsonText,
+				    @DefaultValue("40") @FormParam("cellWidth") int  cellWidth ,
+				    @DefaultValue("3") @FormParam("ncol") int ncol ){
 	String title="", body="";
 	try {
 	    if (boardListJsonText==null || boardListJsonText.trim().equals("")) {
@@ -163,7 +189,7 @@ public class BoardDisplayService {
 	    
 	    BoardList boardList = BoardList.readBoardList(new StringReader(boardListJsonText));
 	    title ="Board list display";
-	    body += fm.para(boardListJsonText) +boardList.htmlFormat();
+	    body += fm.para(boardListJsonText) +boardList.htmlFormat(cellWidth,ncol);
 
 	} catch(Exception ex) {
 	    title ="Error";
@@ -180,7 +206,10 @@ public class BoardDisplayService {
     @Produces(MediaType.TEXT_HTML)
     public String  displayBoardListFile(
 				    @FormDataParam("file") InputStream file,
-                @FormDataParam("file") FormDataContentDisposition fileDisposition			      ) {
+				    @FormDataParam("file") FormDataContentDisposition fileDisposition,
+				    @DefaultValue("40") @FormDataParam("cellWidth") int cellWidth,
+				    @DefaultValue("3") @FormDataParam("ncol") int ncol
+					) {
 	String title="", body="";
 	try {
 	    if (file==null) {
@@ -189,7 +218,7 @@ public class BoardDisplayService {
 	    
 	    BoardList boardList = BoardList.readBoardList(new  InputStreamReader(file));
 	    title ="Board list display";
-	    body += boardList.htmlFormat();
+	    body += boardList.htmlFormat(cellWidth, ncol);
 
 	} catch(Exception ex) {
 	    title ="Error";

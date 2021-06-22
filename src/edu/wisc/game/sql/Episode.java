@@ -731,16 +731,15 @@ public class Episode {
 	    fm.wrap("li","[X] - the position to which the last move or pick attempt (whether successful or not) was applied");
 	String result = fm.para( "Notation: " + fm.wrap("ul",s));
 	
-	result+=doHtmlDisplay(pieces, lastMovePos,  weShowAllMovables(), isMoveable);
+	result+=doHtmlDisplay(pieces, lastMovePos,  weShowAllMovables(), isMoveable, 80);
 	return result;
 
     }
     
-    public static String doHtmlDisplay(Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveable) {
+    public static String doHtmlDisplay(Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveable, int cellWidth) {
 
 
 	String result="";
-
 	
 	ColorMap cm = new ColorMap();
  	
@@ -770,7 +769,7 @@ public class Episode {
 		    hexColor = "#"+ (io!=null? "FFFFFF" : cm.getHex(p.xgetColor(), true));
 		}
 		
-		String z = "<img width='80' src=\"../../GetImageServlet?image="+sh+"\">";
+		String z = "<img width='"+cellWidth+"' src=\"../../GetImageServlet?image="+sh+"\">";
 		//z = (lastMove!=null && lastMove.pos==pos) ?    "[" + z + "]" :
 		//    ruleLine.isMoveable[pos]?     "(" + z + ")" :
 		//    "&nbsp;" + z + "&nbsp;";

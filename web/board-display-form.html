@@ -11,11 +11,11 @@
   <form method="post" action="game-data/BoardDisplayService/displayBoard"
 	enctype="application/x-www-form-urlencoded">
     Please enter a JSON element in the box below<br>
-	<textarea id="board.data" name="boardJson" rows="10" cols="70">
-	</textarea><br>
+	<textarea id="board.data" name="boardJson" rows="15" cols="70">
+	</textarea><br>	
+	The size of each game piece: <input type="text" name="cellWidth" value="60">
 
-    
-	  <input type="submit">
+	<br><button type="submit">Display the board described above</button>
 	</form>
 
 <p>
@@ -25,8 +25,9 @@
   <form  enctype="multipart/form-data"
   	 action="game-data/BoardDisplayService/displayBoardFile"
 	 method="post">
-<input type="file" size="80" name="file">
-<button type="submit">Upload JSON file</button>
+<input type="file" size="80" name="file"><br>
+The size of each game piece: <input type="text" name="cellWidth" value="60">
+<br><button type="submit">Display the board described by the JSON file</button>
 </form>
 
   
@@ -62,8 +63,9 @@
 	<textarea id="board.data" name="boardListJson" rows="10" cols="70">
 	</textarea><br>
 
-    
-	  <input type="submit">
+	<br>The size of each game piece: <input type="text" name="cellWidth" value="40">
+	<br>The number of columns: <input type="text" name="ncol" value="3">    
+	<br><input type="submit">
 	</form>
 
   <p>Example:
@@ -91,7 +93,9 @@
   	 action="game-data/BoardDisplayService/displayBoardListFile"
 	 method="post">
 <input type="file" size="80" name="file">
-<button type="submit">Upload JSON file</button>
+<br>The size of each game piece: <input type="text" name="cellWidth" value="40">
+<br>The number of columns: <input type="text" name="ncol" value="3">
+<br><button type="submit">Upload JSON file</button>
 </form>
 
 
