@@ -188,8 +188,9 @@ public class BoardDisplayService {
 	    }
 	    
 	    BoardList boardList = BoardList.readBoardList(new StringReader(boardListJsonText));
-	    title ="Board list display";
-	    body += fm.para(boardListJsonText) +boardList.htmlFormat(cellWidth,ncol);
+	    title ="Displaying a list of "+boardList.getBoards().size() + " boards";
+	    //body += fm.para(boardListJsonText);
+	    body += boardList.htmlFormat(cellWidth,ncol);
 
 	} catch(Exception ex) {
 	    title ="Error";
@@ -217,7 +218,7 @@ public class BoardDisplayService {
 	    }
 	    
 	    BoardList boardList = BoardList.readBoardList(new  InputStreamReader(file));
-	    title ="Board list display";
+	    title ="Displaying a list of "+boardList.getBoards().size() + " boards";
 	    body += boardList.htmlFormat(cellWidth, ncol);
 
 	} catch(Exception ex) {
