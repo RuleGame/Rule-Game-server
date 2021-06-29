@@ -57,31 +57,6 @@ public class Captive {
     }
     */
 
-    /** "3" to {3,3}; "3:5" to {3,5} */
-    static private int[] range(String x) {
-	String v[] = x.split(":");
-	if (v.length==1) {
-	    int n=Integer.parseInt(v[0]);	    
-	    if (n<0) throw new IllegalArgumentException("Illegal value ("+x+") for the number of properties");
-	    return new int[] {n, n};
-	} else if (v.length==2) {
-	    int z[]= {Integer.parseInt(v[0]),Integer.parseInt(v[1])};
-	    if (z[0]>z[1] ||
-		z[0]<0 || z[0]==0 && z[1]>0) throw new IllegalArgumentException("Illegal range: x");
-	    
-	    return z;
-	} else {
-	    throw new IllegalArgumentException("Cannot parse range spec: " + x);
-	}
-    }
-    
-    static private int[] range(String x, Class<? extends Enum> p) {
-	int z[]=range(x);
-	int nProp = p.getEnumConstants().length;
-	if (z[1]>nProp) throw new IllegalArgumentException("Illegal value ("+z[1]+") for the number of " +p+ " properties");
-	return z;
-    }
-    
     /** Creates a GameGenerator based on the parameters found in the command
 	line */
     static GameGenerator buildGameGenerator(ParseConfig ht, String[] argv) throws IOException,  RuleParseException, ReflectiveOperationException, IllegalInputException{ 
@@ -105,6 +80,15 @@ public class Captive {
 	    Board board = Board.readBoard(bf);
 	    return new TrivialGameGenerator(new Game(AllRuleSets.read(f), board));
 	} else { // Rule file + numeric params
+	    try {
+		return RandomGameGenerator.buildFromArgv(f, ht, argv, ja-1);
+	    } catch(IllegalArgumentException ex) {
+		usage(ex.getMessage());
+		return null;
+	    }
+	    /*
+
+	    
 	    int[] nPiecesRange = range(b);
 	    if (nPiecesRange[0] <= 0) usage("Invalid number of pieces ("+b+"); The number of pieces must be positive");
 
@@ -123,6 +107,7 @@ public class Captive {
 
 	    
 	    return new RandomGameGenerator(f, nPiecesRange, nShapesRange, nColorsRange, shapes, colors);    
+	    */
 	}
     }
 	       

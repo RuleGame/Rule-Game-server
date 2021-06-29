@@ -375,14 +375,18 @@ public interface Expression {
 	} else if (a.type==Token.Type.NUMBER) {
 	    return new Num(a);	    
 	} else if (a.type==Token.Type.OPEN && a.cVal=='(') {
+
+
+	    
 	    // Now, expect a comma-separated list of ArEx or ColonEx
 	    Vector<Expression> v = new Vector<>();
 	    while(!tokens.isEmpty()) {
 		a = tokens.get(0);
-		Expression z;
 		if (a.equals(Token.STAR)) {
 		    tokens.remove(0);
-		    z = new Star();
+		    v.add( new Star());
+		} else if (v.size()==0 && a.type==Token.Type.CLOSE && a.cVal==')'){
+		    // an empty atom
 		} else if (tokens.size()>=2 &&
 			   a.type==Token.Type.ID &&
 			   tokens.get(1).type==Token.Type.COLON) {
@@ -393,11 +397,10 @@ public interface Expression {
 		    Expression y = mkRangeExpression(tokens);
 		    if (y==null) y = mkLongestArithmeticExpression(tokens);
 		    //System.out.println("DEBUG: Found CE=" + prefix + ":" + y +", rest={" + Util.joinNonBlank(" ", tokens) + "}");
-		    z = new ColonExpression(prefix, y);
+		    v.add(  new ColonExpression(prefix, y));
 		} else {
-		    z = mkLongestArithmeticExpression(tokens);
+		    v.add(  mkLongestArithmeticExpression(tokens));
 		}
-		v.add(z);
 		
 		if (tokens.isEmpty()) throw new  RuleParseException("Unexpected end of a paren list expression");
 		Token b = tokens.get(0);

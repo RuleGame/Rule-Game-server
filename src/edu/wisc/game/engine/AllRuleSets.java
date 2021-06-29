@@ -15,7 +15,17 @@ import edu.wisc.game.rest.Files;
 */
 public class AllRuleSets extends HashMap<String, RuleSet> {
 
+    /** @param f The rule set file. if null is given (for the convenience of
+	the command-line random-board generator), we create an all-permissive
+	rule set.
+    */
     public static RuleSet read(File f) throws IOException, RuleParseException {
+	if (f==null){
+	    String [] permitAll={"()"};
+	    return new RuleSet(permitAll);
+  	}
+
+	
 	if (!f.canRead())  throw new IOException("Cannot read rule file: " + f);
 	Logging.info("Reading rule set file " + f);
 	String text = Util.readTextFile(f);

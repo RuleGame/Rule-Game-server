@@ -345,7 +345,7 @@ public class RuleSet {
 	    g = arms.remove("bucket"); // bucket
 	    if (g instanceof Expression.ArithmeticExpression)  {
 		bucketList = new BucketList((Expression.ArithmeticExpression)g);
-	    } else if (g instanceof Expression.Star) {
+	    } else if (g instanceof Expression.Star || g==null) {
 		// for compatibility with Kevin's syntax
 		bucketList = new BucketList((Expression.Star)g);
 	    } else {
