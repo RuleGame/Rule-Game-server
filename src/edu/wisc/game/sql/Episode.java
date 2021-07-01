@@ -735,7 +735,8 @@ public class Episode {
 	return result;
 
     }
-    
+
+    /** @param pieces An array of N*N values, with nulls for empty cells */
     public static String doHtmlDisplay(Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveable, int cellWidth) {
 
 
@@ -756,6 +757,13 @@ public class Episode {
 	    v.clear();
 	    v.add(fm.td(""+y));
 
+	    //-- we use borders if there are any images with color properties
+	    boolean needBorder=false;
+	    for(Piece p: pieces) {
+		if (p!=null && p.xgetColor()!=null) needBorder=true;
+	    }
+	    
+
 	    for(int x=1; x<=Board.N; x++) {
 		int pos = (new Pos(x,y)).num();
 		String sh = "BLANK";
@@ -768,8 +776,14 @@ public class Episode {
 		    sh = (io!=null) ? io.key : p.xgetShape().toString();
 		    hexColor = "#"+ (io!=null? "FFFFFF" : cm.getHex(p.xgetColor(), true));
 		}
-		
-		String z = "<img width='"+cellWidth+"' src=\"../../GetImageServlet?image="+sh+"\">";
+
+		//-- The style is provided to ensure a proper color border
+		//-- around Ellise's elements, whose color is not affected by
+		//-- the background color of TD
+		String z = "<img ";
+		if (needBorder) z += "style='border: 5px solid "+hexColor+"' ";
+
+		z += "width='"+cellWidth+"' src=\"../../GetImageServlet?image="+sh+"\">";
 		//z = (lastMove!=null && lastMove.pos==pos) ?    "[" + z + "]" :
 		//    ruleLine.isMoveable[pos]?     "(" + z + ")" :
 		//    "&nbsp;" + z + "&nbsp;";

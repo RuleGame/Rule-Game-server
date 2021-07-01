@@ -86,28 +86,7 @@ public class Captive {
 		usage(ex.getMessage());
 		return null;
 	    }
-	    /*
 
-	    
-	    int[] nPiecesRange = range(b);
-	    if (nPiecesRange[0] <= 0) usage("Invalid number of pieces ("+b+"); The number of pieces must be positive");
-
-	    int[] zeros = {0,0};
-	    int[] nShapesRange=(ja<argv.length)? range(argv[ja++]) : zeros;
-	    //int[] nColorsRange=(ja<argv.length)? range(argv[ja++], Piece.Color.class) : zeros;
-	    int[] nColorsRange=(ja<argv.length)? range(argv[ja++]) : zeros;
-
-
-	    //System.out.println("#option shapes=" + ht.getOption("shapes",null));
-	    //System.out.println("#option colors=" + ht.getOption("colors",null));
-	    Piece.Shape[] shapes = ParaSet.parseShapes(ht.getOption("shapes",null));
-	    if (shapes==null) shapes = Piece.Shape.legacyShapes;	    
-	    Piece.Color[] colors =  ParaSet.parseColors(ht.getOption("colors",null));
-	    if (colors==null) colors = Piece.Color.legacyColors;
-
-	    
-	    return new RandomGameGenerator(f, nPiecesRange, nShapesRange, nColorsRange, shapes, colors);    
-	    */
 	}
     }
 	       

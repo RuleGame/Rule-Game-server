@@ -107,9 +107,13 @@ public class RandomGameGenerator extends GameGenerator {
 
 	//System.out.println("#option shapes=" + ht.getOption("shapes",null));
 	//System.out.println("#option colors=" + ht.getOption("colors",null));
-	Piece.Shape[] shapes = ParaSet.parseShapes(ht.getOption("shapes",null));
-	if (shapes==null) shapes = Piece.Shape.legacyShapes;	    
-	Piece.Color[] colors =  ParaSet.parseColors(ht.getOption("colors",null));
+	String shapesString = (ja<argv.length)? argv[ja++]: ht.getOption("shapes",null);
+	Piece.Shape[] shapes = ParaSet.parseShapes(shapesString);
+	if (shapes==null) shapes = Piece.Shape.legacyShapes;
+
+	String colorsString = (ja<argv.length)? argv[ja++]: ht.getOption("colors",null);
+	
+	Piece.Color[] colors =  ParaSet.parseColors(colorsString);
 	if (colors==null) colors = Piece.Color.legacyColors;
 		    
 	return new RandomGameGenerator(f, nPiecesRange, nShapesRange, nColorsRange, shapes, colors);    
@@ -140,7 +144,7 @@ public class RandomGameGenerator extends GameGenerator {
 	System.out.println("Will generate " +nb + " boards in directory "+dir);
 	RandomGameGenerator gg=buildFromArgv(null, ht, argv, ja);
 	String fs="000";
-	for(int m=nb/100; m>0; m /= 10) fs += "0";
+	for(int m=nb/1000; m>0; m /= 10) fs += "0";
 	DecimalFormat fmt =new DecimalFormat(fs);
 
 

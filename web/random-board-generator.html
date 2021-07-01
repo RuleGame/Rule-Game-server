@@ -1,0 +1,108 @@
+<html>
+  <head><title>Random Board Generator</title></head>  
+  <body>
+    <h1>Creating initial boards with a random board generator</h1>
+
+<div align="center"><em>Updated 2021-06-30 for ver 3.003</em></div>
+    
+    <p>When <a href="http://localhost:8080/w2020/sop-experiment.html">creating an experiment plan</a>, you need to give a thought to where intial boards are coming from.
+
+<p>In many plans, an initial board for each episode is created on-the-fly by the random board generator, which draws boards from a random distribution controlled by 6 parameters (or 8, if you have color and shape lists) in your trial list file. (For detail on how configure the parameters, see 
+<a href="para-set.html#randomBoard">Rule Game Server parameter sets / Random board generation</a>).
+
+<p>In some plans, however, you may want to give your players a set of boards that satisfies some more sophisticated design requirements, e.g. making sure that a particular color+shape combination does not occur in any initial board, or that no pieces are put to certain cells of the board. Or you may want to ensure that every player gets the same sequence of initial boards. Both of these objectives  can be achieved by creatig a number of JSON files describing initial boards, either manually or using some kind of tool, and then configuring your experiment plan to use these initial boards, as explained in
+  <a href="para-set.html#defineBoard">Rule Game Server parameter sets /Using prefedined initial boards</a>.
+
+  <h2>The command-line random board generator</h2>
+
+<p>The random board generator used by the Game Server is also accessible as a command-line tool, on sapir or on any computer on which you have <a href="deploy.html">checked out and build the server code</a>. It can be used to create a desired number of initial boards files with specified properties.
+
+<p>The script resides on sapir in <code>/home/vmenkov/w2020/game/scripts/random-boards.sh</code>; you can use it in that location. (Don't copy it into your own directory, as it relies on its location to find JAR files etc). It will be found on at a similar location in your directory tree if you follow the  <a href="deploy.html">SOP instructions for checking  out and building the server code</a> on your own machine. The script is to be used as follows:
+
+<pre>
+/home/vmenkov/w2020/game/scripts/random-boards.sh <em>out-dir number-of-boards objects-range  shapes-range  colors-range [shapes-list colors-list]</em>
+</pre>
+
+Here,
+<ul>
+  <li>out-dir = the name of an existing, preferable empty, directory into which the new JSON files will be written
+  <li>number-of-boards = the number of files to create (&ge;1)
+  <li>objects-range = the number of game pieces to place on the board (a positive integer), or a range (<em>n<sub>1</sub>:n<sub>2</sub></em>, with 1&le;<em>n<sub>1</sub></em> &le;<em>n<sub>2</sub></em>, e.g. <tt>2:4</tt>)
+  <li>shapes-range = the number of different shapes to be used on the board. (A positive integer or a range)
+  <li>colors-range = the number of different colors to be used on the board. (A positive integer or a range)
+  <li>shapes-list = unless you want to use the 4 legacy shapes and 4 legacy colors, use this parameter to specify the list from which shapes are to be drawn. Wildcards are allowed. (A single-quoted semicolon-separated list, e.g. <tt>'camel;cat;duck'</tt>, or <tt>'arrows/*;rainbows/*'</tt>).
+  <li>colors-list =  unless you want to use the 4 legacy colors, use this parameter to specify the list from which colors are to be drawn. (A single-quoted semicolon-separated list, e.g. <tt>'red;pink;orange;mauve'</tt>). As with any colors, the colors mentioned here must exist in the color map on your server.
+</ul>
+
+Examples (which, for simplicity, assume that <tt>/home/vmenkov/w2020/game/scripts</tt> is in your path, and that you want 100  board files to be written to the subdirectory <tt>tmp</tt> of your current directory):
+
+     <h4>Specify the number of pieces, the number of shapes, and the number of colors, as single numbers</h4>
+      <p>
+ 	<pre>
+random-boards.sh tmp 100 5 2 3
+	</pre>
+	In the above example, every initial board will have 5 pieces, with exactly 2 distinct shapes and 3 distinct colors
+      </p>
+      
+      <h4>Same as the above, but with using ranges for any of the three quantities.</h4>
+
+      <p>
+      Ranges and single numbers can be combined in arbitrary ways; essentially, a single number <em>n</em> is equivalent to the range <em>n</em>:<em>n</em>. E.g.
+  	<pre>
+random-boards.sh tmp 100 5 1:3 3:4
+	</pre>
+	In the above example,  every initial board will have 5 pieces, with 1, 2, or 3 distinct shapes (with equal probability) and 3 or 4 distinct colors.
+      </p>
+
+      <p>When using ranges, make sure that the upper bound of range of the number of shapes the upper bound of the range of the number of colors do not exceed the lower bound of the range of the number of pieces. Otherwise, the random board generator may be occasionally faced with an impossible task of creating a board which has more distinct colors or shapes than it has pieces!</p>
+      
+      <h4>Same as the above, but with custom shapes and/or custom colors.</h4>
+
+      <p>
+To specify the sets from which colors and/or shapes will be drawn by the initial board generator, you can add additional parameters to the command line. The values of the parameters are semicolon-separated lists of colors and/or shapes, respectively. Make sure to use single quotes as shown below, since semicolons would be interpreted by the UNIX shell as command separators otherwise.
+<pre>
+  random-boards.sh tmp 100  3 2 2 'arrows/arrow-up-left;arrows/arrow-up-right;arrows/arrow-down-right;arrows/arrow-down-left' 'red;pink'
+	   </pre>
+      </p>
+
+<P>One is allowed to use <tt>*</tt> to mean "use all shapes for which SVG files exist in the appropriate subdirectory of the main shapes directory". Thus, <tt>'arrows/*;weather/*'</tt> is equivalent to listing every shape from  <tt>/opt/tomcat/game-data/shapes/arrows</tt> and <tt>/opt/tomcat/game-data/shapes/weather</tt>
+      
+      <p>
+	If you're using custom shapes and/or custom colors, it is necessary that a list of colors and a set of shapes SVG files are found at the appropriate locations under <tt>/opt/tomcat/game-data</tt>, as explained in the document <a href="colors-and-shapes.html">Using custom shapes and colors in Rule Game Server 2.*</a>. If you're running your board generator on <tt>sapir</tt> (the server used for the human subjects), and are playing a game that human subjects are already playing, then you're all set, because the human-player experiment team has already set up the necessary files in   <tt>/opt/tomcat/game-data</tt>.
+      </p>
+
+  <h2>Post-processing: selecting boards matching your additional criteria</h2>
+
+    <p>Now that you know how to create e.g. a bunch of random boards, each with 4 pieces of 4 different colors and 4 different shapes, how can you carry out additional selection  on these boards, to only select those with desired properties?
+
+    <p>Copy the file <tt>/home/vmenkov/game/sample-scripts/sample-random-boards-01.sh</tt> to any of your own directories, examine it, and modify it as needed. (Unlike the files under <tt>scripts</tt>, those under  <tt>sample-scripts</tt> are meant to be "adopted" by users, i.e. copied to their own directories and modified as needed).
+
+    <p>What this file contains is the following:
+
+      <ul>
+	<li>Creating a directory for the JSON files to be produced. (<code>set dir=tmp; mkdir $dir</code>).
+
+	<li>Running random-boards.sh with desired parameters, producing 100 files with 4 game pieces each, of different shapes and colors. Modify that as needed.
+
+	<li>Looking at all files in the output directory, and deleting those that are not matching the desired criteria. In this script we use Linux's versatile <tt>find</tt> command to organize this process. It finds all files with the <tt>name</tt>s of a certain kind (those matching <tt>*.json</tt>), and on each of those files it <tt>exec</tt>utes the Linux <tt>grep</tt> command. The <tt>grep</tt> command looks for a certain substring in each JSON file; due to the way the files are formatted, the search substring only appears in JSON files that have a certain combination of color and shape in the same game piece. When the match occurs, the  <tt>find</tt> command performs the <tt>-delete</tt> the unwanted file.
+	  <pre>
+find $dir -name '*.json' -exec grep -i '"color":"RED_HIGH","shape":"birdlow"' {} \; -delete 
+	  </pre>
+
+      <li>The <tt>find</tt> command is repeated several times, to purge JSON files containing pieces with other unwanted color+shape combinations.
+      </ul>
+
+    <p>
+      You should be able to customize the find commands (likely, the pattern in<tt>grep</tt>) to remove files based on other criteria. If you need advice for a particular case, ask Vladimir.
+
+      <h2>No support for image-and-properties based objects</h2>
+
+    <p>As of GS 3.003, the Random board generator only works with the traditional shape+color based objects. It has no support for <a HREF="proposal-object-properties.html">image-and-properties based objects</a> introduced in GS 3.*.
+      
+      <h2><a name="display">Viewing your initial boards</a></h2>
+
+<p>You can use the <a href="board-display-form.html">Board display tool</a> to view the boards you have produced. Go to the second form in the tool's main screen <a href="board-display-form.html#fileSingle">Board display tool / Display a single board from a file (or multiple boards from multiple files)</a>, and upload all the JSON files you've got (or a representative sample of them), to see a graphics display of them all. Due to the limitations of our display tool, the color of images may not be shown correctly: instead of properly painted icons, you may see black icons with a colored background, or a colored square frame around them.
+
+      
+  </body>
+  </html>

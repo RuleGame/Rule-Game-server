@@ -18,7 +18,8 @@ import edu.wisc.game.engine.*;
 import edu.wisc.game.formatter.*;
 
 
-import org.glassfish.jersey.media.multipart.BodyPartEntity;
+import org.glassfish.jersey.media.multipart.BodyPart;
+import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
@@ -36,6 +37,12 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
     using the library jersey-media-multipart-2.34.jar   from https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-multipart/
     Make sure not use version 3.*, because they jave switched from "json" naming
     to "jakarta" naming.
+
+    <p>
+    See also 
+https://stackoverflow.com/questions/56454397/jersey-formdataparam-to-read-multiple-inputstream-files
+    for uploading multiple files
+
  */
 
 @Path("/BoardDisplayService") 
@@ -81,25 +88,55 @@ public class BoardDisplayService {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_HTML)
-    public String  displayBoardFile(
-				    @FormDataParam("file") InputStream file,
-				    @FormDataParam("file") FormDataContentDisposition fileDisposition,
+    public String  displayBoardFile(@FormDataParam("file") FormDataBodyPart parts,
+				    
+				    //  @FormDataParam("file") InputStream file,
+				    //  @FormDataParam("file") FormDataContentDisposition fileDisposition,
 				    @DefaultValue("80") @FormDataParam("cellWidth") int cellWidth
 				    ) {
 
+
+	
 	String title="", body="";
+
 	try {
-	    if (file==null) {
+
+
+	    if (parts==null) {
 		throw new IllegalInputException("No board description JSON supplied");		
 	    }
-	    
-	    Board board = Board.readBoard(new InputStreamReader(file));
-	    String s = doBoard(board, cellWidth);
-	    title ="Board display";
-	    //body += fm.para(boardJsonText);
-	    body += fm.para(s);
 
+	    title ="Board display";
+	    title+=" (cellWidth=" +cellWidth+")";
+
+	    for(BodyPart part : parts.getParent().getBodyParts()){
+		InputStream file = part.getEntityAs(InputStream.class);
+		ContentDisposition fileDisposition = part.getContentDisposition();
+		String fileName=fileDisposition.getFileName();
+		String type=fileDisposition.getType();
+
+		/*
+		InputStreamReader r = new InputStreamReader(file);
+		StringBuffer b = new StringBuffer();
+		int x=0;
+		while((x=r.read())>=0) b.append( (char)x);
+		r.close();
+		String s =  fm.para("Read a file, fileName="+fileName+", type="+type);
+		s+= fm.para(b.toString());
+		*/
+		
+
+		if (fileName==null) continue; // some other param than a fle
+		Board board = Board.readBoard(new InputStreamReader(file));
+		String s = 		    doBoard(board, cellWidth);
+		
+		//body += fm.para(boardJsonText);
+		body +=fm.h3(fileName);
+		body += fm.para(s);
+	    }
 	} catch(Exception ex) {
+	    System.err.println(ex);
+	    ex.printStackTrace(System.err);
 	    title ="Error";
 	    body = ex.toString();
 	}

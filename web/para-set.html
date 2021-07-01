@@ -18,7 +18,7 @@
 
   <h2><a name="randomBoard">Random board generation</a></h2>
 
-<p>In most experiments, you will likely want the Game Server to randomly generate a new initial board for each episode. In Game Server 1.*, the distribution is controlled by six parameters, discussed under <a name="control-flow.html#randomSix">Six-parameter distribution</a>.
+<p>In most experiments, you will likely want the Game Server to randomly generate a new initial board for each episode. In Game Server 1.*, the distribution is controlled by six parameters, discussed under <a href="control-flow.html#randomSix">Six-parameter distribution</a>.
 
 <P>In Game Server 2.*, additional parameter, <tt>colors</tt> has been introduced. Its value is a <em>color set</em> to use in the random board generator, i.e. a list of color names (each of them should be defined in the <a href="data.html#color">color map file</a>), separated by <em>semicolons</em>. Similarly, the <tt>shapes</tt> parameter specifies the list of shapes to use,  separated by <em>semicolons</em> as well.  
 
@@ -54,7 +54,7 @@
 
 <p>Most commonly, a series of episodes is played on randomly generated initial boards; the appropriate parameter set needs to contain the parameters of this random distribution, such as the min and max number of objects, shapes, and colors.
 
-<p>However, it is also possible for the experiment manager to create a set of JSON files   <a href="data.html#defineBoard">specifying initial boards</a>, and   a parameter set using those initial boards instead of random boards.
+<p>However, it is also possible for the experiment manager to create a set of JSON files   <a href="data.html#defineBoard">specifying initial boards</a>, and   a parameter set using those initial boards instead of random boards. (And, of course, you can also use <a href="random-board-generator.html">the random board generator with a post-processing script</a> to create those initial boards).
 
 <p>The relevant parameters are as follows:
 

@@ -4,9 +4,9 @@
 <body>
   <h1>Display a board</h1>
 
-  <p align="center"><em>Version 3.002,  2021-06-20</em></p>
+  <p align="center"><em>Version 3.003,  2021-06-30</em></p>
 
-<P><strong>Display a single board</strong></p>
+<h2>Display a single board - copy and paste</h2>
   
   <form method="post" action="game-data/BoardDisplayService/displayBoard"
 	enctype="application/x-www-form-urlencoded">
@@ -20,17 +20,6 @@
 
 <p>
 
-  <p>
-  Or you can upload a JSON file (as an example, you can pick anything from under <tt>/opt/tomcat/game-data/boards/</tt>) :<br>
-  <form  enctype="multipart/form-data"
-  	 action="game-data/BoardDisplayService/displayBoardFile"
-	 method="post">
-<input type="file" size="80" name="file"><br>
-The size of each game piece: <input type="text" name="cellWidth" value="60">
-<br><button type="submit">Display the board described by the JSON file</button>
-</form>
-
-  
   <p>
     A sample board JSON element (using legacy shapes and colors) may look like this:
     <pre>
@@ -55,8 +44,23 @@ The size of each game piece: <input type="text" name="cellWidth" value="60">
 ],
  "name":"Some cats"}
 </pre>
+ 
+<h2><a name="fileSingle">Display a single board from a file (or multiple boards from multiple files)</a></h2>
+
+  <p>
+You can upload a JSON file with a single board; or you can upload several files,  each one containing a single board element. (As an example, you can pick any file(s) from under <tt>/opt/tomcat/game-data/boards/</tt>) :<br>
+  <form  enctype="multipart/form-data"
+  	 action="game-data/BoardDisplayService/displayBoardFile"
+	 method="post">
+<input type="file" size="80" name="file" multiple><br>
+The size of each game piece: <input type="text" name="cellWidth" value="60">
+<br><button type="submit">Display the board described by the JSON file</button>
+</form>
+
+<p>The content of each file you upload in this form should look like one of the examples above.
+
   
-<P><strong>Display a list of boards</strong></p>
+ <h2>Display a list of boards (copy and paste)</h2>
   
   <form method="post" action="game-data/BoardDisplayService/displayBoardList"
 	enctype="application/x-www-form-urlencoded">
@@ -87,7 +91,8 @@ The size of each game piece: <input type="text" name="cellWidth" value="60">
       {"color":"blue","shape":"square","id":"36","x":5,"y":5}],
       "name":"Four squares near corners"} ]}
     </pre>
-  
+
+    <h2>Display a list of boards (from a board list file)</h2>
      <p>
   Or you can upload a JSON file with a list of boards,  as per the example above.
   <form  enctype="multipart/form-data"
