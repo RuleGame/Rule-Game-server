@@ -112,7 +112,7 @@ public class AnalyzeTranscripts {
   
 	    }
 
-	    System.out.println("For experiment plan=" +exp+", found " + handles.size()+" good episodes: "+Util.joinNonBlank(" ", handles));
+	    System.out.println("For experiment plan=" +exp+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
 
 	}	    
 
@@ -120,7 +120,7 @@ public class AnalyzeTranscripts {
 	if (!base.exists() || !base.isDirectory() || !base.canWrite())  throw new IOException("Not a writeable directory: " + base);
 
 	for(String ruleSetName: allHandles.keySet()) {
-	    System.out.println("For rule set=" +ruleSetName+", found " + allHandles.get(ruleSetName).size()+" good episodes:"+Util.joinNonBlank(" ",allHandles.get(ruleSetName) ));
+	    System.out.println("For rule set=" +ruleSetName+", found " + allHandles.get(ruleSetName).size()+" good episodes"); //:"+Util.joinNonBlank(" ",allHandles.get(ruleSetName) ));
 	    File d=new File(base, ruleSetName);
 	    if (d.exists()) {
 		if (!d.isDirectory() || !base.canWrite())  throw new IOException("Not a writeable directory: " + d);
