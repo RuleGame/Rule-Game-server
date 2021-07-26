@@ -41,10 +41,20 @@ public class TrialList extends Vector<ParaSet> {
 	return new File(base, exp);	
     }
 
-    public static Vector<String> listTrialLists(String exp) throws IOException {
+    /** Lists the names of the trial list files contained for a particular
+	experiment plan
+	@param exp The name of the experiment plan
+    */
+     public static Vector<String> listTrialLists(String exp) throws IOException {
 	return listTrialLists(dirForExperiment(exp));
     }
-	
+
+
+    /** Lists the names of the trial list files contained in a specified
+	directory.
+	@param base the directory (corresponding to one experiment plan)
+	which contains trial list files
+    */
     public static Vector<String> listTrialLists(File base) throws IOException {
 	//try {
 	if (!base.isDirectory()) throw new IOException("No experiment plan directory exists: " + base);

@@ -171,6 +171,7 @@ public class PlayerResponse extends ResponseBase {
     }
     
     /** Picks a suitable trial list for a new player in a given experiment plan 
+	@param exp The name of the experiment plan
      */
     private static synchronized String chooseRandomTrialList(String exp, double hrs, boolean debug) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
 	Vector<String> lists = TrialList.listTrialLists(exp);

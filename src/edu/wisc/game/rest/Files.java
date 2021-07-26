@@ -23,7 +23,7 @@ public class Files {
     */
     static public void setInputDir(String path) {
 	inputDir = new File(path);
-	System.out.println("DEBUG: inputDir := " + inputDir);
+	//System.out.println("DEBUG: inputDir := " + inputDir);
     }
 
     
@@ -55,10 +55,14 @@ public class Files {
 	return f;
     }
 
-    
-    public static File transcriptsFile(String playerId) throws IOException {
+   
+     public static File transcriptsFile(String playerId) throws IOException {
+	 return transcriptsFile(playerId,false); 
+    }
+
+    public static File transcriptsFile(String playerId, boolean readOnly) throws IOException {
 	File d = new File(savedDir, "transcripts");
-	testWriteDir(d);
+	if (!readOnly) testWriteDir(d);
 	return new File(d, playerId + ".transcripts.csv");
     }
 
@@ -126,14 +130,14 @@ public class Files {
        add to the name.
      */    
     private static File inputFile(String name, String subdir, String ext) throws IOException {
-	System.out.println("DEBUG: inputFile(name=" +name+", subdir=" + subdir+", ext=" + ext+")");
+	//System.out.println("DEBUG: inputFile(name=" +name+", subdir=" + subdir+", ext=" + ext+")");
 	if (name==null || name.equals("")) throw new IOException("File name not specified");
 	if (name.startsWith("/")) {
 	    return new File(name);
 	} else {     
 	    File base = new File(inputDir, subdir);
 	    if (!name.endsWith(ext)) name += ext;
-	    System.out.println("DEBUG: result=" + new File(base, name));
+	    //System.out.println("DEBUG: result=" + new File(base, name));
 	    return new File(base, name);
 	}
     }

@@ -50,7 +50,7 @@ public class PropertiesTable extends HashMap<String,ImageObject> {
 	    if (!header.getCol(0).replaceAll("^#", "").equals("image"))  throw new IOException("The name of the first column in a property file must be 'image'");
 
 
-	    System.out.println("DEBUG: creating properties table from CSV file f=" + f+", with " + csv.entries.length + " lines of date");
+	    //System.out.println("DEBUG: creating properties table from CSV file f=" + f+", with " + csv.entries.length + " lines of date");
 
 	    
 	    for(int j=1; j<csv.entries.length; j++) {

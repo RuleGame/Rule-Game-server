@@ -105,7 +105,7 @@ public class ImageObject extends HashMap<String,String> {
 	File dir = f.getParentFile();
 	PropertiesTable pt = new PropertiesTable(dir);
 
-	System.out.println("DEBUG: properties table in dir=" + dir+" has " + pt.size() + " entries");
+	//System.out.println("DEBUG: properties table in dir=" + dir+" has " + pt.size() + " entries");
 
 	if (pt.error) {
 	    throw new  IllegalArgumentException("Error reading property table for dir="+dir+": " + pt.errmsg);
