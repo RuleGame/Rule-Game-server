@@ -54,6 +54,9 @@
    <fileset dir="${main}/../jaxb-ri/mod">
      <include name="*.jar"/>
    </fileset>
+   <fileset dir="${main}/../commons-math3-3.6.1">
+     <include name="*.jar"/>
+   </fileset>
    <!--includes  jersey-media-multipart-3.0.2.jar from https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-multipart/3.0.2 ; jakarta.ws.rs-api-3.0.0.jar   from 
 https://mvnrepository.com/artifact/jakarta.ws.rs/jakarta.ws.rs-api/3.0.0
 

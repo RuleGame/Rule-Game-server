@@ -1167,51 +1167,8 @@ public class Episode {
 	if (!isCompleted()) givenUp = true;
     }
 
-   /** Let's just write one file at a time */
     static final String file_writing_lock = "Board file writing lock";
 	
-    /* Saves all the recorded moves (the transcript of the episode) into a CSV file.
-       <pre>
-       transcripts/pid.transcript.csv
-      pid,episodeId,moveNo,y,x,by,bx,code
-</pre>
-    */    
-    void saveTranscriptToFile(String pid, String eid, File f) {
-	synchronized(file_writing_lock) {
-	try {	    
-	    PrintWriter w = new PrintWriter(new	FileWriter(f, true));
-	    if (f.length()==0) w.println("#pid,episodeId,moveNo,timestamp,y,x,by,bx,code");
-	    Vector<String> v = new Vector<>();
-	    int k=0;
-	    for(Pick move: transcript) {
-		v.clear();
-		v.add(pid);
-		v.add(eid);
-		v.add(""+(k++));
-		v.add( sdf2.format(move.time));
-		Board.Pos q = new Board.Pos(move.pos);
-		v.add(""+q.y);
-		v.add(""+q.x);
-		if (move instanceof Move) { // a real move with a destination
-		    Move m = (Move)move;
-		    Board.Pos b = Board.buckets[m.bucketNo];
-		    v.add(""+b.y);
-		    v.add(""+b.x);
-		} else { // just a pick -- no destination
-		    v.add("");
-		    v.add("");
-		}
-		v.add(""+move.code);
-		w.println(String.join(",", v));
-	    }
-	    w.close();
-	} catch(IOException ex) {
-	    System.err.println("Error writing the transcript: " + ex);
-	    ex.printStackTrace(System.err);
-	}	    
-	}  
-    }
-
         /** Concise report, handy for debugging */
     public String report() {
 	return "["+episodeId+"; FC="+getFinishCode()+
@@ -1220,5 +1177,4 @@ public class Episode {
 	    "]";
     }
     
-
 }

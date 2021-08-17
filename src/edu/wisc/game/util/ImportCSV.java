@@ -1,3 +1,29 @@
+/*
+Copyright 2018, Rutgers University, New Brunswick and Piscataway, NJ.
+
+All Rights Reserved
+
+Permission to use, copy, and modify this software and its
+documentation for any purpose other than its incorporation into a
+commercial product is hereby granted without fee, provided that the
+above copyright notice appears in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation, and that the names of Rutgers University, DIMACS, and
+the authors not be used in advertising or publicity pertaining to
+distribution of the software without specific, written prior
+permission.
+
+RUTGERS UNIVERSITY, DIMACS, AND THE AUTHORS DISCLAIM ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR ANY PARTICULAR PURPOSE. IN NO EVENT
+SHALL RUTGERS UNIVERSITY, DIMACS, OR THE AUTHORS BE LIABLE FOR ANY
+SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER
+RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
+CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+
+/* ©2019 Rutgers, The State University of New Jersey */
 package edu.wisc.game.util;
 
 import java.io.*;
@@ -83,6 +109,20 @@ public class ImportCSV {
 Empty lines and lines starting with a '#' will be ignored.
 
 
+<pre>
+Last Name of Researcher,CFR DQ Crime Category,CFR Subsection,State,Citation to Applicable Law,Description of Statute,"Yellow Light?  (Needs further clarification -- enter ""Y"" if so)",Notes
+ / Comments (include for any Yellow Light designation and others as necessary),Attempt / Conspiracy Included?
+,,,,,,,,
+,Espionage,(a)(1),NY,N/A,,,,Attempt
+,,,,,,,,
+,Sedition,(a)(2),NY,N/A,,,,Attempt
+,,,,,,,,
+,Treason,(a)(3),NY,N/A,,,,Attempt
+,,,,,,,,
+,Terrorism,(a)(4),NY,490.10,Solicit / Support Terrorism 2,,,Attempt
+,,,,490.15,Solicit / Support Terrorism 1,,,
+...
+</pre>
 
 
      */
@@ -135,8 +175,8 @@ Empty lines and lines starting with a '#' will be ignored.
 
 	final String q = "\"";
 
-	s = s.replaceAll(q, "'"); // .replaceAll(",", ";");
-	
+	s = s.replaceAll(q, "'").replaceAll(",", ";");
+
 	boolean needQ=(s.indexOf(",")>=0);
 
 	if (s.indexOf("\"")>=0) {

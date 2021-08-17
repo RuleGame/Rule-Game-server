@@ -3,13 +3,22 @@ package edu.wisc.game.tools;
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
-// import javax.json.*;
 import javax.persistence.*;
+
+//import org.apache.commons.math3.optimization.*;
+//import org.apache.commons.math3.optimization.general.*;
+//import org.apache.commons.math3.analysis.*;
+
+
+import org.apache.commons.math3.optim.*;
+import org.apache.commons.math3.optim.nonlinear.scalar.*;
+import org.apache.commons.math3.optim.nonlinear.scalar.gradient.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.rest.*;
 import edu.wisc.game.sql.*;
 
+/** Methods for the statistical analysis of game transcripts */
 public class AnalyzeTranscripts {
 
     /** An auxiliary structure used to keep track who and when played 
@@ -45,6 +54,39 @@ public class AnalyzeTranscripts {
 	return null;
     }
 
+    /*
+    private static void writeFile(int eid, Vector<TranscriptManager.ReadTranscriptData.Entry> section) {
+	    PrintWriter w=null;
+	   
+	    
+	    for(TranscriptManager.ReadTranscriptData.Entry e: section) {
+		EpisodeHandle eh = findEpisodeHandle(v, e.eid);
+		if (eh==null) {
+		    throw new IllegalArgumentException("In file "+inFile+", found unexpected experimentId="+e.eid);
+		}
+		    
+		String rid=eh.ruleSetName;
+		if (!lastRid.equals(rid)) {
+		    if (w!=null) { w.close(); w=null;}
+		    File d=new File(base, rid);
+		    File g=new File(d, e.pid + ".split-transcripts.csv");
+
+		    w =  new PrintWriter(new FileWriter(g, false));
+		    w.println(outHeader);
+		    lastRid=rid;
+		}
+		w.print(rid+","+e.pid+","+eh.exp+","+eh.trialListId+","+eh.seriesNo+","+eh.orderInSeries+","+e.eid);
+		for(int j=2; j<e.csv.nCol(); j++) {
+		    w.print(","+ImportCSV.escape(e.csv.getCol(j)));
+		}
+		w.println();
+	    }
+	    if (w!=null) { w.close(); w=null;}
+
+
+
+	    }
+	    //---- */
     
     public static void main(String[] argv) throws Exception {
 
@@ -67,11 +109,7 @@ public class AnalyzeTranscripts {
 	    
 	    for(String trialListId: trialListNames) {
 		TrialList t = new  TrialList(exp, trialListId);
-		trialListMap.put( trialListId,t);
-		//		for(int seriesNo=0; seriesNo < t.size(); seriesNo++) {
-		//		    ParaSet para = t.get(seriesNo);
-		//		    String ruleSetName = para.getRuleSetName();
-		//		}
+		trialListMap.put( trialListId,t);	
 	    }
 	    System.out.println("Experiment plan=" +exp+" has " + trialListMap.size() +" trial lists: "+ Util.joinNonBlank(", ", trialListMap.keySet()));
 	    
@@ -129,7 +167,6 @@ public class AnalyzeTranscripts {
 	    }
 	}
 
-	Pattern pat = Pattern.compile("^([^,]+),([^,]+),(.*)");
 	
 	//-- Take a look at each player's transcript and separate
 	//-- it into sections pertaining to different rule sets
@@ -137,42 +174,43 @@ public class AnalyzeTranscripts {
 	    Vector<EpisodeHandle> v = ph.get(playerId);
 	    
 	    File inFile = Files.transcriptsFile(playerId, true);
-	    LineNumberReader reader = new LineNumberReader(new FileReader(inFile));
-	    // #pid,episodeId,moveNo,timestamp,y,x,by,bx,code
-	    // YS933,20201002-161858-DZV392,0,20201002-161904.226,6,1,7,0,4
-	    String inHeader=reader.readLine();
-	    String outHeader=inHeader.replaceAll("^#pid,episodeId,", "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,episodeNo,episodeId,");
-	    String lastRid="", s=null;
+	    TranscriptManager.ReadTranscriptData transcript = new TranscriptManager.ReadTranscriptData(inFile);
+	    final String outHeader="#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,episodeNo,episodeId," + "moveNo,timestamp,y,x,by,bx,code";
+	    String lastRid="";	
 	    PrintWriter w=null;
+	    Vector<TranscriptManager.ReadTranscriptData.Entry> section=new Vector<>();
 	    
-	    while((s=reader.readLine())!=null) {
-		//		if (s.startsWith("#")) continue;
-		Matcher m = pat.matcher(s);
-		//System.out.println(s);
-		if (!m.find()) throw new IllegalArgumentException("In transcript file "+inFile+", don't know how to parse line " + reader.getLineNumber()+": "+s);
-		String pid =m.group(1), eid=m.group(2), rest=m.group(3);
-		
-		EpisodeHandle eh = findEpisodeHandle(v, eid);
+	    for(TranscriptManager.ReadTranscriptData.Entry e: transcript) {
+		EpisodeHandle eh = findEpisodeHandle(v, e.eid);
 		if (eh==null) {
-		    throw new IllegalArgumentException("In file "+inFile+", found unexpected experimentId="+eid);
+		    throw new IllegalArgumentException("In file "+inFile+", found unexpected experimentId="+e.eid);
 		}
 		    
 		String rid=eh.ruleSetName;
-		
-		
 		if (!lastRid.equals(rid)) {
-		    if (w!=null) { w.close(); w=null;}
+		    if (w!=null) {
+			w.close(); w=null;
+			analyzeSection(playerId, section);
+		    }
 		    File d=new File(base, rid);
-		    File g=new File(d, pid + ".split-transcripts.csv");
+		    File g=new File(d, e.pid + ".split-transcripts.csv");
 
 		    w =  new PrintWriter(new FileWriter(g, false));
 		    w.println(outHeader);
 		    lastRid=rid;
 		}
-		w.println(rid+","+pid+","+eh.exp+","+eh.trialListId+","+eh.seriesNo+","+eh.orderInSeries+","+eid+","+rest);
+		w.print(rid+","+e.pid+","+eh.exp+","+eh.trialListId+","+eh.seriesNo+","+eh.orderInSeries+","+e.eid);
+		for(int j=2; j<e.csv.nCol(); j++) {
+		    w.print(","+ImportCSV.escape(e.csv.getCol(j)));
+		}
+		w.println();
+		section.add(e);
 	    }
-	    if (w!=null) { w.close(); w=null;}
-	   
+	    if (w!=null) {
+		w.close(); w=null;
+		analyzeSection( playerId, section);
+	    }
+
 	    
 	}
 
@@ -206,6 +244,61 @@ public class AnalyzeTranscripts {
 	    w.close();		
 	}
 	*/
+    }
+
+    private static void analyzeSection(String playerId, Vector<TranscriptManager.ReadTranscriptData.Entry> section) {	
+	int[] y = TranscriptManager.ReadTranscriptData.asVectorY(section);
+	if (y.length<2) return;
+
+	int maxEval = 10000;
+	// B,C,t_I, k
+	double[] startPoint = {0.25, 0.75, (y.length-1.0)/2, 0.5/(y.length-1.0)};
+	//double[] startPoint = {0.25};
+	System.out.print("Player="+playerId+", optimizing for y=[");
+	for(int q: y) 	System.out.print(" " + q);
+	System.out.println("]");
+
+	LoglikProblem problem = new LoglikProblem(y);
+	//SimpleProblem problem = new SimpleProblem(y);
+  
+	NonLinearConjugateGradientOptimizer optimizer
+            = new NonLinearConjugateGradientOptimizer(NonLinearConjugateGradientOptimizer.Formula.FLETCHER_REEVES, //POLAK_RIBIERE,
+                                                      new SimpleValueChecker(1e-4, 1e-4),
+						      1e-3, 1e-3, 1);
+ 
+
+	PointValuePair optimum;
+	try {
+	    optimum =
+		optimizer.optimize(new MaxEval(maxEval),
+				   problem.getObjectiveFunction(),
+				   problem.getObjectiveFunctionGradient(),
+				   GoalType.MAXIMIZE,
+				   new InitialGuess(startPoint));
+	} catch(  org.apache.commons.math3.exception.TooManyEvaluationsException ex) {
+	    System.out.println(ex);
+	    return;
+	}
+	System.out.println("B="+   optimum.getPoint()[0] +
+			   ", C="+   optimum.getPoint()[1] +
+			   ", t_I="+   optimum.getPoint()[2] +
+			   ", k="+   optimum.getPoint()[3] +
+			   ". L="+    optimum.getValue() + 
+			   ", after iter=" + optimizer.getIterations());
+
+	//Assert.assertEquals(1.5, optimum.getPoint()[0], 1.0e-10);
+	//        Assert.assertEquals(0.0, optimum.getValue(), 1.0e-10);
+
+        // Check that the number of iterations is updated (MATH-949).
+        //Assert.assertTrue(optimizer.getIterations() > 0);
+   		      
+
+	
+	//PointValuePair pvp = opt.optimize( maxEval,
+	//				   new LoglikProblem(y),
+	//GoalType.MAXIMIZE,
+	//					   startPoint);
+
     }
 
 }

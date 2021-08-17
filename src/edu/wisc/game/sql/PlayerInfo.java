@@ -578,7 +578,7 @@ public class PlayerInfo {
 	File f =  Files.boardsFile(playerId);
 	epi.getCurrentBoard(true).saveToFile(playerId, epi.episodeId, f);
 	f =  Files.transcriptsFile(playerId);
-	epi.saveTranscriptToFile(playerId, epi.episodeId, f);
+	TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.transcript);
 	f =  Files.detailedTranscriptsFile(playerId);
 	epi.saveDetailedTranscriptToFile(f);
 	

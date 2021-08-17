@@ -16,7 +16,7 @@ public class CsvData {
     /** The header line of the CSV file. It is not analyzed, but stored, and
 	can be printed later. A file may or may not have a header line;
 	to decide if there is one, we use a cludge: if the first letter
-	of the first line is a digit, it's not a header, otehrwise it is 
+	of the first line is a digit, it's not a header, otherwise it is 
     */
     public String header=null;
     /** Column count */
@@ -147,7 +147,9 @@ public class CsvData {
 	}
 	public int nCol() { return csv.length; }
 	public String getKey() { return csv[0]; }
+	/** @param j zero-based column index */
 	public String getCol(int j) { return j<csv.length? csv[j]: null; }
+	public Integer getColInt(int j) { return j<csv.length? new Integer(csv[j]): null; }
 	
   	public String toString() {
 	    String s = "";
