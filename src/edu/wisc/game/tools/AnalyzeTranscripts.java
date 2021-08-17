@@ -263,7 +263,7 @@ public class AnalyzeTranscripts {
   
 	NonLinearConjugateGradientOptimizer optimizer
             = new NonLinearConjugateGradientOptimizer(NonLinearConjugateGradientOptimizer.Formula.FLETCHER_REEVES, //POLAK_RIBIERE,
-                                                      new SimpleValueChecker(1e-4, 1e-4),
+                                                      new SimpleValueChecker(1e-4, 1e-6),
 						      1e-3, 1e-3, 1);
  
 
@@ -279,10 +279,21 @@ public class AnalyzeTranscripts {
 	    System.out.println(ex);
 	    return;
 	}
-	System.out.println("B="+   optimum.getPoint()[0] +
-			   ", C="+   optimum.getPoint()[1] +
-			   ", t_I="+   optimum.getPoint()[2] +
-			   ", k="+   optimum.getPoint()[3] +
+	double p[] =optimum.getPoint();
+	double B=p[0], C=p[1], t_I=p[2], k=p[3];
+	if (k<0) {
+	    k= -k;
+	    double b0=B;
+	    B=C;
+	    C=b0;
+	}
+	double e0 = Math.exp(k*t_I);
+	double Z = (B*e0+C)/(1+e0);
+	System.out.println("B="+   B+
+			   ", C="+   C+
+			   ", t_I="+   t_I +
+			   ", k="+   k+
+			   ". Z="+   Z+
 			   ". L="+    optimum.getValue() + 
 			   ", after iter=" + optimizer.getIterations());
 

@@ -26,18 +26,18 @@ class LoglikProblem
     }
 
     
-    static final double eps = 1e-6;
+    static final double eps = 1e-6, M=1000;
 
     static double regLog(double x) {
 	double s = (x>eps)? Math.log(x):
 	    Math.log(eps) + (x-eps)/eps;
-	if (x>1) s += x*(1-x);
+	if (x>1) s += -M*(1-x)*(1-x);
 	return s;
     }
 
     static double regLogDerivative(double x) {
 	double s = (x>eps)?  1/x : 1/eps;
-	if (x>1) s += 1-2*x;
+	if (x>1) s += M*2*(1-x);
 	return s;
     }
 
