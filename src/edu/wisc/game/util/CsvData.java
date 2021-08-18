@@ -149,7 +149,9 @@ public class CsvData {
 	public String getKey() { return csv[0]; }
 	/** @param j zero-based column index */
 	public String getCol(int j) { return j<csv.length? csv[j]: null; }
-	public Integer getColInt(int j) { return j<csv.length? new Integer(csv[j]): null; }
+	public Integer getColInt(int j) {
+	    return j<csv.length &&  (csv[j]!=null) && (csv[j].length()>0) ? new Integer(csv[j]): null;
+	}
 	
   	public String toString() {
 	    String s = "";
