@@ -64,6 +64,20 @@ public class Util {
 	}
 	return join(sep, w);  
     }
+
+    public static <T> String joinNonBlank(String sep, double[] z) {
+	Double v[] = new Double[z.length];
+	for(int j=0; j<z.length; j++) v[j] =new Double(z[j]);
+	return joinNonBlank(sep,v);
+    }
+
+    public static <T> String joinNonBlank(String sep, NumberFormat fmt, double[] z) {
+	String v[] = new String[z.length];
+	for(int j=0; j<z.length; j++) v[j] =fmt.format(z[j]);
+	return joinNonBlank(sep,v);
+    }
+
+    
     /*
    public static <T> String joinNonBlank(String sep, String[] z) {
 	Vector<String> w = new Vector<>();

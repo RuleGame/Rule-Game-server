@@ -3,6 +3,8 @@ package edu.wisc.game.tools;
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
+import java.text.*;
+
 import javax.persistence.*;
 
 //import org.apache.commons.math3.optimization.*;
@@ -90,6 +92,8 @@ public class AnalyzeTranscripts {
     
     public static void main(String[] argv) throws Exception {
 
+
+	if (argv.length==0) test();
 
 	EntityManager em = Main.getNewEM();
 
@@ -246,25 +250,113 @@ public class AnalyzeTranscripts {
 	*/
     }
 
+
+    static void test() {
+	int y[]={1, 1, 0, 0, 0, 0, 1, 1};
+	double tt[]=new double[y.length*2];
+	for(int k=0; k<tt.length; k++) tt[k] = k*0.5;
+	analyzeSection("test", y,tt);
+	
+    }
+    
+    final static DecimalFormat df = new DecimalFormat("0.000");
+    
     private static void analyzeSection(String playerId, Vector<TranscriptManager.ReadTranscriptData.Entry> section) {	
 	int[] y = TranscriptManager.ReadTranscriptData.asVectorY(section);
 	if (y.length<2) return;
+	analyzeSection(playerId,y, null);
+    }
 
-	int maxEval = 10000;
-	// B,C,t_I, k
-	double[] startPoint = {0.25, 0.75, (y.length-1.0)/2, 0.5/(y.length-1.0)};
-	//double[] startPoint = {0.25};
+
+    static class Divider {
+	final double avg0, avg1, L;
+
+	private static double partL(int n, int sum) {
+	    double avg = (double)sum/(double)n;
+	    return (sum>0? sum * Math.log(avg) : 0) +
+		(n-sum>0?  (n-sum) * Math.log(1-avg) : 0);
+	}
+	
+	Divider(int n0, int n1, int sum0, int sum1) {
+	    avg0 = sum0/(double)n0;
+	    avg1 = sum1/(double)n1;
+	    L = partL(n0,sum0) + partL(n1,sum1);
+	}
+    
+	    
+	static Divider goodDivider( int[] y, double t0) {
+	    if ((double)(int)t0 == t0) return null;
+	    if (t0<=0 || t0>= y.length-1) return null;
+	    int n0 = (int)t0 + 1;
+	    int n1 = y.length - n0;
+	    int sum0=0, sum1=0;
+	    for(int t=0; t<y.length; t++) {
+		if (y[t]>0) {
+		    if (t<t0) sum0++; else sum1++;
+		}				
+	    }
+	    Divider d = new Divider(n0,n1,sum0,sum1);
+	    if (d.avg0<d.avg1 && y[n0-1]<y[n0] ||
+		d.avg0>d.avg1 && y[n0-1]>y[n0]) return d;
+	    else return null;
+	}
+    }
+    
+    
+    private static void analyzeSection(String playerId, int[] y, double tt[]) {	
+
+	LoglikProblem.verbose = false;
+	
 	System.out.print("Player="+playerId+", optimizing for y=[");
 	for(int q: y) 	System.out.print(" " + q);
 	System.out.println("]");
 
+
+	if (tt==null) {
+	    //tt=new double[3];
+	    //for(int mode=0; mode<=2; mode++) {
+	    //		tt[mode]= mode * (y.length-1.0)*0.5;
+	    //}
+	    tt=new double[y.length*2-1];
+	    for(int k=0; k<tt.length; k++) tt[k] = k*0.5;
+	}
+
+
 	LoglikProblem problem = new LoglikProblem(y);
 	//SimpleProblem problem = new SimpleProblem(y);
+	ObjectiveFunctionGradient ofg = problem.getObjectiveFunctionGradient();
+
+	final int maxEval = 10000;
   
+	PointValuePair bestOptimum=null;
+	
+	for(int mode=0; mode<tt.length; mode++) {
+
+	double t0 = tt[mode];
+
+	Divider d= Divider.goodDivider(y, t0);
+	if (d!=null) {
+	    System.out.println("***L(" + df.format(d.avg0)+","+df.format(d.avg1)+")=" + df.format(d.L) + "*** ");
+	}
+
+
+	int nAttempts = (d==null)? 1: 2;
+
+	for(int jAttempt = 0; jAttempt<nAttempts; jAttempt++) {
+	
+	// B,C,t_I, k
+
+	   
+	    double[] startPoint = jAttempt==0?
+		new double[]{0.5, 0.5, t0, 0.5/(y.length-1.0)}:
+	    new double[]{d.avg0, d.avg1, t0, 1};
+	    
+
 	NonLinearConjugateGradientOptimizer optimizer
-            = new NonLinearConjugateGradientOptimizer(NonLinearConjugateGradientOptimizer.Formula.FLETCHER_REEVES, //POLAK_RIBIERE,
-                                                      new SimpleValueChecker(1e-4, 1e-6),
-						      1e-3, 1e-3, 1);
+            = new NonLinearConjugateGradientOptimizer(NonLinearConjugateGradientOptimizer.Formula.//FLETCHER_REEVES,
+						      POLAK_RIBIERE,
+                                                      new SimpleValueChecker(1e-7, 1e-7),
+						      1e-5, 1e-5, 1);
  
 
 	PointValuePair optimum;
@@ -272,14 +364,35 @@ public class AnalyzeTranscripts {
 	    optimum =
 		optimizer.optimize(new MaxEval(maxEval),
 				   problem.getObjectiveFunction(),
-				   problem.getObjectiveFunctionGradient(),
+				   ofg,
 				   GoalType.MAXIMIZE,
 				   new InitialGuess(startPoint));
 	} catch(  org.apache.commons.math3.exception.TooManyEvaluationsException ex) {
 	    System.out.println(ex);
-	    return;
+	    continue;
 	}
+	reportOptimum("[t0="+t0+", iter=" + optimizer.getIterations()+"] ", ofg, optimum);
+
+	if (bestOptimum==null || optimum.getValue()>bestOptimum.getValue()) {
+	    bestOptimum =optimum;
+	}
+
+	
+	}
+	}	      
+
+	if (bestOptimum !=null) {
+	    reportOptimum("[GLOBAL?] ", ofg, bestOptimum);
+	}    
+    }
+
+
+    static void reportOptimum(String prefix, ObjectiveFunctionGradient ofg, PointValuePair optimum) {
+	if (prefix!=null) System.out.print(prefix);
+
 	double p[] =optimum.getPoint();
+
+	double grad[] = ofg.getObjectiveFunctionGradient().value(p);
 	double B=p[0], C=p[1], t_I=p[2], k=p[3];
 	if (k<0) {
 	    k= -k;
@@ -288,28 +401,17 @@ public class AnalyzeTranscripts {
 	    C=b0;
 	}
 	double e0 = Math.exp(k*t_I);
-	double Z = (B*e0+C)/(1+e0);
-	System.out.println("B="+   B+
-			   ", C="+   C+
-			   ", t_I="+   t_I +
-			   ", k="+   k+
-			   ". Z="+   Z+
-			   ". L="+    optimum.getValue() + 
-			   ", after iter=" + optimizer.getIterations());
+	double re0 = Math.exp(-k*t_I);
+	double Z = B/(1+re0)+C/(1+e0);
 
-	//Assert.assertEquals(1.5, optimum.getPoint()[0], 1.0e-10);
-	//        Assert.assertEquals(0.0, optimum.getValue(), 1.0e-10);
-
-        // Check that the number of iterations is updated (MATH-949).
-        //Assert.assertTrue(optimizer.getIterations() > 0);
-   		      
-
+	System.out.println("B="+   df.format(B)+
+			   ", C="+    df.format(C)+
+			   ", t_I="+   df.format( t_I) +
+			   ", k="+   df.format( k)+
+			   ". Z="+    df.format(Z)+
+			   ". L="+     df.format(optimum.getValue()));
+	System.out.println("grad L=["+  Util.joinNonBlank(", ", df, grad)+"]");
 	
-	//PointValuePair pvp = opt.optimize( maxEval,
-	//				   new LoglikProblem(y),
-	//GoalType.MAXIMIZE,
-	//					   startPoint);
-
     }
-
+    
 }
