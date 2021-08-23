@@ -449,9 +449,9 @@ public class AnalyzeTranscripts {
 	    t_I=p[2];
 	    double k0=p[3];
 	    if (k0<0) {
-		k= - k0;
-		B= p[0];
-		C= p[1];
+		k= -k0;
+		B= p[1];
+		C= p[0];
 	    } else {
 		k = k0;
 		B = p[0];
