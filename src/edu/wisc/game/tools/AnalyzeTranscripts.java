@@ -161,6 +161,11 @@ public class AnalyzeTranscripts {
 	File base = new File("tmp");
 	if (!base.exists() || !base.isDirectory() || !base.canWrite())  throw new IOException("Not a writeable directory: " + base);
 
+	File gsum=new File(base, "summary.csv");
+	PrintWriter wsum =new PrintWriter(new FileWriter(gsum, false));
+	String sumHeader = "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,yy,B,C,t_I,k,Z,L/n";
+	wsum.println(sumHeader);
+	
 	for(String ruleSetName: allHandles.keySet()) {
 	    System.out.println("For rule set=" +ruleSetName+", found " + allHandles.get(ruleSetName).size()+" good episodes"); //:"+Util.joinNonBlank(" ",allHandles.get(ruleSetName) ));
 	    File d=new File(base, ruleSetName);
@@ -172,6 +177,7 @@ public class AnalyzeTranscripts {
 	}
 
 	
+	
 	//-- Take a look at each player's transcript and separate
 	//-- it into sections pertaining to different rule sets
 	for(String playerId: ph.keySet()) {
@@ -179,13 +185,13 @@ public class AnalyzeTranscripts {
 	    
 	    File inFile = Files.transcriptsFile(playerId, true);
 	    TranscriptManager.ReadTranscriptData transcript = new TranscriptManager.ReadTranscriptData(inFile);
-	    final String outHeader="#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,episodeNo,episodeId," + "moveNo,timestamp,y,x,by,bx,code";
+	    final String outHeader="#ruleSetName,playerId,experimentPlan,trialListId,seriesNo," + "moveNo,timestamp,y,x,by,bx,code";
 	    String lastRid="";	
 	    PrintWriter w=null;
 	    Vector<TranscriptManager.ReadTranscriptData.Entry> section=new Vector<>();
-	    
+	    EpisodeHandle eh =null;
 	    for(TranscriptManager.ReadTranscriptData.Entry e: transcript) {
-		EpisodeHandle eh = findEpisodeHandle(v, e.eid);
+		eh = findEpisodeHandle(v, e.eid);
 		if (eh==null) {
 		    throw new IllegalArgumentException("In file "+inFile+", found unexpected experimentId="+e.eid);
 		}
@@ -194,7 +200,7 @@ public class AnalyzeTranscripts {
 		if (!lastRid.equals(rid)) {
 		    if (w!=null) {
 			w.close(); w=null;
-			analyzeSection(playerId, section);
+			OptimumExplained oe = analyzeSection( section, eh, wsum);			
 		    }
 		    File d=new File(base, rid);
 		    File g=new File(d, e.pid + ".split-transcripts.csv");
@@ -212,12 +218,19 @@ public class AnalyzeTranscripts {
 	    }
 	    if (w!=null) {
 		w.close(); w=null;
-		analyzeSection( playerId, section);
+		OptimumExplained oe = analyzeSection( section, eh, wsum);			
 	    }
 
 	    
 	}
+	
+	wsum.close();
 
+
+
+
+
+	
 
 	/*
 	for(String ruleSetName: allHandles.keySet()) {
@@ -261,10 +274,24 @@ public class AnalyzeTranscripts {
     
     final static DecimalFormat df = new DecimalFormat("0.000");
     
-    private static void analyzeSection(String playerId, Vector<TranscriptManager.ReadTranscriptData.Entry> section) {	
+    private static OptimumExplained analyzeSection(Vector<TranscriptManager.ReadTranscriptData.Entry> section,
+						   EpisodeHandle eh,   PrintWriter wsum
+						   ) {	
 	int[] y = TranscriptManager.ReadTranscriptData.asVectorY(section);
-	if (y.length<2) return;
-	analyzeSection(playerId,y, null);
+	if (y.length<2) return null;
+	
+	OptimumExplained oe =  analyzeSection(eh.playerId, y, null);
+
+	if (oe!=null) {
+	    String rid=eh.ruleSetName;
+	    //	 sumHeader = "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,yy,B,C,t_I,k,Z";
+	    wsum.print(rid+","+eh.playerId+","+eh.exp+","+eh.trialListId+","+eh.seriesNo+",");
+	    wsum.println(mkYString(y)+"," + oe.toCsvString() );
+	}
+
+
+	
+	return oe;
     }
 
 
@@ -301,15 +328,25 @@ public class AnalyzeTranscripts {
 	    else return null;
 	}
     }
+
+    private static String mkYString(int[] y) {
+	Vector<String> v=new Vector<>();
+	for(int q: y) v.add("" + q);
+	return Util.joinNonBlank(" ", v);
+    }
+
+    private static double mkAvg(int[] y) {
+	int sum=0;
+	for(int q: y) sum+=q;
+	return sum/(double)y.length;
+    }
     
-    
-    private static void analyzeSection(String playerId, int[] y, double tt[]) {	
+    private static OptimumExplained analyzeSection(String playerId, int[] y, double tt[]) {	
 
 	LoglikProblem.verbose = false;
 	
-	System.out.print("Player="+playerId+", optimizing for y=[");
-	for(int q: y) 	System.out.print(" " + q);
-	System.out.println("]");
+	System.out.println("Player="+playerId+", optimizing for y=[" +
+			 mkYString(y)+			"]" );
 
 
 	if (tt==null) {
@@ -322,6 +359,7 @@ public class AnalyzeTranscripts {
 	}
 
 
+	double avgY = mkAvg(y);
 	LoglikProblem problem = new LoglikProblem(y);
 	//SimpleProblem problem = new SimpleProblem(y);
 	ObjectiveFunctionGradient ofg = problem.getObjectiveFunctionGradient();
@@ -334,84 +372,128 @@ public class AnalyzeTranscripts {
 
 	double t0 = tt[mode];
 
+	
+	
 	Divider d= Divider.goodDivider(y, t0);
 	if (d!=null) {
-	    System.out.println("***L(" + df.format(d.avg0)+","+df.format(d.avg1)+")=" + df.format(d.L) + "*** ");
+	    System.out.println("***L(" + df.format(d.avg0)+","+df.format(d.avg1)+")/n=" + df.format(d.L/y.length) + "*** ");
 	}
 
 
-	int nAttempts = (d==null)? 1: 2;
+	int nAttempts = (d==null)? 2: 3;
 
 	for(int jAttempt = 0; jAttempt<nAttempts; jAttempt++) {
 	
-	// B,C,t_I, k
+	    // B,C,t_I, k
 
 	   
-	    double[] startPoint = jAttempt==0?
-		new double[]{0.5, 0.5, t0, 0.5/(y.length-1.0)}:
-	    new double[]{d.avg0, d.avg1, t0, 1};
+	    double[] startPoint =
+		jAttempt==0?	new double[]{avgY, avgY, t0, 0}:
+		jAttempt==1?	new double[]{0, 1, t0, 0}:
+		new double[]{d.avg0, d.avg1, t0, 1};
 	    
 
-	NonLinearConjugateGradientOptimizer optimizer
-            = new NonLinearConjugateGradientOptimizer(NonLinearConjugateGradientOptimizer.Formula.//FLETCHER_REEVES,
-						      POLAK_RIBIERE,
-                                                      new SimpleValueChecker(1e-7, 1e-7),
-						      1e-5, 1e-5, 1);
+	    NonLinearConjugateGradientOptimizer optimizer
+		= new NonLinearConjugateGradientOptimizer(NonLinearConjugateGradientOptimizer.Formula.//FLETCHER_REEVES,
+							  POLAK_RIBIERE,
+							  new SimpleValueChecker(1e-7, 1e-7),
+							  1e-5, 1e-5, 1);
  
 
-	PointValuePair optimum;
-	try {
-	    optimum =
-		optimizer.optimize(new MaxEval(maxEval),
-				   problem.getObjectiveFunction(),
-				   ofg,
-				   GoalType.MAXIMIZE,
-				   new InitialGuess(startPoint));
-	} catch(  org.apache.commons.math3.exception.TooManyEvaluationsException ex) {
-	    System.out.println(ex);
-	    continue;
-	}
-	reportOptimum("[t0="+t0+", iter=" + optimizer.getIterations()+"] ", ofg, optimum);
+	    PointValuePair optimum;
+	    try {
+		optimum =
+		    optimizer.optimize(new MaxEval(maxEval),
+				       problem.getObjectiveFunction(),
+				       ofg,
+				       GoalType.MAXIMIZE,
+				       new InitialGuess(startPoint));
+	    } catch(  org.apache.commons.math3.exception.TooManyEvaluationsException ex) {
+		System.out.println(ex);
+		continue;
+	    }
+	    OptimumExplained oe = new OptimumExplained(ofg, optimum, y.length);
+	    oe.report("[t0="+t0+", iter=" + optimizer.getIterations()+"] ");
 
-	if (bestOptimum==null || optimum.getValue()>bestOptimum.getValue()) {
-	    bestOptimum =optimum;
-	}
+	    if (bestOptimum==null || optimum.getValue()>bestOptimum.getValue()) {
+		bestOptimum =optimum;
+	    }
 
 	
 	}
 	}	      
 
 	if (bestOptimum !=null) {
-	    reportOptimum("[GLOBAL?] ", ofg, bestOptimum);
-	}    
+	    OptimumExplained oe = new OptimumExplained(ofg, bestOptimum, y.length);
+	    oe.report("[GLOBAL?] ");
+	    return oe;
+	}  else {
+	    return null;
+	}
     }
 
 
-    static void reportOptimum(String prefix, ObjectiveFunctionGradient ofg, PointValuePair optimum) {
-	if (prefix!=null) System.out.print(prefix);
+    /** An auxiliary structure to describe an optimum */
+    static class OptimumExplained {
 
-	double p[] =optimum.getPoint();
-
-	double grad[] = ofg.getObjectiveFunctionGradient().value(p);
-	double B=p[0], C=p[1], t_I=p[2], k=p[3];
-	if (k<0) {
-	    k= -k;
-	    double b0=B;
-	    B=C;
-	    C=b0;
+	final PointValuePair optimum;
+	final double p[];
+	final double grad[];
+	final double B, C, t_I, k;
+	final double e0, re0, Z, Ln;
+	
+	OptimumExplained(ObjectiveFunctionGradient ofg, PointValuePair _optimum, int n) {
+	    optimum = _optimum;
+	    p =optimum.getPoint();
+	    grad = ofg.getObjectiveFunctionGradient().value(p);
+	    t_I=p[2];
+	    double k0=p[3];
+	    if (k0<0) {
+		k= - k0;
+		B= p[0];
+		C= p[1];
+	    } else {
+		k = k0;
+		B = p[0];
+		C = p[1];
+	    }
+	    e0 = Math.exp(k*t_I);
+	    re0 = Math.exp(-k*t_I);
+	    Z = B/(1+re0)+C/(1+e0);
+	    Ln = optimum.getValue()/n;
 	}
-	double e0 = Math.exp(k*t_I);
-	double re0 = Math.exp(-k*t_I);
-	double Z = B/(1+re0)+C/(1+e0);
 
-	System.out.println("B="+   df.format(B)+
-			   ", C="+    df.format(C)+
-			   ", t_I="+   df.format( t_I) +
-			   ", k="+   df.format( k)+
-			   ". Z="+    df.format(Z)+
-			   ". L="+     df.format(optimum.getValue()));
-	System.out.println("grad L=["+  Util.joinNonBlank(", ", df, grad)+"]");
+	String toReadableString() {
+	    return "B="+   df.format(B)+
+		", C="+    df.format(C)+
+		", t_I="+   df.format( t_I) +
+		", k="+   df.format( k)+
+		". Z="+    df.format(Z)+
+		". L/n="+     df.format(Ln);
+	}
+
+
+	String toCsvString() {
+	    Vector<Double> v=new Vector<>();
+	    v.add(B);
+	    v.add(C);
+	    v.add(t_I);
+	    v.add(k);
+	    v.add(Z);
+	    v.add(Ln);
+	    return Util.joinNonBlank(",",v);
+	}
+
+	void report(String prefix) {
+	    if (prefix!=null) System.out.print(prefix);
+
+	    System.out.println(toReadableString());
+	    System.out.println("grad L=["+  Util.joinNonBlank(", ", df, grad)+"]");
+	
+	}
+    
 	
     }
-    
+
+  
 }
