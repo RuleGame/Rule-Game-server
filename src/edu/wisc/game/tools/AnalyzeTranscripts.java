@@ -93,8 +93,20 @@ public class AnalyzeTranscripts {
     public static void main(String[] argv) throws Exception {
 
 
-	if (argv.length==0) test();
-
+	if (argv.length==0) {
+	    int y[]={1, 1, 0, 0, 0, 0, 1, 1};
+	    test(y);
+	    return;
+	} else if (argv.length==2 && argv[0].equals("-y")) {
+	    String[] ys = argv[1].split("\\s+");
+	    int[] y = new int[ys.length];
+	    for(int j=0; j<y.length; j++) y[j] = Integer.parseInt(ys[j]);
+	    test(y);
+	    return;
+	} else {
+	    System.out.println("argv.length=" + argv.length +", argv[0]='" +argv[0] +"'");
+	}
+	
 	EntityManager em = Main.getNewEM();
 
 	// for each rule set name, keep the list of all episodes
@@ -264,8 +276,7 @@ public class AnalyzeTranscripts {
     }
 
 
-    static void test() {
-	int y[]={1, 1, 0, 0, 0, 0, 1, 1};
+    static void test(int[] y) {
 	double tt[]=new double[y.length*2];
 	for(int k=0; k<tt.length; k++) tt[k] = k*0.5;
 	analyzeSection("test", y,tt);

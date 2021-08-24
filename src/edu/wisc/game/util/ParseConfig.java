@@ -64,75 +64,75 @@ public final class ParseConfig extends Hashtable<String,Object> {
 	 * @param in A Reader (a file reader, etc.)
 	 */
 	public ParseConfig(Reader in) throws IOException {
-		// create an underlying hash table
-		super(20);
-		String param = "";
-		String lastName = "N/A";
-
-		try {
-			StreamTokenizer token = new StreamTokenizer(in);
-
-			// Semicolns are completely and utterly ignored
-			token.whitespaceChars((int) ';', (int) ';');
-
-			// These characters often appear in URLs. 
-			// They should be treated as word chars, so that URLs would be "words" and wouldn't need to be quoted
-			token.wordChars((int) '/', (int) '/');
-			token.wordChars((int) ':', (int) ':');
-			token.wordChars((int) '.', (int) '.');
-			token.wordChars((int) '_', (int) '_');
-
-			// Comments begin with a '#', not '//'
-			token.slashSlashComments(false);
-			token.commentChar('#');
-			token.eolIsSignificant(false);
-
-			// read the name
-			while (token.nextToken() != StreamTokenizer.TT_EOF) {
-				String name = "";
-				if (token.ttype == StreamTokenizer.TT_WORD) {
-					name = token.sval;
-					lastName = name;
-				} else {
-					throw new IOException("Syntax error in config file: A WORD token expected for a parameter name. The last parmeter read was `" + lastName + "'");
-				}
-
-				// read the value 
-				if (token.nextToken() == StreamTokenizer.TT_EOF) {
-					throw new IOException("Syntax error in config file: No value for" + name);
-				}
-
-				if (token.ttype == (int) '=') {
-					// This just was an optional equal sign. The value must be * in the next token.
-					if (token.nextToken() == StreamTokenizer.TT_EOF) {
-						throw new IOException("Syntax error in config file: No value found for"	+ name);
-					}
-				}
-
-				Object value = null;
-				if (token.ttype == StreamTokenizer.TT_WORD || token.ttype == '"') {
-					// a String 
-					value = token.sval;
-				} else if (token.ttype == StreamTokenizer.TT_NUMBER) {
-					// A number
-					value = new Double(token.nval);
-				} else {
-					System.err.println("Syntax error in config file: unexpected value token type " + token.ttype);
-					continue;
-				}
-				
-				// store in the hashtable
-				put(name, value);
+	    // create an underlying hash table
+	    super(20);
+	    String param = "";
+	    String lastName = "N/A";
+	    
+	    try {
+		StreamTokenizer token = new StreamTokenizer(in);
+		
+		// Semicolns are completely and utterly ignored
+		token.whitespaceChars((int) ';', (int) ';');
+		
+		// These characters often appear in URLs. 
+		// They should be treated as word chars, so that URLs would be "words" and wouldn't need to be quoted
+		token.wordChars((int) '/', (int) '/');
+		token.wordChars((int) ':', (int) ':');
+		token.wordChars((int) '.', (int) '.');
+		token.wordChars((int) '_', (int) '_');
+		
+		// Comments begin with a '#', not '//'
+		token.slashSlashComments(false);
+		token.commentChar('#');
+		token.eolIsSignificant(false);
+		
+		// read the name
+		while (token.nextToken() != StreamTokenizer.TT_EOF) {
+		    String name = "";
+		    if (token.ttype == StreamTokenizer.TT_WORD) {
+			name = token.sval;
+			lastName = name;
+		    } else {
+			throw new IOException("Syntax error in config file: A WORD token expected for a parameter name. The last parmeter read was `" + lastName + "'");
+		    }
+		    
+		    // read the value 
+		    if (token.nextToken() == StreamTokenizer.TT_EOF) {
+			throw new IOException("Syntax error in config file: No value for" + name);
+		    }
+		    
+		    if (token.ttype == (int) '=') {
+			// This just was an optional equal sign. The value must be * in the next token.
+			if (token.nextToken() == StreamTokenizer.TT_EOF) {
+			    throw new IOException("Syntax error in config file: No value found for"	+ name);
 			}
+		    }
+		    
+		    Object value = null;
+		    if (token.ttype == StreamTokenizer.TT_WORD || token.ttype == '"') {
+			// a String 
+			value = token.sval;
+		    } else if (token.ttype == StreamTokenizer.TT_NUMBER) {
+			// A number
+			value = new Double(token.nval);
+		    } else {
+			System.err.println("Syntax error in config file: unexpected value token type " + token.ttype);
+			continue;
+		    }
+		    
+		    // store in the hashtable
+		    put(name, value);
 		}
-		finally {
-			if (in != null) {
-				try {
-					in.close();
-				} catch (IOException e) {
-				}
-			}
+	    }
+	    finally {
+		if (in != null) {
+		    try {
+			in.close();
+		    } catch (IOException e) {
+		    }
 		}
+	    }
 	}
 
 	/**
