@@ -201,9 +201,9 @@ public class AnalyzeTranscripts {
 	    String lastRid="";	
 	    PrintWriter w=null;
 	    Vector<TranscriptManager.ReadTranscriptData.Entry> section=new Vector<>();
-	    EpisodeHandle eh =null;
+	    EpisodeHandle  lastEh=null;
 	    for(TranscriptManager.ReadTranscriptData.Entry e: transcript) {
-		eh = findEpisodeHandle(v, e.eid);
+		EpisodeHandle eh = findEpisodeHandle(v, e.eid);
 		if (eh==null) {
 		    throw new IllegalArgumentException("In file "+inFile+", found unexpected experimentId="+e.eid);
 		}
@@ -212,7 +212,8 @@ public class AnalyzeTranscripts {
 		if (!lastRid.equals(rid)) {
 		    if (w!=null) {
 			w.close(); w=null;
-			OptimumExplained oe = analyzeSection( section, eh, wsum);			
+			OptimumExplained oe = analyzeSection( section, lastEh, wsum);			
+			section.clear();
 		    }
 		    File d=new File(base, rid);
 		    File g=new File(d, e.pid + ".split-transcripts.csv");
@@ -227,10 +228,13 @@ public class AnalyzeTranscripts {
 		}
 		w.println();
 		section.add(e);
+		lastEh = eh;
 	    }
 	    if (w!=null) {
 		w.close(); w=null;
-		OptimumExplained oe = analyzeSection( section, eh, wsum);			
+		OptimumExplained oe = analyzeSection( section, lastEh, wsum);
+		//section.setSize(0);
+		section.clear();
 	    }
 
 	    
