@@ -175,6 +175,7 @@ public class AnalyzeTranscripts {
 
 	File gsum=new File(base, "summary.csv");
 	PrintWriter wsum =new PrintWriter(new FileWriter(gsum, false));
+
 	String sumHeader = "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,yy,B,C,t_I,k,Z,L/n";
 	wsum.println(sumHeader);
 	
@@ -197,7 +198,11 @@ public class AnalyzeTranscripts {
 	    
 	    File inFile = Files.transcriptsFile(playerId, true);
 	    TranscriptManager.ReadTranscriptData transcript = new TranscriptManager.ReadTranscriptData(inFile);
-	    final String outHeader="#ruleSetName,playerId,experimentPlan,trialListId,seriesNo," + "moveNo,timestamp,y,x,by,bx,code";
+
+	    //(rid+","+e.pid+","+eh.exp+","+eh.trialListId+","+eh.seriesNo+","+eh.orderInSeries+","+e.eid);
+	
+	    
+	    final String outHeader="#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,orderInSeries,episodeId," + "moveNo,timestamp,y,x,by,bx,code";
 	    String lastRid="";	
 	    PrintWriter w=null;
 	    Vector<TranscriptManager.ReadTranscriptData.Entry> section=new Vector<>();
