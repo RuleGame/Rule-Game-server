@@ -12,7 +12,7 @@ import edu.wisc.game.reflect.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.sql.Board.Pos;
-import edu.wisc.game.sql.ImageObject;
+//import edu.wisc.game.sql.ImageObject;
 import edu.wisc.game.rest.ColorMap;
 import edu.wisc.game.engine.RuleSet.BucketSelector;
 import edu.wisc.game.formatter.*;

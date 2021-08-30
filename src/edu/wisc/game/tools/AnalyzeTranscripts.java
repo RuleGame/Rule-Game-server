@@ -175,7 +175,6 @@ public class AnalyzeTranscripts {
 
 	File gsum=new File(base, "summary.csv");
 	PrintWriter wsum =new PrintWriter(new FileWriter(gsum, false));
-
 	String sumHeader = "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,yy,B,C,t_I,k,Z,L/n";
 	wsum.println(sumHeader);
 	
@@ -193,97 +192,82 @@ public class AnalyzeTranscripts {
 	
 	//-- Take a look at each player's transcript and separate
 	//-- it into sections pertaining to different rule sets
+	
 	for(String playerId: ph.keySet()) {
 	    Vector<EpisodeHandle> v = ph.get(playerId);
-	    
-	    File inFile = Files.transcriptsFile(playerId, true);
-	    TranscriptManager.ReadTranscriptData transcript = new TranscriptManager.ReadTranscriptData(inFile);
-
-	    //(rid+","+e.pid+","+eh.exp+","+eh.trialListId+","+eh.seriesNo+","+eh.orderInSeries+","+e.eid);
-	
-	    
-	    final String outHeader="#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,orderInSeries,episodeId," + "moveNo,timestamp,y,x,by,bx,code";
-	    String lastRid="";	
-	    PrintWriter w=null;
-	    Vector<TranscriptManager.ReadTranscriptData.Entry> section=new Vector<>();
-	    EpisodeHandle  lastEh=null;
-	    for(TranscriptManager.ReadTranscriptData.Entry e: transcript) {
-		EpisodeHandle eh = findEpisodeHandle(v, e.eid);
-		if (eh==null) {
-		    throw new IllegalArgumentException("In file "+inFile+", found unexpected experimentId="+e.eid);
-		}
-		    
-		String rid=eh.ruleSetName;
-		if (!lastRid.equals(rid)) {
-		    if (w!=null) {
-			w.close(); w=null;
-			OptimumExplained oe = analyzeSection( section, lastEh, wsum);			
-			section.clear();
-		    }
-		    File d=new File(base, rid);
-		    File g=new File(d, e.pid + ".split-transcripts.csv");
-
-		    w =  new PrintWriter(new FileWriter(g, false));
-		    w.println(outHeader);
-		    lastRid=rid;
-		}
-		w.print(rid+","+e.pid+","+eh.exp+","+eh.trialListId+","+eh.seriesNo+","+eh.orderInSeries+","+e.eid);
-		for(int j=2; j<e.csv.nCol(); j++) {
-		    w.print(","+ImportCSV.escape(e.csv.getCol(j)));
-		}
-		w.println();
-		section.add(e);
-		lastEh = eh;
-	    }
-	    if (w!=null) {
-		w.close(); w=null;
-		OptimumExplained oe = analyzeSection( section, lastEh, wsum);
-		//section.setSize(0);
-		section.clear();
-	    }
-
-	    
+	    AnalyzeTranscripts atr = new AnalyzeTranscripts(base, wsum);
+	    atr.analyzePlayerRecord(playerId, v);
 	}
-	
 	wsum.close();
-
-
-
-
-
-	
-
-	/*
-	for(String ruleSetName: allHandles.keySet()) {
-	    Vector<EpisodeHandle> v = allHandles.get(ruleSetName);
-	    
-	    // for each player, the list of episodes involving this
-	    // rule set
-	    TreeMap<String,Vector<EpisodeHandle>> ph =new TreeMap<>();
-	    for(EpisodeHandle eh: v) {
-		Vector<EpisodeHandle> w = ph.get(eh.playerId);
-		if (w==null) ph.put(eh.playerId, w=new Vector<>());
-		w.add(eh);		     
-	    }
-
-	    File f=new File(base, ruleSetName + ".csv");
-	    File d=f.getParentFile();
-	    if (d.exists()) {
-		if (!d.isDirectory() || !base.canWrite())  throw new IOException("Not a writeable directory: " + d);
-	    } else {
-		if (!d.mkdirs()) throw new IOException("Cannot create directory: " + d);
-	    }
-	    System.out.println("For rule set=" + ruleSetName+", will write data to file "+ f +". This will include episodes from " + ph.size() +" players");
-	    
-	    PrintWriter w = new PrintWriter(new FileWriter(f, false));
-	    for(String playerId: ph.keySet()) {
-		
-	    }	    
-	    w.close();		
-	}
-	*/
     }
 
+    /**
+    	@param base The main output directory
+    */
+    private AnalyzeTranscripts(File _base, PrintWriter _wsum) {
+	base = _base;
+	wsum = _wsum;
+    }
+
+    final private File base;
+    final private PrintWriter wsum;
+    private PrintWriter w=null;
+
+    private void saveAnyData(Vector<TranscriptManager.ReadTranscriptData.Entry> section,
+			  EpisodeHandle lastEh) {
+	if (w!=null) {
+	    w.close(); w=null;
+	}
+	if (section.size()>0) {
+	    OptimumExplained oe = analyzeSection( section, lastEh, wsum);
+	    section.clear();
+	}
+    }
+
+    
+    /** Prepares the report(s) for one player
+	@param playerId The player whose record we want to analyze
+	@param v The list of episodes played by this player
+    */
+    private  void    analyzePlayerRecord(String playerId, Vector<EpisodeHandle> v) throws  IOException, IllegalInputException {
+
+	File inFile = Files.transcriptsFile(playerId, true);
+	TranscriptManager.ReadTranscriptData transcript = new TranscriptManager.ReadTranscriptData(inFile);
+
+	//(rid+","+e.pid+","+eh.exp+","+eh.trialListId+","+eh.seriesNo+","+eh.orderInSeries+","+e.eid);
+	
+	    
+	final String outHeader="#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,orderInSeries,episodeId," + "moveNo,timestamp,y,x,by,bx,code";
+	String lastRid="";	
+	Vector<TranscriptManager.ReadTranscriptData.Entry> section=new Vector<>();
+	EpisodeHandle  lastEh=null;
+	for(TranscriptManager.ReadTranscriptData.Entry e: transcript) {
+	    EpisodeHandle eh = findEpisodeHandle(v, e.eid);
+	    if (eh==null) {
+		throw new IllegalArgumentException("In file "+inFile+", found unexpected experimentId="+e.eid);
+	    }
+	    
+	    String rid=eh.ruleSetName;
+	    if (!lastRid.equals(rid)) {
+		saveAnyData( section, lastEh);			
+		
+		File d=new File(base, rid);
+		File g=new File(d, e.pid + ".split-transcripts.csv");		
+		w =  new PrintWriter(new FileWriter(g, false));
+		w.println(outHeader);
+		lastRid=rid;
+	    }
+	    w.print(rid+","+e.pid+","+eh.exp+","+eh.trialListId+","+eh.seriesNo+","+eh.orderInSeries+","+e.eid);
+	    for(int j=2; j<e.csv.nCol(); j++) {
+		w.print(","+ImportCSV.escape(e.csv.getCol(j)));
+	    }
+	    w.println();
+	    section.add(e);
+	    lastEh = eh;
+	}
+	saveAnyData( section, lastEh);
+    }
+       
 
     static void test(int[] y) {
 	double tt[]=new double[y.length*2];
