@@ -15,6 +15,7 @@ import edu.wisc.game.rest.TrialList;
 import edu.wisc.game.rest.Files;
 import edu.wisc.game.engine.RuleSet;
 import edu.wisc.game.engine.AllRuleSets;
+import edu.wisc.game.saved.*;
 
 /** Information about a player (what trial list he's in, what episodes he's done etc) stored in the SQL database.
  */
@@ -576,7 +577,8 @@ public class PlayerInfo {
 	saveMe();
 	// save the data in the CSV files
 	File f =  Files.boardsFile(playerId);
-	epi.getCurrentBoard(true).saveToFile(playerId, epi.episodeId, f);
+	Board b = epi.getCurrentBoard(true);
+	BoardManager.saveToFile(b, playerId, epi.episodeId, f);
 	f =  Files.transcriptsFile(playerId);
 	TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.transcript);
 	f =  Files.detailedTranscriptsFile(playerId);

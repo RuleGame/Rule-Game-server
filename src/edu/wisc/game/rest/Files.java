@@ -48,9 +48,13 @@ public class Files {
 
     /** The file into which the initial boards of all episodes played by a given player are written */
     public static File boardsFile(String playerId) throws IOException {
+	return boardsFile(playerId, false);
+    }
+    
+    public static File boardsFile(String playerId, boolean readOnly) throws IOException {
 
 	File d = new File(savedDir, "boards");
-	testWriteDir(d);
+	if (!readOnly) testWriteDir(d);
 	File f= new File(d, playerId + ".boards.csv");
 	return f;
     }

@@ -38,8 +38,7 @@ import edu.wisc.game.rest.Files;
 </pre>
 */
 @Entity  
-public class Board// extends OurTable
-{
+public class Board {
  	
     static public final int N = 6;
 
@@ -48,7 +47,7 @@ public class Board// extends OurTable
     public static class Pos {
 	/** Coordinates counted from the bottom left corner. The left bottom
 	    bucket is at (0,0), the corner cell is at (1,1). */
-	final int x, y;
+	public final int x, y;
 
 
 	/** Counted by row (left-to-right), rows being arranged bottom-to-top.
@@ -113,6 +112,10 @@ public class Board// extends OurTable
 	    Pos q = new Pos(N+1-x, N+1-y);
 	    return q.nearestBucket();
 	}
+
+	public String toString() {
+	    return "(x=" +x+", y=" +y+")";
+	}
 	
     }
 
@@ -160,9 +163,6 @@ public class Board// extends OurTable
    @XmlElement
    public void setId(long _id) { id = _id; }
 
-    /*     public String getId() { return id; }
- @XmlElement
- public void setId(String _id) { id = _id; } */
     public String getName() { return name; }
     @XmlElement
     public void setName(String _name) { name = _name; }
@@ -375,39 +375,6 @@ public class Board// extends OurTable
 	return board;
     }
 
-    /** Let's just write one file at a time */
-    static private final String file_writing_lock = "Board file writing lock";
-	
-    /* Saves this board in CSV file.
-       <pre>
-      boards/pid.board.csv
-      pid,episode-id,y,x,shape,color,image
-</pre>
-    */    
-    void saveToFile(String pid, String eid, File f) {
-	synchronized(file_writing_lock) {
-	try {	    
-	    PrintWriter w = new PrintWriter(new	FileWriter(f, true));
-	    if (f.length()==0) w.println("#playerId,episodeId,y,x,shape,color,objectType");
-	    Vector<String> v = new Vector<>();
-	    for(Piece p: value) {
-		v.clear();
-		v.add(pid);
-		v.add(eid);
-		v.add(""+p.getY());
-		v.add(""+p.getX());
-		v.add(""+p.xgetShape());
-		v.add(""+p.xgetColor());
-		v.add(""+p.objectType());
-		w.println(String.join(",", v));
-	    }
-	    w.close();
-	} catch(IOException ex) {
-	    System.err.println("Error writing the board: " + ex);
-	    ex.printStackTrace(System.err);
-	}	    
-	}  
-    }
 
     /** Checking that a board description does not include any colors
 	or shapes that cannot be displayed */

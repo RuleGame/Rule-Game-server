@@ -7,10 +7,6 @@ import java.text.*;
 
 import javax.persistence.*;
 
-//import org.apache.commons.math3.optimization.*;
-//import org.apache.commons.math3.optimization.general.*;
-//import org.apache.commons.math3.analysis.*;
-
 
 import org.apache.commons.math3.optim.*;
 import org.apache.commons.math3.optim.nonlinear.scalar.*;
@@ -19,79 +15,32 @@ import org.apache.commons.math3.optim.nonlinear.scalar.gradient.*;
 import edu.wisc.game.util.*;
 import edu.wisc.game.rest.*;
 import edu.wisc.game.sql.*;
+import edu.wisc.game.engine.*;
+import edu.wisc.game.saved.*;
+import edu.wisc.game.parser.RuleParseException;
 
 /** Methods for the statistical analysis of game transcripts */
 public class AnalyzeTranscripts {
 
-    /** An auxiliary structure used to keep track who and when played 
-	episodes
+
+    /** Looks up the EpisodeHandle object for a specified episode id.
+	
+	FIXME: Using a HashMap instead of a vector could, theoretically,
+	provide a faster retrieval, but in practice it probably would make
+	little difference, since a player does not play all that many episodes,
+	and v is fairly short.
      */
-    static class EpisodeHandle {
-	String ruleSetName;
-	String exp;
-	String trialListId;
-	int seriesNo;
-	int orderInSeries;
-	String episodeId;
-	String playerId;
-	public String toString() {return episodeId;}
-	EpisodeHandle(String _exp, String _trialListId, TrialList t, String _playerId, EpisodeInfo e, int _orderInSeries) {
-	    episodeId = e.getEpisodeId();
-
-	    playerId = _playerId;
-	    exp = _exp;
-	    trialListId = _trialListId;
-	    seriesNo= e.getSeriesNo();
-	    orderInSeries =  _orderInSeries;
-	    ParaSet para = t.get(seriesNo);
-	    ruleSetName = para.getRuleSetName();	    
-	}
-    }
-
-
-    static EpisodeHandle findEpisodeHandle(Vector<EpisodeHandle> v, String eid) {
+    private static EpisodeHandle findEpisodeHandle(Vector<EpisodeHandle> v, String eid) {
 	for(EpisodeHandle eh: v) {
 	    if (eh.episodeId.equals(eid)) return eh;
 	}
 	return null;
     }
-
-    /*
-    private static void writeFile(int eid, Vector<TranscriptManager.ReadTranscriptData.Entry> section) {
-	    PrintWriter w=null;
-	   
-	    
-	    for(TranscriptManager.ReadTranscriptData.Entry e: section) {
-		EpisodeHandle eh = findEpisodeHandle(v, e.eid);
-		if (eh==null) {
-		    throw new IllegalArgumentException("In file "+inFile+", found unexpected experimentId="+e.eid);
-		}
-		    
-		String rid=eh.ruleSetName;
-		if (!lastRid.equals(rid)) {
-		    if (w!=null) { w.close(); w=null;}
-		    File d=new File(base, rid);
-		    File g=new File(d, e.pid + ".split-transcripts.csv");
-
-		    w =  new PrintWriter(new FileWriter(g, false));
-		    w.println(outHeader);
-		    lastRid=rid;
-		}
-		w.print(rid+","+e.pid+","+eh.exp+","+eh.trialListId+","+eh.seriesNo+","+eh.orderInSeries+","+e.eid);
-		for(int j=2; j<e.csv.nCol(); j++) {
-		    w.print(","+ImportCSV.escape(e.csv.getCol(j)));
-		}
-		w.println();
-	    }
-	    if (w!=null) { w.close(); w=null;}
-
-
-
-	    }
-	    //---- */
+   
+    private static boolean needP0=false;
+	
     
     public static void main(String[] argv) throws Exception {
-
 
 	if (argv.length==0) {
 	    int y[]={1, 1, 0, 0, 0, 0, 1, 1};
@@ -104,7 +53,7 @@ public class AnalyzeTranscripts {
 	    test(y);
 	    return;
 	} else {
-	    System.out.println("argv.length=" + argv.length +", argv[0]='" +argv[0] +"'");
+	    //System.out.println("argv.length=" + argv.length +", argv[0]='" +argv[0] +"'");
 	}
 	
 	EntityManager em = Main.getNewEM();
@@ -114,15 +63,18 @@ public class AnalyzeTranscripts {
 	// for each player, the list of episodes...
 	TreeMap<String,Vector<EpisodeHandle>> ph =new TreeMap<>();
 
-	// for h experiment plan
+	// for each experiment plan...
 	for(int j=0; j<argv.length; j++) {
 	    String exp = argv[j];
+	    if (j==0 && exp.equals("-p0")) {
+		needP0=true;
+		continue;
+	    }
 	    System.out.println("Experiment plan=" +exp);
 	    Vector<String> trialListNames = TrialList.listTrialLists(exp);
 
-	    HashMap<String,TrialList> trialListMap=new HashMap<>();
-
-	    
+	    // ... List all trial lists 
+	    HashMap<String,TrialList> trialListMap=new HashMap<>();	    
 	    for(String trialListId: trialListNames) {
 		TrialList t = new  TrialList(exp, trialListId);
 		trialListMap.put( trialListId,t);	
@@ -130,7 +82,8 @@ public class AnalyzeTranscripts {
 	    System.out.println("Experiment plan=" +exp+" has " + trialListMap.size() +" trial lists: "+ Util.joinNonBlank(", ", trialListMap.keySet()));
 	    
 	    Vector<EpisodeHandle> handles= new Vector<>();
-	    
+
+	    // ... and all players enrolled in the plan
 	    Query q = em.createQuery("select m from PlayerInfo m where m.experimentPlan=:e");
 	    q.setParameter("e", exp);
 	    List<PlayerInfo> res = (List<PlayerInfo>)q.getResultList();
@@ -143,6 +96,7 @@ public class AnalyzeTranscripts {
 		}
 		int orderInSeries = 0;
 		int lastSeriesNo =0;
+		// ... and all episodes of each player
 		for(EpisodeInfo e: p.getAllEpisodes()) {
 		    int seriesNo = e.getSeriesNo();
 		    if (seriesNo != lastSeriesNo) orderInSeries = 0;
@@ -173,9 +127,9 @@ public class AnalyzeTranscripts {
 	File base = new File("tmp");
 	if (!base.exists() || !base.isDirectory() || !base.canWrite())  throw new IOException("Not a writeable directory: " + base);
 
-	File gsum=new File(base, "summary.csv");
+	File gsum=new File(base, needP0? "summary-p0.csv" : "summary-flat.csv");
 	PrintWriter wsum =new PrintWriter(new FileWriter(gsum, false));
-	String sumHeader = "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,yy,B,C,t_I,k,Z,L/n";
+	String sumHeader = "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,yy,B,C,t_I,k,Z,L/n,n";
 	wsum.println(sumHeader);
 	
 	for(String ruleSetName: allHandles.keySet()) {
@@ -195,8 +149,8 @@ public class AnalyzeTranscripts {
 	
 	for(String playerId: ph.keySet()) {
 	    Vector<EpisodeHandle> v = ph.get(playerId);
-	    AnalyzeTranscripts atr = new AnalyzeTranscripts(base, wsum);
-	    atr.analyzePlayerRecord(playerId, v);
+	    AnalyzeTranscripts atr = new AnalyzeTranscripts(playerId, base, wsum);
+	    atr.analyzePlayerRecord(v);
 	}
 	wsum.close();
     }
@@ -204,87 +158,220 @@ public class AnalyzeTranscripts {
     /**
     	@param base The main output directory
     */
-    private AnalyzeTranscripts(File _base, PrintWriter _wsum) {
+    private AnalyzeTranscripts(String _playerId, File _base, PrintWriter _wsum) {
 	base = _base;
 	wsum = _wsum;
+	playerId = _playerId;
     }
 
     final private File base;
     final private PrintWriter wsum;
-    private PrintWriter w=null;
+    final String playerId;
 
-    private void saveAnyData(Vector<TranscriptManager.ReadTranscriptData.Entry> section,
-			  EpisodeHandle lastEh) {
-	if (w!=null) {
-	    w.close(); w=null;
+    /** Saves the data for a single (player, ruleSet) pair
+	@param section A vector of arrays, each array representing the recorded
+	moves for one episode.
+	@param includedEpisodes All non-empty episodes played by this player in this rule set
+    */
+    private void saveAnyData(Vector<TranscriptManager.ReadTranscriptData.Entry[]> section,
+			     Vector<EpisodeHandle> includedEpisodes)
+	throws  IOException, IllegalInputException,  RuleParseException {
+
+	if (includedEpisodes.size()==0) return;
+	EpisodeHandle eh0 =  includedEpisodes.firstElement();
+
+	double[] p0 = computeP0(section, eh0.ruleSetName);
+
+	String rid = eh0.ruleSetName;
+	File d=new File(base, rid);
+	File g=new File(d, includedEpisodes.firstElement().playerId + ".split-transcripts.csv");		
+	PrintWriter w =  new PrintWriter(new FileWriter(g, false));
+	final String outHeader="#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,orderInSeries,episodeId," + "moveNo,timestamp,y,x,by,bx,code,p0";
+	w.println(outHeader);
+
+	int je =0, jp=0;
+	for(TranscriptManager.ReadTranscriptData.Entry[] subsection: section) {
+	    EpisodeHandle eh = includedEpisodes.get(je ++);
+	    for(TranscriptManager.ReadTranscriptData.Entry e: subsection) {
+		if (!eh.episodeId.equals(e.eid)) throw new IllegalArgumentException("Array mismatch");
+		
+		w.print(rid+","+e.pid+","+eh.exp+","+eh.trialListId+","+eh.seriesNo+","+eh.orderInSeries+","+e.eid);
+		for(int j=2; j<e.csv.nCol(); j++) {
+		    w.print(","+ImportCSV.escape(e.csv.getCol(j)));
+		}
+		w.print(","+ p0[jp++]);
+		w.println();	
+	    }
 	}
-	if (section.size()>0) {
-	    OptimumExplained oe = analyzeSection( section, lastEh, wsum);
-	    section.clear();
+
+	w.close(); w=null;
+
+	OptimumExplained oe = analyzeSection( joinSubsections( section), eh0, wsum, needP0? p0: null);
+	section.clear();
+	includedEpisodes.clear();
+    }
+
+    /** Splits a section of transcript pertaining to a single rule set (i.e. a series of episodes) into subsections, each subsection pertaining to one specific
+	episode.
+     */
+    private static Vector<TranscriptManager.ReadTranscriptData.Entry[]> splitTranscriptIntoEpisodes(Vector<TranscriptManager.ReadTranscriptData.Entry> section) {
+	Vector<TranscriptManager.ReadTranscriptData.Entry[]> result = new Vector<>();
+	Vector<TranscriptManager.ReadTranscriptData.Entry> q = new Vector<>();
+	String lastEid = "";
+	for( TranscriptManager.ReadTranscriptData.Entry e: section) {
+	    String eid = e.eid;
+	    if (!eid.equals(lastEid)) {
+		if (q.size()>0) {
+		    result.add( q.toArray(new TranscriptManager.ReadTranscriptData.Entry[0]));
+		}
+		q.clear();
+		lastEid = eid;
+	    }
+	    q.add(e);
 	}
+	
+	if (q.size()>0) {
+	    result.add( q.toArray(new TranscriptManager.ReadTranscriptData.Entry[0]));
+	}
+	return result;			
+    }
+
+    private static <T> Vector<T> joinSubsections(Vector<T[]> w) {
+	Vector<T> v = new Vector<>();
+	for(T[] a: w) {
+	    for(T t: a) {
+		v.add(t);
+	    }
+	}
+	return v;
+    }
+    
+    private static <T> int sumLen(Vector<T[]> w) {
+	int len=0;
+	for(T[] a: w) {
+	    len+= a.length;
+	}
+	return len;
     }
 
     
-    /** Prepares the report(s) for one player
+    /** Reconstructs and replays the historical episode, computing p0 for
+	every pick or move attempt.
+     */
+    private double[] computeP0(Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections, String ruleSetName)  throws  IOException, IllegalInputException,  RuleParseException{
+	RuleSet rules = AllRuleSets.obtain( ruleSetName);
+
+	double [] p0 = new double[sumLen(subsections)];
+	int k=0;
+	
+	for(TranscriptManager.ReadTranscriptData.Entry[] subsection: subsections) {
+	    String episodeId = subsection[0].eid;
+	    
+	    Board board = boards.get(episodeId);
+	    Game game = new Game(rules, board);
+	    ReplayedEpisode rep = new ReplayedEpisode(episodeId, game);
+
+	    System.out.println("------------- eid=" + episodeId);
+
+	    System.out.println("All moves:");
+	    for(int j=0; j<subsection.length; j++) {
+		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
+		System.out.println(e.pick.toString());
+	    }
+	
+	    for(int j=0; j<subsection.length; j++) {
+		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
+
+		System.out.println("j=" + j);
+		System.out.println(rep.graphicDisplay());
+		
+		double p =rep.computeP0(e.pick);	    
+		p0[k++] = p;
+
+		int code = rep.accept(e.pick);
+		
+		System.out.println(e.pick.toString() +", p0=" + p+", code=" + code);
+
+		if (code!=e.code) {
+		    throw new IllegalArgumentException("Unexpected code in replay: " + code +", vs. the recorded code=" + e.code);
+		}
+	    }
+	}
+	return p0;
+    }
+
+    
+    HashMap<String,Board> boards;
+    
+    /** Reads one player's transcript, and prepares a complete report 
+	for that player.
 	@param playerId The player whose record we want to analyze
 	@param v The list of episodes played by this player
     */
-    private  void    analyzePlayerRecord(String playerId, Vector<EpisodeHandle> v) throws  IOException, IllegalInputException {
+    private  void    analyzePlayerRecord(Vector<EpisodeHandle> v) throws  IOException, IllegalInputException,  RuleParseException{
 
+
+	File boardsFile =  Files.boardsFile(playerId, true);
+
+	HashMap <String,Boolean> useImages = new HashMap<>();
+	for(EpisodeHandle eh: v) {
+	    useImages.put(eh.episodeId, eh.useImages);
+	}
+	
+	boards = BoardManager.readBoardFile(boardsFile, useImages);
+
+	
 	File inFile = Files.transcriptsFile(playerId, true);
 	TranscriptManager.ReadTranscriptData transcript = new TranscriptManager.ReadTranscriptData(inFile);
 
-	//(rid+","+e.pid+","+eh.exp+","+eh.trialListId+","+eh.seriesNo+","+eh.orderInSeries+","+e.eid);
-	
+	// split by episode 
+	Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections = splitTranscriptIntoEpisodes(transcript);
+	// One subsection per episode
+	System.out.println("Split the player's transcript ("+transcript.size()+" moves) into "+subsections.size()+ " episode sections");
 	    
-	final String outHeader="#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,orderInSeries,episodeId," + "moveNo,timestamp,y,x,by,bx,code";
-	String lastRid="";	
-	Vector<TranscriptManager.ReadTranscriptData.Entry> section=new Vector<>();
-	EpisodeHandle  lastEh=null;
-	for(TranscriptManager.ReadTranscriptData.Entry e: transcript) {
-	    EpisodeHandle eh = findEpisodeHandle(v, e.eid);
+	String lastRid="";
+	// all episodes' subsections for a given rule sets
+	Vector<TranscriptManager.ReadTranscriptData.Entry[]> section=new Vector<>();
+	Vector<EpisodeHandle> includedEpisodes=new Vector<>();
+	
+	for(TranscriptManager.ReadTranscriptData.Entry[] subsection: subsections)  {
+	    String eid = subsection[0].eid;
+	    EpisodeHandle eh = findEpisodeHandle(v, eid);
 	    if (eh==null) {
-		throw new IllegalArgumentException("In file "+inFile+", found unexpected experimentId="+e.eid);
+		throw new IllegalArgumentException("In file "+inFile+", found unexpected experimentId="+ eid);
 	    }
 	    
 	    String rid=eh.ruleSetName;
 	    if (!lastRid.equals(rid)) {
-		saveAnyData( section, lastEh);			
-		
-		File d=new File(base, rid);
-		File g=new File(d, e.pid + ".split-transcripts.csv");		
-		w =  new PrintWriter(new FileWriter(g, false));
-		w.println(outHeader);
+		saveAnyData( section, includedEpisodes);
 		lastRid=rid;
 	    }
-	    w.print(rid+","+e.pid+","+eh.exp+","+eh.trialListId+","+eh.seriesNo+","+eh.orderInSeries+","+e.eid);
-	    for(int j=2; j<e.csv.nCol(); j++) {
-		w.print(","+ImportCSV.escape(e.csv.getCol(j)));
-	    }
-	    w.println();
-	    section.add(e);
-	    lastEh = eh;
+	    includedEpisodes.add(eh);
+	    section.add(subsection);
 	}
-	saveAnyData( section, lastEh);
+	saveAnyData( section, includedEpisodes);
     }
        
 
     static void test(int[] y) {
 	double tt[]=new double[y.length*2];
 	for(int k=0; k<tt.length; k++) tt[k] = k*0.5;
-	analyzeSection("test", y,tt);
+	analyzeSection("test", y, null, tt);
 	
     }
     
     final static DecimalFormat df = new DecimalFormat("0.000");
-    
+
+    /** Processes the sequence of all moves for a (player, rule set) pair
+       @param eh A handle for one of the episodes in this  (player, rule set) series. It is only used to access the information common for the entire series, not for the specific episode.
+     */
     private static OptimumExplained analyzeSection(Vector<TranscriptManager.ReadTranscriptData.Entry> section,
-						   EpisodeHandle eh,   PrintWriter wsum
+						   EpisodeHandle eh,   PrintWriter wsum, double[] p0
 						   ) {	
 	int[] y = TranscriptManager.ReadTranscriptData.asVectorY(section);
 	if (y.length<2) return null;
 	
-	OptimumExplained oe =  analyzeSection(eh.playerId, y, null);
+	OptimumExplained oe =  analyzeSection(eh.playerId, y, p0, null);
 
 	if (oe!=null) {
 	    String rid=eh.ruleSetName;
@@ -299,6 +386,7 @@ public class AnalyzeTranscripts {
     }
 
 
+    /** An auxiliary class used to pinpoint possible inflection points */
     static class Divider {
 	final double avg0, avg1, L;
 
@@ -344,8 +432,12 @@ public class AnalyzeTranscripts {
 	for(int q: y) sum+=q;
 	return sum/(double)y.length;
     }
-    
-    private static OptimumExplained analyzeSection(String playerId, int[] y, double tt[]) {	
+
+    /** 
+	@param tt Suggested inflection points. If null, this method will decide 
+	on its own.
+     */
+    private static OptimumExplained analyzeSection(String playerId, int[] y, double p0[], double tt[]) {	
 
 	LoglikProblem.verbose = false;
 	
@@ -353,19 +445,48 @@ public class AnalyzeTranscripts {
 			 mkYString(y)+			"]" );
 
 
+	int n =y.length;
+	if (p0!=null) {
+	    if (y.length!=p0.length) throw new IllegalArgumentException("y, p0 length mismatch");
+	    // Remove the points with p0(t)=1, where no fitting is possible
+	    Vector<Integer> yz=new Vector<>();
+	    Vector<Double> p0z=new Vector<>();
+	    for(int j=0; j<y.length; j++) {
+		if (p0[j]<0 || p0[j]>1) throw new IllegalArgumentException("Invalid p0");
+		if (p0[j]==1) continue;
+		yz.add(y[j]);
+		p0z.add(p0[j]);
+	    }
+	    int n0=n;
+	    n=yz.size();
+	    if (n<n0) {
+		y = new int[n];
+		p0 = new double[n];
+		for(int j=0; j<n; j++) {
+		    y[j] = yz.get(j);
+		    p0[j] = p0z.get(j);
+		}
+		System.out.println("Reduced n from "+n0+" to " + n+", due to the removal of 'impossible' points with p0==1");
+	    }
+	}
+
+
+	
 	if (tt==null) {
 	    //tt=new double[3];
 	    //for(int mode=0; mode<=2; mode++) {
 	    //		tt[mode]= mode * (y.length-1.0)*0.5;
 	    //}
-	    tt=new double[y.length*2-1];
+	    tt=new double[n*2-1];
 	    for(int k=0; k<tt.length; k++) tt[k] = k*0.5;
 	}
 
 
 	double avgY = mkAvg(y);
-	LoglikProblem problem = new LoglikProblem(y);
-	//SimpleProblem problem = new SimpleProblem(y);
+	LoglikProblem problem =
+	    p0==null? new LoglikProblem(y):
+	    new LoglikP0Problem(y, p0);
+
 	ObjectiveFunctionGradient ofg = problem.getObjectiveFunctionGradient();
 
 	final int maxEval = 10000;
@@ -380,7 +501,7 @@ public class AnalyzeTranscripts {
 	
 	Divider d= Divider.goodDivider(y, t0);
 	if (d!=null) {
-	    System.out.println("***L(" + df.format(d.avg0)+","+df.format(d.avg1)+")/n=" + df.format(d.L/y.length) + "*** ");
+	    System.out.println("***L(" + df.format(d.avg0)+","+df.format(d.avg1)+")/n=" + df.format(d.L/n) + "*** ");
 	}
 
 
@@ -389,7 +510,6 @@ public class AnalyzeTranscripts {
 	for(int jAttempt = 0; jAttempt<nAttempts; jAttempt++) {
 	
 	    // B,C,t_I, k
-
 	   
 	    double[] startPoint =
 		jAttempt==0?	new double[]{avgY, avgY, t0, 0}:
@@ -416,7 +536,7 @@ public class AnalyzeTranscripts {
 		System.out.println(ex);
 		continue;
 	    }
-	    OptimumExplained oe = new OptimumExplained(ofg, optimum, y.length);
+	    OptimumExplained oe = new OptimumExplained(ofg, optimum, n);
 	    oe.report("[t0="+t0+", iter=" + optimizer.getIterations()+"] ");
 
 	    if (bestOptimum==null || optimum.getValue()>bestOptimum.getValue()) {
@@ -428,10 +548,11 @@ public class AnalyzeTranscripts {
 	}	      
 
 	if (bestOptimum !=null) {
-	    OptimumExplained oe = new OptimumExplained(ofg, bestOptimum, y.length);
+	    OptimumExplained oe = new OptimumExplained(ofg, bestOptimum, n);
 	    oe.report("[GLOBAL?] ");
 	    return oe;
 	}  else {
+	    // No solution found, e.g. because the input was empty
 	    return null;
 	}
     }
@@ -445,8 +566,10 @@ public class AnalyzeTranscripts {
 	final double grad[];
 	final double B, C, t_I, k;
 	final double e0, re0, Z, Ln;
+	final int n;
 	
-	OptimumExplained(ObjectiveFunctionGradient ofg, PointValuePair _optimum, int n) {
+	OptimumExplained(ObjectiveFunctionGradient ofg, PointValuePair _optimum, int _n) {
+	    n = _n;
 	    optimum = _optimum;
 	    p =optimum.getPoint();
 	    grad = ofg.getObjectiveFunctionGradient().value(p);
@@ -473,18 +596,20 @@ public class AnalyzeTranscripts {
 		", t_I="+   df.format( t_I) +
 		", k="+   df.format( k)+
 		". Z="+    df.format(Z)+
-		". L/n="+     df.format(Ln);
+		". L/n="+     df.format(Ln)+
+		". n="+     df.format(n);
 	}
 
 
 	String toCsvString() {
-	    Vector<Double> v=new Vector<>();
+	    Vector<Number> v=new Vector<>();
 	    v.add(B);
 	    v.add(C);
 	    v.add(t_I);
 	    v.add(k);
 	    v.add(Z);
 	    v.add(Ln);
+	    v.add(n);
 	    return Util.joinNonBlank(",",v);
 	}
 

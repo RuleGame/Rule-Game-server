@@ -11,16 +11,14 @@ import org.apache.commons.math3.analysis.*;
 
 import edu.wisc.game.util.*;
 
-    /** v={B,C,tI,k}
-	u = (t-tI)*k
-	p(t) = B + 0.5*(C-B)*(1+tanh(u/2)) =
-              B + (C-B)/(1+exp(-u)) = 
-             ( B*exp(-u) + C)/(1+exp(-u))
-	L(v) = sum_t ( y(t) log p(t) + (1-y(t)) log(1 - p(t))
-     */
-class LoglikProblem
-//implements DifferentiableMultivariateFunction//, Serializable
-{
+/** v={B,C,tI,k}
+    u = (t-tI)*k
+    p(t) = B + 0.5*(C-B)*(1+tanh(u/2)) =
+    B + (C-B)/(1+exp(-u)) = 
+       ( B*exp(-u) + C)/(1+exp(-u))
+       L(v) = sum_t ( y(t) log p(t) + (1-y(t)) log(1 - p(t))
+*/
+class LoglikProblem {
 
 
     static boolean verbose=false;
@@ -30,6 +28,8 @@ class LoglikProblem
 	y = _y;
     }
 
+    /** The number of points over which L is computed */
+    int size() { return y.length; }
     
     static final double eps = 1e-6, M=1000;
 
@@ -84,14 +84,10 @@ class LoglikProblem
 			//double p = ( B*ex + C)/(1 + ex);
 			double p = B/(1+rex) + C/(1 + ex);
 
-
-
 			//double r = (y[t]-p)/(p*(1-p));
 			double r = (y[t]==1)? regLogDerivative(p):
-			    -regLogDerivative(1-p);
+			    -regLogDerivative(1-p);		
 			
-			
-			//sum[0] += r*ex/(1+ex);
 			sum[0] += r/(1+rex);
 			sum[1] += r/(1+ex);
 			//double z= r*(C-B)*ex/((1+ex)*(1+ex));
@@ -107,6 +103,5 @@ class LoglikProblem
     }
 		
 	
-
 }
     

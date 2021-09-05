@@ -53,8 +53,9 @@ public class Episode {
 	specifying its destination */
     public static class Pick {
 	/** The position of the piece being moved, in the [1:N*N] range */
-	final int pos;
+	public final int pos;
 	Pick(int _pos) { pos = _pos; }
+	public Pick(Pos  pos) { this(pos.num()); }
 	int pieceId = -1;
 	public int getPos() { return pos; }
         public int getPieceId() { return pieceId; }	
@@ -62,9 +63,9 @@ public class Episode {
 	/** Acceptance code; will be recorded upon processing */
 	int code;
  	public int getCode() { return code; }
-	Date time = new Date();
+	final public Date time = new Date();
 	public String toString() {
-	    return "PICK " + pos;
+	    return "PICK " + pos + " " +new Pos(pos);
 	}
     }
 
@@ -73,14 +74,17 @@ public class Episode {
      */
     public static class Move extends Pick {
  	/** (Attempted) destination, in the [0:3] range */
-	final int bucketNo;
+	public final int bucketNo;
 	public int getBucketNo() { return bucketNo ; }
  	Move(int _pos, int b) {
 	    super(_pos);
 	    bucketNo = b;
 	}
+	public Move(Pos pos, Pos bu) {
+	    this(pos.num(), bu.bucketNo());
+	}
 	public String toString() {
-	    return "MOVE " + pos + " to B" + bucketNo;
+	    return "MOVE " + pos + " " +new Pos(pos) +	" to B" + bucketNo;
 	}
    }
     
@@ -158,7 +162,7 @@ public class Episode {
     protected int ruleLineNo = 0;
 
     @Transient
-    private RuleLine ruleLine = null;
+    protected RuleLine ruleLine = null;
 
     /** Will return true if this is, apparently, an episode restored
 	from SQL server, and cannot be played anymore because the boad
@@ -221,6 +225,51 @@ public class Episode {
 	    at pos to bucket[dest]. */
 	private BitSet[][] acceptanceMap = new BitSet[Board.N*Board.N+1][];
 	private boolean[] isMoveable = new boolean[Board.N*Board.N+1];
+
+	/** Computes the probability that a random pick by a frugal player
+	    (one who does not repeat a failed pick) would be successful.
+	    @param knownFailedPicks The number of distinct pieces that the 
+	    player has already tried to pick (and failed) from this board.
+	    This reduces the denominator (= the number of still-not-tested
+	    pieces).
+	 */
+
+	double computeP0ForPicks(int knownFailedPicks) {
+	    int countPieces=0, countMovablePieces=0;
+	    for(int pos=0; pos<pieces.length; pos++) {		
+		if (pieces[pos]!=null) {
+		    countPieces++;
+		    if (isMoveable[pos]) countMovablePieces++;
+		}		
+	    }
+	    if ( knownFailedPicks>countPieces) throw new IllegalArgumentException("You could not have really tried to pick " +knownFailedPicks+ " pieces, as the board only has " +  countPieces);
+	    countPieces -= knownFailedPicks;
+	    if (countMovablePieces>countPieces)  throw new IllegalArgumentException("What, there are more moveable pieces (" + countMovablePieces+") than not-tested-yet pieces ("+countPieces+")?");
+	    return (countPieces==0)? 0.0: countMovablePieces/(double)countPieces;
+	}
+
+	 
+	/** Computes the probability that a random move would be successful */
+  	double computeP0ForMoves(int knownFailedMoves) {
+	    int countMoves=0, countAllowedMoves=0;
+	    for(int pos=0; pos<pieces.length; pos++) {		
+		if (pieces[pos]!=null) {
+		    countMoves += 4;
+
+		    BitSet a = new BitSet();
+		    for(BitSet z: acceptanceMap[pos]) {
+			a.or(z);
+		    }
+		    countAllowedMoves += a.cardinality();
+		}		
+	    }
+	    if ( knownFailedMoves>countMoves) throw new IllegalArgumentException("You could not have really tried to make " +knownFailedMoves+ " pieces, as the board only has enough pieces for " +  countMoves);
+	    countMoves -= knownFailedMoves;
+	    
+	    if (countAllowedMoves>countMoves)  throw new IllegalArgumentException("What, there are more allowed moves (" + countAllowedMoves+") than not-tested-yet moves ("+countMoves+")?");
+	    return (countMoves==0)? 0.0: countAllowedMoves/(double)countMoves;
+	}
+	
 
 	/** For each piece, where can it go? (OR of all rules) */
 	BitSet[] moveableTo() {
@@ -308,11 +357,12 @@ public class Episode {
 	    return whoAccepts;
 	}
 
-
+    
 	/** Requests acceptance for this move or pick. In case of
 	    acceptance of an actual move (not just a pick), decrements
 	    appropriate counters, and removes the piece from the
 	    board.
+
 	    @return result  (accept/deny)
 	*/
 	int accept(Pick pick) {
@@ -390,6 +440,7 @@ public class Episode {
 	    return  move.code=CODE.ACCEPT;
 	}
 
+    
 	/** Is this row of rules "exhausted", based either on the
 	    global counter for the row, or the individual rules?
 	    "Control moves to the next row when either all counters OR
@@ -463,7 +514,7 @@ public class Episode {
    
     static final DateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
     /** with milliseconds */
-    static final DateFormat sdf2 = new SimpleDateFormat("yyyyMMdd-HHmmss.SSS");
+    public static final DateFormat sdf2 = new SimpleDateFormat("yyyyMMdd-HHmmss.SSS");
 
     /** Creates a more or less unique string ID for this Episode object */
     private String buildId() {
@@ -501,13 +552,17 @@ public class Episode {
 	@param _in The input stream for commands; it will be null in the web app
 	@param _out Will be null in the web app.
     */
-    public Episode(Game game, OutputMode _outputMode, Reader _in, PrintWriter _out) {
+   public Episode(Game game, OutputMode _outputMode, Reader _in, PrintWriter _out) {
+       this( game,  _outputMode,  _in,  _out, null);
+       
+   }
+    protected Episode(Game game, OutputMode _outputMode, Reader _in, PrintWriter _out, String _episodeId ) {
 	startTime = new Date();    
 	in = _in;
 	out = _out;
 	outputMode = _outputMode;
-	episodeId = buildId();
-	
+	episodeId = (_episodeId==null)?  buildId():    _episodeId;
+    
 	rules = game.rules;
 	Board b =  game.initialBoard;
 	if (b==null) {
@@ -680,8 +735,11 @@ public class Episode {
     /** The last pick or move (successful or failed attempt) */
     @Transient
     private Pick lastMove = null;
-    
-    private int accept(Pick move) {
+
+    /**    	    One normally should not use this method directly; use
+	    doPick() or doMove() instead.
+    */
+    protected int accept(Pick move) {
 	lastMove = move;
 	if (stalemate) {
 	    return CODE.STALEMATE;
@@ -697,6 +755,7 @@ public class Episode {
 	
 	return code;
     }
+
 
     /** The basic mode tells the player where all movable pieces are, 
 	but EpisodeInfo will override it if the para set mandates "free" mode.

@@ -1,4 +1,4 @@
-package edu.wisc.game.sql;
+package edu.wisc.game.saved;
 
 import java.io.*;
 import java.util.*;
@@ -6,6 +6,7 @@ import java.text.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.engine.*;
+import edu.wisc.game.sql.*;
 
 import edu.wisc.game.sql.Board.Pos;
 import edu.wisc.game.sql.Episode.Pick;
@@ -26,7 +27,7 @@ public class TranscriptManager {
       pid,episodeId,moveNo,y,x,by,bx,code
 </pre>
     */    
-    static void saveTranscriptToFile(String pid, String eid, File f,     Vector<Pick> transcript) {
+    public static void saveTranscriptToFile(String pid, String eid, File f,     Vector<Pick> transcript) {
 	synchronized(file_writing_lock) {
 	try {	    
 	    PrintWriter w = new PrintWriter(new	FileWriter(f, true));
@@ -39,7 +40,7 @@ public class TranscriptManager {
 		v.add(eid);
 		v.add(""+(k++));
 		v.add( Episode.sdf2.format(move.time));
-		Board.Pos q = new Board.Pos(move.pos);
+		Pos q = new Pos(move.pos);
 		v.add(""+q.y);
 		v.add(""+q.x);
 		if (move instanceof Move) { // a real move with a destination
@@ -51,7 +52,7 @@ public class TranscriptManager {
 		    v.add("");
 		    v.add("");
 		}
-		v.add(""+move.code);
+		v.add(""+move.getCode());
 		w.println(String.join(",", v));
 	    }
 	    w.close();
@@ -74,10 +75,13 @@ public class TranscriptManager {
 	    final public String pid, eid;
 	    final public int k;
 	    // time
-	    final public int qy,qx;
-	    final public boolean isMove;
-	    final public Integer by,bx;
+	    //	    final public int qy,qx;
+	    //final public boolean isMove;
+	    //	    final public Integer by,bx;
+	    /** Pick or move, as the case may be */
+	    final public Pick pick;
 	    final public int code;
+
 	    Entry(CsvData.BasicLineEntry e) {
 		csv = e;
 		int j=0;
@@ -85,11 +89,18 @@ public class TranscriptManager {
 		eid = e.getCol(j++);
 		k = e.getColInt(j++);
 		String timeString = e.getCol(j++);
-		qy = e.getColInt(j++);
-		qx = e.getColInt(j++);
-		by = e.getColInt(j++);
-		bx = e.getColInt(j++);
-		isMove=(by!=null);
+		int qy = e.getColInt(j++);
+		int qx = e.getColInt(j++);
+		Integer by = e.getColInt(j++);
+		Integer bx = e.getColInt(j++);
+		boolean isMove =(by!=null);
+	
+		Pos pos = new Pos(qx,qy);
+		    pick = isMove?
+		    new Move(pos, new Pos(bx, by)):
+		    new Pick(pos);
+
+		
 		code = e.getColInt(j++);
 	    }
 	}
@@ -98,6 +109,9 @@ public class TranscriptManager {
 	    for(CsvData.LineEntry _e: csv.entries) {
 		CsvData.BasicLineEntry e= (CsvData.BasicLineEntry )_e;
 		Entry z = new Entry(e);
+		// ignore picks at empty cells, as they may drive p0
+		// calculation crazy
+		if (z.code == Episode.CODE.EMPTY_CELL) continue;
 		add(z);
 	    }
 
