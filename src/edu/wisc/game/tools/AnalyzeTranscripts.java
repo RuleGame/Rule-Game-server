@@ -475,8 +475,6 @@ public class AnalyzeTranscripts {
 
 
 	int n =y.length;
-	if (n==0) return null; // nothing to optimize
-
 	
 	if (p0!=null) {
 	    if (y.length!=p0.length) throw new IllegalArgumentException("y, p0 length mismatch");
@@ -501,6 +499,8 @@ public class AnalyzeTranscripts {
 		System.out.println("Reduced n from "+n0+" to " + n+", due to the removal of 'impossible' points with p0==1");
 	    }
 	}
+
+	if (n==0) return null; // nothing to optimize
 
 
 	
