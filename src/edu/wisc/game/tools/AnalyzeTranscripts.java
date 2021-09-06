@@ -475,6 +475,9 @@ public class AnalyzeTranscripts {
 
 
 	int n =y.length;
+	if (n==0) return null; // nothing to optimize
+
+	
 	if (p0!=null) {
 	    if (y.length!=p0.length) throw new IllegalArgumentException("y, p0 length mismatch");
 	    // Remove the points with p0(t)=1, where no fitting is possible
