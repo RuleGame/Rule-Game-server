@@ -74,10 +74,7 @@ public class TranscriptManager {
 	    
 	    final public String pid, eid;
 	    final public int k;
-	    // time
-	    //	    final public int qy,qx;
-	    //final public boolean isMove;
-	    //	    final public Integer by,bx;
+	    final public String timeString;
 	    /** Pick or move, as the case may be */
 	    final public Pick pick;
 	    final public int code;
@@ -88,7 +85,7 @@ public class TranscriptManager {
 		pid = e.getCol(j++);
 		eid = e.getCol(j++);
 		k = e.getColInt(j++);
-		String timeString = e.getCol(j++);
+		timeString = e.getCol(j++);
 		int qy = e.getColInt(j++);
 		int qx = e.getColInt(j++);
 		Integer by = e.getColInt(j++);
@@ -103,6 +100,13 @@ public class TranscriptManager {
 		
 		code = e.getColInt(j++);
 	    }
+
+	    /** Requires the equality of the strings in all columns */
+	    public boolean equals(Object o) {
+		return (o instanceof Entry) &&
+		    csv.equals(((Entry)o).csv);
+	    }
+	    
 	}
 	public ReadTranscriptData(File csvFile) throws IOException,  IllegalInputException {
 	    CsvData csv = new CsvData(csvFile);

@@ -141,6 +141,7 @@ public class CsvData {
     }
 
     static public class BasicLineEntry implements LineEntry {
+	/** The columns read from the CSV file */
 	String [] csv;
 	BasicLineEntry(String[] _csv) {
 	    csv = _csv;
@@ -152,6 +153,18 @@ public class CsvData {
 	public Integer getColInt(int j) {
 	    return j<csv.length &&  (csv[j]!=null) && (csv[j].length()>0) ? new Integer(csv[j]): null;
 	}
+
+	/** Requires the equality of the strings in all fields */
+	public boolean equals(Object o) {
+	    if (!(o instanceof BasicLineEntry)) return false;
+	    BasicLineEntry e = (BasicLineEntry)o;
+	    if (e.csv.length != csv.length) return false;
+	    for(int j=0; j<csv.length; j++) {
+		if (!e.csv[j].equals(csv[j])) return false;
+	    }
+	    return true;
+	}
+
 	
   	public String toString() {
 	    String s = "";

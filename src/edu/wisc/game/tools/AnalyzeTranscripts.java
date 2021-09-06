@@ -254,6 +254,30 @@ public class AnalyzeTranscripts {
 	return len;
     }
 
+    /** Removes any duplicate entries from each subsection. Such
+	entries may have been creasted due to imperfections in the
+	transcript-saving process.
+    */
+    void removeDuplicates(Vector<TranscriptManager.ReadTranscriptData.Entry[]>  subsections) {
+	for(int j=0; j<subsections.size(); j++) {
+	    TranscriptManager.ReadTranscriptData.Entry[] in = subsections.get(j);
+	    Vector<TranscriptManager.ReadTranscriptData.Entry> out = new Vector<>();
+	    for(int k=0; k<in.length; k++) {
+		boolean isDup = false;
+		for(TranscriptManager.ReadTranscriptData.Entry q: out) {
+		    if (q.equals(in[k])) {
+			isDup=true;
+			break;
+		    }
+		}
+		if (!isDup) out.add(in[k]);
+	    }
+	    if (out.size()<in.length) {
+		subsections.set(j, out.toArray(new TranscriptManager.ReadTranscriptData.Entry[0]));
+	    }
+	}
+    }
+
     
     /** Reconstructs and replays the historical episode, computing p0 for
 	every pick or move attempt.
@@ -326,6 +350,11 @@ public class AnalyzeTranscripts {
 
 	// split by episode 
 	Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections = splitTranscriptIntoEpisodes(transcript);
+	// remove any duplicates that may exist due to imperfections in the transcript saving mechanism
+	removeDuplicates(subsections);
+
+	
+	
 	// One subsection per episode
 	System.out.println("Split the player's transcript ("+transcript.size()+" moves) into "+subsections.size()+ " episode sections");
 	    
@@ -609,7 +638,7 @@ public class AnalyzeTranscripts {
 	    v.add(k);
 	    v.add(Z);
 	    v.add(Ln);
-	    v.add(n);
+	    v.add(n );
 	    return Util.joinNonBlank(",",v);
 	}
 
