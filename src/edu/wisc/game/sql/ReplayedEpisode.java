@@ -75,10 +75,17 @@ public class ReplayedEpisode extends Episode {
 	    // The player's knowledge has increased
 	    int pos = pick.getPos();
 	    if (pick instanceof Move) {
-		BitSet b = movesFor(pos);
-		Move move = (Move)pick;
-		b.set(move.getBucketNo());
-		if (b.cardinality()==NBU) failedPicks.set(pos);
+		// In the show-movables mode, only movable pieces are taken into account.
+		// Ideally, this conditional is not even needed, since in the show-movables
+		// mode the GUI client should not even allow the client to attempt moving
+		// an immovable piece. But we have the condition just in case the client
+		// does not behaves quite right; and also for the HTML Play.
+		if (!weShowAllMovables() ||  ruleLine.isMoveable[pos]) {
+		    BitSet b = movesFor(pos);
+		    Move move = (Move)pick;
+		    b.set(move.getBucketNo());
+		    if (b.cardinality()==NBU) failedPicks.set(pos);
+		}
 	    } else {
 		failedPicks.set(pos);
 		// A failed pick prohibits all NBU=4 moves for this piece, too!

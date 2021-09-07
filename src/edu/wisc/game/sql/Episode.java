@@ -224,14 +224,19 @@ public class Episode {
 	    in the current rule line allows moving the piece currently
 	    at pos to bucket[dest]. */
 	private BitSet[][] acceptanceMap = new BitSet[Board.N*Board.N+1][];
-	private boolean[] isMoveable = new boolean[Board.N*Board.N+1];
+	protected boolean[] isMoveable = new boolean[Board.N*Board.N+1];
 
 	/** Computes the probability that a random pick by a frugal player
 	    (one who does not repeat a failed pick) would be successful.
 	    @param knownFailedPicks The number of distinct pieces that the 
 	    player has already tried to pick (and failed) from this board.
 	    This reduces the denominator (= the number of still-not-tested
-	    pieces).
+	    pieces). 
+
+	    This method should not be called on episodes where movable
+	    pieces are shown to the player, since a frugal player won't
+	    ever do picks there. (And the GUI should not allow picks in
+	    such episodes anyway).	    
 	 */
 
 	double computeP0ForPicks(int knownFailedPicks) {
@@ -254,6 +259,10 @@ public class Episode {
 	    int countMoves=0, countAllowedMoves=0;
 	    for(int pos=0; pos<pieces.length; pos++) {		
 		if (pieces[pos]!=null) {
+		    // In the show-movables mode, only movable pieces are taken into account
+		    if (weShowAllMovables() && !isMoveable[pos]) continue;
+
+		    
 		    countMoves += 4;
 
 		    BitSet a = new BitSet();

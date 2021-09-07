@@ -89,7 +89,7 @@ New:
 
 	    Piece p;
 	    if (useImages) {
-		if (e.nCol()<7) throw new IllegalArgumentException("The board file " + f + " seem to lack the ObjectType column");
+		if (e.nCol()<7) throw new IllegalArgumentException("The board file " + f + " seems to lack the ObjectType column");
 		String image = e.getCol(6);
 		p = new Piece(image, x,y);
 	    } else {
