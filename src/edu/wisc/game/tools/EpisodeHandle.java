@@ -20,7 +20,7 @@ class EpisodeHandle {
     final String episodeId;
     final String playerId;
     final boolean useImages;
-    
+    final ParaSet para;
     public String toString() {return episodeId;}
 
 
@@ -32,7 +32,7 @@ class EpisodeHandle {
 	    trialListId = _trialListId;
 	    seriesNo= e.getSeriesNo();
 	    orderInSeries =  _orderInSeries;
-	    ParaSet para = t.get(seriesNo);
+	    para = t.get(seriesNo);
 	    ruleSetName = para.getRuleSetName();
 	    useImages = (para.images!=null);
     }

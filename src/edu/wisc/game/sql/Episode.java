@@ -272,7 +272,7 @@ public class Episode {
 		    countAllowedMoves += a.cardinality();
 		}		
 	    }
-	    if ( knownFailedMoves>countMoves) throw new IllegalArgumentException("You could not have really tried to make " +knownFailedMoves+ " pieces, as the board only has enough pieces for " +  countMoves);
+	    if ( knownFailedMoves>countMoves) throw new IllegalArgumentException("You could not have really tried to make " +knownFailedMoves+ " moves, as the board only has enough pieces for " +  countMoves);
 	    countMoves -= knownFailedMoves;
 	    
 	    if (countAllowedMoves>countMoves)  throw new IllegalArgumentException("What, there are more allowed moves (" + countAllowedMoves+") than not-tested-yet moves ("+countMoves+")?");

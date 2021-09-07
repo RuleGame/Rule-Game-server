@@ -6,10 +6,10 @@ import java.text.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.engine.*;
+import edu.wisc.game.rest.ParaSet;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.sql.Board.Pos;
 
-//import javax.xml.bind.annotation.XmlElement; 
 
 /** Built on top of an Episode object, a ReplayedEpisode is created during
     the analysis of transcripts, in order to recreate the episode's events 
@@ -20,16 +20,23 @@ public class ReplayedEpisode extends Episode {
 
 
     //    public Game(RuleSet _rules, Board _initialBoard);
+    final ParaSet para;
+
+    /** We tell the player where all movable pieces are, unless the 
+	para set mandates "free" mode.
+     */
+    boolean weShowAllMovables() {
+	return !para.isFeedbackSwitchesFree();
+    }
+ 
 
     
    /** Creates an Episode in order to replay an old recorded Game (with a known rule set and a known initial board)
 	properties of the initial board). 
-	@param _in The input stream for commands; it will be null in the web app
-	@param _out Will be null in the web app.
     */
-    public ReplayedEpisode(String _episodeId, Game game) {
+    public ReplayedEpisode(String _episodeId, ParaSet _para, Game game) {
 	super(game, Episode.OutputMode.BRIEF, null, null, _episodeId);
-	
+	para = _para;
 	if (game.initialBoard==null) {
 	    throw new IllegalArgumentException("Cannot replay a game without knowing the initial board!");
 	}

@@ -180,7 +180,7 @@ public class AnalyzeTranscripts {
 	if (includedEpisodes.size()==0) return;
 	EpisodeHandle eh0 =  includedEpisodes.firstElement();
 
-	double[] p0 = computeP0(section, eh0.ruleSetName);
+	double[] p0 = computeP0(section, eh0.para, eh0.ruleSetName);
 
 	String rid = eh0.ruleSetName;
 	File d=new File(base, rid);
@@ -282,7 +282,7 @@ public class AnalyzeTranscripts {
     /** Reconstructs and replays the historical episode, computing p0 for
 	every pick or move attempt.
      */
-    private double[] computeP0(Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections, String ruleSetName)  throws  IOException, IllegalInputException,  RuleParseException{
+    private double[] computeP0(Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections, ParaSet para, String ruleSetName)  throws  IOException, IllegalInputException,  RuleParseException{
 	RuleSet rules = AllRuleSets.obtain( ruleSetName);
 
 	double [] p0 = new double[sumLen(subsections)];
@@ -293,7 +293,7 @@ public class AnalyzeTranscripts {
 	    
 	    Board board = boards.get(episodeId);
 	    Game game = new Game(rules, board);
-	    ReplayedEpisode rep = new ReplayedEpisode(episodeId, game);
+	    ReplayedEpisode rep = new ReplayedEpisode(episodeId, para, game);
 
 	    System.out.println("------------- eid=" + episodeId);
 
