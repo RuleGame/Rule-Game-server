@@ -38,8 +38,8 @@ public class AnalyzeTranscripts {
     }
    
     private static boolean needP0=false;
-    private static ReplayedEpisode.RandomPlayer randomPlayerModel=null;
-	
+    private static ReplayedEpisode.RandomPlayer randomPlayerModel=//null;
+	ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;	
     
     public static void main(String[] argv) throws Exception {
 
@@ -134,7 +134,7 @@ public class AnalyzeTranscripts {
 	File base = new File("tmp");
 	if (!base.exists() || !base.isDirectory() || !base.canWrite())  throw new IOException("Not a writeable directory: " + base);
 
-	File gsum=new File(base, needP0? "summary-p0.csv" : "summary-flat.csv");
+	File gsum=new File(base, needP0? "summary-p0-"+randomPlayerModel+".csv" : "summary-flat.csv");
 	PrintWriter wsum =new PrintWriter(new FileWriter(gsum, false));
 	String sumHeader = "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,yy,B,C,t_I,k,Z,n,L/n,AIC/n";
 	wsum.println(sumHeader);
