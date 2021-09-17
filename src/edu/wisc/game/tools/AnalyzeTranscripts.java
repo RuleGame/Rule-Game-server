@@ -262,7 +262,7 @@ public class AnalyzeTranscripts {
     }
 
     /** Removes any duplicate entries from each subsection. Such
-	entries may have been creasted due to imperfections in the
+	entries may have been created due to imperfections in the
 	transcript-saving process.
     */
     void removeDuplicates(Vector<TranscriptManager.ReadTranscriptData.Entry[]>  subsections) {
@@ -485,12 +485,12 @@ public class AnalyzeTranscripts {
 	
 	if (p0!=null) {
 	    if (y.length!=p0.length) throw new IllegalArgumentException("y, p0 length mismatch");
-	    // Remove the points with p0(t)=1, where no fitting is possible
+	    // Remove the points with p0(t)=1 and y(t)=0, where no fitting is possible
 	    Vector<Integer> yz=new Vector<>();
 	    Vector<Double> p0z=new Vector<>();
 	    for(int j=0; j<y.length; j++) {
 		if (p0[j]<0 || p0[j]>1) throw new IllegalArgumentException("Invalid p0");
-		if (p0[j]==1) continue;
+		if (p0[j]==1 && y[j]==0) continue;
 		yz.add(y[j]);
 		p0z.add(p0[j]);
 	    }
