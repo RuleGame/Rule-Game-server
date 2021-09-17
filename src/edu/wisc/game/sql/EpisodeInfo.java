@@ -190,15 +190,18 @@ public class EpisodeInfo extends Episode {
 	if (bonus) {
 	    if (isCompleted()) {
 		if (movesLeftToStayInBonus()< -eps) { // has run out of moves
-		    lost=true;		    
+		    lost=true;
+		    Logging.info("PM: Lost (cleared, but with negative balance), episodeId=" + episodeId);
 		    bonusSuccessful = false;
 		} else { 
 		    lost=false;		    
 		    bonusSuccessful = cleared;  // can stay in bonus if cleared
+		    Logging.info("PM: Completed (bonusSuccesful="+bonusSuccessful+"), episodeId=" + episodeId);
 		}
 	    } else {  // there are still pieces of the board...
 		// so the player has lost if less than 1 move left
 		lost = movesLeftToStayInBonus()< 1.0-eps;
+		Logging.info("PM: not cleared yet, lost="+lost+", episodeId=" + episodeId);
 	    }
 	}
 	    	

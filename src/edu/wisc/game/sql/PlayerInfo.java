@@ -573,6 +573,7 @@ public class PlayerInfo {
 	}
 
 	epi.updateFinishCode();
+	Logging.info("PlayerInfo.ended(epi=" + epi.getEpisodeId()+"); finishCode =" + epi.finishCode);
 	// save the data in the SQL server
 	saveMe();
 	// save the data in the CSV files

@@ -18,6 +18,12 @@ import edu.wisc.game.sql.Board.Pos;
 */
 public class ReplayedEpisode extends Episode {
 
+    /** The possible random player models.
+     */
+    public enum RandomPlayer {
+	COMPLETELY_RANDOM, MCP1 
+    };
+    
 
     //    public Game(RuleSet _rules, Board _initialBoard);
     final ParaSet para;
@@ -28,14 +34,18 @@ public class ReplayedEpisode extends Episode {
     boolean weShowAllMovables() {
 	return !para.isFeedbackSwitchesFree();
     }
- 
 
+    /** The random player model used to compute p0 */
+    final RandomPlayer randomPlayerModel;
     
    /** Creates an Episode in order to replay an old recorded Game (with a known rule set and a known initial board)
 	properties of the initial board). 
     */
-    public ReplayedEpisode(String _episodeId, ParaSet _para, Game game) {
+public ReplayedEpisode(String _episodeId, ParaSet _para, Game game,
+		       RandomPlayer _randomPlayerModel
+		       ) {
 	super(game, Episode.OutputMode.BRIEF, null, null, _episodeId);
+	randomPlayerModel  = _randomPlayerModel;
 	para = _para;
 	if (game.initialBoard==null) {
 	    throw new IllegalArgumentException("Cannot replay a game without knowing the initial board!");
@@ -74,11 +84,22 @@ public class ReplayedEpisode extends Episode {
     public int accept(Pick pick) {
 	int code = super.accept(pick);
 
+	if (randomPlayerModel==RandomPlayer.COMPLETELY_RANDOM) {
+	    // No knowledge kept!
+	} else if (randomPlayerModel==RandomPlayer.MCP1) {
+
+	
 	if (code==CODE.ACCEPT) {
-	    // the board has changed; the old knowledge can be wiped out
-	    failedPicks.clear();
-	    failedMoves.clear();
-	} else if (code==CODE.DENY) {
+	    if (pick instanceof Move) {	    
+		// the board has changed; the old knowledge can be wiped out
+		failedPicks.clear();
+		failedMoves.clear();
+	    } else {
+		// FIXME: successful Pick also gives new knowledge about
+		// the current display, but I don't have a model and
+		// a structure to represent it
+	    }
+	} else {
 	    // The player's knowledge has increased
 	    int pos = pick.getPos();
 	    if (pick instanceof Move) {
@@ -101,7 +122,10 @@ public class ReplayedEpisode extends Episode {
 	    }
 	    
 	}
-	
+	} else {
+	    throw new IllegalArgumentException("Model not supported: " + randomPlayerModel);
+	}
+		   
 	return code;
     }
 

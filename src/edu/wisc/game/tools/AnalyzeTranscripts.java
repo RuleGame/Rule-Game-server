@@ -38,6 +38,7 @@ public class AnalyzeTranscripts {
     }
    
     private static boolean needP0=false;
+    private static ReplayedEpisode.RandomPlayer randomPlayerModel=null;
 	
     
     public static void main(String[] argv) throws Exception {
@@ -66,10 +67,16 @@ public class AnalyzeTranscripts {
 	// for each experiment plan...
 	for(int j=0; j<argv.length; j++) {
 	    String exp = argv[j];
-	    if (j==0 && exp.equals("-p0")) {
+	    if (j==0 && exp.equals("-p0random")) {
 		needP0=true;
+		randomPlayerModel = ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;
+		continue;
+	    } else if  (j==0 && exp.equals("-p0mcp1")) {
+		needP0=true;
+		randomPlayerModel = ReplayedEpisode.RandomPlayer.MCP1;
 		continue;
 	    }
+	    
 	    System.out.println("Experiment plan=" +exp);
 	    Vector<String> trialListNames = TrialList.listTrialLists(exp);
 
@@ -129,7 +136,7 @@ public class AnalyzeTranscripts {
 
 	File gsum=new File(base, needP0? "summary-p0.csv" : "summary-flat.csv");
 	PrintWriter wsum =new PrintWriter(new FileWriter(gsum, false));
-	String sumHeader = "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,yy,B,C,t_I,k,Z,L/n,n";
+	String sumHeader = "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,yy,B,C,t_I,k,Z,n,L/n,AIC/n";
 	wsum.println(sumHeader);
 	
 	for(String ruleSetName: allHandles.keySet()) {
@@ -293,7 +300,7 @@ public class AnalyzeTranscripts {
 	    
 	    Board board = boards.get(episodeId);
 	    Game game = new Game(rules, board);
-	    ReplayedEpisode rep = new ReplayedEpisode(episodeId, para, game);
+	    ReplayedEpisode rep = new ReplayedEpisode(episodeId, para, game, randomPlayerModel);
 
 	    System.out.println("------------- eid=" + episodeId);
 
@@ -597,7 +604,7 @@ public class AnalyzeTranscripts {
 	final double p[];
 	final double grad[];
 	final double B, C, t_I, k;
-	final double e0, re0, Z, Ln;
+	final double e0, re0, Z, Ln, AICn;
 	final int n;
 	
 	OptimumExplained(ObjectiveFunctionGradient ofg, PointValuePair _optimum, int _n) {
@@ -620,6 +627,8 @@ public class AnalyzeTranscripts {
 	    re0 = Math.exp(-k*t_I);
 	    Z = B/(1+re0)+C/(1+e0);
 	    Ln = optimum.getValue()/n;
+	    final int K = 4;
+	    AICn = (n<=K+1)? 0:  -2*Ln + 2*K/(double)(n-K-1);
 	}
 
 	String toReadableString() {
@@ -628,8 +637,9 @@ public class AnalyzeTranscripts {
 		", t_I="+   df.format( t_I) +
 		", k="+   df.format( k)+
 		". Z="+    df.format(Z)+
+		". n="+     df.format(n)+
 		". L/n="+     df.format(Ln)+
-		". n="+     df.format(n);
+		". AIC/n="+     df.format(AICn);
 	}
 
 
@@ -640,8 +650,9 @@ public class AnalyzeTranscripts {
 	    v.add(t_I);
 	    v.add(k);
 	    v.add(Z);
-	    v.add(Ln);
 	    v.add(n );
+	    v.add(Ln);
+	    v.add(AICn);
 	    return Util.joinNonBlank(",",v);
 	}
 
