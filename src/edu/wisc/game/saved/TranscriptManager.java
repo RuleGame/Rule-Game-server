@@ -77,6 +77,7 @@ public class TranscriptManager {
 	    final public String timeString;
 	    /** Pick or move, as the case may be */
 	    final public Pick pick;
+	    /** The success code read from the transcript */
 	    final public int code;
 
 	    Entry(CsvData.BasicLineEntry e) {
@@ -108,6 +109,11 @@ public class TranscriptManager {
 	    }
 	    
 	}
+	/** Reads in the entire content of a transcript file for a player.
+	    Ignores picks at empty cells, as they represent the player's
+	    failing to understand the notation, or "slips of the fingers",
+	    and may drive p0 calculation crazy.
+	 */
 	public ReadTranscriptData(File csvFile) throws IOException,  IllegalInputException {
 	    CsvData csv = new CsvData(csvFile);
 	    for(CsvData.LineEntry _e: csv.entries) {

@@ -30,7 +30,7 @@ public class AnalyzeTranscripts {
 	little difference, since a player does not play all that many episodes,
 	and v is fairly short.
      */
-    private static EpisodeHandle findEpisodeHandle(Vector<EpisodeHandle> v, String eid) {
+   private static EpisodeHandle findEpisodeHandle(Vector<EpisodeHandle> v, String eid) {
 	for(EpisodeHandle eh: v) {
 	    if (eh.episodeId.equals(eid)) return eh;
 	}

@@ -66,6 +66,10 @@ public ReplayedEpisode(String _episodeId, ParaSet _para, Game game,
     /** Computes the probability of success for a random pick or random
 	move made by a frugal player. A call to this method should precede
 	a call to accept().
+	@param nextMove The pick or move the value of p0 before which
+	(for which) we want to compute. This pick or move has been
+	read from the transcript, and contains the success code, which we
+	can use to interpret what the random player may have wanted here.
     */
     public double computeP0( Pick nextMove) {
     
