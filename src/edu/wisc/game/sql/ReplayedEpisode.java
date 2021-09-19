@@ -66,6 +66,14 @@ public ReplayedEpisode(String _episodeId, ParaSet _para, Game game,
     /** Computes the probability of success for a random pick or random
 	move made by a frugal player. A call to this method should precede
 	a call to accept().
+
+	As of 2021-09-18, the approach is that "P0 for a pick" is only
+	used for successful picks (i.e. when there is incontrovertible
+	evidence that the player wanted to do a pick). For failed
+	picks, we use the "P0 for a move", since it's believed that the
+	player most likely intended to attempt a move, but the GUI 
+	converts an move attempt on an immovable piece to a failed pick.
+
 	@param nextMove The pick or move the value of p0 before which
 	(for which) we want to compute. This pick or move has been
 	read from the transcript, and contains the success code, which we
@@ -79,9 +87,12 @@ public ReplayedEpisode(String _episodeId, ParaSet _para, Game game,
 	    if (b!=null) knownFailedMoves += b.cardinality();
 	}
 
-	return  (nextMove instanceof Move) ?
-	    ruleLine.computeP0ForMoves(knownFailedMoves):
-	    ruleLine.computeP0ForPicks(knownFailedPicks);
+	boolean successfulPick = !(nextMove instanceof Move) && nextMove.code==CODE.ACCEPT;
+	
+	return  successfulPick?
+	    ruleLine.computeP0ForPicks(knownFailedPicks):
+	    ruleLine.computeP0ForMoves(knownFailedMoves);
+
     }
 
 	    
