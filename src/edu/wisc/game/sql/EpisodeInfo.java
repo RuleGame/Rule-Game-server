@@ -77,11 +77,17 @@ public class EpisodeInfo extends Episode {
     boolean guessSaved;
     public boolean getGuessSaved() { return guessSaved; }
     public void setGuessSaved(boolean _guessSaved) { guessSaved = _guessSaved; }
-    
+
+    /** The default length is varchar(255) */
     @Basic
     String guess = null;	
     public String getGuess() { return guess; }
-    public void setGuess(String _guess) { guess = _guess; }
+    /** Sets the guess value, truncating it if necessary */
+    public void setGuess(String _guess) {
+	final int L =255;
+	if (_guess.length()>L)  _guess = _guess.substring(0,L);
+	guess = _guess;
+    }
 
     @Basic
     int guessConfidence;
