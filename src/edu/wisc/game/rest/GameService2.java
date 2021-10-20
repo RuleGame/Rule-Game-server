@@ -22,6 +22,7 @@ import edu.wisc.game.reflect.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.formatter.*;
+//import edu.wisc.game.web.LoginServlet.UserResponse;
 
 /** The "Second Batch" of API calls, primarily for use with players constrained by an experiment plan, and playing a sequence of games as outlined in the trial list to which the player is assigned. This API is set up in accordance with Kevin Mui's request, 2020-08-17.
  */
@@ -29,6 +30,22 @@ import edu.wisc.game.formatter.*;
 @Path("/GameService2") 
 public class GameService2 {
 
+        
+    @POST
+    @Path("/registerUser") 
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    /** Can be used by the Android app to register the application.
+     */
+    public UserResponse registerUser(@DefaultValue("null") @FormParam("email") String email,
+				       @DefaultValue("null") @FormParam("nickname") String nickname,
+				       @DefaultValue("false") @FormParam("anon") boolean anon)
+    {
+
+	return new UserResponse(email, nickname, anon);
+    }
+
+    
     
     @POST
     @Path("/player") 

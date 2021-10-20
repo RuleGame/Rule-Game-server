@@ -4,7 +4,7 @@
 <body>
   <h1>Web API for the use by the Rule Game client - second batch</h1>
 
-  <p align="center"><em>Version 3.001,  2021-05-06</em></p>
+  <p align="center"><em>Version 4.000,  2021-10-20</em></p>
 
   <p>This is the "Second Batch" (prefix=<tt>/GameService2</tt>)  of the Game Service web API calls. They are intended for use with a client app that works with players enrolled in experiments; each player is identified by a player ID, and the server assigns each player to a "trial list" (a particular track in the experiment plan with which this player ID is associated with).</p>
 
@@ -18,7 +18,40 @@
 	  <button type="submit">Get version!</button>
 	</form>
 
-    <li>POST <strong><tt>/player:</tt> Start a player's interaction with the system, and obtain a randomly selected trial list for this player</strong>
+
+  <li>POST <strong><tt>/registerUser:</tt> Regsiter a new repeat user.</strong> The Android app should do it when it's first used, before any games are applied. Before making this call, the Androing app can ask the user to either identify himself in some way (by entering an email address and/or a nickname), or to proceed anonymously (by checking the "anonymous" box on the identification screen). 
+  <form method="post" action="game-data/GameService2/registerUser"
+	 enctype="application/x-www-form-urlencoded">
+    Email: <input name="email" type="text" size="32" value="">
+    <br>
+    Nickname: <input name="nickname" type="text" size="32" value="">
+    <br>
+
+    Anonymous: <input type="checkbox" name="anon" value="true"><br>
+
+    <input type="submit">
+  </form>
+
+    <p>On error, the return structure  may have an error flag set to true, and an error message. On success, the return structure will contain an integer user id (<tt>user.id</tt>), which the Android app should save for later use in /player calls. Another value, <tt>user.idCode</tt> should be remembered as well; in future versions, it may be used for authentication. (As of ver 4.000, this is not yet supported).
+      
+<p>Sample return value, when a new user is registered with a nickname and no email (thus, <tt>newlyRegistered=true</tt>)
+      
+{"error":false,"newlyRegistered":true,"user":{"date":"2021-10-20T18:38:31.288Z[UTC]","email":"","id":6,"idCode":"user-20211020-143831-GF0LJI","nickname":"The Walrus"}}</tt>
+
+ <p>Sample return value, when a new user is registered with a nickname and an email address (thus, <tt>newlyRegistered=true</tt>)
+      <tt>
+      {"error":false,"newlyRegistered":true,"user":{"date":"2021-10-20T18:40:19.968Z[UTC]","email":"v.menkov@gmail.com","id":7,"idCode":"user-20211020-144019-I9O244","nickname":"The Walrus"}}</tt>
+
+       <p>Sample return value, when a new user is registered with no email or nickname, and with the "anon" box checked:<tt>
+{"error":false,"newlyRegistered":true,"user":{"date":"2021-10-20T18:45:44.047Z[UTC]","id":8,"idCode":"anon-20211020-144544-9WGVH3"}}</tt>
+      
+
+      <p>Sample return value, when the email and nickname matched an already regiesterd (thus, <tt>newlyRegistered=false</tt>)
+      <tt>
+      {"error":false,"newlyRegistered":false,"user":{"date":"2021-10-12T01:55:21Z[UTC]","email":"vmenkov@gmail.com","id":3,"idCode":"user-5L54KP","nickname":"V Menkov Test 1"}}
+      </tt>
+      
+    <li>POST <strong><tt>/player:</tt> Start a player's interaction with the system, and obtain a randomly selected trial list for this player</strong>. 
   <form method="post" action="game-data/GameService2/player"
 	 enctype="application/x-www-form-urlencoded">
      Player ID: <input name="playerId" type="text" size="25" value="AnyText01"> -- mandatory, unless Repeat User ID is supplied (in which case the server will create a unique playerId)<br>
@@ -27,6 +60,24 @@
 	  <input type="submit">
   </form>
 
+      <p>The input should include either player ID (pid), or Repeat User ID (uid), or both. In the traditional approach with no repeat users (e.g., the Mechanical Turk use case) only the player ID is supplied. In the repeat-user context (e.g. from the Android app), it is best to supply only the uid; the server will then create a unique pid and return it. Sample output:
+<pre>
+  {"errmsg":"Debug:\n*M*[0]\n[1]\n[2]\nid=46, curSer=0 b=false, R=$0"
+  ,"error":false,"alreadyFinished":false,
+  "experimentPlan":"P:pilot06:no-feedback",
+  "newlyRegistered":true,
+  <strong>"playerId":"RepeatUser-8-V7CMVI-20211020-144752"</strong>,
+
+  "trialList":[{"clearing_threshold":1.3,"max_points":10,"b":1.5,
+  "min_points":2,"max_colors":4,"feedback_switches":"free",
+  "min_objects":9,"clear_how_many":2,"bonus_extra_pts":3,"rule_id":
+  "shapeMatch_1","max_objects":9,"grid_memory_show_order":false,
+  "min_shapes":4,"give_up_at":3,"stack_memory_show_order":false,
+  "max_shapes":4,"min_colors":4,"stack_memory_depth":0,"max_boards":5,
+  "activate_bonus_at":3},
+  ....],
+  "trialListId":"shape_shapeBroad_posBroad"}
+</pre>
   <p>For the meaning of the output fields, see the documentation for <a href="api/edu/wisc/game/rest/PlayerResponse.html">PlayerResponse</a>. A field named <tt>foo</tt> will be described there under <tt>getFoo()</tt> or (for boolean values) <tt>isFoo()</tt>. The field named <tt>playerId</tt> normally simply mirrors the input value of the same name; but if playerId was blank and user ID was supplied instead, the server will create a playerId itself, and return it via this field.
 
     <p>Ver. 1.021: added <tt>trialList</tt>, which is a vector with one element per line of the trial list. Can be used to find the total number of rule sets to which a player will be exposed.</p>
@@ -39,7 +90,7 @@
       "trialListId":"trial_1"}
     </pre>
     
-    In practice, you don't need any of the returned values, other than the error code.</p></li>
+    In practice, if you supplied a pid with the input you don't need any of the returned values, other than the error code. If uid with no pid was supplied on input, you need to save the pid to use it in the subsequent calls to /newEpisode or /mostRecentEpisode. </p></li>
 
 <li>POST <strong><tt>/mostRecentEpisode</tt>: Return the latest episode (complete or incomplete) for a specified user:</strong>
         <form method="post" action="game-data/GameService2/mostRecentEpisode"

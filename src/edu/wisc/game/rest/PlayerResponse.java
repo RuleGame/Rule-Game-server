@@ -70,12 +70,6 @@ public class PlayerResponse extends ResponseBase {
 	this(pid, exp, uid, false);
     }
 
-    /** Regularize an input parameter */
-    private static String regularize(String x) {
-	if (x!=null && (x.trim().equals("") || x.equals("null"))) x=null;
-	return x;
-    }
-
 
     /** Registers a new player, or finds an existing player record.
       
