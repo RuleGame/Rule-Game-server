@@ -12,7 +12,6 @@ import edu.wisc.game.reflect.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.sql.Board.Pos;
-//import edu.wisc.game.sql.ImageObject;
 import edu.wisc.game.rest.ColorMap;
 import edu.wisc.game.engine.RuleSet.BucketSelector;
 import edu.wisc.game.formatter.*;
@@ -521,19 +520,25 @@ public class Episode {
     @Transient
     private final Reader in;
    
-    static final DateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
+    public static final DateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
     /** with milliseconds */
     public static final DateFormat sdf2 = new SimpleDateFormat("yyyyMMdd-HHmmss.SSS");
 
-    /** Creates a more or less unique string ID for this Episode object */
-    private String buildId() {
-	String s = sdf.format(startTime) + "-";
-	for(int i=0; i<6; i++) {
+    /** Creates a word made out of random letters and digits */
+    public static String randomWord(int len) {
+	StringBuffer b=new StringBuffer(len);
+	for(int i=0; i<len; i++) {
 	    int k =  Board.random.nextInt(10 + 'Z'-'A'+1);
 	    char c = (k<10) ? (char)('0' + k) : (char)('A' + k-10);
-	    s += c;
+	    b.append(c);
 	}
-	return s;
+	return b.toString();
+    }
+
+    
+    /** Creates a more or less unique string ID for this Episode object */
+    private String buildId() {
+	return sdf.format(startTime) + "-" +randomWord(6);
     }
 
     /** Dummy constructor; only used for error code production, and maybe
@@ -973,7 +978,7 @@ public class Episode {
 	return json.toString();
     }
 
-    public static final String version = "3.003";
+    public static final String version = "4.000";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();

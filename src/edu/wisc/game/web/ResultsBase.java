@@ -6,25 +6,23 @@ import java.text.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
-//import javax.xml.bind.annotation.XmlTransient; 
-//import javax.json.*;
-
-
-
-
 import edu.wisc.game.util.*;
-import edu.wisc.game.reflect.*;
+//import edu.wisc.game.reflect.*;
 import edu.wisc.game.sql.*;
-import edu.wisc.game.engine.*;
-import edu.wisc.game.formatter.*;
+//import edu.wisc.game.engine.*;
+//import edu.wisc.game.formatter.*;
 
 
 
-/** The base of all response objects returned by our REST API methods */
-public class ResponseBase {
+/** The base of all "results object" classes used in JSP pages */
+public class ResultsBase {
     boolean error=false;
     String errmsg=null;
-    
+   /** The JSP page should always print this message. Most often
+        it is just an empty string, anyway; but it may be used
+        for debugging and status messages. */
+    public String infomsg = "";
+  
     public boolean getError() { return error; }
     public void setError(boolean _error) { error = _error; }
     
@@ -37,9 +35,50 @@ public class ResponseBase {
 	setErrmsg(msg);
     }
 
-    ResponseBase( ) {}
+    final HttpServletRequest request;
+    final String cp;
+    SessionData sd;
+    /** The numeric user id (converted to string) associated with the current session, or null */
+    public String uid=null;
+    public String displayName=null;
 
-    ResponseBase( boolean _error,     String _errmsg) {
+    public boolean loggedIn() { return uid!=null; }
+
+    public String getDisplayText() {
+	if (uid==null) return "You are not logged in";
+	else return "User No. " + uid + " ("+displayName+")";
+    }
+
+	
+    /** This one is to be used in all pages where we want to identify the 
+	user to some extent (even as an anon with a cookie-based session) */
+    ResultsBase(HttpServletRequest _request, HttpServletResponse response,
+		 boolean requiresUser) {
+
+	long tid=Thread.currentThread().getId();
+
+	request = _request;
+	cp = request.getContextPath();
+	infomsg += " [cp="+cp+"]";
+	
+	if (!requiresUser) return;
+
+	
+	sd = SessionData.getSessionData(request);
+	infomsg += " [sd="+sd+"]";
+
+	StringBuffer msgBuffer=new StringBuffer();
+	uid = sd.getRemoteUser(request,  msgBuffer);
+	infomsg += msgBuffer;
+	
+	displayName= sd.getStoredDisplayName();
+
+	
+    }
+
+    ResultsBase( boolean _error,     String _errmsg) {
+	request=null;
+	cp=null;
 	setError(_error);
 	setErrmsg( _errmsg);
     }

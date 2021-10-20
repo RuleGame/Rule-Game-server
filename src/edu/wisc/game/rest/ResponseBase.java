@@ -32,4 +32,12 @@ public class ResponseBase {
 	setError(_error);
 	setErrmsg( _errmsg);
     }
+
+    void hasError(String msg) {
+	Logging.error(msg);
+	setError(true);
+	setErrmsg(msg);
+    }
+
+    
 }

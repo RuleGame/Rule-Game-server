@@ -17,7 +17,7 @@ import edu.wisc.game.engine.RuleSet;
 import edu.wisc.game.engine.AllRuleSets;
 import edu.wisc.game.saved.*;
 
-/** Information about a player (what trial list he's in, what episodes he's done etc) stored in the SQL database.
+/** A PlayerInfo object represent information about a player (what trial list he's in, what episodes he's done etc) stored in the SQL database. It is identiied by a playerId (a string). A humans playing the Rule Game may create just one PlayerInfo object (a single playerId), if he comes from the Mechanical Turk, or goes directly to the GUI Client URL; or he can create many such objects (each one with a particular experiment plan), if he starts many games from the Repeat User Launch page, or from the Android app. In the latter case, all such PlayerInfo objects are linked to a single User object.
  */
 
 @Entity  
@@ -26,24 +26,48 @@ public class PlayerInfo {
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private long id;
 
-    @Basic 
-    private String playerId;
-    @Basic 
-    private String experimentPlan;
-    @Basic 
-    private String trialListId;
-
     /** The date of first activity */
     @Basic
     private Date date; 
 
+    /** Back link to the user, for JPA's use. It is non-null only for
+	player IDs created via the repeat-user launch pages, or via the
+	Android app.
+     */
+    @ManyToOne(fetch = FetchType.EAGER)
+    private User user;
+    public User getUser() { return user; }
+    public void setUser(User _user) { user = _user; }
+
+
+    @Basic 
+    private String playerId;
+    /** A human-readable string ID for this player. A mandatory
+	non-null value, which we strive to keep unique (by the
+	PlayerResponse code).  */
     public String getPlayerId() { return playerId; }
     public void setPlayerId(String _playerId) { playerId = _playerId; }
 
+    @Basic 
+    private String experimentPlan;
+    /** The experiment plan historically was just a directory name, 
+	e.g. "pilot06". Starting from ver. 3.004, dynamic experiment 
+	plans are also supported, in the form P:plan:modifer or
+	R:ruleSet:modifier.
+     */
     public String getExperimentPlan() { return experimentPlan; }
     public void setExperimentPlan(String _experimentPlan) { experimentPlan = _experimentPlan; }
 
     
+    @Basic 
+    private String trialListId;
+    /** For traditional (static) and "P:"-type dynamic experiment
+	plans, this is the name of the actual trial list file in the
+	appropriate experiment plan directory (without the ".csv"
+	extension). For "R:"-type dynamic experiment plans (which do
+	not involve any trial list files) this field, rather tautologically,
+	contains the rule set name.
+     */
     public String getTrialListId() { return trialListId; }
     public void setTrialListId(String _trialListId) { trialListId = _trialListId; }
     public Date getDate() { return date; }
@@ -76,9 +100,9 @@ public class PlayerInfo {
 	for(EpisodeInfo p: _allEpisodes) addEpisode(p);    	
     }
    
-    public static String assignTrialList(String player) {
-	return null;
-    }
+    //public static String assignTrialList(String player) {
+    //	return null;
+    //    }
 
     public String toString() {
 	return "(PlayerInfo: id=" + id +",  playerId="+ playerId+", trialListId=" + trialListId +", date=" + date+")";

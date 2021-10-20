@@ -6,6 +6,7 @@
 <body>
 <h1>Validate your experiment plan</h1>
 
+<h2>Static experiment plans</h2>
 <P>You can use this form to check your experiment plan's input files for errors (syntax errors, references to non-existent files, attempts to generate boards with non-existence colors or shapes, etc). Just choose the name of your experiment plan in the form below, and click on the "Check" button.
   
    <form method="post" action="game-data/CheckPlanService/checkPlan"
@@ -16,6 +17,17 @@
      <button type="submit">Check</button>
    </form>
 
+
+<h2>Dynamic experiment plans</h2>
+
+<p>Type  the name of a plan, e.g. <tt>P:pilot06:max-feedback</tt>,  or <tt>R:bottomLeft_then_topRight:simple</tt>
+
+   <form method="post" action="game-data/CheckPlanService/checkPlan"
+	 enctype="application/x-www-form-urlencoded">
+	 <input type="text" name="exp" size="40">
+	 <br>
+     <button type="submit">Check</button>
+   </form>
 
 </body>
 </html>

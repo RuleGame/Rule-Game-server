@@ -182,6 +182,17 @@ public class ParaSet extends HashMap<String, Object> {
 	}
     }
 
+    private ParaSet() {}
+
+    /** Makes a para set with just 1 column. This is used in "R:" dynamic 
+	experiment plans.
+     */
+    static ParaSet ruleNameToParaSet(String ruleSetName) {
+	ParaSet q = new ParaSet();
+	q.put("rule_id", ruleSetName);
+	return q;
+    }
+
     private static boolean isRegular(char c) {
 	return (Character.isLetterOrDigit(c) || c=='_');
     }
@@ -348,6 +359,16 @@ public class ParaSet extends HashMap<String, Object> {
 	    v.add(key +": "+get(key));
 	}
 	return "ParaSet{\n" + String.join("\n", v) + "\n}";
+    }
+
+    /** Augments this parameter set by the values from the modifier ParaSet. In
+	case of matching column names, the values from the modifier replace the
+	orginal ones.
+     */
+    void modifyBy(ParaSet modifier) {
+	for(String key: modifier.keySet()) {
+	    put(key, modifier.get(key));
+	}
     }
     
 }

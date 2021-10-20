@@ -86,11 +86,14 @@ public class Files {
 	return new File(inputDir, "shapes");
     }
 
+
+    static final String RULES_EXT = ".txt";
+    
     /** @param  ruleSetName Either a complete absolute path name ("/home/vmenkov/foo.txt") starting with a slash, or just a file name without the extension ("foo"). In the later case, the file is assumed to be in the standard rules directory.
      */
     public static File rulesFile(String ruleSetName) throws IOException {
 	if (ruleSetName==null || ruleSetName.equals("")) throw new IOException("Rule set name not specified");
-	return inputFile(ruleSetName, "rules", ".txt");
+	return inputFile(ruleSetName, "rules", RULES_EXT);
     }
 
     /** Can the game server cache this rule set? The convention is, names not
@@ -241,6 +244,47 @@ public class Files {
 	return v.toArray( new String[0]);
     }
 
+    /** Lists all rule sets under rules/s
+       @param s The position of the root of the tree relative to the
+       main rules directory
+       @return A list of proper rule set names (in the same format they 
+       would be likely to be encountered in trial list files, i.e.
+       path names (relative to "rules") without extension.
+    */
+    public static String[] listAllRuleSetsInTree(String s) throws IOException {
+	File root = new File(inputDir, "rules");
+	if (s.length()>0) root = new File(root, s);
+
+	String[] w = listAllRuleSetsInTree(root);
+	String[] v = new String[w.length];
+	if (s.length()>0) {
+	    for(int j=0; j<w.length; j++) {
+		v[j] = s + "/" + w[j];
+	    }
+	}
+	return v;
+    }
+
+    
+    private static String[] listAllRuleSetsInTree(File root) throws IOException {
+	if (!root.isDirectory()) throw new IOException("" + root + " is not a directory");
+	File[] files = root.listFiles();
+	Vector<String> v = new Vector<>();
+
+	for(File cf: files) {
+	    String fname = cf.getName();
+	    if (cf.isDirectory()) {
+		for(String x: listAllRuleSetsInTree(cf)) {
+		    v.add(fname + File.separator + x);
+		}
+	    } else if (cf.isFile() && fname.endsWith(RULES_EXT)) {
+		v.add(fname.substring(0, fname.length()-RULES_EXT.length()));
+	    }
+	}
+	return v.toArray( new String[0]);
+    }
+
+    
     /** Creates an HTML snippet (to be used inside a FORM) listing
 	all currently existing experiment plans.
      */
@@ -250,6 +294,20 @@ public class Files {
 	    v.add( Tools.radio("exp", exp, exp, false));
 	}
 	return String.join("<br>\n", v);
+    }
+
+    static File launchDir() {
+	return new File(inputDir, "launch");
+    }
+
+    /** The control file for the repeat-user launch page */
+    static public File getLaunchFile() {
+	return new File(launchDir(), "launch.csv");
+    }
+
+    public static File modifierFile(String modifierName) throws IOException {
+	if (modifierName==null || modifierName.equals("")) throw new IOException("Modifier name not specified");
+	return inputFile(modifierName, "modifiers", ".csv");
     }
 
     

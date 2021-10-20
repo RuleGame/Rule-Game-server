@@ -26,10 +26,38 @@ sub avgY(@) {
 }
 
 
+#-- List of all "good" (useful for analysis) player IDs.
+my $goodPidFile = '/home/vmenkov/w2020/ellise/rule_all_rules_ppts_by_rule.csv';
+my %goodPids = ();
+open(F, "<$goodPidFile");
+foreach my $line (<F>) {
+    my @q = split(/,/, $line);
+    my $pid = $q[0];
+    if ($pid =~ /player/) { next; }
+    $goodPids{$q[0]} = 1;
+}
+close(F);
+
+
 my $summary = 'summary-flat.csv';
 
 #-- only keep MTurk entries, A12 or A13 
-`egrep  '^[-/a-zA-Z0-9_]+,A[0-9A-Z]+,' $summary > s.tmp`;
+`egrep  '^[-/a-zA-Z0-9_]+,A[0-9A-Z]+,' $summary > s0.tmp`;
+
+
+#-- Only keep good players
+open(F, "<s0.tmp");
+open(G, ">s.tmp");
+foreach my $line (<F>) {
+    #ruleSetName,playerId,experimentPlan,trialListId,seriesNo,yy,B,C,t_I,k,Z,n,L/n,AIC/n
+    my @q = split(/,/, $line);
+    my $pid = $q[1];
+    if (defined $goodPids{$pid})   {  print G $line;}
+}
+close(F);
+close(G);
+
+
 
 #-- What rule sets are represented in the summary file?
 my @rules = `cut -d , -f 1 s.tmp | sort | uniq`;
@@ -37,8 +65,8 @@ my @rules = `cut -d , -f 1 s.tmp | sort | uniq`;
 
 open( GNU, ">cmd.gnu");
 print GNU "set grid xtics ytics;\n";
-print GNU "set xlabel 'p(0)=Z';\n";
-print GNU "set ylabel 'p(n-1)';\n";
+print GNU "set xlabel 'p(0)=Z, or Y1';\n";
+print GNU "set ylabel 'p(n-1), or Y2';\n";
 
 my $win = 0;
 

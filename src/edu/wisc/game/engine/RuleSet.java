@@ -11,6 +11,11 @@ import edu.wisc.game.parser.*;
 /** A RuleSet describes the rules of a game. */
 public class RuleSet {
 
+    /** An optional description of the rule set, which may have been found
+	in the comment lines on top of the rule set file.
+     */
+    public Vector<String> description=new Vector<>();
+    
     /** The list of variables that can be used in the bucket
 	expression */
     public enum BucketSelector {
@@ -586,11 +591,23 @@ public class RuleSet {
 	lines, followed by one or more rule lines.
 	@param rr The lines  from the rule set file */
     public RuleSet(String[] rr) throws RuleParseException {
+
+	boolean topCommentEnded=false;
+
+	
 	for(String r: rr) {
 	    r = r.trim();
-	    if (r.startsWith("#") || r.length()==0) continue; // skip comment lines and blank lines
+	    if (r.startsWith("#") || r.length()==0) {
+		if (!topCommentEnded) {
+		    String s = r.replaceAll("^#", "");
+		    if (s.length()>0) description.add(s);
+		}
 
-
+		
+		continue; // skip comment lines and blank lines
+	    }
+	    topCommentEnded=true;
+	    
 	    Vector<Token> tokens= Token.tokenize(r);
 	    if (tokens.isEmpty()) throw new RuleParseException("No data found in the line: " + r);
 	    Token a=tokens.get(0);

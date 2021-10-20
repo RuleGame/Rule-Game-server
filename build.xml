@@ -42,6 +42,9 @@
      </fileset -->
 
      <!-- Obtained from https://mvnrepository.com/artifact/org.glassfish.jersey.bundles -->
+   <fileset dir="/opt/tomcat/lib">
+     <include name="jsp-api.jar"/>
+   </fileset>
    <fileset dir="${main}/../jaxrs-ri/api">
      <include name="*.jar"/>
    </fileset>
@@ -166,6 +169,7 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
       <!-- include name="**/*.class"/ -->
       <!-- include name="Piece.class" />
       <include name="Board.class" / -->
+      <include name="User.class" />
       <include name="PlayerInfo.class" />
       <include name="EpisodeInfo.class" />
       <include name="Episode.class" />

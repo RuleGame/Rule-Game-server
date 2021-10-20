@@ -2,6 +2,7 @@ package edu.wisc.game.rest;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.*;
 import javax.json.*;
 
 import javax.persistence.*;
@@ -29,7 +30,16 @@ public class PlayerResponse extends ResponseBase {
 
     private TrialList trialList = null;
     public TrialList getTrialList() { return trialList; }
- 
+
+    /** Typically, this is the same player ID which was used in the
+	/player call. However, there is a mode (with a repeat user ID in use)
+	when the /player call will create a player ID, and return it via this field.
+     */
+    private String playerId;
+    public String getPlayerId() { return playerId; }
+    @XmlElement
+    public void setPlayerId(String _playerId) { playerId = _playerId; }
+
     
     /** Only used in debug mode */
     private PlayerInfo playerInfo=null; 
@@ -54,16 +64,53 @@ public class PlayerResponse extends ResponseBase {
     public String getExperimentPlan() { return experimentPlan; }
  
 
+    static private final Pattern repeatUserPat = Pattern.compile("^RepeatUser-([0-9]+)-");
 
-    PlayerResponse(String pid, String exp) {
-	this(pid, exp, false);
+    PlayerResponse(String pid, String exp, int uid) {
+	this(pid, exp, uid, false);
     }
-    
-    PlayerResponse(String pid, String exp, boolean debug) {
-	if (exp!=null && (exp.equals("") || exp.equals("null"))) exp=null;
 
-	EntityManager em = Main.getNewEM();
+    /** Regularize an input parameter */
+    private static String regularize(String x) {
+	if (x!=null && (x.trim().equals("") || x.equals("null"))) x=null;
+	return x;
+    }
+
+
+    /** Registers a new player, or finds an existing player record.
+      
+	@param pid The player ID. If it is not supplied, the uid
+	must be supplied, and this method will create a semi-random 
+	player ID.
+	@param uid The numeric ID of the repeat user who creates this 
+	playerId for himself. If negative, this parameter is ignored,
+	as this is an M-Turker etc, and not a repeat user.
+    */
+    PlayerResponse(String pid, String exp, int uid, boolean debug) {
+	exp = regularize(exp);
+	pid = regularize(pid);
+	Date now = new Date();
 	
+	Matcher m;
+
+	if (pid==null) { 	    
+	    if (uid<0) {
+		hasError("Neither player Id nor user Id have been provided");
+		return;	
+	    } else {
+		// Creating a PID dynamically 
+		pid = "RepeatUser-" + uid + "-" +  Episode.randomWord(6) + "-" + Episode.sdf.format(now);
+	    }
+	} else if (uid<0 && (m = repeatUserPat.matcher(pid)).find()) {
+	    // This is a temporary hack, for when the GUI client does not
+	    // support the uid parameter
+	    uid = Integer.parseInt(m.group(1));
+	}
+
+	
+	EntityManager em = Main.getNewEM();
+
+
 	try {
 
 	    Logging.info("PlayerResponse(pid="+ pid+", exp="+exp+")");
@@ -79,23 +126,49 @@ public class PlayerResponse extends ResponseBase {
 		trialList  = new TrialList(x.getExperimentPlan(), trialListId);
 		alreadyFinished = x.alreadyFinished();
 		completionCode = x.getCompletionCode();
-		if (exp!=null && !exp.equals("") && !x.getExperimentPlan().equals(exp)) {
-		    String msg = "Cannot play experiment plan '" + exp + "' with playerId=" + pid + ", because that playerId already belongs to experiment plan '" + x.getExperimentPlan() +"'";
-		    Logging.error(msg);
-		    setError(true);
-		    setErrmsg(msg);
+
+		String msg=null;
+		if (exp!=null  && !x.getExperimentPlan().equals(exp)) {
+		    msg = "Cannot play experiment plan '" + exp + "' with playerId=" + pid + ", because that playerId is already assigned to experiment plan '" + x.getExperimentPlan() +"'";
+
+		} else 	if (uid>=0 && x.getUser()==null) {
+		    msg = "Cannot use playerId=" + pid + " with a user ID=" + uid +", because this playerId is  already created without a user ID";
+		} else if (uid<0 && x.getUser()!=null) {
+		    msg = "Cannot use playerId=" + pid + " without a user ID, because this playerId is  already created with user ID=" + x.getUser().getId();
+		} else if (uid>=0 &&  x.getUser()!=null && uid!=x.getUser().getId()) {
+		    msg = "Cannot use playerId=" + pid + " without user ID="+uid+", because this playerId is  already created with user ID=" + x.getUser().getId();    
+		}
+			
+		if (msg!=null) {
+		    hasError(msg);
 		    return;
+		}
+		
+	    } else { // new player
+
+	       		
+		x = new PlayerInfo();
+		x.setDate(now);
+		x.setPlayerId(pid);
+
+		if (uid>=0) {
+		    User user = (User)em.find(User.class, uid);
+		    if (user==null) {
+			String msg="Invalid user id=" + uid+". No user exists with that ID";
+			hasError(msg);
+			return;
+		    }	
+		    
+		    x.setUser(user);
 		}
 
 		
-	    } else { // new player
-		x = new PlayerInfo();
-		x.setDate( new Date());
-		x.setPlayerId(pid);
 		if (exp==null) exp= TrialList.extractExperimentPlanFromPlayerId(pid);
 		x.setExperimentPlan(exp);
 		assignRandomTrialList(x);
 		trialListId = x.getTrialListId();
+		playerId = x.getPlayerId();
+		
 		em.getTransaction().begin();
 		em.persist(x);
 		em.flush(); // to get the new ID in
@@ -174,8 +247,13 @@ public class PlayerResponse extends ResponseBase {
 	@param exp The name of the experiment plan
      */
     private static synchronized String chooseRandomTrialList(String exp, double hrs, boolean debug) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
+
+	
+	
 	Vector<String> lists = TrialList.listTrialLists(exp);
 	if (lists.size()==0)  throw new IOException("Found no CSV files in the trial list directory for experiment plan=" + exp);
+	if (lists.size()==1)  return lists.get(0);
+	
 	HashMap<String,Integer> names = new HashMap<>();
 	for(String key: lists) names.put(key,0);
 

@@ -19,7 +19,7 @@ import edu.wisc.game.parser.*;
 /** A tool for an easy online testing of arithmetic expression evaluation.
 The data come from arithmetic-result.jsp.
  */
-public class ArithmeticResult      extends ResponseBase  {
+public class ArithmeticResult      extends ResultsBase  {
 
     public final static String prefix = "var.";
 
@@ -29,7 +29,8 @@ public class ArithmeticResult      extends ResponseBase  {
     static final HTMLFmter fmt = HTMLFmter.htmlFmter;
     
     public ArithmeticResult(HttpServletRequest request, HttpServletResponse response){
-
+	super(request,response,false);
+	if (error) return;
 	try {
 	   String exp = request.getParameter("expression");
 	   if (exp==null || exp.trim().equals("")) {

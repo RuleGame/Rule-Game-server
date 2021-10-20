@@ -222,7 +222,7 @@ public class GameService {
     @Produces(MediaType.APPLICATION_JSON)
     public PlayerResponse startTrial(@FormParam("playerId") String playerId,
 				 @DefaultValue("null") @FormParam("exp") String exp){
-	return new PlayerResponse( playerId, exp);
+	return new PlayerResponse( playerId, exp, -1);
     }
 
     

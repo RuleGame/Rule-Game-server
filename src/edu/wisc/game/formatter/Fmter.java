@@ -93,6 +93,10 @@ public class  Fmter {
     }
 
     
+    final public  String button(String text) {
+	return wrap("button", text);
+    }
+
     public  String para(String text) {
 	if (text==null || text.length()==0) return "";
 	return wrap("p", text) + "\n";
@@ -119,6 +123,7 @@ public class  Fmter {
     }
 
     /** Generates a TABLE ... /TABLE structure.
+	@param extra E.g. "border=\"1\""
 	@param rows Each one is a TR ... /TR
      */
     final public  String table(String extra, String... rows) {

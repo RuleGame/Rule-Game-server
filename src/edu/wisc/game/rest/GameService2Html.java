@@ -38,10 +38,12 @@ public class GameService2Html extends GameService2 {
     /** @param exp The experiment plan. If not supplied (null), the experiment
 	plan will be guessed from the playerId.
      */
-    public String playerHtml(@FormParam("playerId") String playerId,
-			  @DefaultValue("null") @FormParam("exp") String exp){
+    public String playerHtml(@DefaultValue("null") @FormParam("playerId") String playerId,
+			     @DefaultValue("null") @FormParam("exp") String exp,
+			     @DefaultValue("-1") @FormParam("uid") int uid
+){
 	
-	PlayerResponse pr = new PlayerResponse( playerId, exp);
+	PlayerResponse pr = new PlayerResponse( playerId, exp, uid);
 
 	Vector<String> v = new Vector<>();
 	boolean canPlay = false;

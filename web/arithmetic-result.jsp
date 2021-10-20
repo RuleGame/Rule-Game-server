@@ -9,7 +9,7 @@
 <body>
 <h1>Arithmetic test: results</h1>
 
-<%   if (main.getError()) {   %>  <%@include file="../include/error.jsp" %>
+<%   if (main.getError()) {   %>  <%@include file="include/error.jsp" %>
 <%   } else {
 for(String s: main.v) {
 %>

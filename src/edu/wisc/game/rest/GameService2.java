@@ -29,7 +29,7 @@ import edu.wisc.game.formatter.*;
 @Path("/GameService2") 
 public class GameService2 {
 
-
+    
     @POST
     @Path("/player") 
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -37,9 +37,14 @@ public class GameService2 {
     /** @param exp The experiment plan. If not supplied (null), the experiment
 	plan will be guessed from the playerId.
      */
-    public PlayerResponse player(@FormParam("playerId") String playerId,
-				 @DefaultValue("null") @FormParam("exp") String exp){
-	return new PlayerResponse( playerId, exp);
+    public PlayerResponse player(@DefaultValue("null") @FormParam("playerId") String playerId,
+				 @DefaultValue("null") @FormParam("exp") String exp,
+				 @DefaultValue("-1") @FormParam("uid") int uid
+				 )
+
+    {
+
+	return new PlayerResponse( playerId, exp, uid);
     }
 
     @POST
@@ -144,15 +149,25 @@ public class GameService2 {
 	return new  GiveUpWrapper(playerId);
     }
 
+
+    //   @POST
+    //    @Path("/player") 
+    //    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    //    @Produces(MediaType.APPLICATION_JSON)
     
+
+    /*
     @GET
     @Path("/debug") 
     @Produces(MediaType.APPLICATION_JSON)
-    public PlayerResponse debug(@QueryParam("playerId") String playerId,
-				@DefaultValue("null") @QueryParam("exp") String exp){
-	return new PlayerResponse( playerId, exp, true);
-    }
+    public PlayerResponse debug(@DefaultValue("null") @QueryParam("playerId") String playerId,
+				@DefaultValue("null") @QueryParam("exp") String exp,
+				@DefaultValue("-1") @FormParam("uid") int uid
 
+				){
+	return new PlayerResponse( playerId, exp, uid, true);
+    }
+    */
 
     /** Records a player's guess about the rules. This is typically used at the
 	end of an episode.
