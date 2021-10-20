@@ -128,22 +128,22 @@ public class LaunchRules      extends ResultsBase  {
 		    int buttonCnt=0;
 		    if (players!=null) {
 			for(PlayerInfo p: players) {
-			    text = "";
+			    String t;
 			    int ne = p.getAllEpisodes().size();
 			    if (p.getCompletionCode()!=null) {
-				text = "[COMPLETED ROUND (" +ne+ " episodes)]";
+				t = "[COMPLETED ROUND (" +ne+ " episodes)]";
 			    } else {
-				text =				
-				    mkForm("[STARTED (done " +ne+ " episodes); ", "]",
-					   exp, p.getPlayerId(), "CONTINUE!");
+				t=mkForm("[STARTED (done "+ne+" episodes); ","]",
+					 exp, p.getPlayerId(), "CONTINUE!");
 				buttonCnt++;
 			    }
+			    pv.add(t);
 			}
-			pv.add(text);
 		    }
 
 		    if (buttonCnt==0) {
-			text =mkForm("","", exp, null, "PLAY!");
+			String bt = (pv.size()==0)? "PLAY!": "Play another round!";
+			text =mkForm("","", exp, null, bt);
 			pv.add(text);
 		    }
 		    
