@@ -59,7 +59,7 @@ public class LaunchMain      extends ResultsBase  {
     
     public LaunchMain(HttpServletRequest request, HttpServletResponse response){
 	super(request,response,true);
-	if (error) return;
+	if (error || !loggedIn()) return;
 
 	final HTMLFmter fm = HTMLFmter.htmlFmter;
 	try {

@@ -332,7 +332,7 @@ The arguments to the <tt>/pick</tt> call are similar to those used in a /move ca
    <p>The finish code reports the current state: 0=can play (there are pieces on the board, and some can be moved), 1=finish (no pieces left on the board), 2=stalemate (there are pieces on the board, but none of them can be moved anymore).</p>
    </li>
  
-	<li>POST <strong><tt>/giveUp:</tt> "Gives up" the current series (i.e. the series played with the current param set), so that the next episode will be run with the next param set.</strong> If this is invoked while an episode is in progress, the episode will be marked as "given up" as well. However, you may choose to only used this call /at the end of an episode (that is, give the player an option of switching to the next param set for the next episode, regardless of one's current position in the current series).
+	<li>POST <strong><tt>/giveUp:</tt> "Gives up" the current series (i.e. the series played with the current param set), so that the next episode will be run with the next param set.</strong> If this is invoked while an episode is in progress, the episode will be marked as "given up" as well. However, you may choose to only use this call at the end of an episode (that is, give the player an option of switching to the next param set for the next episode, regardless of one's current position in the current series).
   <form method="post" action="game-data/GameService2/giveUp"
 	 enctype="application/x-www-form-urlencoded">
 Player ID:     <input name="playerId" type="text" size="25" value="AnyText01">

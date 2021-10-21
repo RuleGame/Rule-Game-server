@@ -83,7 +83,7 @@ public class LaunchRules      extends ResultsBase  {
     
     public LaunchRules(HttpServletRequest request, HttpServletResponse response){
 	super(request,response,true);
-	if (error) return;
+	if (error || !loggedIn()) return;
 
 
 	atHome = Hosts.atHome();
