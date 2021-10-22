@@ -116,8 +116,7 @@ public class PlayerResponse extends ResponseBase {
 	    setNewlyRegistered(x==null);
 	    if (x!=null) {  // existing player
 		Logging.info("Found existing player=" + x + ", with plan=" + x.getExperimentPlan());
-		trialListId = x.getTrialListId();		
-		trialList  = new TrialList(x.getExperimentPlan(), trialListId);
+		trialList  = new TrialList(x.getExperimentPlan(), x.getTrialListId());		
 		alreadyFinished = x.alreadyFinished();
 		completionCode = x.getCompletionCode();
 
@@ -131,16 +130,12 @@ public class PlayerResponse extends ResponseBase {
 		    msg = "Cannot use playerId=" + pid + " without a user ID, because this playerId is  already created with user ID=" + x.getUser().getId();
 		} else if (uid>=0 &&  x.getUser()!=null && uid!=x.getUser().getId()) {
 		    msg = "Cannot use playerId=" + pid + " without user ID="+uid+", because this playerId is  already created with user ID=" + x.getUser().getId();    
-		}
-			
+		}		
 		if (msg!=null) {
 		    hasError(msg);
 		    return;
-		}
-		
+		}		
 	    } else { // new player
-
-	       		
 		x = new PlayerInfo();
 		x.setDate(now);
 		x.setPlayerId(pid);
@@ -151,17 +146,13 @@ public class PlayerResponse extends ResponseBase {
 			String msg="Invalid user id=" + uid+". No user exists with that ID";
 			hasError(msg);
 			return;
-		    }	
-		    
+		    }
 		    x.setUser(user);
 		}
-
 		
 		if (exp==null) exp= TrialList.extractExperimentPlanFromPlayerId(pid);
 		x.setExperimentPlan(exp);
 		assignRandomTrialList(x);
-		trialListId = x.getTrialListId();
-		playerId = x.getPlayerId();
 		
 		em.getTransaction().begin();
 		em.persist(x);
@@ -169,8 +160,10 @@ public class PlayerResponse extends ResponseBase {
 		em.getTransaction().commit();
 		Logging.info("Persisted new player=" + x);
 		allPlayers.put(pid,x);
-	    }
+	    }	
+	    playerId = x.getPlayerId();
 	    experimentPlan = x.getExperimentPlan();
+	    trialListId = x.getTrialListId();	
 	    setError(false);
 	    setErrmsg("Debug:\n" + x.report());
 

@@ -102,9 +102,11 @@ public class LaunchRules      extends ResultsBase  {
 
 	    String[] hm = {"No feedback",
 			   "Some feedback",
+			   "More feedback",
 			   "Max feedback" };
 	    String[] mods = {"APP/APP-no-feedback",
 			     "APP/APP-some-feedback",
+			     "APP/APP-more-feedback",
 			     "APP/APP-max-feedback" };
 	    Vector<String> cells = new Vector<>();
 	    for(String h: hm) cells.add(fm.th(h));	    
