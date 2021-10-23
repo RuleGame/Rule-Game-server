@@ -5,13 +5,12 @@ import java.util.*;
 import java.text.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
+import javax.persistence.*;
 
-//import javax.xml.bind.annotation.XmlTransient; 
-//import javax.json.*;
 
 import edu.wisc.game.util.*;
 //import edu.wisc.game.reflect.*;
-//import edu.wisc.game.sql.*;
+import edu.wisc.game.sql.*;
 //import edu.wisc.game.engine.*;
 import edu.wisc.game.formatter.*;
 import edu.wisc.game.rest.*;
@@ -53,38 +52,92 @@ The columns of the table for this researcher challenge should provide these opti
 </pre>
 
 */
-public class LaunchMain      extends ResultsBase  {
-
-    public String tableText = "NO DATA";
+public class LaunchMain      extends LaunchRulesBase  {
     
     public LaunchMain(HttpServletRequest request, HttpServletResponse response){
-	super(request,response,true);
+	super(request,response);
 	if (error || !loggedIn()) return;
+	EntityManager em = Main.getNewEM();
 
-	final HTMLFmter fm = HTMLFmter.htmlFmter;
 	try {
+
+	    HashMap<String,Vector<PlayerInfo>> allPlayers = findPlayers( em,  new Integer(uid));
+
+	    //String[] allRuleNames = Files.listAllRuleSetsInTree("APP");
 
 	    Vector<String> rows = new Vector<>();
 
-	    rows.add(fm.tr("<TH>Plan</TH><TH>Actions</TH>"));
+	    String[] hm = {"No feedback",
+			   "Some feedback",
+			   "More feedback",
+			   "Max feedback" };
+	    String[] mods = {"APP/APP-no-feedback",
+			     "APP/APP-some-feedback",
+			     "APP/APP-more-feedback",
+			     "APP/APP-max-feedback" };
+
+	    rows.add(fm.tr("<TH rowspan=2>Experiment plan</TH><TH colspan="+hm.length+">Actions</TH>"));
+	    Vector<String> cells = new Vector<>();
+	    for(String h: hm) cells.add(fm.th(h));	    
+	    rows.add(fm.tr(String.join("",cells)));
+
 	    
 	    File launchFile = Files.getLaunchFile();
 	    if (!launchFile.exists()) throw new IOException("The control file " + launchFile + " does not exist on the server");;
 	    CsvData csv = new CsvData(launchFile, true, false, new int[] {2});	
 	    for(CsvData.LineEntry _e: csv.entries) {
+		cells.clear();
+
 		CsvData.BasicLineEntry e= (CsvData.BasicLineEntry)_e;
 		String plan = e.getKey();
 		String descr = e.getCol(1);
-		Vector<String> cells = new Vector<>();
+
 		cells.add( fm.td(fm.strong(fm.code(plan)) + ": " + descr));
 
-
-
-
-		cells.add( fm.td("Link goes here"));
+		int ntr = 0;
+		try {
+		    ntr = TrialList.listTrialLists(plan).size();
+		} catch(IOException ex) {}
+		if (ntr==0) {
+		    cells.add( fm.wrap("td", "colspan=" + mods.length, "Plan not valid - check the plan directory!"));		    
+		    rows.add(fm.tr(String.join("",cells)));
+		    continue;
+		}
 		
+
+		for(String mod: mods) {
+		    String exp = "P:" + plan + ":"+mod;	
+		    Vector<PlayerInfo> players = allPlayers.get(exp);	    
+		    Vector<String> pv = new Vector<>();
+
+		    int buttonCnt=0;
+		    if (players!=null) {
+			for(PlayerInfo p: players) {
+			    String t;
+			    int ne = p.getAllEpisodes().size();
+			    if (p.getCompletionCode()!=null) {
+				t = "[COMPLETED ROUND (" +ne+ " episodes)]";
+			    } else {
+				t=mkForm("[STARTED (done "+ne+" episodes); ","]",
+					 exp, p.getPlayerId(), "CONTINUE!");
+				buttonCnt++;
+			    }
+			    pv.add(t);
+			}
+		    }
+
+		    if (buttonCnt==0) {
+			String bt = (pv.size()==0)? "PLAY!": "Play another round!";
+			String t =mkForm("","", exp, null, bt);
+			pv.add(t);
+		    }
+		    
+		    String t = String.join(" ", pv);
+		    cells.add( fm.td(t));
+		}
 		rows.add(fm.tr(String.join("",cells)));
 	    }
+
 	    tableText = fm.table( "border=\"1\"", rows);
 	} catch(Exception ex) {
 	    hasException(ex);

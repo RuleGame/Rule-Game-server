@@ -5,10 +5,10 @@
 %>
 <html>
 <head>
-<title>Rule Game Launch Page</title>
+<title>MLC Rule Game Launch Page</title>
 </head>
 <body>
-<h1>Rule Game Launch Page</h1>
+<h1>MLC Rule Game Launch Page</h1>
 
 <%   if (main.getError()) {   %>  <%@include file="../include/error.jsp" %>
 <%   } else if (!main.loggedIn()) { %>

@@ -1,14 +1,16 @@
 <%@include file="../include/imports.jsp" %>
 <%
-   String sp="launch/index.jsp";
+   String sp="launch/launch-rules.jsp";
    LaunchRules main=new LaunchRules(request, response);
 %>
 <html>
 <head>
-<title>Rule Game -- Try out various rule sets!</title>
+<title>APP Rule Game launch page</title>
 </head>
 <body>
-<h1>Rule Game -- Try out various rule sets!</h1>
+<h1>APP Rule Game launch page</h1>
+
+<h2>Try out various rule sets!</h2>
 
 <%   if (main.getError()) {   %>  <%@include file="../include/error.jsp" %>
 <%   } else if (!main.loggedIn()) { %>

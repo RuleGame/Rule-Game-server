@@ -10,7 +10,7 @@ import edu.wisc.game.util.*;
 //import edu.wisc.game.reflect.*;
 import edu.wisc.game.sql.*;
 //import edu.wisc.game.engine.*;
-//import edu.wisc.game.formatter.*;
+import edu.wisc.game.formatter.*;
 
 
 
@@ -49,7 +49,10 @@ public class ResultsBase {
 	else return "User No. " + uid + " ("+displayName+")";
     }
 
-	
+    boolean atHome;
+    final HTMLFmter fm = HTMLFmter.htmlFmter;
+    
+    
     /** This one is to be used in all pages where we want to identify the 
 	user to some extent (even as an anon with a cookie-based session) */
     ResultsBase(HttpServletRequest _request, HttpServletResponse response,
@@ -72,7 +75,7 @@ public class ResultsBase {
 	infomsg += msgBuffer;
 	
 	displayName= sd.getStoredDisplayName();
-
+	atHome = Hosts.atHome();
 	
     }
 
