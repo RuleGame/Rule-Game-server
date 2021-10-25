@@ -220,8 +220,22 @@ public class Files {
     /** List all existing experiment plans (based on the directory
 	names in the appropriate tree) */
     public static String[] listSAllExperimentPlans()  throws IOException{
-	String[] a = listAllExperimentPlanDirsInTree( trialListMainDir());
+	return  listSAllExperimentPlansInTree(null);
+    }
+
+    public static String[] listSAllExperimentPlansInTree(String subdir) throws IOException{
+	File root =  trialListMainDir();
+	if (subdir!=null && subdir.length()>0) root = new File(root, subdir);
+	String[] a = listAllExperimentPlanDirsInTree(root);
 	Arrays.sort(a);
+
+	if (subdir!=null && subdir.length()>0) {
+	    for(int j=0; j<a.length; j++) {
+		a[j] = subdir + "/" + a[j];
+	    }
+	}
+
+	
 	return a;	
     }
 

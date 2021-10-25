@@ -47,35 +47,54 @@ public class LaunchRulesBase      extends ResultsBase  {
 
         
     protected String mkForm(String text1, String text2, String exp, String pid, String buttonText) {
-			    
-	String text = "<FORM METHOD='GET' ACTION='"+action+"'>";
+
+	final boolean isDev = cp.startsWith("/w2020-dev");
+					    
+	//String action="http://sapir.psych.wisc.edu/rule-game/prod/";
+	// As of Oct 2021, only dev supports the server= option 
+	String action= (atHome || isDev || mustUseDevClient)?
+	    "http://sapir.psych.wisc.edu/rule-game/dev/":
+	    "http://sapir.psych.wisc.edu/rule-game/prod/";
+	
+					    
+	String text = "<FORM METHOD='GET' ACTION='"+action+"'>\n";
+	
 	// If we're not running in prod, we need to tell the
 	// client which Game Server to hit with REST requests
 	if (atHome) {
 	    String url="http://localhost:8080/w2020";
 	    // http://sapir.psych.wisc.edu:7150/w2020
-	    text+="\n"+Tools.inputHidden("server", url);
-	}  else if (cp.startsWith("/w2020-dev")) {
+	    text+=Tools.inputHidden("server", url);
+	}  else if (isDev) {
 	    String url="http://sapir.psych.wisc.edu:7150/w2020-dev";
-	    text+="\n"+Tools.inputHidden("server", url);
+	    text+=Tools.inputHidden("server", url);
 	}
-	text+="\n"+Tools.inputHidden("intro", false);
-	text+="\n"+Tools.inputHidden("exp", exp);
-	text+="\n"+Tools.inputHidden("uid", uid);
+	text+=Tools.inputHidden("intro", false);
+	text+=Tools.inputHidden("exp", exp);
+	text+=Tools.inputHidden("uid", uid);
 	if (pid==null) {
 	    pid = "RepeatUser-" + uid + "-" +  Episode.randomWord(6) + "-tmp-" + Episode.sdf.format(new Date());
 	}
 		
-	text+="\n"+Tools.inputHidden("workerId", pid);
-	text+="\n" + text1 + fm.button(buttonText) + text2;
-	text+="\n</FORM>";
+	text+=Tools.inputHidden("workerId", pid);
+	text+= text1 + fm.button(buttonText) + text2 +"\n";
+	text+="</FORM>";
 	return text;
     }	    
 
 
-    //String action="http://sapir.psych.wisc.edu/rule-game/prod/";
-    // Only dev supports the server= option
-    private static final String action="http://sapir.psych.wisc.edu/rule-game/dev/";
+    /** This will be set to true in the MLC page (LaunchMain), to guarantee
+     */
+    protected boolean mustUseDevClient = false;
+
+    /*
+    void setActionDev() {
+	action="http://sapir.psych.wisc.edu/rule-game/dev/";
+    }
+    void setActionProd() {
+	action="http://sapir.psych.wisc.edu/rule-game/prod/";
+    }
+    */
     
     public LaunchRulesBase(HttpServletRequest request, HttpServletResponse response){
 	super(request,response,true);

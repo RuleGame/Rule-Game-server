@@ -57,6 +57,9 @@ public class LaunchMain      extends LaunchRulesBase  {
     public LaunchMain(HttpServletRequest request, HttpServletResponse response){
 	super(request,response);
 	if (error || !loggedIn()) return;
+
+	mustUseDevClient = true;
+	
 	EntityManager em = Main.getNewEM();
 
 	try {

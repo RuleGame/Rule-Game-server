@@ -164,18 +164,18 @@ public class ParaSet extends HashMap<String, Object> {
 	for(int k=0; k<nCol; k++) {
 	    String key =header.getCol(k);
 	    String val = line.getCol(k);
-
-	    //System.out.println("DEBUG: column key=" + key+", val=" + val);
-
-	    if (key.equals("colors") && val!=null) {
+	    if (val==null || val.length()==0) continue;
+	    
+	    if (key.equals("colors")) {
+		//System.out.println("DEBUG: column key=" + key+", val=" + val);
 		Piece.Color[] _colors = parseColors(val);
 		if (_colors != null) colors = _colors;	
-	    } else if (key.equals("shapes") && val!=null) {
+	    } else if (key.equals("shapes")) {
 		//System.out.println("DEBUG: parseShapes(" + val+")");
 		Piece.Shape[] _shapes = parseShapes(val);
 		//System.out.println("DEBUG: parseShapes(" + val+") done");
 		if (_shapes!=null) shapes = _shapes;			
-	    } else if (key.equals("images") && val!=null) {
+	    } else if (key.equals("images")) {
 		String[] _images = parseImages(val);
 		if (_images !=null) images = _images;
 	    } else typedPut(key, val);
@@ -217,6 +217,7 @@ public class ParaSet extends HashMap<String, Object> {
     /** Converts the value to an object of a (likely) proper type, and 
 	puts it into this HashMap */
     private Object typedPut(String key, String val) {
+	if (val==null) return null;
 	val = val.trim();
 	String s= val.toLowerCase();
 	return
@@ -248,6 +249,7 @@ public class ParaSet extends HashMap<String, Object> {
 		String val = ((CsvData.BasicLineEntry)e).getCol(1);
 		if (val==null) continue;
 		val = val.trim();
+		if (val.length()==0) continue;
 		typedPut(key, val);		    
 	    }
 	} catch(Exception ex) {
