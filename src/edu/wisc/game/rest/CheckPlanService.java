@@ -25,6 +25,55 @@ public class CheckPlanService extends GameService2 {
     private static HTMLFmter  fm = new HTMLFmter(null);
 
     @POST
+    @Path("/checkRules") 
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.TEXT_HTML)
+    /** The "Check rules" service. 
+	@param rulesText
+     */
+    public String checkRulesHtml( @FormParam("rulesText") String rulesText){
+	Vector<String> v = new Vector<>();
+	int errcnt=0;
+	String info = null;
+	String title = "Checking a rule set";
+	String title1 = "Checking a rule set";
+
+	v.add(fm.h1(title1));
+
+	v.add(fm.para("Input:<br>" + fm.pre(rulesText)));  
+
+    
+	try {
+	    RuleSet rules = new RuleSet(rulesText);
+	    v.add(fm.para("The rules have been compiled as follows:"));
+	    v.add(fm.para(fm.tt(rules.toSrc().replaceAll("\n","<br>"))));
+
+	} catch(Exception ex) {
+	    if (info != null) v.add(fm.para(info));
+	    v.add(fm.para("Error: " + ex));
+	    StringWriter sw = new StringWriter();
+	    ex.printStackTrace(new PrintWriter(sw));
+	    String s = fm.pre(sw.toString());
+	    v.add(fm.para(fm.wrap("small", "Details:"  + s)));
+	    errcnt ++;
+	}
+
+	v.add("<hr>");
+	if (errcnt>0) {
+	    v.add(fm.para("Found " + errcnt + " errors. You may want to fix them before inviting players into this experiment plan"));
+	} else {
+	    v.add(fm.para("Found no errors."));
+	}
+
+
+	String body = String.join("\n", v);
+
+	return fm.html(title, body);	
+
+    }
+
+    
+    @POST
     @Path("/checkPlan") 
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.TEXT_HTML)

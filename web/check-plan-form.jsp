@@ -20,11 +20,30 @@
 
 <h2>Dynamic experiment plans</h2>
 
-<p>Type  the name of a plan, e.g. <tt>P:pilot06:max-feedback</tt>,  or <tt>R:bottomLeft_then_topRight:simple</tt>
+<p>Type  the name of a plan, e.g. <tt>P:pilot06:max-feedback</tt>,
+<tt>R:APP/OCT26/OCT26-1:APP/APP-no-feedback</tt>,
+or <tt>R:bottomLeft_then_topRight:simple</tt>
 
    <form method="post" action="game-data/CheckPlanService/checkPlan"
 	 enctype="application/x-www-form-urlencoded">
 	 <input type="text" name="exp" size="40">
+	 <br>
+     <button type="submit">Check</button>
+   </form>
+
+<h2>Individual rules</h2>
+
+<p>You can type the text of an individual rule set in the box below, e.g.
+<pre>
+1 (*, square, *, *, 0) (*, triangle, *, *,1) (*, circle, *, *,2) (*, square, *, *,3)
+(*,*,*,*,[p-1,p+1])
+</pre>
+
+   <form method="post" action="game-data/CheckPlanService/checkRules"
+	 enctype="application/x-www-form-urlencoded">
+
+<textarea  name="rulesText" rows="10" cols="120"></textarea><br>
+
 	 <br>
      <button type="submit">Check</button>
    </form>

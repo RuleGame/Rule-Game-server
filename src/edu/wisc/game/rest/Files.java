@@ -270,13 +270,13 @@ public class Files {
 	if (s.length()>0) root = new File(root, s);
 
 	String[] w = listAllRuleSetsInTree(root);
-	String[] v = new String[w.length];
+	Arrays.sort(w);
 	if (s.length()>0) {
 	    for(int j=0; j<w.length; j++) {
-		v[j] = s + "/" + w[j];
+		w[j] = s + "/" + w[j];
 	    }
 	}
-	return v;
+	return w;
     }
 
     
