@@ -53,9 +53,33 @@ The columns of the table for this researcher challenge should provide these opti
 
 */
 public class LaunchMain      extends LaunchRulesBase  {
-    
-    public LaunchMain(HttpServletRequest request, HttpServletResponse response){
+
+  public LaunchMain(HttpServletRequest request, HttpServletResponse response)  {
 	super(request,response);
+	if (error || !loggedIn()) return;
+	String z = "APP"; // can use APP's mods for now
+	String[] modsLong = {z + "/" + z + "-no-feedback",
+			     z + "/" + z + "-some-feedback",
+			     z + "/" + z + "-more-feedback",
+			     z + "/" + z + "-max-feedback"};
+
+	String z1= z+"-short";
+	String[] modsShort = {z1 + "/" + z1 + "-no-feedback",
+			     z1 + "/" + z1 + "-some-feedback",
+			     z1 + "/" + z1 + "-more-feedback",
+			     z1 + "/" + z1 + "-max-feedback"};
+
+
+	// As per Paul's request, give them debug mode
+	mustUseDevClient = false;
+	z = "MLC";
+	File launchFile = Files.getLaunchFileAPP();
+	buildTable(modsShort, modsLong, z, launchFile);
+    }
+
+    
+    public void old_LaunchMain(HttpServletRequest request, HttpServletResponse response){
+	//super(request,response);
 	if (error || !loggedIn()) return;
 
 	mustUseDevClient = true;
@@ -64,7 +88,7 @@ public class LaunchMain      extends LaunchRulesBase  {
 
 	try {
 
-	    HashMap<String,Vector<PlayerInfo>> allPlayers = findPlayers( em,  new Integer(uid));
+	    allPlayers = findPlayers( em,  new Integer(uid));
 
 	    //String[] allRuleNames = Files.listAllRuleSetsInTree("APP");
 
@@ -85,7 +109,7 @@ public class LaunchMain      extends LaunchRulesBase  {
 	    rows.add(fm.tr(String.join("",cells)));
 
 	    
-	    File launchFile = Files.getLaunchFile();
+	    File launchFile = Files.getLaunchFileMLC();
 	    if (!launchFile.exists()) throw new IOException("The control file " + launchFile + " does not exist on the server");;
 	    CsvData csv = new CsvData(launchFile, true, false, new int[] {2});	
 	    for(CsvData.LineEntry _e: csv.entries) {

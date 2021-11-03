@@ -43,6 +43,8 @@ public class AnalyzeTranscripts {
     
     public static void main(String[] argv) throws Exception {
 
+	String outDir = "tmp";
+
 	if (argv.length==0) {
 	    int y[]={1, 1, 0, 0, 0, 0, 1, 1};
 	    test(y);
@@ -64,7 +66,7 @@ public class AnalyzeTranscripts {
 	// for each player, the list of episodes...
 	TreeMap<String,Vector<EpisodeHandle>> ph =new TreeMap<>();
 
-	// for each experiment plan...
+	Vector<String> plans = new Vector<>();
 	for(int j=0; j<argv.length; j++) {
 	    String exp = argv[j];
 	    if (j==0 && exp.equals("-p0random")) {
@@ -75,8 +77,17 @@ public class AnalyzeTranscripts {
 		needP0=true;
 		randomPlayerModel = ReplayedEpisode.RandomPlayer.MCP1;
 		continue;
+	    } else if (j+1< argv.length && exp.equals("out")) {
+		outDir = argv[++j];
 	    }
-	    
+	    plans.add(exp);
+	}
+
+	plans = expandPlans(em, plans);
+	
+	// for each experiment plan...
+	for(String exp: plans) {
+		
 	    System.out.println("Experiment plan=" +exp);
 	    Vector<String> trialListNames = TrialList.listTrialLists(exp);
 
@@ -131,7 +142,7 @@ public class AnalyzeTranscripts {
 
 	}	    
 
-	File base = new File("tmp");
+	File base = new File(outDir);
 	if (!base.exists() || !base.isDirectory() || !base.canWrite())  throw new IOException("Not a writeable directory: " + base);
 
 	File gsum=new File(base, needP0? "summary-p0-"+randomPlayerModel+".csv" : "summary-flat.csv");
@@ -162,6 +173,26 @@ public class AnalyzeTranscripts {
 	wsum.close();
     }
 
+    /** Expands '%' in plan names. Only includes plans that have any
+	non-empty episodes associated with them. */
+    private static Vector<String> expandPlans(EntityManager em, Vector<String> v0) throws Exception  {
+	Vector<String> v = new 	Vector<>();
+	Query q = em.createQuery("select distinct e.player.experimentPlan from  EpisodeInfo e where e.player.experimentPlan like :p and e.attemptCnt>0");
+
+
+	for(String p: v0) {
+	    if (p.indexOf('%')>=0) {
+		q.setParameter("p", p);
+		v.addAll((List<String>)q.getResultList());		
+	    } else {
+		v.add(p);
+	    }
+	}
+	    
+	return v;
+    }
+
+    
     /**
     	@param base The main output directory
     */

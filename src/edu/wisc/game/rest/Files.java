@@ -241,8 +241,9 @@ public class Files {
 
     private static String[] listAllExperimentPlanDirsInTree(File root) throws IOException {
 	File[] files = root.listFiles();
+	if (files==null) throw new IOException("Cannot read directory " + root);
 	Vector<String> v = new Vector<>();
-
+	
 	for(File cf: files) {	    
 	    if (cf.isDirectory()) {
 		String fname = cf.getName();
@@ -315,8 +316,12 @@ public class Files {
     }
 
     /** The control file for the repeat-user launch page */
-    static public File getLaunchFile() {
-	return new File(launchDir(), "launch.csv");
+    static public File getLaunchFileAPP() {
+	return new File(launchDir(), "launch-app.csv");
+    }
+    /** The control file for the repeat-user launch page */
+    static public File getLaunchFileMLC() {
+	return new File(launchDir(), "launch-mlc.csv");
     }
 
     public static File modifierFile(String modifierName) throws IOException {

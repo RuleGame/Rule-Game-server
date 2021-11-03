@@ -30,6 +30,13 @@ Welcome <%= main.getDisplayText() %>
 
 <p>See also the <a href="launch-rules.jsp">students' page (APP)</a>
 
+
+<hr>
+<h2>Instructions for the experiment manager</h2>
+
+<p>The experiment manager can find the setup instructions for this page <a href="launch-setup.html">here</a>.
+
+
 <hr>
 <a href="../LogoutServlet">Log out</a>
 
