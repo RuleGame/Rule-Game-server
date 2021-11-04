@@ -25,7 +25,8 @@ public class PlayerInfo {
     @Id 
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private long id;
-
+    public long getId() { return id;}
+    
     /** The date of first activity */
     @Basic
     private Date date; 

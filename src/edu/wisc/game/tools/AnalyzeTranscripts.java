@@ -40,6 +40,21 @@ public class AnalyzeTranscripts {
     private static boolean needP0=false;
     private static ReplayedEpisode.RandomPlayer randomPlayerModel=//null;
 	ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;	
+
+
+    /** This can be set to false, with the "-nofit" option, to
+	skip curve fitting */
+    private static boolean weWantFitting=true;
+
+    /** How argv elements are interpreted */
+    enum ArgType { PLAN, PID, UID, UNICK};
+    
+    // for each rule set name, keep the list of all episodes
+    static TreeMap<String, Vector<EpisodeHandle>> allHandles= new TreeMap<>();
+
+    // for each player, the list of episodes...
+    static TreeMap<String,Vector<EpisodeHandle>> ph =new TreeMap<>();
+
     
     public static void main(String[] argv) throws Exception {
 
@@ -61,42 +76,52 @@ public class AnalyzeTranscripts {
 	
 	EntityManager em = Main.getNewEM();
 
-	// for each rule set name, keep the list of all episodes
-	TreeMap<String, Vector<EpisodeHandle>> allHandles= new TreeMap<>();
-	// for each player, the list of episodes...
-	TreeMap<String,Vector<EpisodeHandle>> ph =new TreeMap<>();
-
+	ArgType argType = ArgType.PLAN;
+	
 	Vector<String> plans = new Vector<>();
+	Vector<String> pids = new Vector<>();
+	Vector<String> nicknames = new Vector<>();
+	Vector<Long> uids = new Vector<>();
 	for(int j=0; j<argv.length; j++) {
-	    String exp = argv[j];
-	    if (j==0 && exp.equals("-p0random")) {
+	    String a = argv[j];
+	    if (a.equals("-p0random")) {
 		needP0=true;
 		randomPlayerModel = ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;
-		continue;
-	    } else if  (j==0 && exp.equals("-p0mcp1")) {
+	    } else if  (a.equals("-p0mcp1")) {
 		needP0=true;
 		randomPlayerModel = ReplayedEpisode.RandomPlayer.MCP1;
-		continue;
-	    } else if (j+1< argv.length && exp.equals("out")) {
+	    } else if  (a.equals("-nofit")) {
+		weWantFitting=false;
+	    } else if (j+1< argv.length && a.equals("out")) {
 		outDir = argv[++j];
+	    } else if  (a.equals("-nickname")) {
+		argType = ArgType.UNICK;
+	    } else if  (a.equals("-plan")) {
+		argType = ArgType.PLAN;
+	    } else if  (a.equals("-uid")) {
+		argType = ArgType.UID;
+	    } else if  (a.equals("-pid")) {
+		argType = ArgType.PID;
+	    } else {
+
+		if (argType==ArgType.PLAN) 	plans.add(a);
+		else if (argType==ArgType.UNICK) 	nicknames.add(a);
+		else if (argType==ArgType.UID) 	uids.add(new Long(a));
+		else if (argType==ArgType.PID)  pids.add(a);
 	    }
-	    plans.add(exp);
 	}
 
 	plans = expandPlans(em, plans);
-	
+
+
+	PlayerList plist = new 	PlayerList(em,	   pids,  nicknames,   uids);
+       
 	// for each experiment plan...
-	for(String exp: plans) {
-		
+	for(String exp: plans) {		
 	    System.out.println("Experiment plan=" +exp);
-	    Vector<String> trialListNames = TrialList.listTrialLists(exp);
 
 	    // ... List all trial lists 
-	    HashMap<String,TrialList> trialListMap=new HashMap<>();	    
-	    for(String trialListId: trialListNames) {
-		TrialList t = new  TrialList(exp, trialListId);
-		trialListMap.put( trialListId,t);	
-	    }
+	    TrialListMap trialListMap=new TrialListMap(exp);
 	    System.out.println("Experiment plan=" +exp+" has " + trialListMap.size() +" trial lists: "+ Util.joinNonBlank(", ", trialListMap.keySet()));
 	    
 	    Vector<EpisodeHandle> handles= new Vector<>();
@@ -106,49 +131,32 @@ public class AnalyzeTranscripts {
 	    q.setParameter("e", exp);
 	    List<PlayerInfo> res = (List<PlayerInfo>)q.getResultList();
 	    for(PlayerInfo p:res) {
-		String trialListId = p.getTrialListId();
-		TrialList t = trialListMap.get( trialListId);
-		if (t==null) {
-		    System.out.println("ERROR: for player "+p.getPlayerId()+", no trial list is available for id=" +  trialListId +" any more");
-		    continue;
-		}
-		int orderInSeries = 0;
-		int lastSeriesNo =0;
-		// ... and all episodes of each player
-		for(EpisodeInfo e: p.getAllEpisodes()) {
-		    int seriesNo = e.getSeriesNo();
-		    if (seriesNo != lastSeriesNo) orderInSeries = 0;
-		    EpisodeHandle eh = new EpisodeHandle(exp, trialListId, t, p.getPlayerId(), e, orderInSeries);
-		    handles.add(eh);
-
-		    Vector<EpisodeHandle> v = allHandles.get( eh.ruleSetName);
-		    if (v==null)allHandles.put(eh.ruleSetName,v=new Vector<>());
-		    v.add(eh);
-
-		    Vector<EpisodeHandle> w = ph.get(eh.playerId);
-		    if (w==null) ph.put(eh.playerId, w=new Vector<>());
-		    w.add(eh);		     
-
-
-		    
-		    orderInSeries++;
-		    lastSeriesNo=seriesNo;
-		    
-		}
-  
+		doOnePlayer(p,  trialListMap, handles);
 	    }
 
 	    System.out.println("For experiment plan=" +exp+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
+	}
 
-	}	    
+	// Or, for each specified player...
+	for(PlayerInfo p: plist) {
+	    TrialListMap trialListMap=new TrialListMap(p.getExperimentPlan());
+	    Vector<EpisodeHandle> handles= new Vector<>();
+	    doOnePlayer(p,  trialListMap, handles);
+	    System.out.println("For player=" +p.getPlayerId()+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
+	}
+
+	
 
 	File base = new File(outDir);
 	if (!base.exists() || !base.isDirectory() || !base.canWrite())  throw new IOException("Not a writeable directory: " + base);
 
-	File gsum=new File(base, needP0? "summary-p0-"+randomPlayerModel+".csv" : "summary-flat.csv");
-	PrintWriter wsum =new PrintWriter(new FileWriter(gsum, false));
-	String sumHeader = "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,yy,B,C,t_I,k,Z,n,L/n,AIC/n";
-	wsum.println(sumHeader);
+
+	PrintWriter wsum =null;
+	if (weWantFitting) {
+	    File gsum=new File(base, needP0? "summary-p0-"+randomPlayerModel+".csv" : "summary-flat.csv");	    wsum = new PrintWriter(new FileWriter(gsum, false));
+	    String sumHeader = "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,yy,B,C,t_I,k,Z,n,L/n,AIC/n";
+	    wsum.println(sumHeader);
+	}
 	
 	for(String ruleSetName: allHandles.keySet()) {
 	    System.out.println("For rule set=" +ruleSetName+", found " + allHandles.get(ruleSetName).size()+" good episodes"); //:"+Util.joinNonBlank(" ",allHandles.get(ruleSetName) ));
@@ -170,9 +178,72 @@ public class AnalyzeTranscripts {
 	    AnalyzeTranscripts atr = new AnalyzeTranscripts(playerId, base, wsum);
 	    atr.analyzePlayerRecord(v);
 	}
-	wsum.close();
+	if (wsum!=null) wsum.close();
     }
 
+    /** ... List all trial lists for a plan */
+    static class TrialListMap extends HashMap<String,TrialList> {
+	TrialListMap(String exp) throws IOException, IllegalInputException {
+	    Vector<String> trialListNames = TrialList.listTrialLists(exp);
+	    for(String trialListId: trialListNames) {
+		TrialList t = new  TrialList(exp, trialListId);
+		put( trialListId,t);	
+	    }
+	}
+    }
+    
+    /** An ordered list of unique PlayerInfo objects */
+    private static class PlayerList extends Vector<PlayerInfo> {
+	private HashSet<Long> h = new HashSet<>();	
+	public boolean addAll(Collection<? extends PlayerInfo > c) {
+	    int cnt=0;
+	    for(PlayerInfo p: c) {
+		if (!h.contains(p.getId())) {
+		    h.add(p.getId());
+		    add(p);
+		    cnt++;
+		}
+	    }
+	    return(cnt>0);
+	}
+	
+	PlayerList(EntityManager em,
+		   Vector<String> pids,
+		   Vector<String> nicknames,
+		   Vector<Long> uids) {
+
+	    for(String pid: pids) {
+		Query q =
+		    (pid.indexOf('%')>=0)?
+		    em.createQuery("select p from PlayerInfo p where p.playerId like :p"):
+		    em.createQuery("select p from PlayerInfo p where p.playerId=:p");
+	    
+		q.setParameter("p", pid);
+		addAll((List<PlayerInfo>)q.getResultList());
+	    }	    
+
+	    for(Long uid: uids) {
+		Query q = em.createQuery("select p from PlayerInfo p where p.user.id=:u");
+	    
+		q.setParameter("p", uid);
+		addAll((List<PlayerInfo>)q.getResultList());
+	    }
+
+	    for(String nickname: nicknames) {
+		Query q =
+		    (nickname.indexOf('%')>=0)?
+		    em.createQuery("select p from PlayerInfo p where p.user.nickname like :n"):
+		    em.createQuery("select p from PlayerInfo p where p.user.nickname=:n");
+	    
+		q.setParameter("n", nickname);
+		addAll((List<PlayerInfo>)q.getResultList());
+	    }
+
+	}
+	
+    }
+
+    
     /** Expands '%' in plan names. Only includes plans that have any
 	non-empty episodes associated with them. */
     private static Vector<String> expandPlans(EntityManager em, Vector<String> v0) throws Exception  {
@@ -190,6 +261,40 @@ public class AnalyzeTranscripts {
 	}
 	    
 	return v;
+    }
+
+    private static void doOnePlayer(PlayerInfo p,  TrialListMap trialListMap,    	    Vector<EpisodeHandle> handles) {
+
+		
+		String trialListId = p.getTrialListId();
+		TrialList t = trialListMap.get( trialListId);
+		if (t==null) {
+		    System.out.println("ERROR: for player "+p.getPlayerId()+", no trial list is available for id=" +  trialListId +" any more");
+		    return;
+		}
+		int orderInSeries = 0;
+		int lastSeriesNo =0;
+		// ... and all episodes of each player
+		for(EpisodeInfo e: p.getAllEpisodes()) {
+		    int seriesNo = e.getSeriesNo();
+		    if (seriesNo != lastSeriesNo) orderInSeries = 0;
+		    EpisodeHandle eh = new EpisodeHandle(p.getExperimentPlan(), trialListId, t, p.getPlayerId(), e, orderInSeries);
+		    //		    handles.add(eh);
+
+		    Vector<EpisodeHandle> v = allHandles.get( eh.ruleSetName);
+		    if (v==null)allHandles.put(eh.ruleSetName,v=new Vector<>());
+		    v.add(eh);
+
+		    Vector<EpisodeHandle> w = ph.get(eh.playerId);
+		    if (w==null) ph.put(eh.playerId, w=new Vector<>());
+		    w.add(eh);		     
+
+
+		    
+		    orderInSeries++;
+		    lastSeriesNo=seriesNo;
+		    
+		}
     }
 
     
@@ -218,13 +323,18 @@ public class AnalyzeTranscripts {
 	if (includedEpisodes.size()==0) return;
 	EpisodeHandle eh0 =  includedEpisodes.firstElement();
 
-	double[] p0 = computeP0(section, eh0.para, eh0.ruleSetName);
-
+	double[] p0=null;
+	String outHeader="#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,orderInSeries,episodeId," + "moveNo,timestamp,y,x,by,bx,code";
+	if (needP0) {
+	    outHeader += ",p0";
+	    p0 = computeP0(section, eh0.para, eh0.ruleSetName);
+	}
+	
 	String rid = eh0.ruleSetName;
 	File d=new File(base, rid);
 	File g=new File(d, includedEpisodes.firstElement().playerId + ".split-transcripts.csv");		
 	PrintWriter w =  new PrintWriter(new FileWriter(g, false));
-	final String outHeader="#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,orderInSeries,episodeId," + "moveNo,timestamp,y,x,by,bx,code,p0";
+
 	w.println(outHeader);
 
 	int je =0, jp=0;
@@ -237,14 +347,16 @@ public class AnalyzeTranscripts {
 		for(int j=2; j<e.csv.nCol(); j++) {
 		    w.print(","+ImportCSV.escape(e.csv.getCol(j)));
 		}
-		w.print(","+ p0[jp++]);
+		if (needP0) w.print(","+ p0[jp++]);
 		w.println();	
 	    }
 	}
 
 	w.close(); w=null;
 
-	OptimumExplained oe = analyzeSection( joinSubsections( section), eh0, wsum, needP0? p0: null);
+	if (weWantFitting) {
+	    OptimumExplained oe = analyzeSection( joinSubsections( section), eh0, wsum, needP0? p0: null);
+	}
 	section.clear();
 	includedEpisodes.clear();
     }
@@ -373,15 +485,16 @@ public class AnalyzeTranscripts {
     private  void    analyzePlayerRecord(Vector<EpisodeHandle> v) throws  IOException, IllegalInputException,  RuleParseException{
 
 
-	File boardsFile =  Files.boardsFile(playerId, true);
 
 	HashMap <String,Boolean> useImages = new HashMap<>();
 	for(EpisodeHandle eh: v) {
 	    useImages.put(eh.episodeId, eh.useImages);
 	}
-	
-	boards = BoardManager.readBoardFile(boardsFile, useImages);
 
+	if (weWantFitting) {
+	    File boardsFile =  Files.boardsFile(playerId, true);
+	    boards = BoardManager.readBoardFile(boardsFile, useImages);
+	}
 	
 	File inFile = Files.transcriptsFile(playerId, true);
 	TranscriptManager.ReadTranscriptData transcript = new TranscriptManager.ReadTranscriptData(inFile);
@@ -405,7 +518,9 @@ public class AnalyzeTranscripts {
 	    String eid = subsection[0].eid;
 	    EpisodeHandle eh = findEpisodeHandle(v, eid);
 	    if (eh==null) {
-		throw new IllegalArgumentException("In file "+inFile+", found unexpected experimentId="+ eid);
+		String msg = "In file "+inFile+", found unexpected experimentId="+ eid;
+		System.err.println(msg);		continue;
+		//throw new IllegalArgumentException(msg);
 	    }
 	    
 	    String rid=eh.ruleSetName;
