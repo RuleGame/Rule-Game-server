@@ -115,7 +115,7 @@ public class AnalyzeTranscripts {
 
 
 	PlayerList plist = new 	PlayerList(em,	   pids,  nicknames,   uids);
-       
+
 	// for each experiment plan...
 	for(String exp: plans) {		
 	    System.out.println("Experiment plan=" +exp);
@@ -138,8 +138,11 @@ public class AnalyzeTranscripts {
 	}
 
 	// Or, for each specified player...
+	HashMap<String,TrialListMap> trialListMaps = new HashMap<>();	
 	for(PlayerInfo p: plist) {
-	    TrialListMap trialListMap=new TrialListMap(p.getExperimentPlan());
+	    String exp=p.getExperimentPlan();
+	    TrialListMap trialListMap=trialListMaps.get(exp);
+	    if (trialListMap==null) trialListMaps.put(exp, trialListMap=new TrialListMap(p.getExperimentPlan()));
 	    Vector<EpisodeHandle> handles= new Vector<>();
 	    doOnePlayer(p,  trialListMap, handles);
 	    System.out.println("For player=" +p.getPlayerId()+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));

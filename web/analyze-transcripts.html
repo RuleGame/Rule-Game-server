@@ -1,0 +1,109 @@
+<html>
+  <head><title>Analyze Transcripts tool</title>
+  </head>
+<body>
+  <h1>Analyze Transcripts tool</h1>
+
+<div align="center"><em>Updated 2021-11-03, for Game Server 4.000</em></div>
+
+  <p>The Analyze Transcripts tool can be used to extract transcripts for specified experiment plans, specified players, or specified repeat users, and to carry out certain types of data analysis.
+
+  <p>In general, the usage of the script can be described as follows:
+
+<re>
+      /home/vmenkov/w2020/game/scripts/analyze-transcripts.sh <em>[options]</em> <em>data_selector</em>
+</pre>
+    where <em>data_selector</em> specifies the set of transcripts to extract, and  <em>options</em> specify the mode of processing.
+</p>
+
+    <h2>Data selection</h2>
+<p>There are several data selection modes, illustrated below. To save space, the script name in the examples below is given without the full path, which in reality you will need to indicate. The output goes to directory named <tt>tmp</tt>, which you need to create (as a new empty directory) before running the script.
+
+  <h3>1. Select experiment plans</h3>
+  <pre>      
+analyze-transcripts.sh <em>[options] plan1 [plan2...]</em>
+  </pre>
+   e.g.
+  <pre>      
+analyze-transcripts.sh pilot06
+  </pre>
+  or
+  <pre>      
+analyze-transcripts.sh '%OCT26%'
+  </pre>
+
+<p>
+(You can also write <code>analyze-transcripts.sh -plan '%OCT26%'</code>, but the <tt>-plan</tt> option is unnecessary, since selection by plan name is the default selection method).
+
+<p>
+As the above example shows, the percent character can be used for wildcard-based selection, to select all matching plans. The percent character can also be used in all other selectors discussed below.  (We use '%' rather than '*' because that's what used in the SQL server. It also avoids certain problems with  command line processing).
+
+<p>Specifying an experiment plan is equivalent to specifying a list of player IDs (see 2 below) that includes all player IDs assigned to that experiment plan.
+
+    <h3>2. Select player IDs</h3>
+
+<p>In the Rule Game Server, a player ID corresponds to a round of one or several series of episodes played according to a particular trial list. An M-Turker has a single player id, while a repeat user may have multiple ones.
+  <pre>      
+analyze-transcripts.sh -pid <em>playerId1 [playerId2 ...]</em>
+  </pre>
+  E.g.
+  <pre>      
+analyze-transcripts.sh -pid 'pk%'
+  </pre>
+or
+  <pre>      
+analyze-transcripts.sh -pid 'RepeatUser-%'
+  </pre>
+(The second examples picks all player IDs created by GS4's repeat users, since that's what their player IDs look like).      
+
+  <h3>3. Select by repeat user ID</h3>
+
+<P>Internally, repeat users are identified by unique user IDs. (You can see IDs for various player e.g. by logging in to the SQL server with <tt>mysql</tt> and issuing commands such as
+  <Pre>
+use game;
+select * from User;
+  </pre>
+
+<p>
+  One can pass a list of user IDs to the Analyze Transcript tool as well, as follows:
+  <pre>      
+analyze-transcripts.sh -uid <em>uid1 [uid2 ...]</em>
+  </pre>
+  E.g.
+  <pre>      
+analyze-transcripts.sh -uid 2 3 6
+  </pre>
+</p>
+
+<p>Selecting data by specifying a repeat user ID is equivalent to selecting by player ID and listing all player IDs associated with that repeat user.
+    	 
+<h3>4. Select by repeat user nickname</h3>
+
+<p>A repeat created via the login screen may have a nickname. You can see the nicknames of repeat users with the same SQL command. The Analyze Transcript tool can take a list of user nicknames instead of a list of user IDs, e.g.  
+  <pre>      
+analyze-transcripts.sh -nickname 'John%Doe' '%Walrus%'
+  </pre>
+
+
+<p>Note that one should not use spaces inside command-line arguments. If your nickname has a space inside it, you may use a percent sign (%) on the command line above instead.  
+</p>
+
+<h2>Options controlling data processing</h2>
+
+<p>The Transcript Analyzer identifies all episodes played by specified players (or the players in the specified experiment plan), and writes out a separate transcript section file for each (player, rule set) combination (i.e. for each series played by each player). Additional computations are controlled by the options that appear on the command line before the selection specifiers.
+
+<p>If the <tt>-nofit</tt> option is given, no additional computations are carried out.
+
+<p>Otherwise, log-like curve-fitting is carried out, either with no <em>p</em><sub>0</sub>, or with <em>p</em><sub>0</sub>, computed based on a particular baseline player model. Currently, two such models are supported:
+  <ul>
+    <li><tt>-p0random</tt> -- a completely random player
+    <li><tt>-p0mcp</tt> -- a Minimally Competent Player (one who does not repeat failed move attempts until the board position changes).
+  </ul>
+
+<p>The value of <em>p</em><sub>0</sub> for each move attempt is written as a last column of each transcript section file, when applicable.
+
+<p>The curve fitting parameters are written into a file named <tt>summary-flat.csv</tt>, <tt>summary-p0-COMPLETELY_RANDOM.csv</tt>, or <tt>summary-p0-MCP.csv</tt>, as the case may be.
+   
+
+</body>
+</html>

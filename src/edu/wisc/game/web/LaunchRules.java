@@ -30,13 +30,13 @@ public class LaunchRules      extends LaunchRulesBase  {
 	super(request,response);
 	if (error || !loggedIn()) return;
 	String[] modsLong = {"APP/APP-no-feedback",
-			 "APP/APP-some-feedback",
-			 "APP/APP-more-feedback",
+			 "APP/APP2-some-feedback",
+			 "APP/APP2-more-feedback",
 			 "APP/APP-max-feedback" };
 
 	String[] modsShort = {"APP-short/APP-short-no-feedback",
-			  "APP-short/APP-short-some-feedback",
-			  "APP-short/APP-short-more-feedback",
+			  "APP-short/APP2-short-some-feedback",
+			  "APP-short/APP2-short-more-feedback",
 			  "APP-short/APP-short-max-feedback" };
 
 	File launchFile = Files.getLaunchFileAPP();
