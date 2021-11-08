@@ -71,7 +71,7 @@ public class LaunchMain      extends LaunchRulesBase  {
 
 
 	// As per Paul's request, give them debug mode
-	mustUseDevClient = false;
+	mustUseDevClient = true;
 	z = "MLC";
 	File launchFile = Files.getLaunchFileMLC();
 	buildTable(modsShort, modsLong, z, launchFile);
