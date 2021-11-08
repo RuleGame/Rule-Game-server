@@ -28,10 +28,12 @@
 
 2. Enter the expression to be evaluated in the box below
 <%= HTMLFmter.htmlFmter.input( "expression", "", 80) %>
-
+<br>
+Note: variable names are case-sensitive!
 <br>
 3. <button type="submit">Evaluate!</button>
 </form>
+
 
 <hr>
 [<a href="arithmetic.html">Bucket expression arithmetic</a>]

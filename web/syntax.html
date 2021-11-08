@@ -183,6 +183,8 @@ Each position specifier must be either an integer number in the range 1..<em>N</
 	<li><tt>Remotest</tt> = the bucket farthest from  the location of the piece being picked
       </ul>
     </ol>
+<p>
+    Note: variable names are case-sensitive!
     <p>
     The variables <tt>p</tt>, <tt>pc</tt>, <tt>ps</tt> are nor defined before the first relevant actions have occured (i.e. <tt>p</tt> is not defined before the first successful move;  <tt>pc</tt> is not defined in the context of an attempt to move a triangle, unless a triangle has been previously successfully moved; etc). When any variable occurring in an expression is not defined during a move attempt, the expression is simply ignored, i.e. does not provide any destination.
 

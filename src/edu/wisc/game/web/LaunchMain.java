@@ -59,21 +59,21 @@ public class LaunchMain      extends LaunchRulesBase  {
 	if (error || !loggedIn()) return;
 	String z = "APP"; // can use APP's mods for now
 	String[] modsLong = {z + "/" + z + "-no-feedback",
-			     z + "/" + z + "-some-feedback",
-			     z + "/" + z + "-more-feedback",
+			     z + "/" + z + "2-some-feedback",
+			     z + "/" + z + "2-more-feedback",
 			     z + "/" + z + "-max-feedback"};
 
-	String z1= z+"-short";
-	String[] modsShort = {z1 + "/" + z1 + "-no-feedback",
-			     z1 + "/" + z1 + "-some-feedback",
-			     z1 + "/" + z1 + "-more-feedback",
-			     z1 + "/" + z1 + "-max-feedback"};
+	String z1 = "APP-short";
+	String[] modsShort = {z1 + "/" + z + "-short-no-feedback",
+			     z1 + "/" + z + "2-short-some-feedback",
+			     z1 + "/" + z + "2-short-more-feedback",
+			     z1 + "/" + z + "-short-max-feedback"};
 
 
 	// As per Paul's request, give them debug mode
 	mustUseDevClient = false;
 	z = "MLC";
-	File launchFile = Files.getLaunchFileAPP();
+	File launchFile = Files.getLaunchFileMLC();
 	buildTable(modsShort, modsLong, z, launchFile);
     }
 

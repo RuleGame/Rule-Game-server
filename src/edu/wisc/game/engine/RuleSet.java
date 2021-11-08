@@ -599,7 +599,7 @@ public class RuleSet {
 	    r = r.trim();
 	    if (r.startsWith("#") || r.length()==0) {
 		if (!topCommentEnded) {
-		    String s = r.replaceAll("^#", "");
+		    String s = r.replaceAll("^#+-* *", "");
 		    if (s.length()>0) description.add(s);
 		}
 
@@ -626,7 +626,14 @@ public class RuleSet {
 		continue;
 	    }
 		
-	    Row row = new Row(tokens, orders);
+	    Row row;
+	    try {
+		row = new Row(tokens, orders);
+	    } catch(RuleParseException ex) {
+		throw new RuleParseException("Failed to parse rule row: " + r, ex);
+	    }
+
+	    
 	    if (row.size()==0)  throw new RuleParseException("No rules found in this line: "+r);
 	    rows.add(row);
 

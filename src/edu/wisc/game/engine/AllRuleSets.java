@@ -39,6 +39,7 @@ public class AllRuleSets extends HashMap<String, RuleSet> {
 	if (rules==null) {
 	    File f = Files.rulesFile(ruleSetName);
 	    rules = read(f);
+	    Logging.info("AllRuleSets: Loaded rule set named " + ruleSetName);
 	    if (Files.rulesCanBeCached(ruleSetName)) {
 		super.put(ruleSetName, rules);
 	    }
@@ -58,6 +59,7 @@ public class AllRuleSets extends HashMap<String, RuleSet> {
     /** Can be used to ensure that the rule sets will be reloaded */
     public static void clearAll() {
 	allRuleSets.clear();
+	Logging.info("AllRuleSets: Cleared the rule table");
     }
     
     private static  AllRuleSets allRuleSets = new  AllRuleSets();
