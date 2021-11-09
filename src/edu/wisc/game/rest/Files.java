@@ -9,7 +9,12 @@ import edu.wisc.game.sql.Piece;
 /** Information about the data files the Rule Game web server reads and writes */
 public class Files {
 
-    static final File savedDir = new File("/opt/tomcat/saved");
+    /** The place where the Game Server saves transcripts etc.
+	Normally, this is always the same location; but, for example,
+	an analysis script may use an archive copy of these data from
+	a different location
+     */
+    static File savedDir = new File("/opt/tomcat/saved");
     static File inputDir = new File("/opt/tomcat/game-data");
 
     /** Sets the path to the input directory, which is the root
@@ -23,6 +28,19 @@ public class Files {
     */
     static public void setInputDir(String path) {
 	inputDir = new File(path);
+	//System.out.println("DEBUG: inputDir := " + inputDir);
+    }
+
+    /** Sets the path to the saved-data directory. The Game Server
+	itself would never need to do that; however, one can
+	imagine an analysis script running on a different computer
+	(e.g., you use your desktop computer to analyze the data
+	accumulated at the main server), in which case it may
+	read the transcript etc. data to be analyzed from a different
+	location.
+     */
+    static public void setSavedDir(String path) {
+	savedDir = new File(path);
 	//System.out.println("DEBUG: inputDir := " + inputDir);
     }
 

@@ -7,7 +7,6 @@ import java.text.*;
 
 import javax.persistence.*;
 
-
 import org.apache.commons.math3.optim.*;
 import org.apache.commons.math3.optim.nonlinear.scalar.*;
 import org.apache.commons.math3.optim.nonlinear.scalar.gradient.*;
@@ -22,8 +21,19 @@ import edu.wisc.game.parser.RuleParseException;
 /** Methods for the statistical analysis of game transcripts */
 public class AnalyzeTranscripts {
 
+    static private void usage() {
+	usage(null);
+    }
+    static private void usage(String msg) {
+	System.err.println("For usage info, please see:\n");
+	System.err.println("http://sapir.psych.wisc.edu:7150/w2020/analyze-transcripts.html");
+	if (msg!=null) 	System.err.println(msg + "\n");
+	System.exit(1);
+    }
 
-    /** Looks up the EpisodeHandle object for a specified episode id.
+    
+    /** Looks up the EpisodeHandle object in vector v for a specified
+	episode id.
 	
 	FIXME: Using a HashMap instead of a vector could, theoretically,
 	provide a faster retrieval, but in practice it probably would make
@@ -36,17 +46,21 @@ public class AnalyzeTranscripts {
 	}
 	return null;
     }
-   
+
+    /** Do we need to compute p0? */
     private static boolean needP0=false;
+    /** How should be compute p0? (Using which baseline random player model?) */
     private static ReplayedEpisode.RandomPlayer randomPlayerModel=//null;
 	ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;	
 
 
-    /** This can be set to false, with the "-nofit" option, to
-	skip curve fitting */
+    /** Do we want to fit the learning curve for the Y(t) vector? This
+	can be set to false, with the "-nofit" option, to skip curve
+	fitting */
     private static boolean weWantFitting=true;
 
-    /** How argv elements are interpreted */
+    /** Various ways to interpret argv elements -- as experiment plan
+	names, player IDs, etc. */
     enum ArgType { PLAN, PID, UID, UNICK};
     
     // for each rule set name, keep the list of all episodes
@@ -77,6 +91,7 @@ public class AnalyzeTranscripts {
 	EntityManager em = Main.getNewEM();
 
 	ArgType argType = ArgType.PLAN;
+	boolean fromFile = false;
 	
 	Vector<String> plans = new Vector<>();
 	Vector<String> pids = new Vector<>();
@@ -84,16 +99,30 @@ public class AnalyzeTranscripts {
 	Vector<Long> uids = new Vector<>();
 	for(int j=0; j<argv.length; j++) {
 	    String a = argv[j];
-	    if (a.equals("-p0random")) {
-		needP0=true;
-		randomPlayerModel = ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;
-	    } else if  (a.equals("-p0mcp1")) {
-		needP0=true;
-		randomPlayerModel = ReplayedEpisode.RandomPlayer.MCP1;
+	    if (a.startsWith("-p0")) {
+		String mode = a.substring(3);
+		if (mode.equals("")) {
+		    if (++j >= argv.length) usage("The -p0 option must be followed by a model name");
+		    mode = argv[j];
+		}
+		needP0=true;		
+		if (mode.equals("random")) {
+		    randomPlayerModel = ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;
+		} else if  (mode.equals("mcp1")) {
+		    randomPlayerModel = ReplayedEpisode.RandomPlayer.MCP1;
+		} else {
+		    usage("Invalid model name: " + mode);
+		}
 	    } else if  (a.equals("-nofit")) {
 		weWantFitting=false;
-	    } else if (j+1< argv.length && a.equals("out")) {
+	    } else if (j+1< argv.length && a.equals("-out")) {
 		outDir = argv[++j];
+	    } else if (j+1< argv.length && a.equals("-in")) {
+		String inputDir = argv[++j];
+		if (!(new File(inputDir)).isDirectory()) usage("Not a directory: " + inputDir);
+		Files.setSavedDir(inputDir);
+
+		
 	    } else if  (a.equals("-nickname")) {
 		argType = ArgType.UNICK;
 	    } else if  (a.equals("-plan")) {
@@ -102,12 +131,18 @@ public class AnalyzeTranscripts {
 		argType = ArgType.UID;
 	    } else if  (a.equals("-pid")) {
 		argType = ArgType.PID;
+	    } else if  (a.equals("-file")) {
+		fromFile=true;
 	    } else {
 
-		if (argType==ArgType.PLAN) 	plans.add(a);
-		else if (argType==ArgType.UNICK) 	nicknames.add(a);
-		else if (argType==ArgType.UID) 	uids.add(new Long(a));
-		else if (argType==ArgType.PID)  pids.add(a);
+		String[] v=  fromFile? readList(new File(a)):  new String[]{a};
+				  
+		for(String b: v) {
+		    if (argType==ArgType.PLAN) 	plans.add(b);
+		    else if (argType==ArgType.UNICK) 	nicknames.add(b);
+		    else if (argType==ArgType.UID) 	uids.add(new Long(b));
+		    else if (argType==ArgType.PID)  pids.add(b);
+		}
 	    }
 	}
 
@@ -151,7 +186,10 @@ public class AnalyzeTranscripts {
 	
 
 	File base = new File(outDir);
-	if (!base.exists() || !base.isDirectory() || !base.canWrite())  throw new IOException("Not a writeable directory: " + base);
+	if (!base.exists()) {
+	    if (!base.mkdirs()) usage("Cannot create output directory: " + base);
+	}
+	if (!base.isDirectory() || !base.canWrite()) usage("Not a writeable directory: " + base);
 
 
 	PrintWriter wsum =null;
@@ -194,6 +232,19 @@ public class AnalyzeTranscripts {
 	    }
 	}
     }
+
+    /** Reads a list of something (e.g. player IDs) from teh first column
+	of a CSV file */
+    private static String[] readList(File f) throws IOException, IllegalInputException{
+	Vector<String> v=new Vector<>();
+	CsvData csv = new CsvData(f, true, false, null);
+	for(CsvData.LineEntry _e: csv.entries) {
+	    CsvData.BasicLineEntry e = (CsvData.BasicLineEntry)_e;
+	    v.add( e.getKey());
+	}
+	return v.toArray(new String[0]);
+    }
+    
     
     /** An ordered list of unique PlayerInfo objects */
     private static class PlayerList extends Vector<PlayerInfo> {

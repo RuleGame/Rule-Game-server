@@ -4,7 +4,7 @@
 <body>
   <h1>Analyze Transcripts tool</h1>
 
-<div align="center"><em>Updated 2021-11-03, for Game Server 4.000</em></div>
+<div align="center"><em>Updated 2021-11-08, for Game Server 4.001</em></div>
 
   <p>The Analyze Transcripts tool can be used to extract transcripts for specified experiment plans, specified players, or specified repeat users, and to carry out certain types of data analysis.
 
@@ -17,7 +17,7 @@
 </p>
 
     <h2>Data selection</h2>
-<p>There are several data selection modes, illustrated below. To save space, the script name in the examples below is given without the full path, which in reality you will need to indicate. The output goes to directory named <tt>tmp</tt>, which you need to create (as a new empty directory) before running the script.
+<p>There are several data selection modes, illustrated below. To save space, the script name in the examples below is given without the full path, which in reality you will need to indicate. The output goes to directory named <tt>tmp</tt> (or another chosen directory), which you need to create (as a new empty directory) before running the script.
 
   <h3>1. Select experiment plans</h3>
   <pre>      
@@ -88,6 +88,20 @@ analyze-transcripts.sh -nickname 'John%Doe' '%Walrus%'
 <p>Note that one should not use spaces inside command-line arguments. If your nickname has a space inside it, you may use a percent sign (%) on the command line above instead.  
 </p>
 
+<h2>Options controlling input and output</h2>
+
+
+<p>If you have a large list of arguments (e.g. player IDs), you can put them in a CSV file (one items per line, to be read from the first column of the file; all other columns are ignored), and use the <code>-file</code> option on the command line. E.g.
+  <pre>      
+analyze-transcripts.sh -pid -file my-pid-list.csv
+  </pre>
+
+<p>This is handy if, for example, you have a list of "good" players prepared for you separately by another team.
+
+<p>Normally, the Transcript Analyzer reads saved data (transcripts etc) from <tt>/opt/tomcat/saved</tt>. However, this can be changed with the option <tt>-in <em>input_dir_name</tt>.  If you do that, make sure that you are still connecting to the right MySQL server, i.e. the data in the SQL server are consistent with the data in the input directory.
+  
+<p>You can use the option <code>-out <em>directory_name</em></code> to have the output written to a directory other than the default <tt>tmp</tt>.
+
 <h2>Options controlling data processing</h2>
 
 <p>The Transcript Analyzer identifies all episodes played by specified players (or the players in the specified experiment plan), and writes out a separate transcript section file for each (player, rule set) combination (i.e. for each series played by each player). Additional computations are controlled by the options that appear on the command line before the selection specifiers.
@@ -96,14 +110,20 @@ analyze-transcripts.sh -nickname 'John%Doe' '%Walrus%'
 
 <p>Otherwise, log-like curve-fitting is carried out, either with no <em>p</em><sub>0</sub>, or with <em>p</em><sub>0</sub>, computed based on a particular baseline player model. Currently, two such models are supported:
   <ul>
-    <li><tt>-p0random</tt> -- a completely random player
-    <li><tt>-p0mcp</tt> -- a Minimally Competent Player (one who does not repeat failed move attempts until the board position changes).
+    <li><tt>-p0 random</tt> -- Completely Random Player (understands notaion, but has no memory)
+    <li><tt>-p0 mcp1</tt> -- MCP1 (Minimally Competent Player 1 -- one who does not repeat failed move attempts until the board position changes).
   </ul>
 
 <p>The value of <em>p</em><sub>0</sub> for each move attempt is written as a last column of each transcript section file, when applicable.
 
 <p>The curve fitting parameters are written into a file named <tt>summary-flat.csv</tt>, <tt>summary-p0-COMPLETELY_RANDOM.csv</tt>, or <tt>summary-p0-MCP.csv</tt>, as the case may be.
-   
+
+  <h2>Examples</h2>
+
+  <h3>Example 1</h3>
+
+  
+  
 
 </body>
 </html>
