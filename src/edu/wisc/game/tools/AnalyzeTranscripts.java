@@ -175,12 +175,18 @@ public class AnalyzeTranscripts {
 	// Or, for each specified player...
 	HashMap<String,TrialListMap> trialListMaps = new HashMap<>();	
 	for(PlayerInfo p: plist) {
-	    String exp=p.getExperimentPlan();
-	    TrialListMap trialListMap=trialListMaps.get(exp);
-	    if (trialListMap==null) trialListMaps.put(exp, trialListMap=new TrialListMap(p.getExperimentPlan()));
-	    Vector<EpisodeHandle> handles= new Vector<>();
-	    doOnePlayer(p,  trialListMap, handles);
-	    System.out.println("For player=" +p.getPlayerId()+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
+	    try {
+		String exp=p.getExperimentPlan();
+		TrialListMap trialListMap=trialListMaps.get(exp);
+		if (trialListMap==null) trialListMaps.put(exp, trialListMap=new TrialListMap(p.getExperimentPlan()));
+		Vector<EpisodeHandle> handles= new Vector<>();
+		doOnePlayer(p,  trialListMap, handles);
+		System.out.println("For player=" +p.getPlayerId()+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
+	    } catch(IOException ex) {
+		System.err.println("Skipping player=" +p.getPlayerId()+" due to missing data. The problem is as follows");
+		System.err.println(ex);
+		ex.printStackTrace(System.err);
+	    }
 	}
 
 	
