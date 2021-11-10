@@ -124,14 +124,39 @@ analyze-transcripts.sh -pid -file my-pid-list.csv
 
 <P>(Here, we assume that we run the script in <tt>/home/vmenkov</tt>. If running in your own directory, adjust the paths as appropriate).
   
-<p>Let's say that we have a list of "interesting" playerIDs in the file  w2020/slack/pid.csv
+<p>Let's say that we have a list of "interesting" playerIDs in the file  w2020/slack/pid.csv. (This is based on what Gary's team sent in late October 2021). We just want to extract and split the transcript data for these players, without curve fitting.
 
-<P>Produce data split and curve fit, without p0:
+
 <pre>
   w2020/game/scripts/analyze-transcripts.sh -nofit -pid -file w2020/slack/pid.csv  -out tmp-3-flat >& tmp.log
   w2020/game/scripts/analyze-transcripts.sh -p0 random -nofit -pid -file w2020/slack/pid.csv  -out tmp-3-random >& tmp.log
     w2020/game/scripts/analyze-transcripts.sh -p0 mcp1 -nofit -pid -file w2020/slack/pid.csv  -out tmp-3-mcp1 >& tmp.log
+</pre>
 
+<p>The output files in the 3 directories, tmp-3-flat, tmp-3-random, tmp-3-mcp1, contain the split transcripts in 3 versions (only differing in the last column, p0). The first has no p0, the 2nd and 3rd have p0 given by the completely random model and the MCP1 model, respectively.
+
+<P>Each line in those files represents one move (or pick) attempt. The <tt>code</tt> column of the output files contains 0 for a successful move (or pick) attempt, and a non-zero (usually 3) for a failed attempt. The p0 column (where applicable) contains the value of p0 (for the relevant baseline model) before each attempt.
+
+<p>With a large real-life sample, it's likely that the log file will contain some error messages. E.g. the following message is due to the fact that a particular experiment plan no longer exists:
+<pre>
+ERROR: Skipping player=A3UKRC3LBM1LEW due to missing data. The problem is as follows:
+java.io.IOException: No experiment plan directory exists: /opt/tomcat/game-data/trial-lists/pilot05_1
+</pre>
+The following message indicates that a particular plan no longer has any trial list files in its directory:
+<pre>
+ERROR: for player A1FKRZKU1H9YFC, no trial list is available for id=nameability_high_first any more
+</pre>
+
+<p>
+The following message indicates that a rule set file has been (re)moved, and no longer exists at the location specified in the trial list file that was used during the particular player's play.
+<pre>
+ERROR: Cannot process data for player=APGX2WZ59OWDN due to missing data. The problem is as follows:
+java.io.IOException: Cannot read rule file: /opt/tomcat/game-data/rules/Rule-002.txt
+</pre>
+This particular message is only relevant in runs with <tt>-p0</tt> on, since we need to know the rules to compute p0. Thus it's likely that there will be fewer split transcripts in the analyses with p0 than in those without p0.
+
+<P>
+Such phenomena usually result from the research team occasionally rearranging the experiment control files. Still, despite such defects, you will have plenty of remaining good data to work with.
 
 </body>
 </html>
