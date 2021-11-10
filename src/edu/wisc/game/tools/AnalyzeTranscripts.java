@@ -237,7 +237,8 @@ public class AnalyzeTranscripts {
 	    String sumHeader = "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,yy,B,C,t_I,k,Z,n,L/n,AIC/n";
 	    wsum.println(sumHeader);
 	}
-	
+
+	// Create subdirectories for all relevant rule sets
 	for(String ruleSetName: allHandles.keySet()) {
 	    System.out.println("For rule set=" +ruleSetName+", found " + allHandles.get(ruleSetName).size()+" good episodes"); //:"+Util.joinNonBlank(" ",allHandles.get(ruleSetName) ));
 	    File d=new File(base, ruleSetName);
@@ -553,10 +554,8 @@ public class AnalyzeTranscripts {
 	    useImages.put(eh.episodeId, eh.useImages);
 	}
 
-	if (weWantFitting) {
-	    File boardsFile =  Files.boardsFile(playerId, true);
-	    boards = BoardManager.readBoardFile(boardsFile, useImages);
-	}
+	File boardsFile =  Files.boardsFile(playerId, true);
+	boards = BoardManager.readBoardFile(boardsFile, useImages);	
 	
 	File inFile = Files.transcriptsFile(playerId, true);
 	TranscriptManager.ReadTranscriptData transcript = new TranscriptManager.ReadTranscriptData(inFile);
