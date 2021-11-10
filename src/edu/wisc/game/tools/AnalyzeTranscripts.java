@@ -183,7 +183,7 @@ public class AnalyzeTranscripts {
 		doOnePlayer(p,  trialListMap, handles);
 		System.out.println("For player=" +p.getPlayerId()+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
 	    } catch(IOException ex) {
-		System.err.println("Skipping player=" +p.getPlayerId()+" due to missing data. The problem is as follows");
+		System.err.println("ERROR: Skipping player=" +p.getPlayerId()+" due to missing data. The problem is as follows");
 		System.err.println(ex);
 		ex.printStackTrace(System.err);
 	    }
@@ -340,9 +340,9 @@ public class AnalyzeTranscripts {
 		    if (seriesNo != lastSeriesNo) orderInSeries = 0;
 		    EpisodeHandle eh = new EpisodeHandle(p.getExperimentPlan(), trialListId, t, p.getPlayerId(), e, orderInSeries);
 		    //		    handles.add(eh);
-
+		    handles.add(eh);
 		    Vector<EpisodeHandle> v = allHandles.get( eh.ruleSetName);
-		    if (v==null)allHandles.put(eh.ruleSetName,v=new Vector<>());
+		    if (v==null) allHandles.put(eh.ruleSetName,v=new Vector<>());
 		    v.add(eh);
 
 		    Vector<EpisodeHandle> w = ph.get(eh.playerId);

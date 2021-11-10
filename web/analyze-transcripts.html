@@ -122,8 +122,14 @@ analyze-transcripts.sh -pid -file my-pid-list.csv
 
   <h3>Example 1</h3>
 
+<P>(Here, we assume that we run the script in <tt>/home/vmenkov</tt>. If running in your own directory, adjust the paths as appropriate).
   
-  
+<p>Let's say that we have a list of "interesting" playerIDs in the file  w2020/slack/pid.csv
+
+<P>Produce data split and curve fit, without p0:
+<pre>
+w2020/game/scripts/analyze-transcripts.sh -pid -file w2020/slack/pid.csv -out tmp-3-flat >& tmp.log
+
 
 </body>
 </html>
