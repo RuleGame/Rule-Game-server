@@ -66,8 +66,41 @@ public class AnalyzeTranscripts {
     // for each rule set name, keep the list of all episodes
     static TreeMap<String, Vector<EpisodeHandle>> allHandles= new TreeMap<>();
 
-    // for each player, the list of episodes...
-    static TreeMap<String,Vector<EpisodeHandle>> ph =new TreeMap<>();
+    /** This is a map which, for each player, contains the list of episodes...
+     */
+    private static class EpisodesByPlayer extends TreeMap<String,Vector<EpisodeHandle>> {
+	void doOnePlayer(PlayerInfo p,  TrialListMap trialListMap,
+			 Vector<EpisodeHandle> handles) {
+		
+	    String trialListId = p.getTrialListId();
+	    TrialList t = trialListMap.get( trialListId);
+	    if (t==null) {
+		System.out.println("ERROR: for player "+p.getPlayerId()+", no trial list is available for id=" +  trialListId +" any more");
+		return;
+	    }
+	    int orderInSeries = 0;
+	    int lastSeriesNo =0;
+	    // ... and all episodes of each player
+	    for(EpisodeInfo e: p.getAllEpisodes()) {
+		int seriesNo = e.getSeriesNo();
+		if (seriesNo != lastSeriesNo) orderInSeries = 0;
+		EpisodeHandle eh = new EpisodeHandle(p.getExperimentPlan(), trialListId, t, p.getPlayerId(), e, orderInSeries);
+		//		    handles.add(eh);
+		handles.add(eh);
+		Vector<EpisodeHandle> v = allHandles.get( eh.ruleSetName);
+		if (v==null) allHandles.put(eh.ruleSetName,v=new Vector<>());
+		v.add(eh);
+	    
+		Vector<EpisodeHandle> w = this.get(eh.playerId);
+		if (w==null) this.put(eh.playerId, w=new Vector<>());
+		w.add(eh);		     
+		
+		orderInSeries++;
+		lastSeriesNo=seriesNo;
+		
+	    }
+	}
+    }
 
     
     public static void main(String[] argv) throws Exception {
@@ -148,8 +181,8 @@ public class AnalyzeTranscripts {
 
 	plans = expandPlans(em, plans);
 
-
-	PlayerList plist = new 	PlayerList(em,	   pids,  nicknames,   uids);
+	PlayerList plist = new 	PlayerList(em,  pids,  nicknames,   uids);
+	EpisodesByPlayer ph =new EpisodesByPlayer();
 
 	// for each experiment plan...
 	for(String exp: plans) {		
@@ -166,7 +199,7 @@ public class AnalyzeTranscripts {
 	    q.setParameter("e", exp);
 	    List<PlayerInfo> res = (List<PlayerInfo>)q.getResultList();
 	    for(PlayerInfo p:res) {
-		doOnePlayer(p,  trialListMap, handles);
+		ph.doOnePlayer(p,  trialListMap, handles);
 	    }
 
 	    System.out.println("For experiment plan=" +exp+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
@@ -180,10 +213,10 @@ public class AnalyzeTranscripts {
 		TrialListMap trialListMap=trialListMaps.get(exp);
 		if (trialListMap==null) trialListMaps.put(exp, trialListMap=new TrialListMap(p.getExperimentPlan()));
 		Vector<EpisodeHandle> handles= new Vector<>();
-		doOnePlayer(p,  trialListMap, handles);
+		ph.doOnePlayer(p,  trialListMap, handles);
 		System.out.println("For player=" +p.getPlayerId()+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
-	    } catch(IOException ex) {
-		System.err.println("ERROR: Skipping player=" +p.getPlayerId()+" due to missing data. The problem is as follows");
+	    } catch(Exception ex) {
+		System.err.println("ERROR: Skipping player=" +p.getPlayerId()+" due to missing data. The problem is as follows:");
 		System.err.println(ex);
 		ex.printStackTrace(System.err);
 	    }
@@ -215,15 +248,20 @@ public class AnalyzeTranscripts {
 	    }
 	}
 
-	
-	
+		
 	//-- Take a look at each player's transcript and separate
 	//-- it into sections pertaining to different rule sets
 	
 	for(String playerId: ph.keySet()) {
 	    Vector<EpisodeHandle> v = ph.get(playerId);
-	    AnalyzeTranscripts atr = new AnalyzeTranscripts(playerId, base, wsum);
-	    atr.analyzePlayerRecord(v);
+	    try {
+		AnalyzeTranscripts atr = new AnalyzeTranscripts(playerId, base, wsum);
+		atr.analyzePlayerRecord(v);
+	    } catch(Exception ex) {
+		System.err.println("ERROR: Cannot process data for player=" +playerId+" due to missing data. The problem is as follows:");
+		System.err.println(ex);
+		ex.printStackTrace(System.err);
+	    }
 	}
 	if (wsum!=null) wsum.close();
     }
@@ -321,40 +359,6 @@ public class AnalyzeTranscripts {
 	}
 	    
 	return v;
-    }
-
-    private static void doOnePlayer(PlayerInfo p,  TrialListMap trialListMap,    	    Vector<EpisodeHandle> handles) {
-
-		
-		String trialListId = p.getTrialListId();
-		TrialList t = trialListMap.get( trialListId);
-		if (t==null) {
-		    System.out.println("ERROR: for player "+p.getPlayerId()+", no trial list is available for id=" +  trialListId +" any more");
-		    return;
-		}
-		int orderInSeries = 0;
-		int lastSeriesNo =0;
-		// ... and all episodes of each player
-		for(EpisodeInfo e: p.getAllEpisodes()) {
-		    int seriesNo = e.getSeriesNo();
-		    if (seriesNo != lastSeriesNo) orderInSeries = 0;
-		    EpisodeHandle eh = new EpisodeHandle(p.getExperimentPlan(), trialListId, t, p.getPlayerId(), e, orderInSeries);
-		    //		    handles.add(eh);
-		    handles.add(eh);
-		    Vector<EpisodeHandle> v = allHandles.get( eh.ruleSetName);
-		    if (v==null) allHandles.put(eh.ruleSetName,v=new Vector<>());
-		    v.add(eh);
-
-		    Vector<EpisodeHandle> w = ph.get(eh.playerId);
-		    if (w==null) ph.put(eh.playerId, w=new Vector<>());
-		    w.add(eh);		     
-
-
-		    
-		    orderInSeries++;
-		    lastSeriesNo=seriesNo;
-		    
-		}
     }
 
     
@@ -544,8 +548,6 @@ public class AnalyzeTranscripts {
     */
     private  void    analyzePlayerRecord(Vector<EpisodeHandle> v) throws  IOException, IllegalInputException,  RuleParseException{
 
-
-
 	HashMap <String,Boolean> useImages = new HashMap<>();
 	for(EpisodeHandle eh: v) {
 	    useImages.put(eh.episodeId, eh.useImages);
@@ -563,11 +565,10 @@ public class AnalyzeTranscripts {
 	Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections = splitTranscriptIntoEpisodes(transcript);
 	// remove any duplicates that may exist due to imperfections in the transcript saving mechanism
 	removeDuplicates(subsections);
-
 	
 	
 	// One subsection per episode
-	System.out.println("Split the player's transcript ("+transcript.size()+" moves) into "+subsections.size()+ " episode sections");
+	System.out.println("Player "+playerId+": split the transcript ("+transcript.size()+" moves) into "+subsections.size()+ " episode sections");
 	    
 	String lastRid="";
 	// all episodes' subsections for a given rule sets

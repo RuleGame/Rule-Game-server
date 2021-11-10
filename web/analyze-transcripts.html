@@ -128,7 +128,9 @@ analyze-transcripts.sh -pid -file my-pid-list.csv
 
 <P>Produce data split and curve fit, without p0:
 <pre>
-w2020/game/scripts/analyze-transcripts.sh -pid -file w2020/slack/pid.csv -out tmp-3-flat >& tmp.log
+  w2020/game/scripts/analyze-transcripts.sh -nofit -pid -file w2020/slack/pid.csv  -out tmp-3-flat >& tmp.log
+  w2020/game/scripts/analyze-transcripts.sh -p0 random -nofit -pid -file w2020/slack/pid.csv  -out tmp-3-random >& tmp.log
+    w2020/game/scripts/analyze-transcripts.sh -p0 mcp1 -nofit -pid -file w2020/slack/pid.csv  -out tmp-3-mcp1 >& tmp.log
 
 
 </body>
