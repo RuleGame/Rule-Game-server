@@ -98,7 +98,7 @@ analyze-transcripts.sh -pid -file my-pid-list.csv
 
 <p>This is handy if, for example, you have a list of "good" players prepared for you separately by another team.
 
-<p>Normally, the Transcript Analyzer reads saved data (transcripts etc) from <tt>/opt/tomcat/saved</tt>. However, this can be changed with the option <tt>-in <em>input_dir_name</tt>.  If you do that, make sure that you are still connecting to the right MySQL server, i.e. the data in the SQL server are consistent with the data in the input directory.
+<p>Normally, the Transcript Analyzer reads saved data (transcripts etc) from <tt>/opt/tomcat/saved</tt>. However, this can be changed with the option <tt>-in <em>input_dir_name</em></tt>.  If you do that, make sure that you are still connecting to the right MySQL server, i.e. the data in the SQL server are consistent with the data in the input directory.
   
 <p>You can use the option <code>-out <em>directory_name</em></code> to have the output written to a directory other than the default <tt>tmp</tt>.
 
@@ -128,9 +128,9 @@ analyze-transcripts.sh -pid -file my-pid-list.csv
 
 
 <pre>
-  w2020/game/scripts/analyze-transcripts.sh -nofit -pid -file w2020/slack/pid.csv  -out tmp-3-flat >& tmp.log
-  w2020/game/scripts/analyze-transcripts.sh -p0 random -nofit -pid -file w2020/slack/pid.csv  -out tmp-3-random >& tmp.log
-    w2020/game/scripts/analyze-transcripts.sh -p0 mcp1 -nofit -pid -file w2020/slack/pid.csv  -out tmp-3-mcp1 >& tmp.log
+w2020/game/scripts/analyze-transcripts.sh -nofit -pid -file w2020/slack/pid.csv  -out tmp-3-flat >& tmp.log
+w2020/game/scripts/analyze-transcripts.sh -p0 random -nofit -pid -file w2020/slack/pid.csv  -out tmp-3-random >& tmp.log
+w2020/game/scripts/analyze-transcripts.sh -p0 mcp1 -nofit -pid -file w2020/slack/pid.csv  -out tmp-3-mcp1 >& tmp.log
 </pre>
 
 <p>The output files in the 3 directories, tmp-3-flat, tmp-3-random, tmp-3-mcp1, contain the split transcripts in 3 versions (only differing in the last column, p0). The first has no p0, the 2nd and 3rd have p0 given by the completely random model and the MCP1 model, respectively.
