@@ -35,31 +35,17 @@ public class Captive {
 	System.exit(1);
     }
 
-    /** @param x "n" or "n1:n2"
-     */
-    /*
-    static private int randomFromRange(String x, Class<? extends Enum> p) {
-	int nProp = p.getEnumConstants().length;
-	String v[] = x.split(":");
-	if (v.length==1) {
-	    int n=Integer.parseInt(v[0]);
-	    if (n<=0 || n>nProp) throw new IllegalArgumentException("Illegal value (" + n+") for the number of " + p + " properties");
-	    return n;
-	} else if (v.length==2) {
-	    int z[]= {Integer.parseInt(v[0]),Integer.parseInt(v[1])};
-	    for(int n: z) {
-		if (n<=0 || n>nProp) throw new IllegalArgumentException("Illegal value (" + n+") for the number of " + p + " properties");
-	    }
-	    return Board.random.getInRange(z[0], z[1]);
-	} else {
-	    throw new IllegalArgumentException("Cannot parse range spec: " + x);
-	}
-    }
-    */
+
 
     /** Creates a GameGenerator based on the parameters found in the command
 	line */
-    static GameGenerator buildGameGenerator(ParseConfig ht, String[] argv) throws IOException,  RuleParseException, ReflectiveOperationException, IllegalInputException{ 
+    static GameGenerator buildGameGenerator(ParseConfig ht, String[] argv) throws IOException,  RuleParseException, ReflectiveOperationException, IllegalInputException{
+
+	long seed = ht.getOptionLong("seed", 0L);
+	//if (seed != 0L) Board.initRandom(seed);
+
+	final RandomRG random= (seed != 0L)? new RandomRG(seed): new RandomRG();
+  	
 	//System.out.println("output mode=" +  outputMode);
 	int ja=0;
 	if (argv.length<2) usage();
@@ -73,15 +59,15 @@ public class Captive {
 	    int rowNo = Integer.parseInt(b);
 	    if (rowNo<=0 || rowNo> trialList.size())  usage("Invalid row number (" + rowNo+ "). Row numbers should be positive, and should not exceed the size of the trial list ("+trialList.size()+")");
 	    ParaSet para = trialList.elementAt(rowNo-1);
-	    return  GameGenerator.mkGameGenerator(para);
+	    return  GameGenerator.mkGameGenerator(random, para);
 
 	} else if (b.indexOf(".")>=0) { // Rule file + initial board file
 	    File bf = new File(b);
 	    Board board = Board.readBoard(bf);
-	    return new TrivialGameGenerator(new Game(AllRuleSets.read(f), board));
+	    return new TrivialGameGenerator(random, new Game(AllRuleSets.read(f), board));
 	} else { // Rule file + numeric params
 	    try {
-		return RandomGameGenerator.buildFromArgv(f, ht, argv, ja-1);
+		return RandomGameGenerator.buildFromArgv(random, f, ht, argv, ja-1);
 	    } catch(IllegalArgumentException ex) {
 		usage(ex.getMessage());
 		return null;
@@ -99,14 +85,11 @@ public class Captive {
 
 	ParseConfig ht = new ParseConfig();
 
-	// allows colors=.... etc among argv
+	// allows seed=... , colors=.... etc among argv
 	argv = ht.enrichFromArgv(argv);
 
 	//System.out.println("output=" +  ht.getOption("output", null));
 	OutputMode outputMode = ht.getOptionEnum(OutputMode.class, "output", OutputMode.FULL);
-
-	long seed = ht.getOptionLong("seed", 0L);
-	if (seed != 0L) Board.initRandom(seed);
 
 	String inputDir=ht.getOption("inputDir", null);
 	if (inputDir!=null) Files.setInputDir(inputDir);

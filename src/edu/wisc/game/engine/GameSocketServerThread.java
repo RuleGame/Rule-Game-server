@@ -98,46 +98,6 @@ class GameSocketServerThread extends Thread {
 			Episode epi = new Episode(game, outputMode, in, out);
 			if (!epi.playGame(gameCnt)) return;
 		    }
-		    /*
-		    if (tokens.get(1).type!=Token.Type.STRING ||
-			tokens.get(2).type!=Token.Type.NUMBER) {
-			respond(out, CODE.INVALID_RULES, "# Expected double-quoted string and a number after the GAME command, found: " + tokens.get(1) + " " + tokens.get(2));
-			return;
-		    }
-		    
-		    String ruleFile = tokens.get(1).sVal;
-		    File f = new File(ruleFile);
-		    if (!f.canRead()) {
-			respond(out, Episode.CODE.INVALID_RULES,"Cannot read rule file: " + f);
-			return;
-		    }
-
-		    System.out.println("Thread " + id + ": reading rules from file " + f);
-		    String text = Util.readTextFile(f);
-		    RuleSet rules;
-		    try {
-			rules = new RuleSet(text);
-		    } catch(RuleParseException ex) {
-			respond(out, Episode.CODE.INVALID_RULES,"Parse error in rule file " + f);
-			return;		 	
-		    }
-		    
-		    int nPieces = tokens.get(2).nVal;
-		    if (nPieces <= 0) {
-			respond(out, Episode.CODE.INVALID_RULES, "Must specify a positive number of pieces");
-			return;
-		    }
-		    Game game = new Game(rules, nPieces,
-					 Piece.Shape.legacyShapes,
-					 Piece.Color.legacyColors);  
-
-		    OutputMode outputMode = OutputMode.STANDARD;
-		    while(true) {
-			gameCnt++;
-			Episode epi = new Episode(game, outputMode, in, out);
-			if (!epi.playGame(gameCnt)) return;
-		    }
-		    */		    
 		} else {
 		    respond(out, Episode.CODE.INVALID_COMMAND, "Invalid command " + cmd);
 		    return;

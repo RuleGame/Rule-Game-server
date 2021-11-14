@@ -18,8 +18,9 @@ import socket
 
 #game='game-data/rules/rules-01.txt'
 host=sys.argv[1]
+#sys.stdout.write("host="+host +"\n")
 port=int(sys.argv[2])
-
+                 
 game=sys.argv[3]
 
 # nPieces = '5'

@@ -81,6 +81,7 @@ public class CheckPlanService extends GameService2 {
 	@param exp The experiment plan. 
      */
     public String checkPlanHtml( @FormParam("exp") String exp){
+	
 	exp = exp.trim();
 	Vector<String> v = new Vector<>();
 	int errcnt=0;
@@ -200,7 +201,7 @@ public class CheckPlanService extends GameService2 {
 
 		    //-- Parsing the rule sets (errors can cause exceptions)
 		    info = "The rule set name = " + para.getRuleSetName();
-		    GameGenerator gg = GameGenerator.mkGameGenerator(para);
+		    GameGenerator gg = GameGenerator.mkGameGenerator(Episode.random, para);
 		    info = null;
 		    Game game = gg.nextGame();
 

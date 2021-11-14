@@ -496,6 +496,7 @@ public class AnalyzeTranscripts {
     
     /** Reconstructs and replays the historical episode, computing p0 for
 	every pick or move attempt.
+	
      */
     private double[] computeP0(Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections, ParaSet para, String ruleSetName)  throws  IOException, IllegalInputException,  RuleParseException{
 	RuleSet rules = AllRuleSets.obtain( ruleSetName);
@@ -524,9 +525,10 @@ public class AnalyzeTranscripts {
 		System.out.println("j=" + j);
 		System.out.println(rep.graphicDisplay());
 		
-		double p =rep.computeP0(e.pick);	    
+		double p =rep.computeP0(e.pick, e.code);	    
 		p0[k++] = p;
 
+		//-- replay the move/pick attempt 
 		int code = rep.accept(e.pick);
 		
 		System.out.println(e.pick.toString() +", p0=" + p+", code=" + code);

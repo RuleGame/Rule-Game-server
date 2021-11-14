@@ -64,7 +64,7 @@ public class Episode {
  	public int getCode() { return code; }
 	final public Date time = new Date();
 	public String toString() {
-	    return "PICK " + pos + " " +new Pos(pos);
+	    return "PICK " + pos + " " +new Pos(pos) +", code=" + code;
 	}
     }
 
@@ -83,7 +83,7 @@ public class Episode {
 	    this(pos.num(), bu.bucketNo());
 	}
 	public String toString() {
-	    return "MOVE " + pos + " " +new Pos(pos) +	" to B" + bucketNo;
+	    return "MOVE " + pos + " " +new Pos(pos) +	" to B" + bucketNo+", code=" + code;
 	}
    }
     
@@ -524,11 +524,13 @@ public class Episode {
     /** with milliseconds */
     public static final DateFormat sdf2 = new SimpleDateFormat("yyyyMMdd-HHmmss.SSS");
 
+    public static final RandomRG random = new RandomRG();
+    
     /** Creates a word made out of random letters and digits */
     public static String randomWord(int len) {
 	StringBuffer b=new StringBuffer(len);
 	for(int i=0; i<len; i++) {
-	    int k =  Board.random.nextInt(10 + 'Z'-'A'+1);
+	    int k =  random.nextInt(10 + 'Z'-'A'+1);
 	    char c = (k<10) ? (char)('0' + k) : (char)('A' + k-10);
 	    b.append(c);
 	}
@@ -581,9 +583,9 @@ public class Episode {
 	Board b =  game.initialBoard;
 	if (b==null) {
 	    if (game.allImages!=null) {
-		b = new Board( game.randomObjCnt,  game.allImages);
+		b = new Board(game.random,  game.randomObjCnt,  game.allImages);
 	    } else { 
-		b = new Board( game.randomObjCnt, game.nShapes, game.nColors, game.allShapes, game.allColors);
+		b = new Board(game.random,  game.randomObjCnt, game.nShapes, game.nColors, game.allShapes, game.allColors);
 	    }
 	}
 	nPiecesStart = b.getValue().size();
@@ -978,7 +980,7 @@ public class Episode {
 	return json.toString();
     }
 
-    public static final String version = "4.001";
+    public static final String version = "4.002";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();

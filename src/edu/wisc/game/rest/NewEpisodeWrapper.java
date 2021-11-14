@@ -32,6 +32,7 @@ public class NewEpisodeWrapper extends ResponseBase {
     public Episode.Display getDisplay() { return display; }
     private void setDisplay(Episode.Display _display) { display = _display; }
 
+    private static RandomRG random = new RandomRG();
     
     NewEpisodeWrapper(String ruleSetName, int nPieces,   int nShapes,  int nColors,
 		      String boardName) {
@@ -64,9 +65,9 @@ public class NewEpisodeWrapper extends ResponseBase {
 	
 		if (nPieces<=0 || nPieces>Board.N * Board.N) throw new IOException("Invalid #pieces=" + nPieces);
 
-		game = new  Game(rules, nPieces, nShapes, nColors,
-					 Piece.Shape.legacyShapes,
-					 Piece.Color.legacyColors);
+		game = new  Game(random, rules, nPieces, nShapes, nColors,
+				 Piece.Shape.legacyShapes,
+				 Piece.Color.legacyColors);
 	    }
 	    Episode epi = new Episode(game, Episode.OutputMode.BRIEF, null, null); //in, out);
 

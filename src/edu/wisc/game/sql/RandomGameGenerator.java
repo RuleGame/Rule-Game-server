@@ -22,24 +22,24 @@ public class RandomGameGenerator extends GameGenerator {
   
     //final RuleSet rules;
     
-    RandomGameGenerator(String ruleSetName, int[] _nPiecesRange, int[] _nShapesRange,
+    RandomGameGenerator(RandomRG _random, String ruleSetName, int[] _nPiecesRange, int[] _nShapesRange,
 			int[] _nColorsRange,  Piece.Shape[] _allShapes, Piece.Color[] _allColors) throws IOException, RuleParseException {
-	this(AllRuleSets.obtain(ruleSetName), _nPiecesRange,  _nShapesRange,
+	this(_random, AllRuleSets.obtain(ruleSetName), _nPiecesRange,  _nShapesRange,
 	     _nColorsRange, _allShapes, _allColors);
 
     }
 
-    public RandomGameGenerator(File ruleSetFile, int[] _nPiecesRange, int[] _nShapesRange,
+    public RandomGameGenerator(RandomRG _random, File ruleSetFile, int[] _nPiecesRange, int[] _nShapesRange,
 		  int[] _nColorsRange,  Piece.Shape[] _allShapes, Piece.Color[] _allColors) throws IOException, RuleParseException {
-	this(AllRuleSets.read(ruleSetFile), _nPiecesRange,  _nShapesRange,
+	this(_random, AllRuleSets.read(ruleSetFile), _nPiecesRange,  _nShapesRange,
 	     _nColorsRange, _allShapes, _allColors);
 
     }
 
 
-    RandomGameGenerator(RuleSet _rules, int[] _nPiecesRange, int[] _nShapesRange,
+    RandomGameGenerator(RandomRG _random, RuleSet _rules, int[] _nPiecesRange, int[] _nShapesRange,
 		  int[] _nColorsRange,  Piece.Shape[] _allShapes, Piece.Color[] _allColors) throws IOException, RuleParseException {
-	super(_rules);
+	super(_random, _rules);
 	nPiecesRange = _nPiecesRange;
 	nShapesRange = _nShapesRange;
 	nColorsRange = _nColorsRange;
@@ -56,11 +56,11 @@ public class RandomGameGenerator extends GameGenerator {
     /** Generates a game with a random initial board, in accordance with this 
 	generator's parameters */
     public Game nextGame() {
-	int nPieces = Board.random.getInRange(nPiecesRange);
-	int nShapes = Board.random.getInRange(nShapesRange);
-	int nColors = Board.random.getInRange(nColorsRange);
+	int nPieces = random.getInRange(nPiecesRange);
+	int nShapes = random.getInRange(nShapesRange);
+	int nColors = random.getInRange(nColorsRange);
 
-	Game game = new Game(rules, nPieces, nShapes, nColors,allShapes,allColors);
+	Game game = new Game(random, rules, nPieces, nShapes, nColors,allShapes,allColors);
 	next();
 	return game;
     }
@@ -93,7 +93,7 @@ public class RandomGameGenerator extends GameGenerator {
 
 
     /** Builds a RandomGameGenerator from command-line arguments */
-    public static RandomGameGenerator buildFromArgv(File f, ParseConfig ht, String[] argv, int ja) throws IOException, RuleParseException {
+    public static RandomGameGenerator buildFromArgv(RandomRG _random, File f, ParseConfig ht, String[] argv, int ja) throws IOException, RuleParseException {
 	String b = argv[ja++];
 
 	int[] nPiecesRange = range(b);
@@ -116,7 +116,7 @@ public class RandomGameGenerator extends GameGenerator {
 	Piece.Color[] colors =  ParaSet.parseColors(colorsString);
 	if (colors==null) colors = Piece.Color.legacyColors;
 		    
-	return new RandomGameGenerator(f, nPiecesRange, nShapesRange, nColorsRange, shapes, colors);    
+	return new RandomGameGenerator(_random, f, nPiecesRange, nShapesRange, nColorsRange, shapes, colors);    
     }
 
    static private void usage(String msg) {
@@ -142,16 +142,16 @@ public class RandomGameGenerator extends GameGenerator {
 	if (!dir.isDirectory()) usage("Not a directory: " +dir);
 	int nb = Integer.parseInt(argv[ja++]);
 	System.out.println("Will generate " +nb + " boards in directory "+dir);
-	RandomGameGenerator gg=buildFromArgv(null, ht, argv, ja);
+	RandomGameGenerator gg=buildFromArgv(new RandomRG(), null, ht, argv, ja);
 	String fs="000";
 	for(int m=nb/1000; m>0; m /= 10) fs += "0";
 	DecimalFormat fmt =new DecimalFormat(fs);
 
-
+	RandomRG random = new RandomRG();
 	for(int j=0; j<nb; j++) {
 	    File f = new File(dir, fmt.format(j) +".json");
 	    Game g =gg.nextGame();
-	    Board b = new Board( g.randomObjCnt, g.nShapes, g.nColors, g.allShapes, g.allColors);
+	    Board b = new Board(random, g.randomObjCnt, g.nShapes, g.nColors, g.allShapes, g.allColors);
 	    PrintWriter w=new PrintWriter(new FileWriter(f));
 	    w.println(JsonReflect.reflectToJSONObject(b, true));	
 	    w.close();

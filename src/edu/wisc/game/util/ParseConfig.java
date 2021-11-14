@@ -192,7 +192,7 @@ public final class ParseConfig extends Hashtable<String,Object> {
 			if (obj instanceof Number)
 				value = ((Number) obj).doubleValue();
 			else {
-				String msg = "Property `" + aName + "' read from the config file " + "is not a number! Ignored.";
+				String msg = "Property `" + aName + "', value='"+obj+"', read from the config file " + "is not a number! Ignored.";
 				System.err.println(msg);
 			}
 		}
@@ -212,7 +212,7 @@ public final class ParseConfig extends Hashtable<String,Object> {
 			if (obj instanceof Number)
 				value = ((Number) obj).intValue();
 			else {
-				String msg = "Property `" + aName + "' read from the config file " + "is not a number! Ignored.";
+				String msg = "Property `" + aName + "', value='"+obj+"', read from the config file " + "is not a number! Ignored.";
 				System.err.println(msg);
 			}
 		}
@@ -229,7 +229,7 @@ public final class ParseConfig extends Hashtable<String,Object> {
 		if (obj instanceof Number)
 		    value = ((Number) obj).longValue();
 		else {
-		    String msg = "Property `" + aName + "' read from the config file " + "is not a number! Ignored.";
+		    String msg = "Property `" + aName + "', value='"+obj+"', read from the config file " + "is not a number! Ignored.";
 		    System.err.println(msg);
 		}
 	    }
@@ -379,8 +379,18 @@ public final class ParseConfig extends Hashtable<String,Object> {
 	for(String s: argv) {
 	    Matcher m = p.matcher(s.trim());
 	    if (m.matches()) {
-		String key=m.group(1), val=m.group(2);
-		put(key, val);
+		String key=m.group(1), text=m.group(2);
+		Object obj = text;
+		try {
+		    Pattern p1 = Pattern.compile("([0-9]+)");
+		    Pattern p2 = Pattern.compile("([0-9]*)\\.([0-9]+)");
+		    if (p1.matcher(text).matches()) {
+			obj = new Long(text);
+		    } else if (p2.matcher(text).matches()) {
+			obj = new Double(text);
+		    } 
+                } catch(Exception ex) {}
+		put(key, obj);
 	    } else {
 		v.add(s);
 	    }

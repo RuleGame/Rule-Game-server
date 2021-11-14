@@ -32,7 +32,7 @@ public class PredefinedBoardGameGenerator extends GameGenerator {
 	} else if (mode==Mode.RANDOM) {
 	    if (remainingRandom.size()==0) {
 		int n = boards.length;
-		remainingRandom = Board.random.randomSubsetPermuted(n,n);
+		remainingRandom = random.randomSubsetPermuted(n,n);
 	    }
 	    pos = remainingRandom.remove(0);
 	} 
@@ -42,8 +42,8 @@ public class PredefinedBoardGameGenerator extends GameGenerator {
 	return new Game(rules, b);
     }
     
-    PredefinedBoardGameGenerator(String ruleSetName, File boardDir, String modeString) throws  IOException, IllegalInputException, RuleParseException, ReflectiveOperationException {
-	super( AllRuleSets.obtain(ruleSetName)); 
+    PredefinedBoardGameGenerator(RandomRG _random, String ruleSetName, File boardDir, String modeString) throws  IOException, IllegalInputException, RuleParseException, ReflectiveOperationException {
+	super(_random,  AllRuleSets.obtain(ruleSetName)); 
 	File orderFile = null;
 	Mode _mode;
 	try {

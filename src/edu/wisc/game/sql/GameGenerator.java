@@ -16,6 +16,8 @@ import edu.wisc.game.rest.ParaSet;
     range specifications */
 abstract public class GameGenerator {
 
+    final RandomRG random;// = new RandomRG();
+    
     //    final int[] nPiecesRange, nShapesRange, nColorsRange;
 
     /** The rule set */
@@ -26,8 +28,9 @@ abstract public class GameGenerator {
     int produceCnt=0;
 
     /** Only used by subclasses */
-    GameGenerator(RuleSet _rules) {
+    GameGenerator(RandomRG _random, RuleSet _rules) {
 	rules = _rules;
+	random = _random;
     }
 
     /** Generates the next game to play */
@@ -56,7 +59,7 @@ abstract public class GameGenerator {
 	@param para The parameter set for which we will create a suitable
 	GameGenerator
      */
-    public static GameGenerator mkGameGenerator(ParaSet para) throws IOException, RuleParseException, IllegalInputException, ReflectiveOperationException {
+    public static GameGenerator mkGameGenerator(RandomRG _random, ParaSet para) throws IOException, RuleParseException, IllegalInputException, ReflectiveOperationException {
 
 	String ruleSetName = para.getRuleSetName();
 
@@ -71,12 +74,12 @@ abstract public class GameGenerator {
 	if (initial_boards!=null && initial_boards.length()>0) {
 	    if (initial_boards_order==null ||initial_boards_order.length()==0) throw new  IllegalInputException("Parameter sets specifies initial_boards, but not initial_boards_order");
 	    File boardDir = Files.inputBoardSubdir(initial_boards);
-	    gg = new PredefinedBoardGameGenerator(ruleSetName,  boardDir, initial_boards_order);
+	    gg = new PredefinedBoardGameGenerator(_random, ruleSetName,  boardDir, initial_boards_order);
 	} else if  (para.images!=null) {
 	    
 	    int[] nPiecesRange = {para.getInt("min_objects"),
 				  para.getInt("max_objects")};
-	    gg =new RandomImageGameGenerator(ruleSetName, nPiecesRange, para.images);
+	    gg =new RandomImageGameGenerator(_random, ruleSetName, nPiecesRange, para.images);
 	} else {
 
 	    int[] nPiecesRange = {para.getInt("min_objects"),
@@ -86,7 +89,7 @@ abstract public class GameGenerator {
 		nColorsRange = {para.getInt("min_colors"),
 				para.getInt("max_colors")};
 
-	    gg =new RandomGameGenerator(ruleSetName, nPiecesRange, nShapesRange,
+	    gg =new RandomGameGenerator(_random, ruleSetName, nPiecesRange, nShapesRange,
 					nColorsRange, para.shapes, para.colors);
 	}
 

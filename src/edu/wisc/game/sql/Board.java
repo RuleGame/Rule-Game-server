@@ -182,18 +182,19 @@ public class Board {
 	value = new Vector<>();
     }
 
-    static public RandomRG random = new RandomRG();
+    //    static public RandomRG random = new RandomRG();
 
     /** This can be called on startup (from main()) if we want to initialize
 	the random number generator with a specific seed */
-    static public void initRandom(long seed) {
-	random = new RandomRG(seed);	
-    }
-
+    /*
+//    static public void initRandom(long seed) {
+//	random = new RandomRG(seed);	
+//    }
+    */
     
     /** The simple constructor, creates a random board with a given number  
      of pieces, using the 4 legacy colors. */
-    public Board(int randomCnt) {
+    public Board(RandomRG random, int randomCnt) {
 	setName("Random board with " + randomCnt + " pieces");
 	Piece.Shape[] shapes = 	Piece.Shape.legacyShapes;
 	Piece.Color[] colors = 	Piece.Color.legacyColors;
@@ -215,7 +216,7 @@ public class Board {
     /** Fills the array results[] with random values from allProps[], ensuring that results will contain exactly nProp distinct values. 
 	@param nProp If 0 is given, each object is assigned properties independently from the entire available range; so the resulting scheme may have any number of distinct properties. If non-zero is given, this will be the exact number of distinct values in the resulting scheme.
      */
-    private void designatedProps(Object[] allProps, Object results[], int nProp) {
+    private void designatedProps(RandomRG random, Object[] allProps, Object results[], int nProp) {
 	if (nProp < 0 || nProp>allProps.length) throw new IllegalArgumentException("Illegal number of values ("+nProp+") to pick out of "+allProps.length);
 	final int m = results.length;
 	if (nProp==0) {
@@ -247,13 +248,14 @@ public class Board {
     
     
     /** The main constructor for a random initial board in GS 2.*.
+	@param random The random number generator to use
 	@param randomCnt required number of pieces. 
 	@param nShapes required number of shapes. If 0 is passed, there is no restriction (independent decision is made for each piece)
 	@param nColors required number of colors. If 0 is passed, there is no restriction (independent decision is made for each piece)
 	@param allShapes the set from which shapes are drawn
 	@param allColors the set from which colors are drawn
      */
-    public Board(int randomCnt, int nShapes, int nColors, Piece.Shape[] allShapes, Piece.Color[] allColors) {
+    public Board(RandomRG random, int randomCnt, int nShapes, int nColors, Piece.Shape[] allShapes, Piece.Color[] allColors) {
 	setName("Random board with " + randomCnt + " pieces, "+nShapes+" shapes, and " + nColors+" colors");
 	if (randomCnt>N*N) throw new IllegalArgumentException("Cannot fit " + randomCnt + " pieces on an "+ N + " square board!");
 	if (nShapes<0 || nShapes>allShapes.length) throw new IllegalArgumentException("Invalid number of shapes: " + nShapes);
@@ -263,8 +265,8 @@ public class Board {
 
 	Piece.Shape[] useShapes = new Piece.Shape[randomCnt];
 	Piece.Color[] useColors = new Piece.Color[randomCnt];	
-	designatedProps(allShapes, useShapes, nShapes);
-	designatedProps(allColors, useColors, nColors);
+	designatedProps(random, allShapes, useShapes, nShapes);
+	designatedProps(random, allColors, useColors, nColors);
 
 	
 	for(int i=0; i<randomCnt; i++) {
@@ -280,7 +282,7 @@ public class Board {
 	@param randomCnt required number of pieces. 
 	@param allImages the set from which images are drawn
      */
-    public Board(int randomCnt, String[] allImages) {
+    public Board(RandomRG random, int randomCnt, String[] allImages) {
 	setName("Random board with " + randomCnt + " pieces, drawn from a set of "+allImages.length+" images");
 	if (randomCnt>N*N) throw new IllegalArgumentException("Cannot fit " + randomCnt + " pieces on an "+ N + " square board!");
 	

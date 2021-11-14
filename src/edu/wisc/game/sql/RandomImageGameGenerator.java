@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.text.*;
 
+import edu.wisc.game.util.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.rest.ParaSet;
@@ -19,19 +20,19 @@ public class RandomImageGameGenerator extends GameGenerator {
     final String[] allImages;
   
     
-    RandomImageGameGenerator(String ruleSetName, int[] _nPiecesRange, String[] _allImages) throws IOException, RuleParseException {
-	this(AllRuleSets.obtain(ruleSetName), _nPiecesRange,  _allImages);
+    RandomImageGameGenerator(RandomRG _random, String ruleSetName, int[] _nPiecesRange, String[] _allImages) throws IOException, RuleParseException {
+	this(_random, AllRuleSets.obtain(ruleSetName), _nPiecesRange,  _allImages);
 
     }
 
-    public RandomImageGameGenerator(File ruleSetFile, int[] _nPiecesRange, String[] _allImages) throws IOException, RuleParseException {
-	this(AllRuleSets.read(ruleSetFile), _nPiecesRange, _allImages);
+    public RandomImageGameGenerator(RandomRG _random, File ruleSetFile, int[] _nPiecesRange, String[] _allImages) throws IOException, RuleParseException {
+	this(_random, AllRuleSets.read(ruleSetFile), _nPiecesRange, _allImages);
 
     }
 
 
-    RandomImageGameGenerator(RuleSet _rules, int[] _nPiecesRange, String[] _allImages) throws IOException, RuleParseException {
-	super(_rules);
+    RandomImageGameGenerator(RandomRG _random, RuleSet _rules, int[] _nPiecesRange, String[] _allImages) throws IOException, RuleParseException {
+	super(_random, _rules);
 	nPiecesRange = _nPiecesRange;
 	allImages = _allImages;
 	if (nPiecesRange[0]>nPiecesRange[1])  throw new IOException("GameGenerator: Invalid param range");
@@ -43,9 +44,9 @@ public class RandomImageGameGenerator extends GameGenerator {
     /** Generates a game with a random initial board, in accordance with this 
 	generator's parameters */
     public Game nextGame() {
-	int nPieces = Board.random.getInRange(nPiecesRange);
+	int nPieces = random.getInRange(nPiecesRange);
 
-	Game game = new Game(rules, nPieces, allImages);
+	Game game = new Game(random, rules, nPieces, allImages);
 	next();
 	return game;
     }

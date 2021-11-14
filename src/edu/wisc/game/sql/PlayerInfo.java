@@ -120,7 +120,7 @@ public class PlayerInfo {
 
 	Series(ParaSet _para) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
 	    para = _para;
-	    gg = GameGenerator.mkGameGenerator(para);
+	    gg = GameGenerator.mkGameGenerator(Episode.random, para);
 	}
 	
 	public String toString() {
@@ -518,7 +518,7 @@ public class PlayerInfo {
     private String buildCompletionCode() {
 	String s = playerId + "-" + Episode.sdf.format(new Date()) + "-";
 	for(int i=0; i<4; i++) {
-	    int k =  Board.random.nextInt(10 + 'F'-'A'+1);
+	    int k =  Episode.random.nextInt(10 + 'F'-'A'+1);
 	    char c = (k<10) ? (char)('0' + k) : (char)('A' + k-10);
 	    s += c;
 	}

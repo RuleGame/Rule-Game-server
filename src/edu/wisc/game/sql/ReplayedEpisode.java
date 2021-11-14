@@ -74,12 +74,17 @@ public ReplayedEpisode(String _episodeId, ParaSet _para, Game game,
 	player most likely intended to attempt a move, but the GUI 
 	converts an move attempt on an immovable piece to a failed pick.
 
-	@param nextMove The pick or move the value of p0 before which
+	@param nextMove The pick/move attempt the value of p0 before which
 	(for which) we want to compute. This pick or move has been
 	read from the transcript, and contains the success code, which we
 	can use to interpret what the random player may have wanted here.
+	The nextMove.code field is not set yet, because it will only be 
+	set during an actual replay (the Episode.accept() call).
+
+	@param code The historical acceptance code for this attempt,
+	as read from the transcript
     */
-    public double computeP0( Pick nextMove) {
+    public double computeP0( Pick nextMove, int code) {
     
 	int knownFailedPicks = failedPicks.cardinality();
 	int knownFailedMoves = 0;	
@@ -87,7 +92,9 @@ public ReplayedEpisode(String _episodeId, ParaSet _para, Game game,
 	    if (b!=null) knownFailedMoves += b.cardinality();
 	}
 
-	boolean successfulPick = !(nextMove instanceof Move) && nextMove.code==CODE.ACCEPT;
+	boolean successfulPick = !(nextMove instanceof Move) && code==CODE.ACCEPT;
+	System.out.println("RE.computeP0(" +nextMove+"); code="+code+", successfulPick=" + successfulPick);
+
 	
 	return  successfulPick?
 	    ruleLine.computeP0ForPicks(knownFailedPicks):
