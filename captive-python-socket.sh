@@ -1,8 +1,11 @@
 #!/bin/csh
 
 #-------------------------------------------------------------------
+# This shell script starts a sample Python application that will
+# "talk" to the socket-based Captive Game Server. (The server itself
+# can be started with socket-server.sh)
 # Sample usage:
-# ./captive-python-socket.sh localhost 7501 /opt/tomcat/game-data/rules/MLC/vm/test-05.txt
+# ./captive-python-socket.sh localhost 7501 /opt/tomcat/game-data/rules/MLC/vm/test-05.txt 4
 #-------------------------------------------------------------------
 
 #-- The directory where this script is

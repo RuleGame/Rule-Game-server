@@ -2,6 +2,7 @@ package edu.wisc.game.engine;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.*;
 import java.text.*;
 import java.net.*;
 
@@ -21,7 +22,7 @@ class GameSocketServerThread extends Thread {
     public GameSocketServerThread(Socket _socket) {
         super("GameSocketServerThread " + _socket.getInetAddress());
         socket = _socket;
- }
+    }
 
 
     static private void respond(PrintWriter out, int code, String msg) {
@@ -53,7 +54,15 @@ class GameSocketServerThread extends Thread {
 		line = line.trim();
 		if (line.equals("")) continue;
 
+		final Pattern pat = Pattern.compile("^(\\S+)\\s*");
+		Matcher m = pat.matcher(line);
+		if (!m.find()) {
+		    respond(out, CODE.INVALID_COMMAND,"# Invalid input - cannot find the command in this line: " + line);
+		    return;
+		}
+		String cmd = m.group(1), tail = line.substring(m.end());
 
+		/*
 		Vector<Token> tokens;
 		try {
 		    tokens    = Token.tokenize(line);
@@ -66,20 +75,21 @@ class GameSocketServerThread extends Thread {
 		    return;
 		}
 		String cmd = tokens.get(0).sVal.toUpperCase();
-
+		*/
+		
 		if (cmd.equals("EXIT")) {
 		    return;
 		} else if (cmd.equals("GAME")) {
-		    // GAME "rule-file.json" n
-		    if (tokens.size()<2) {
+		    // GAME game-generator-parameters
+		    if (tail.length()==0) {
 			respond(out, Episode.CODE.INVALID_RULES, "No rule file or trial list file specified");			       
 			return;
 		    }
 
-		    String[] argv = new String[tokens.size()-1];
-		    for(int j=0; j<argv.length; j++) argv[j]=tokens.get(j+1).toArgv();
+		    String[] argv = tail.split("\\s+");
+		    stripQuotes(argv);
 		    ParseConfig ht = new ParseConfig();
-		    // allows colors=.... etc among argv.
+		    // allows seed=..., colors=.... etc among argv.
 		    // (Cannot set inputDir though, since it's static and
 		    // shared by all threads)
 		    argv = ht.enrichFromArgv(argv);
@@ -113,6 +123,20 @@ class GameSocketServerThread extends Thread {
 	    System.out.println("Thread " + id + ": finishing after playing " + gameCnt + " episodes");		
 	}
     }
+
+    static void stripQuotes(String[] argv) {
+	for(int j=0; j<argv.length; j++) {
+	    String a = argv[j];	    
+	    if (a.length()<2) continue;
+	    if (a.startsWith("\"") && a.endsWith("\"") ||
+		a.startsWith("'") && a.endsWith("'")) {
+		argv[j] = a.substring(1, a.length()-1);
+	    }
+	}
+    }
+
+
+    
 }
 
   

@@ -38,9 +38,9 @@ then add grid memory.
 <p>The columns of the table correspond to different types of "feedback" the player receives, viz.:
 <ul>
 <li>No feedback (hardest) -- no indication of which pieces are movable, no grid memory or stack memory
-<li>Some feedback -- non-movable pieces are marked as such (by cross marks)
-<li>More feedback -- ditto, with stack memory aids
-<li>Max feedback -- ditto, with  stack and grid memory aids
+<li>Some feedback -- stack memory aids enabled
+<li>More feedback -- stack and grid memory aids enabled 
+<li>Max feedback --  stack and grid memory aids enabled; non-movable pieces are marked as such (by cross marks)
 </ul>
 
 

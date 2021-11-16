@@ -2,6 +2,8 @@ package edu.wisc.game.engine;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.*;
+
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.reflect.*;
@@ -38,7 +40,11 @@ public class Captive {
 
 
     /** Creates a GameGenerator based on the parameters found in the command
-	line */
+	line 
+	@param argv The argv array (from the command line or the GAME
+	command in the pipe or socket stream), from which any superfluous 
+	quotes must have already been stripped.
+    */
     static GameGenerator buildGameGenerator(ParseConfig ht, String[] argv) throws IOException,  RuleParseException, ReflectiveOperationException, IllegalInputException{
 
 	long seed = ht.getOptionLong("seed", 0L);
@@ -48,16 +54,24 @@ public class Captive {
   	
 	//System.out.println("output mode=" +  outputMode);
 	int ja=0;
-	if (argv.length<2) usage();
-	File f = new File(argv[ja++]);
-	if (!f.canRead()) usage("Cannot read file " + f);
+	if (argv.length<2) throw new IllegalInputException("No params specified");
+	String fname = argv[ja++];
+	/*
+	if (fname.length()>=2 &&
+	    (fname.startsWith("\"") && fname.endsWith("\"") ||
+	     fname.startsWith("'") && fname.endsWith("'"))) {
+	    fname = fname.substring(1, fname.length()-1);
+	}
+	*/
+	File f = new File(fname);
+	if (!f.canRead())  throw new IllegalInputException("Cannot read file " + f);
 
 	String b = argv[ja++];
 
 	if (f.getName().endsWith(".csv")) { // Trial list file + row number
 	    TrialList trialList = new TrialList(f);
 	    int rowNo = Integer.parseInt(b);
-	    if (rowNo<=0 || rowNo> trialList.size())  usage("Invalid row number (" + rowNo+ "). Row numbers should be positive, and should not exceed the size of the trial list ("+trialList.size()+")");
+	    if (rowNo<=0 || rowNo> trialList.size())   throw new IllegalInputException("Invalid row number (" + rowNo+ "). Row numbers should be positive, and should not exceed the size of the trial list ("+trialList.size()+")");
 	    ParaSet para = trialList.elementAt(rowNo-1);
 	    return  GameGenerator.mkGameGenerator(random, para);
 
@@ -69,8 +83,9 @@ public class Captive {
 	    try {
 		return RandomGameGenerator.buildFromArgv(random, f, ht, argv, ja-1);
 	    } catch(IllegalArgumentException ex) {
-		usage(ex.getMessage());
-		return null;
+		throw ex;
+		//usage(ex.getMessage());
+		//return null;
 	    }
 
 	}
@@ -94,7 +109,12 @@ public class Captive {
 	String inputDir=ht.getOption("inputDir", null);
 	if (inputDir!=null) Files.setInputDir(inputDir);
 	
-	GameGenerator gg = buildGameGenerator(ht, argv);
+	GameGenerator gg=null;
+	try {
+	    gg = buildGameGenerator(ht, argv);
+	} catch(Exception ex) {
+	    usage("Cannot create game generator. Problem: " + ex.getMessage());
+	}
 	        	
 	int gameCnt=0;
 

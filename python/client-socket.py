@@ -20,15 +20,17 @@ import socket
 host=sys.argv[1]
 #sys.stdout.write("host="+host +"\n")
 port=int(sys.argv[2])
-                 
-game=sys.argv[3]
 
-# nPieces = '5'
+otherParamString = " ".join(sys.argv[3:])
+
+# game=sys.argv[3]
 
 #-- this is a string, not a number!
-nPieces = sys.argv[4]
+# nPieces = sys.argv[4]
 
-sys.stdout.write("Port="+repr(port)+" Rule file=" + game +", #pieces=" + nPieces+"\n")
+#sys.stdout.write("Port="+repr(port)+" Rule file=" + game +", #pieces=" + nPieces+"\n")
+
+sys.stdout.write("Host=" + host+", Port="+repr(port)+", game params: " + otherParamString +"\n")
 
 try: 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
@@ -59,7 +61,9 @@ print "the socket has successfully connected to host=" + host_ip+ " on port=" + 
 rfile = sock.makefile('rb')
 wfile = sock.makefile('wb')
  
-msg = "GAME \"" + game + "\" " + nPieces
+# msg = "GAME \"" + game + "\" " + nPieces
+msg = "GAME " + otherParamString 
+
 print "Sending: " + msg + "\n"
 wfile.write(msg + "\n")
 wfile.flush()

@@ -517,6 +517,8 @@ public class Episode {
     private OutputMode outputMode;
     @Transient
     private final PrintWriter out;
+    /** In the captive server, this is where the client's commands come from.
+	This is null in web server. */
     @Transient
     private final Reader in;
    
@@ -1117,9 +1119,11 @@ public class Episode {
 	    null;
     }
     
-    /** Lets this episode play out until either all pieces are cleared, or
-	a stalemate is reached, or the player gives up (sends an EXIT or NEW command)
-	@return true if another game is requested */
+    /** Lets this episode play out until either all pieces are
+	cleared, or a stalemate is reached, or the player gives up
+	(sends an EXIT or NEW command). The episode takes commands from
+	the reader.
+	@return true if another episode is requested */
     public boolean playGame(int gameCnt) throws IOException {
 	try {
 	String msg = "# Hello. This is Captive Game Server ver. "+version+". Starting a new game (no. "+gameCnt+")";

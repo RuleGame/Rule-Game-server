@@ -9,8 +9,6 @@ import edu.wisc.game.util.Util;
 /** A token represents an element of the input text. Used in parsing rules. */
 public class Token {
     
-    //static void foo1(){};
-
     public enum Type { NUMBER, ID, STRING, COMMA, MULT_OP, ADD_OP, EQQ /* == */, UNARY_OP, OPEN, CLOSE, EQUAL /* = */, COLON, DOT, DOTDOT};
     public final Type type;
     public char cVal=0;

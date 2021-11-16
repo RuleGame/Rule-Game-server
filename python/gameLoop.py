@@ -16,7 +16,7 @@ import subprocess, sys, re, random, json
 def readLine(inx):
     while True:
         s = inx.readline()
-        sys.stdout.write("Received: "+ s)
+        sys.stdout.write("Received: "+ s + "\n")
         if not s:
             return s
         if s.startswith('#'):
@@ -58,14 +58,15 @@ def mainLoop(inx,outx):
         statusLine = readLine(inx).strip();
         jsonLine = readLine(inx).strip();
         
-        #sys.stdout.write("Unpack: "+ statusLine + "\n")
+        sys.stdout.write("Unpack: "+ statusLine + "\n")
         tt = re.split("\s+", statusLine);
         # print(tt);
         [code, status, t] = map( int, re.split("\s+", statusLine));
         sys.stdout.write("Code=" +repr(code)+ ", status=" +repr(status)+ ", stepNo="+repr(t)+ "\n");
 
         if code<0:
-            sys.stdout.write("Error code"+ code + "\n")
+            sys.stdout.write("Error code"+ repr(code) + "\n")
+            sys.stdout.write("Error message: "+ jsonLine + "\n")
             break
         
         if status==0:
