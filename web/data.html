@@ -4,7 +4,7 @@
 <body>
   <h1>Rule Game server data</h1>
 
-    <p align="center"><em>Updated for Ver 3.001,  2021-05-06</em></p>
+    <p align="center"><em>Updated for Ver 4.002,  2021-11-20</em></p>
 
   <h2>Introduction</h2>
 
@@ -15,38 +15,13 @@
 
       <li>Read-and-write data. This includes several tables describing the progress of the players in their experiments. By their nature, the server needs both to read and write these data. They are currently stored in several tables in a relational database in the MySQL server.
 
-      <li>Write-only data. Certain data, such as the record of completed episodes, are created by the server, but the server does not need to read them back. These data are written into CSV files that live under the  <strong>Rule Game server saved data directory</strong>, <tt>/opt/tomcat/saved</tt>.
+      <li>Write-only data. Certain data, such as the transcripts of completed episodes, are created by the server, but the server does not need to read them back. These data are written into CSV files that live under the  <strong>Rule Game server saved data directory</strong>, <tt>/opt/tomcat/saved</tt>.
     </ol>
   </p>
 
-<p>This document is written as a guide for the experiment manager, i.e. a researcher who design new experiment plans and processes the data accumulated in the experiments.
-  
-  <h2>Main concepts: players, experiment plans, trial lists, series, episodes</h2>
+  <p>This document is written as a guide for the experiment manager, i.e. a researcher who designs new experiment plans and processes the data accumulated in the experiments. The first section concerns the data files you need to create to run an experiment, and the other two, the data that the server will generate for you as players play their games.
 
-  <p>A  <strong>player</strong> is a human being participating in our experiments pursuant to a particular experiment plans. A player is identified by a string 
-    <strong>playerId</strong>.</p>
-
-  <p>An  <strong>experiment plan</strong> is described by a set of <strong>trial lists.</strong> Each trial list describes the sequence of experiences (or a "treatment") in which a certain group of players will participatye.     Whenever a player starts participating in an experiment (is about to start playing), he is automatically assigned to one of the trial lists; this is association is permanent, i.e. all experiences of this player will follow that trial list.</P>
-
-  <p>A  <strong>trial list</strong> is a detailed "road map" to what a player associated with that trial list may experience. A trial list is described by a CSV files consisting of several lines of data. Each line specifies a <strong>parameter set</strong>; the parameters in the parameter set determine what kind of game will be played (by referring to a specific rule set file), what the initial boards may look like, how many episodes may be played, how rewards will be assigned, etc.  The player will progress through the lines of the trial list in the sequence in which they appear in the trial list file, i.e. once you complete a certain number of episodes pursuant by one parameter set (a <strong>series</strong> of episodes), you will be able to (or you will have to) switch to the next parameter set; there is no going back.  The series of episodes played in accordance with a given parameter set may be divided into the main subseries and the bonus subseries. For details, see the document on <a href="control-flow.html">Control flow</a>.</P>
-
-<p>A series consists of <strong>episodes</strong>. An episode is one instance of playing a game, from setting up an initial board to clearing it. An episode, therefore, can be represented by the initial board and the sequence of moves, together with a reference to the set of rule under which the episode was played.</p>
-
-<p>See also Paul's document, <a href="https://docs.google.com/document/d/13ZZ9nUXOTmQTWSaR8v-UuvCeCAoXGd6nEKJCHSsztlk/edit">_0.Terminology</a>.</P>
-
-  <h2><a name="players">The meaning of PlayerId</a></h2>
-
-  <p>At present (ver. 1.027, 2020-10-09), the Rule Game web server associates players with expreriment plans based on the explicit assignment at the start URL, or on the PlayerId.  The assignment rules are as follows:
-
-    <ul>
-      <li>A PlayerId can be explicitly assigned to any expriment plan if the parameter <tt>exp</tt> is used in the URL at which the player starts his interaction with the system. E.g. the start URL was <tt>http://sapir.psych.wisc.edu/rule-game/prod/?exp=qt&workerId=vm001</tt>, then the PlayerId <tt>vm001</tt> will be  associated with the experiment plan <tt>qt</tt>.
-      <li>In the absence of an explicit assignment, if the PlayerId has no hyphens in it, it is associated with the experiment plan <tt>default</tt>.
-      <li>In the absence of an explicit assignment, if the PlayerId has a hyphen in it, the part of the PlayerID preceding the hyphen (or preceding the first hyphen, if there are several) is taken to be the name of the experiment plan. For example, if PlayerId=<tt>qt-01-a</tt>, it will be considered belonging to experiment plan <tt>qt</tt>.
-    </ul>
-  </p>
-  
-  <p>Presently (2020-09-10) we only have two experiment plans,  <tt>default</tt> and  <tt>qt</tt>, so if one tries to register a PlayerId with a hyphen in it and the prefix part other than these, it will cause an error.
-    
+    <p>Before proceeding with this document, make sure that you are familiar with the <a href="concepts.html">main concepts</a> of the Rule Game Server, such as repeat users, players, experiment plans, trial lists, series, episodes, etc.   
 
     <h2><a name="in">Read-only data: experiment control files</a></h2>
 
@@ -54,16 +29,20 @@
 
     <h3><a name="trialList">Trial list files</a></h3>
 
-  <p>The trial list files are in subdirectories of the main trial list directory, <tt>/opt/tomcat/game-data</tt>. For each experiment plan, the subdirectory name is identical to that of the experiment plan; so, for example, the trial list files for the experiment plan <tt>default</tt>, sent by Gary in mid-August 2020, are in <tt>/opt/tomcat/game-data/default</tt>.
+  <p>The trial list files are in subdirectories of the main trial list directory, <tt>/opt/tomcat/game-data</tt>. For each static experiment plan, the subdirectory name is identical to that of the experiment plan; so, for example, the trial list files for the experiment plan <tt>default</tt>, sent by Gary in mid-August 2020, are in <tt>/opt/tomcat/game-data/default</tt>.
   </p>
 
-  <p>Trial list files should have extension <tt>.csv</tt>. For example, if your experiment plant has 3 trial lists, named <tt>list_A</tt>, <tt>list_B</tt>, and <tt>list_C</tt>, these lists shoud be described in files named <tt>list_A.csv</tt>, <tt>list_B.csv</tt>, and <tt>list_C.csv</tt>. Please make sure not to name any of your trial lists <tt>defect</tt>, because the file name <tt>defect.csv</tt> is reserved, and is used for the <a href="#defect">defect file.</tt>
+  <p>Trial list files should have extension <tt>.csv</tt>. For example, if your experiment plant has 3 trial lists, named <tt>list_A</tt>, <tt>list_B</tt>, and <tt>list_C</tt>, these lists shoud be described in files named <tt>list_A.csv</tt>, <tt>list_B.csv</tt>, and <tt>list_C.csv</tt>. Please make sure not to name any of your trial lists <tt>defect</tt>, because the file name <tt>defect.csv</tt> is reserved, and is used for the <a href="#defect">defect file.</a>
   
-  <p>When a player first enters the system, the server figures what experiment plan the player is associated with (as per <a href="#players">The meaning of PlayerId</a>, above). Among all the trial list files located in that experiment's directory, the server picks one  trial list file based on the <a href="balancing.html">balancing algorithm</a>, the main consideration being to assign approximately equal number of "usable" players to each trial list. Once the assignment has been completed, it is permanently recorded in the <a  href="#PlayerInfo">table</a>, for use in all episodes played by this player.</p>
+  <p>When a player first enters the system, the server figures what experiment plan the player is associated with (as supplied in the URL, or, early on  <a href="#players">as encoded in the PlayerId</a>). Among all the trial list files located in that experiment's directory, the server picks one  trial list file based on the <a href="balancing.html">balancing algorithm</a>, the main consideration being to assign approximately equal number of "usable" players to each trial list. Once the assignment has been completed, it is permanently recorded in the <a  href="#PlayerInfo">table</a>, for use in all episodes played by this player.</p>
 
 
   <p>Each row of the trial list file contains a parameter set. The meaning of parameters is explained briefly in the following document compiled by Paul:
     <a href="https://docs.google.com/spreadsheets/d/1KoYdi0i_toN29hhPiOVA-teX1jjo6WlJs7wL6Oz0AzM/edit#gid=0">_0.GameParameters</a>, with     <a href="para-set.html">additional notes</a> elsewhere. However, parameters <tt>n</tt> and  <tt>b</tt> mentioned in that document are not actually used. See  the document on <a href="control-flow.html">Control flow</a> for additional discussion of how some parameters are used by the server when directing a player's activities and playing games.</P>
+
+  <h3><a name="trialList">Modifier files</a></h3>
+
+  <P>As outlined  <a href="concepts.html#sd">elsewhere</a>, since GS 4.*, the Game Server also supports dynamic experiment plans, which are convenient for quick experimentation. A dynamic experiment plan does not need an experiment plan directory under <tt>trial-lists</tt>. Instead, it has a <em>modifier file</em>, somewhere under <tt>modifiers</tt>. A modifier is a CSV file whose structure is similar to that of a trial list file, but it contains fewer columns.  For more details on how modifier files are used, and some examples, see <a href="launch/launch-setup.html">Adding a plan or a rule set to the MLC or APP launch pages</a>.
 
   <h3><a name="defect">The defect file</a></h3>
 
@@ -71,11 +50,11 @@
 
 <p>Note that because the name <tt>defect.csv</tt> is reserved for the defect file, it cannot be used for a trial list file, you therefore must not name any of your trial lists  <tt>defect</tt>.
     
-  <h3>Rule sets</h3>
+  <h3>Rule set files</h3>
 
   <p>Each line of a trial list file, i.e. each parameter set, contains parameter <tt>rule_id</tt>, which refers to a particular set of rules for playing the game. The rule set files are all in  <tt>/opt/tomcat/game-data/rules</tt>; the name of each file consists of the value of the  <tt>rule_id</tt> parameter and the extension  <tt>.txt</tt>.</p>
 
-  <p>For the syntax and semantics of the rule sets, see the document <a href="https://docs.google.com/document/d/1z_I1kbu-cocUUxOsoEU0WUK9gd3OZ3KiqisJw_Fn_tw/edit?ts=5f08503a">_0.Semantics2020.07.10.txt</a>.</p>
+<p>For the syntax and semantics of the rule sets, see the <a href="syntax.html">Rule Set Syntax guide</a>. (It overrides the early  document, <a href="https://docs.google.com/document/d/1z_I1kbu-cocUUxOsoEU0WUK9gd3OZ3KiqisJw_Fn_tw/edit?ts=5f08503a">_0.Semantics2020.07.10.txt</a>, from GS 1.*).</p>
 
   <h3><a name="defineBoard">Definining initial boards</a></h3>
 
@@ -150,7 +129,7 @@ Each line  consists of 4 fields. The first field is the color name, writen using
 
 <p>It is preferable that you don't modify the data files directly in  <tt>/opt/tomcat/game-data</tt>, since if you do that, your updates may be lost later. Instead, it is better to modify the files in your working directory, and deploy from there. Also, you may considering checking in your work to your repository in Github. For details, see the <a href="deploy.html">Deployment Guide</a>.
 
-  <h3>Can you place files to my own directory, instead of /opt/tomcat/game-data</h3>
+  <h3>Can I place files to my own directory, instead of /opt/tomcat/game-data?</h3>
 
 <p>For development and testing purposes, it is possible to make Game Server work with rule files and initial board files located in your home directory, rather than in the <tt>/opt/tomcat/game-data</tt> tree.
 

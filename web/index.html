@@ -5,46 +5,93 @@
     <h2>Rule Game Server Documentation</h2>
 
     <p>
+    To get started...
     <ul>
+      <li><strong><a href="concepts.html">The main concepts</a></strong>
+      </ul>
+	  
+
+    
+    <h3>Designing an experiment</h3>
+
+    <p>If you are a researcher designing new experiments, these are
+    documents for you.
+
+      <p>Preparing an experiment:
+<ul>
+      <li><a href="sop-experiment.html">Standard Operating Procedures: Preparing and running an experiment with the Rule Game Server</a>
+      <li><a href="data.html">About the data files</a> (read the first section, concerning the control files)
+      <li><a href="syntax.html">About the syntax of rule set files</a>
+      <li><a href="arithmetic.html">Bucket expression arithmetic</a>: more about the expressions used to compute the accepting bucket number(s)
+      <li><a href="arithmetic-form.jsp">Try out your arithmetic expressions!</a>
+      <li><a href="para-set.html">Notes on Rule Game Server parameter sets</a>
+      <li><a href="colors-and-shapes.html">Using custom colors and shapes in Game Server 2.*</a>
+      <li><a href="random-board-generator.html">Using the random board generator with a post-processing script</a> to create predefined initial boards.
+      <li><a href="launch/launch-setup.html">Adding a plan or a rule set to the MLC or APP launch pages</a>
+</ul>
+
+<p>Special topics:
+<ul>
+  <li><a href="control-flow.html">About the initial board settings and the control flow</a>
+      <li><a href="balancing.html">About the balancing algorithm</a>, used to assign players to trial lists.
+      <li><a href="game-server-2-overview.html.pdf">What's new in Game Server 2.*</a> (slides for a presentation, PDF)	  
+      <li><a href="game-server-2-overview.html">What's new in Game Server 2.*</a> (same in HTML)
+      </ul>
+
+    <p>Online tools for experiment designers:
+      <ul>
+	<li>The	<a href="game-api-2.html#clear">clear tables tool</a>. You can use  it after you have modified an existing rule set file, and want to make sure that the server reloads it right away.
+	<li>The    <a href="check-plan-form.jsp">experiment plan validation tool</a>. Use it to check the syntax of your rules, etc.
+      </ul>
+      
+      <h3>Processing experimental results</h3>
+
+      <p>Read here about the data saved by the Rule Game Server, and how to use them
+
+	<ul>
+	  <li><a href="data.html">About the data files</a> (read the 2nd and 3rd  sections)
+	  <li><A href="analyze-transcripts.html">The Analyze Transcripts tool</a>
+	</ul>	
+
+
+      <h3>For the ML team</h3>
+
+      <ul>
+	<li><a href="captive.html">The Captive Game Server</a>
+	<li><a href="board-display-form.html">Board display tool</a> (for Shubham and the rest of the ML team)
+      </ul>
+      
+      <h3>Client-server interaction</h3>
+
+      <P>If you are designing a TypeScript/JavaScript front end GUI
+	app to run in a web browser, or an Android app, these documents
+	discuss how the front end app is to talk to the Rule Game Server
+	
+      <ul>
+
+	
       <li>[Obsolete]: Web API: <a href="game-api.html">First Batch (for research API, without player name and SQL databasse)</a>. This also includes <a href="game-api.html#html">HTML play (old version)</a>, an HTML-GUI interface for the first batch API.
       <li>Web API: <a href="game-api-2.html">Second Batch (in use for the main public-facing API)</a>. This page also includes:<ul>
 	  <li><a href="html-play.jsp">HTML play</a> (second batch),
-	  <li>the	<a href="game-api-2.html#clear">clear tables tool</a>,
-	  <li>the
-	    <a href="check-plan-form.jsp">experiment plan validation tool</a>.
 	    <!-- a href="game-api-2.html#checkPlan">experiment plan validation tool.</a -->
 	  <li><a href="game-api-2.html#GetImageServlet">GetImageServlet</a> (since ver. 3.0)
 	</ul>
-      <li><a href="control-flow.html">About the initial board settings and the control flow</a>
-      <li><a href="balancing.html">About the balancing algorithm</a>, used to assign players to trial lists.
-      <li>Preparing an experiment:
-	<ul>
-	  <li><a href="game-server-2-overview.html.pdf">What's new in Game Server 2.*</a> (slides for a presentation, PDF)	  
-	  <li><a href="game-server-2-overview.html">What's new in Game Server 2.*</a> (same in HTML)
-	  <li><a href="sop-experiment.html">Standard Operating Procedures: Preparing and running an experiment with the Rule Game Server</a>
-	  <li><a href="data.html">About the data files</a>
-	  <li><a href="syntax.html">About the syntax of rule set files</a>
-	  <li><a href="arithmetic.html">Bucket expression arithmetic</a>: more about the expressions used to compute the accepting bucket number(s)
-	  <li><a href="arithmetic-form.jsp">Try out your arithmetic expressions!</a>
-	  <li><a href="para-set.html">Notes on Rule Game Server parameter sets</a>
-	  <li><a href="colors-and-shapes.html">Using custom colors and shapes in Game Server 2.*</a>
-	  <li><a href="random-board-generator.html">Using the random board generator with a post-processing script</a> to create predefined initial boards.
-	</ul>
-      <li>Data analysis:
-	<ul>
-	  <li><A href="analyze-transcripts.html">The Analyze Transcripts tool</a>
-	</ul>	
-      <li>SOP: <a href="deploy.html">Maintaining and deploying server code and server data files</a>
-      <li><a href="captive.html">The Captive Game Server</a>
       <li><a href="api/">Java API documentation</a>
-      <li>Proposals:
+      </ul>
+
+      <h3>Managing the Game Server</h3>
 	<ul>
-	  <li><a href="proposal-wildcards.html">Proposal: wildcard syntax for a wider object space</a> (2021-04-01)
-	  <li><a href="proposal-object-properties.html">Proposal: image-and-property-based description of objects</a> (2021-04-13)
-	  <li><a href="proposal-code-snippets.html">Proposal: code snippets</a> (2021-05-20)
+	  <li>SOP: <a href="deploy.html">Maintaining and deploying server code and server data files</a>
+	</ul>
+      
+	<h3>Old proposals</h3>
+
+	<ul>
+	  <li><a href="proposal-wildcards.html">Proposal: wildcard syntax for a wider object space</a> (2021-04-01) -- an early proposal, mostly superseded by subsequent ones
+	  <li><a href="proposal-object-properties.html">Proposal: image-and-property-based description of objects</a> (2021-04-13) -- mostly implemented
+	  <li><a href="proposal-code-snippets.html">Proposal: code snippets</a> (2021-05-20) -- still outstanding
   	</ul>
 
-	 <li><a href="board-display-form.html">Board display tool</a> (for Shubham and the rest of the ML team)
 
 
     </ul>
@@ -63,9 +110,7 @@
 	  
       </ul>
 
-    <h2>Documents at other sites</h2>
-      <ul>
-      </ul>
+      <!-- <h2>Documents at other sites</h2> -->
 
       <h2>The front-end (GUI) tools, from Kevin</h2>
       <ul>

@@ -4,7 +4,7 @@
 <body>
   <h1>Rule file syntax and semantics</h1>
 
-  <div align="center"><em>Updated for ver. 2.005. 2021-10-25</em></div>
+  <div align="center"><em>Updated for ver. 4.002. 2021-11-17</em></div>
 
 <p>This document describes the syntax of rule files used by the Game Engine (the main component of the Rule Game Server), and the way these rules are interepreted, i.e. their semantics.
 
@@ -38,9 +38,24 @@
 
   <p>Each move of the game consists of the player attempting to pick one of the pieces and to drop it into one the buckets. The rules of the game, described by a <em>rule file</em>, determine which pieces can be dropped into which buckets; this may depend on the location and properties of the piece itself, the other pieces on the board, and on the previous successful moves in this episode.
 
+    <h3>The nature of game pieces</h3>
+
+  <p>What set of objects a game can support has evolved greatly during our work on Rule Game.
+
+  <p>In the original Rule Game Server 1.*, each object had exactly 2 properties: color and shape. Colors could be picked from the set of 4 colors (now known as "legacy colors": black, yellow, red, and blue), and shapes, from the set of 4 legacy shapes (circle, star, square, triangle). In other word, an object could be described as an object from a 4x4=16-element set of all possible (color,shape) pairs.
+
+  <p>Since Rule Game Server 2.*, the game designer can specify an arbitrary set of colors ("custom colors") and/or an arbitrary set of shapes ("custom shapes"). This is done in the <a href="para-set.html">trial list file</a> for your experiment. So if in your rule set file you use any colors and/or shapes outside of the "legacy" ones, you probably want for your colors and/or shapes to be listed in the appropriate columns in the trial list file. Otherwise, some parts of your rules will never get a chance to be activated. (See: <a href="colors-and-shapes.html">Using custom shapes and colors in Rule Game Server 2.*</a>
+
+    <p>Since Rule Game Server 3.*, it is possible to create objects which are described not by two "legacy" properties (color and shapes) but by any number of properties you care to define. See: <a href="proposal-object-properties.html">image-and-property-based description of objects</a>.
+    
   <h2>The structure of a rule file</h2>
     
-  <p>The rules used in a particular episode are defined by a rule file. The file consists of two sections: the optional <strong>Order definition section</strong>, followed by the <strong>Rule section</strong>. The rule file may also contain comment lines and blank lines.
+    <p>The rules used in a particular episode are defined by a rule file. The file consists of two sections:
+      <uL>
+	<li>the optional <strong>Order definition section</strong>, followed by
+	<li>the <strong>Rule section</strong>.
+      </ul>
+      The rule file may also contain comment lines and blank lines.
 
     <h3>Comment lines</h3>
 
@@ -120,7 +135,7 @@ orders the <em>N</em><sup>2</sup> cells by the <em>L</em><sub>1</sub> norm (the 
   <p>
   The rule file must contain at least one <strong>rule line</strong>. All rule lines together form the rule section, which is  located after the order section, if there is one.
 
-  <P>Each <strong>rule line</strong> is one line of text. It consists of an optional <strong>global counter</strong>, followed by one or several  <strong>atoms</strong>:
+  <P>Each <strong>rule line</strong> is one line of text. It consists of an optional <strong>global counter</strong>, followed by one or several  <strong>atoms</strong>.
   <pre>
     <em>[global_count]  atom [atom ...]</em> 
   </pre>
@@ -129,8 +144,21 @@ orders the <em>N</em><sup>2</sup> cells by the <em>L</em><sub>1</sub> norm (the 
 
     <p>If the rule line has no <em>global_count</em>, or <em>global_count</em> is <tt>*</tt>, we call the rule line "unmetered"; this means that no additional restriction is imposed on the number of times it can be used, beyond what's imposed by the counters in individual atoms (see below). If a <em>global_count</em> is given, the rule line is "metered", and the value of the <em>global_count</em> given in this line of the rule file is used to initialize the rule's <em>global counter</em> every time this rule line is reset.  (For more details on counters, see <a href="#transfer">Transfer of control between rule lines</a>, under Semantics).
 
-      
-  <p>Each <em>atom</em> has the following structure:
+<p>
+  Atoms can be written in one of the two formats:
+    <uL>
+      <li>
+	The original (from GS 1.*) position-based format
+      <li>
+	The property-based format (introduced in GS 3.*)
+    </ul>
+    If the only properties your objects have are color and shape, then you can use either format for your atoms. You can write some atoms in one format and other atoms in the other format, and freely combine atoms in both format in your rule lines.
+
+    <p>If you use property-based objects with properties other than color and shape, you must use property-based atoms.
+    
+    <h4>Atoms in position-based format</h4>
+    
+  <p>Each <em>atom</em> wtitten in the original position-based format consists of 5 components, arranged as follows:
     <pre>
       (<em>count</em>, <em>shapes</em>, <em>colors</em>, <em>positions</em>, <em>buckets</em>)
     </pre>
@@ -191,13 +219,46 @@ Each position specifier must be either an integer number in the range 1..<em>N</
     <p> The values of the variables <tt>Nearby</tt> and <tt>Remotest</tt> are based on the position of the piece the player attempts to move. E.g. for a piece located in the bottom left corner of our 6x6 board (1 &le; row &le; 3, 1 &le; column &le; 3), <tt>Nearby</tt>=3 and  <tt>Remotest</tt>=1. If we had a board with an even number of rows or columns (e.g. <em>N</em>=7), then for a piece located on the "central meridian" or the "equator" of the board (column=(N+1)/2, or row=(N+1)/2) these variables would be set-valued, with 2 values each; for a piece located in the central cell of the board, each of these variables would have the entire set [0,1,2,3] as its value.
 
       <p>For more details on expressions, please see <a href="arithmetic.html">Bucket expression arithmetic</a>.
-    
-    <h2>Semantics</h2>
+
+	<h4>Atoms in property-based format</h4>
+
+      <p>The alternative, property-based, format for atoms was introduced in GS 3.*, primarily because it became necessary to describe predicates that made use of arbitrary designer-defined properties of objects, and not just on the two "legacy" properties (color and shape).
+
+      <p>If you just use the two legacy properties (color and shape), then propert-based atoms are completely equivalent to the position-based ones. The difference between the two formats is that in the position-based format it was the position of the component in the atom which determined its meaning, while in a property-based atom the meaning of each component is explicitly labled. For example, if an atome is written in the  position-based format as follows:
+	<pre>
+	  (2,triangle,[red,black],L1,p+1)	</pre>
+	then it can be written in the property-based format as follows:
+	<pre>
+	  (count:2, shape:triangle, color:[red,black], pos:L1, bucket:[p+1])	</pre>
+
+	<p>
+	If the  property-based format is used, the order of components within an atom does not matter, so the same atom can also be written e.g. as
+	<pre>
+	  (count:2, pos:L1, color:[red,black], shape:triangle,  bucket:[p+1])	</pre>
+	with no difference in semantics.
+
+      <p>When the property-based format is used, compoments with the value "*" (i.e., "any value is allowd") can be omitted.
+	Thus, a non-metered atom does not need the "count:" component, an atom that allows picking game pieces from anywhere on the board does not need the "pos:" component, an atom that allows one to put objects to any bucket does not need the "bucket:" component, and so on. No component is mandatory. Thus, the position-based atom
+	<pre>
+	  (*,*,*,*,*)	</pre>
+	which means "you can pick any pieces and put them to any bucket, and the rule will be never exhausted" can be written in the property-based format simply as
+	<pre>
+	  ()
+	</pre>
+The rule	
+	<pre>
+	  (*,square,*,*,Nearby)	</pre>
+	which means "pick any square and put it to the nearest bucket; you can do it  as many times as you want" can be written as
+	<pre>
+	  (shape:square,pos:Nearby)	  </pre>
+	
+	
+    <h3>Semantics of the rules</h3>
 
   <p>At any time during the episode, one of the rule lines is currently active (AKA "in control"). When the episode starts, the first rule line is made active; as the episode progresses, the control may be passed from the first rule line to the second, and so on, cyclically, under the rules discussed below.
 
     <p>Whenever a rule line becomes active (the first time, or any subsequent time), all applicable counters associated with the rule line and its atoms are set to their initial values given in the rule file. (This includes the counters for all metered atoms, and, if the rule line itself is metered, its global counter).
-<h3>Acceptance of a move by a rule line</h3>
+<h4>Acceptance of a move by a rule line</h4>
     
   <p>When the player attempts to move a piece <em>G</em>  from position <em>a</em> to bucket <em>b</em>, the move attempt is <em>accepted</em> by the currently active rule line <em>R</em> if both clauses below are true:
     <ul>
@@ -219,7 +280,7 @@ Each position specifier must be either an integer number in the range 1..<em>N</
 	<li>the counters of all metered atoms in this line that have accepted the move, <li>the global counter of the rule line itself, if it is metered.
       </ul>
 
-      <h3><a name="transfer">Transfer of control between rule lines</a></h3>
+      <h4><a name="transfer">Transfer of control between rule lines</a></h4>
 
 <p>If the currently active rule line has accepted a move, the control stays with this line, and the Game Engine removes the game piece from the board, placing it into the requested destination bucket. If no pieces remain on the board, the episode is finished; if there are still pieces, the Game Engine will be ready to process the player's next move attempt.
       
@@ -241,13 +302,23 @@ Each position specifier must be either an integer number in the range 1..<em>N</
 
 <h2>Examples</h2>
 
-<p>Example 1:
+<h4>Example 1</h4>
 
+  <table border="1">
+    <tr><td>Position-based format
+    <td>Property-based format
+    <tr><td>
 <pre>
 1 (*,*,RED,T,0) (*,*,GREEN,T,1)
 1 (*,*,BLACK,T,2) (*,*,YELLOW,T,3)
 </pre>
-
+<td>
+<pre>
+1 (color:RED,pos:T, bucket:0) (color:GREEN, pos:T, bucket:1)
+1 (color:BLACK, pos:T, bucket:2) (color:YELLOW,pos:T,bucket:3)
+</pre>
+  </table>
+  
 <ul>
   <li>(1) If there are any green or red pieces in the topmost non-empty row of the board, this rule set will allow you to pick any of these pieces, and put it to bucket 0 if red or to bucket 1 if green.
   <li>(2) After that one piece is picked, or if there are no green or red pieces in the  topmost non-empty row of the board to begin with, then, if there are any black or yellow piec in  the  topmost non-empty row, you can pick that piece  and put it to bucket 2 (if black) or to bucket 3 (if yellow).
@@ -256,27 +327,55 @@ Each position specifier must be either an integer number in the range 1..<em>N</
 
 <p>This rule set is guaranteed to complete if the board has no pieces of  colors other than red, green, black, or yellow. But if any such piece exists, a stalemate will occurr as soon as all pieces above, or in the same rows as, that piece, are removed.
 
-<p>Example 2:
-<pre>
+  <h4>Example 2</h4>
+  
+ <table border="1">
+    <tr><td>Position-based format
+    <td>Property-based format
+    <tr><td><pre>
 * (*,CRANE,*,T,0)  (*,PELICAN,*,T,1)
 * (*,SHARK,*,B,2)  (*,CRAB,*,B,3)
 </pre>
-
+<td><pre>
+* (shape:CRANE,pos:T,bucket:0)  (shape:PELICAN,pos:T,bucket:1)
+* (shape:SHARK,pos:B,bucket:2)  (shape:CRAB,pos:B,bucket:3)
+</pre>
+ </table>
+ 
 <p>Here, the top rule and its atoms are unmetered. So one can first remove all cranes and pelicans as long as they are in the currently topmost occupied row. After that, one can remove all sharks and crabs as long as they are in the currently bottommost occupied row. After that, if any pieces still remain on the board (i.e. you have a shark or crab on top, and a crane or pelican below), stalemate will occur.
 
-<p>Example 3:
-<pre>
+  <p>Naturally, if you create a rule like this, you need to include the appropriate <tt>shapes</tt> parameter in your parameter set (in the appropriate line of the trial list file), and to ensure that the SVG files for those shapes do exist.
+
+    <h4>Example 3 </h4>
+
+    <table border="1">
+    <tr><td>Position-based format
+    <td>Property-based format
+    <tr><td><pre>
 * (2,*,YELLOW,*,[0,1]) (2,*,RED,*,[2,3])
 * (*,*,*,*,(p+2)%4) 
 </pre>
+      <td><pre>
+* (count:2, color:YELLOW, bucket:[0,1]) (count:2, color:RED, bucket:[2,3])
+* (bucket:[p+2]) 
+</pre>
+  </table>
 
+    <p>
 The first rule line allows moving up to 2 yellow pieces to buckets 0 or 1, and up to two red pieces to buckets 2 or 3. The control shifts from this line once each atom is either exhausted or has no applicable pieces (i.e. after you have removed 2 yellow pieces, or no yellow pieces are left; AND you have removed and 2  red pieces, or no red pieces are left). After this point, the control will stay with the second line until the end of the game. It will allow you to pick any piece, and move it to the bucket opposite of the last bucket used while the first line was in control; after that, you will be able to put pieces one by one, alternatingly, into two opposite buckets (e.g. 1 and 3).
 
+<P>Note that the Game Server carries out <tt>result := result modulo 4</tt> operation with the result of the bucket expression, to ensure it always maps to a legal bucket number. Therefore, the <tt>%4</tt> part in the bucket expression is actually superfluous.
 
+  <h4>More examples</h4>
+
+<p>More rules set examples can be found in the directory <tt>rules</tt> in the GitHub  repository <a href="https://github.com/lupyanlab/Rule-Game-game-data">lupyanlab/Rule-Game-game-data</a> (ask for access from Gary Lupyan or his people), or on sapir in <tt>/opt/tomcat/game-data/rules</tt>.
+
+<p>You can also see various rules in operation at the <a href="launch/">MLC launch page</a>.
+  
 <h2>See also</h2>
 
 <ul>
-  <li>The original write-up on the rules: <a href="https://docs.google.com/document/d/1z_I1kbu-cocUUxOsoEU0WUK9gd3OZ3KiqisJw_Fn_tw/edit?usp=sharing">_0.Semantics2020.07.10.txt</a>
+  <li>The original (GS 1.*) write-up on the rules: <a href="https://docs.google.com/document/d/1z_I1kbu-cocUUxOsoEU0WUK9gd3OZ3KiqisJw_Fn_tw/edit?usp=sharing">_0.Semantics2020.07.10.txt</a>
 </ul>
 
 </body>

@@ -5,16 +5,18 @@
 <body>
   <h1>Standard Operating Procedures: Preparing and running an experiment with the Rule Game Server</h1>
 
-    <p align="center"><em>Updated 2021-04-02 for Game Server ver. 2.006</em></p>
+    <p align="center"><em>Updated 2021-11-20 for Game Server ver. 4.002</em></p>
 
     <h2>Preparing the experiment control files</h2>
 
     <h3>The control files</h3>
-  <p>As discussed in the <a href="data.html">Rule Game server data guide</a>, a number of files need to be prepared in the <strong>server's game data directory</strong> (/opt/tomcat/game-data) in order to control the players' experience during your experiment. At a minimum, this should include:
+  <p>As discussed in the <a href="data.html">Rule Game server data guide</a>, a number of files need to be prepared in the <strong>server's game data directory</strong> (/opt/tomcat/game-data) in order to control the players' experience during your experiment. To summarize, this should include, at a minimum:
     <ul>
       <li>The experiment plan directory (a subdirectory under /opt/tomcat/game-data/trial-lists), containing one or several trial list files. The server will <a href="balancing.html">pseudo-randomly assign</a> players, in a balanced manner, to different trial lists, so each of the trial list files will be the top-level file defining the experiences of a particulalry (randomly selected) subgroup of the participants of your experiment.
       <li>For each rule set mentioned in the trial list files, a  <a href="syntax.html">rule set file</a> must be created in the rules directory, /opt/tomcat/game-data/rules. If you are creating a group of rule set files to be used in just one experiment, or in some series of experiments, it would make sense to place them into a new, specially created subdirectory under the rules directory. This will make it easier to manage rule set files.
     </ul>
+
+    <p>Since GS 4.*, an alternative way to create experiment plans, known as <a href="concepts.html#sd">dynamic experiment plans</a>, has been made available. If you want to create an R:-type dynamic plan, you don't need an experiment plan directory, but you need a modifier file in the modifier directory.
 
   <p>Depending on the design of your experiment, you may also need to create or modify other files:
     <ul>
@@ -38,7 +40,7 @@
 
         <h3>Checking your math</h3>
 
-      <p>One of the most complicated parts of the <a href="syntax.html">syntax of rule set files</a> is the field which specifies the bucket(s) into which a rule allows game pieces to be put. (See the <a href="arithmetic.html">>Bucket expression arithmetic Guide</a> for details). To help you test your arithmetic, we have the  <a href="arithmetic-form.jsp">Arithmetic test form</a>, which you can use to test your expression, for various values of the built-in variables, before actually using it in a rule.
+      <p>One of the most complicated parts of the <a href="syntax.html">syntax of rule set files</a> is the field which specifies the bucket(s) into which a rule allows game pieces to be put. (See the <a href="arithmetic.html">Bucket expression arithmetic Guide</a> for details). To help you test your arithmetic, we have the  <a href="arithmetic-form.jsp">Arithmetic test form</a>, which you can use to test your expression, for various values of the built-in variables, before actually using it in a rule.
 
 	
         <h3>Validating your plan</h3>

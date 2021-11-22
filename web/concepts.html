@@ -1,0 +1,105 @@
+<html>
+  <head><title>Main Rule Game server concepts</title>
+  </head>
+<body>
+  <h1>Main Rule Game server concepts</h1>
+
+    <p align="center"><em>Updated for Ver 4.002,  2021-11-19</em></p>
+
+<p>In this document we discuss the main concepts of the  Rule Game server: repeat users,  players, experiment plans, trial lists, series, episodes.
+
+<h2>Rule Game objects</h2>
+  
+  <h3><a name="user">Repear users</a></h3>
+
+  <p>The concept of repeat user was introduced in GS 4.*. A repeat user represents the information about a human user who starts his games from one of Game server's launch pages that require (or at least suggest) user identification (such as <a href="launch/">the MLC launch page</a> or <a href="launch/">the APP launch page</a>, or from the Android app.
+
+  <p>For every repeat user we have an entry in the <tt>User</tt> tablle, with a unique integer ID as a primary identifier.  A repeat user may be "named" or "unnamed". A named repeat user may be also identified by an email address and/or a self-selected nickname. An unnamed repeat user does not have those; it is simply an object that is used to link together all game rounds started by an anonymous user from the same web browser. (Internally, these rounds are linked together using browser cookies).
+
+    
+ <h3>Players</h3>
+  
+  <p>A <strong>player</strong>, identified by a  <strong>playerId</strong>, represents the interaction of a human being with the game server within  the scope of a single experiment plan. Every player is permanently associated with a single experiment plan. At the beginning of the player's  interaction with the system, the player is <a href="balancing.html">pseudo-randomly assigned</a> to one of the trial lists of that experiment plan. The player then experiences everything that the trial list prescribes to be experienced; that is, he plays <strong>a round</strong> (several <a href="#series">series</a>) of <a href="#episode">episodes</a>, and at the end of this experience, is issued a completion code. After that, no user-system interaction involvingh that playerId is supposed to take place. (If tried, the system will tell the player that he has played everything he was to play).
+
+  <p>For each player, an entry exists in the SQL table <tt>PlayerInfo</tt>. The server also maintains two output files for each player, one to contain the initial board positions of all episodes played by the player, the other for the episodes' transcripts (a record of all attempted moves, successful and unsuccessful).
+
+  <P>A player entry may or may not be associated with a repeat user. (This is reflected in the <tt>PlayerInfo</tt> table). Specifically:
+    <ul>
+      <li>
+    Each persons who comes to the Rule Game from Mechanical Turk is given one (system-created) player id, and has one player record created  for him, without association with any repeat user. M-Turkers, generally, are not supposed to come back for another round (with a different player ID). I assume that our set up with M-Turk ensures that, i.e. no more than 1 player ID for any M-Turk registered user. Similarly, when a person starts a game through a launch page that does not require identification (e.g. <a href="front-end-form.jsp">this one</a>, where one invents his own player ID  for the round to be played), there player record is not associated with a User entry.
+
+      <li>On the other hand, when a repeat user starts a round from an "identification-required" (or "-suggested") launch page, such as the a href="launch/">the MLC launch page</a>, the system creates a new PlayerInfo entry associated with the User entry, for use in that round.
+    </ul>
+    
+   <p>
+    
+
+<h3><a name="exp">Experiment plans and trial lists</a></h3>
+  <p>An  <strong>experiment plan</strong> is described by a set of <strong>trial lists.</strong> (It may,  contain just one trial list, or several). Each trial list describes the sequence of experiences (or a "treatment") in which a certain group of players will participatye.     Whenever a player starts participating in an experiment (is about to start playing), he is automatically assigned to one of the trial lists; this is association is permanent, i.e. all experiences of this player will follow that trial list.</P>
+
+  <p>A  <strong>trial list</strong> is a detailed "road map" to what a player associated with that trial list may experience. A trial list (in the original "static" variety of experiment plans) is described by a CSV files consisting of several lines of data. Each line specifies a <strong>parameter set</strong>; the parameters in the parameter set determine what kind of game will be played (by referring to a specific rule set file), what the initial boards may look like, how many episodes may be played, how rewards will be assigned, etc.  The player will progress through the lines of the trial list in the sequence in which they appear in the trial list file, i.e. once you complete a certain number of episodes pursuant by one parameter set (a <strong>series</strong> of episodes), you will be able to (or you will have to) switch to the next parameter set; there is no going back.  The series of episodes played in accordance with a given parameter set may be divided into the main subseries and the bonus subseries. For details, see the document on <a href="control-flow.html">Control flow</a>.</P>
+
+  <h3><a name="sd">Static and dynamic experiment plans</a></h3>
+
+<p>The Rule Game server provides several ways for the experiment designer to describe an experiment plan. The types of experiment plans that has been supported since  the original GS 1.* is now called "static experiment plans". Additionally, in GS 4.* the so-called "dynamic experiment plans" were introduced. Those come in two varieties, the "P:" type and "R:" type.
+
+  <h4>Static experiment plans</h4>
+
+<p>This arrangmenet, originally developed by Gary, works as follows. For each static experiment plan, an appropriately named directory exists under the control file directory. In that directory, one or several CSV files (known as trial list files) are placed, each one describing a (static) trial list. Each line of each of those trial list files must contain all parameters needed to run a series of episodes.
+
+<p>A static experiment plan is identified by the name of the plan's directory, relative to the main experiment plan directory in the control file data tree. For example, the directory for the plan named <tt>APP/foo</tt> will be in <tt>/opt/tomcat/game-data/trial-lists/APP/foo</tt>
+
+  <h4>"P:"-type dynamic  experiment plans</h4>
+  
+<p>Sometimes an experiment designer may want to carry out an experiment which is very similar to one that is already described by an existing static experiment plan, but with a few differences from that. For example, suppose we like plan named <tt>foo</tt>, but we want to change the number of game pieces on the initial board, and the feedback mode used in each episode. To do that, we need to first create a so-called <tt>modifier file</tt>. Let's suppose we call the modifer <tt>bar</tt>, which means that the modifier file needs to be in an appropriately named file under the modifier directory, namely <tt>/opt/tomcat/game-data/modifiers/bar.csv</tt>. Since we only want to modifiy 2 parameters of the original static plan, the modifier file needs to contain 2 columns. The file will have a header line (with the names of the two parameters), followed by a data line with the values of those parameters.
+
+<p>After that, one can refer to the modifed plan under the name <tt>P:APP/foo:bar</tt>. When encountering this plan name, the Game Server will create, in the server memory, a plan consisting of the same number of trial lists as the original plan <tt>APP/foo</tt> did, but each of those trial lists will have new values in the 2 columns you wanted to modify; those values will, of course, be taken from the modifier file.
+
+  <h4>"R:"-type dynamic  experiment plans</h4>
+
+<p>In another use case, an experiment designer may want create a single template trial list which will define all the parameters needed for running games (the number of pieces, colors and shapes, the number of episodes to play, reward rates, etc) except for the name of the rules, and then offer to players a number of plans based on this template trial list, but with different rule sets. This can be accomplished by placing that template file into the modifier directory (e.g. the file in <tt>/opt/tomcat/game-data/modifiers/my-template.csv</tt>. will define the template trial list named <tt>my-template</tt>). After that, to create a dynamic experiment plan that uses the rule set named <tt>my-rule</tt> (thus, defined by the rule set file in  <tt>/opt/tomcat/game-data/rules/my-rule.csv</tt>) plus the parameters from the template file, one can refer to the dynamic plan by the name <tt>R:my-rule:my-template</tt>. The Game Server, again, will take the  parameters from the modifier file and will put the rule name <tt>my-rule</tt> into the rule ID column of the trial list.
+
+<p>Since one only specifies a single rule in an R:-type plan, the template trial list should have only one data line (preceded, of course, by the header line), and the dynamic plan will have just one trial list, with a single parameter set in that list.
+
+<p>When you refer to dynamic plans, of either P: or R: variety, the server does not create new experiment plan directories; instead, the plan definitions only exist in the server's memory, created when you first refer to the plan. This is why we call such plans "dynamic".
+  
+  
+  <h3><a name="game">Games</a></h3>
+
+<p>When speaking precisely, we use the word <strong>game</strong> to refer to the combination of a rule set (which defines in which way pieces can be moved from the board) and an initial board. This is similar to how the word "game" may be used in other domains. For example, the expression "game of chess" means "a game which starts with a certain initial position (16 white and 16 black game pieces of certain kinds, arranged in a certain order in 4 rows of the board), and in which the players can move the  game pieces according to certain specified rules". In our Rule Game, we can say "players A and B were given identical game to play", meaning that A and B were given the same initial boards and had to follow the same rules for removing pieces.
+
+ <p> When the Game Server is given a parameter set (coming e.g. from a particular line of a trial list file), the Game Server internally creates a so-called "game generator": a machine which will create a series of games which will have various (randomly generated or predefined) initial boards and a certain rule set (the same for all games in the series).
+
+  <h3><a name="episode">Episodes</a></h3>
+
+    
+ <p>A series consists of <strong>episodes</strong>. An episode is one instance of playing a game, from setting up an initial board to clearing it. In a given series, all episodes involve games with the same rule sets but, generally, different initial boards.
+   An episode, therefore, can be represented by the initial board and the sequence of moves, together with a reference to the set of rule under which the episode was played.</p>
+
+<p>See also Paul's document, <a href="https://docs.google.com/document/d/13ZZ9nUXOTmQTWSaR8v-UuvCeCAoXGd6nEKJCHSsztlk/edit">_0.Terminology</a>.</P>
+
+  <h2><a name="playerId">Appendix: the formats and meaning of PlayerId</a></h2>
+
+<p>Normally, when a player is registered (which happens when an M-Turker follows a link from the M-Turk side, or when somebody uses a launch page), the name of the experiment plan is an explicit part of the start URL.
+
+  <em>
+<p>For historical purposes, we mention here a deprecated Game server feature  that has remained since GS 1.*, and should not be used anymore. Namely, there is a procedure to assign a player to an experiment plan even if the plan name is not provided in the URL. It works  as follows:
+
+    <ul>
+      <li>A PlayerId can be explicitly assigned to any expriment plan if the parameter <tt>exp</tt> is used in the URL at which the player starts his interaction with the system. E.g. the start URL was <tt>http://sapir.psych.wisc.edu/rule-game/prod/?exp=qt&workerId=vm001</tt>, then the PlayerId <tt>vm001</tt> will be  associated with the experiment plan <tt>qt</tt>.
+      <li>In the absence of an explicit assignment, if the PlayerId has no hyphens in it, it is associated with the experiment plan <tt>default</tt>.
+      <li>In the absence of an explicit assignment, if the PlayerId has a hyphen in it, the part of the PlayerID preceding the hyphen (or preceding the first hyphen, if there are several) is taken to be the name of the experiment plan. For example, if PlayerId=<tt>qt-01-a</tt>, it will be considered belonging to experiment plan <tt>qt</tt>.
+    </ul>
+  </p>
+  </em>
+  
+<P>As stated above, player IDs normally don't have a connection with the experiment plan name, and, generally, can be picked freely if one comes from a non-registration launch page. However, certain conventions exist which allow one to guess, with a high probability, the origin of a particular player. In particular:
+
+  <ul>
+    <li>M-Turkers have player IDs consisting of upper-case letters and digits, e.g. <tt>A16QZSBYXE5VY8</tt>. Most commonly, they are 14 characters long, but there are some shorter and longer ones (from 12 to 20 characters long).
+    <li>Player IDs created for repeat users usually start with <tt>RepeatUser-</tt>
+  </ul>
+
+
+</body>
+</html>

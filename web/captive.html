@@ -392,7 +392,7 @@ The second number, the <strong>finish code</strong> reports the current state: 0
 
       <h2>Socket interface</h2>
 
-    <p>An alternative way of running CGS is as a process in a separate console window (or even by a different user, or on a different host) and communicating with it over the socket interface. Unlike the "normal" CGS, the socket game server can serve multiple clients, with a different game rule set for each one; but the client-server session facing each client is still completely controlled by the client and thus can still be described as "captive".</p>
+    <p>An alternative way of running CGS is as a process in a separate console window (or even by a different user, or on a different host) and communicating with it over the socket interface. Unlike the "normal" CGS, the socket game server can serve multiple clients, with a different game rule set for each one; however, the client-server session facing each client (and running in a separate thread) is still completely controlled by the client and thus can still be described as "captive".</p>
 
     <h3>Starting the socket CGS</h3>
 
