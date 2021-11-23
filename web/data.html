@@ -125,9 +125,13 @@ Each line  consists of 4 fields. The first field is the color name, writen using
 
       <p>Note that double quotes around individual shape names should not be used when defining the set of shapes in the trial list file. (There, the entire list of shapes can be double-quoted, if desired, but that's not necessary).
 
+	<h3>Launch files</h3>
+  <li>If you want your experiment plan, or a dynamic plan based on your rule set, to appear in the <a href="launch/">MLC Launch Page</a> (for the staff) or the <a href="launch/launch-rules.jsp">APP Launch Page</a> (for the students), you need either to follow certain rules for placing the trial list files or the rule set files into certain special directories, or to edit the "launch files". For details, see  <a href="launch/launch-setup.html">Setting up launch pages</a>.
+   
+	
     <h3>Modifying input files</h3>
 
-<p>It is preferable that you don't modify the data files directly in  <tt>/opt/tomcat/game-data</tt>, since if you do that, your updates may be lost later. Instead, it is better to modify the files in your working directory, and deploy from there. Also, you may considering checking in your work to your repository in Github. For details, see the <a href="deploy.html">Deployment Guide</a>.
+<p>It is important  that you don't modify the data files directly in  <tt>/opt/tomcat/game-data</tt>, since if you do that, your updates will be lost later. Instead, you should modify the files in your working directory, and deploy from there. While it's possible to carry out the deployment manually, the preferred way to do it is by checking in your work to your repository in Github, which will trigger an automatic deployment. (Thanks, Kevin!) For details, see the section on GitHub in<a href="sop-experiment.html">Standard Operating Procedures: Preparing and running an experiment with the Rule Game Server</a>.
 
   <h3>Can I place files to my own directory, instead of /opt/tomcat/game-data?</h3>
 
