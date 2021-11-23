@@ -16,8 +16,9 @@ import edu.wisc.game.rest.*;
 //import edu.wisc.game.parser.*;
 
 
-/** The Launch page that allows one to play all rule sets from rules/APP.
-    As requested by Paul on 2021-10-12 and 2021-10-13.
+/** The common base for the Launch page that allows one to play all
+    rule sets from rules/APP and rules/MLC. As requested by Paul on
+    2021-10-12 and 2021-10-13.
 
 <pre>
   The M need not provide bonuses, and can use the standard 4 colors and shapes. I'd suggest either 5 to 8 pieces (a random number). People should be able to give up even at the first screen, if that is supported.
@@ -146,12 +147,18 @@ public class LaunchRulesBase      extends ResultsBase  {
     */
     protected String describeTrialList(TrialList t, HashSet<String> knownRuleSetNames) throws Exception {
 	Vector<String> v = new Vector<>();
+	int j=0;
+	HashSet<String> h = new HashSet<>();
 	for(ParaSet para: t) {
 	    String r = para.getRuleSetName();
 	    knownRuleSetNames.add(r);
 	    RuleSet ruleSet = AllRuleSets.obtain(r);
-	    String descr = String.join("<br>", ruleSet.description);	    
-	    v.add( fm.tt(r) + " " + descr);
+	    String q = "["+ ++j+"] "+fm.tt(r);
+	    if (!h.contains(r)) {
+		q += " " + String.join("<br>", ruleSet.description);
+		h.add(r);
+	    }
+	    v.add(q);
 	}
 	return String.join("<br>",v);
     }
