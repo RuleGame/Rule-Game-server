@@ -363,6 +363,8 @@ qt-07,20200910-123116-PRDLET,1,20200910-123151,5,1,7,7,0
 <p>The last column, <tt>code</tt>, contains the server response. The value of 0 is recorded when the move attempt is successful; positive values (usually 4, sometimes 2) are recorded on rejections, as per <tt><a href="api/constant-values.html#edu.wisc.game.sql.Episode.CODE.ACCEPT">CODE</a></tt>.
 
 
+<p><strong>Note: in certain circumstances the Game Server may save a partial transcript before the episode is completed, and then write out the full transcript again at the end of the episode. It is recommended that the data user remove duplicate lines from each transcript before analyzing the data.</strong>
+  
   <h3>The detailed transcript</h3>
 
 <p>The detailed transripts are saved in  /opt/tomcat/saved/detailed-transcripts/ , in file names based on the PlayerID + ".-detailed-transcripts.csv".
