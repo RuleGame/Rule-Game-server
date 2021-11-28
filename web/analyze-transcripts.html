@@ -4,10 +4,15 @@
 <body>
   <h1>The Analyze Transcripts tool</h1>
 
-<div align="center"><em>Updated 2021-11-08, for Game Server 4.001</em></div>
+<div align="center"><em>Updated 2021-11-27, for Game Server 4.002</em></div>
 
   <p>The Analyze Transcripts tool can be used to extract transcripts for specified experiment plans, specified players, or specified repeat users, and to carry out certain types of data analysis.
 
+<p>When processing trasnscripts, the analyzer removes duplicate entries (which are sometimes written by the server) and entries with code 3 "empty cell", because our researchers become sad when they see players grabbing at empty cells (i.e. already-removed pieces).
+
+  
+<h2>Usage - overview</h2>
+  
   <p>In general, the usage of the script can be described as follows:
 
 <re>
@@ -111,13 +116,73 @@ analyze-transcripts.sh -pid -file my-pid-list.csv
 <p>Otherwise, log-like curve-fitting is carried out, either with no <em>p</em><sub>0</sub>, or with <em>p</em><sub>0</sub>, computed based on a particular baseline player model. Currently, two such models are supported:
   <ul>
     <li><tt>-p0 random</tt> -- Completely Random Player (understands notaion, but has no memory)
-    <li><tt>-p0 mcp1</tt> -- MCP1 (Minimally Competent Player 1 -- one who does not repeat failed move attempts until the board position changes).
+    <li><tt>-p0 mcp1</tt> -- MCP1 (Minimally Competent Player 1 -- one who does not repeat failed move/pick attempts until the board position changes.) 
   </ul>
 
 <p>The value of <em>p</em><sub>0</sub> for each move attempt is written as a last column of each transcript section file, when applicable.
 
 <p>The curve fitting parameters are written into a file named <tt>summary-flat.csv</tt>, <tt>summary-p0-COMPLETELY_RANDOM.csv</tt>, or <tt>summary-p0-MCP.csv</tt>, as the case may be.
 
+  <h2><a name="p0">The computation of p0</a></h2>
+
+<p>Computing the p0 in a sensible way is somewhat complicated by the fact that, when we see a "failed pick" recorded in the transcript, we do not know what the player's true intention was: did he hope to move a game piece into a bucket (but could not, because the piece wasn't movable), or did he just want to find if the piece is movable (with the intent to just drop it even if it was)?
+
+  <table border=1>
+  <tr><th>What the player wanted to do <th> How the system responded
+    <Th>What was recorded
+  </tr>
+  <tr>
+    <td rowspan="2">Find out if a piece was movable
+    <td> Can't be moved
+    <Td>Failed pick
+  </tr>
+  <tr>
+    <td> Can be moved (and then the player drops it in the middle of the board)
+    <td>Successful pick
+   </tr>
+  <tr>
+    <td rowspan="3">Move the piece to a bucket of his choice
+    <td> Can't be moved
+    <Td>Failed pick
+  </tr>
+  <tr>
+   <td> Can  moved, but not to the chosen bucket
+   <td>Faied move
+  </tr>
+  <tr>
+   <td> Can be moved to the chosen bucket
+   <td>Successful move
+  </tr>   
+  </table>
+  
+<p>If the latter were the case, then we would also see a lot of successful picks in our transcripts, and we don't. Therefore, we compute p0 for failed picks based on the first assumption, i.e. give them the same value as for moves (succsesful and failed).
+
+<p>There are still some successful picks in the record. I am inclined to explain them primarily by "slips of the fingers" (it's not that easy to uses a mouse or a touchscreen device error-free, so in some cases a player can accidentally drop a piece on the board before it's brought to a bucket). Nonetheless, for them we compute p0 as if they, indeed, resulted from an intent to just try a pick
+  
+
+  <h3>The  Completely Random Player</h3>
+
+<p>A completely random player has no memory whatsoever of his actions. Every time, it randomly chooses a piece, and a destination bucket, and makes an attempt to move the chosen piece to the chosen bucket. Accordingly, the value of p0 for all successful and failed move attempts, and for failed pick attempts, is computed as
+  <em> p0 = B/(4*m),</em>
+  where <em>m</em> is the number of pieces on the board, and <em>B</em> is the number of possible moves (i.e., of allowed-move pairs (origin,destination)). For sucessful picks, we use
+  <em> p0 = M/m,</em>
+  where <em>M</em> is the number of movable pieces currently on the board.
+
+    <h3>MCP1 (Minimally Competent Player 1</h3>
+
+<p>This models a player who does not repeat failed move/pick attempts on the same unchanged board. That is, if he has a failed pick for piece A, it won't make another attempt to pick or move A. If he has a failed move attempt for piece A to bucket <em>b</em>, than he won't try to move A to b again, but he still may try to move A to other buckets. However, MCP1 does not make any "positive inferences", along the lines of, "if I have had a failed move attempt for piece A to bucket b, this must mean that one of the other 3 destinations for A is allowed", or "if I have had a succsessful pick attempt for A, it means that A has at least one allowed destination". Accordingly, the p0 for MCP1 are computed as follows:
+  <p>
+  <table>
+    <tr><td> p0 = B/(4*m - F), <td> for failed and successful moves and for failed picks
+    </tr>
+    <tr><td>p0 = M/(m-f), <td> for successful picks.
+  </tr></table>
+
+  <p>
+  Here, F is the number of "known impossible moves", which includes all (piece,bucket) pairs which can be inferred from a failed move or from a failed pick. (A failed pick, of course, results in  4 such known impossible pairs). Similarly, f is the number of "known immovable pieces", which counts pieces for which the player has had a failed pick in the current position, or 4 failed moves (trying all 4 buckets) in the current position.
+
+  <p>The values of F and f reset to 0 once a piece is successfully removed from the board and the board position changes. In other words, an MCP does not retain any memory of his actions from one position to the next.
+ 
   <h2>Examples</h2>
 
   <h3>Example 1</h3>
