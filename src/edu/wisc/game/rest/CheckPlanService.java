@@ -48,6 +48,24 @@ public class CheckPlanService extends GameService2 {
 	    v.add(fm.para("The rules have been compiled as follows:"));
 	    v.add(fm.para(fm.tt(rules.toSrc().replaceAll("\n","<br>"))));
 
+	    StalemateTester tester = new StalemateTester(rules);
+	    Board stalemated = tester.canStalemate();
+
+
+	    if (stalemated!=null) {
+		v.add(fm.para("Error: this rule set can stalemate (4)"));
+		String picture = 
+		    BoardDisplayService.doBoard(stalemated, 48);
+		v.add(fm.para("Sample stalemate board:<br>" + picture));
+
+
+		
+		errcnt++;
+	    } else {
+		v.add(fm.para("This rule will not stalemate"));
+	    }
+
+	    
 	} catch(Exception ex) {
 	    if (info != null) v.add(fm.para(info));
 	    v.add(fm.para("Error: " + ex));
@@ -57,6 +75,9 @@ public class CheckPlanService extends GameService2 {
 	    v.add(fm.para(fm.wrap("small", "Details:"  + s)));
 	    errcnt ++;
 	}
+
+
+	
 
 	v.add("<hr>");
 	if (errcnt>0) {

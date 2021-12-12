@@ -11,8 +11,8 @@ import edu.wisc.game.parser.*;
 /** A RuleSet describes the rules of a game. */
 public class RuleSet {
 
-    /** An optional description of the rule set, which may have been found
-	in the comment lines on top of the rule set file.
+    /** An optional verbal description of the rule set, which may have
+	been found in the comment lines on top of the rule set file.
      */
     public Vector<String> description=new Vector<>();
     
@@ -198,7 +198,8 @@ public class RuleSet {
     
     /** A  PropertyCondition object describes the set of restrictions
 	imposed on a particular property of an image-and-property-based
-	object.
+	object. The restrictions can be expressed in terms of a set of 
+	accepted string values, or a range of accepted integer values.
      */
     private static class PropertyCondition {
 	HashSet<String> acceptedValues = new HashSet<>();
@@ -293,6 +294,16 @@ public class RuleSet {
 		    "," + showList(colors) +
 		    "," + plist.toSrc() +  "," + bucketList.toSrc() + ")";
 	    }
+	}
+
+	/** Used in lite rule sets */
+	Atom(Piece.Shape[] _shapes,  Piece.Color[] _colors) {
+	    counter = -1;
+	    shapes = _shapes;
+	    colors = _colors;
+	    try {
+		bucketList = new BucketList( Expression.STAR);
+	    } catch (RuleParseException ex) {}
 	}
 	
 	/** Syntax: either
@@ -428,10 +439,17 @@ public class RuleSet {
 		throw new RuleParseException("Invalid color ("+g+") in: " + pex);
 	    }
 
-	    //System.out.println("colors=" + showList(colors));
+	    //System.out.println("colors=" + showList(colors));	    
+	}
 
-
-	    
+	/** Creates a "lite" atom based on this atom. The lite atom
+	    is unmetered, and has no restriction on buckets.
+	 */
+	Atom mkLite() {
+	    Atom a=new Atom(shapes,colors);
+	    a.plist = plist;
+	    a.propertyConditions=propertyConditions;
+	    return a;
 	}
 	
 	/** Used when converting Kevin's JSON to our server format */
@@ -482,6 +500,13 @@ public class RuleSet {
     public static class Row extends Vector<Atom> {
 	/** The default value, 0, means that there is no global limit in this row */
 	public final int globalCounter;
+
+
+	/** Only used to construct lite rows */
+	Row() {
+	    globalCounter=0;
+	}
+	
 	/** Creates a row of the rule set from a parsed line of the rule set file.
 	    @param tokens One line of the rule set file, parsed into tokens
 	    @param orders Contains all existing orderings
@@ -581,6 +606,9 @@ public class RuleSet {
     public TreeMap<String, Order> orders =  new TreeMap<>();
     /** All rows of this rule set */
     public Vector<Row> rows = new Vector<>();
+
+    /** Used for "lite" sets */
+    private RuleSet() {}
     
     public RuleSet(String ruleText) throws RuleParseException {
 	this( ruleText.split("\n"));
@@ -725,6 +753,26 @@ public class RuleSet {
 	return propValues;
     }
 
+    /** Creates a "lite" rule set based on this rule set. A lite set is one
+	which has all atoms in the same row, nothing is metered, and 
+	all destination  buckets are allowed. Such sets are used in 
+	stalemate testing.
+     */
+    RuleSet mkLite() {
+	RuleSet x = new RuleSet();
+	x.orders = orders;
+	x.rows = new Vector<Row>();
+	Row r = new Row();
+	for(Row row: rows) {
+	    for(Atom a: row) {
+		r.add( a.mkLite());
+	    }
+	}
+	x.rows.add(r);
+	return x;
+ 
+    }
+    
     public static void main(String[] argv) throws IOException,  RuleParseException {
 	System.out.println("Have " + argv.length + " files to read");
 	for(String a: argv) {

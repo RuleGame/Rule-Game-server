@@ -312,7 +312,8 @@ public class Board {
 	
 	for(Piece p: pieces) {
 	    if (p!=null) {
-		BitSet bi = moveableTo[ p.pos().num()];
+		BitSet bi = (moveableTo!=null)?  moveableTo[ p.pos().num()]:
+		    new BitSet();
 		int[] z = new int[bi.cardinality()];
 		int k=0;
 		for(int i=0; i<bi.length(); i++) {

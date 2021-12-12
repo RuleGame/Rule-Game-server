@@ -301,7 +301,7 @@ public class Episode {
 	*/
 	private boolean buildAcceptanceMap() {
 
-	    EligibilityForOrders eligibleForEachOrder = new EligibilityForOrders();
+	    EligibilityForOrders eligibleForEachOrder = new EligibilityForOrders(rules, onBoard());
 	    //System.err.println("eligibileForEachOrder=" + eligibleForEachOrder);
 
 	    
@@ -670,40 +670,6 @@ public class Episode {
 
     @Transient
     private boolean prepReady = false;
-
-    
-    /** At present, which pieces are eligible for picking under each of
-	the existing orders? This structure needs to be updated every time
-	a piece is removed from the board.
-    */
-    private class EligibilityForOrders extends HashMap<String, BitSet>  {
-	/** Finds pieces eligible for pick up under each orders based on
-	    the current board content */
-	void update() {
-	    clear();
-	    // Which pieces may be currently picked under various ordering schemes?
-	    for(String name: rules.orders.keySet()) {
-		Order order = rules.orders.get(name);
-		BitSet eligible = order.findEligiblePieces(onBoard());
-		put(name,  eligible);
-	    }
-	}
-
-	EligibilityForOrders() {
-	    super();
-	    update();			
-	}
-
-	public String toString() {
-	    Vector<String> v= new Vector<>();
-	    for(String key: keySet()) {
-		v.add("Eli(" + key+")="+ get(key));
-	    }
-	    return "[Eligibility: "+String.join("; " , v)+"]";
-	}
-	
-    }
-
 
     /** Run this method at the beginning of the game, and
 	every time a piece has been removed, to update various

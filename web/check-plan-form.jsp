@@ -2,6 +2,7 @@
 <html>
 <head>
 <title>Validate your experiment plan</title>
+    <link rel="stylesheet" type="text/css" href="css/rule-game.css"/>
 </head>
 <body>
 <h1>Validate your experiment plan</h1>
@@ -33,10 +34,19 @@ or <tt>R:bottomLeft_then_topRight:simple</tt>
 
 <h2>Individual rules</h2>
 
-<p>You can type the text of an individual rule set in the box below, e.g.
-<pre>
+<p>You can type the text of an individual rule set in the box below, such as
+<pre class="yellow">
 1 (*, square, *, *, 0) (*, triangle, *, *,1) (*, circle, *, *,2) (*, square, *, *,3)
 (*,*,*,*,[p-1,p+1])
+</pre>
+
+or (for a stalemate example):
+
+<pre class="yellow">
+(*,*,RED,T,[0,1,2,3])
+(*,*,BLUE,R,[0,1,2,3])
+(*,*,YELLOW,*,[0,1,2,3])
+(*,*,BLACK,*,[0,1,2,3])
 </pre>
 
    <form method="post" action="game-data/CheckPlanService/checkRules"

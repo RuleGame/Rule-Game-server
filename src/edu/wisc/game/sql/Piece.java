@@ -243,6 +243,8 @@ public class Piece  implements Serializable {
     @XmlElement
     public void setDropped(Integer _dropped) { dropped = _dropped; }
 
+    static private long maxId = 1;
+    
     public Piece(){} 
      
     public Piece(//int _id,
@@ -253,6 +255,7 @@ public class Piece  implements Serializable {
 	image = null;
 	x = _x;
 	y = _y;
+	id = (maxId++);
     }
 
     public Piece(String _image, int _x, int _y) {
@@ -262,6 +265,7 @@ public class Piece  implements Serializable {
 	color = null;
 	x = _x;
 	y = _y;
+	id = (maxId++);
     }
 
     

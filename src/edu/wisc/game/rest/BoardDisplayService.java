@@ -78,7 +78,10 @@ public class BoardDisplayService {
 
     }
 
-    private static String doBoard(Board board,  int cellWidth) {	    
+    /** Given a Board object, creates an HTML snippet containing a
+	visual display of the board.
+     */
+    public static String doBoard(Board board,  int cellWidth) {	    
 	Piece[] pieces= board.asBoardPieces();
 	boolean[] isMoveable = new boolean[Board.N*Board.N+1];	
 	return Episode.doHtmlDisplay(pieces, -1, false, isMoveable, cellWidth);
