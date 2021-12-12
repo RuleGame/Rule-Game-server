@@ -197,5 +197,10 @@ public class  Fmter {
     //    public static Fmter plaintText = new Fmter();
 
 
+    public String html(String title, String body) {
+	return wrap("html", wrap("head", wrap("title", title)) + "\n" + wrap("body", body));       
+    }
+
     
+
 }

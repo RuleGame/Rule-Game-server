@@ -65,7 +65,8 @@ public class BoardDisplayService {
 	    }
 	    
 	    Board board = Board.readBoardFromString(boardJsonText);
-	    String s = doBoard(board, cellWidth);
+	    String s = (fm instanceof HTMLFmter) ? doBoard(board, cellWidth):
+		doBoardAscii(board);
 	    title ="Board display";
 	    body += fm.para(boardJsonText);
 	    body += fm.para(s);
@@ -85,6 +86,13 @@ public class BoardDisplayService {
 	Piece[] pieces= board.asBoardPieces();
 	boolean[] isMoveable = new boolean[Board.N*Board.N+1];	
 	return Episode.doHtmlDisplay(pieces, -1, false, isMoveable, cellWidth);
+    }
+
+    /** The ASCII-art alternative */
+    public static String doBoardAscii(Board board) {	    
+	Piece[] pieces= board.asBoardPieces();
+	boolean[] isMoveable = new boolean[Board.N*Board.N+1];	
+	return Episode.graphicDisplayAscii(pieces, -1, false, isMoveable, false);
     }
    
     @Path("/displayBoardFile")

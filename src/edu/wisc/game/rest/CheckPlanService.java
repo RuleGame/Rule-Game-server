@@ -22,7 +22,7 @@ import edu.wisc.game.formatter.*;
 /** The "Check my experiment plan" service. */
 @Path("/CheckPlanService") 
 public class CheckPlanService extends GameService2 {
-    private static HTMLFmter  fm = new HTMLFmter(null);
+    private static Fmter  fm = new HTMLFmter(null);
 
     @POST
     @Path("/checkRules") 
@@ -40,23 +40,26 @@ public class CheckPlanService extends GameService2 {
 
 	v.add(fm.h1(title1));
 
-	v.add(fm.para("Input:<br>" + fm.pre(rulesText)));  
+	v.add(fm.para("Input:" + fm.br()+ fm.pre(rulesText)));  
 
     
 	try {
 	    RuleSet rules = new RuleSet(rulesText);
 	    v.add(fm.para("The rules have been compiled as follows:"));
-	    v.add(fm.para(fm.tt(rules.toSrc().replaceAll("\n","<br>"))));
+	    v.add(fm.para(fm.tt(rules.toSrc().replaceAll("\n",fm.br()))));
 
 	    StalemateTester tester = new StalemateTester(rules);
 	    Board stalemated = tester.canStalemate();
 
 
 	    if (stalemated!=null) {
-		v.add(fm.para("Error: this rule set can stalemate (4)"));
-		String picture = 
-		    BoardDisplayService.doBoard(stalemated, 48);
-		v.add(fm.para("Sample stalemate board:<br>" + picture));
+		v.add(fm.para("Error: this rule set can stalemate"));
+		String picture =	(fm instanceof HTMLFmter) ?
+		    BoardDisplayService.doBoard(stalemated, 48):
+		    BoardDisplayService.doBoardAscii(stalemated);
+	  
+
+		v.add(fm.para("Sample stalemate board:" + fm.br() + picture));
 
 
 		
@@ -234,7 +237,7 @@ public class CheckPlanService extends GameService2 {
 		    //-- checking the rule files for properties and their values, or for colors and shapes, as the case may be
 		    RuleSet rules = gg.getRules();
 		    v.add(fm.para("The rules have been compiled as follows:"));
-		    v.add(fm.para(fm.tt(rules.toSrc().replaceAll("\n","<br>"))));
+		    v.add(fm.para(fm.tt(rules.toSrc().replaceAll("\n",fm.br()))));
 
 		    if (ipb) {
 			TreeMap<String,TreeSet<String>> w = rules.listAllPropValues();
@@ -319,5 +322,28 @@ public class CheckPlanService extends GameService2 {
 	return fm.html(title, body);	
    }
 
+    /** Command-line interface to the validator. The command-line
+	arguments can be names of experiment plans or names of rule
+	set files.
+     */
+    public static void main(String[] argv) throws Exception {
+	CheckPlanService service = new CheckPlanService();
+	service.fm = new Fmter();
+	for(String a: argv) {
+	    String s;	       
+	    if (a.endsWith(".txt")) {
+		File f = new File(a);
+		if (!f.canRead()) throw new IOException("Cannot read file " + f);
+		String text = Util.readTextFile(f);
+		s = service.checkRulesHtml(text);
+	    } else {
+		s = service.checkPlanHtml(a);
+	    }
+	    System.out.println("------------------------------------------------");
+	    System.out.println(s);
+
+	}
+    }
+    
 }
 	

@@ -160,7 +160,7 @@ public class StalemateTester {
 	int cnt = onBoard.cardinality();
 	while(cnt>0) {
 	    EligibilityForOrders eligibleForEachOrder = new EligibilityForOrders(rules, onBoard);
-	    System.out.println("cnt=" + cnt+", Eli=" + eligibleForEachOrder );
+	    //System.out.println("cnt=" + cnt+", Eli=" + eligibleForEachOrder );
 
 	    int rmCnt = 0;
 	    for(int i=0; i<pieceGroups.size(); i++) {

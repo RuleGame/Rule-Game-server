@@ -762,12 +762,20 @@ public class Episode {
 	printing on terminal, instead of a web browser)
     */
     public String graphicDisplay(boolean html) {
-	if (isNotPlayable() || !html) return graphicDisplayAscii(html);
 
 	int lastMovePos =  (lastMove==null)? -1:  lastMove.pos;
 	//	private boolean[] isMoveable = new boolean[Board.N*Board.N+1];
 	boolean[] isMoveable = ruleLine.isMoveable;
 
+	if (isNotPlayable()) {
+	    return "This episode must have been restored from SQL server, and does not have the details necessary to show the board";
+	}
+	
+
+
+	if (!html) return// graphicDisplayAscii(html);
+					  graphicDisplayAscii(pieces, lastMovePos,  weShowAllMovables(), isMoveable, html);
+	
 	String s = 
 	    fm.wrap("li", "(X) - a movable piece" +
 		    (!weShowAllMovables()? " (only marked on the last touched piece)": "")) +
@@ -827,7 +835,7 @@ public class Episode {
 		if (needBorder) z += "style='border: 5px solid "+hexColor+"' ";
 
 		z += "width='"+cellWidth+"' src=\"../../GetImageServlet?image="+sh+"\">";
-		//z = (lastMove!=null && lastMove.pos==pos) ?    "[" + z + "]" :
+		//z = (lastMove!=null && lastMovePos==pos) ?    "[" + z + "]" :
 		//    ruleLine.isMoveable[pos]?     "(" + z + ")" :
 		//    "&nbsp;" + z + "&nbsp;";
 
@@ -857,13 +865,16 @@ public class Episode {
 	return result; 
     }
 
-    /** Retired from the web game server; still used in Captive Game Server. */
-      public String graphicDisplayAscii(boolean html) {
 
-	if (isNotPlayable()) {
-	    return "This episode must have been restored from SQL server, and does not have the details necessary to show the board";
-	}
-	
+    //(Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveable, int cellWidth) {
+
+    
+    /** Retired from the web game server; still used in Captive Game Server. */
+    static public String graphicDisplayAscii(
+Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveable, 
+
+					boolean html) {
+
 	Vector<String> w = new Vector<>();
 
 	String div = "#---+";
@@ -890,8 +901,8 @@ public class Episode {
 		    }
 		}
 
-		z = (lastMove!=null && lastMove.pos==pos) ?    "[" + z + "]" :
-		    ruleLine.isMoveable[pos]?     "(" + z + ")" :
+		z = (lastMovePos==pos) ?    "[" + z + "]" :
+		    isMoveable[pos]?     "(" + z + ")" :
 		    " " + z + " ";
 
 		s += " " + z;
