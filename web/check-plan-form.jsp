@@ -32,9 +32,10 @@ or <tt>R:bottomLeft_then_topRight:simple</tt>
      <button type="submit">Check</button>
    </form>
 
-<h2>Individual rules</h2>
+<h2>Individual rule sets</h2>
 
-<p>You can type the text of an individual rule set in the box below, such as
+<p>To test an individual rule set without creating an experiment plan, 
+you can type the text of the rule set in the box below. For example,
 <pre class="yellow">
 1 (*, square, *, *, 0) (*, triangle, *, *,1) (*, circle, *, *,2) (*, square, *, *,3)
 (*,*,*,*,[p-1,p+1])
@@ -49,6 +50,7 @@ or (for a stalemate example):
 (*,*,BLACK,*,[0,1,2,3])
 </pre>
 
+
    <form method="post" action="game-data/CheckPlanService/checkRules"
 	 enctype="application/x-www-form-urlencoded">
 
@@ -57,6 +59,9 @@ or (for a stalemate example):
 	 <br>
      <button type="submit">Check</button>
    </form>
+
+<p>(Note: when testing individual rule sets, stalemate testing will only work correctly if your rule set uses the legacy shapes and legacy colors. To test a rule set with custom shapes or custom colors, and for rule sets with image-and-property-based objects, you need to create an experiment plan, so that the tester will know what the set of possible objects is!)
+
 
 </body>
 </html>

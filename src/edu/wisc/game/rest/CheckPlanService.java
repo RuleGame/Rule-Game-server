@@ -49,7 +49,7 @@ public class CheckPlanService extends GameService2 {
 	    v.add(fm.para(fm.tt(rules.toSrc().replaceAll("\n",fm.br()))));
 
 	    StalemateTester tester = new StalemateTester(rules);
-	    Board stalemated = tester.canStalemate();
+	    Board stalemated = tester.canStalemate(Piece.Shape.legacyShapes, Piece.Color.legacyColors, null);
 
 
 	    if (stalemated!=null) {
@@ -271,6 +271,31 @@ public class CheckPlanService extends GameService2 {
 			    }
 			}
 		    }
+		    //--- check the rule set for stalemates
+		    StalemateTester tester = new StalemateTester(rules);
+
+		    //Piece.Shape.legacyShapes, Piece.Color.legacyColors, para.images);
+		    
+		    Board stalemated = tester.canStalemate(para.shapes, para.colors, para.images);
+		    
+		    if (stalemated!=null) {
+			v.add(fm.para("Error: this rule set can stalemate"));
+			String picture =	(fm instanceof HTMLFmter) ?
+			    BoardDisplayService.doBoard(stalemated, 48):
+			    BoardDisplayService.doBoardAscii(stalemated);
+			
+			
+			v.add(fm.para("Sample stalemate board:" + fm.br() + picture));
+
+
+		
+			errcnt++;
+		    } else {
+			v.add(fm.para("This rule will not stalemate"));
+		    }
+
+
+		    
 		}
 
 	    }

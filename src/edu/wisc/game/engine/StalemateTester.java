@@ -30,18 +30,35 @@ public class StalemateTester {
 	
     /** Creates an initial multi-board, which has each possible piece in 
 	each cell. */
-	MBoard(Piece.Shape[] shapes, Piece.Color[] colors) {
-	
+	MBoard(Piece.Shape[] shapes, Piece.Color[] colors,
+	       String[] allImages) {
+
+	    boolean ipb = (allImages != null);
+	    if (ipb) {
+		//if (shapes!=null || colors!=null) throw new IllegalArgumentException("Cannot supply shapes or colors if images have been supplied");
+	    } else {
+		if (shapes==null || colors==null) throw new IllegalArgumentException("Shapes or colors not supplied");
+	    }
+		       
+	    
 	    add( new HashSet<Piece>());
 	    for(int j=1; j<Board.N*Board.N + 1; j++) {
 		Pos pos = new Pos(j);
 		HashSet<Piece> g = new HashSet<Piece>();
-		for( Piece.Shape shape: shapes) {
-		    for( Piece.Color color: colors) {
-			Piece p = new Piece(shape, color, 	pos.x, pos.y);
-			//System.out.println("Adding " + p);
+
+		if (ipb) {
+		    for(String image: allImages) {
+			Piece p = new Piece(image,  pos.x, pos.y);
 			g.add(p);
-			//System.out.println("|g|=" + g.size()+", g={" +Util.joinNonBlank(", ", g)+"}");
+		    }				    
+		} else {		
+		    for( Piece.Shape shape: shapes) {
+			for( Piece.Color color: colors) {
+			    Piece p = new Piece(shape, color, 	pos.x, pos.y);
+			    //System.out.println("Adding " + p);
+			    g.add(p);
+			    //System.out.println("|g|=" + g.size()+", g={" +Util.joinNonBlank(", ", g)+"}");
+			}
 		    }
 		}
 		add(g);
@@ -122,11 +139,15 @@ public class StalemateTester {
 	pieces in each cell)? 
 	@return A sample stalemate board, or null if no stalemate is possible
     */
-    public Board canStalemate() {
-	Piece.Shape[] shapes = Piece.Shape.legacyShapes;
-	Piece.Color[] colors = Piece.Color.legacyColors;
+
+    // MBoard(Piece.Shape[] shapes, Piece.Color[] colors,
+    //	       String[] allImages) {
+
+    
+    public Board canStalemate(Piece.Shape[] shapes, Piece.Color[] colors,
+	       String[] allImages) {
   	
-	MBoard pieceGroups = new MBoard(shapes, colors);
+	MBoard pieceGroups = new MBoard(shapes, colors, allImages);
 	if (canStalemate(pieceGroups )) {
 	    MBoard q =  simplifyStalematedBoard(pieceGroups);
 	    return new Board( q.mono(), null, null);
@@ -228,7 +249,9 @@ public class StalemateTester {
 	    RuleSet lite = rules.mkLite();
 	    System.out.println(lite.toSrc());
 	    StalemateTester tester = new  StalemateTester(rules);
-	    Board stalemated = tester.canStalemate();
+	    Board stalemated = tester.canStalemate( Piece.Shape.legacyShapes,
+						    Piece.Color.legacyColors,
+						    null);
 	    if (stalemated!=null) {
 		System.out.println("Can stalemate");
 

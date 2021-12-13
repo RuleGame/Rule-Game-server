@@ -1,0 +1,40 @@
+<html>
+<head>
+<title>Stalemates and stalemate testing</title>
+    <link rel="stylesheet" type="text/css" href="css/rule-game.css"/>
+</head>
+<body>
+<h1>Stalemates and stalemate testing</h1>
+
+<h2>What is a stalemate</h2>
+
+<p>A stalemate is a state of the game (a board position plus the current value of the variables such as <tt>p</tt> or <tt>pc</tt>), with at least one piece remaining on the board, which allows no legal moves.
+
+<p>If a stalemate has been achieved, the current value of the counters in metered atoms and metered lines (see <a href="syntax.html">Syntax</a>) is irrelevant. This is because in a stalemate situation the control will cycle through all lines of the rule set, and all lines' and aroms' counters will reset.
+
+  <h2>Is a stalemate predetermined?</h2>
+
+<p>Given a rule set and an initial board, can we tell in advance whether the episode will end in a stalemate regardless of how the player plays, or will the outcome depend on the player's choices?
+
+<p>It turns out that this depends on the rule set.  Let us use the term <em>disappearing atom</em> for an atom whose <a href="arithmetic.html">bucket expression</a> evaluates to a non-empty set at the beginning of the episode, but may start to evaluate to an empty set after some point in the episode. With the currently supported rule syntax (as of GS 4.*), the only possible disappearing atoms are those that use the negation operator (!) in combination with certain variables. Consider, for example, the following  atom:
+  <pre>
+    (*,Square,Red,*,!pc)
+  </pre>
+This atom can be applied to red square objects, and has a bucket expression <tt>!pc</tt> which evaluates to [1] when <tt>pc</tt> is not defined (i.e. when no red pieces have been moved yet), and to [] (the empty set) once the first red piece has been move. We can call this atom "disappearing" because after a certain piint in the episode (namely, after the first red game piece has been moved), this atom becomes permanently inactive for the rest of the episode.
+
+<p>  
+  The following propostion holds:
+
+<p class="yellow">Proposition 1: If the rule set contains no disappearing atoms, then whether a given episode ends in a stalemate depends entirely on the game's rule set and the episode's intial board, and does not depend on the player's actions.</p>
+
+<p>The proof can be found in subsequent sections.
+
+  <h2>Stalemate tester limitations</h2>
+
+ <p>The stalemate tester implemented as a component of the 
+
+  
+
+
+</body>
+</html>
