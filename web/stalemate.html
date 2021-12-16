@@ -6,12 +6,21 @@
 <body>
 <h1>Stalemates and stalemate testing</h1>
 
-<h2>What is a stalemate</h2>
+<div align="center"><em>Updated for ver. 4.003. 2021-12-13</em></div>
+
+
+<p>This document discusses stalemate situations in the Rule Game, and the procedure useds by the experiment plan validator to check whether a rule set can stalemate.
+
+
+<h2>What is a stalemate?</h2>
 
 <p>A stalemate is a state of the game (a board position plus the current value of the variables such as <tt>p</tt> or <tt>pc</tt>), with at least one piece remaining on the board, which allows no legal moves.
 
 <p>If a stalemate has been achieved, the current value of the counters in metered atoms and metered lines (see <a href="syntax.html">Syntax</a>) is irrelevant. This is because in a stalemate situation the control will cycle through all lines of the rule set, and all lines' and aroms' counters will reset.
 
+<p>We will say that, given a set of allowed object types, a <em>rule set can stalemate</em> if there is at least one initial board composed of objects of those types such as that an episode with that initial board may result in a stalemate.
+
+  
   <h2>Is a stalemate predetermined?</h2>
 
 <p>Given a rule set and an initial board, can we tell in advance whether the episode will end in a stalemate regardless of how the player plays, or will the outcome depend on the player's choices?
@@ -29,12 +38,40 @@ This atom can be applied to red square objects, and has a bucket expression <tt>
 
 <p>The proof can be found in subsequent sections.
 
-  <h2>Stalemate tester limitations</h2>
-
- <p>The stalemate tester implemented as a component of the 
+<p>As an example of how a rule set with disappearing atoms may have an initial board that may or may not result in a stalemate depending on the player's decisions, consider the following rule set:
+<pre>
+(pos:36, bucket:[!p])
+(pos:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,33,35)
+</pre>
+The first atom of this set allows the player to remove game piece from cell No. 36, but only if no pieces have been removed yet. Hence, this rule can only be used once. The second atom allows the player to remove any number of pieces from cells No. 1 thru 35. Now, consider an initial board that has a game piece in cell No. 36, and one or more pieces in other cells of the board. If the player starts the episode with removing the piece from cell No. 36 (using the first atom), then he can remove all other game pieces using the second atom; thus, no stalemate. But if the player starts with using the first atom to remove any other piece than the one in cell No. 36, then he will never again have a chance to remove that piece; thus, once all other pieces have been removed, a stalemate will result.
 
   
+  <h2>Stalemate tester in the Rule Game Server: properties and limitations</h2>
 
+<p>The Rule Game server includes a stalemate tester component, which, starting in ver. 4.003, is used  as a component of the  <a href="check-plan-form.jsp">experiment plan validator</a>, to allow the experiment designer to detect possible stalemate situation in his or her rule set. The  stalemate tester will also be used in the future as a component of the automatic rule generator (to de deployed).
+
+<p><strong>When used as part of validating an experiment plan,</strong> the stalemate tester looks at how the parameter set in question specifies the set of objects allowed on the board. If the parameter set specifies the sets of colors and shapes, or (for <a href="proposal-object-properties.html">image-and-property-based objects</a>) speifies the set of objects, then the tester uses those sets. If no parameter set does not have any of those specifications, then the tester assumes that we have a GS-1.* style game with the 4 legacy shapes and 4 legacy colors.
+
+<p>
+  The stalemate tester does not properly support parameter sets that specify that the games are to be played with <a href="para-set.html#defineBoard">prefedined initial boards</a>. On such a parameter set the tester will ignore the initial board specifications, and will instead solve the stalemate problem for all boards using the legacy shapes and colors. This is not correct, especially if you intend the games to use custom shapes or colors.
+
+<p><strong>When used as part of validating a "naked" rule set</strong> (without an experiment plan), the stalemate tester will assume that you  intend the games to use the legacy shapes and colors.
+
+
+  <h2>Proofs etc</h2>
+
+<P>Here we sketch the underlying "theory" for stalemate testing, without giving full proofs.
+
+<p>We will introduce the concept of <em>Multi-board</em>. Unlike a normal board position in Rule Game, where each cell is either empty or contains a single game piece, <div class="yellow">a  <em>multi-board</em> is defined as a position where each cell contains a set of game pieces</em>.</div> (A set is understood mathematically, i.e. as an assemblage of distinct pieces). A normal board position is, of course, a special case of multi-board, in which every cell happens to contain a set with no more than 1 element.
+
+<p>For a given set of allowed game pieces,  <div class="yellow">the <em>full board</em> is a multi-board which contains a set of all possible pieces in each cell.</div>  Thus, for a legacy game (one with the 4 legacy colors and the 4 legacy shapes), the full board has a set of 16 game pieces (representing all possible combinations of shapes and colors) in each cell.
+
+<p>All game rules applied to our "normal" games can be applied to games with mutli-boards as well, in an obvious way.
+
+<p>For any rule set without disappearing atoms, we will define  <div class="yellow">a <em>stalemate position</em> as a board position or a multi-board from which not a single game piece can be removed anymore</div>.
+
+
+  
 
 </body>
 </html>

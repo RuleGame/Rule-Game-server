@@ -5,7 +5,7 @@
 <body>
   <h1>Standard Operating Procedures: Preparing and running an experiment with the Rule Game Server</h1>
 
-    <p align="center"><em>Updated 2021-11-20 for Game Server ver. 4.002</em></p>
+    <p align="center"><em>Updated 2021-12-15 for Game Server ver. 4.003</em></p>
 
     <h2>Preparing the experiment control files</h2>
 
@@ -77,6 +77,27 @@ Server Version: 2.006
 	  </pre>
 Make sure to have thus information recorded in your experiment log. (Note that the server version is not reported prior to 2.006).
       </ul>
+
+      <h2><a name="init">Configuring the instructions pages</h2>
+
+    <p>We refer to the sequence of screens shown by the GUI client to a new player as the "instruction booklet". These screens contain information about the rules of game, to the extent we want the player to know them in advance.
+
+    <p>The sequence of screens presented to players in GS 1.* thru 3.* (and still available in GS 4.*) is referred to as the "instruction booklet No. 0". As of December 2021, it is expected that Kevin will add to the GUI client the functionality to display different instruction booklets to different players; the choice of the booklet will be controlled by the trial set files.
+
+    <p>If the experiment designer decided to create a new instruction booklet to be presented to some players, here are the steps:
+
+      <ol>
+	<li>Check with Kevin how many booklets exist now. If, for examples, booklets Nos. 0 thru 3 are currently in existence, you may choose to designate your new booklet as No. 4.
+
+	<li>In the experiment plan you are designing, indicate that this instruction booklet is to be presented to players assigned to some trial lists. To do that, put the appropriate integer value (in this example, <tt>4</tt>) in the column named <tt>init</tt> of the first data row (= the first parameter set) of these trial lists.
+
+	<li>Check in the trial list files to the GitHub repository, in order for them to be auto-deployed to the server (so that Kevin will be able to  test your booklet).
+
+	<li>Create the pages of your booklet, as JPEG or PNG files, and send them to Kevin, asking him to add them to the GUI application, to be presented as the instruction booklet with the desired number (e.g. 4, in this example).
+
+	<li>Kevin will add these image files to the appropriate directory of the client, rebuild the client, deploy it to the server, and inform you of its availability.
+      </ol>
+      
 
       <h2>Data processing</h2>
 

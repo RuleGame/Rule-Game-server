@@ -959,7 +959,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	return json.toString();
     }
 
-    public static final String version = "4.002";
+    public static final String version = "4.003";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();
