@@ -36,7 +36,7 @@ This atom can be applied to red square objects, and has a bucket expression <tt>
 
 <p class="yellow">Proposition 1: If the rule set contains no disappearing atoms, then whether a given episode ends in a stalemate depends entirely on the game's rule set and the episode's intial board, and does not depend on the player's actions.</p>
 
-<p>The proof can be found in subsequent sections.
+<p>(It follows from Proposition 4 in the <a href="#proof">last section</a> of this document).
 
 <p>As an example of how a rule set with disappearing atoms may have an initial board that may or may not result in a stalemate depending on the player's decisions, consider the following rule set:
 <pre>
@@ -55,22 +55,81 @@ The first atom of this set allows the player to remove game piece from cell No. 
 <p>
   The stalemate tester does not properly support parameter sets that specify that the games are to be played with <a href="para-set.html#defineBoard">prefedined initial boards</a>. On such a parameter set the tester will ignore the initial board specifications, and will instead solve the stalemate problem for all boards using the legacy shapes and colors. This is not correct, especially if you intend the games to use custom shapes or colors.
 
-<p><strong>When used as part of validating a "naked" rule set</strong> (without an experiment plan), the stalemate tester will assume that you  intend the games to use the legacy shapes and colors.
+<p><strong>When used as part of validating a "naked" rule set</strong> (without an experiment plan), the stalemate tester will assume that you  intend the games to use the legacy shapes and colors.</p>
+
+  
 
 
-  <h2>Proofs etc</h2>
+  <h2><a name="proof">Proofs etc</a></h2>
 
-<P>Here we sketch the underlying "theory" for stalemate testing, without giving full proofs.
+<P>Here we sketch the underlying "theory" for stalemate testing, without giving detailed proofs.
 
-<p>We will introduce the concept of <em>Multi-board</em>. Unlike a normal board position in Rule Game, where each cell is either empty or contains a single game piece, <div class="yellow">a  <em>multi-board</em> is defined as a position where each cell contains a set of game pieces</em>.</div> (A set is understood mathematically, i.e. as an assemblage of distinct pieces). A normal board position is, of course, a special case of multi-board, in which every cell happens to contain a set with no more than 1 element.
+<p>We will generalize the concept of a "board position" by introducing the concept of <em>Multi-board</em>. Unlike a normal board position in Rule Game, where each cell is either empty or contains a single game piece, <span class="yellow">a  <em>multi-board</em> is defined as a position where each cell contains a set of game pieces</em>.</span> (A set is understood mathematically, i.e. as an assemblage of distinct pieces). A normal board position is, of course, a special case of multi-board, in which every cell happens to contain a set with no more than 1 element. 
 
-<p>For a given set of allowed game pieces,  <div class="yellow">the <em>full board</em> is a multi-board which contains a set of all possible pieces in each cell.</div>  Thus, for a legacy game (one with the 4 legacy colors and the 4 legacy shapes), the full board has a set of 16 game pieces (representing all possible combinations of shapes and colors) in each cell.
-
-<p>All game rules applied to our "normal" games can be applied to games with mutli-boards as well, in an obvious way.
-
-<p>For any rule set without disappearing atoms, we will define  <div class="yellow">a <em>stalemate position</em> as a board position or a multi-board from which not a single game piece can be removed anymore</div>.
+<p>All game rules applied to our "normal" games can be applied to games with mutli-boards as well, in an obvious way. In the discussion below, a "position" will mean "mutli-board".</p>
+  
+<p>For a given set of allowed game pieces,  <span class="yellow">the <em>full board</em> is a multi-board which contains a set of all possible pieces in each cell.</span>  Thus, for a legacy game (one with the 4 legacy colors and the 4 legacy shapes), the full board has a set of 16 game pieces (representing all possible combinations of shapes and colors) in each cell.</p>
 
 
+<p>For any <strong>rule set without disappearing atoms (WODA rule set)</strong>, we will define  <span class="yellow">a <em>stalemate position</em> as a board position from which not a single game piece can be removed anymore</span>.</p>
+
+<p>We will define a     <span class="yellow"><em>lite rule set</em> as a rule set which:
+    <ul>
+      <li>has only one rule line;
+      <li>that line is unmetered, and consists of unmetered non-disappearing atoms
+    </ul>
+  </span>
+  In other words, a "lite rule set" is one where all atoms are active at all times.</p>
+
+
+<p>
+  We will say that <em>rule set R simplifies to lite rule set R'</em> (R'=Simp(R))  if R' can be obtained from R by removing all counters (i.e. making all atoms and lines unmetered) and putting in all atoms into one rule line. 
+  
+<p>It is fairly easy to show that <span class="yellow">if R'=Simp(R), then any position  A that is  a stalemate position for R' is also a stalemate position for R. The converse is also true (any stalemate position for R' is also a stalemate position for R).</span> Indeed, if A is a stalemate position for R', this means that no atom of R' can remove any game piece from A; but that also means that no atom of R can remove any piece from that position either, and therefore A is also a stalemate position from A'. Conversely, if A is a stalemate position for R, it means that even when the rule lines of R "cycle" and all counter reset their positions, none of the atoms of R can move a piece; thus, none of the atoms of R' can move a piece either.</p>
+
+<p>The above equivalence means that, in the following discussion, it is sufficient to think only of "lite" rule sets, since any non-lite rule set R without disappearing atoms will behave the same way as the lite rule set obtained by the simplification of R.</p>
+
+<p>We will say that  <span class="yellow">position A is <em>subsumed</em> by position B  (written, A &sube; B)  if every cell of B contains every game piece that the corresponding cell of A does (and perhaps some other pieces as well).</span></p>
+
+<P>(It would have been so much easier to talk of A as a "subset of" B, but unfortunately we cannot, because positions aren't set. Technically, a multi-board can be defined as an N<sup>2</sup>-tuple of sets, each component of the tuple being the set of pieces in a particular cell. So if A is subsumed by B it means that A is a tuple each of whose components is a subset of the corresponding component of B.</p>
+
+
+<p class="yellow">Proposition 2: If C is a stalemate position for a WODA rule set R, and C' is some position that subsumes C, then when the position on the board in C', no piece from C is movable.</p>
+
+In other words, adding pieces to a stalemate position C will not make any pieces from C movable. The proof is based on the analysis on how atoms work. For an atom to allow moving a piece, the properties of the piece (such as shape and color) should match, and the position should match as well. The properties of the piece are not affected by adding more pieces to C. The position match can be never improved by adding pieces to C. That is, if the position expression refers to a fixed position (cell number), then it is not affected by adding extra pieces. If the position expression refers to an ordering (e.g. T, B, L1, etc), then the match requires the piece to be the first piece (or one of the piece in the first group) in the ordering; by adding more pieces, we can only make the position of the piece in the ordering "worse" (that is, a first piece can become a not-first piece, but not the other way around). Thus adding pieces to C can destroy a position match that existed in C, but cannot create a match  where one did not exist in C.
+			   
+			   
+<p class="yellow">Proposition 3: In a WODA rule set, if the initial position A subsumes a stalemate position C, then any episode starting at A will stalemate, no matter how the player chooses to play</p>
+
+      <p>For a proof by contradiction, let's suppose that a player starts with postion A and eventually clears the board (i.e. does not get to a stalemate). During the process of clearing the board, one of the moves will transition from position P which subsumes C to position P' which does not subsume C. In other words, P contains all pieces from C and maybe some other pieces, while the next move removes one of the piece sfrom C. By proposition 2, the movability of pieces in P cannot be better than the movability of pieces in C. Thus, no pieces belonging to C can be moved when the position on the board is P. Thus we know that no pices from C will be ever removed, and the episode will stalemate at C or at some position B that subsumes C.
+
+<p>Although positions are not sets, we will use the expression <em>union of A and B</em> to mean a mutli-board each cell of which contains the union of the sets of pieces found in the respective cells of A and B.
+
+<p class="yellow">Proposition 4: In a WODA rule set, if the initial position A subsumes a stalemate position C, then any episode starting with A will, no matter how the player choses to play, end with a stalemate in position B which is defined as the union of all stalemate positions subsumed by A.</p>
+
+<p>
+This easily follows from the proof of the preceding proposition. If Q is a stalemate position subsumed by A, then we know that the player starting with A will never be able to remove any piece from A. Thus is B is a union of all stalemate positions subsumed by A, then no piece from B will be ever be removed by the player. On the other hand, every piece from A but not from B will be removed by the player at some point (otherwise, B will not be the union of <em>all</em> stalemate positions within A). Thus, B is the final position for the episode.
+
+<p class="yellow">We will refer to B as the <em>final position reachable from A</em>, B=Fin(A). For an initial position A that does not lead to stalemate, Fin(A) is the empty board.</p>
+    
+<p class="yellow">Proposition 5:  In a WODA rule set, if A' &sube; A, then the Fin(A') &sube; Fin(A).</p>
+
+<p>
+This directly follows from Prop. 4, as Fin(A) is a union of the same positions that form Fin(A') and then some.
+
+<p>Prop 5 immediately gives us the final proposition,
+
+<p class="yellow">Proposition 6:  In a WODA rule set, if position W is the full board, then  Fin(W) subsumes Fin(B') for any position B.</p>
+
+      <p class="yellow">Prop. 6 gives us an algorithm for finding whether a WODA rule set results in a stalemate. The stalemate tester starts with the full board W, and removes all removable pieces one by one, until either the board is empty or no more pieces can be removed. In the former case, we know that no initial position will result in a stalemate, and therefore the rule set cannot stalemate. In the latter case, we have obtained B=Fin(W), which is the union of all possible stalemate positions.</p>
+
+      <p>B=Fin(W) may be a multi-board, but it is easy to show that if we simplify B to some regular board position B' by leaving just 1 piece in any non-empty cell, B' will be also a stalemate position. This can be proven by reasoning similar to that used when proving Prop. 2: namely,  all ordering-based position expressions return the same truth value for all pieces in B and in B'; thus  if no atom of our rule set accepts any game piece of B, it won't accept any game piece of B' either.
+   
+
+
+
+      
+			     
   
 
 </body>

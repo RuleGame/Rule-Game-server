@@ -62,6 +62,14 @@ or (for a stalemate example):
 
 <p>(Note: when testing individual rule sets, stalemate testing will only work correctly if your rule set uses the legacy shapes and legacy colors. To test a rule set with custom shapes or custom colors, and for rule sets with image-and-property-based objects, you need to create an experiment plan, so that the tester will know what the set of possible objects is!)
 
+<hr>
+
+<p>See also:
+
+<ul>
+<li><a href="stalemate.html">About stalemates and the stalemate tester</a>
+</ul>
+
 
 </body>
 </html>
