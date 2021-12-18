@@ -181,6 +181,11 @@ public class Token {
 	return String.join(" ", v);
    }
 
+    public boolean isOpenParen() {
+	return type==Token.Type.OPEN && cVal=='(';
+    }
+
+    
     public static void main(String[] argv) throws IOException,  RuleParseException {
 
 	HashMap<String, Integer> h = new HashMap<>();

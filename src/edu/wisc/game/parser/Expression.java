@@ -8,11 +8,23 @@ import edu.wisc.game.sql.Episode;
 
 public interface Expression {
 
+    /** A Mapper is something that can take a variable
+	(Expression.Id) and produce another Expression (e.g. by
+	substituting the value of the variable). This is used 
+	in automatic rule generation
+    */
+    public static interface Mapper {
+	Expression apply(Expression ex)  throws RuleParseException;
+    }
+
+    public Expression map(Mapper mapper)  throws RuleParseException;
+    
     public String toSrc();
     /** Can be overridden as needed */
     //    public String toString() { return toSrc(); }
 
     abstract static class ExList extends Vector<Expression> implements Expression {
+	private ExList() {}
 	ExList( Vector<Expression> v) {
 	    super(v);
 	}
@@ -27,9 +39,17 @@ public interface Expression {
 	    return ""+ open + String.join(", ", v) + close;
 	}
 
+	/** Applies the mapper to each component */
+	Vector<Expression> doMap(Mapper mapper)   throws RuleParseException{
+	    Vector<Expression> w = new Vector<>();
+	    for(Expression e: this) w.add( e.map(mapper));
+	    return w;
+	}
+
     };
 
     static public class ParenList extends ExList {
+ 	private ParenList() {}
  	ParenList( Vector<Expression> v) {
 	    super(v);
 	}
@@ -39,10 +59,18 @@ public interface Expression {
  	public String toSrc() {
 	    return toSrc('(', ')');
 	}
+
+	/** Applies the mapper to each component */
+	public ParenList map(Mapper mapper)   throws RuleParseException{
+	    ParenList e = new  ParenList(doMap( mapper));
+	    return (ParenList)mapper.apply(e);
+	}
+
     };
     
     static public class BracketList extends ExList implements ArithmeticExpression {
 	
+ 	private BracketList()  {}
  	BracketList( Vector<Expression> v)  throws RuleParseException{
 	    super(v);
    	    for(Expression x: v) {
@@ -75,6 +103,14 @@ public interface Expression {
  	public String toSrc() {
 	    return toSrc('[', ']');
 	}
+
+	/** Applies the mapper to each component */
+	public BracketList map(Mapper mapper)   throws RuleParseException{
+	    BracketList e = new BracketList(doMap( mapper));
+	    return (BracketList)mapper.apply(e);
+	}
+
+
     };
 
 
@@ -117,6 +153,11 @@ public interface Expression {
 	}
 	public String toSrc() { return toString(); }
 	public HashSet<String> listAllVars() { return new HashSet<String>(); }
+
+	public Expression map(Mapper mapper)   throws RuleParseException{
+	    return mapper.apply(this);
+	}
+	
     }
 
     /** A variable. In GS 2.0. a STRING is treated as a variable name as 
@@ -134,6 +175,11 @@ public interface Expression {
 	    sVal = t.sVal;
 	    quoted = (t.type==Token.Type.STRING);
 	}
+	/** @param s Must be a proper ID, not a quoted string */
+	public Id(String s) throws RuleParseException {
+	    sVal = s;
+	    quoted = false;
+	}
 
 	public HashSet<Integer> evalSet(HashMap<String, HashSet<Integer>> h) {
 	    HashSet<Integer> q= h.get(sVal);
@@ -149,6 +195,9 @@ public interface Expression {
 	    HashSet<String> h = new HashSet<String>();
 	    h.add(toString());
 	    return h;
+	}
+	public Expression map(Mapper mapper)   throws RuleParseException{
+	    return mapper.apply(this);
 	}
     }
 
@@ -197,6 +246,15 @@ public interface Expression {
 	    return h;
 	}
 
+	/** Applies the mapper to each component */
+	public Expression map(Mapper mapper)   throws RuleParseException{
+	    ArithmeticExpression body1 =
+		(ArithmeticExpression)mapper.apply(body);	    
+	    NegationExpression e = new NegationExpression( body1 );
+	    return mapper.apply(e);
+	}
+
+	
     }
 
 
@@ -206,7 +264,17 @@ public interface Expression {
 	/** All operators are of the same type, either additive or multiplicative. this.size()==ops.size()+1 */
 	Vector<Token> ops = new Vector<>();
 	
-	public String toString() {
+	SerialExpression() {
+	    super();
+	}
+	
+	SerialExpression(Vector<Token> _ops, Vector<ArithmeticExpression> v) {
+	    super(v);
+	    ops = _ops;
+	}
+
+	
+   	public String toString() {
 	    Vector<String> v = new Vector<>();
 	    v.add(firstElement().toString());
 	    for(int j=0; j<ops.size(); j++) {
@@ -272,7 +340,17 @@ public interface Expression {
 	    return hs;
 	}
 
+	/** Applies the mapper to each component */
+	Vector<ArithmeticExpression> doMap(Mapper mapper)  throws RuleParseException {
+	    Vector<ArithmeticExpression> w = new Vector<>();
+	    for(ArithmeticExpression e: this) {
+		w.add( (ArithmeticExpression)e.map(mapper));
+	    }
+	    //	    System.out.println("|w|=" + w.size());
+	    return w;
+	}
 
+	
     }
 
 
@@ -300,6 +378,15 @@ public interface Expression {
 	    if (e) hr.add(1);
 	    return hr;
 	}	
+
+
+	/** Applies the mapper to each component */
+	public Expression map(Mapper mapper)   throws RuleParseException{
+	    Vector<ArithmeticExpression> w = doMap( mapper);
+	    EqualityExpression e = new EqualityExpression(w.get(0),w.get(1));
+	    return mapper.apply(e);
+	}
+
     }
 
 
@@ -308,6 +395,18 @@ public interface Expression {
 	AdditiveExpression(ArithmeticExpression x) {
 	    add(x);
 	}
+	AdditiveExpression(Vector<Token> _ops, Vector<ArithmeticExpression> v) {
+	    super(_ops, v);
+	}
+
+	/** Applies the mapper to each component */
+	public Expression map(Mapper mapper)  throws RuleParseException {
+	    AdditiveExpression e = new AdditiveExpression(ops, doMap( mapper));
+	    //System.out.println("Assembled additive = " + e);
+	    return mapper.apply(e);
+	}
+
+	
     }
 
     public static class MultiplicativeExpression extends  SerialExpression  {
@@ -315,6 +414,18 @@ public interface Expression {
 	MultiplicativeExpression(ArithmeticExpression x) {
 	    add(x);
 	}
+	MultiplicativeExpression(Vector<Token> _ops, Vector<ArithmeticExpression> v) {
+	    super( _ops, v);
+	}
+
+
+	/** Applies the mapper to each component */
+	public Expression map(Mapper mapper)  throws RuleParseException {
+	    MultiplicativeExpression e = new MultiplicativeExpression(ops, doMap( mapper));
+	    return mapper.apply(e);
+	}
+
+	
     }
 
     /** Id:ArithmeticExpression; used in GS 3 */
@@ -331,7 +442,10 @@ public interface Expression {
 	public String toString() {
 	    return prefix.toString() + ":" + arex.toString();
 	}
-
+	public Expression map(Mapper mapper)   throws RuleParseException{
+	    ColonExpression e=new ColonExpression( (Id)prefix.map(mapper), arex.map(mapper));
+	    return  mapper.apply(e);
+	}
     }
 
     /** [Num..Num] */
@@ -345,6 +459,11 @@ public interface Expression {
 	    return "[" + a0.toSrc() + ".." + a1.toSrc() + "]";
 	}
 	public String toString() { return toSrc(); }
+
+	public Expression map(Mapper mapper)   throws RuleParseException{
+	    RangeExpression e=new RangeExpression( (Num)a0.map(mapper),(Num)a1.map(mapper));
+	    return  mapper.apply(e);
+	}
     }
     
     /** A Star expression is simply "*". (Used in rule description for
@@ -356,6 +475,9 @@ public interface Expression {
 	public String toSrc() {
 	    return toString();
 	}  
+	public Expression map(Mapper mapper)   throws RuleParseException{
+	    return mapper.apply(this);
+	}
     };
 
     final Star STAR = new Star();
@@ -374,9 +496,7 @@ public interface Expression {
 	    return STAR;
 	} else if (a.type==Token.Type.NUMBER) {
 	    return new Num(a);	    
-	} else if (a.type==Token.Type.OPEN && a.cVal=='(') {
-
-
+	} else if (a.isOpenParen()) {
 	    
 	    // Now, expect a comma-separated list of ArEx or ColonEx
 	    Vector<Expression> v = new Vector<>();
@@ -423,7 +543,7 @@ public interface Expression {
 
     /** If the given sequence of tokens starts with a range expression,
 	extracts it; otherwise, returns null */
-    private static RangeExpression mkRangeExpression(Vector<Token> tokens) throws RuleParseException {
+    static RangeExpression mkRangeExpression(Vector<Token> tokens) throws RuleParseException {
 	if (tokens.size()<5) return null;
 	if (!(tokens.get(0).type==Token.Type.OPEN && tokens.get(0).cVal=='[')) return null;
 	if (tokens.get(1).type!=Token.Type.NUMBER) return null;

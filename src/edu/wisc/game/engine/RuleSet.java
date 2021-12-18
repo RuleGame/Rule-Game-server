@@ -306,6 +306,11 @@ public class RuleSet {
 	    } catch (RuleParseException ex) {}
 	}
 	
+	Atom(Expression.ParenList pex, TreeMap<String, Order> orders) throws RuleParseException {
+	    this(pex,orders, null);
+	}
+
+       
 	/** Syntax: either
 	    (counter,shape,color,position,bucketFunctions) or
 	    (domain:value, domain:value, ....).  Note that since GS
@@ -315,8 +320,10 @@ public class RuleSet {
 	    and into the original (GS 1) "colors" and "shapes" lists
 	    (which will be applied to the traditional shape-and-color
 	    objects).
+
+	    @param agen If not null, use it to expand certain variables, such as X
 	 */
-	Atom(Expression.ParenList pex, TreeMap<String, Order> orders) throws RuleParseException {
+	Atom(Expression.ParenList pex, TreeMap<String, Order> orders, AutomaticRuleGenerator agen) throws RuleParseException {
 	    int colonCnt=0;
 	    for(Expression g: pex) {
 		if (g instanceof Expression.ColonExpression) colonCnt++;
@@ -346,6 +353,8 @@ public class RuleSet {
 	    
 
 	    Expression g = arms.remove("count"); // count
+	    if (g!=null && agen!=null)  g = agen.interpret(g, "count");
+	    	    
 	    if (g==null || g instanceof Expression.Star) {
 		counter = -1;
 	    } else if (g instanceof Expression.Num) {
@@ -356,9 +365,12 @@ public class RuleSet {
 
 	    
 	    g = arms.remove("pos"); // position
+	    if (g!=null && agen!=null) g = g.map(agen.mkMapper("pos"));
+	    
 	    plist = new PositionList(g, orders);
 	    //System.out.println("plist=" + plist);
 	    g = arms.remove("bucket"); // bucket
+	    if (g!=null && agen!=null) g = g.map(agen.mkMapper("bucket"));
 	    if (g instanceof Expression.ArithmeticExpression)  {
 		bucketList = new BucketList((Expression.ArithmeticExpression)g);
 	    } else if (g instanceof Expression.Star || g==null) {
@@ -371,6 +383,7 @@ public class RuleSet {
 	    // Properties...
 	    for(String key: arms.keySet()) {
 		g = arms.get(key);
+		if (g!=null && agen!=null) g = g.map(agen.mkMapper(key));
 		if (g instanceof Expression.Star) continue;
 		PropertyCondition cond = new PropertyCondition();
 		if (g instanceof Expression.Id || g instanceof Expression.Num) {
@@ -395,6 +408,7 @@ public class RuleSet {
 	    }
 
 	    g = arms.remove("shape"); // shape
+	    if (g!=null && agen!=null) g = g.map(agen.mkMapper("shape"));
 	    // System.out.println("Setting shapes from " + g);
 	    if (g==null || g instanceof Expression.Star) {
 		shapes = null;
@@ -419,6 +433,7 @@ public class RuleSet {
 	    }
 	    //System.out.println("shapes=" + showList(shapes));
 	    g = arms.remove("color");// color
+	    if (g!=null && agen!=null) g = g.map(agen.mkMapper("color"));
 	    if (g==null || g instanceof Expression.Star) {
 		colors = null;
 	    } else if (g instanceof Expression.Id) {
@@ -513,6 +528,11 @@ public class RuleSet {
 	 */
 	Row(Vector<Token> tokens, TreeMap<String, Order> orders)
 	    throws RuleParseException {
+	    this(tokens, orders, null);
+	}
+
+	Row(Vector<Token> tokens, TreeMap<String, Order> orders, AutomaticRuleGenerator agen) throws RuleParseException {
+
 	    
 	    int gc=-1;
 	    boolean first=true;
@@ -521,9 +541,11 @@ public class RuleSet {
 	    while(tokens.size()>0) {
 		//Expression ex = Expression.mkExpression(tokens);
 		Expression ex = Expression.mkCounterOrAtom( tokens);
-
+		
+		
 		if (first) {
 		    first=false;
+		    if (agen!=null && ex instanceof  Expression.Id)  ex = agen.interpret(ex, "count");
 		    if (ex instanceof Expression.Star) {
 			gc = -1;
 			continue;
@@ -535,7 +557,7 @@ public class RuleSet {
 		
 		if (!(ex instanceof Expression.ParenList)) throw new RuleParseException("Expected a paren list; found " + ex);
 		Expression.ParenList pex = (Expression.ParenList)ex;
-		add(new Atom(pex, orders));		    
+		add(new Atom(pex, orders, agen));		    
 	    }
 
 	    globalCounter= gc;
@@ -609,9 +631,16 @@ public class RuleSet {
 
     /** Used for "lite" sets */
     private RuleSet() {}
+
+
+    //	Row(Vector<Token> tokens, TreeMap<String, Order> orders, AutomaticRuleGenerator agen) throws RuleParseException {
     
     public RuleSet(String ruleText) throws RuleParseException {
-	this( ruleText.split("\n"));
+	this( ruleText, null);
+    }
+    
+    public RuleSet(String ruleText, AutomaticRuleGenerator agen) throws RuleParseException {
+	this( ruleText.split("\n"), agen);
     }
 
     /** Creates a RuleSet based on the content of a rule set file. 
@@ -619,6 +648,9 @@ public class RuleSet {
 	lines, followed by one or more rule lines.
 	@param rr The lines  from the rule set file */
     public RuleSet(String[] rr) throws RuleParseException {
+	this(rr,null);
+    }
+    public RuleSet(String[] rr, AutomaticRuleGenerator agen) throws RuleParseException {
 
 	boolean topCommentEnded=false;
 
@@ -656,7 +688,7 @@ public class RuleSet {
 		
 	    Row row;
 	    try {
-		row = new Row(tokens, orders);
+		row = new Row(tokens, orders, agen);
 	    } catch(RuleParseException ex) {
 		throw new RuleParseException("Failed to parse rule row: " + r, ex);
 	    }

@@ -227,20 +227,30 @@ public class ParaSet extends HashMap<String, Object> {
 	    put(key, val);
     }
 
+    private static File findFile(String name) throws IOException {
+	if (name==null) throw new IOException("File name not specified");
+	File base = new File(Files.inputDir, "param");
+	String ext = ".csv";
+	if (!name.endsWith(ext)) name += ext;
+	return  new File(base, name);
+    }
+
     /** Reads a ParaSet from a CSV file with key-val columns.
-	This method is obsolete now, since we read parameters from
-	trial list files instead.
+	This method is mostly obsolete now, since we read parameters from
+	trial list files instead. It can, however, be "revived" for
+	other applications, e.g. providing parameters for an automatic rule
+	generator.
      */
-    ParaSet(String name) {
+    public ParaSet(String name) throws IOException {
+	this(findFile(name));
+	put("name", name);
+    }
+
+    public ParaSet(File f)  throws IOException{
+
 	put("error", false);
 	put("errmsg", "No error");
-	put("name", name);
 	try {
-	    if (name==null) throw new IOException("File name not specified");
-	    File base = new File(Files.inputDir, "param");
-	    String ext = ".csv";
-	    if (!name.endsWith(ext)) name += ext;
-	    File f= new File(base, name);
 	    if (!f.exists()) throw new IOException("File does not exist: " + f);
 	    if (!f.canRead()) throw new IOException("Cannot read file: " + f);
 	    CsvData csv = new CsvData(f, true, false, null);
@@ -373,5 +383,18 @@ public class ParaSet extends HashMap<String, Object> {
 	}
     }
     
+    static private ParaSet mkLegacy() {
+	ParaSet para = new ParaSet();
+	para.shapes = Piece.Shape.legacyShapes;
+	para.colors = Piece.Color.legacyColors;
+
+	return para;
+    }
+
+    /** A dummy ParaSet object that contains legacy colors and shapes. This is
+	used e.g. as a default context in the automatic rule generation.
+    */
+    static final public ParaSet legacy = mkLegacy();
+
 }
 			     

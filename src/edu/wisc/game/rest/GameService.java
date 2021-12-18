@@ -169,7 +169,12 @@ public class GameService {
     @Path("/getParaSet") 
     @Produces(MediaType.APPLICATION_JSON)
     public ParaSet getParam(@QueryParam("name") String name){
-	return new ParaSet(name);
+	try {
+	    ParaSet para = new	ParaSet(name);
+	    return para;
+	} catch(IOException ex) {
+	    return null;
+	}
     }
     
     @POST
