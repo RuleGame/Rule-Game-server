@@ -3,10 +3,12 @@ package edu.wisc.game.engine;
 import java.io.*;
 import java.util.*;
 import java.text.*;
+import javax.json.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.parser.*;
+import edu.wisc.game.reflect.*;
 import edu.wisc.game.rest.ParaSet;
 
 /** An AutomaticRuleGenerator is used to create multiple rule set
@@ -165,6 +167,7 @@ Xc,[1..3]
 
     /** Looks up and processes a parameter value */
     TableValue getValue(String x) throws RuleParseException {
+	try {
 	TableValue q = h.get(x);
 	if (q!=null) return q;
 	Object o = para.get(x);
@@ -178,6 +181,10 @@ Xc,[1..3]
 	}
 	h.put(x,q);
 	return q;
+	} catch (RuleParseException ex) {
+	    System.err.println("Error while getting param value for key=" + x);
+	    throw ex;
+	}
     }
 
     /** Ensures that the para table has the default (legacy) values for 
@@ -274,16 +281,48 @@ Xc,[1..3]
 
     
 
-   private static RandomRG random;
-	
+    private static RandomRG random = new RandomRG();
+    private static boolean verbose=false;
+	    
     public static void main(String[] argv) throws IOException,  RuleParseException {
-	random = new RandomRG();
 
+	String outPath = "tmp";
+	
+	Vector<String> va = new Vector<String>();
+	for(int j=0; j<argv.length; j++) {
+	    String a = argv[j];
+	    if (a.equals("-verbose")) {
+		verbose = true;
+	    } else if (a.equals("-seed") && j+1<argv.length) {
+		long seed = Long.parseLong(argv[++j]);
+		 random = new RandomRG(seed);
+	    } else if (a.equals("-out") && j+1<argv.length) {
+		outPath= argv[++j];
+	    } else {
+		va.add(a);
+	    }
+	}
+
+	argv = va.toArray(new String[0]);
+
+	
 	if (argv.length!=3) usage();
 	String paraPath = argv[0];
 	String rulePath = argv[1];
 	int n = Integer.parseInt(argv[2]);
+
+
+	File base = new File(outPath);
+	if (!base.exists()) {
+	    if (!base.mkdirs()) usage("Cannot create output directory: " + base);
+	}
+	if (!base.isDirectory() || !base.canWrite()) usage("Not a writeable directory: " + base);
+	System.out.println("Output directory: " +base);
+
+	
 	System.out.println("Para file " +paraPath );
+
+       
 	ParaSet para = new ParaSet(new File(paraPath));
 	
 	AutomaticRuleGenerator ag = new  AutomaticRuleGenerator(para);
@@ -301,7 +340,8 @@ Xc,[1..3]
 
 
 	System.out.println("Reading file " + rulePath);
-	String text = Util.readTextFile(new File(rulePath));
+	File f = new File(rulePath);
+	String text = Util.readTextFile(f);
 
 	try {
 	    System.out.println("--- The template ----");
@@ -309,11 +349,45 @@ Xc,[1..3]
 	    System.out.println(rules0.toSrc());
 	} catch (Exception ex) {}
 
-	for(int j=0; j<n; j++) {
+	int outCnt = 0;
+	NumberFormat nfmt = new DecimalFormat("000");
+	
+	
+	for(int j=0; j<n*10; j++) {
 	    System.out.println("--- Auto rule set No. " + j + " -----------------");
 	    RuleSet rules = new RuleSet(text, ag);
 	    System.out.println(rules.toSrc());
+
+	    StalemateTester tester = new  StalemateTester(rules);
+	    Board stalemated = tester.canStalemate( Piece.Shape.legacyShapes,
+						    Piece.Color.legacyColors,
+						    null);
+	    if (stalemated!=null) {
+		System.out.println("The rule set above can stalemate");
+
+		JsonObject jo = JsonReflect.reflectToJSONObject(stalemated, true);
+
+		
+		System.out.println("Sample stalemate board: " + jo);
+		
+	    } else {
+
+		String s = f.getName().replaceAll("\\.txt$","") + "." + nfmt.format(outCnt) + ".txt";
+		File g = new File(base,s);
+		System.out.println("No stalemate; saving file to " + g);		
+		PrintWriter w = new PrintWriter(new FileWriter(g));
+		w.println(rules.toSrc());
+		w.close();
+		
+		
+		outCnt++;
+		
+	    }
+	    if (outCnt==n) break;
+	    
 	}
+	if (outCnt<n) System.out.println("Could not generate all " + n+" requested rule sets; only produced " + outCnt);
+	else  System.out.println("Saved " + outCnt + " rule sets to files in " + base);
 
     }
     

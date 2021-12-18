@@ -1,0 +1,16 @@
+# For each shape, there are two randomly chosen permanent designated
+# buckets (sometimes just one, if both random choices are identical).
+# For each shape, there are 2 specific randomly chosen orders (such as
+# T, B, L1) in which they can be picked from the board. For each
+# shape, a certain number of pieces (Xcnt, ranging from 1 to 4, as per
+# the param file) can be picked before the control falls to the next
+# line.
+#
+# This template will have some rule sets rejected for stalemating rate,
+# but at much lower rate than template-2.txt
+# -----------------------------------------------------------------
+
+(Xcnt, Circle, *, [X,X], [X,X])
+(Xcnt, Star, *, [X,X], [X,X])
+(Xcnt, Square, *, [X,X], [X,X])
+(Xcnt, Triangle, *, [X,X], [X,X])

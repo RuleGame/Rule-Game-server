@@ -1,0 +1,14 @@
+# For each shape, there are two randomly chosen permanent designated
+# buckets (sometimes just one, if both random choices are identical).
+# For each shape, there is a specific randomly chosen order (e.g. T,
+# B, L1) in which they can be picked from the board. For each shape,
+# a certain number of pieces (Xcnt, ranging from 1 to 4, as per the
+# param file) can be picked before the control falls to the next line.
+#
+# This will have a very high stalemate rate.
+#-----------------------------------------------------------------
+
+(Xcnt, Circle, *, X, [X,X])
+(Xcnt, Star, *, X, [X,X])
+(Xcnt, Square, *, X, [X,X])
+(Xcnt, Triangle, *, X, [X,X])
