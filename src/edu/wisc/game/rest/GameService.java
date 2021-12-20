@@ -172,7 +172,7 @@ public class GameService {
 	try {
 	    ParaSet para = new	ParaSet(name);
 	    return para;
-	} catch(IOException ex) {
+	} catch(Exception ex) {
 	    return null;
 	}
     }

@@ -198,8 +198,10 @@ public class  Fmter {
 
 
     public String html(String title, String body) {
-	return wrap("html", wrap("head", wrap("title", title)) + "\n" + wrap("body", body));       
+	String h = wrap("title", title) + style();
+	return wrap("html", wrap("head", h) + "\n" + wrap("body", body));       
     }
+
 
     
 

@@ -47,7 +47,7 @@ https://stackoverflow.com/questions/56454397/jersey-formdataparam-to-read-multip
 
 @Path("/BoardDisplayService") 
 public class BoardDisplayService {
-    private static HTMLFmter  fm = new HTMLFmter(null);
+    private static HTMLFmter  fm = new HTMLFmter();
 
     @POST
     @Path("/displayBoard") 

@@ -9,8 +9,11 @@ import edu.wisc.game.util.Util;
 /** Auxiliary class for formatting output as HTML. */
 public class HTMLFmter extends Fmter {
 
-    private String css=null;
+    private String css=null, cssUrl=null;
 
+    public HTMLFmter(){}
+
+    
     /** @param cssFile The location of the CSS file which will be inserted into the head of
 	the HTML report (both the the batch mode and in the GUI tool) */
     public HTMLFmter(File cssFile) { //throws IOException { 
@@ -20,9 +23,17 @@ public class HTMLFmter extends Fmter {
 	} catch (IOException ex) {}
     }
 
-    /** The STYLE element */
+    public HTMLFmter(String _cssUrl) { //throws IOException { 
+	html = true;
+	cssUrl = _cssUrl;
+    }
+
+    /** The STYLE or LINK REL=STYLESHEET element for this HTML file, as the case may be */
     public String style() {
-	return css==null? "" : wrap2("style",  "type=\"text/css\"", css) +"\n";
+	return css!=null?  wrap2("style",  "type=\"text/css\"", css) +"\n":
+	    cssUrl!=null? "<link rel=\"stylesheet\" type=\"text/css\" href=\""+cssUrl+"\"/>":
+	    "";
+
     }
 
     
@@ -185,6 +196,6 @@ public class HTMLFmter extends Fmter {
 	return s;
     }
     
-    public static HTMLFmter htmlFmter = new HTMLFmter(null);
+    public static HTMLFmter htmlFmter = new HTMLFmter();
  
 }

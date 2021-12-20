@@ -1,0 +1,209 @@
+
+<html>
+<head>
+<title>Automatic Rule Generator</title>
+    <link rel="stylesheet" type="text/css" href="css/rule-game.css"/>
+</head>
+<body>
+<h1>Automatic Rule Generator</h1>
+
+<div align="center"><em>Updated for ver. 4.004. 2021-12-20</em></div>
+
+<h2>How does the Automatic rule generator work?</h2>
+
+<p>The automatic rule generator takes 2 inputs: a template file and a parameter file.
+
+<p>The template file shoudl like very much like a rule set file, using either of the <a href="syntax.html">allowed syntaxes</a> (with position-based or property-based atoms; mix and match allowed). The only unusual thing is that in its rule lines you can use "special variables" (identifiers starting with an <tt>X</tt>) anywhere where an identifier (such as <tt>Red</tt> or <tt>T</tt>) or a number (such as <tt>2</tt>) is allowed.
+
+<p>The parameter files contains some information that will help the automatic rule generator to replace special variables with some identifiers or numbers, as will be explained in details below.
+
+<p>The automatic rule  generator parses the  template file using exactly the same mechanism that is used to parse "normal" rule set files, but with an additional "hook" which replaces each special variable with an identifier or a number.
+
+  <h3>How special variables are replaced</h3>
+
+    <p>All occurrences of special variables are completely indendent of each other. For example, in the rule template
+      <pre>(*,X,X,[0,X],[X,X,p+X])</pre>
+      each of the 6 X'es will be substituted independently from each other, each one with appropriate values for its position.
+
+    <p>When the automatic rule generator subsitutes a particular occurence of a variable, it randomly draws its value from a set which is defined according to the following rules:
+      <ol>
+	<li>If the  parameter file explicitly gives the set of values for a named variable, this set is used. For example, if the parameter file has the line<pre>Xpos,"[1..5]"</pre>, each occurrence of the variable <tt>Xpos</tt> is replaced by an integer drawn from the set {1,2,3,4,5}.
+	<li>If  the  parameter file does not mention the specific special variable name, but has a line that defines the default value set for special variables encountered in a particualr "domain" (particular section of atoms, such as <tt>count, shape, color, pos, bucket</tt>), then this range is used. For example, suppose the parameter file, in its entirety, looks as follows:
+	  <pre>pos,"[2..4]"
+shape,"(Triangle,Square)"
+color,"(Red,Pink,Orange)"</pre>	    
+	  Then in the atom template <pre>(X,X,[X,X]*,[pc,ps])</pre> or <pre>(pos:X, shape:X, color:X, bucket:[pc,ps])</pre> the first X will be replaced with an integer from the range 2 thru 4, the second X, with <tt>Triangle</tt> or <tt>Square</tt>, and the third X and fourth X, will be replaced (independly from each other) with <tt>Red</tt>, <tt>Pink</tt>, or <tt>Orange</tt>.
+	<li>If the parameter file has no values provided for either the specific special variable name or the domain, the automatic rule  generator uses its default value set for the domain in question. Presently, such sets defined for the following domains:
+	  <ul>
+	    <li>shape: the 4 legacy shapes
+	    <li>color: the 4 legacy colors
+	    <li>pos: the <a href="syntax.html#order">built-in orders</a>
+	    <li>bucket: [0..3]
+	  </ul>
+	  Note that there is no default value set for the <tt>pos</tt> domain. This means that if you put a special variable in the <tt>pos</tt> field of an atom, you must make sure that your parameter file contains a value set either for this specific variable or for the <tt>pos</tt> domain.
+      </ol>
+				    
+
+      <h3>The syntax of the paramter file</h3>
+
+    <p>The parameter file is a CSV file with 2 columns. The first column contains the variable name or the domain name; the second, the value set. The value set can consist of any of the following:
+      <ul>
+	<li>a single number or identifier, e.g. <tt>5</tt> or <tt>Triangle</tt>
+	<li>a set of values, e.g. <tt>"(Square,Triangle,Star)"</tt> or <tt>"(1,3,5,7)"</tt>
+	      <li>a range of integer values, e.g. <tt>"[2..6]"</tt> (which is equivaluent to the set <tt>"(2,3,4,5,6)"</tt>).
+      </ul>
+
+    <p>The allowed domain names are the same as those used in the property-based rule syntax, i.e.  <tt>count, shape, color, pos, bucket</tt>. If you use image-and-property-based objects in your rule template, you can also use the names of your custom properties.
+
+      <h2>Command-line interface</h2>
+
+    <P>There is a script on sapir that you can use to run the automatic rule set generator. The syntax is as follows
+
+<pre>
+/home/vmenkov/w2020/game/scripts/auto-rule-generator.sh <em>[options] param-file.csv template-file.txt n</em>
+</pre>      
+
+Supported options:
+<ul>
+  <li><tt>-seed s</tt> : an integer seed for the random number generator. You can use this for repeatable runs.
+  <li><tt>-out directory_name</tt> : the name of the output directory. By default, <tt>tmp</tt>.
+</ul>
+
+<p>Examples (with the input files from /home/vmenkov/w2020/game/templates):
+
+<pre>
+  /home/vmenkov/w2020/game/scripts/auto-rule-generator.sh  /home/vmenkov/w2020/game/templates/param-4.csv  /home/vmenkov/w2020/game/templates/template-4.txt 10
+</pre>
+
+
+
+<h2>Web interface, with examples</h2>
+
+<h3>Example 1</h3>
+ For each color, there is a random initial bucket; after that, all
+ pieces of the same color can go to buckets either clockwise (X2=1)
+ or counterclockwise (X2=3). 
+   <form method="post" action="game-data/AutomaticRuleGeneratorService/generateHtml"
+	 enctype="application/x-www-form-urlencoded">
+
+     Parameters:<br>
+     <textarea  name="paraText" rows="8" cols="120">X2,"(1,3)"
+     </textarea><br>
+
+     Rule set template:<br>
+     <textarea  name="templateText" rows="8" cols="120">
+(*,*,Red,*,[!pc*X, pc+X2]) (*,*,Blue,*,[!pc*X, pc+X2]) (*,*,Yellow,*,[!pc*X, pc+X2]) (*,*,Black,*,[!pc*X, pc+X2])
+     </textarea><br>
+	 <br>
+
+	 The number of rule sets to generate:
+	 <input name="n" type="text" value="10"/>
+	 <button type="submit">Generate rule sets</button>
+   </form>
+
+
+
+<h3>Example 2</h3>
+
+<p>
+For each shape, there are two randomly chosen permanent designated
+buckets (sometimes just one, if both random choices are identical).
+For each shape, there is a specific randomly chosen order (e.g. T,
+B, L1) in which they can be picked from the board. For each shape,
+a certain number of pieces (Xcnt, ranging from 1 to 4, as per the
+param file) can be picked before the control falls to the next line.
+
+<p>
+This will have a very high stalemate rate.
+
+   <form method="post" action="game-data/AutomaticRuleGeneratorService/generateHtml"
+	 enctype="application/x-www-form-urlencoded">
+
+     Parameters:<br>
+     <textarea  name="paraText" rows="8" cols="120">Xcnt,"[1..4]"  
+     </textarea><br>
+
+     Rule set template:<br>
+     <textarea  name="templateText" rows="8" cols="120">(Xcnt, Circle, *, X, [X,X])
+(Xcnt, Star, *, X, [X,X])
+(Xcnt, Square, *, X, [X,X])
+(Xcnt, Triangle, *, X, [X,X])
+     </textarea><br>
+	 <br>
+
+	 The number of rule sets to generate:
+	 <input name="n" type="text" value="10"/>
+	 <button type="submit">Generate rule sets</button>
+   </form>
+
+
+
+<h3>Example 3</h3>
+
+
+<p>
+For each shape, there are two randomly chosen permanent designated
+buckets (sometimes just one, if both random choices are identical).
+For each shape, there are 2 specific randomly chosen orders (such as
+T, B, L1) in which they can be picked from the board. For each
+shape, a certain number of pieces (Xcnt, ranging from 1 to 4, as per
+the param file) can be picked before the control falls to the next
+line.
+
+<p>
+This template will have many rule sets rejected for stalemating rate, but at a  lower rate than Example 2 (template-2.txt)
+
+
+   <form method="post" action="game-data/AutomaticRuleGeneratorService/generateHtml"
+	 enctype="application/x-www-form-urlencoded">
+
+     Parameters:<br>
+     <textarea  name="paraText" rows="8" cols="120">Xcnt,"[1..4]"  
+     </textarea><br>
+
+     Rule set template:<br>
+     <textarea  name="templateText" rows="8" cols="120">(Xcnt, Circle, *, [X,X], [X,X])
+(Xcnt, Star, *, [X,X], [X,X])
+(Xcnt, Square, *, [X,X], [X,X])
+(Xcnt, Triangle, *, [X,X], [X,X])
+     </textarea><br>
+	 <br>
+
+	 The number of rule sets to generate:
+	 <input name="n" type="text" value="10"/>
+	 <button type="submit">Generate rule sets</button>
+   </form>
+   
+<h3>Example 4</h3>
+
+
+<p>The first rule line allows you to pick 1 piece from anywhere, and  put it into a randomly chosen bucket
+
+<p>The second rule allows picking pieces from the top, to be put into one
+bucket, and from the bottom, to be put into another bucket. Each of those
+buckets will be chosen randomly, to be either pc or ps
+
+<p>This is an example of a rule with disappearing (or, more precicely, possibly-never-appearing) atoms; while they may often stalemate, the stalemate tester does not detect this possibility.
+
+   <form method="post" action="game-data/AutomaticRuleGeneratorService/generateHtml"
+	 enctype="application/x-www-form-urlencoded">
+
+     Parameters:<br>
+     <textarea  name="paraText" rows="8" cols="120">Xp,"(pc,ps)"
+     </textarea><br>
+
+     Rule set template:<br>
+     <textarea  name="templateText" rows="8" cols="120">
+(count:1, bucket:X)
+(pos:T, bucket:Xp) (pos:B, bucket:Xp)
+     </textarea><br>
+	 <br>
+
+	 The number of rule sets to generate:
+	 <input name="n" type="text" value="10"/>
+	 <button type="submit">Generate rule sets</button>
+   </form>
+
+
+</body>
+</html>

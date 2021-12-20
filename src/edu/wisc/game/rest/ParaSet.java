@@ -157,7 +157,7 @@ public class ParaSet extends HashMap<String, Object> {
     public void setErrmsg(String _errmsg) { errmsg = _errmsg; }
     */
 
-    /** Initializes a ParaSet object from a line of trial list file */
+    /** Initializes a ParaSet object from one line of a trial list file */
     ParaSet(CsvData.BasicLineEntry header, CsvData.BasicLineEntry line) throws IOException {
 	int nCol=header.nCol();
 	if (nCol!=line.nCol()) throw new  IOException("Column count mismatch:\nHEADER=" + header + ";\nLINE=" + line);
@@ -241,19 +241,38 @@ public class ParaSet extends HashMap<String, Object> {
 	other applications, e.g. providing parameters for an automatic rule
 	generator.
      */
-    public ParaSet(String name) throws IOException {
+    public ParaSet(String name) throws IOException,  IllegalInputException {
 	this(findFile(name));
 	put("name", name);
     }
 
-    public ParaSet(File f)  throws IOException{
 
+    private static CsvData fileToCsv(File f)  throws IOException,  IllegalInputException {
+	if (!f.exists()) throw new IOException("File does not exist: " + f);
+	if (!f.canRead()) throw new IOException("Cannot read file: " + f);
+	return new CsvData(f, true, false, null);
+   }
+	
+
+    /**Processes ParaSet data that have been already read into string.
+
+       @param s A multi-line string, which looks like the content of a
+       traditional ParaSet CSV file. This can come over HTTP, for example.
+     */
+    public static ParaSet textToParaSet(String s)  throws IOException,  IllegalInputException {
+	CsvData csv = new CsvData(null, new StringReader(s), true, false, null);
+ 	return new ParaSet(csv);
+    }
+    
+    public ParaSet(File f)  throws IOException,  IllegalInputException {
+	this( fileToCsv(f));
+    }
+    
+    public ParaSet( CsvData csv)  throws IOException{
+	
 	put("error", false);
 	put("errmsg", "No error");
 	try {
-	    if (!f.exists()) throw new IOException("File does not exist: " + f);
-	    if (!f.canRead()) throw new IOException("Cannot read file: " + f);
-	    CsvData csv = new CsvData(f, true, false, null);
 	    for(CsvData.LineEntry e: csv.entries) {
 		String key = e.getKey();
 		String val = ((CsvData.BasicLineEntry)e).getCol(1);

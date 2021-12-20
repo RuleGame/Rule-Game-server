@@ -5,7 +5,10 @@
 # a certain number of pieces (Xcnt, ranging from 1 to 4, as per the
 # param file) can be picked before the control falls to the next line.
 #
-# This will have a very high stalemate rate.
+# For randomly chosen orders, such a rule set will very often stalemate.
+# In one experiment, only 4 non-stalemating rule sets were generated
+# out of 100*10 attempts. The successful ones are those which happened
+# to have all compatible orders (e.g. T and L1).
 #-----------------------------------------------------------------
 
 (Xcnt, Circle, *, X, [X,X])

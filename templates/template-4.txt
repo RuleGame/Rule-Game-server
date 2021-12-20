@@ -1,0 +1,9 @@
+# The first rule line allows you to pick 1 piece from anywhere, and
+#  put it into a randomly chosen bucket
+#
+# The second rule allows picking pieces from the top, to be put into one
+# bucket, and from the bottom, to be put into another bucket. Each of those
+# buckets will be chosen randomly, to be either pc or ps
+#--------------------------------
+(count:1, bucket:X)
+(pos:T, bucket:Xp) (pos:B, bucket:Xp)

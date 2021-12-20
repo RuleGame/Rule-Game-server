@@ -6,7 +6,7 @@
 <body>
 <h1>Stalemates and stalemate testing</h1>
 
-<div align="center"><em>Updated for ver. 4.003. 2021-12-13</em></div>
+<div align="center"><em>Updated for ver. 4.004. 2021-12-19</em></div>
 
 
 <p>This document discusses stalemate situations in the Rule Game, and the procedure useds by the experiment plan validator to check whether a rule set can stalemate.
@@ -25,7 +25,7 @@
 
 <p>Given a rule set and an initial board, can we tell in advance whether the episode will end in a stalemate regardless of how the player plays, or will the outcome depend on the player's choices?
 
-<p>It turns out that this depends on the rule set.  Let us use the term <em>disappearing atom</em> for an atom whose <a href="arithmetic.html">bucket expression</a> evaluates to a non-empty set at the beginning of the episode, but may start to evaluate to an empty set after some point in the episode. With the currently supported rule syntax (as of GS 4.*), the only possible disappearing atoms are those that use the negation operator (!) in combination with certain variables. Consider, for example, the following  atom:
+<p>It turns out that this depends on the rule set.  Let us use the term <em>disappearing atom</em> for an atom whose <a href="arithmetic.html">bucket expression</a> may evaluate to a non-empty set during some part of the episode, and to an empty set during another part of the episode. With the currently supported rule syntax (as of GS 4.*), the only possible disappearing atoms are those that use bucket variables such as p, pc, ps. In particular, those that use the negation operator (!) in combination with certain variables may have a non-empty bucket set at the begining, but an empty one later on. Consider, for example, the following  atom:
   <pre>
     (*,Square,Red,*,!pc)
   </pre>

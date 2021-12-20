@@ -749,7 +749,7 @@ public class Episode {
     }
  
 
-    private static HTMLFmter fm = new HTMLFmter(null);
+    private static HTMLFmter fm = new HTMLFmter();
 
 
     /** Graphic display of the board */
@@ -959,7 +959,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	return json.toString();
     }
 
-    public static final String version = "4.003";
+    public static final String version = "4.004";
 
     private String readLine( LineNumberReader​ r) throws IOException {
 	out.flush();

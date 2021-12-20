@@ -28,7 +28,7 @@ import edu.wisc.game.formatter.*;
 
 @Path("/GameServiceHtml") 
 public class GameServiceHtml extends GameService {
-    private static HTMLFmter  fm = new HTMLFmter(null);
+    private static HTMLFmter  fm = new HTMLFmter();
 
     @POST
     @Path("/newEpisodeHtml") 

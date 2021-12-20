@@ -68,6 +68,12 @@ public class CsvData {
 	return h;
     }
 
+    private static FileReader openFile(File csvFile)  throws IOException {
+ 	if (!csvFile.canRead()) throw new  IOException("File '"+csvFile+"' does not exist or is not readable");
+	return new FileReader(csvFile);
+    }
+	
+            
     /** Creates a CsvData object from the content of a CSV file.
 	@param csvFile File to read
 	@param neverHeader If true, we don't expect the input file to connect a header; the file only should have data lines and optional comment lines. If false, we look at the first line of the file to figure if it's a header line or data line or comment line, and process it appropriately.
@@ -75,8 +81,15 @@ public class CsvData {
 	@param legalLengths If this is not null, it specifies how many columns the file's lines may contain. For example, {4,6} means that the lines must contain 4 or 6 columns.
      */
     public CsvData(File csvFile, boolean neverHeader, boolean keepComments, int legalLengths[]) throws IOException, IllegalInputException  {
-	if (!csvFile.canRead()) throw new  IllegalInputException("File '"+csvFile+"' does not exist or is not readable");
-	LineNumberReader reader = new LineNumberReader(new FileReader(csvFile));
+	this(csvFile, openFile(csvFile), neverHeader,  keepComments,  legalLengths);
+    }
+
+    /** @param csvFile only passed so that the name of it can be used in error messages. May be null if the data come not from the file.
+	@param r The data to read
+     */
+    public CsvData(File csvFile, Reader r, boolean neverHeader, boolean keepComments, int legalLengths[]) throws IOException, IllegalInputException  {
+
+	LineNumberReader reader = new LineNumberReader(r);
 	int n=0;
 	int errorCnt=0, warnCnt=0;
 	Vector<LineEntry> v = new Vector<LineEntry>();

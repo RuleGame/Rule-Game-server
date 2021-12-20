@@ -22,7 +22,7 @@ import edu.wisc.game.formatter.*;
 /** The "Check my experiment plan" service. */
 @Path("/CheckPlanService") 
 public class CheckPlanService extends GameService2 {
-    private static Fmter  fm = new HTMLFmter(null);
+    private static Fmter  fm = new HTMLFmter();
 
     @POST
     @Path("/checkRules") 

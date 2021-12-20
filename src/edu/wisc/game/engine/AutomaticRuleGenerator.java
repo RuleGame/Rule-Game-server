@@ -151,11 +151,16 @@ Xc,[1..3]
 	    return sVal[ random.nextInt( sVal.length) ];
 	}
 
-	Expression pickOne() throws RuleParseException {
-	    if (nVal==null) return new Expression.Num( pickInt());
-	    else if (sVal==null) return new Expression.Id( pickId());
-	    else throw new RuleParseException("No data");
-	    //return null;
+	Expression pickOne(boolean preferNum) throws RuleParseException {
+	    if (preferNum) {
+		if (nVal!=null) return new Expression.Num( pickInt());
+		else if (sVal!=null) return new Expression.Id( pickId());
+	    } else {
+		if (sVal!=null) return new Expression.Id( pickId());
+		else if (nVal!=null) return new Expression.Num( pickInt());
+	    }
+	    
+	    throw new RuleParseException("No data");
 	}
 	    
 	
@@ -190,8 +195,9 @@ Xc,[1..3]
     /** Ensures that the para table has the default (legacy) values for 
 	"colors" and "shapes", if none are supplied in the CSV file.
     */
-    AutomaticRuleGenerator(ParaSet _para)  throws RuleParseException{
+    public AutomaticRuleGenerator(Long seed, ParaSet _para)  throws RuleParseException{
 	para = _para;
+	random = (seed==null)? new RandomRG() :new RandomRG(seed);
 	if (getValue("color")==null) {
 	    Vector<String> v = new Vector<>();
 	    for(Piece.Color w: Piece.Color.legacyColors) v.add(w.toString());
@@ -227,7 +233,8 @@ Xc,[1..3]
     /** Replaces an id such as "X" with a random value drawn
 	from an approriate set.
 	@param e Expression to convert. If null is given, null is returned.
-	@param domain The prefix used in the property-based syntax for rules, such as "count", "shape", "color", "pos", "bucket" etc
+	@param domain The prefix used in the property-based syntax for rules, such as "count", "shape", "color", "pos", "bucket", or a custom property name
+	@return an Expression (numeric or Id; different preferences for different domains)
     */
     Expression interpret(Expression e, String domain) throws RuleParseException {
 	//System.out.println("-- Interpreting '"+domain+"' on " + e);
@@ -243,7 +250,12 @@ Xc,[1..3]
 	if (q==null) q = getValue(domain);  
 
 	if (q==null) throw new RuleParseException("Var " + x + " for domain '"+domain+ "' has not been given a value set or range");
+
 	
+	boolean preferNum = domain.equals("count")||domain.equals("bucket");
+	return q.pickOne(preferNum);
+
+	/**
 	if (domain.equals("count")) {
 	    return new Expression.Num( q.pickInt());
 	} else if (domain.equals("color") ||
@@ -253,8 +265,9 @@ Xc,[1..3]
 	} else if (domain.equals("bucket")) { // numeric
 	    return  new Expression.Num( q.pickInt());
 	} else { // have to guess
-	    return  q.pickOne();
+	    return  q.pickOne(preferNum);
 	}
+	*/
 		   
     }
 
@@ -280,13 +293,13 @@ Xc,[1..3]
     }
 
     
-
-    private static RandomRG random = new RandomRG();
+    private final RandomRG random;
     private static boolean verbose=false;
 	    
-    public static void main(String[] argv) throws IOException,  RuleParseException {
+    public static void main(String[] argv) throws IOException,  IllegalInputException, RuleParseException {
 
 	String outPath = "tmp";
+	Long seed = null;
 	
 	Vector<String> va = new Vector<String>();
 	for(int j=0; j<argv.length; j++) {
@@ -294,8 +307,7 @@ Xc,[1..3]
 	    if (a.equals("-verbose")) {
 		verbose = true;
 	    } else if (a.equals("-seed") && j+1<argv.length) {
-		long seed = Long.parseLong(argv[++j]);
-		 random = new RandomRG(seed);
+		seed = new Long(argv[++j]);
 	    } else if (a.equals("-out") && j+1<argv.length) {
 		outPath= argv[++j];
 	    } else {
@@ -325,19 +337,13 @@ Xc,[1..3]
        
 	ParaSet para = new ParaSet(new File(paraPath));
 	
-	AutomaticRuleGenerator ag = new  AutomaticRuleGenerator(para);
+	AutomaticRuleGenerator ag = new  AutomaticRuleGenerator(seed, para);
 
 
 	System.out.println("Variable substitutions are drawn from the following sets:");
-	for(String key: ag.h.keySet()) {
-	    System.out.println(key + " = " + ag.getValue(key));
+	for(String  s: ag.varReport()) {
+	    System.out.println(s);
 	}
-	System.out.println(".... wait, there is more ....");
-	for(String key: para.keySet()) {
-	    if (key.startsWith("err")) continue;
-	    System.out.println(key + " = " + ag.getValue(key));
-	}	
-
 
 	System.out.println("Reading file " + rulePath);
 	File f = new File(rulePath);
@@ -390,5 +396,25 @@ Xc,[1..3]
 	else  System.out.println("Saved " + outCnt + " rule sets to files in " + base);
 
     }
+
+    public Vector<String> varReport(//ParaSet para
+)throws  RuleParseException {
+	Vector<String> v = new Vector<>();
+	HashSet<String> w = new HashSet<>();
+	for(String key: h.keySet()) {
+	    v.add(key + " = " + getValue(key));
+	    w.add(key);
+	}
+	//	System.out.println(".... wait, there is more ....");
+	for(String key: para.keySet()) {
+	    if (key.startsWith("err")) continue;
+	    if (w.contains(key)) continue;	    
+	    v.add(key + " = " + getValue(key));
+	    w.add(key);	    
+	}
+	return v;
+    }
+
+
     
 }

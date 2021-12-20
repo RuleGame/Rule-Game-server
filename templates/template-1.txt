@@ -2,10 +2,6 @@
 # pieces of the same color can go to buckets either clockwise (X2=1)
 # or counterclockwise (X2=3). The param file has this line:
 # X2:(1,3)
-# For randomly chosen orders, such a rule set will very often stalemate.
-# In one experiment, only 4 non-stalemating rule sets were generated
-# out of 100*10 attempts. The successful ones are those which happened
-# to have all compatible orders (e.g. T and L1).
 #--------------------------------
 
 (*,*,Red,*,[!pc*X, pc+X2]) (*,*,Blue,*,[!pc*X, pc+X2]) (*,*,Yellow,*,[!pc*X, pc+X2]) (*,*,Black,*,[!pc*X, pc+X2])
