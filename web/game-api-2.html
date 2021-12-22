@@ -266,7 +266,38 @@ If the rule set file was specified in the param set as an absolute path, that's 
 <pre>
 "ruleSetName":"/home/vmenkov/test/rules/rule-a.txt",
 </pre>
-      
+
+<p>As of ver 4.005, there is support for the new incentive scheme, called <tt>DOUBLING</tt>. The output may look as follows (with the fields relevant for this incentive scheme shown in bold):
+  <pre>{"board":{"id":0,"value":[{"buckets":[0,1],"color":"YELLOW","id":2,"shape":"STAR","x":3,"y":3},{"buckets":[0,1],"color":"BLACK","id":3,"shape":"SQUARE","x":4,"y":3},{"buckets":[0,1],"color":"BLACK","id":4,"shape":"STAR","x":2,"y":4},{"buckets":[0,1],"color":"YELLOW","id":5,"shape":"STAR","x":5,"y":4},{"buckets":[0,1],"color":"BLACK","id":7,"shape":"SQUARE","x":4,"y":6},{"buckets":[0,1],"color":"RED","id":8,"shape":"TRIANGLE","x":6,"y":6},{"buckets":[],"color":"BLUE","dropped":3,"id":0,"shape":"SQUARE","x":4,"y":1},{"buckets":[],"color":"YELLOW","dropped":3,"id":1,"shape":"CIRCLE","x":3,"y":2},{"buckets":[],"color":"RED","dropped":0,"id":6,"shape":"SQUARE","x":3,"y":6}]},
+    "code":-8,
+    "errmsg":"Display requested\nDEBUG\n*M*[S0][20211222-124942-JRNZOF; FC=1g; m 9/9 $10][20211222-130206-M51PK8; FC=0; m 3/9 $0]\n[S1]\n[S2]\nid=115, curSer=0 b=false, R=$10",
+    "error":false,
+    "explainCounters":"* / 1",
+    "finishCode":0,"numMovesMade":3,
+    "ruleLineNo":1,
+    "rulesSrc":{"orders":[],"rows":["(1,*,*,*,[2, 3])","(1,*,*,*,[0, 1])"]},
+    "transcript":[{"code":0,"pieceId":0,"pos":4,"time":"2021-12-22T18:06:27.543Z[UTC]","bucketNo":3},{"code":0,"pieceId":6,"pos":33,"time":"2021-12-22T18:06:41.463Z[UTC]","bucketNo":0},{"code":0,"pieceId":1,"pos":9,"time":"2021-12-22T18:06:52.927Z[UTC]","bucketNo":3}],
+    "bonus":false,"bonusEpisodeNo":0,"canActivateBonus":false,
+    "episodeNo":1,
+    <strong>
+      "factorAchieved":2,
+      "factorPromised":4,
+      "incentive":"DOUBLING",
+      "justReachedX2":false,
+      "justReachedX4":false,
+      "lastStretch":11,
+      "rewardsAndFactorsPerSeries":[[10,2]],
+      </strong>
+    "guessSaved":false,
+    "ruleSetName":"bottom_then_top",
+    "seriesNo":0,
+    "totalBoardsPredicted":5,
+    "totalRewardEarned":10,
+    "trialListId":"broad_clock_shape"}    
+    </pre>
+
+<p>For a detailed explanation of the incentive-related fields, see <a href="incentive-doubling.html">The DOUBLING incentive scheme</a>.
+
  <li>POST <strong><tt>/move</tt>: Make a move:</strong>
       <form method="post" action="game-data/GameService2/move"
 	 enctype="application/x-www-form-urlencoded">

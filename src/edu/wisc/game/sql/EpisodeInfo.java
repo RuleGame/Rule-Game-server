@@ -10,6 +10,7 @@ import edu.wisc.game.util.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.rest.ParaSet;
+import edu.wisc.game.rest.ParaSet.Incentive;
 
 import javax.xml.bind.annotation.XmlElement; 
 
@@ -26,7 +27,6 @@ public class EpisodeInfo extends Episode {
     private PlayerInfo player;
     public PlayerInfo getPlayer() { return player; }
     public void setPlayer(PlayerInfo _player) { player = _player; }
-
 
     public static HashMap<String, Episode> globalAllEpisodes = new HashMap<>();
     public static Episode locateEpisode(String eid) {
@@ -73,6 +73,11 @@ public class EpisodeInfo extends Episode {
     public int getSeriesNo() { return seriesNo; }
     public void setSeriesNo(int _seriesNo) { seriesNo = _seriesNo; }
 
+    private PlayerInfo.Series mySeries() {
+	return  getPlayer().getSeries(getSeriesNo());
+    }
+
+    
     @Basic
     boolean guessSaved;
     public boolean getGuessSaved() { return guessSaved; }
@@ -87,12 +92,35 @@ public class EpisodeInfo extends Episode {
 	final int L =255;
 	if (_guess.length()>L)  _guess = _guess.substring(0,L);
 	guess = _guess;
-    }
+    }    
 
     @Basic
     int guessConfidence;
     public int getGuessConfidence() { return guessConfidence; }
     public void setGuessConfidence(int _guessConfidence) { guessConfidence = _guessConfidence; }
+
+    /** If we look at the sequence of all move/pick attempts in this
+	series up to and including this episode (including the last [so
+	far] attempt of this episode), does it end in a sequence of
+	successful ones? How long is this sequence? Once the episode is
+	completed, this episode's number is preserved in this episode's
+	SQL server record.
+    */
+    int lastStretch;
+    public int getLastStretch() { return lastStretch; }
+    @XmlElement
+    public void setLastStretch(int _lastStretch) { lastStretch = _lastStretch; }
+
+    /** In a series with the "doubling" incentive scheme, the episode
+	that triggered x2 for the series has the value of 2 stored
+	here, and the episode that triggered x4 has 4 stored here. 
+	The default value for this field (stored in all other episodes)
+	is 0.
+     */
+    int xFactor;
+    public int getXFactor() { return xFactor; }
+    @XmlElement
+    public void setXFactor(int _xFactor) { xFactor = _xFactor; }
 
     
     @Transient
@@ -103,6 +131,9 @@ public class EpisodeInfo extends Episode {
 	return para.getPickCost();
     }
 
+    Incentive xgetIncentive() {
+	return para.getIncentive();
+    }
     
     @Transient
     final private double clearingThreshold;
@@ -184,15 +215,50 @@ public class EpisodeInfo extends Episode {
 	return processMove(_q);
     }
 
+    /** This is set when the player first reach a new threshold. The info
+     should be kept until the end of the episode. */
+    private int factorPromised = 0;
+    private boolean justReachedX2=false, justReachedX4=false;
+    
     /** The common part of doMove and doPick: after a move or pick has
 	been completed, see how it affects the current state of the
 	episode.  
+
+	This method takes care of the issues related to the incentive scheme.
 
 	The player fails a bonus episode if there are still
 	pieces on the board, but less than 1 move left in the budget.
  */
     private Display processMove(Display _q) throws IOException  {
+	justReachedX2=justReachedX4=false;
+	
+	if (_q.code==CODE.ACCEPT) lastStretch++;
+	else lastStretch=0;
 
+	
+	if (xgetIncentive()==Incentive.DOUBLING) {
+	    final int x2=para.getInt("x2_after"), x4=para.getInt("x4_after");
+
+	    PlayerInfo.Series ser =  mySeries();
+	    int f = ser.findXFactor();
+
+	    if (f < 4 && factorPromised < 4 && lastStretch>=x4) {
+		factorPromised = 4;
+		//setXFactor(4);
+		justReachedX4=true;
+	    } else if (f<2 && factorPromised < 2 && lastStretch>=x2) {
+		factorPromised = 2;
+		//setXFactor(2);
+		justReachedX2=true;
+	    }
+
+	    if (cleared) {
+		if (getXFactor()<factorPromised) setXFactor(factorPromised);
+	    }
+
+	}
+
+	
 	if (bonus) {
 	    if (isCompleted()) {
 		if (movesLeftToStayInBonus()< -eps) { // has run out of moves
@@ -278,6 +344,8 @@ public class EpisodeInfo extends Episode {
 		if (getFinishCode()!=FINISH_CODE.NO) {
 		    transitionMap = p.new TransitionMap();
 		}
+
+		incentive2();
 		
 		errmsg += "\nDEBUG\n" + getPlayer().report();
 
@@ -365,6 +433,47 @@ public class EpisodeInfo extends Episode {
 	String ruleSetName;
 	public String getTrialListId() { return trialListId; }
         public String getRuleSetName() { return ruleSetName; }
+
+	/** Indicators for the DOUBLING incentive scheme */
+	Incentive incentive;
+        public Incentive getIncentive() { return incentive; }
+
+	int lastStretch;
+	public int getLastStretch() { return lastStretch; }
+	
+	/** The components of the total reward: an array of
+	    (reward,factor) pairs for all series so far.
+	 */
+	int[][] rewardsAndFactorsPerSeries;
+	/** Have we just reached this threshold on the most recent move? */
+	boolean justReachedX2=false, justReachedX4=false;
+	/** This factor (1,2,4) will be given out for certain, because
+	    it has been achieved at one of the completed episodes in
+	    this series.
+	 */
+	int factorAchieved;
+	/** This factor (1,2,4) will be in effect once the current
+	    episode has been completed. This may be higher than
+	    factorAchieved between the point when a new threshold has
+	    been achieved in this episode and the completion of the episode */
+	int factorPromised;
+	public int[][] getRewardsAndFactorsPerSeries() { return rewardsAndFactorsPerSeries; }
+   	
+	public boolean getJustReachedX2() { return justReachedX2; }
+	public boolean getJustReachedX4() { return justReachedX4; }
+        public int getFactorAchieved() { return factorAchieved; }
+        public int getFactorPromised() { return factorPromised; }
+
+	private void incentive2() {	    
+	    incentive = xgetIncentive();
+	    lastStretch = EpisodeInfo.this.lastStretch;
+	    rewardsAndFactorsPerSeries = getPlayer().getRewardsAndFactorsPerSeries();
+ 	    justReachedX2 = EpisodeInfo.this.justReachedX2;
+ 	    justReachedX4 = EpisodeInfo.this.justReachedX4;
+	    factorAchieved = rewardsAndFactorsPerSeries[ rewardsAndFactorsPerSeries.length-1][1];
+	    factorPromised =  EpisodeInfo.this.factorPromised;
+	}
+	
     }
     
     /** Builds a display to be sent out over the web UI */
@@ -372,7 +481,7 @@ public class EpisodeInfo extends Episode {
     	return new ExtendedDisplay(Episode.CODE.JUST_A_DISPLAY, "Display requested");
     }
 
-       
+
 
    void saveDetailedTranscriptToFile(File f) {
 
@@ -406,7 +515,7 @@ public class EpisodeInfo extends Episode {
 	   h.put( "playerId", x.getPlayerId());
 	   h.put( "trialListId", x.getTrialListId());
 	   h.put( "seriesNo", getSeriesNo());
-	   PlayerInfo.Series ser =  x.getSeries(getSeriesNo());
+	   PlayerInfo.Series ser =  mySeries();
 	   h.put( "ruleId",  ser.para.getRuleSetName());
 	   h.put( "episodeNo", ser.episodes.indexOf(this));
 	   h.put( "episodeId", getEpisodeId());	   
@@ -483,7 +592,7 @@ public class EpisodeInfo extends Episode {
        h.put( "playerId", x.getPlayerId());
        h.put( "trialListId", x.getTrialListId());
        h.put( "seriesNo", getSeriesNo());
-       PlayerInfo.Series ser =  x.getSeries(getSeriesNo());
+       PlayerInfo.Series ser =  mySeries();
        h.put( "ruleId",  ser.para.getRuleSetName());
        h.put( "episodeNo", ser.episodes.indexOf(this));
        h.put( "episodeId", getEpisodeId());	   

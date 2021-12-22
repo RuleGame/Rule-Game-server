@@ -157,7 +157,9 @@ public class ParaSet extends HashMap<String, Object> {
     public void setErrmsg(String _errmsg) { errmsg = _errmsg; }
     */
 
-    /** Initializes a ParaSet object from one line of a trial list file */
+    /** Initializes a ParaSet object from one line of a trial list file.
+	Empty cells are ignored.
+    */
     ParaSet(CsvData.BasicLineEntry header, CsvData.BasicLineEntry line) throws IOException {
 	int nCol=header.nCol();
 	if (nCol!=line.nCol()) throw new  IOException("Column count mismatch:\nHEADER=" + header + ";\nLINE=" + line);
@@ -410,10 +412,61 @@ public class ParaSet extends HashMap<String, Object> {
 	return para;
     }
 
+    /** Various incentive schemes available to experiment designers. */
+    public enum Incentive { BONUS, DOUBLING };
+
+    /** Returns the name of the incentive scheme in use in this para set,
+	or null if none is apparenly is in effect. This is determined
+	by the presence or absence of necessary parameters.
+    */
+    public  Incentive getIncentive() {
+	try {
+	    int n  = getInt("activate_bonus_at");
+	    if (n>=0) return  Incentive.BONUS;
+	} catch(Exception ex) {}
+	try {
+	    int n  = getInt("x2_after");
+	    if (n>=0) return  Incentive.DOUBLING;
+	} catch(Exception ex) {}
+	return null;	
+    }
+
+    /** Checks whether the parameters related to incentive schemes are
+	consistent (that is, you don't have a parameter from one
+	scheme and and another parameter from a different scheme).
+     */
+    public void checkIncentive() throws IllegalInputException {
+	Incentive inc = getIncentive();
+	Vector<String> names = new Vector<>();
+	if (inc!=Incentive.BONUS) {
+	    names.addAll( Util.array2vector("activate_bonus_at", "clear_how_many", "bonus_extra_pts"));
+	}
+	
+	if (inc!=Incentive.DOUBLING) {
+	    names.addAll( Util.array2vector("x2_after", "x4_after"));
+	} else {
+	    if (getInt("x2_after") >= getInt("x4_after")) throw new IllegalInputException("Check the paramters x2_after and x4_after. Both must be present, and the former must be smaller than the latter");
+	}
+
+	for(String key: names) {
+	    Object o = get(key);
+	    if (o!=null) {
+		String msg = "The parameter set is thought to have ";
+		msg += (inc==null)?"no incentive scheme, ":
+		    "incentive scheme of type "+inc + ", ";
+		msg += "but it also contains inappropriate parameter " + key +"=" + o;
+		throw new IllegalInputException(msg);
+	    }
+	}
+    }
+
     /** A dummy ParaSet object that contains legacy colors and shapes. This is
 	used e.g. as a default context in the automatic rule generation.
     */
     static final public ParaSet legacy = mkLegacy();
 
+    
+    
+    
 }
 			     

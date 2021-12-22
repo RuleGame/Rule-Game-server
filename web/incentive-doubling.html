@@ -1,0 +1,60 @@
+<html>
+  <head><title>The DOUBLING incentive scheme</title>
+  </head>
+<body>
+  <h1>The DOUBLING incentive scheme</h1>
+
+  <p align="center"><em>Version 4.005,  2021-12-22</em></p>
+
+  <p>Effective ver 4.005, the Game Server has the explicit concept of "incentive scheme". An "incentive scheme" is a system of rules and parameters which determines additional rewards for a player conditioned on achieving certain performance benchmarks, and associated changes in the server behaviour.
+
+    <h2>Specifying an incentive scheme</h2>
+    
+  <p>On the technical level, the incentive scheme is associated with a parameter set, i.e. each parameter set can have its own scheme; this is specified by the values of the approrpiate parameters in the appropriate row of the trial list file. The PIs prefer, however, that all parameter sets in a given trial list use the same incentive scheme; this means that the experiment designer should sdesign a  given trial set file so that each incentive-scheme related column contains the same value in all of its data cells.
+
+  <p>Currently, there are 2 incentive schemes available to experiment designers.
+
+  <p>All experiment plans created prior of ver. 4.005 (December 2021) have the experiment plan named <tt>BONUS</tt>; this is identified by the non-empty column "activate_bonus_at" in each parameter set. The parameter sets with this incentive scheme should also have appropriate values in the columns  "clear_how_many" and "bonus_extra_pts".
+
+  <p>The incentive scheme named <tt>DOUBLING</tt> has been introduced in GS 4.005. The parameter sets using this scheme must have positive integer values in columns "x2_after" and "x4_after". The latter value must be greater than the former. These two values determine how long a sequence of correct move or pick attempts (within a single series of episodes, but possibly spanning the border of episodes) must be in order for the "doubling" and "quadrupling" incentives to be activated. Tehcnically speaking, the incentives are merely "promised" once the player has made the required number of successful moves or picks; they are actually "activated" as soon as the player completes the episode during which the achievement occured, i.e fully clears the board.
+
+<p> Specifically, the former incentive results in doubling the payoff
+for the entire series of episodes played with the current parameter
+set (i.e. with the current rule set); the latter incentive results in
+the quadrupling the reward for the current rule set, and also in
+terminating the currenty series, and moving the player to the next series (or the end of the session, if that was the last series).
+
+<p>Finally, it is possible for a parameter set to have no incentive scheme at all, if neither set of incentive-related columns are present in the trial list file.
+
+<h2>Server reporting the incentive state in the DOUBLING scheme</h2>
+
+<p>The response structure of the <a href="game-api-2.html">Game Sever API</a> /display call (as well as the <tt>display</tt> element of the response structures of the /move and /pick  calls) contains a number of fields that are relevant for the incentive scheme. The GUI client can use them to provide appropriate display of the GUI elements related to the incentive scheme. These fields  are as follows.
+
+<p>Fields supplied regardless of the scheme:
+
+  <ul>
+    <li><strong>"incentive":"DOUBLING",</strong> -- the name of the  incentive scheme in use in the current series (DOUBLING or BONUS). This field will be absent if the parameter set has no incentive scheme.
+
+    <li><strong>"lastStretch":7,</strong> -- the length of the current stretch of correct moves/picks, including the most recent move. It starts with 0, increments at every correct move or pick, and goes back to 0 on an failed  move or pick attempt. The GUI can display this number as "the number of recent successful moves", or some such.
+      
+    <li><strong>"rewardsAndFactorsPerSeries":[[17,2], [8,1]],</strong> -- a two dimensional array with the values [[rew0, x0], [rew1,x1], [rew2,x2], ...], representing the earned reward (before doubling or quadrupling) for each series, and the earned incentive factor (1 (default), 2, or 4) for the same series. The total reward earned by the player so far can be computed as
+      <pre>totalReward= rew0*x0 + rew1*x1 + rew2*x2 + ...</pre>
+Of course, unless the current incentive scheme is DOUBLING, each of the "incentive factor" values will be 1.   The GUI can display the above calculation, with the sum taken from the usual  "totalRewardEarned" field of the /display structure.
+      </ul>
+
+<p>Fields supplied only in the DOUBLING scheme:
+
+<ul>
+	
+  <li><strong>"factorAchieved":2</strong> -- this is the incentive factor (1, 2, or 4) applicable to the reward of the current series. It is the same value as found as the second element of the last elment of the 2-dimensional array <tt>rewardsAndFactorsPerSeries</tt> (see above).  Initially, this value is 1. Once the episode during which the player achieved a stretch of <tt>x2_after</tt> successful moves has been completed, the value will become 2.  Once the episode during which the player achieved a stretch of <tt>x4_after</tt> successful moves has been completed, the value will become 4.  The GUI can use the value of this field to display a message such as "double payoff on", "quadruple payoff on", which will be present from the end of the episode in which doubling/quadrupling has been earned until the end of the series (=rule set). (Strictly speaking, for quadrupling there isn't much time to display, as one will go to the next rule set as soon as this message is displayed!)
+
+  <li><strong>"factorPromised":4,</strong> -- this value is normally zero. It is set to 2 or 4 once the player has achieved an appropriately long stretch of successful moves, and stays at this value  during the remainder of the episode. Once the episode has been completed and "factorAchieved" has been set to reflect the achievement, the "factorPromised" value goes back to 0 for the next episode. The GUI can use the value of this field to produce a message such as "Your payoff for this rule will be doubled/quadrupled once you complete this episode".
+
+  <li><strong>"justReachedX2":false,</strong> -- this value is normally false. It is set to true for just one move, after the move that has resulted in the player first reaching the "doubling " benchmark in the current series. The value goes back to false on the next move. Its presence can serve as an indicator for the GUI tool that it can display a congraulatory pop-up message.
+    
+  <li><strong>"justReachedX4":false,</strong> -- ditto, for quadrupling.
+    
+</ul>
+
+</body>
+</html>

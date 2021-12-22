@@ -228,6 +228,28 @@ public class GameService2Html extends GameService2 {
 
 	String body = "";
 	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
+
+	int[][] rxv = d.getRewardsAndFactorsPerSeries();
+	if (rxv!=null) {
+	    Vector<String> v = new Vector<>();
+	    for(int[] rx: rxv) {
+		v.add("" + rx[0] +"*"+rx[1]);		
+	    }
+	    body += fm.para("Reward: " + d.getTotalRewardEarned() + " = " +
+			    String.join(" + ", v));
+	}
+
+	body += fm.para("Incentive scheme=" + d.getIncentive());
+	if (d.getIncentive()==ParaSet.Incentive.DOUBLING) {
+	    body += fm.para("Stretch="+d.getLastStretch()+". Factor achieved="+ d.getFactorAchieved()+"; promised in this episode " +  d.getFactorPromised()) +
+		(d.getJustReachedX2()? fm.para("Just reached x2") : "") +
+		(d.getJustReachedX4()? fm.para("Just reached x4") : "") +
+		fm.hr();
+	}
+	    
+
+
+	
 	body += showHistoryAndPosition(epi,  d);
 
 

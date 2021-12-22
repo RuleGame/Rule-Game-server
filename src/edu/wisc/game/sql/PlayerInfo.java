@@ -169,6 +169,27 @@ public class PlayerInfo {
 	    return false;
 	}
 
+	/** Scans the episodes of the series to see if the xFactor has
+	    been set for this series. Only appliable to series with 
+	    DOUBLING incentive scheme.
+	    @return 1,2, or 4.
+	 */
+	int findXFactor() {
+	    int f = 1;
+	    for(EpisodeInfo x: episodes) {
+		if (x.getXFactor()>f) f=x.getXFactor();
+	    }
+	    return f;
+	}
+
+	/** True if we have the DOUBLING incentive scheme, and this 
+	    series has been ended by the x4 achievement */
+	boolean seriesEndedByX4() {
+	    return para.getIncentive()==ParaSet.Incentive.DOUBLING &&
+		findXFactor()==4;
+	}
+
+	
     }
 
 
@@ -177,7 +198,7 @@ public class PlayerInfo {
     }
     
     /** Retrieves a link to the currently played series, or null if this player
-	has finihed all his series */
+	has finished all his series */
     Series getCurrentSeries() {
 	return alreadyFinished()? null: allSeries.get(currentSeriesNo);
     }
@@ -207,8 +228,9 @@ public class PlayerInfo {
     /** @return true if an "Activate Bonus" button can be displayed, i.e. 
 	the player is eligible to start bonus episodes, but has not done that yet */
     public boolean canActivateBonus() {
+	Series ser = getCurrentSeries();	
+	if (ser.para.getIncentive()!=ParaSet.Incentive.BONUS) return false;
 	if (inBonus) return false;  // already doing a bonus subseries!
-	Series ser=getCurrentSeries();
 	if (ser==null) return false;
 	int at = ser.para.getInt("activate_bonus_at");
 	// 0-based index of the episode on which activation will be in
@@ -286,7 +308,10 @@ public class PlayerInfo {
     /** Can a new "regular" (non-bonus) episode be started in the current series? */
     private boolean canHaveAnotherRegularEpisode() {
 	Series ser=getCurrentSeries();
-	return ser!=null && !inBonus && ser.episodes.size()<ser.para.getMaxBoards();
+	if (ser==null) return false;
+	if (ser.seriesEndedByX4()) return false;
+	if (inBonus) return false;
+	return  ser.episodes.size()<ser.para.getMaxBoards();
     } 
 
     /** Can a new bonus episode be started in the current series? */
@@ -313,7 +338,11 @@ public class PlayerInfo {
 	return result;
     }
 
-    /** The main table for all episodes of this player, arranged in series */
+    /** The main table for all episodes of this player, arranged in
+	series.  This table normally contains entries for all series,
+	both those already played and the future ones, one series per
+	para set. The tables is initialized by initSeries().
+     */
     @Transient
     private Vector<Series> allSeries = new Vector<>();
 
@@ -472,6 +501,11 @@ public class PlayerInfo {
 	    }
 
 	    if (epi!=null) {
+		// The error-free sstretch continues across episode border
+		if (ser.episodes.size()>0) {
+		    epi.setLastStretch(ser.episodes.lastElement().getLastStretch());
+		}
+		
 		ser.episodes.add(epi);
 		addEpisode(epi);	
 		Logging.info("episodeToDo(pid="+playerId+"): returning new episode " + epi.episodeId);
@@ -556,15 +590,37 @@ public class PlayerInfo {
 	int sum=0;
 	int cnt=0;
 	for(Series ser: allSeries) {
+	    int s=0, f=1;
 	    for(EpisodeInfo epi: ser.episodes) {
 		cnt++;
-		sum +=  epi.getTotalRewardEarned();  
+		s +=  epi.getTotalRewardEarned();  
+		f = Math.max(f, epi.getXFactor());
 	    }
+	    sum += s;
 	}
 	totalRewardEarned=sum;
 	System.err.println("Total reward("+playerId+"):=" + totalRewardEarned +", based on " + cnt + " episodes");
     }
-    
+
+
+    /** @return { {s0,f0}, {s1,f1}, {s2,f2}....}, which are the
+	per-series components that sum to reward=s0*f0+ s1*f1+ s2*f2 +....
+     */
+    int[][] getRewardsAndFactorsPerSeries() {
+	int n = Math.min( currentSeriesNo+1, allSeries.size());
+	int[][] rx = new int[n][];
+
+	for(int j=0; j< n; j++) {
+	    Series ser = allSeries.get(j);
+	    int s=0, f=1;
+	    for(EpisodeInfo epi: ser.episodes) {
+		s +=  epi.getTotalRewardEarned();
+		f = Math.max(f, epi.getXFactor());
+	    }
+	    rx[j++] = new int[]{s, f};
+	}
+	return rx;
+    }
     
     /** This method is called after an episode completes. It computes
 	the applicable rewards (if the board has been cleared), calls
@@ -621,7 +677,7 @@ public class PlayerInfo {
 	for(Series ser: allSeries) {
 	    String s="";
 	    if (j==currentSeriesNo) s+= (inBonus? "*B*" : "*M*");
-	    s += "["+j+"]";
+	    s += "[S"+j+"]";
 	    for(EpisodeInfo epi: ser.episodes) s += epi.report();
 	    v.add(s);
 	    j++;
@@ -676,10 +732,13 @@ public class PlayerInfo {
 		    put(whitherNext, Action.DEFAULT);
 		}
 	    } else {
-		if (ser.episodes.size()<ser.para.getMaxBoards()) {
+
+		if (canHaveAnotherRegularEpisode()) {
+		    // space left to continue or give up
 		    put(Transition.MAIN, Action.DEFAULT);
 		    put(whitherNext, Action.GIVE_UP);
 		} else {
+		    // end of series
 		    put(whitherNext, Action.DEFAULT);
 		}
 
