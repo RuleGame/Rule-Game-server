@@ -56,5 +56,12 @@ Of course, unless the current incentive scheme is DOUBLING, each of the "incenti
     
 </ul>
 
+<h2>Series transitioning</h2>
+
+<p>Server-side, care is taken to where each /newEpisode call will take you, i.e. to the next episode of the same series, or to the first episode of the  next series.
+
+<p>If the GUI client needs to know what the possible transitions in a given state is, it can use the "transitionMap" structure, which comes as part of the response structure of the  /guess API call, as well as as part of the /display structure (is /display, /move, or /pick call) at the last move of each episode. For details, see the <a href="game-api-2.html#guess">/guess call</a>
+
+
 </body>
 </html>
