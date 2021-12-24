@@ -45,8 +45,7 @@ public class  AutomaticRuleGeneratorService extends GameService2 {
 	v.add(fm.h1(title1));
 
 	try {
-	    ParaSet para = ParaSet.textToParaSet(paraText); //  throws IOException,  IllegalInputException
-	    
+	    ParaSet para = ParaSet.textToParaSet(paraText); 	    
 	    AutomaticRuleGenerator ag = new  AutomaticRuleGenerator(-1L, para);
 
 	    v.add( fm.para("Variable substitutions are drawn from the following sets:"));
@@ -64,11 +63,14 @@ public class  AutomaticRuleGeneratorService extends GameService2 {
 		v.add(fm.h4("Auto rule set No. " + j));  
 		RuleSet rules = new RuleSet(templateText, ag);
 
-
 		StalemateTester tester = new  StalemateTester(rules);
-		Board stalemated = tester.canStalemate( Piece.Shape.legacyShapes,
-							Piece.Color.legacyColors,
-							null);
+		Board stalemated =
+		    tester.canStalemate(//Piece.Shape.legacyShapes,
+					//Piece.Color.legacyColors,
+					Piece.Shape.findShapes(ag.getShapeNames()),
+					Piece.Color.findColors(ag.getColorNames()),
+
+					null);
 
 		String extra = "";
 

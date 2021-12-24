@@ -67,13 +67,22 @@ public class Piece  implements Serializable {
 
 
 	private static HashMap<String,Color> allColors = new HashMap<>();
-	
+
+	/** @return The Color object for a given name */
 	static synchronized public Color findColor(String s) {
 	    s = s.toUpperCase();
 	    Color c = allColors.get(s);
 	    if (c==null) allColors.put(s, c=new Color(s));
 	    return c;	    
 	}
+
+	static public Color[] findColors(String[] v) {
+	    Color[] w = new Color[v.length];
+	    for(int j=0; j<v.length; j++) w[j] = findColor(v[j]);
+	    return w;
+	}
+	
+	
 	static final public  Color RED=findColor("RED"), BLACK=findColor("BLACK"),
 	    BLUE=findColor("BLUE"), YELLOW=findColor("YELLOW");
 	// "r" for RED, "b" for BLACK, etc; BLUE becomes "g", as if it's GREEN
@@ -113,6 +122,15 @@ public class Piece  implements Serializable {
 	    if (c==null) allShapes.put(s, c=new Shape(s));
 	    return c;	    
 	}
+
+	static public Shape[] findShapes(String[] v) {
+	    Shape[] w = new Shape[v.length];
+	    for(int j=0; j<v.length; j++) w[j] = findShape(v[j]);
+	    return w;
+	}
+
+
+	
 	static final public Shape SQUARE=findShape("SQUARE"), STAR=findShape("STAR"), CIRCLE=findShape("CIRCLE"), TRIANGLE=findShape("TRIANGLE");
 
 	static public final Piece.Shape[] legacyShapes = {SQUARE, STAR, CIRCLE, TRIANGLE};

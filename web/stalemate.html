@@ -6,7 +6,7 @@
 <body>
 <h1>Stalemates and stalemate testing</h1>
 
-<div align="center"><em>Updated for ver. 4.004. 2021-12-19</em></div>
+<div align="center"><em>Updated for ver. 4.005. 2021-12-22</em></div>
 
 
 <p>This document discusses stalemate situations in the Rule Game, and the procedure useds by the experiment plan validator to check whether a rule set can stalemate.
@@ -45,7 +45,32 @@ This atom can be applied to red square objects, and has a bucket expression <tt>
 </pre>
 The first atom of this set allows the player to remove game piece from cell No. 36, but only if no pieces have been removed yet. Hence, this rule can only be used once. The second atom allows the player to remove any number of pieces from cells No. 1 thru 35. Now, consider an initial board that has a game piece in cell No. 36, and one or more pieces in other cells of the board. If the player starts the episode with removing the piece from cell No. 36 (using the first atom), then he can remove all other game pieces using the second atom; thus, no stalemate. But if the player starts with using the first atom to remove any other piece than the one in cell No. 36, then he will never again have a chance to remove that piece; thus, once all other pieces have been removed, a stalemate will result.
 
-  
+<h3>How to ensure that your rule set has no disappearing atoms</h3>
+
+<p>
+There is a way to ensure that your rule set is without disappearing atoms (WODA). All you need to do is to make sure that every bucket expression always produces a non-empty set. This can be achieved by balancing parts with <tt>pc</tt> and
+<tt>!pc</tt>, and so on. E.g. an atom
+<pre>(*,*,Red,T,pc)</pre>
+is "disappearing", because is produces an empty set before the first red piece has been moved. But it can be fixed by a adding to its bucket expression a clause that returns a non-empty set when pc is not defined, e.g.
+<pre>(*,*,Red,T,[!pc*2, pc])</pre>
+, so that this atom produces a destination (bucket 2) if it is applied to the very first red piece to be moved.
+
+<p>An equivalent solution can be achieved by "duplicating" an atom, so that the two atoms have their shape and color sections (and any other property-based sections, if applicable) identical, and their bucket sections, if viewed together, always produce a non-empty set. For example, a rule set may contain these two atoms:
+<pre>(1,*,Red,T,!pc*3)
+  (*,*,Red,T,pc+1)</pre>
+In this example we see that once the first atom has been spent, the second is ensured to always produce a non-empty set of destination buckets. This ensures that, when viewed together, they (eventually) provide the same opportunities for "red pieces from the top non-empty row" to be moved as a non-disappearing atom
+<pre>(*,*,Red,T,[3,pc+1])</pre>
+
+<p>
+Similarly, these two atoms put together:
+<pre>
+  (*,*,Red,T,!ps*1)
+  (*,*,Red,T,ps-1)
+</pre>
+ensure that a red piece from the top non-empty row will always (possibly, after some cycling of the rule lines) have a destination bucket, regardless of whether any piece of the same shape has been moved yet.
+
+
+
   <h2>Stalemate tester in the Rule Game Server: properties and limitations</h2>
 
 <p>The Rule Game server includes a stalemate tester component, which, starting in ver. 4.003, is used  as a component of the  <a href="check-plan-form.jsp">experiment plan validator</a>, to allow the experiment designer to detect possible stalemate situation in his or her rule set. The  stalemate tester will also be used in the future as a component of the automatic rule generator (to de deployed).

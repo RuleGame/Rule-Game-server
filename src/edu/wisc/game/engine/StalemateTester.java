@@ -144,6 +144,12 @@ public class StalemateTester {
     //	       String[] allImages) {
 
     
+    /** Is there any board composed of any pieces of the specified
+	colors and shapes on which this rule set will stalemate?  As
+	always, we assume that all atoms in the rules are
+	"non-disappearing", i.e. each bucket expression always produces
+	a non-empty result.
+     */
     public Board canStalemate(Piece.Shape[] shapes, Piece.Color[] colors,
 	       String[] allImages) {
   	
@@ -174,7 +180,7 @@ public class StalemateTester {
 	remove.  The method modififes the content of the board,
 	removing all pieces it can. If the game does not stalemate,
 	this board will be empty upon return from this method; if a stalemate
-	is encountered, the board will contain pieces that can't be removed.
+	is encountered, the board will contain pieces that can't be removed.	
      */
     public boolean canStalemate(MBoard pieceGroups) {
 	BitSet onBoard = pieceGroups.onBoard();

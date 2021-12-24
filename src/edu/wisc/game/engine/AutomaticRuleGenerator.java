@@ -192,6 +192,14 @@ Xc,[1..3]
 	}
     }
 
+
+    public String[] getColorNames() throws RuleParseException{
+	return getValue("color").sVal;
+    }
+    public String[] getShapeNames() throws RuleParseException{
+	return getValue("shape").sVal;
+    }
+    
     /** Ensures that the para table has the default (legacy) values for 
 	"colors" and "shapes", if none are supplied in the CSV file.
     */
