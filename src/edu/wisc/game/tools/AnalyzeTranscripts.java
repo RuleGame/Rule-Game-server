@@ -187,7 +187,8 @@ public class AnalyzeTranscripts {
 	// for each experiment plan...
 	for(String exp: plans) {		
 	    System.out.println("Experiment plan=" +exp);
-
+	    try {
+	    
 	    // ... List all trial lists 
 	    TrialListMap trialListMap=new TrialListMap(exp);
 	    System.out.println("Experiment plan=" +exp+" has " + trialListMap.size() +" trial lists: "+ Util.joinNonBlank(", ", trialListMap.keySet()));
@@ -201,8 +202,16 @@ public class AnalyzeTranscripts {
 	    for(PlayerInfo p:res) {
 		ph.doOnePlayer(p,  trialListMap, handles);
 	    }
-
+	    
 	    System.out.println("For experiment plan=" +exp+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
+	    } catch(Exception ex) {
+		String msg = "ERROR: Skipping plan=" +exp+" due to an exception:";
+		System.out.println(msg);
+		System.err.println(msg);
+		System.err.println(ex);
+		ex.printStackTrace(System.err);
+	    }
+
 	}
 
 	// Or, for each specified player...
