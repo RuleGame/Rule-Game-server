@@ -37,8 +37,10 @@ class EpisodeHandle {
 	    para = t.get(seriesNo);
 	    ruleSetName = para.getRuleSetName();
 	    useImages = (para.images!=null);
-	    precedingRules = new Vector<>();
-	    for(int j=0; j<orderInSeries; j++) {
+
+	    int seriesNo = e.getSeriesNo();
+	    precedingRules = new Vector<>();	
+	    for(int j=0; j<seriesNo; j++) {
 		precedingRules.add( t.get(j).getRuleSetName());
 	    }
     } 
