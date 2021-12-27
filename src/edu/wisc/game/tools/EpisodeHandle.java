@@ -13,6 +13,8 @@ import edu.wisc.game.sql.*;
 */
 class EpisodeHandle {
     final String ruleSetName;
+    /** Which other rules preceded this rule in the trial list? */
+    final Vector<String> precedingRules;
     final String exp;
     final String trialListId;
     final int seriesNo;
@@ -35,6 +37,10 @@ class EpisodeHandle {
 	    para = t.get(seriesNo);
 	    ruleSetName = para.getRuleSetName();
 	    useImages = (para.images!=null);
-    }
+	    precedingRules = new Vector<>();
+	    for(int j=0; j<orderInSeries; j++) {
+		precedingRules.add( t.get(j).getRuleSetName());
+	    }
+    } 
 }
 

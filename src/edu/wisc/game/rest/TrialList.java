@@ -167,6 +167,13 @@ public class TrialList extends Vector<ParaSet> {
 	}
     }
 
+    /** Reads all lines of the trial list file, and creates a
+	ParaSet objects for each line
+	@param f The trial list file to read
+	@param v If not null, the new ParaSet objects will be added to this vector.
+	@return The vector containing new ParaSet objects (and maybe some old ones, if v is not null).
+	This will be the same vector object as v, if v was not null, or a newly created one otherwise.
+    */
     private static Vector<ParaSet> readTrialListFile(Vector<ParaSet> v, File f) throws IOException, IllegalInputException {
 	if (v==null) v=new Vector<ParaSet>();
 	if (!f.exists()) throw new IOException("File does not exist: " + f);
@@ -187,7 +194,7 @@ public class TrialList extends Vector<ParaSet> {
     /** Reads a trial list from the  file that corresponds to a given
 	experiment plan  and the specified trial list id within that
 	experiment. 
-	@parame exp An experiment plan (static or dynamic)
+	@parame exp The name of an experiment plan (static or dynamic)
     */
     public TrialList(String exp, String trialListId) throws IOException,IllegalInputException  {
 	this(false, "No error");

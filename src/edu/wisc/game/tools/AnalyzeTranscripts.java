@@ -102,6 +102,7 @@ public class AnalyzeTranscripts {
 	}
     }
 
+    static boolean weWantPredecessorEnvironment  = false;
     
     public static void main(String[] argv) throws Exception {
 
@@ -146,6 +147,9 @@ public class AnalyzeTranscripts {
 		} else {
 		    usage("Invalid model name: " + mode);
 		}
+	    } else if  (a.equals("-pre")) {
+		weWantPredecessorEnvironment  = true;
+		System.out.println("weWantPredecessorEnvironment=" + weWantPredecessorEnvironment);
 	    } else if  (a.equals("-nofit")) {
 		weWantFitting=false;
 	    } else if (j+1< argv.length && a.equals("-out")) {
@@ -403,7 +407,10 @@ public class AnalyzeTranscripts {
 	    outHeader += ",p0";
 	    p0 = computeP0(section, eh0.para, eh0.ruleSetName);
 	}
-	
+	if (weWantPredecessorEnvironment) {
+	    outHeader += ",precedingRules";
+	}
+					      
 	String rid = eh0.ruleSetName;
 	File d=new File(base, rid);
 	File g=new File(d, includedEpisodes.firstElement().playerId + ".split-transcripts.csv");		
@@ -422,6 +429,10 @@ public class AnalyzeTranscripts {
 		    w.print(","+ImportCSV.escape(e.csv.getCol(j)));
 		}
 		if (needP0) w.print(","+ p0[jp++]);
+		if (weWantPredecessorEnvironment) {
+		    w.print("," + ImportCSV.escape( String.join(";", eh.precedingRules)));
+		}
+		
 		w.println();	
 	    }
 	}
