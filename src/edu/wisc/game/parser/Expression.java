@@ -572,7 +572,8 @@ public interface Expression {
 	return mkLongestE5( tokens);
     }
 
-    private static ArithmeticExpression mkLongestE5(Vector<Token> tokens) throws RuleParseException {
+    //    private
+    static ArithmeticExpression mkLongestE5(Vector<Token> tokens) throws RuleParseException {
 	if (tokens.size()==0) throw new RuleParseException("Unexpected end of line. (Expected an E5-type arithmetic expression)");
 	ArithmeticExpression q = mkLongestE4(tokens);
 	if (tokens.size()==0) return q;
@@ -583,7 +584,8 @@ public interface Expression {
 	return new EqualityExpression( q, q2);
     }
 
-    private static ArithmeticExpression mkLongestE4(Vector<Token> tokens) throws RuleParseException {
+    //private
+    static ArithmeticExpression mkLongestE4(Vector<Token> tokens) throws RuleParseException {
 	if (tokens.size()==0) throw new RuleParseException("Unexpected end of line. (Expected an E4-type arithmetic expression)");
 	ArithmeticExpression q = mkLongestE3(tokens);
 	AdditiveExpression y = new AdditiveExpression(q);
@@ -597,7 +599,8 @@ public interface Expression {
     }
 
     /** E3 :=  E2  |  E2*E2... */
-    private static ArithmeticExpression mkLongestE3(Vector<Token> tokens) throws RuleParseException {
+    //private
+    static ArithmeticExpression mkLongestE3(Vector<Token> tokens) throws RuleParseException {
 	if (tokens.size()==0) throw new RuleParseException("Unexpected end of line. (Expected an E3-type arithmetic expression)");
 	ArithmeticExpression q = mkLongestE2(tokens);
 	MultiplicativeExpression y = new MultiplicativeExpression(q);
@@ -611,7 +614,8 @@ public interface Expression {
     }
     
     /** E2 :=  E1  |  !E2 */
-       private static ArithmeticExpression mkLongestE2(Vector<Token> tokens) throws RuleParseException {
+    //private
+    static ArithmeticExpression mkLongestE2(Vector<Token> tokens) throws RuleParseException {
 	if (tokens.size()==0) throw new RuleParseException("Unexpected end of line. (Expected an E2-type arithmetic expression)");
 	if (tokens.firstElement().equals(Token.BANG)) {
 	    tokens.remove(0);

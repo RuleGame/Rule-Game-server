@@ -355,6 +355,9 @@ public class EpisodeInfo extends Episode {
 		    setErrmsg(msg);
 		    setError( true);		
 		}
+
+		faces =p.computeFaces(EpisodeInfo.this);
+
 		
 	    }	       
 	}
@@ -440,6 +443,14 @@ public class EpisodeInfo extends Episode {
 
 	int lastStretch;
 	public int getLastStretch() { return lastStretch; }
+
+
+	/** For GS 4.006, this represents all moves (and picks) 
+	    in all episodes in this series, with a true for 
+	    each success, and a false for each failure */	   
+	private Vector<Boolean> faces =  null;
+	public Vector<Boolean> getFaces() { return faces; }
+
 	
 	/** The components of the total reward: an array of
 	    (reward,factor) pairs for all series so far.
