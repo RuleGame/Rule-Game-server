@@ -207,12 +207,12 @@ public class EpisodeInfo extends Episode {
      */
     public Display doMove(int y, int x, int by, int bx, int _attemptCnt) throws IOException {
 	Display _q = super.doMove(y, x, by, bx, _attemptCnt);
-	return processMove(_q);
+	return processMove(_q, true);
     }
 
     public Display doPick(int y, int x, int _attemptCnt) throws IOException {
 	Display _q = super.doPick(y, x, _attemptCnt);
-	return processMove(_q);
+	return processMove(_q, false);
     }
 
     /** This is set when the player first reach a new threshold. The info
@@ -228,12 +228,17 @@ public class EpisodeInfo extends Episode {
 
 	The player fails a bonus episode if there are still
 	pieces on the board, but less than 1 move left in the budget.
+
+Doubling: successful picks are ignored in stretch calculations, 
+to prevent gaming the system.
+
  */
-    private Display processMove(Display _q) throws IOException  {
+    private Display processMove(Display _q, boolean isMove) throws IOException  {
 	justReachedX2=justReachedX4=false;
 	
-	if (_q.code==CODE.ACCEPT) lastStretch++;
-	else lastStretch=0;
+	if (isMove && _q.code==CODE.ACCEPT) lastStretch++;
+	else if (_q.code==CODE.ACCEPT) {}
+else lastStretch=0;
 
 	
 	if (xgetIncentive()==Incentive.DOUBLING) {
