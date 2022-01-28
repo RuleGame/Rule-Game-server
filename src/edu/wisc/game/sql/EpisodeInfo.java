@@ -486,7 +486,11 @@ else lastStretch=0;
 	    rewardsAndFactorsPerSeries = getPlayer().getRewardsAndFactorsPerSeries();
  	    justReachedX2 = EpisodeInfo.this.justReachedX2;
  	    justReachedX4 = EpisodeInfo.this.justReachedX4;
+
+factorAchieved=1;
+try {
 	    factorAchieved = rewardsAndFactorsPerSeries[ rewardsAndFactorsPerSeries.length-1][1];
+} catch(Exception ex) {} // fixme - silly fix for Kevin's report ,2022-01-28
 	    factorPromised =  EpisodeInfo.this.factorPromised;
 	}
 	
