@@ -756,6 +756,33 @@ public class PlayerInfo {
 	Main.saveObject(this);
     }
 
-    
+    /** Computes the "faces" vector for the series to which the 
+	specified episode belongs. This is used by Kevin's GUI tool
+	in the DOUBLING incentive scheme display (ver 4.006)
+	
+Ignoring successful picks to keep players from gaming the system.
+
+@param epi We pass it in so that everything will work
+	correctly even if this is part of a /move call that ended
+	the last episode of the series, and currentSeriesNo may already be
+	referring to the next series.
+    */
+    Vector<Boolean> computeFaces(EpisodeInfo epi)// throws IOException
+    {
+	Series ser = whoseEpisode(epi);
+	Vector<Boolean> v = new Vector<>();
+	if (ser==null) return v;
+	for(Episode e: ser.episodes) {
+	    Vector<Episode.Pick> t=e.transcript;
+	    if (t==null) continue;
+	    for(Episode.Pick pick: t) {
+if (pick instanceof Episode.Move ||
+pick.code==Episode.CODE.DENY)
+		v.add( pick.code==Episode.CODE.ACCEPT);
+	    }
+	}
+	return v;
+    }
+
 }
  

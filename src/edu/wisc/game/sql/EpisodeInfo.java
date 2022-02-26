@@ -207,12 +207,12 @@ public class EpisodeInfo extends Episode {
      */
     public Display doMove(int y, int x, int by, int bx, int _attemptCnt) throws IOException {
 	Display _q = super.doMove(y, x, by, bx, _attemptCnt);
-	return processMove(_q);
+	return processMove(_q, true);
     }
 
     public Display doPick(int y, int x, int _attemptCnt) throws IOException {
 	Display _q = super.doPick(y, x, _attemptCnt);
-	return processMove(_q);
+	return processMove(_q, false);
     }
 
     /** This is set when the player first reach a new threshold. The info
@@ -228,12 +228,17 @@ public class EpisodeInfo extends Episode {
 
 	The player fails a bonus episode if there are still
 	pieces on the board, but less than 1 move left in the budget.
+
+Doubling: successful picks are ignored in stretch calculations, 
+to prevent gaming the system.
+
  */
-    private Display processMove(Display _q) throws IOException  {
+    private Display processMove(Display _q, boolean isMove) throws IOException  {
 	justReachedX2=justReachedX4=false;
 	
-	if (_q.code==CODE.ACCEPT) lastStretch++;
-	else lastStretch=0;
+	if (isMove && _q.code==CODE.ACCEPT) lastStretch++;
+	else if (_q.code==CODE.ACCEPT) {}
+else lastStretch=0;
 
 	
 	if (xgetIncentive()==Incentive.DOUBLING) {
@@ -355,6 +360,9 @@ public class EpisodeInfo extends Episode {
 		    setErrmsg(msg);
 		    setError( true);		
 		}
+
+		faces =p.computeFaces(EpisodeInfo.this);
+
 		
 	    }	       
 	}
@@ -440,6 +448,14 @@ public class EpisodeInfo extends Episode {
 
 	int lastStretch;
 	public int getLastStretch() { return lastStretch; }
+
+
+	/** For GS 4.006, this represents all moves (and picks) 
+	    in all episodes in this series, with a true for 
+	    each success, and a false for each failure */	   
+	private Vector<Boolean> faces =  null;
+	public Vector<Boolean> getFaces() { return faces; }
+
 	
 	/** The components of the total reward: an array of
 	    (reward,factor) pairs for all series so far.
@@ -470,7 +486,11 @@ public class EpisodeInfo extends Episode {
 	    rewardsAndFactorsPerSeries = getPlayer().getRewardsAndFactorsPerSeries();
  	    justReachedX2 = EpisodeInfo.this.justReachedX2;
  	    justReachedX4 = EpisodeInfo.this.justReachedX4;
+
+factorAchieved=1;
+try {
 	    factorAchieved = rewardsAndFactorsPerSeries[ rewardsAndFactorsPerSeries.length-1][1];
+} catch(Exception ex) {} // fixme - silly fix for Kevin's report ,2022-01-28
 	    factorPromised =  EpisodeInfo.this.factorPromised;
 	}
 	
