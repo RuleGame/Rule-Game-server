@@ -4,7 +4,7 @@
 <body>
   <h1>The Analyze Transcripts tool</h1>
 
-<div align="center"><em>Updated 2021-11-27, for Game Server 4.002</em></div>
+<div align="center"><em>Updated 2021-12-27, for Game Server 4.005</em></div>
 
   <p>The Analyze Transcripts tool can be used to extract transcripts for specified experiment plans, specified players, or specified repeat users, and to carry out certain types of data analysis.
 
@@ -107,11 +107,15 @@ analyze-transcripts.sh -pid -file my-pid-list.csv
   
 <p>You can use the option <code>-out <em>directory_name</em></code> to have the output written to a directory other than the default <tt>tmp</tt>.
 
+
 <h2>Options controlling data processing</h2>
+
 
 <p>The Transcript Analyzer identifies all episodes played by specified players (or the players in the specified experiment plan), and writes out a separate transcript section file for each (player, rule set) combination (i.e. for each series played by each player). Additional computations are controlled by the options that appear on the command line before the selection specifiers.
 
-<p>If the <tt>-nofit</tt> option is given, no additional computations are carried out.
+<p><strong>1. If the <tt>-pre</tt> option is given</strong>, an additional column named <tt>precedingRules</tt> is produced in split transcript files. The value in this column describes the player's experience prior to starting playing with the current rules set. Specifically, this column contrains the list of the rule sets that preceded the current rule set in the trial list, in the chronological order, separated by semicolons. Naturally, if the current rule set is the first rule set in the trial list, the    <tt>precedingRules</tt> column will be empty.
+
+<p><strong> 2. Curve fitting.</strong> If the <tt>-nofit</tt> option is given, no additional computations are carried out.
 
 <p>Otherwise, log-like curve-fitting is carried out, either with no <em>p</em><sub>0</sub>, or with <em>p</em><sub>0</sub>, computed based on a particular baseline player model. Currently, two such models are supported:
   <ul>

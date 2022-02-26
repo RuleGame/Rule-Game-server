@@ -226,7 +226,7 @@ public class GameService2 {
     @Path("/getVersion") 
     @Produces(MediaType.APPLICATION_JSON)
     public  String getVersion() {
-	return Episode.version;
+	return Episode.getVersion();
     }
 
     
