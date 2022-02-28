@@ -22,6 +22,14 @@ import javax.xml.bind.annotation.XmlElement;
 @Entity  
 public class EpisodeInfo extends Episode {
 
+    /** Since 4.007, this will fully activate the mode proposed by
+	Erick Pulick, "to treat stalemates identical with board
+	clearings */
+    static final boolean stalematesAsClears = true;
+
+    
+
+
     /** Back link to the player, for JPA's use */
     @ManyToOne(fetch = FetchType.EAGER)
     private PlayerInfo player;
@@ -49,10 +57,10 @@ public class EpisodeInfo extends Episode {
     public boolean isBonus() { return bonus; }
     public void setBonus(boolean _bonus) { bonus = _bonus; }
 
-    /** Set to true if this was one of the "successful bonus episodes", i.e. 
-	bonus-series episode, and the board
-	was cleared quickly enough for the bonus series to
-	continue. */
+    /** Set to true if this was one of the "successful bonus
+	episodes", i.e.  bonus-series episode, and the board was
+	cleared (or, since 4.007, stalemated) quickly enough for the
+	bonus series to continue. */
     boolean bonusSuccessful;
    /** True if the bonus rewarded has been given for this
     episode. This typically is the last episode of a successful
@@ -229,16 +237,25 @@ public class EpisodeInfo extends Episode {
 	The player fails a bonus episode if there are still
 	pieces on the board, but less than 1 move left in the budget.
 
-Doubling: successful picks are ignored in stretch calculations, 
-to prevent gaming the system.
+        If the "DOUBLING" incentive scheme is in effect, the xFactor
+	(2 or 4) is "promised" when the successful stretch reaches the
+	required length, but is "crystallized" (actually become applicable)
+	only when the episode is successfully completed (cleared or
+	stalemated).
+
+	Doubling: successful picks are ignored in stretch calculations, 
+	to prevent the player from gaming the system.
 
  */
     private Display processMove(Display _q, boolean isMove) throws IOException  {
 	justReachedX2=justReachedX4=false;
-	
-	if (isMove && _q.code==CODE.ACCEPT) lastStretch++;
-	else if (_q.code==CODE.ACCEPT) {}
-else lastStretch=0;
+
+	if (_q.code==CODE.ACCEPT) {
+	    // count succcessful moves only, but ignore successful picks
+	    if (isMove)  lastStretch++;
+	} else { // failed move or pick
+	    lastStretch=0;
+	}
 
 	
 	if (xgetIncentive()==Incentive.DOUBLING) {
@@ -256,8 +273,9 @@ else lastStretch=0;
 		//setXFactor(2);
 		justReachedX2=true;
 	    }
-
-	    if (cleared) {
+	   
+	    if (cleared ||
+		stalematesAsClears && stalemate) {
 		if (getXFactor()<factorPromised) setXFactor(factorPromised);
 	    }
 
@@ -272,7 +290,9 @@ else lastStretch=0;
 		    bonusSuccessful = false;
 		} else { 
 		    lost=false;		    
-		    bonusSuccessful = cleared;  // can stay in bonus if cleared
+		    bonusSuccessful = cleared ||
+		       stalemate && stalematesAsClears;
+		        // can stay in bonus if cleared (or stalemated)
 		    Logging.info("PM: Completed (bonusSuccesful="+bonusSuccessful+"), episodeId=" + episodeId);
 		}
 	    } else {  // there are still pieces of the board...

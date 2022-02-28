@@ -117,7 +117,10 @@ public class Episode {
 	including successful and unsuccessful ones. If cost_pick!=1,
 	this value may be different from attemptCnt. */
     double attemptSpent=0;
-    /** All successful moves so far */
+    /** All successful moves so far.  Since each successful move removes
+	a game piece, the number of pieces remaining on the board can be 
+	computed as (nPiecesStart - doneMoveCnt).
+     */
     int doneMoveCnt;
     @Transient
     Vector<Pick> transcript = new Vector<>();
@@ -674,7 +677,7 @@ public class Episode {
     /** Run this method at the beginning of the game, and
 	every time a piece has been removed, to update various
 	auxiliary data structures.
-	@return true, unless stalemeate (no piece can be picked) is
+	@return true, unless stalemate (no piece can be picked) is
 	detected, in which case it return false
     */
     private boolean doPrep() {
@@ -960,7 +963,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
 
 
-    public static final String version = "4.006";
+    public static final String version = "4.007";
 
     public static String getVersion() { return version; }
 

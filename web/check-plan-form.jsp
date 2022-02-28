@@ -50,6 +50,10 @@ or (for a stalemate example):
 (*,*,BLACK,*,[0,1,2,3])
 </pre>
 
+or (for another stalemate example):
+<pre class="yellow">
+(color:[red,yellow], pos:T, bucket:[0,1]) (color:[blue,black], pos:B, bucket:[2,3])
+</pre>
 
    <form method="post" action="game-data/CheckPlanService/checkRules"
 	 enctype="application/x-www-form-urlencoded">

@@ -298,6 +298,8 @@ If the rule set file was specified in the param set as an absolute path, that's 
 
 <p>For a detailed explanation of the incentive-related fields, see <a href="incentive-doubling.html">The DOUBLING incentive scheme</a>.
 
+<p>If the <tt>finishCode</tt> in the display structure has a value other than 0 (thus indicating that the episode has completed), the display structure will also have a <tt>transitionMap</tt> field. That fields contains a structure whose content is explained under <a href="#guess">/guess</a>, below.
+  
  <li>POST <strong><tt>/move</tt>: Make a move:</strong>
       <form method="post" action="game-data/GameService2/move"
 	 enctype="application/x-www-form-urlencoded">
