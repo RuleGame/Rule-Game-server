@@ -233,7 +233,9 @@ public class GameService2Html extends GameService2 {
 	if (rxv!=null) {
 	    Vector<String> v = new Vector<>();
 	    for(int[] rx: rxv) {
-		v.add("" + rx[0] +"*"+rx[1]);		
+		if (rx!=null) {
+		    v.add("" + rx[0] +"*"+rx[1]);
+		}
 	    }
 	    body += fm.para("Reward: " + d.getTotalRewardEarned() + " = " +
 			    String.join(" + ", v));

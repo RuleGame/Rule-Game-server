@@ -268,13 +268,14 @@ public class EpisodeInfo extends Episode {
 		factorPromised = 4;
 		//setXFactor(4);
 		justReachedX4=true;
+		if (!cleared) earlyWin = true;
 	    } else if (f<2 && factorPromised < 2 && lastStretch>=x2) {
 		factorPromised = 2;
 		//setXFactor(2);
 		justReachedX2=true;
 	    }
 	   
-	    if (cleared ||
+	    if (cleared || earlyWin ||
 		stalematesAsClears && stalemate) {
 		if (getXFactor()<factorPromised) setXFactor(factorPromised);
 	    }
@@ -365,7 +366,11 @@ public class EpisodeInfo extends Episode {
 		ParaSet para=p.getPara(EpisodeInfo.this);
 		ruleSetName = para.getRuleSetName();
 		movesLeftToStayInBonus = EpisodeInfo.this.movesLeftToStayInBonus();
-	
+
+		double d = attemptSpent - doneMoveCnt;
+		rewardRange = para.kantorLupyanRewardRange(d);
+
+		
 		if (getFinishCode()!=FINISH_CODE.NO) {
 		    transitionMap = p.new TransitionMap();
 		}
@@ -448,6 +453,11 @@ public class EpisodeInfo extends Episode {
 	public Double getMovesLeftToStayInBonus() { return movesLeftToStayInBonus; }
 
 
+	/** (min,max) */
+	int[] rewardRange;
+	public int[] getRewardRange() { return rewardRange; }
+	
+	
 	PlayerInfo.TransitionMap transitionMap=null;
 	/** Describes the possible transitions (another episode in the
 	    same series, new series, etc) which can be effected after this
@@ -656,5 +666,6 @@ try {
          
     }
 
+    
     
 }

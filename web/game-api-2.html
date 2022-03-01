@@ -99,7 +99,7 @@
 	  <input type="submit">
 	</form>
 
-  <P>The response is in the same format as for /newEpisode, below. Check the values of <tt>display.<a href="api/constant-values.html">finishCode</a></tt> to see the status of the game (continuing/cleared/stalemated/given up), and of <tt>display.guessSaved</tt> to see if a guess has been recorded.</p> 
+  <P>The response is in the same format as for /newEpisode, below. Check the values of <tt>display.<a href="api/constant-values.html">finishCode</a></tt> to see the status of the game (continuing/cleared/stalemated/given up/early win), and of <tt>display.guessSaved</tt> to see if a guess has been recorded.</p> 
 
 <li>POST <strong><tt>/newEpisode</tt>: Create a new episode for a specified user:</strong>
         <form method="post" action="game-data/GameService2/newEpisode"
@@ -298,6 +298,12 @@ If the rule set file was specified in the param set as an absolute path, that's 
 
 <p>For a detailed explanation of the incentive-related fields, see <a href="incentive-doubling.html">The DOUBLING incentive scheme</a>.
 
+<p>Starting in ver. 4.008, this structure  has one more field:
+<pre>
+  "rewardRange":[2,6],
+</pre>
+The value is the range within which the reward for the current episode could conceivably fall once episode is ended. The first value is the lower bound; this is what the player would earn if it will make an inordinately large number of mistakes before he completes the episode (i.e. clears the board or reaches a stalemate). The second value is the upper bound; this is what the player will earn if he completes the episode without making any more mistakes in addition to those he may have made already. (If the episode has been completed already, this field is still provided, and the upper bound of the range represents the actual reward for the episode).  These reward numbers do not include any doubling/qudrupling factor that may attach to this episode (and the series) if the DOUBLING incentive scheme is in effect.
+  
 <p>If the <tt>finishCode</tt> in the display structure has a value other than 0 (thus indicating that the episode has completed), the display structure will also have a <tt>transitionMap</tt> field. That fields contains a structure whose content is explained under <a href="#guess">/guess</a>, below.
   
  <li>POST <strong><tt>/move</tt>: Make a move:</strong>

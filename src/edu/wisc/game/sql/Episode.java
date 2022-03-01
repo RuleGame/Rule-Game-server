@@ -125,11 +125,12 @@ public class Episode {
     @Transient
     Vector<Pick> transcript = new Vector<>();
   
-    /** Set when appropriate */
+    /** Set when appropriate at the end of the episode */
     boolean stalemate = false;
     boolean cleared = false;
     boolean givenUp = false;
     boolean lost = false;
+    boolean earlyWin = false;
     
     /** Which bucket was the last one to receive a piece of a given color? */
     @Transient
@@ -657,7 +658,13 @@ public class Episode {
 	/** This was a bonus round which has been terminated by the 
 	    system because the player has failed to complete it within the 
 	    required number of steps */
-	    LOST = 4
+	    LOST = 4,
+	/** The server decided that the player is so good that 
+	    it terminated the episode early, giving the player full
+	    points that he'd get if he completed the episode 
+	    without any additional errors. This is sometimes done
+	    when the DOUBLING incentive scheme is in effect. */
+	    EARLY_WIN = 5
 	    ;
     }
 
@@ -736,7 +743,7 @@ public class Episode {
 	int code = ruleLine.accept(move);
 
 	// Update the data structures describing the current rule line, acceptance, etc
-	if (move instanceof Move && code==CODE.ACCEPT && !cleared && !stalemate && !givenUp) {
+	if (move instanceof Move && code==CODE.ACCEPT && !cleared && !earlyWin && !stalemate && !givenUp) {
 	    doPrep();
 	}
 	
@@ -924,6 +931,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	     stalemate? FINISH_CODE.STALEMATE :
 	     givenUp?  FINISH_CODE.GIVEN_UP :
 	     lost?  FINISH_CODE.LOST :
+	     earlyWin? FINISH_CODE.EARLY_WIN :
 	     FINISH_CODE.NO;
     }
        
@@ -963,7 +971,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
 
 
-    public static final String version = "4.007";
+    public static final String version = "4.008";
 
     public static String getVersion() { return version; }
 
@@ -1055,7 +1063,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     */
     private Display inputErrorCheck1(int y, int x, int _attemptCnt) {
 	if (isCompleted()) {
-	    return new Display(CODE.NO_GAME, "No game is on right now (cleared="+cleared+", stalemate="+stalemate+"). Use NEW to start a new game");
+	    return new Display(CODE.NO_GAME, "No game is on right now (cleared="+cleared+", stalemate="+stalemate+", earlyWin="+earlyWin+"). Use NEW to start a new game");
 	}
 
 	if (_attemptCnt != attemptCnt)  return new Display(CODE.ATTEMPT_CNT_MISMATCH, "Given attemptCnt="+_attemptCnt+", expected " + attemptCnt);
@@ -1099,6 +1107,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	    cleared?  "Game cleared - the board is clear" :
 	    stalemate?  "Stalemate - no piece can be moved any more. Apology for these rules!" :
 	    givenUp? "You have given up this episode" :
+	    earlyWin?  "You won by a long error-free stretch" :
 	    null;
     }
     
@@ -1220,7 +1229,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	for any reason (board cleared, stalemate, given up, lost).
      */
     boolean isCompleted() {
-	return cleared || stalemate || givenUp || lost;
+	return cleared || earlyWin|| stalemate || givenUp || lost;
     }
 
     /** Marks this episode as "given up" (unless it's already marked

@@ -466,6 +466,40 @@ public class ParaSet extends HashMap<String, Object> {
     static final public ParaSet legacy = mkLegacy();
 
     
+    /** Returns the reward for an episode with a given number of errors,
+	computed by the Kantor-Lupyan formula.
+
+
+	The  Kantor-Lupyan formula  for the  reward computation  is at
+	https://www.desmos.com/calculator/9nyuxjy7ri .  The actual min
+	(asymptotic)  is smin;  the  actual  max (atd=0)  is smin  +
+	(smax-smin)/(1+exp(-2*b)), which is a bit smaller than smax
+
+
+	@param errors The number of errors the player has made
+	in the episode. This can be a fractional number, if
+	failed pick attempts are counted with a weight less
+	than 1.0. The value Double.POSITIVE_INFINITY if allowed,
+	in order to compute the lower bound of possible reward.
+    */
+    public int kantorLupyanReward(double errors)     {
+
+	double smax = getDouble("max_points");
+	double smin = getDouble("min_points");
+	double b = getDouble("b");
+
+	if (errors==Double.POSITIVE_INFINITY) return (int)smin;
+	return (int)Math.round( smin + (smax-smin)/(1.0 + Math.exp(b*(errors-2))));
+    }
+
+    /** @return (lowerBound, upperBound)
+     */
+    public int[] kantorLupyanRewardRange(double errors) 
+    {
+	int[] range = { kantorLupyanReward(Double.POSITIVE_INFINITY), kantorLupyanReward(errors)};
+	return range;
+    }
+
     
     
 }

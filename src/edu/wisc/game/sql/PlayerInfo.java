@@ -622,17 +622,14 @@ public class PlayerInfo {
 	return rx;
     }
 
+    
+
+    
     /** This method is called after an episode completes. It computes
 	the applicable rewards (if the board has been cleared or
 	(since 4.007) stalemared, calls the SQL persist operations,
 	writes CSV files, and, if needed, switches the series and
 	subseries.
-
-	The  Kantor-Lupyan formula  for the  reward computation  is at
-	https://www.desmos.com/calculator/9nyuxjy7ri .  The actual min
-	(asymptotic)  is smin;  the  actual  max (at  d=0)  is smin  +
-	(smax-smin)/(1+exp(-2*b)), which is a bit smaller than smax
-
 
 	@param epi An episode that's just completed; so all data are in memory 
 	now.
@@ -647,18 +644,19 @@ public class PlayerInfo {
 	    // do not happen; but if one does, let just finish this series
 	    // to avoid extra annoyance for the player
 	    goToNextSeries();
-	} else if (epi.cleared ||
+	} else if (epi.cleared || epi.earlyWin ||
 		   epi.stalemate && epi.stalematesAsClears) {
-	    double smax = ser.para.getDouble("max_points");
-	    double smin = ser.para.getDouble("min_points");
-	    double b = ser.para.getDouble("b");
+	    //double smax = ser.para.getDouble("max_points");
+	    //double smin = ser.para.getDouble("min_points");
+	    //double b = ser.para.getDouble("b");
+
 	    //double d = epi.attemptSpent - epi.getNPiecesStart();
 	    // For completions, nPiecesStart==doneMoveCnt, but for
 	    // stalemates, we must use the latter
 	    double d = epi.attemptSpent - epi.doneMoveCnt;
-
 	    
-	    epi.rewardMain = (int)Math.round( smin + (smax-smin)/(1.0 + Math.exp(b*(d-2))));
+	    epi.rewardMain =  ser.para.kantorLupyanReward(d);
+	    //(int)Math.round( smin + (smax-smin)/(1.0 + Math.exp(b*(d-2))));
 	    if (epi.bonus) {
 		ser.assignBonus();
 	    }
