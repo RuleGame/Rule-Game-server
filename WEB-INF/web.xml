@@ -72,7 +72,7 @@ See also https://stackoverflow.com/questions/45625925/what-exactly-is-the-resour
     <servlet>
     <servlet-name>GetImageServlet</servlet-name>
     <description>
-      Test
+      Get image servlet retrieves image files for objects
     </description>
     <servlet-class>edu.wisc.game.rest.GetImageServlet</servlet-class>
     <load-on-startup>1</load-on-startup>

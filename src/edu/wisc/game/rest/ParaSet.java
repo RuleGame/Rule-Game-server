@@ -111,27 +111,30 @@ public class ParaSet extends HashMap<String, Object> {
     }
 
     /** Parses the content of the "images" column. It may contain a
-	semicolon-separated list of wildcard expressions.
+	semicolon-separated list of wildcard expressions. Together,
+	they determine the set of ImageObjects from which 
+	random boards can be constructed for the episodes played
+	pursuant to this ParaSet.
      */
     public static String[] parseImages(String val) throws IOException {
 	if (val==null) return null;
 	val = val.trim();
 	String[] ss = val.split(";");
-	Vector<String> w = new Vector<>();
+	//Vector<String> w = new Vector<>();
+	HashSet<String> h = new HashSet<>();
 	if (ss.length>0) {
-	    HashSet<String> h = new HashSet<>();
 	    for(String s: ss) {
 		Vector<ImageObject> v = ImageObject.obtainImageObjects(s);
 		for(ImageObject io: v) {
 		    String z = io.key;
-		    if (h.contains(z)) continue;
+		    //if (h.contains(z)) continue;
 		    h.add(z);
-		    w.add(z);
+		    // w.add(z);
 		}
 	    }
 	}
-	if (w.size()==0) return null;
-	String q[] =  w.toArray(new String[0]);
+	if (h.size()==0) return null;
+	String q[] =  h.toArray(new String[0]);
 	Arrays.sort(q);
 	return q;
     }

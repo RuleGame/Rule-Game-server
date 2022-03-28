@@ -570,14 +570,16 @@ public class Episode {
 
 
     /** Creates a new Episode for a given Game (which defines rules and the 
-	properties of the initial board). 
+	properties of the initial board). Depending on what the Game is,
+	the episode may use a pre-created board stored in the Game object,
+	or a random board created on the fly.
 	@param _in The input stream for commands; it will be null in the web app
 	@param _out Will be null in the web app.
     */
-   public Episode(Game game, OutputMode _outputMode, Reader _in, PrintWriter _out) {
-       this( game,  _outputMode,  _in,  _out, null);
-       
-   }
+    public Episode(Game game, OutputMode _outputMode, Reader _in, PrintWriter _out) {
+	this( game,  _outputMode,  _in,  _out, null);	
+    }
+
     protected Episode(Game game, OutputMode _outputMode, Reader _in, PrintWriter _out, String _episodeId ) {
 	startTime = new Date();    
 	in = _in;

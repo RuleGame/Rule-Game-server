@@ -203,9 +203,7 @@ public class Piece  implements Serializable {
     @XmlElement
     public void setImage(String _image) { image = _image; }
 
-    /** Empty in  SC objects; contains properties in IPB objects */
-    //    HashMap<String,String> properties = new HashMap<String,String>();
-
+    /** @return null for a SC object; the value of the specified property for an IPB object */    
     public String getProperty(String name) {
 	ImageObject io=getImageObject();
     	return io==null? null: io.get(name);

@@ -5,25 +5,31 @@ import java.util.*;
 import java.util.regex.*;
 import java.text.*;
 
-//import java.io.Serializable;  
-//import javax.xml.bind.annotation.XmlElement; 
-//import javax.xml.bind.annotation.XmlRootElement; 
-//import javax.xml.bind.annotation.XmlTransient; 
-
 import edu.wisc.game.util.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.rest.Files;
 
 
-/** Describes an image-and-properties-based object 
+/** Describes an image-and-properties-based object. For details, see
+<a href="../../../../../proposal-object-properties.html">Image-and-property-based description of objects</a>
  */
 public class ImageObject extends HashMap<String,String> {
 
     public final String key;
+    /** For static objects, this is the SVG file for the image. For
+	dynamically generated ones, null.
+     */
     public final File file;
+    /** The SVG code for the image, if available. It is mandatory for
+	dynamically generated ImageObjects (/composite).  For static
+	ones, it may or may not be null.
+     */
+    public final String svg;
+
     private ImageObject(File _file) {
 	file = _file;
 	key = fileToKey(file);
+	svg = null;
     }
 
     
@@ -37,7 +43,7 @@ public class ImageObject extends HashMap<String,String> {
     }
 
     
-    /** Enters this ImageObject to the master table */
+    /** Enters this ImageObject into the master table */
     private void enlist() {
 	allImageObjects.put(key, this);
     }
@@ -74,6 +80,10 @@ public class ImageObject extends HashMap<String,String> {
 	If necessary, tries to add that object (and all other objects listed
 	in the properties file in that directory) to the master table.
 	@param dir If provided, plainPath is understood as being relative to it.
+	@param plainPath The image path (relative to dir, or absolute
+	if dir==null).  Must not contain wildcard. May contain an
+	extension (e.g. ".png" or ".svg"); if it does not, ".svg" will
+	be added.
      */
     public static synchronized ImageObject obtainImageObjectPlain(File dir, String plainPath, boolean allowMissing) {
 	if (!plainPath.matches(".*\\.[a-zA-Z0-9]+")) {
@@ -120,7 +130,9 @@ public class ImageObject extends HashMap<String,String> {
 	return z;
     }
 
-    
+
+    /** Loads an image object, or a group of them, if a wildcard is given.
+     */
     public  static Vector<ImageObject> obtainImageObjects(String wildCardPath) {
 
 	if (wildCardPath==null || wildCardPath.length()==0)  throw new IllegalArgumentException("Image path not specified or empty");
@@ -132,10 +144,17 @@ public class ImageObject extends HashMap<String,String> {
 	} else {
 	    dir = Files.shapesDir();
 	}
-	return obtainImageObjects3(dir, Util.array2vector(wildCardPath.split("/")));
-	
+	return obtainImageObjects3(dir, Util.array2vector(wildCardPath.split("/")));	
     }
 
+    /** Loads an ImageObjects (or multiple ImageObjects, if wildcards are
+	used) from a path under a specified directory.
+	@param dir The root of the directory from which ImageObjects are
+	to be loaded
+	@param relativeWildCardPath A relative paths (relative to
+	dir), which has been split into components (with '/' being the
+	separator), possibly with wildcards in some components.
+     */
     static private Vector<ImageObject> obtainImageObjects3(File dir, Vector<String> relativeWildCardPath) {
 	Vector<ImageObject> v = new Vector<>();
 	while( relativeWildCardPath.size()>0 && !mayBeWild(relativeWildCardPath.get(0))) {

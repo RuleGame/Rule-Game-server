@@ -33,7 +33,8 @@ public class PropertiesTable extends HashMap<String,ImageObject> {
     }
 
 
-    /** Reads a properties file. */
+    /** Reads a properties file, creating and loading an ImageObject
+	for every table entry. */
     public PropertiesTable(File dir) {
 	this(false, "No error");
 	File f = new File(dir, "properties.csv");
