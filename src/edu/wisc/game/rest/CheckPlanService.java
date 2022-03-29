@@ -141,18 +141,22 @@ public class CheckPlanService extends GameService2 {
 		    v.add(fm.para("Checking para set no. " + j + " out of "+npara+"..."));
 
 		    para.checkImages();
-		    boolean ipb = (para.images!=null);
+		    boolean ipb = (para.imageGenerator!=null);
 		    // All values of all properties occurring in our objects
 		    TreeMap<String,TreeSet<String>> propValues=new TreeMap<>();
-		    if (ipb) {
-			v.add(fm.para("This is an image-and-properties-based para set, which uses "+para.images.length+" images:"));
+		    boolean useDynamicImages = (ipb && !(para.imageGenerator instanceof ImageObject.PickFromList));
+
+		    
+		    if (ipb && !useDynamicImages) {
+			v.add(fm.para("This is an image-and-properties-based para set, which uses "+para.imageGenerator.describeBrief()));
 		
 			rows = new Vector<>();
-			for(String k: para.images) {
+
+			ImageObject.PickFromList g = (ImageObject.PickFromList)para.imageGenerator;
+			for(String k: g.getKeys()) {
 			    String z = "<img width='80' src=\"../../GetImageServlet?image="+k+"\">";
 			    ImageObject io = ImageObject.obtainImageObjectPlain(null, k, false);
-  
-			    
+  			    
 			    rows.add(fm.tr(fm.td(k) + fm.td(z) + fm.td(io.listProperties())));
 			    for(String p: io.keySet()) {
 				TreeSet<String> h = propValues.get(p);
@@ -169,6 +173,8 @@ public class CheckPlanService extends GameService2 {
 			    rows.add(fm.tr(fm.td(p) + fm.td( Util.joinNonBlank(", ",propValues.get(p)))));
 			}
 			v.add( fm.table("border='1'", rows));
+		    } else if (useDynamicImages) {
+			v.add(fm.para("This is an image-and-properties-based para set with dynamic image generation. Sample display is not supported yet"));
 		    } else {
 			v.add(fm.para("Images are not used in this para set, which means that this is a shapes-and-colors para set"));
 
@@ -221,7 +227,7 @@ public class CheckPlanService extends GameService2 {
 		    v.add(fm.para("The rules have been compiled as follows:"));
 		    v.add(fm.para(fm.tt(rules.toSrc().replaceAll("\n",fm.br()))));
 
-		    if (ipb) {
+		    if (ipb && !useDynamicImages) {
 			TreeMap<String,TreeSet<String>> w = rules.listAllPropValues();
 			for(String p: w.keySet()) {
 			    TreeSet<String> h = propValues.get(p);
@@ -235,7 +241,8 @@ public class CheckPlanService extends GameService2 {
 				v.add(fm.para("Warning: When rule set " + para.getRuleSetName() + " has conditions referring to property <tt>" + p +"</tt>, it makes use of "+z.size()+" values of this property (<tt>" + Util.joinNonBlank(", ", z) +"</tt>), which do not appear in any of the image-based objects of this parameter set."));
 			    }
 			}
-
+		    } else if (useDynamicImages) {
+			v.add("Use dynamic image objects -- cannot analyze properties yet");
 		    } else {
 			for(Piece.Shape shape:  rules.listAllShapes()) {
 			    File f = Files.getSvgFile(shape);
@@ -289,12 +296,19 @@ public class CheckPlanService extends GameService2 {
 
     /**  check the rule set for stalemates */
     private static Vector<String> stalemateCheck(RuleSet rules,ParaSet para, int errcnt[])    {
+
 	Vector<String> v = new Vector<>();
+	if (!(para.imageGenerator instanceof  ImageObject.PickFromList)) {
+	    v.add(fm.para("This game uses a dynamic ImageObject generator; stalemate testing is not supported"));
+	    return v;
+	}
+	ImageObject.PickFromList g = (ImageObject.PickFromList)para.imageGenerator;
+	
 	StalemateTester tester = new StalemateTester(rules);
 
 	//Piece.Shape.legacyShapes, Piece.Color.legacyColors, para.images);
 	
-	Board stalemated = tester.canStalemate(para.shapes, para.colors, para.images);
+	Board stalemated = tester.canStalemate(para.shapes, para.colors, g.getKeys());
 	
 	if (stalemated!=null) {
 	    v.add(fm.para("Error: this rule set can stalemate"));

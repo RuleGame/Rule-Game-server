@@ -36,7 +36,7 @@ class EpisodeHandle {
 	    orderInSeries =  _orderInSeries;
 	    para = t.get(seriesNo);
 	    ruleSetName = para.getRuleSetName();
-	    useImages = (para.images!=null);
+	    useImages = (para.imageGenerator!=null);
 
 	    int seriesNo = e.getSeriesNo();
 	    precedingRules = new Vector<>();	

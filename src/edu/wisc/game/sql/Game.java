@@ -30,9 +30,10 @@ public class Game {
 
     final Piece.Shape[] allShapes;
     final Piece.Color[] allColors;
-    /** A game with IPB pieces have allImages!=non-null, while allShapes and allColors are both nulls; a color-and-shape game will have allImages==null */
-    final String[] allImages;
-    
+    /** A game with IPB pieces have allImages!=non-null, while allShapes and allColors are both nulls; a color-and-shape game will have allImages==null. Array elements  */
+    //final String[] allImages;
+    final ImageObject.Generator imageGenerator;
+  
     public Game(RuleSet _rules, Board _initialBoard) {
 	random = null;
 	rules = _rules;
@@ -40,7 +41,7 @@ public class Game {
 	randomObjCnt = 0;
 	allShapes=null;
 	allColors=null;
-	allImages=null;
+	imageGenerator=null;
     }
     public Game(RandomRG _random, RuleSet _rules, int _randomObjCnt, Piece.Shape[] _allShapes,    Piece.Color[] _allColors) {
 	random = _random;
@@ -48,7 +49,7 @@ public class Game {
 	randomObjCnt = _randomObjCnt;
 	allShapes =_allShapes;
 	allColors =_allColors;
-	allImages=null;
+	imageGenerator=null;
     }
     /** A game with shape-and-color objects used as game pieces */
     public Game(RandomRG _random, RuleSet _rules, int _randomObjCnt, int _nShapes, int _nColors,
@@ -58,13 +59,17 @@ public class Game {
 	nColors  = _nColors;
     }
     /** A game with image-and-properties-based objects used as game pieces */
-    public Game(RandomRG _random, RuleSet _rules, int _randomObjCnt, String[] _allImages) {
+    public Game(RandomRG _random, RuleSet _rules, int _randomObjCnt,
+		ImageObject.Generator _imageGenerator
+		//String[] _allImages
+		) {
 	random = _random;
 	rules = _rules;
 	randomObjCnt = _randomObjCnt;
 	allShapes = null;
 	allColors = null;
-	allImages = _allImages;
+	imageGenerator = _imageGenerator;
+	//	allImages = _allImages;
     }
 
     

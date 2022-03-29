@@ -17,24 +17,26 @@ import edu.wisc.game.rest.ParaSet;
 public class RandomImageGameGenerator extends GameGenerator {
 
     final int[] nPiecesRange;
-    final String[] allImages;
-  
+    final ImageObject.Generator imageGenerator; 
     
-    RandomImageGameGenerator(RandomRG _random, String ruleSetName, int[] _nPiecesRange, String[] _allImages) throws IOException, RuleParseException {
-	this(_random, AllRuleSets.obtain(ruleSetName), _nPiecesRange,  _allImages);
+    RandomImageGameGenerator(RandomRG _random, String ruleSetName, int[] _nPiecesRange, ImageObject.Generator _imageGenerator) throws IOException, RuleParseException {
+	this(_random, AllRuleSets.obtain(ruleSetName), _nPiecesRange, _imageGenerator);
 
     }
 
-    public RandomImageGameGenerator(RandomRG _random, File ruleSetFile, int[] _nPiecesRange, String[] _allImages) throws IOException, RuleParseException {
-	this(_random, AllRuleSets.read(ruleSetFile), _nPiecesRange, _allImages);
+    public RandomImageGameGenerator(RandomRG _random, File ruleSetFile, int[] _nPiecesRange, ImageObject.Generator _imageGenerator) throws IOException, RuleParseException {
+	this(_random, AllRuleSets.read(ruleSetFile), _nPiecesRange,  _imageGenerator);
 
     }
 
 
-    RandomImageGameGenerator(RandomRG _random, RuleSet _rules, int[] _nPiecesRange, String[] _allImages) throws IOException, RuleParseException {
+    RandomImageGameGenerator(RandomRG _random, RuleSet _rules, int[] _nPiecesRange,
+			     ImageObject.Generator _imageGenerator
+			     //String[] _allImages
+			     ) throws IOException, RuleParseException {
 	super(_random, _rules);
 	nPiecesRange = _nPiecesRange;
-	allImages = _allImages;
+	imageGenerator = _imageGenerator;
 	if (nPiecesRange[0]>nPiecesRange[1])  throw new IOException("GameGenerator: Invalid param range");
 	if (nPiecesRange[0]<=0) throw new IOException("GameGenerator: Number of pieces must be positive");
 
@@ -46,7 +48,7 @@ public class RandomImageGameGenerator extends GameGenerator {
     public Game nextGame() {
 	int nPieces = random.getInRange(nPiecesRange);
 
-	Game game = new Game(random, rules, nPieces, allImages);
+	Game game = new Game(random, rules, nPieces,  imageGenerator);
 	next();
 	return game;
     }

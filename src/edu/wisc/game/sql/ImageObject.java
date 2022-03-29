@@ -15,7 +15,7 @@ import edu.wisc.game.rest.Files;
  */
 public class ImageObject extends HashMap<String,String> {
 
-    public final String key;
+    public String key;
     /** For static objects, this is the SVG file for the image. For
 	dynamically generated ones, null.
      */
@@ -24,14 +24,19 @@ public class ImageObject extends HashMap<String,String> {
 	dynamically generated ImageObjects (/composite).  For static
 	ones, it may or may not be null.
      */
-    public final String svg;
+    public String getSvg() { return null; }
 
     private ImageObject(File _file) {
 	file = _file;
 	key = fileToKey(file);
-	svg = null;
     }
 
+    /** Used by Composite */
+    protected ImageObject(//String _key//, String _svg
+			  ) {
+	//key = _key;
+	file = null;
+    }
     
     /** The key is a relative path (under the main shapes dir) or absolute 
 	path (for images elsewhere), case-sensitive and 
@@ -44,11 +49,12 @@ public class ImageObject extends HashMap<String,String> {
 
     
     /** Enters this ImageObject into the master table */
-    private void enlist() {
+    public void enlist() {
 	allImageObjects.put(key, this);
     }
   
 
+    /** A file path (relative to the shapes dir), including extension */ 
     private static String fileToKey(File f) {
 	String key = f.toString();
 	final String prefix = Files.shapesDir() + "/";
@@ -75,6 +81,11 @@ public class ImageObject extends HashMap<String,String> {
 	return new ImageObject(f);
 
     }
+
+    /** This one is used by Composite */
+    //    static synchronized public ImageObject mkBlankImageObjectPlain2() {
+    //    }
+
 
     /** Retrieves the ImageObject for a specified path from the master table.
 	If necessary, tries to add that object (and all other objects listed
@@ -273,5 +284,38 @@ public class ImageObject extends HashMap<String,String> {
 	return w[w.length-1].substring(0,1);
     }
 	
+
+    static abstract public class Generator {
+	//public ImageObject getOne(Random random);
+	abstract public String getOneKey(Random random);
+ 	public String asList() {
+	    return "";
+	}
+	public String describeBrief() {
+	    return "Some set of image-and-property-based objects";
+	}
+   }
+
+     static public class PickFromList extends Generator {
+
+	 /** Will be set as appropriate if specified in the CSV file "images" column. The array elements are keys used for the image lookup. */
+	 final private String[] keys;
+	 public String[] getKeys() { return keys;}
+	
+	public PickFromList(String[] _keys) { keys = _keys; }
+	 public //ImageObject
+	    String getOneKey(Random random) {
+	    String imageKey = keys[random.nextInt(keys.length)];
+	    return imageKey;
+	}
+	public String asList() {
+	    return Util.joinNonBlank(";", keys);
+	}
+	public String describeBrief() {
+	    return "Set of "+keys.length+" image-and-property-based objects";
+	}
+
+    }
+
     
 }

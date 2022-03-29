@@ -7,8 +7,22 @@ import java.text.*;
 
 import  edu.wisc.game.formatter.*;
 import  edu.wisc.game.util.*;
+import  edu.wisc.game.sql.ImageObject;
 
-public class Composite {
+/** The description of a single composite ImageObject, or a family
+    of such objects, obtained by parsing its name
+    (which may contain wildcards). Unlike other ImageObject, 
+    Composite ones are dynamically generated, because 
+    they are drawn from a large space.
+
+<p>
+    A Composite object may be a "concrete" one (has no
+    wildcards, and describes exactly one ImageObject),
+    or a "family" one (has wildcards that match a group
+    of objects). The sample() method can be used to
+    randomly draw a concrete object from a family.
+*/
+public class Composite extends ImageObject {
 
     /** How many elements in a composite image */
     final static int N=3;
@@ -19,8 +33,7 @@ public class Composite {
 
     /** Size of the entire SVG */
     final static int H=N*2*(R+margin);
-    
-    
+        
     static final HTMLFmter fm =    HTMLFmter.htmlFmter;
 
     /** name="val" .... */
@@ -34,12 +47,12 @@ public class Composite {
 	return String.join(" ", v);
     }
 
-    static String elt(String name, String... nameVal) {
+    private static String elt(String name, String... nameVal) {
 	return "<"+name + " " + mkSvgParams(nameVal) +
-	    //" " + mkSvgParams("fill", "currentcolor") +
  	    "/>";
     }
     
+    /** A single element (circle, square, star, triangle) of the composite image */
     private static class Element {
 
 	private static final double[] trianglePP = {0, -1,   Math.sqrt(0.75), 0.5, -Math.sqrt(0.75), 0.5};
@@ -129,286 +142,307 @@ public class Composite {
 
 	    w += "\n" +  elt("rect", "x", ""+(cx-R), "y", ""+(cy-R),
 			     "width", ""+(2*R), "height", ""+(2*R), "fill-opacity", "0",
-			     "stroke", "black", "stroke-width", "1");
-	       
-	    return w;
-	    
+			     "stroke", "black", "stroke-width", "1");	       
+	    return w;	    
 	}
 	
     }
-
 	
+
+    enum Orientation {
+	VERTICAL, HORIZONTAL, ANY;
+	String toLetter() {
+	    return  (this == VERTICAL) ? "v":
+		(this == HORIZONTAL) ? "h": "?";
+	}
+	/** If this is a wildcard, randomly picks a "concrete" orientation */
+	Orientation sample(Random random) {
+	    return (this==ANY) ?
+		(random.nextBoolean()? VERTICAL: HORIZONTAL): this;
+	}
+		       
+    };
+    Orientation orientation;
+    boolean wild = false;
+    //String name;
+    final static int ANY=0;
+    /** Size and brightness levels range from 1 thru M. M is the default */
+    final static int M=3;
+    final static String MMM= initMMM();
+
+    /** "MMM" */
+    static private String initMMM() {
+	char[] a=new char[N];
+	Arrays.fill( a, (char)('0' + M));
+	return new String(a);
+    }
+    
+    /** Arrays of N=3 elements which contain values 1 2 3, or ANY */
+    int[] sizeRank={M,M,M}, bright={M,M,M};
+    /** 'q', 't' etc, or 'r', 'g', 'b'. May also contain '?' */
+    String[] shapes=new String[N], colors=new String[N];
+    final static String[] allShapes = {"c", "s", "q", "t"}, allColors={"r","g","b"};
+    
+    private String svg;
+    public String getSvg() { return svg; }
 
     
-    private static class Point {
+    final static String prefix = "/composite/";
 
+    
+    private static String joinInt(int [] x) {
+	Vector<String> v = new Vector<>();
+	for(int a: x) {
+	    v.add(	a==ANY? "?" : ""+a);
+	}
+	return String.join("",v);
+    }
+    
+    /** @return "/s=123" etc, or empty string for all default values */
+    private static String field(String key, int [] x) {
+	String s = joinInt(x);
+	return s.equals(MMM)?  "": "/" + key + "=" +s;	    
+    }
+    
+    /** Computes a name based on stored parameters. This is useful during 
+	random sample generation */
+    private String mkName() {
+	String s = prefix + orientation.toLetter();
+	s += field("d", sizeRank);
+	s += field("b", bright);
+	for(int j=0; j<N; j++) {
+	    s += "/" + 	colors[j] + shapes[j];
+	}	    
+	return s;	       
+    }
+    
+    public String toString() {
+	String s = "[Composite ImageObject Description: orientation="+orientation+", sizes=" + joinInt(sizeRank) +
+	    ", brightness=" + joinInt(bright) +
+	    ", pieces=";
+	Vector<String> v = new Vector<>();
+	for(int j=0; j<N; j++) {
+	    v.add(		colors[j] + shapes[j] );
+	}
+	s += String.join(" ",v);
+	return s;
+    }
 
-	//    static final int H=2*(R+margin);
-
-
+    /** @param val Could be "123", "*", "1*", "1?2" etc. 
+	@return Input split into 3 digits (possibly ANY)
+    */
+    private int[] parseVal(String val) {
 	
-	/** Coordinates with respect to the center of the image, with 
-	    the Y axis going up */
-	double x,y;
-	Point(double _x, double _y) {
-	    x=_x;
-	    y=_y;
+	int [] q = new int[N];
+	if (val.equals("*")) {
+	    wild=true;
+	    return new int[]{ANY, ANY, ANY};
 	}
-	/** Counterclockwise rotation 
-	    @param alpha in radians
-	*/
-	Point rotate(double alpha) {
-	    double qx =x*Math.cos(alpha) - y*Math.sin(alpha);
-	    double qy =y*Math.cos(alpha) + x*Math.sin(alpha);
-	    return new Point(qx,qy);
-	}
-	/** In SVG coordinates (with respect to the top left corner, 
-	    Y going down)
-	*/
-	int[] svgCoord() {
-	    int[] xy = {(int)Math.round(R+margin+x),  (int)Math.round(R+margin-y)};
-	    return xy;
-	}
-	String[] svgCoordString() {
-	    int[] q = svgCoord();
-	    String[] xy = {""+q[0], ""+q[1]};
-	    return xy;
-	}
-	String svgString() {
-	    return String.join(" ", svgCoordString());
-	}
-
-	static Point[] rotate(Point[] a, double alpha) {
-	    Point[] b = new Point[a.length];
-	    for(int j=0; j<a.length; j++) {
-		b[j] = a[j].rotate(alpha);
+	int k=0;
+	for(int j=0; j<val.length(); j++) {
+	    if (k>=N)  throw new IllegalArgumentException("String too long: " + val);
+	    char c = val.charAt(j);
+	    if (c == '?') {
+		wild = true;
+		q[k++] = ANY;
 	    }
-	    return b;
+	    else if (c>='1' && c<='0'+M) q[k++] = c - '0';
+	    else if (c=='*' && j+1==val.length()) { // '*' at the end of string
+		wild = true;
+		while(k<N)  q[k++] = ANY;
+	    }
+	    else throw new IllegalArgumentException("Character " + c + " is not allowed. String=" + val);
+	}
+	if (k<N)  throw new IllegalArgumentException("String too short: " + val);
+	return q;
+    }
+
+
+    /** Common initializer for all constructors */
+    private Composite() {
+	super();
+	sizeRank = new int[N];
+	Arrays.fill( sizeRank, M);
+	bright = new int[N];		 
+	Arrays.fill( bright, M);
+    }
+    
+    /** Creates a new "concrete" Composite object patterned on a particular object that has
+	wildcards */
+    private Composite(Composite p, Random random) {
+	this();
+	orientation = p.orientation.sample(random);
+	for(int j=0; j<N; j++) {
+	    sizeRank[j] = (p.sizeRank[j]==ANY)? 1+random.nextInt(M) : p.sizeRank[j];
+	    bright[j] = (p.bright[j]==ANY)? 1+random.nextInt(M) : p.bright[j];
+	}
+	for(int j=0; j<N; j++) {
+	    shapes[j] = p.shapes[j].equals("?")? allShapes[random.nextInt(allShapes.length)] : p.shapes[j];
+	    colors[j] = p.colors[j].equals("?")? allColors[random.nextInt(allColors.length)] : p.colors[j];
+	}
+	key = mkName();
+	svg = wild? null: makeFullSvg();
+    }
+
+    /** How many distinct concrete Composite ImageObjects does this Composite
+	object describe? The result is based on the number of wildcards in 
+	this object.
+     */
+    public int familySize() {
+  	if (!wild) return 1;
+	int n = 1;
+	if (orientation==Orientation.ANY) n*=2;
+	for(int j=0; j<N; j++) {
+	    if (sizeRank[j]==ANY) n *= M;
+	    if (bright[j]==ANY)  n *= M;
+	}
+	for(int j=0; j<N; j++) {
+	    if (shapes[j].equals("?")) n *= allShapes.length;
+	    if (colors[j].equals("?")) n *= allColors.length;
+	}	
+	return n;
+    }
+  
+    /** If this is a wildcard description, generates a "concrete" (non-wildcard)
+	desription of a matching composite object */
+    Composite sample( Random random) {
+	if (!wild) return this;
+	Composite q = new Composite(this, random);
+	return q;
+    }
+
+
+    /** Constructs a concrete or "family" Composite object based
+	on a name string.
+	@param name E.g. "/composite/h/d=???/b=123/gq/gq/gq"
+    */
+    private Composite(String name) {
+	this();	
+	key = name;
+	for(int j=0; j<N; j++) {
+	    shapes[j] = "q";
+	    colors[j] = "r";
 	}
 	    
-    }
-
-
-    /** <line x1="7" y1="17" x2="17" y2="7"></line> */   
-    static String line(Point _a, Point _b) {
-	String[] a = _a.svgCoordString(), b = _b.svgCoordString();
-	String para = mkSvgParams( "x1", a[0],
-				   "y1", a[1],
-				   "x2", b[0],
-				   "y2", b[1]);
-	return fm.wrap("line", para, "");
-    }
-
-
-    /** The description of a single composite object, or a class
-	of such objects, obtained by parsing its name
-	(which may contain wildcards)
-    */
-    static class Description {
-	boolean vertical=false;
-	boolean wild = false;
-	final String name;
-	final static int ANY=0;
-	/** Arrays of N=3 elements which contain values 1 2 3, or ANY */
-	int[] sizeRank={3,3,3}, bright={3,3,3};
-	/** 'q', 't' etc, or 'r', 'g', 'b'. May also contain '?' */
-	String[] shapes=new String[N], colors=new String[N];
+	    
+	if (!name.startsWith(prefix)) throw new IllegalArgumentException("Illegal name: " + name + ". Names must start with " + prefix);
+	String [] q = name.substring(prefix.length()).split("/");
+	if (q.length<1) throw new IllegalArgumentException("name too short: " + name);
 	
-	public String toString() {
-	    String s = "[Description: "+(vertical? "vertical" : "horizontal")+", sizes=" + Util.joinNonBlank("",sizeRank) +
-		", brightness=" + Util.joinNonBlank("",bright) +
-		", pieces=";
+	int k=0;
+	
+	boolean first = true;
+	
+	for(String s: q) {
+	    s = s.trim();
+	    if (s.equals("")) throw new IllegalArgumentException("Empty name component: you must have put two slashes next to each other in name=" + name);
+	    //System.out.println("first=" + first+", element=" +  s);
+	    
+	    if (first) {
+		if (s.equals("h")) orientation=Orientation.HORIZONTAL;
+		else if (s.equals("v")) orientation=Orientation.VERTICAL;
+		else if (s.equals("?")) {
+		    orientation=Orientation.ANY;
+		    wild =true;
+		}
+		else throw new IllegalArgumentException("Expected h or v, found '"+s+"' in name=" + name);
+		first=false;
+		continue;
+	    }
+
+	    	
+	    if (s.indexOf("=")>=0) {  //   d=123
+		String[] w = s.split("=");
+		if (w.length==2) {
+		    String key = w[0], val=w[1];
+		    int[] vals = parseVal(val);
+		    
+		    //System.out.println(key + " = " +  Util.joinNonBlank("", vals));
+		    
+		    if (key.equals("d")) sizeRank=vals;
+		    else if (key.equals("b")) bright=vals;
+		    else  throw new IllegalArgumentException("Unknown key="+key+" in name=" + name);
+		} else  throw new IllegalArgumentException("Cannot parse component="+s+" in name=" + name);		
+	    } else if (k<N) {  // rq
+		// System.out.println("piece = " +  s);
+		if (s.length()!=2)  throw new IllegalArgumentException("Illegal length of component="+s+" (expected 2 chars, e.g. 'rq', found "+s+") in name=" + name);
+		char c = s.charAt(0);
+		wild = wild ||  (c=='?');
+		if (c == 'r' || c=='g' || c=='b' || c=='?' ) colors[k] = "" + c;
+		else  throw new IllegalArgumentException("Illegal color char '" + c +"' in component="+s+", in name=" + name);
+		c = s.charAt(1);
+		if (c == 'q' || c=='t' || c=='s' || c=='c' || c=='?') shapes[k] = "" + c;
+		else  throw new IllegalArgumentException("Illegal shape char '" + c +"' in component="+s+", in name=" + name);
+		k++;
+	    } else  throw new IllegalArgumentException("Extra component="+s+" in name=" + name);			
+	}
+	svg = makeFullSvg();	
+    }
+
+	/** The SVG code for the composite image, not yet wrapped into  the top-level SVG element */
+	String makeSvg() {
+	    if (wild) {
+		return fm.wrap("text",      mkSvgParams("x", "0", "y", "0"),
+			       "Abstract");
+	    }
 	    Vector<String> v = new Vector<>();
 	    for(int j=0; j<N; j++) {
-		v.add(		colors[j] + shapes[j] );
+		Element e = new Element(shapes[j], colors[j], sizeRank[j], bright[j]);
+		int cx = H/2, cy=H/2;
+		int delta = 2*(R+margin) * (j-1);
+		if (orientation==Orientation.VERTICAL) cy += delta;
+		else cx += delta;	    
+		String s = e.makeSvg(cx, cy);	    
+		v.add(s);
 	    }
-	    s += String.join(" ",v);
+	    v.add(elt("rect", "x", "0", "y", "0",
+		      "width", ""+H, "height", ""+H, "fill-opacity", "0",
+		      "stroke", "black", "stroke-width", "1"));
+	    
+	    String s = String.join("\n",v);
+	    
 	    return s;
 	}
 
-	/** @param val Could be "123", "*", "1*", "1?2" etc. 
-	    @return Input split into 3 digits (possibly ANY)
-	 */
-	private static int[] parseVal(String val) {
-	    
-	    int [] q = new int[N];
-	    if (val.equals("*")) return new int[]{ANY, ANY, ANY};
-	    int k=0;
-	    for(int j=0; j<val.length(); j++) {
-		if (k>=N)  throw new IllegalArgumentException("String too long: " + val);
-		char c = val.charAt(j);
-		if (c == '?') q[k++] = ANY;
-		else if (c>='1' && c<='3') q[k++] = 1 + (c - '1');
-		else if (c=='*' && j+1==val.length()) { // '*' at the end of string
-		    while(k<N)  q[k++] = ANY;
-		}
-		else throw new IllegalArgumentException("Character " + c + " is not allowed. String=" + val);
-	    }
-	    if (k<N)  throw new IllegalArgumentException("String too short: " + val);
-	    return q;
-	}
 
-	
-	Description(String _name) {
-	    name =  _name;
-
-	    for(int j=0; j<N; j++) {
-		shapes[j] = "q";
-		colors[j] = "r";
-	    }
-	    
-	    
-	    final String prefix = "/composite/";
-	    if (!name.startsWith(prefix)) throw new IllegalArgumentException("Illegal name: " + name + ". Names must start with " + prefix);
-	    String [] q = name.substring(prefix.length()).split("/");
-	    if (q.length<1) throw new IllegalArgumentException("name too short: " + name);
-	    
-	    int k=0;
-
-	    boolean first = true;
-	    
-	    for(String s: q) {
-		s = s.trim();
-		if (s.equals("")) throw new IllegalArgumentException("Empty name component: you must have put two slashes next to each other in name=" + name);
-		//System.out.println("first=" + first+", element=" +  s);
-
-		if (first) {
-		    if (s.equals("h")) vertical=false;
-		    else if (s.equals("v")) vertical=true;
-		    else throw new IllegalArgumentException("Expected h or v, found '"+s+"' in name=" + name);
-		    first=false;
-		    continue;
-		}
-
-	    	
-		if (s.indexOf("=")>=0) {  //   d=123
-		    String[] w = s.split("=");
-		    if (w.length==2) {
-			String key = w[0], val=w[1];
-			int[] vals = parseVal(val);
-
-			//System.out.println(key + " = " +  Util.joinNonBlank("", vals));
-			
-			if (key.equals("d")) sizeRank=vals;
-			else if (key.equals("b")) bright=vals;
-			else  throw new IllegalArgumentException("Unknown key="+key+" in name=" + name);
-		    } else  throw new IllegalArgumentException("Cannot parse component="+s+" in name=" + name);		
-		} else if (k<N) {  // rq
-		    // System.out.println("piece = " +  s);
-		    if (s.length()!=2)  throw new IllegalArgumentException("Illegal length of component="+s+" (expected 2 chars, e.g. 'rq', found "+s+") in name=" + name);
-		    char c = s.charAt(0);
-		    if (c == 'r' || c=='g' || c=='b' || c=='?' ) colors[k] = "" + c;
-		    else  throw new IllegalArgumentException("Illegal color char '" + c +"' in component="+s+", in name=" + name);
-		    c = s.charAt(1);
-		    if (c == 'q' || c=='t' || c=='s' || c=='c' || c=='?') shapes[k] = "" + c;
-		    else  throw new IllegalArgumentException("Illegal shape char '" + c +"' in component="+s+", in name=" + name);
-		    k++;
-		} else  throw new IllegalArgumentException("Extra component="+s+" in name=" + name);			
-	    }
-		    
-	}
-
-	    String makeSvg() {
-		Vector<String> v = new Vector<>();
-		for(int j=0; j<N; j++) {
-		    Element e = new Element(shapes[j], colors[j], sizeRank[j], bright[j]);
-		    int cx = H/2, cy=H/2;
-		    int delta = 2*(R+margin) * (j-1);
-		    if (vertical) cy += delta;
-		    else cx += delta;	    
-		    String s = e.makeSvg(cx, cy);	    
-		    v.add(s);
-		}
-		v.add(elt("rect", "x", "0", "y", "0",
-			  "width", ""+H, "height", ""+H, "fill-opacity", "0",
-			  "stroke", "black", "stroke-width", "1"));
-		      
-		String s = String.join("\n",v);
-		
-		return s;
-	    }
-
-
-
-	
-    }
-
-    /**
+    /** Produces the entire content of an SVG file describing the image for this ImageObject.
+<code>
 <?xml version="1.0" standalone="no"?>
 <svg width="600" height="500" version="1.1" xmlns="http://www.w3.org/2000/svg">
 
   <rect x="10" y="10" width="80" height="80" stroke="black" fill="red"
       fill-opacity="1" stroke-width="8"/>
 </svg>
-
+</code>
      */
-    private static String makeSvg(String name) {
+    private String makeFullSvg() {
 	StringBuffer b = new StringBuffer("<?xml version=\"1.0\" standalone=\"no\"?>\n");
 	String svgExtra = mkSvgParams("xmlns", "http://www.w3.org/2000/svg",
 				      "width", ""+H,
 				      "height", ""+H,
 				      "version", "1.1");
 
-
 	//	final String prefix = "/composite/";
 	//	if (!name.startsWith(prefix)) throw new IllegalArgumentException("Illegal name: " + name + ". Names must start with " + prefix);
 	//	name = name.substring(prefix.length());
-	Description d = new 	Description(name);
-	String body = d.makeSvg();
+	String body = "\n" + makeSvg() + "\n";
 	b.append( fm.wrap( "svg", svgExtra, body) + "\n");	
 	return b.toString();
     }
-
-    
-/*
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-up-right">
-<g color="orange">
-  <line x1="7" y1="17" x2="17" y2="7"></line>
-  <polyline points="10 10 17 7 14 14"></polyline>
-</g>
-</svg>
-*/    /**
-
-               C
-       A---------B
-               D
-     */
-    private static String makeSvg0(String color, double alpha) {
-	String svgExtra = mkSvgParams("xmlns", "http://www.w3.org/2000/svg",
-				      "width", ""+H,
-				      "height", ""+H,
-				      "viewBox", ""+H+" "+H,
-				      "fill", "none",
-				      "stroke", "currentColor",
-				      "stroke-width", "" +2,
-				      "stroke-linecap", "round",
-				      "stroke-linejoin", "round",
-				      "class", "feather feather-arrow");
-
-	Point[] a0 = {new Point(-R, 0),
-		     new Point(R, 0), 
-		     new Point(0.6*R, 0.2*R), 
-		     new Point(0.6*R, -0.2*R) };
-
-	
-	Point[] a = Point.rotate(a0, alpha);
-	
-	String z = line(a[0], a[1]) + line(a[2], a[1]) + line(a[3], a[1]);
-
-	z = fm.wrap( "g", "color=\"" + color+"\"", z);
-	z = fm.wrap("svg", svgExtra, z);
-	return z;
-    }
-
-    static NumberFormat fmt3d = new DecimalFormat("000");
-
-
-    
+   
+  
+    //  static NumberFormat fmt3d = new DecimalFormat("000");
 	
     public static void main(String argv[]) throws IOException {
+	Random random = new Random();
 	for(String a: argv) {
-	    //Description d = new Description(a);
-	    System.out.println( makeSvg(a));
+	    Composite d = new  Composite(a);
+	    System.err.println("d=" + d);
+	    int n = d.familySize();
+	    System.err.println("Expands to " + n + " concrete objects");
+	    Composite b = d.sample(random);
+	    System.err.println("b=" + b);
+	    System.out.println( b.makeFullSvg());
 	}
 
 	
@@ -426,9 +460,57 @@ public class Composite {
 	*/
     }
 
-	
 
-	    
+
+    /** A tool for drawing concrete ImageObjects from a family defined bya Composite object,
+	or a union of such families.
+     */
+    static public class Generator extends ImageObject.Generator {
+
+	/** The families */
+	final private Composite[] compo;
+	/** Family sizes, and their sum */
+	final private int size[], sumSize;
+	
+	public String[] getKeys() {
+	    String[] v = new String[compo.length];
+	    for(int j=0; j<compo.length; j++) v[j] = compo[j].key;
+	    return v;
+	}
+	
+	public Generator( Composite[] _compo) {
+	    compo = _compo;
+	    size = new int[compo.length];
+	    int sum=0;
+	    for(int j=0; j<compo.length; j++) {
+		sum += size[j] = compo[j].familySize();
+	    }
+	    sumSize = sum;
+	    if (sumSize<1) throw new IllegalArgumentException("Appaently empty set of composite objects");
+	}
+	
+	 public //ImageObject
+	     String getOneKey(Random random) {
+	     int k = random.nextInt(sumSize);
+	     int sum=0;
+	     int j=0;
+	     while((sum += size[j])<=k) {
+		 j++;
+		 if (j>=compo.length) throw new IllegalArgumentException("Internal error");
+	     }
+	     Composite a = compo[j];
+	     Composite b = a.sample( random );
+	     b.enlist();
+	     return b.key;
+	}
+	public String asList() {
+	    return Util.joinNonBlank(";", getKeys());
+	}
+	public String describeBrief() {
+	    return "Set of dynamically generated image-and-property-based objects";
+	}
+
+    }
 
     
 }

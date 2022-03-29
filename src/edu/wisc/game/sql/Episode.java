@@ -590,8 +590,8 @@ public class Episode {
 	rules = game.rules;
 	Board b =  game.initialBoard;
 	if (b==null) {
-	    if (game.allImages!=null) {
-		b = new Board(game.random,  game.randomObjCnt,  game.allImages);
+	    if (game.imageGenerator!=null) {
+		b = new Board(game.random,  game.randomObjCnt,  game.imageGenerator);
 	    } else { 
 		b = new Board(game.random,  game.randomObjCnt, game.nShapes, game.nColors, game.allShapes, game.allColors);
 	    }

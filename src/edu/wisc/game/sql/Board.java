@@ -282,8 +282,11 @@ public class Board {
 	@param randomCnt required number of pieces. 
 	@param allImages the set from which images are drawn
      */
-    public Board(RandomRG random, int randomCnt, String[] allImages) {
-	setName("Random board with " + randomCnt + " pieces, drawn from a set of "+allImages.length+" images");
+    public Board(RandomRG random, int randomCnt,
+		  ImageObject.Generator imageGenerator
+		 //String[] allImages
+		 ) {
+	setName("Random board with " + randomCnt + " pieces, drawn from "+ imageGenerator.describeBrief());
 	if (randomCnt>N*N) throw new IllegalArgumentException("Cannot fit " + randomCnt + " pieces on an "+ N + " square board!");
 	
 	Vector<Integer> w  = random.randomSubsetOrdered(N*N, randomCnt); 
@@ -291,7 +294,8 @@ public class Board {
 	
 	for(int i=0; i<randomCnt; i++) {
 	    Pos pos = new Pos(w.get(i)+1);
-	    String image = allImages[random.nextInt(allImages.length)];
+	    String image = imageGenerator.getOneKey(random);
+	    //allImages[random.nextInt(allImages.length)];
 	    Piece p = new Piece(image,  pos.x, pos.y);
 	    p.setId(i);
 	    value.add(p);

@@ -41,9 +41,9 @@ public class ParaSet extends HashMap<String, Object> {
     /** Will be set as appropriate if specified in the CSV file "colors" column */
     public Piece.Shape[] shapes = Piece.Shape.legacyShapes;
     public Piece.Color[] colors = Piece.Color.legacyColors;
-    /** Will be set as appropriate if specified in the CSV file "images" column */
-    public String[] images=null;
-    
+    /** Will be set as appropriate if specified in the CSV file "images" column. The array elements are keys used for the image lookup. */
+    //    public String[] images=null;
+    public ImageObject.Generator imageGenerator=null;
 
     /** For JSON */
     public String getColors() {
@@ -53,7 +53,8 @@ public class ParaSet extends HashMap<String, Object> {
 	return Util.joinNonBlank(";", shapes);
     }
     public String getImages() {
-	return images==null? null: Util.joinNonBlank(";", images);
+    //	return images==null? null: Util.joinNonBlank(";", images);
+	return imageGenerator.asList();
     }
 
     /** Parses a semicolon-separated list of shapes.
@@ -116,7 +117,7 @@ public class ParaSet extends HashMap<String, Object> {
 	random boards can be constructed for the episodes played
 	pursuant to this ParaSet.
      */
-    public static String[] parseImages(String val) throws IOException {
+    public static ImageObject.Generator parseImages(String val) throws IOException {
 	if (val==null) return null;
 	val = val.trim();
 	String[] ss = val.split(";");
@@ -136,7 +137,7 @@ public class ParaSet extends HashMap<String, Object> {
 	if (h.size()==0) return null;
 	String q[] =  h.toArray(new String[0]);
 	Arrays.sort(q);
-	return q;
+	return new ImageObject.PickFromList(q);
     }
 
     
@@ -181,8 +182,7 @@ public class ParaSet extends HashMap<String, Object> {
 		//System.out.println("DEBUG: parseShapes(" + val+") done");
 		if (_shapes!=null) shapes = _shapes;			
 	    } else if (key.equals("images")) {
-		String[] _images = parseImages(val);
-		if (_images !=null) images = _images;
+		imageGenerator=parseImages(val);
 	    } else typedPut(key, val);
 	}
     }
@@ -374,8 +374,10 @@ public class ParaSet extends HashMap<String, Object> {
 
 
     public void checkImages() throws IOException {
-	if (images==null) return;
-	for(String key: images) {
+	if (imageGenerator==null) return;
+	if (!(imageGenerator instanceof  ImageObject.PickFromList)) return;
+	ImageObject.PickFromList g = (ImageObject.PickFromList)imageGenerator;
+	for(String key: g.getKeys()) {
 	    ImageObject io = ImageObject.obtainImageObjectPlain(null, key, false);
 	}
     }

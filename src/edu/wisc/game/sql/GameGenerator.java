@@ -75,11 +75,11 @@ abstract public class GameGenerator {
 	    if (initial_boards_order==null ||initial_boards_order.length()==0) throw new  IllegalInputException("Parameter sets specifies initial_boards, but not initial_boards_order");
 	    File boardDir = Files.inputBoardSubdir(initial_boards);
 	    gg = new PredefinedBoardGameGenerator(_random, ruleSetName,  boardDir, initial_boards_order);
-	} else if  (para.images!=null) {
+	} else if  (para.imageGenerator!=null) {
 	    
 	    int[] nPiecesRange = {para.getInt("min_objects"),
 				  para.getInt("max_objects")};
-	    gg =new RandomImageGameGenerator(_random, ruleSetName, nPiecesRange, para.images);
+	    gg =new RandomImageGameGenerator(_random, ruleSetName, nPiecesRange, para.imageGenerator);
 	} else {
 
 	    int[] nPiecesRange = {para.getInt("min_objects"),
