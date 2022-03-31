@@ -149,6 +149,7 @@ public class Composite extends ImageObject {
     }
 	
 
+    /** Describes the orientation of a composite image */
     enum Orientation {
 	VERTICAL, HORIZONTAL, ANY;
 	String toLetter() {
@@ -281,7 +282,8 @@ public class Composite extends ImageObject {
 	    colors[j] = p.colors[j].equals("?")? allColors[random.nextInt(allColors.length)] : p.colors[j];
 	}
 	key = mkName();
-	svg = wild? null: makeFullSvg();
+	svg = makeFullSvg();
+	computeProperties();
     }
 
     /** How many distinct concrete Composite ImageObjects does this Composite
@@ -311,12 +313,16 @@ public class Composite extends ImageObject {
 	return q;
     }
 
+    public static boolean isCompositeName(String name) {
+	return name.startsWith(prefix);
+    }
 
     /** Constructs a concrete or "family" Composite object based
 	on a name string.
 	@param name E.g. "/composite/h/d=???/b=123/gq/gq/gq"
+	@return A concrete or "family" Composite ImageObject
     */
-    private Composite(String name) {
+    public Composite(String name) {
 	this();	
 	key = name;
 	for(int j=0; j<N; j++) {
@@ -324,15 +330,16 @@ public class Composite extends ImageObject {
 	    colors[j] = "r";
 	}
 	    
-	    
-	if (!name.startsWith(prefix)) throw new IllegalArgumentException("Illegal name: " + name + ". Names must start with " + prefix);
-	String [] q = name.substring(prefix.length()).split("/");
-	if (q.length<1) throw new IllegalArgumentException("name too short: " + name);
+	if (!isCompositeName(name)) throw new IllegalArgumentException("Illegal name: " + name + ". Names must start with " + prefix);
 	
+	String[] q = name.substring(prefix.length()).split("/");
+
+	if (q.length<1) {
+	    throw new IllegalArgumentException("name too short: " + name);
+	}
+
 	int k=0;
-	
 	boolean first = true;
-	
 	for(String s: q) {
 	    s = s.trim();
 	    if (s.equals("")) throw new IllegalArgumentException("Empty name component: you must have put two slashes next to each other in name=" + name);
@@ -350,7 +357,6 @@ public class Composite extends ImageObject {
 		continue;
 	    }
 
-	    	
 	    if (s.indexOf("=")>=0) {  //   d=123
 		String[] w = s.split("=");
 		if (w.length==2) {
@@ -362,7 +368,7 @@ public class Composite extends ImageObject {
 		    if (key.equals("d")) sizeRank=vals;
 		    else if (key.equals("b")) bright=vals;
 		    else  throw new IllegalArgumentException("Unknown key="+key+" in name=" + name);
-		} else  throw new IllegalArgumentException("Cannot parse component="+s+" in name=" + name);		
+		} else  throw new IllegalArgumentException("Cannot parse component="+s+" in name=" + name);
 	    } else if (k<N) {  // rq
 		// System.out.println("piece = " +  s);
 		if (s.length()!=2)  throw new IllegalArgumentException("Illegal length of component="+s+" (expected 2 chars, e.g. 'rq', found "+s+") in name=" + name);
@@ -373,37 +379,87 @@ public class Composite extends ImageObject {
 		c = s.charAt(1);
 		if (c == 'q' || c=='t' || c=='s' || c=='c' || c=='?') shapes[k] = "" + c;
 		else  throw new IllegalArgumentException("Illegal shape char '" + c +"' in component="+s+", in name=" + name);
-		k++;
-	    } else  throw new IllegalArgumentException("Extra component="+s+" in name=" + name);			
+		k++;		
+	    }
+	    else  throw new IllegalArgumentException("Extra component="+s+" in name=" + name);
 	}
-	svg = makeFullSvg();	
+	svg = makeFullSvg();
+	if (!wild) computeProperties();
     }
 
-	/** The SVG code for the composite image, not yet wrapped into  the top-level SVG element */
-	String makeSvg() {
-	    if (wild) {
-		return fm.wrap("text",      mkSvgParams("x", "0", "y", "0"),
-			       "Abstract");
+	int dummy;
+	
+    /** d_order = one of {-1, 0, 1, 2}. Here, -1 stands for "not monotonous", i.e. the sizes of the elements within the image are neither monotonically non-decreasing nor non-increasing. 0 stands for "all elements are same size" (e.g. h/RS1/BT1/GQ1).   1 stands for "non-decreasing, with at least some increase" (from the left to the right, or from the top to the bottom, as the case may be), e.g. 1/1/2 ,  1/3/3, or 1/2/3.   -1 stands for "non-increasing, with at least some decrease", e.g.  2/1/1  or 3/2/1. 2 stands for "non-monotonic", e.g. 1/2/1
+     */
+    static class Order {
+	static final int SAME=0, SOME_INCREASE=1, SOME_DECREASE=-1, NONE=2;
+	static int compute(int x[]) {
+	    boolean nonDecrease=true, nonIncrease=true;
+	    for(int j=1; j<x.length; j++) {
+		if (x[j]>x[j-1]) nonIncrease=false;
+		if (x[j]<x[j-1]) nonDecrease=false;
 	    }
-	    Vector<String> v = new Vector<>();
-	    for(int j=0; j<N; j++) {
-		Element e = new Element(shapes[j], colors[j], sizeRank[j], bright[j]);
-		int cx = H/2, cy=H/2;
-		int delta = 2*(R+margin) * (j-1);
-		if (orientation==Orientation.VERTICAL) cy += delta;
-		else cx += delta;	    
-		String s = e.makeSvg(cx, cy);	    
-		v.add(s);
-	    }
-	    v.add(elt("rect", "x", "0", "y", "0",
-		      "width", ""+H, "height", ""+H, "fill-opacity", "0",
-		      "stroke", "black", "stroke-width", "1"));
-	    
-	    String s = String.join("\n",v);
-	    
-	    return s;
+	    return (nonIncrease && nonDecrease)? SAME:
+		nonDecrease? SOME_INCREASE:
+		nonIncrease? SOME_DECREASE: NONE;	    
 	}
 
+    }
+	
+
+    static boolean allSame(String[] x) {
+	boolean same=true;
+	for(int j=1; j<x.length; j++) {
+	    same = same && x[j].equals(x[j-1]);
+	}
+	return same;
+    }
+
+
+    static final String[] columnNames = {
+	"image",
+	"name",
+	"orientation",
+	"d_order",
+	"b_order",
+	"sameshape",
+	"samecolor"};
+	
+    private void computeProperties() {
+	put("name",key);
+	put("orientation", orientation.toLetter());
+	put("d_order", ""+Order.compute( sizeRank));
+	put("b_order", ""+Order.compute( bright));
+	put("sameshape", ""+allSame(shapes));
+	put("samecolor", ""+allSame(colors));
+    }
+	
+    /** The SVG code for the composite image, not yet wrapped into  the top-level SVG element */
+    private String makeSvg() {
+	if (wild) {
+	    return fm.wrap("text",      mkSvgParams("x", "0", "y", "0"),
+			   "Abstract");
+	}
+	Vector<String> v = new Vector<>();
+	for(int j=0; j<N; j++) {
+	    Element e = new Element(shapes[j], colors[j], sizeRank[j], bright[j]);
+	    int cx = H/2, cy=H/2;
+	    int delta = 2*(R+margin) * (j-1);
+	    if (orientation==Orientation.VERTICAL) cy += delta;
+	    else cx += delta;	    
+	    String s = e.makeSvg(cx, cy);	    
+	    v.add(s);
+	}
+	v.add(elt("rect", "x", "0", "y", "0",
+		  "width", ""+H, "height", ""+H, "fill-opacity", "0",
+		  "stroke", "black", "stroke-width", "1"));
+	
+	String s = String.join("\n",v);
+	
+	return s;
+    }
+
+    
 
     /** Produces the entire content of an SVG file describing the image for this ImageObject.
 <code>
@@ -435,16 +491,57 @@ public class Composite extends ImageObject {
 	
     public static void main(String argv[]) throws IOException {
 	Random random = new Random();
+	Vector<Composite> v = new Vector<>();
 	for(String a: argv) {
 	    Composite d = new  Composite(a);
 	    System.err.println("d=" + d);
+	    v.add(d);
 	    int n = d.familySize();
 	    System.err.println("Expands to " + n + " concrete objects");
 	    Composite b = d.sample(random);
 	    System.err.println("b=" + b);
-	    System.out.println( b.makeFullSvg());
+	    System.out.println( b.getSvg());
 	}
 
+
+	
+	Composite.Generator g = new Composite.Generator(v.toArray(new Composite[0]));
+	System.err.println("--- Generator, size="+g.sumSize+" ---");
+	Vector<String> headers = new Vector<>();
+
+	Vector<Composite> ov = new Vector<>();
+	for(int i=0; i<3; i++) {
+	    String key = g.getOneKey(random);
+	    System.err.println("key=" + key);
+	    Composite b = (Composite)ImageObject.obtainImageObjectPlain(null, key, false);
+
+	    
+	    //	    Vector<ImageObject> w = ImageObject.obtainImageObjects(key);
+	    //	    for(ImageObject io: w) {
+	    //Composite b = (Composite)io;
+	    System.out.println( b.getSvg());
+	    ov.add(b);
+	}
+
+	// output dir
+	File dir = new File("tmp");
+
+	File propFile = new File(dir, "properties.csv");
+	System.err.println("Property file will be written to " + propFile); //.getName());
+	
+	PrintWriter wg = new PrintWriter(new      FileWriter(propFile));
+	wg.println("#" + String.join(",", columnNames));
+	for( Composite b: ov) {
+	    Vector<String> w=new Vector<>();
+	    // FIXME: should quote and escape as per ImportCSV
+	    for(String c: columnNames) {
+		if (c.equals("image")) w.add(b.key + ".svg");
+		else if (b.get(c)==null) w.add("");
+		else w.add( b.get(c));
+	    }
+	    wg.println(String.join(",", w));
+	}	
+	wg.close();
 	
 	/*
 	String color = argv[0];
@@ -462,7 +559,7 @@ public class Composite extends ImageObject {
 
 
 
-    /** A tool for drawing concrete ImageObjects from a family defined bya Composite object,
+    /** A tool for drawing concrete ImageObjects from a family defined by a Composite object,
 	or a union of such families.
      */
     static public class Generator extends ImageObject.Generator {

@@ -8,12 +8,15 @@ import java.text.*;
 import edu.wisc.game.util.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.rest.Files;
+import edu.wisc.game.svg.Composite;
 
 
 /** Describes an image-and-properties-based object. For details, see
 <a href="../../../../../proposal-object-properties.html">Image-and-property-based description of objects</a>
  */
 public class ImageObject extends HashMap<String,String> {
+
+    
 
     public String key;
     /** For static objects, this is the SVG file for the image. For
@@ -97,6 +100,14 @@ public class ImageObject extends HashMap<String,String> {
 	be added.
      */
     public static synchronized ImageObject obtainImageObjectPlain(File dir, String plainPath, boolean allowMissing) {
+	if (Composite.isCompositeName(plainPath)) {
+	    ImageObject z =   allImageObjects.get(plainPath);
+	    if (z==null && !allowMissing) throw new IllegalArgumentException("Composite ImageObject named " + plainPath + " is not stored in the ImageObject table");
+	    return z;
+	}
+
+
+
 	if (!plainPath.matches(".*\\.[a-zA-Z0-9]+")) {
 	    plainPath += ".svg";
 	}
@@ -119,7 +130,6 @@ public class ImageObject extends HashMap<String,String> {
 	String key = fileToKey(f);
 	ImageObject z = allImageObjects.get(key);
 	if (z!=null) return z;
-
 	// Read the properties table from the relevant directory,
 	// and put all ImageObjects into our master table
 	if (!f.canRead()) throw new IllegalArgumentException("No image file exists: " +f);
@@ -142,12 +152,25 @@ public class ImageObject extends HashMap<String,String> {
     }
 
 
-    /** Loads an image object, or a group of them, if a wildcard is given.
+    /** Loads an image object, or a group of them, if a wildcard is
+	given. The path may also refer to dynamically generated
+	Composite ImageObjects.
+
+	@return a Vector of "regular" ImageObjects (associated with the file(s) given
+	by the wildCardPath), or a Composite ImageObject (maybe a "family" one) is
+	the path is of that kind.
      */
     public  static Vector<ImageObject> obtainImageObjects(String wildCardPath) {
 
 	if (wildCardPath==null || wildCardPath.length()==0)  throw new IllegalArgumentException("Image path not specified or empty");
 
+	if (Composite.isCompositeName( wildCardPath)) {
+	    Vector<ImageObject>  v = new Vector<>();
+	    v.add( new Composite( wildCardPath));	    
+	    return v;
+	}
+
+	
 	File dir;
 	if (wildCardPath.startsWith("/")) {
 	    dir = new File("/");
@@ -296,14 +319,15 @@ public class ImageObject extends HashMap<String,String> {
 	}
    }
 
-     static public class PickFromList extends Generator {
+    /** A Generator interface to a stored list of ImageObjects */
+    static public class PickFromList extends Generator {
 
-	 /** Will be set as appropriate if specified in the CSV file "images" column. The array elements are keys used for the image lookup. */
-	 final private String[] keys;
-	 public String[] getKeys() { return keys;}
+	/** Will be set as appropriate if specified in the CSV file "images" column. The array elements are keys used for the image lookup. */
+	final private String[] keys;
+	public String[] getKeys() { return keys;}
 	
 	public PickFromList(String[] _keys) { keys = _keys; }
-	 public //ImageObject
+	public //ImageObject
 	    String getOneKey(Random random) {
 	    String imageKey = keys[random.nextInt(keys.length)];
 	    return imageKey;
