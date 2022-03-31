@@ -121,23 +121,32 @@ public class ParaSet extends HashMap<String, Object> {
 	if (val==null) return null;
 	val = val.trim();
 	String[] ss = val.split(";");
-	//Vector<String> w = new Vector<>();
+	Vector<String> namesPlain = new Vector<>();
+	Vector<Composite> compo = new Vector<>();  
 	HashSet<String> h = new HashSet<>();
 	if (ss.length>0) {
 	    for(String s: ss) {
 		Vector<ImageObject> v = ImageObject.obtainImageObjects(s);
 		for(ImageObject io: v) {
 		    String z = io.key;
-		    //if (h.contains(z)) continue;
+		    if (h.contains(z)) continue;
 		    h.add(z);
-		    // w.add(z);
+		    if (io instanceof Composite) compo.add((Composite)io);
+		    else namesPlain.add(z);
 		}
 	    }
 	}
 	if (h.size()==0) return null;
-	String q[] =  h.toArray(new String[0]);
-	Arrays.sort(q);
-	return new ImageObject.PickFromList(q);
+	
+	if (compo.size()>0) {
+		if (namesPlain.size()>0) throw new IllegalArgumentException("A game cannot combine traditional and composite ImageObjects. Choose one or the other, but not both");
+	       return new Composite.Generator(compo.toArray(new Composite[0]));
+	} else {		
+	       String q[] = namesPlain.toArray(new String[0]);
+	       Arrays.sort(q);
+	       return new ImageObject.PickFromList(q);
+	}
+	
     }
 
     
