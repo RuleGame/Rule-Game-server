@@ -11,6 +11,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import edu.wisc.game.util.*;
 import edu.wisc.game.sql.Piece;
 import edu.wisc.game.sql.ImageObject;
+import edu.wisc.game.svg.Composite;
 
 @XmlRootElement(name = "ParaSet") 
 
