@@ -625,7 +625,7 @@ public interface Expression {
 	    return mkLongestE1(tokens);
 	}
     }
-   /** 	E1 :=  (E) | Id.Id |  Id  | Num |  [E,E,...] */ 
+   /** 	E1 :=  (E) | Id.Id |  Id  | Num | -Num |  [E,E,...] */ 
     static ArithmeticExpression mkLongestE1(Vector<Token> tokens) throws RuleParseException {
 	if (tokens.size()==0) throw new RuleParseException("Unexpected end of line. (Expected an E1-type arithmetic expression)");
 	Token a = tokens.firstElement();
@@ -647,6 +647,16 @@ public interface Expression {
 	} else if (a.type == Token.Type.NUMBER) {
 	    tokens.remove(0);
 	    return new Num(a);
+	} else if (a.type==Token.Type.ADD_OP && a.cVal=='-') {
+	    tokens.remove(0);
+	    if (tokens.size()==0) throw new  RuleParseException("Minus sign at the end of expression");
+	    Token b = tokens.firstElement();
+	    if (b.type==Token.Type.NUMBER) {
+		tokens.remove(0);
+		return new Num(-b.nVal);
+	    } else {
+		throw new  RuleParseException("Minus sign not followed by a number; instead, found " + b);
+	    }		    
 	} else if (a.type==Token.Type.OPEN && a.cVal=='(') {
 	    tokens.remove(0);	    
 	    ArithmeticExpression q = mkLongestArithmeticExpression(tokens);

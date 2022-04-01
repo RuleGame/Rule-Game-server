@@ -101,12 +101,18 @@ public class ImageObject extends HashMap<String,String> {
      */
     public static synchronized ImageObject obtainImageObjectPlain(File dir, String plainPath, boolean allowMissing) {
 	if (Composite.isCompositeName(plainPath)) {
-	    ImageObject z =   allImageObjects.get(plainPath);
-	    if (z==null && !allowMissing) throw new IllegalArgumentException("Composite ImageObject named " + plainPath + " is not stored in the ImageObject table");
+	    Composite z = (Composite)allImageObjects.get(plainPath);
+	    if (z==null) {
+		z = new Composite(plainPath);
+		if (z.isWild())  throw new IllegalArgumentException("Composite ImageObject named " + plainPath + " is not concrete; wildcards are not permitted in this function call");
+	        
+
+		// && !allowMissing) throw new IllegalArgumentException("Composite ImageObject named " + plainPath + " is not stored in the ImageObject table");
+	    }
 	    return z;
 	}
 
-
+	
 
 	if (!plainPath.matches(".*\\.[a-zA-Z0-9]+")) {
 	    plainPath += ".svg";

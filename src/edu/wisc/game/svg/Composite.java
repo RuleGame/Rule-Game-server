@@ -164,7 +164,10 @@ public class Composite extends ImageObject {
 		       
     };
     Orientation orientation;
-    boolean wild = false;
+    private boolean wild = false;
+    /** Does the name contain wildcards, thus describing a family of 
+	Composite images, rather than a single "concrete" image? */
+    public boolean isWild() { return wild; }
     //String name;
     final static int ANY=0;
     /** Size and brightness levels range from 1 thru M. M is the default */
