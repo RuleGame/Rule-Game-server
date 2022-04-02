@@ -1,0 +1,285 @@
+<html>
+<head>
+  <!-- style type="text/css">h2 {page-break-before:always}</style -->
+  <title>Image-and-property-based description of object</title>
+   <link rel="stylesheet" type="text/css" href="css/rule-game.css"/>
+ </head>
+<body>
+  <h1>Image-and-property-based description of objects</h1>
+  <div    align="center"Updated: April 1, 2022, for GS ver. 4.009</div>
+
+<p>This document describes image-and-property-based objects, which have been made available since  Game Server ver. 3.*. It is based on the proposal documents:
+<ul>  
+  <li><a href="proposal-wildcards.html">Wildcard syntax for a wider object space</a> (2021-04-01)
+  <li><a href="proposal-object-properties.html">Proposal: image-and-property-based description of objects</a> (2021-04-23)
+</ul>
+  
+  <h2>Notation</h2>
+
+<p>For conciseness, in this document I will use the term "object" to refer to a class of identically looking entities, e.g. "black square(s)". The term "game piece" will refer to an individual object at a particular location on the board.
+  
+  <h2>Defining object types</h2>
+
+<P>There are be two ways of defining objects in Game Engine 3.*.
+
+<p>For compatibiliy with  Game Engine 1.* and 2.*, it is still  possible to define an object as a  <a href="colors-and-shapes.html">combination of a color (defined by an entry in the shared color map) and a shape (defined by a color-less SVG file)</a>; e.g. a black square is defined by its color (black) and shape (square, referring to <tt>square.svg</tt> in the shape directory). We will refer to such traditional objects as <strong>shape+color tuple objects</strong>, or <strong>SC objects</strong>.
+
+<p>In addition, a new way of defining object types has become available since Game Engine 3.*. In this approach, each object is defined by:
+  <ul>
+    <li>an image file (SVG, PNG, JPEG...) which already contains the desired coloring of the objects, and
+    <li>a list of properties, which represent some concepts with which humans can reason about objects.
+  </ul>
+      We will  refer to this new type of objects as 
+  <strong>image-and-properties-based objects</strong>, or 
+    <strong>IPB objects</strong>.
+
+<p>Since multiple experiments with different sets of objects can be carried out on the game server, IPB object descriptions can be located in multiple directories under the <em>main shape directory</em>, <tt>/opt/tomcat/game-data/shapes</tt>. For example, if an experiment designer has named a particular experiment <tt>exp-20210501-a</tt> and decided to use two groups of objects, heraldic animals and arrows, as game pieces in that experiment, he may want to put them into new directories,  <tt>/opt/tomcat/game-data/shapes/exp-20210501-a/animals</tt> and  <tt>/opt/tomcat/game-data/shapes/exp-20210501-a/arrows</tt>. (Of course, the experimenters may decide to use the same group of images in multiple experiments, so maybe one of the directories will be simply named  <tt>/opt/tomcat/game-data/shapes/arrows</tt>, or whatever.
+
+<p>(Note: anyone who reads this document is, of course, expected to know that, as per our <a href="sop-experiment.html">SOP</a>, one does not put files directly to the <tt>/opt/tomcat/game-data</tt> tree, but deploys them there via the GitHub repository!)
+  
+  <p>Each directory containing image files (unless it only contains colorless SVG images for use in GS 2.*-style experiments) will need to contain a <em>properties file</em>, named <tt>properties.csv</tt>, which will contain the descriptions of all objects defined in that directory. This CSV file, therefore, will need to contain 1 line of text per each image file in the directory, in addition to the header line on top.  For example, it may look something like this:
+    <pre>
+#image,name,species,posture,orientation,color,brightness
+tiger-01.svg,tiger-01,tiger,crouching,right,,bright
+tiger-02.svg,tiger-02,tiger,crouching,left,,bright
+tiger-03.svg,tiger-03,tiger,crouching,right,,faded
+tiger-04.svg,tiger-04,tiger,crouching,right,,faded
+tiger-05.svg,tiger-05,tiger,leaping,right,,bright
+tiger-06.svg,tiger-06,tiger,leaping,left,,bright
+lion-01.png,lion-01,lion,rampant,left,yellow,
+lion-02.png,lion-02,lion,rampant,left,red,
+lion-03.png,lion-03,lion,rampant,left,black,
+weasel-01.jpg,weasel-01,weasel,sitting,left,pink,
+weasel-02.jpg,weasel-01.jpg,weasel-02,weasel,sitting,right,black,
+weasel-03.jpg,weasel-03,weasel,running,right,*,
+....
+    </pre>
+    In the table, above:
+    <ul>
+	 <li>
+	   The first column (<tt>image</tt>) is the only mandatory one. It contains the exect name (case-sensitive) of the image file used to display the object, complete with the extension (such as .svg, .jpg, or .png).
+	 <li>The next column, <tt>name</tt>, is optional. If supplied, it is recommended that it contains a unique value in each row; this value may, for example, be the same as that of the image file, but without the extenstion. The idea is that the value in that column can be used to write rules that apply only to objects of this specific kind.
+	 <li>All other columns contain whatever properties you want to assign to your objects in order to be able to use them in rules. The column names (i.e. property names) are arbitrary, and are up to the experiment designer For example, with a table such as the one described above, you will be able to create rules that distinguish objects based on the species of the animal (tiger vs. lion vs. weasel), their posture (rampant vs. seating vs. walking), the color of the image etc.
+    </ul>
+
+  <p>Property names should be written using lower case Latin letters; they may also contain the underscore character (<tt>_</tt>) and digits, but not in the first position.
+
+  <p>If, for a particular object, the cell corresponding to property X is empty (contains an empty string), this means that property X is not defined for that object (e.g., all our tigers are striped, and we don't associate a color property with them). This means that any rule atom that only select objects with property X having a particular value won't select this object.
+
+    <p>It is also possible for an object to contain an * in the column for property X. This object will match any X-based selector.
+    
+      <h3>Reserved names</h3>
+
+    <p>One should not use the following words for property names: <tt>image, pos</tt>.
+
+    <p>The property names <tt>shape</tt> and <tt>color</tt> are perfectly legal to use in a property file. The Game Server software and the GUI client will know that the objects involved are IPB objects, rather than as shape-color tuples, and will handle them accordingly.
+
+      <h3>Automatic generation of images and property files.</h3>
+
+    <p>It is expected than in many cases, both a group of object images and the property file describing them will be generating programmatically, by means of a customized program or shell script. For example, if one wants to create a directory with 24 images of arrows, consisting of red, green, and yellow arrows pointing in 8 directions (N, NE, E, SE, etc), one can manually create a single image (in an image editing program such as Inkscape, Gimp, or Microsoft Paint), and then have a script produce multiple images by rotating the original image and changing its color, using a command-line image manipulation utility such as <a href="https://imagemagick.org/">ImageMagick</a>.
+
+    <p>In a more sophisticated example, you can have a 3D model of solid structure, such as a statue (e.g. in VRML or <a href="https://en.wikipedia.org/wiki/X3D">X3D</a> format), and a program that rotates it in various ways and saves various 2-D projections (equivalent to views from different directions) as separate images; for each image it will create an entry in the properties file describing the direction from which the statue is viewed (e.g. using spherical coordinates).
+     
+    <p>If you need some help with generating a series of images along with an accompanying property file, contact Vladimir.      
+
+	
+  <h2>Controlling the initial board generation</h2>
+
+  <p>In GS 1.* and 2.*, there were two methods for a parameter set (a line of a trial list file) to specify the process how boards initialized during the episodes played pursuant to this parameter set. In a given parameter set, one can either <a href="para-set.html#defineBoard">describe a sequence of prefedined initial boards</a>, or <a href="para-set.html#randomBoard">specify the parameters of a random initial board generator</a>.
+
+  <p>Both of these methods exist in GS 3.* as well, and support not only traditional SC objects but also new IPB objects.
+
+    <h3>When using predefined initial boards</h3>
+    
+  <p>If your parameter set uses predefined initial boards, there is not much difference from GS 2.*. The way the parameter set <a href="para-set.html#defineBoard">specifies the location and ordering of prefedined initial boards</a> is exactly the same; any of the initial board files themselves may contain either SC objects, or IPB objects, or any combination of both types of objects.
+
+        <h3>When using a random generator</h3>
+
+  <p>In GS 2.*, a parameter set could specify the parameters of the random board genrator, i.e. the min and max number of pieces on the board, the min and max number of colors and shapes, as well as the set of shapes and the set of colors from which the shapes and colors of all pieces are drawn. (If those two sets are not specified in the parameter set, the legacy 4-shape and 4-color sets are used as the defaults).
+
+  <p>In GS 3.*, if you want to generate random boards using IPB objects, you need to first specify the set from which these objects are drawn, by using the <tt>images</tt> parameters. You also need to provide the <tt>min_objects</tt> and <tt>max_objects</tt>, same as for the traditional SC objects. You don't need the 
+ <tt>min_shapes</tt>, <tt>max_shapes</tt>,
+ <tt>min_colors</tt>, <tt>max_colors</tt> any more, since they are not applicable in the IPB context.
+
+  <p>The value in the  <tt>images</tt> parameter, is essentially, a list of image files, with <tt>*</tt>-based and <tt>?</tt>-based
+<a href="linfo.org/wildcard.html">wildcard expressions</a> allowed, and the <tt>[x,y,...]</tt> notation for lists. The file locations can be relative (interpreted as relative to the server's shape directory) or absolute.  For example,
+    <pre>
+      [exp-20210501-a/animals/*,exp-20210501-a/arrows/*,legacy/black-square,/home/vmenkov/photos/tortoise.jpg]
+      </pre>
+will include all image files from 
+    <tt>/opt/tomcat/game-data/shapes/exp-20210501-a/animals</tt> and  <tt>/opt/tomcat/game-data/shapes/exp-20210501-a/arrows</tt>, as well as  <tt>/opt/tomcat/game-data/legacy/black-square.svg</tt> and <tt>/home/vmenkov/photos/tortoise.jpg</tt>. (For compatibility with GS 2.*, the <tt>.svg</tt> extension can be omitted for brevity; however, other extensions, such as  <tt>.jpg</tt> or  <tt>.png</tt>, should not be omitted when specifying individual files).
+
+    <p>
+	Note that, if you are using a random board generator in your parameter set, <strong>it cannot combine SC objects and IPB objects in the same parameter set</strong>. If you want your random boards to contain, for example, both black squares and rampant lions, you have to create a directory in which shape-and-color tuples are defined as IPB objects, i.e. with an individual image file for each object  (<tt>black-suqare.svg</tt> etc)
+
+<H2><a name="rules">Rule set files</a></h2>
+
+  <p>
+    In addition to the "legacy" fixed 5-tuple format for <a href="syntax.html">rule atoms</a>,
+     <pre>
+      (<em>count</em>, <em>shapes</em>, <em>colors</em>, <em>positions</em>, <em>buckets</em>)
+     </pre>
+     , Game Engine 3.* also supports the new  extensible format, t where every field in the atom has to be explicitly labeled, and no field is mandatory:
+       <pre>
+           (count:<em>count</em>, <em>property1:valueList1 [, property2:valueList2]</em>  <em>[pos:positions,]</em>, bucket:<em>buckets</em>)
+       </pre>
+       An absent field is equivalent to a present field with the value <tt>*</tt>, i.e. "anything is allowed, as far as this type of condition is concerned".
+
+       <p>       
+     As it is the case with the "legacy" atoms, each free-style atom can be understood as a conjunction. That is, for an atom to allow moving a game piece to a bucket, each part of the atom, viewed as a condition, must yield true on this game piece. The possible conditions include:
+	<li>an optional condition on the number of times the atom can be used until the rule line needs to be reset;
+	 <li>zero, one, or several conditions applied to various properties of the game piece the player wants to move. (No more than one condition per property);
+	 <li>an  optional condition on the position of the game piece to be moved;
+	 <li>an  optional condition on the choice of the destination bucket
+	   
+       </ul>
+       Thus, the simplest atom,
+      <pre>
+()
+       </pre>
+      is the trivial conjunction of no conditions -- so it means, "take any number of pieces and put them into any  buckets". If for example, the condition specifies <tt>count</tt> and the property <tt>species</tt>, e.g.
+           <pre>
+(count:3 species:[lion,mouse])
+	   </pre>
+	   it means, "take 3 pieces that are lions or mice, and put them into any buckets". The atom  
+        <pre>
+	  (species:tiger color[pink:blue] pos:T bucket:[0,1])	  
+	</pre>
+	means, "take any number of pink or blue tigers from the top occupied row of the board, and put them to bucket 0 or 1".
+</P>
+     
+       
+       
+     <p>  For example, an atom
+     <pre>
+       (species:tiger, brightness:bright, bucket:0)
+     </pre>
+     will allow the player to pick all bright tigers and put them into bucket 0.
+     (If a particular property is not explicitly listed in an atom, it means that there is no restriction on this property). An atom
+     <pre>
+       (count:3, color:black, pos:T, bucket:1)
+     </pre>
+     will allow the player to pick 3 objects whose color is black from the top occupied row of the board, and put them into bucket 1. In the table above, the matching objects for this atom will include our black lion, black weasel, and the "color-inclusive" weasel:
+ <pre>
+  lion-03,lion,rampant,left,black,
+  weasel-02,weasel,sitting,right,black,
+  weasel-03,weasel,running,right,*,
+ </pre>
+
+  <p>Just like one could do it with shapes and colors in GS 1.* and 2.*, one can  also use lists of values with IBP objects. E.g. the atom
+      <pre>
+       (count:2, species:[tiger,lion], direction:right, bucket:0)
+     </pre>
+      will allow the player to pick 2 right-facing tigers or lions.
+
+    <h3>Value ranges</h3>
+
+  <p>A new feature in GS 3.* is  value ranges.
+
+  <p>Suppose the property <tt>angle</tt> is integer-valued, with values ranges from 0 to 360; it is used to describe the orientation of objects (the rotation angle from some initial position). For example, suppose the experiment desisgner uses this property to indicate the angle by which an arrow is rotated, counterclockwise, from the direction "east" (X axis):
+    <pre>
+      image,color,angle
+      arrow-b-0,black,0
+      arrow-b-10,black,10
+      arrow-b-20,black,20
+      arrow-b-30,black,30
+      ...
+      arrow-b-350,black,350
+      arrow-r-0,red,0
+      ...
+ </pre>
+    In this case, it is legal to use the value range syntax, <tt>val1..val2</tt>
+    in the conditions applied to property  <tt>angle</tt>. For example, we can have the rule line
+    <pre>
+(count:*, angle:[0..45,315..360], bucket:[1,2])  (count:*, angle:45..135, bucket:[0,1]) (count:*, angle:135..225, bucket:[3,0])  (count:*, angle:135..225, bucket:[2,3])
+</pre>      
+    This rules means that e.g. every arrow pointing to an approximately northern direction (between angle 45 = NE and angle 135 = NW) can be put into the NE or NW buckets (buckets 2 and 1), etc.
+
+    <p>When creating a rule with a range for some property, the experiment designer should ensure that all objects for which this property is defined contain eiher a numerical value for this propery, or the special value * (which matches all selectors).
+    
+    <h3>Effect on the <em>buckets</em> statement</h3>
+
+    <p>As of GS 2.*, the <a href="arithmetic.html">expression</a> used as the last element of the atom makes use of the variables <tt>ps</tt> and <tt>pc</tt>, which refer to "the most recent bucket into which an object of this shape was put" and  "the most recent bucket into which an object of this shape was put". This syntax is not available for  IPB objects.
+
+<p><em>
+      A proposal wes made, but never implemented, to extend this syntax to apply to IPB objects, so that we could express concepts such as e.g. "the most recent bucket into which an object with this orientation was put". I propose to use the following syntax:
+    <pre>
+      p.<em>property</em>
+    </pre>
+    where <em>property</em> is the name of the property in question. So, for example, if our objects have the property <tt>species</tt>, the variable named
+<tt>p.species</tt> will refer to  "the most recent bucket into which an object sof this species was put".
+</em>
+    
+    <h2><a name="json">Describing a board as a JSON structure</a></h2>
+
+<p>The Game Engine exports the informastion about the current state of the board in JSON format when the Web-based Game Server transmits this information to the GUI client, or when the Captive Game Server sends this information to the ML program that has spawned the CGS.
+	
+<p>When a JSON representation is former for sending to the GUI client, each IPB game piece is identified just by the <tt>image</tt> attribut. The GUI client does not need to know about the properties associated with this object in the properties table, since all it needs is the image.
+
+    <h3><a name="ml">How will this work with ML?</a></h3>
+
+  <strong><em>
+      <p>Question for discussion: What information should be supplied in the JSON representation of the board provided by the Captive Game Server to the ML program?
+	<ul>
+	  <li>If the CGS does not tell the ML program about the properties of the objects, then the ML program does not have essential information about the objects that a human, in a comparable game, would likely be able to infer. So if the CGS does not send the properties to the ML program, the ML program won't be able to play well, if at all.
+	  <li>On the other hand, if the CGS explicitly tells the ML program what properties (as defined in the property file) each object has, then it appears that the ML program will have a bit of an advantage over a human player in the same game, as discussed below.
+	</ul>
+
+  </em></strong>
+
+<em>
+  <p>We can contrast the traditional SC objects and the new IPB objects.
+    With the traditional SC objects, it is very easy for a non-blind and non-color-blind human to divide all objects on the board into several groups according to their shape, and, similarly, into several groups according to their color. A ML player is also told these two properties for each object.
+
+  <p>Within the set of the IPB objects used in a particular game, the properties may be more subtle. Still, by looking at several boards full of heraldic animals -- or even full of unique photographs of live animals -- a human may naturally use his innate image recognition abilities and logical abilities and decide to classify them by species, and maybe by posture as well. Now imagine that the images are cartoon animals, and besides the species and orientation, the experiment designer added the property named <tt>mood</tt> to the properties table, classified the animals into <tt>happy</tt> and  <tt>sad</tt>, and added some rules making use of this  <tt>mood</tt> property. The player may or may not figure that the mood affects the behavior of game pieces, but he well may, again based on his mental picture of the world, and maybe some experience with cartoons.
+
+  <p>Still, a human player is never explicitly told what properties of objects may be used in the rules, and he has to figure that on his own, likely making natural guesses of what features are salient. E.g. if the game pieces are alphabetic glyphs from various alphabets, such as </em><strong>A, &Lambda;, V,  М,  &Delta;,
+  E, &Gamma;, L, &Pi; Ш,
+  O, U, Ո, &Phi;,
+  P, З, C</strong><em>, a human player may need to make guesses as to <strong<>which features may matter</strong>. Is it the geometrical shape of the glyph (with a sharp angle vs. with a right angle vs. with a rounded element)? Or the topology (having or not having a loop)? Is it the alphabet the character may belong too (Latin vs. Greek vs. ...)? Is it the sound expressed by the letter (vowel vs. stop vs. fricative vs. liquid)? On the other hand, if we explicitly give the ML program the list of properties (as given in the property file) for each game piece on the board, the ML program will be able to only look at this finite set of properties.
+
+  <p>Recently (2021-04-13) on Slack Jerry <a href="https://rulegame.slack.com/archives/CKF4M34DB/p1618365633052100">apparently suggested</a> that they can use :"deep net feature representation" to anlyze the images. If something like this can be tried, then perhaps a ML program could try to play against the the Captive Game Server without being explicitly supplied features, just like a human would...
+
+<div class="yellow">
+    <P><strong>Based on Jerry's and Shubham's input at the 2021-04-19 meeting, it was understood that the ML team indeed intends to use image recognition. So their ML application can get the SVG or JPEG file based on the <tt>image</tt> attribute of each object. They don't need to use the explciti property information, so the captive server may choose not to supply it. However, I may also provide an option for the captive server to include it, so that the ML team can have an easier time in some experiments.
+</strong>
+</div>
+      
+</em>
+  
+    <h2>Game transcripts and other output files</h2>
+
+<p>The introduction of the IPB objects will necessitate some changes to the <a name="data.html#saved">CSV data files</a> written by the Game Server for subsequent analysis.
+
+   <h3>The initial board</h3>
+
+<p>In GS 1.* and 2.*, the initial board file describes each game piece by two columns, <tt>shape</tt> and <tt>color</tt>. In GS 3.*, we will add one more column, <tt>objectType</tt>. The traditional SC objects will continue to be described primarily by the two old columns, while the <tt>objectType</tt> column will contain something like <tt>BLACK_SQUARE</tt> empty; the new IPB objects will leave the  <tt>shape</tt> and <tt>color</tt> columns empty (or write <tt>null</tt> to them), while the  <tt>objectType</tt> column will contain the path to the image file (either relative to the server's shape directory, or absolute, as appropriate).
+
+  <p><strong><em>Note that we don't explicitly write the properties of IPB objects to the saved initial board file. The researchers can combine each game piece's image name from this file with the data from the properties file in the directory where the image is located in order to find out the object's properties. If this is an issue for Aria or Ellise, please let me (Vladimir) know!</em></strong>
+  
+<h3>The transcript</h3>
+
+<p>The transcript files won't be affected, as they identify game pieces by their positions on the board.
+
+<h3>The detailed transcript</h3>
+
+<p>When the detailed transcript format was first introduced in GS 1.*, Aria wisely requested that a field named <tt>objectType</tt> be provided. In GS 1.* and 2.*, the value of this field is created from the color and shape properties of the object, and then capitalized, e.g. <tt>BLACK_CIRCLE</tt>. In GS 3.*, we will write the same value in this field for SC objects, while for the new IPB objects the image path will be written into this field, e.g. <tt>/opt/tomcat/game-data/shapes/exp-20210501-a/animals/rampant-lion-03.jpg</tt>.
+  
+    <h2>Compatibility with Game Engine 1.* and 2.*</h2>
+
+    <p>All old (GS 1.* and 2.*) experiment control files (trial list files, rule sets files, initial board files) will continue to be usable in GS 3.*, with the same effect (behavior of the system) as in GS 2.*.
+
+<p>A JSON structure describing a board (such as an initial board file, or a JSON structure sent by the Game Server to the GUI client in response to a <tt>/display</tt> API call) may contain both GS 2.* legacy pieces (described by a <tt>shape</tt> and <tt>color</tt> and GS 3.* IPB objects.
+
+<p>A trial list file may also contain both parameter sets using the tradition SC objects and those making use of the new IPB objects. As mentioned above, however, one cannot combine both types of objects in the random board generator within a single parameter set.
+
+<p>A single rule set file may also have atoms with the legacy 5-tuple structure, and atoms in the new format. Internally, an SC object is handled the same way as an IPB object that has exactly 2 properties defined (shape and color), and a 5-tuple rule atom has the same effect as a new-format rule that explicitly refers to these two properties.
+
+    <hr>
+
+    <div align="center">
+      [<a href="index.html">DOCS HOME</a>]
+      </div>
+  
+</body>
+</html>
