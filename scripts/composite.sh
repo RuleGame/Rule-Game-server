@@ -5,7 +5,7 @@ set sc=`dirname $0`
 set h=`(cd $sc/..; pwd)`
 source "$sc/set-var.sh"
 
-java edu.wisc.game.svg.Composite $argv[1-]
+java edu.wisc.game.svg.Composite "$argv[1-]"
 
 
 
