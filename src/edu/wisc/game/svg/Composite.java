@@ -461,7 +461,7 @@ public class Composite extends ImageObject {
 	"image",
 	"name",
 	"orientation",
-	"d", "b", "c", "s"
+	"d", "b", "c", "s",
 	"d_order",
 	"b_order",
 	"sameshape",
