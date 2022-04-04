@@ -479,8 +479,8 @@ public class Composite extends ImageObject {
 	put("c", ""+ Util.joinNonBlank("", colors));
 
 	    
-	put("sameshape", ""+allSame(shapes));
-	put("samecolor", ""+allSame(colors));
+	put("sameshape", allSame(shapes)? "1":"0");
+	put("samecolor", allSame(colors)? "1":"0");
     }
 	
     /** The SVG code for the composite image, not yet wrapped into  the top-level SVG element */
