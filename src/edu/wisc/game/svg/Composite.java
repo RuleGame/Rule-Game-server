@@ -56,7 +56,8 @@ public class Composite extends ImageObject {
     /** A single element (circle, square, star, triangle) of the composite image */
     private static class Element {
 
-	private static final double[] trianglePP = {0, -1,   Math.sqrt(0.75), 0.5, -Math.sqrt(0.75), 0.5};
+	private static final double[] trianglePP = //{0, -1,   Math.sqrt(0.75), 0.5, -Math.sqrt(0.75), 0.5};
+	{0, 1-Math.sqrt(0.75), 1, 1+Math.sqrt(0.75), -1, 1+Math.sqrt(0.75)};
 	private static final double[] starPP = {0, -1,
 						Math.sin(0.2 * Math.PI), Math.cos(0.2 * Math.PI),
 						-Math.sin(0.4 * Math.PI), -Math.cos(0.4* Math.PI),
