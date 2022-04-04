@@ -418,6 +418,7 @@ public class Composite extends ImageObject {
 		if (c == 'r' || c=='g' || c=='b' || c=='?' ) colors[k] = "" + c;
 		else  throw new IllegalArgumentException("Illegal color char '" + c +"' in component="+s+", in name=" + name);
 		c = s.charAt(1);
+		wild = wild ||  (c=='?');
 		if (c == 'q' || c=='t' || c=='s' || c=='c' || c=='?') shapes[k] = "" + c;
 		else  throw new IllegalArgumentException("Illegal shape char '" + c +"' in component="+s+", in name=" + name);
 		k++;		
