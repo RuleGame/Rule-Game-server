@@ -50,6 +50,12 @@
 
 <p>This ensures backward compatibility, i.e. the ability of Game Server 2.* to interpret older trial list files (which don't have the <tt>colors</tt> and <tt>shapes</tt> parameters) in the same way as they were interpreted by Game Server 1.*.
 
+  <h3>With image-and-property-based objects</h3>
+
+  <p>Since GS 3.*, you can design games with image-and-properties-based (IPB) objects. Unlike games with legacy color-and-shape objects, for a game with IPB objects you need to specify the set of objects using  the <tt>images</tt> column, rather than the  <tt>colors</tt> or  <tt>shape</tt> columns of your trial list file. For details, please see  <a href="object-properties.html#boards">supports Image-and-property-based objects |Controlling the initial board generation</a>.
+
+
+
   <h2><a name="defineBoard">Using prefedined initial boards</a></h2>
 
 <p>Most commonly, a series of episodes is played on randomly generated initial boards; the appropriate parameter set needs to contain the parameters of this random distribution, such as the min and max number of objects, shapes, and colors.

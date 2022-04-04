@@ -113,7 +113,9 @@ public class Composite extends ImageObject {
 	 */
 	String makeSvg(int cx, int cy) {
 	    String name;
-	    int r = (int)( (1 - 0.3*(3-sizeRank))  *R);
+	    // Was:   0.4 : 0.7 : 1
+	    // Paul wants: 3: 4: 5,   i.e. 0.6: 0.8: 0.1
+	    int r = (int)( (1 - 0.2*(3-sizeRank))  *R);
 	    String[] q;
 	    if (shape.equals("c"))  {
 		name = "circle";
@@ -467,8 +469,15 @@ public class Composite extends ImageObject {
     private void computeProperties() {
 	put("name",key);
 	put("orientation", orientation.toLetter());
+	put("d", ""+ Util.joinNonBlank("", sizeRank));
 	put("d_order", ""+Order.compute( sizeRank));
+	put("b", ""+ Util.joinNonBlank("", bright));
 	put("b_order", ""+Order.compute( bright));
+
+	put("s", ""+ Util.joinNonBlank("", shapes));
+	put("c", ""+ Util.joinNonBlank("", colors));
+
+	    
 	put("sameshape", ""+allSame(shapes));
 	put("samecolor", ""+allSame(colors));
     }
