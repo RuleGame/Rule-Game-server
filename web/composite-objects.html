@@ -101,6 +101,16 @@ We can add more orderable features in the future, e.g. texture pattern or tilt.
 
 <p>Names of individual composite objects will appear in initial board files saved by the Game Server. If you create a game that uses pre-defined initial boards, you will use names of individual composite objects in the board description files as well.
 
+	<h2>Test form</h2>
+	
+<form action="GetImageServlet">
+	<input type="text" name="image" size=60 value="/composite/h/d=123/b=321/rq/rq/rq"><br>
+	<input type="button" type="submit">
+	Show this object!
+	       </form>
+
+	
+	
   <h2>Using wildcards to describe a family of composite image objects</h2>
 
 <p>When you create a <a href="para-set.html">parameter set</a> for a game in which initial boards are genereated randomly, populated with game pieces drawn from a certain set of objects, you need to specify the set of objects in the column <tt>images</tt>. While it is possible to describe the set of objects by explicitly listing all of its elements, e.g. <pre>"/composite/h/d=123/rc/bc/gc;/composite/h/d=321/rc/bc/gc;/composite/h/d=222/rc/bc/gc"</pre>, it is often possible and convenient to describe entire family of composite objects by using wildcards.
