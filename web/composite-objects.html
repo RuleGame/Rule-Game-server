@@ -126,42 +126,69 @@ We can add more orderable features in the future, e.g. texture pattern or tilt.
 
 <li>Properties of an objects include the feature strings from its name, such as
   <ul>
-d: 123  (the sequence of elements' sizes)
-b: 321  (the sequence of elements' brightness values)
-etc for whatever features we have, e.g. "t".
+<li>d: 123  (the sequence of elements' sizes)
+<li>b: 321  (the sequence of elements' brightness values)
+	  </uL>
+More of those can be introduced for any features we may add later, e.g. "t".
 
-I desired, we can also add properties that gives you access to the object's elements' shapes and colors, e.g.
+<li>	
+We also have properties that gives you access to the object's elements' shapes and colors, i.e.
+<ul>	
+	<li>
 s: "sqt"
+		<li>
 c: "rbg"
+	</ul>
 
-
-3) In principle, the above properties are sufficient to construct predicates, but obviously this would be very awkward. (E.g. if you want a predicate which hold true on all non-decreasing orders, it would look like
+<li>In principle, the above properties are sufficient to construct predicates, but obviously this would be very awkward. (E.g. if you want a predicate which hold true on all non-decreasing orders, it would look like
 (d: [111, 222, 333, 112, 113, 122, 123, 223, 233]),
-and that's slightly cumbersome. So, similarly to the first version of these specs, we will have some "syntactic sugar", that is properties names, say,
+and that's slightly cumbersome. So we also have some "syntactic sugar", that is properties with names such as 
+<ul>
+	<li>d_order = one of {-1, 0, 1, 2}.
+		Here, -1 stands for "not monotonous", i.e. the sizes of the elements within the image are neither monotonically non-decreasing nor non-increasing. 0 stands for "all elements are same size" (e.g. h/RS1/BT1/GQ1).   1 stands for "non-decreasing, with at least some increase" (from the left to the right, or from the top to the bottom, as the case may be), e.g. 1/1/2 ,  1/3/3, or 1/2/3.   -1 stands for "non-increasing, with at least some decrease", e.g.  2/1/1  or 3/2/1.
 
-d_order = one of {-1, 0, 1, 2}. Here, -1 stands for "not monotonous", i.e. the sizes of the elements within the image are neither monotonically non-decreasing nor non-increasing. 0 stands for "all elements are same size" (e.g. h/RS1/BT1/GQ1).   1 stands for "non-decreasing, with at least some increase" (from the left to the right, or from the top to the bottom, as the case may be), e.g. 1/1/2 ,  1/3/3, or 1/2/3.   -1 stands for "non-increasing, with at least some decrease", e.g.  2/1/1  or 3/2/1.
+Thus a predicate referring to all non-decreasing orders will haves the form <code>(d_order: [0,1])</code>, and that's handier.
+<li>b_order is a similar property for opacity (brightness).
+	</ul>
+	Analogous properties can be added for any other orderable features that may be introduced later.
 
-Thus a predicate referring to all non-decreasing orders will haves the form (d_order: [0,1]), and that's handier.
+	<li>sameshape = 0 or 1  (with 1 = true)
 
-Similarly, we'll have b_order (for brightness), and analogous properties for other orderable features.
-
-4) sameshape = 0 or 1  (with 1 = true)
-
-5) samecolor = 0 or 1 (with 1=true)
-  
+<li>samecolor = 0 or 1 (with 1=true)
+	</ul>
 
   <h2>Sample experiment plans</h2>
   
-<p>To illustrate using composite image objects, an experiment plan (<tt>vm/composite-01</tt>) has been created. You can play it in GS 4.009, starting from the <a href="front-end-form.jsp">Launch page</a>.
+<p>To illustrate using composite image objects, an experiment plan (<tt>vm/composite-01</tt>) has been created. You can play it in GS 4.009, 
+	starting from the <a href="front-end-form.jsp">Launch page</a>. (You can also see the text of the
+	<a href="https://github.com/lupyanlab/Rule-Game-game-data/tree/master/trial-lists/vm/composite-01">trial list files</a> and 
+	<a href="https://github.com/lupyanlab/Rule-Game-game-data/tree/master/rules/vm/composite-01"?> rule set files</a> on GitHub).
+	
 
 <p>To make the details of composite images more visible, you may want to make the 6x6 board appear as large as possible. To do that, use a compute with a large monitor; maximize the visual area of the web browser window (with F11); turn off the "Debug" mode of the GUI client.
 
   <h2>Command-line unit testing</h2>
 
+	<p>Since composite image objects are dynamically generated, there is no directory with SVG file and a property file where they are stored. Nonetheless, if you would  like to see what the SVG file for a particular object would like, or what the values of its properties are, this can be done with the help of a command-line tool on sapir.
+		
+<p>Example:		
+	
 <pre>
   /home/vmenkov/w2020/game/scripts/composite.sh /composite/h/d=123
 </pre>
   
+<p>In this example, the object has elements of the specified sizes, of the default opacity (high), default color (red), and default shape (square).
+
+<pre>
+  /home/vmenkov/w2020/game/scripts/composite.sh /composite/h/d=123/b=*/r?/g?/b?
+</pre>
+
+<p>In this example, the script will randomly pick one object from the family of objects matching the description. That is, the sizes and colors are specified, but the opacity values and shapes will be picked randomly.
+	
+	
+<p>
+	
+	
 </body>
 </html>
 
