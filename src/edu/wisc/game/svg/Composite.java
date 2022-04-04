@@ -461,6 +461,7 @@ public class Composite extends ImageObject {
 	"image",
 	"name",
 	"orientation",
+	"d", "b", "c", "s"
 	"d_order",
 	"b_order",
 	"sameshape",
@@ -542,6 +543,7 @@ public class Composite extends ImageObject {
     public static void main(String argv[]) throws IOException {
 	Random random = new Random();
 	Vector<Composite> v = new Vector<>();
+	Vector<Composite> ov = new Vector<>();
 	for(String a: argv) {
 	    Composite d = new  Composite(a);
 	    System.err.println("d=" + d);
@@ -551,10 +553,11 @@ public class Composite extends ImageObject {
 	    Composite b = d.sample(random);
 	    System.err.println("b=" + b);
 	    System.out.println( b.getSvg());
+	    ov.add(b);	
 	}
 
 
-	
+	/*
 	Composite.Generator g = new Composite.Generator(v.toArray(new Composite[0]));
 	System.err.println("--- Generator, size="+g.sumSize+" ---");
 	Vector<String> headers = new Vector<>();
@@ -572,6 +575,7 @@ public class Composite extends ImageObject {
 	    System.out.println( b.getSvg());
 	    ov.add(b);
 	}
+	*/
 
 	// output dir
 	File dir = new File("tmp");
