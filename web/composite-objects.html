@@ -6,7 +6,7 @@
  </head>
 <body>
   <h1>Composite Image objects</h1>
-  <div    align="center">Updated: April 3, 2022, for GS ver. 4.009</div>
+  <div    align="center">Updated: April 4, 2022, for GS ver. 4.009</div>
 
   <p>Since version 3.*, the Game Server <a href="object-properties.html">supports Image-and-property-based objects.</a> This document discusses a particular class of such objects, the <strong>composite image objects</strong> introduced in GS 4.009. Unlike the images for the objects previously available in the Game Server, the composite image objects are not pre-generated and stored in /opt/tomcat/game-data (and the GitHub repository); instead, they are generated dynamically in the Game Server whenever they are needed.
 
@@ -25,6 +25,25 @@
       <li>
 	<tt>/composite/h/b=321/rq/rq/rq</tt>
 	<img src="GetImageServlet?image=/composite/h/b=321/rq/rq/rq">
+    </ul>
+
+<P>One can also use composite image objects with fewer or more than 3 elements. One element is allowed too:
+    <ul>
+      <li>
+	<tt>/composite/h1/d=3/b=3/gc</tt>
+	<img src="GetImageServlet?image=/composite/h1/d=3/b=3/gc">
+     <li>
+	<tt>/composite/h1/d=2/b=2/gc</tt>
+	<img src="GetImageServlet?image=/composite/h1/d=2/b=2/gc">
+     <li>
+	<tt>/composite/h1/d=1/b=1/gc</tt>
+	<img src="GetImageServlet?image=/composite/h1/d=1/b=1/gc">
+    <li>
+	<tt>/composite/h5/d=11233/b=31313/rs/rs/rs/rs/rs</tt>
+	<img src="GetImageServlet?image=/composite/h5/d=11233/b=31313/rs/rs/rs/rs/rs">
+ <li>
+	<tt>/composite/v2/d=31/b=13/bt/bt</tt>
+	<img src="GetImageServlet?image=/composite/v2/d=31/b=13/bt/bt">
     </ul>
     
     <h2>How to use composite image objects?</h2>

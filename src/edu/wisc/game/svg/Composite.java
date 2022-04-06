@@ -56,13 +56,22 @@ public class Composite extends ImageObject {
     /** A single element (circle, square, star, triangle) of the composite image */
     private static class Element {
 
+
 	private static final double[] trianglePP = //{0, -1,   Math.sqrt(0.75), 0.5, -Math.sqrt(0.75), 0.5};
 	{0, -Math.sqrt(0.75), 1, Math.sqrt(0.75), -1, Math.sqrt(0.75)};
-	private static final double[] starPP = {0, -1,
+	private static double alpha = 0.1*Math.PI;
+	private static final double[] starPP0 = {0, -1,
 						Math.sin(0.2 * Math.PI), Math.cos(0.2 * Math.PI),
 						-Math.sin(0.4 * Math.PI), -Math.cos(0.4* Math.PI),
 						Math.sin(0.4 * Math.PI), -Math.cos(0.4 * Math.PI),
 						-Math.sin(0.2 * Math.PI), Math.cos(0.2 * Math.PI)};
+
+	private static final double[] starPP =
+	{0, -Math.cos(alpha),
+	 2*Math.sin(alpha), Math.cos(alpha),
+	 -1, -(1-Math.sin(alpha))*Math.sin(alpha)/Math.cos(alpha),
+	 1, -(1-Math.sin(alpha))*Math.sin(alpha)/Math.cos(alpha),
+	 -2*Math.sin(alpha), Math.cos(alpha)};
 
 	/** @return "x1 y1 x2 y2 x3 y3 ..." */
 	private static String mkPolygonPara(int cx, int cy, int r,  double[] pp) {
