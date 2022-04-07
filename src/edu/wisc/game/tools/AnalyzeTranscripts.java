@@ -49,6 +49,8 @@ public class AnalyzeTranscripts {
 
     /** Do we need to compute p0? */
     private static boolean needP0=false;
+    /** Do we need to print out the board position after p0? */
+    private static boolean needBoards=false;
     /** How should be compute p0? (Using which baseline random player model?) */
     private static ReplayedEpisode.RandomPlayer randomPlayerModel=//null;
 	ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;	
@@ -147,6 +149,8 @@ public class AnalyzeTranscripts {
 		} else {
 		    usage("Invalid model name: " + mode);
 		}
+	    } else if  (a.equals("-boards")) {
+		needBoards = true;
 	    } else if  (a.equals("-pre")) {
 		weWantPredecessorEnvironment  = true;
 		System.out.println("weWantPredecessorEnvironment=" + weWantPredecessorEnvironment);
@@ -183,6 +187,8 @@ public class AnalyzeTranscripts {
 	    }
 	}
 
+	if (needBoards && !needP0) throw new IllegalArgumentException("Cannot use option -boards without -p0");
+	
 	plans = expandPlans(em, plans);
 
 	PlayerList plist = new 	PlayerList(em,  pids,  nicknames,   uids);
@@ -402,10 +408,12 @@ public class AnalyzeTranscripts {
 	EpisodeHandle eh0 =  includedEpisodes.firstElement();
 
 	double[] p0=null;
+	Vector<Board> boardHistory = (needBoards)? new Vector<>(): null;
 	String outHeader="#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,orderInSeries,episodeId," + "moveNo,timestamp,y,x,by,bx,code";
 	if (needP0) {
 	    outHeader += ",p0";
-	    p0 = computeP0(section, eh0.para, eh0.ruleSetName);
+	    p0 = computeP0(section, eh0.para, eh0.ruleSetName, boardHistory);
+	    if (needBoards) outHeader += ",board";
 	}
 	if (weWantPredecessorEnvironment) {
 	    outHeader += ",precedingRules";
@@ -517,8 +525,16 @@ public class AnalyzeTranscripts {
     /** Reconstructs and replays the historical episode, computing p0 for
 	every pick or move attempt.
 	
+	@param subsections A (preprocessed) transcript by a player, which covers an entire series of  episodes
+	@param para The parameter set that was in effect for this series
+	@param boardHistory If not null, we will save the board before each move to that vector. The number of 
+	entries put into this vector will be equal to the number of values put into the return value (p0)
+	@return p0 The p0 values for each move.
+
      */
-    private double[] computeP0(Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections, ParaSet para, String ruleSetName)  throws  IOException, IllegalInputException,  RuleParseException{
+    private double[] computeP0(Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections, ParaSet para, String ruleSetName,
+			       Vector<Board> boardHistory
+			       )  throws  IOException, IllegalInputException,  RuleParseException{
 	RuleSet rules = AllRuleSets.obtain( ruleSetName);
 
 	double [] p0 = new double[sumLen(subsections)];
@@ -544,6 +560,14 @@ public class AnalyzeTranscripts {
 
 		System.out.println("j=" + j);
 		System.out.println(rep.graphicDisplay());
+
+		if (boardHistory!=null) {		
+		    Board b = rep.getCurrentBoard();
+		    boardHistory.add(b);
+		}
+
+
+
 		
 		double p =rep.computeP0(e.pick, e.code);	    
 		p0[k++] = p;
