@@ -283,7 +283,10 @@ public class Episode {
 	}
 	
 
-	/** For each piece, where can it go? (OR of all rules) */
+	/** For each piece, where can it go? (OR of all rules). 
+	    The acceptanceMap needs to be computed before this
+	    method can be called.
+	 */
 	BitSet[] moveableTo() {
 	    BitSet[] q =  new BitSet[Board.N*Board.N+1];
 	    for(int pos=0; pos<pieces.length; pos++) {
@@ -973,7 +976,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
 
 
-    public static final String version = "4.009";
+    public static final String version = "4.010";
 
     public static String getVersion() { return version; }
 

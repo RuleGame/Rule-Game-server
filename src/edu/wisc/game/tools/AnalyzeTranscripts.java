@@ -16,6 +16,7 @@ import edu.wisc.game.rest.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.saved.*;
+import edu.wisc.game.reflect.*;
 import edu.wisc.game.parser.RuleParseException;
 
 /** Methods for the statistical analysis of game transcripts */
@@ -407,13 +408,15 @@ public class AnalyzeTranscripts {
 	if (includedEpisodes.size()==0) return;
 	EpisodeHandle eh0 =  includedEpisodes.firstElement();
 
+	HashSet<String> excludableNames = Util.array2set("buckets", "dropped");
+
 	double[] p0=null;
 	Vector<Board> boardHistory = (needBoards)? new Vector<>(): null;
 	String outHeader="#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,orderInSeries,episodeId," + "moveNo,timestamp,y,x,by,bx,code";
 	if (needP0) {
 	    outHeader += ",p0";
 	    p0 = computeP0(section, eh0.para, eh0.ruleSetName, boardHistory);
-	    if (needBoards) outHeader += ",board";
+	    // if (needBoards) outHeader += ",board";
 	}
 	if (weWantPredecessorEnvironment) {
 	    outHeader += ",precedingRules";
@@ -423,8 +426,11 @@ public class AnalyzeTranscripts {
 	File d=new File(base, rid);
 	File g=new File(d, includedEpisodes.firstElement().playerId + ".split-transcripts.csv");		
 	PrintWriter w =  new PrintWriter(new FileWriter(g, false));
-
 	w.println(outHeader);
+	PrintWriter wb = null;
+	
+	if (needBoards) outHeader += ",board";
+	
 
 	int je =0, jp=0;
 	for(TranscriptManager.ReadTranscriptData.Entry[] subsection: section) {
@@ -436,7 +442,17 @@ public class AnalyzeTranscripts {
 		for(int j=2; j<e.csv.nCol(); j++) {
 		    w.print(","+ImportCSV.escape(e.csv.getCol(j)));
 		}
-		if (needP0) w.print(","+ p0[jp++]);
+		if (needP0) {
+		    w.print(","+ p0[jp]);
+		    if (needBoards) {
+			Board b = boardHistory.get(jp);
+			String s = JsonReflect.reflectToJSONObject(b, true, excludableNames).toString();
+			s =  ImportCSV.escape(s);
+			w.print("," + s);
+		    }
+		    jp++;
+					
+		}
 		if (weWantPredecessorEnvironment) {
 		    w.print("," + ImportCSV.escape( String.join(";", eh.precedingRules)));
 		}
@@ -585,8 +601,9 @@ public class AnalyzeTranscripts {
 	return p0;
     }
 
-    
-    HashMap<String,Board> boards;
+
+    /** The initial boards for all episodes of this player */
+    private HashMap<String,Board> boards;
     
     /** Reads one player's transcript, and prepares a complete report 
 	for that player.

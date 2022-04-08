@@ -168,14 +168,17 @@ Last Name of Researcher,CFR DQ Crime Category,CFR Subsection,State,Citation to A
     }
     */
 
-    /** Process a string for writing into a CSV file. Escapes any double quotes the string contains, and surrounds it with double quotes if needed. We also replace multiple spaces with single spaces.*/
+    /** Process a string for writing into a CSV file. Escapes any
+	double quotes the string contains, and surrounds it with
+	double quotes if needed. We also replace multiple spaces with
+	single spaces.*/
     public static String escape(String s) {
 	if (s==null) return "";
 	s = s.trim().replaceAll("\\s+", " ");
 
 	final String q = "\"";
 
-	s = s.replaceAll(q, "'").replaceAll(",", ";");
+	//s = s.replaceAll(q, "'").replaceAll(",", ";");
 
 	boolean needQ=(s.indexOf(",")>=0);
 

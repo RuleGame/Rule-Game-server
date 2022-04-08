@@ -189,8 +189,8 @@ public class Piece  implements Serializable {
     private int x;
     private int y;
 
-    /** Empty vector for the pieces still on the board; contains the destination
-	bucket number for the pieces that have been removed */
+    /** Contains null if the piece is still on the board; contains the
+	destination bucket number for the piece that have been	removed */
     Integer dropped=null;
     
     public long getId() { return id; }

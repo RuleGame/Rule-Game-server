@@ -127,6 +127,10 @@ analyze-transcripts.sh -pid -file my-pid-list.csv
 
 <p>The curve fitting parameters are written into a file named <tt>summary-flat.csv</tt>, <tt>summary-p0-COMPLETELY_RANDOM.csv</tt>, or <tt>summary-p0-MCP.csv</tt>, as the case may be.
 
+<p><strong>3. Board positions.</strong> If the <tt>-boards</tt> option is supplied, the analyzer saves the board position before each move. It is written into the same CSV output file, in a column named "board" that follows the column "p0". The board  description is saved in a JSON format, similar to what is used in the client-server communication (as illustrated in the <a href="ame-api-2.html">Game API</a> document, under <tt>/display</tt>).
+
+<p>This option can only be used with the <tt>-p0...</tt> option.
+  
   <h2><a name="p0">The computation of p0</a></h2>
 
 <p>Computing the p0 in a sensible way is somewhat complicated by the fact that, when we see a "failed pick" recorded in the transcript, we do not know what the player's true intention was: did he hope to move a game piece into a bucket (but could not, because the piece wasn't movable), or did he just want to find if the piece is movable (with the intent to just drop it even if it was)?
