@@ -416,7 +416,7 @@ public class AnalyzeTranscripts {
 	if (needP0) {
 	    outHeader += ",p0";
 	    p0 = computeP0(section, eh0.para, eh0.ruleSetName, boardHistory);
-	    // if (needBoards) outHeader += ",board";
+	    if (needBoards) outHeader += ",board";
 	}
 	if (weWantPredecessorEnvironment) {
 	    outHeader += ",precedingRules";
@@ -427,9 +427,7 @@ public class AnalyzeTranscripts {
 	File g=new File(d, includedEpisodes.firstElement().playerId + ".split-transcripts.csv");		
 	PrintWriter w =  new PrintWriter(new FileWriter(g, false));
 	w.println(outHeader);
-	PrintWriter wb = null;
-	
-	if (needBoards) outHeader += ",board";
+	//PrintWriter wb = null;
 	
 
 	int je =0, jp=0;
