@@ -24,14 +24,11 @@ import  edu.wisc.game.sql.ImageObject;
 */
 public class Composite extends ImageObject {
 
-    /** How many elements in a composite image */
-    final int N; // 3
-    
     /** Max size of a single element */
     final static int R=20;
     static final int margin=0;
     /** If true, show the bounds of squares */
-    static final boolean framing = false;
+    static final boolean framing = true; //false;
     /** Size of the entire SVG */
     final int H; // =N*2*(R+margin);
         
@@ -122,11 +119,12 @@ public class Composite extends ImageObject {
 
 	 */
 	String makeSvg(int cx, int cy) {
-	    String name;
+	    String name=null;
 	    // Was:   0.4 : 0.7 : 1
 	    // Paul wants: 3: 4: 5,   i.e. 0.6: 0.8: 0.1
 	    int r = (int)( (1 - 0.2*(3-sizeRank))  *R);
-	    String[] q;
+	    String[] q = null;
+
 	    if (shape.equals("c"))  {
 		name = "circle";
 		q = new String[] {"cx", ""+cx, "cy", ""+cy, "r", ""+r};
@@ -141,18 +139,22 @@ public class Composite extends ImageObject {
 	    } else if  (shape.equals("s"))  {
 		name = "polygon";
 		q = new String[] { "points", mkPolygonPara(cx, cy, r, starPP)};
+	    } else if  (shape.equals("x"))  {
+		// skip
 	    } else throw new IllegalArgumentException("Illegal shape: " + shape);
-
-	    Vector<String> a = Util.array2vector(q);
-	    a.add("fill");
-	    a.add(color);
-	    if (bright!=3) {
-		a.add( "fill-opacity");
-		double opa = (bright==1)? 0.15: 0.4;
-		a.add("" + opa);
+	    String w="";
+	    if (q!=null) {
+		Vector<String> a = Util.array2vector(q);
+		a.add("fill");
+		a.add(color);
+		if (bright!=3) {
+		    a.add( "fill-opacity");
+		    double opa = (bright==1)? 0.15: 0.4;
+		    a.add("" + opa);
+		}
+		w += elt(name, a.toArray(new String[0]));
 	    }
-	    String w = elt(name, a.toArray(new String[0]));
-
+	    
 	    if (framing) {
 		w += "\n" +  elt("rect", "x", ""+(cx-R), "y", ""+(cy-R),
 			     "width", ""+(2*R), "height", ""+(2*R), "fill-opacity", "0",
@@ -166,19 +168,78 @@ public class Composite extends ImageObject {
 
     /** Describes the orientation of a composite image */
     enum Orientation {
-	VERTICAL, HORIZONTAL, ANY;
+	VERTICAL, HORIZONTAL, GRID, ANY;
 	String toLetter() {
 	    return  (this == VERTICAL) ? "v":
-		(this == HORIZONTAL) ? "h": "?";
+		(this == HORIZONTAL) ? "h":
+		(this == GRID) ? "g":
+		"?";
 	}
 	/** If this is a wildcard, randomly picks a "concrete" orientation */
-	Orientation sample(Random random) {
-	    return (this==ANY) ?
-		(random.nextBoolean()? VERTICAL: HORIZONTAL): this;
-	}
-		       
+	//Orientation sample(Random random) {
+	//return (this==ANY) ?
+	//(random.nextBoolean()? VERTICAL: HORIZONTAL): this;
+	//}		       
     };
-    Orientation orientation;
+
+    static class Geometry {
+	/** If true, this is a wildcard object, representing a family ({h,v}) */
+	final boolean any;
+	/** How many elements in a composite image (rows, columns)*/
+	final int NR, NC; // 3
+	Geometry(int nr, int nc, boolean _any) {
+	    any = _any;
+	    NR = nr; NC=nc;
+	}
+	/** The total number of elements in the grid */
+	int N() { return NR * NC; }
+	/** Is this a row, a column, or a grid? Or a wildcard? */
+	Orientation getOrientation() {
+	    return any? Orientation.ANY:
+		NR==1? Orientation.HORIZONTAL:
+		NC==1? Orientation.VERTICAL:
+		Orientation.GRID;
+	}
+
+
+	private static Pattern nPat =  Pattern.compile("/([hvg\\?])([0-9]*)/");
+	/** Looks for the /hN/ component in the name */    
+	static Geometry extractGeometry(String name) {
+	    Matcher m = nPat.matcher(name);
+	    int nr=1, nc=1;
+	    if (m.find()) {
+		String so = m.group(1);
+		String sn = m.group(2);
+		boolean any =  so.equals("?");
+		if (so.equals("h") || any) {
+		    nc = sn.equals("") ? 3 : Integer.parseInt(sn);
+		} else if (so.equals("v")) {
+		    nr = sn.equals("") ? 3 : Integer.parseInt(sn);
+		} else if (so.equals("g")) {
+		    if (sn.length()!=2) throw new IllegalArgumentException("Invalid component /g"+sn+" in name=" + name+ ". The /g flag must be always followed by exactly 2 digits");
+		    nr = sn.charAt(0) - '0';
+		    nc = sn.charAt(1) - '0';
+		}
+		return new Geometry(nr,nc, any);		
+	    } else  throw new IllegalArgumentException("No /h, /v, /?, or /g found in the name=" + name);
+	}
+
+	/** If this is a wildcard, randomly picks a "concrete" orientation */
+	Geometry sample(Random random) {
+	    if (any) {
+		return random.nextBoolean()?
+		    new Geometry( NR, NC, false):
+		    new Geometry( NC, NR, false);
+	    } else return this;
+	}		       
+
+	
+    }
+
+    
+    Geometry g;
+    
+    //Orientation orientation;
     private boolean wild = false;
     /** Does the name contain wildcards, thus describing a family of 
 	Composite images, rather than a single "concrete" image? */
@@ -198,7 +259,9 @@ public class Composite extends ImageObject {
     
     /** Shapes and colors of all elements. 'q', 't' etc, or 'r', 'g', 'b'. May also contain '?' */
     String[] shapes, colors;
-    final static String[] allShapes = {"c", "s", "q", "t"}, allColors={"r","g","b"};
+    /** "x" goes in position 0, so that it can be excluded in random selection */
+    final static String[] allShapes = {"x", "c", "s", "q", "t"},
+	allColors={"x", "r","g","b"};
     
     private String svg;
     public String getSvg() { return svg; }
@@ -224,21 +287,25 @@ public class Composite extends ImageObject {
     /** Computes a name based on stored parameters. This is useful during 
 	random sample generation */
     private String mkName() {
-	String s = prefix + orientation.toLetter();
+	String s = prefix + g.getOrientation().toLetter();
 	s += field("d", sizeRank);
 	s += field("b", bright);
-	for(int j=0; j<N; j++) {
+	for(int j=0; j<N(); j++) {
 	    s += "/" + 	colors[j] + shapes[j];
 	}	    
 	return s;	       
     }
+
+
+    /** The total number of elements in the grid */
+    private int N() { return g.N(); }
     
     public String toString() {
-	String s = "[Composite ImageObject Description: orientation="+orientation+", sizes=" + joinInt(sizeRank) +
+	String s = "[Composite ImageObject Description: orientation="+g.getOrientation()+", sizes=" + joinInt(sizeRank) +
 	    ", brightness=" + joinInt(bright) +
 	    ", pieces=";
 	Vector<String> v = new Vector<>();
-	for(int j=0; j<N; j++) {
+	for(int j=0; j<N(); j++) {
 	    v.add(		colors[j] + shapes[j] );
 	}
 	s += String.join(" ",v);
@@ -250,14 +317,14 @@ public class Composite extends ImageObject {
     */
     private int[] parseVal(String val) {
 	
-	int [] q = new int[N];
+	int [] q = new int[N()];
 	if (val.equals("*")) {
 	    wild=true;
 	    return new int[]{ANY, ANY, ANY};
 	}
 	int k=0;
 	for(int j=0; j<val.length(); j++) {
-	    if (k>=N)  throw new IllegalArgumentException("String too long: " + val);
+	    if (k>=N())  throw new IllegalArgumentException("String too long: " + val);
 	    char c = val.charAt(j);
 	    if (c == '?') {
 		wild = true;
@@ -266,33 +333,35 @@ public class Composite extends ImageObject {
 	    else if (c>='1' && c<='0'+M) q[k++] = c - '0';
 	    else if (c=='*' && j+1==val.length()) { // '*' at the end of string
 		wild = true;
-		while(k<N)  q[k++] = ANY;
+		while(k<N())  q[k++] = ANY;
 	    }
 	    else throw new IllegalArgumentException("Character " + c + " is not allowed. String=" + val);
 	}
-	if (k<N)  throw new IllegalArgumentException("String too short: " + val);
+	if (k<N())  throw new IllegalArgumentException("String too short: " + val);
 	return q;
     }
 
 
     /** Common initializer for all constructors */
-    private Composite(int _N) {
+    private Composite(Geometry geo) {
 	super();
-	N = _N;
-	H=N*2*(R+margin);
+	g = geo;
+	wild = g.any;
+	
+	H=Math.max(g.NR, g.NC)*2*(R+margin);
 	//initMMM();
 
-	char[] a=new char[N];
+	char[] a=new char[N()];
 	Arrays.fill( a, (char)('0' + M));
 	MMM=new String(a);
-	sizeRank=new int[N];
+	sizeRank=new int[N()];
 	Arrays.fill(sizeRank, M);
-	bright=new int[N];
+	bright=new int[N()];
 	Arrays.fill(bright, M);
 	
 
-	shapes=new String[N];
-	colors=new String[N];
+	shapes=new String[N()];
+	colors=new String[N()];
 	
 	//sizeRank = new int[N];
 	//Arrays.fill( sizeRank, M);
@@ -303,15 +372,14 @@ public class Composite extends ImageObject {
     /** Creates a new "concrete" Composite object patterned on a particular object that has
 	wildcards */
     private Composite(Composite p, Random random) {
-	this(p.N);
-	orientation = p.orientation.sample(random);
-	for(int j=0; j<N; j++) {
+	this(p.g.sample(random));
+	for(int j=0; j<N(); j++) {
 	    sizeRank[j] = (p.sizeRank[j]==ANY)? 1+random.nextInt(M) : p.sizeRank[j];
 	    bright[j] = (p.bright[j]==ANY)? 1+random.nextInt(M) : p.bright[j];
 	}
-	for(int j=0; j<N; j++) {
-	    shapes[j] = p.shapes[j].equals("?")? allShapes[random.nextInt(allShapes.length)] : p.shapes[j];
-	    colors[j] = p.colors[j].equals("?")? allColors[random.nextInt(allColors.length)] : p.colors[j];
+	for(int j=0; j<N(); j++) {
+	    shapes[j] = p.shapes[j].equals("?")? allShapes[1+random.nextInt(allShapes.length-1)] : p.shapes[j];
+	    colors[j] = p.colors[j].equals("?")? allColors[1+random.nextInt(allColors.length-1)] : p.colors[j];
 	}
 	key = mkName();
 	svg = makeFullSvg();
@@ -325,14 +393,14 @@ public class Composite extends ImageObject {
     public int familySize() {
   	if (!wild) return 1;
 	int n = 1;
-	if (orientation==Orientation.ANY) n*=2;
-	for(int j=0; j<N; j++) {
+	if (g.any) n*=2;
+	for(int j=0; j<N(); j++) {
 	    if (sizeRank[j]==ANY) n *= M;
 	    if (bright[j]==ANY)  n *= M;
 	}
-	for(int j=0; j<N; j++) {
-	    if (shapes[j].equals("?")) n *= allShapes.length;
-	    if (colors[j].equals("?")) n *= allColors.length;
+	for(int j=0; j<N(); j++) {
+	    if (shapes[j].equals("?")) n *= allShapes.length-1;
+	    if (colors[j].equals("?")) n *= allColors.length-1;
 	}	
 	return n;
     }
@@ -349,19 +417,8 @@ public class Composite extends ImageObject {
 	return name.startsWith(prefix);
     }
 
-    private static Pattern nPat =  Pattern.compile("/[hv\\?]([0-9]+)/");
-    private static Pattern nPat2 =  Pattern.compile("([hv\\?])([0-9]*)");
+    private static Pattern nPat2 =  Pattern.compile("([hvg\\?])([0-9]*)");
 
-    /** Looks for the /hN/ component in the name */    
-    private static int extractN(String name) {
-	int n=3; // default
-	Matcher m = nPat.matcher(name);
-	if (m.find()) {
-	    String s = m.group(1);
-	    n = Integer.parseInt(s);
-	}
-	return n;
-    }
 
     
     /** Constructs a concrete or "family" Composite object based
@@ -370,9 +427,9 @@ public class Composite extends ImageObject {
 	@return A concrete or "family" Composite ImageObject
     */
     public Composite(String name) {
-	this(extractN(name));	
+	this(Geometry.extractGeometry(name));
 	key = name;
-	for(int j=0; j<N; j++) {
+	for(int j=0; j<N(); j++) {
 	    shapes[j] = "q";
 	    colors[j] = "r";
 	}
@@ -394,7 +451,8 @@ public class Composite extends ImageObject {
 	    
 	    if (first) {
 		Matcher m = nPat2.matcher(s);
-		if (!m.matches()) throw new IllegalArgumentException("Expected h or v (plus optionally N), found '"+s+"' in name=" + name);
+		if (!m.matches()) throw new IllegalArgumentException("Expected h, v, or g (plus optionally N), found '"+s+"' in name=" + name);
+		/*
 		String z=m.group(1);
 		
 		if (z.equals("h")) orientation=Orientation.HORIZONTAL;
@@ -404,6 +462,7 @@ public class Composite extends ImageObject {
 		    wild =true;
 		}
 		else throw new IllegalArgumentException("Expected h or v, found '"+s+"' in name=" + name);
+		*/
 		first=false;
 		continue;
 	    }
@@ -420,17 +479,21 @@ public class Composite extends ImageObject {
 		    else if (key.equals("b")) bright=vals;
 		    else  throw new IllegalArgumentException("Unknown key="+key+" in name=" + name);
 		} else  throw new IllegalArgumentException("Cannot parse component="+s+" in name=" + name);
-	    } else if (k<N) {  // rq
+	    } else if (k<N()) {  // rq
 		// System.out.println("piece = " +  s);
 		if (s.length()!=2)  throw new IllegalArgumentException("Illegal length of component="+s+" (expected 2 chars, e.g. 'rq', found "+s+") in name=" + name);
 		char c = s.charAt(0);
 		wild = wild ||  (c=='?');
-		if (c == 'r' || c=='g' || c=='b' || c=='?' ) colors[k] = "" + c;
-		else  throw new IllegalArgumentException("Illegal color char '" + c +"' in component="+s+", in name=" + name);
+		colors[k] = choose(c, allColors);
+		if (colors[k] == null)  throw new IllegalArgumentException("Illegal color char '" + c +"' in component="+s+", in name=" + name);
+
 		c = s.charAt(1);
 		wild = wild ||  (c=='?');
-		if (c == 'q' || c=='t' || c=='s' || c=='c' || c=='?') shapes[k] = "" + c;
-		else  throw new IllegalArgumentException("Illegal shape char '" + c +"' in component="+s+", in name=" + name);
+		shapes[k] = choose(c, allShapes);
+		if (shapes[k] == null) throw new IllegalArgumentException("Illegal shape char '" + c +"' in component="+s+", in name=" + name);
+
+		if (colors[k].equals("x") && !shapes[k].equals("x"))  throw new IllegalArgumentException("Color 'x' cannot be used unless the shape is also 'x'");
+		
 		k++;		
 	    }
 	    else  throw new IllegalArgumentException("Extra component="+s+" in name=" + name);
@@ -439,8 +502,15 @@ public class Composite extends ImageObject {
 	if (!wild) computeProperties();
     }
 
-	int dummy;
-	
+    static private String choose(char c, String[] all) {
+	if (c=='?') return  "" + c;
+	for(String z: allShapes) {
+	    if (z.equals(""+c)) return z;
+	}
+	return null;
+    }
+
+    
     /** d_order = one of {-1, 0, 1, 2}. Here, -1 stands for "not monotonous", i.e. the sizes of the elements within the image are neither monotonically non-decreasing nor non-increasing. 0 stands for "all elements are same size" (e.g. h/RS1/BT1/GQ1).   1 stands for "non-decreasing, with at least some increase" (from the left to the right, or from the top to the bottom, as the case may be), e.g. 1/1/2 ,  1/3/3, or 1/2/3.   -1 stands for "non-increasing, with at least some decrease", e.g.  2/1/1  or 3/2/1. 2 stands for "non-monotonic", e.g. 1/2/1
      */
     static class Order {
@@ -480,7 +550,7 @@ public class Composite extends ImageObject {
 	
     private void computeProperties() {
 	put("name",key);
-	put("orientation", orientation.toLetter());
+	put("orientation", g.getOrientation().toLetter());
 	put("d", ""+ Util.joinNonBlank("", sizeRank));
 	put("d_order", ""+Order.compute( sizeRank));
 	put("b", ""+ Util.joinNonBlank("", bright));
@@ -501,14 +571,22 @@ public class Composite extends ImageObject {
 			   "Abstract");
 	}
 	Vector<String> v = new Vector<>();
-	for(int j=0; j<N; j++) {
-	    Element e = new Element(shapes[j], colors[j], sizeRank[j], bright[j]);
-	    int cx = H/2, cy=H/2;
-	    int t = (R+margin)*(1+2*j);
-	    if (orientation==Orientation.VERTICAL) cy = t;
-	    else cx = t;
-	    String s = e.makeSvg(cx, cy);	    
-	    v.add(s);
+
+	int dx =0, dy=0;
+	if (g.NC<g.NR) dx = (g.NR-g.NC);
+	if (g.NR<g.NC) dy = (g.NC-g.NR);
+
+	int j=0;
+	for(int row=0; row<g.NR; row++) {
+	    for(int col=0; col<g.NC; col++) {
+		int cx = (R+margin) * (1 + 2*col + dx);
+		int cy = (R+margin) * (1 + 2*row + dy);
+	
+		Element e = new Element(shapes[j], colors[j], sizeRank[j], bright[j]);
+		String s = e.makeSvg(cx, cy);	    
+		v.add(s);
+		j++;
+	    }
 	}
 	if (framing) {
 	    v.add(elt("rect", "x", "0", "y", "0",
