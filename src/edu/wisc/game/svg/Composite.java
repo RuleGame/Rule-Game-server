@@ -504,7 +504,7 @@ public class Composite extends ImageObject {
 
     static private String choose(char c, String[] all) {
 	if (c=='?') return  "" + c;
-	for(String z: allShapes) {
+	for(String z: all) {
 	    if (z.equals(""+c)) return z;
 	}
 	return null;

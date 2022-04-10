@@ -6,7 +6,7 @@
  </head>
 <body>
   <h1>Composite Image objects</h1>
-  <div    align="center">Updated: April 4, 2022, for GS ver. 4.009</div>
+  <div    align="center">Updated: April 10, 2022, for GS ver. 4.011</div>
 
   <p>Since version 3.*, the Game Server <a href="object-properties.html">supports Image-and-property-based objects.</a> This document discusses a particular class of such objects, the <strong>composite image objects</strong> introduced in GS 4.009. Unlike the images for the objects previously available in the Game Server, the composite image objects are not pre-generated and stored in /opt/tomcat/game-data (and the GitHub repository); instead, they are generated dynamically in the Game Server whenever they are needed.
 
@@ -46,6 +46,23 @@
 	<img src="GetImageServlet?image=/composite/v2/d=31/b=13/bt/bt">
     </ul>
 
+<p>Since GS 4.011, as proposed by Charles, the Game Server are also have "grid" composite objects. This is a generalization of the "h" and "v" objects; they are assembled from elements arranged into a rectangular grid with an arbitrary number of rows and columns.
+
+<table border="1">
+  <tr>
+    <td><tt>/composite/g33/d=123123123/b=111222333</tt>
+    <td><tt>/composite/g34/d=111122223333/bq/bc/bt/bs/gq/gc/gt/gs/rq/rc/rt/rs</tt>
+
+  </tr>
+  <tr>
+    <td>
+    	<img src="GetImageServlet?image=/composite/g33/d=123123123/b=111222333">
+  	<img src="GetImageServlet?image=/composite/g34/d=111122223333/bq/bc/bt/bs/gq/gc/gt/gs/rq/rc/rt/rs">
+
+  </tr>
+</table>
+
+    
     <h3>Comparative sizes</h3>
 
 <p>Two elements are notionally considered to be of the same size if squares of the same size can be circumscribed around them. Thus, a circle of diameter <em>D</em> is considered of the same size as a square or equilateral triangle whose sides are of the length  <em>D</em>, or a star in which the distance between two most remote points (vertices) is <em>D</em>. Since a triangle or or star of a given size occupies smaller surface area than a circle or square of the same (by the above defnition) size, the former may visually appear smaller than the latter.
@@ -71,7 +88,7 @@
       <td>
 	<tt>/composite/v/d=111/rt/gq/bs</tt><br>
 	<img src="GetImageServlet?image=/composite/v/d=111/rt/gq/bs">
-      <td>s
+      <td>
 	<tt>/composite/v/d=222/rt/gq/bs</tt><br>s
 	<img src="GetImageServlet?image=/composite/v/d=222/rt/gq/bs">
       <td>
@@ -110,6 +127,9 @@
     <li><strong><tt>/composite</tt> -- this is a mandatory prefix</strong>, which tells the Game Server that the object needs to be dynamically generated inside the server, rather than read in from a pre-created SVG file and property file.s
     <li> <strong>Orientation</strong>, e.g. <tt>/h3</tt> (3 elements, horizontally arranged) or  <tt>/v2</tt> (2 elements, vertically arranged). Since Paul's proposal talked primarily of composite objects made out of 3 elements, this is the default number of elements in a composite object, and you can omit the digit <tt>3</tt>. Thus, /h means the same as /h3.
 
+      <br>
+      For grid objects, the orientation part has the form <tt>/g<em>RC</em></tt>, consisting of <tt>/g</tt> and two digits specifying the number of rows and columns, respectively. E.g. <tt>/g34</tt> for a grid with 12 elements (3 rows and 4 columns).
+
     <li> <strong>Orderable features</strong>. Some features of elements, namely their size and opacity are considered "orderable", that is a player is supposed to figure that there is something special about a composite image consisting e.g. of elements ordered in the order of increasing sizes:
     <ul>
       <li>
@@ -135,12 +155,15 @@ These features of the elements are described in the format <em>featureName=featu
 
 We can add more orderable features in the future, e.g. texture pattern or tilt.
 
+<br>For a grid composite object, the number of digits in the <tt>d=...</tt> and <tt>b=...</tt> strings should be equal to the number of rows times the number of columns. They describe the elements one by one, arrangede by row.
+
 <li> <strong>Colors and shapes of elements</strong>. The last section of the name decribes the colors and shapes of individual elements, in the <em>/ColorShape/ColorShape/...</em> format, with the one-letter codes as follows:
   <table border="1">
     <tr><td colspan="2">Colors</tr>
     <tr><td>r <td>red </tr>
     <tr><td>g <td>green</tr>
     <tr><td>b <td>blue</tr>
+    <tr><td>x <td>Used in /xx to describe a skipped (empty) element</tr>
   </table>
 
   <br>
@@ -151,11 +174,16 @@ We can add more orderable features in the future, e.g. texture pattern or tilt.
     <tr><td>s <td>star </tr>
     <tr><td>q <td>square</tr>
     <tr><td>t <td>triangle</tr>
+    <tr><td>x <td>empty element (leaves the appropriate section of the composite object empty)</tr>
   </table>
 
    <br>
-   This part of the name can be omitted as well. If omitted, the default element, red square, will be used.   
+   This part of the name can be omitted as well. If omitted, the default element, red square, will be used.
+
+   <br>For a grid composite objects with R rows and C columns, this component needs to describe all R*C elements, arranged by row, unless you want to use the default color and shape (red squares).
+   
   </ol>
+
 
 <p>Names of individual composite objects will appear in initial board files saved by the Game Server. If you create a game that uses pre-defined initial boards, you will use names of individual composite objects in the board description files as well.
 
