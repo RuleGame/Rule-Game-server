@@ -56,7 +56,8 @@
   </tr>
   <tr>
     <td>
-    	<img src="GetImageServlet?image=/composite/g33/d=123123123/b=111222333">
+      <img src="GetImageServlet?image=/composite/g33/d=123123123/b=111222333">
+    <td>
   	<img src="GetImageServlet?image=/composite/g34/d=111122223333/bq/bc/bt/bs/gq/gc/gt/gs/rq/rc/rt/rs">
 
   </tr>
@@ -187,10 +188,13 @@ We can add more orderable features in the future, e.g. texture pattern or tilt.
 
 <p>Names of individual composite objects will appear in initial board files saved by the Game Server. If you create a game that uses pre-defined initial boards, you will use names of individual composite objects in the board description files as well.
 
-	<h2>Test form</h2>
+  <h2>Test form</h2>
+
+  <p>You can use the form below to see the image and properties associated with any legal composite-object name. No wildcards in this form, please.
 	
-<form method="post" action="GetImageServlet">
-	<input type="text" name="image" size="60" value="/composite/h/d=123/b=321/rq/rq/rq"><br>
+<!-- form method="get" action="GetImageServlet" -->
+<form method="get" action="image-object-report.jsp">
+	<input type="text" name="image" size="120" value="/composite/h/d=123/b=321/rq/rq/rq"><br>
 	<button type="submit">	Show this object! </button>
 	       </form>
 

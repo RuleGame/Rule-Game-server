@@ -174,7 +174,7 @@ public class CheckPlanService extends GameService2 {
 			}
 			v.add( fm.table("border='1'", rows));
 		    } else if (useDynamicImages) {
-			v.add(fm.para("This is an image-and-properties-based para set with dynamic image generation. Sample display is not supported yet"));
+			v.add(fm.para("This is an image-and-properties-based para set with dynamic image generation,  which uses "+para.imageGenerator.describeBrief() + ". Sample display is not supported yet"));
 		    } else {
 			v.add(fm.para("Images are not used in this para set, which means that this is a shapes-and-colors para set"));
 

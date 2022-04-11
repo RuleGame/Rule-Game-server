@@ -298,13 +298,17 @@ public class ImageObject extends HashMap<String,String> {
     }
 
     public String listProperties() {
+	return listProperties(", ");
+    }
+    
+    public String listProperties(String sep) {
 	String[] keys = keySet().toArray(new String[0]);
 	Arrays.sort(keys);
 	Vector<String> v = new Vector<>();
 	for(String key: keys) {
 	    v.add(key + ":" + get(key));
 	}
- 	return String.join(", ", v);
+ 	return String.join(sep, v);
     }
 
     /** For use in ASCII graphics */

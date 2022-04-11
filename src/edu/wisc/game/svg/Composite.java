@@ -717,6 +717,21 @@ public class Composite extends ImageObject {
 	    for(int j=0; j<compo.length; j++) v[j] = compo[j].key;
 	    return v;
 	}
+
+	/** A more or less sensible sample */
+	public String[] getSomeConcreteKeys(Random random) {
+	    Vector<String> v = new Vector<>();
+	    for(int j=0; j<compo.length; j++) {
+		if (compo[j].wild) {
+		    Composite b = compo[j].sample(random);
+		    v.add( b.key);
+		} else {
+		    v.add( compo[j].key);
+		}
+	    }
+	    return v.toArray(new String[0]);	    
+	}
+	
 	
 	public Generator( Composite[] _compo) {
 	    compo = _compo;
@@ -728,7 +743,8 @@ public class Composite extends ImageObject {
 	    sumSize = sum;
 	    if (sumSize<1) throw new IllegalArgumentException("Appaently empty set of composite objects");
 	}
-	
+
+	/** Randomly gets the name for one concrete image object */
 	 public //ImageObject
 	     String getOneKey(Random random) {
 	     int k = random.nextInt(sumSize);
