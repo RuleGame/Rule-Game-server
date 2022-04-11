@@ -28,7 +28,7 @@ public class Composite extends ImageObject {
     final static int R=20;
     static final int margin=0;
     /** If true, show the bounds of squares */
-    static final boolean framing = true; //false;
+    static final boolean framing = false;
     /** Size of the entire SVG */
     final int H; // =N*2*(R+margin);
         
@@ -88,14 +88,20 @@ public class Composite extends ImageObject {
 	final String color;
 	final int sizeRank;
 	final int bright;
+	final boolean  blank;
 	Element(String _shape, String _color, int _sizeRank, int _bright) {
 	    shape = _shape;
 	    bright = _bright;
-	    color =  _color.equals("r") ? "red":
-		_color.equals("g") ? "green":
-		_color.equals("b") ? "blue": null;
-	    if (color==null)  throw new IllegalArgumentException("Illegal color: " + _color);
-	    
+
+	    blank = (shape.equals("x"));
+
+	    if (blank) color=null;
+	    else {
+		color =  _color.equals("r") ? "red":
+		    _color.equals("g") ? "green":
+		    _color.equals("b") ? "blue": null;
+		if (color==null)  throw new IllegalArgumentException("Illegal color: " + _color);
+	    }	    
 	    sizeRank = _sizeRank;
 	}
 	
@@ -123,27 +129,27 @@ public class Composite extends ImageObject {
 	    // Was:   0.4 : 0.7 : 1
 	    // Paul wants: 3: 4: 5,   i.e. 0.6: 0.8: 0.1
 	    int r = (int)( (1 - 0.2*(3-sizeRank))  *R);
-	    String[] q = null;
 
-	    if (shape.equals("c"))  {
-		name = "circle";
-		q = new String[] {"cx", ""+cx, "cy", ""+cy, "r", ""+r};
-	    } else if  (shape.equals("q"))  {
-		name = "rect";
-		q = new String[] { "x", ""+(cx-r), "y", ""+(cy-r),
-				   "width", ""+(2*r),
-				   "height", ""+(2*r)};
-	    } else if  (shape.equals("t"))  {
-		name = "polygon";
-		q = new String[] { "points", mkPolygonPara(cx, cy, r, trianglePP)};
-	    } else if  (shape.equals("s"))  {
-		name = "polygon";
-		q = new String[] { "points", mkPolygonPara(cx, cy, r, starPP)};
-	    } else if  (shape.equals("x"))  {
-		// skip
-	    } else throw new IllegalArgumentException("Illegal shape: " + shape);
 	    String w="";
-	    if (q!=null) {
+
+
+	    if (!blank) {
+		String[] q = null;
+		if (shape.equals("c"))  {
+		    name = "circle";
+		    q = new String[] {"cx", ""+cx, "cy", ""+cy, "r", ""+r};
+		} else if  (shape.equals("q"))  {
+		    name = "rect";
+		    q = new String[] { "x", ""+(cx-r), "y", ""+(cy-r),
+				       "width", ""+(2*r),
+				       "height", ""+(2*r)};
+		} else if  (shape.equals("t"))  {
+		    name = "polygon";
+		    q = new String[] { "points", mkPolygonPara(cx, cy, r, trianglePP)};
+		} else if  (shape.equals("s"))  {
+		    name = "polygon";
+		    q = new String[] { "points", mkPolygonPara(cx, cy, r, starPP)};
+		} else throw new IllegalArgumentException("Illegal shape: " + shape);
 		Vector<String> a = Util.array2vector(q);
 		a.add("fill");
 		a.add(color);
@@ -201,6 +207,18 @@ public class Composite extends ImageObject {
 		Orientation.GRID;
 	}
 
+	public String toString() {
+	    return "{" +  getOrientation() + ", NR=" + NR+", NC=" + NC+"}";
+	}
+
+	public String toPrefix() {
+	    String s;
+	    if (any) s = "?" + NR;
+	    else if (NC>=1 && NR==1) s = "h" + NC;
+	    else if (NR>1 && NC==1) s = "v" + NR;
+	    else s = "g" +"" + NR+"" + NC;
+	    return s;
+	}
 
 	private static Pattern nPat =  Pattern.compile("/([hvg\\?])([0-9]*)/");
 	/** Looks for the /hN/ component in the name */    
@@ -287,7 +305,7 @@ public class Composite extends ImageObject {
     /** Computes a name based on stored parameters. This is useful during 
 	random sample generation */
     private String mkName() {
-	String s = prefix + g.getOrientation().toLetter();
+	String s = prefix + g.toPrefix();
 	s += field("d", sizeRank);
 	s += field("b", bright);
 	for(int j=0; j<N(); j++) {
@@ -337,7 +355,7 @@ public class Composite extends ImageObject {
 	    }
 	    else throw new IllegalArgumentException("Character " + c + " is not allowed. String=" + val);
 	}
-	if (k<N())  throw new IllegalArgumentException("String too short: " + val);
+	if (k<N())  throw new IllegalArgumentException("String too short: " + val +"; expected " + N() + " digits");
 	return q;
     }
 
@@ -399,7 +417,7 @@ public class Composite extends ImageObject {
 	    if (bright[j]==ANY)  n *= M;
 	}
 	for(int j=0; j<N(); j++) {
-	    if (shapes[j].equals("?")) n *= allShapes.length-1;
+	    if (shapes[j].equals("?")) n *= allShapes.length-1; // ignore 'x'
 	    if (colors[j].equals("?")) n *= allColors.length-1;
 	}	
 	return n;
@@ -429,6 +447,10 @@ public class Composite extends ImageObject {
     public Composite(String name) {
 	this(Geometry.extractGeometry(name));
 	key = name;
+
+
+	//System.err.println("name="  +name+", geo="+g+", N=" + N());
+	
 	for(int j=0; j<N(); j++) {
 	    shapes[j] = "q";
 	    colors[j] = "r";
@@ -581,10 +603,11 @@ public class Composite extends ImageObject {
 	    for(int col=0; col<g.NC; col++) {
 		int cx = (R+margin) * (1 + 2*col + dx);
 		int cy = (R+margin) * (1 + 2*row + dy);
-	
-		Element e = new Element(shapes[j], colors[j], sizeRank[j], bright[j]);
-		String s = e.makeSvg(cx, cy);	    
-		v.add(s);
+		if (!shapes[j].equals("x")) {
+		    Element e = new Element(shapes[j], colors[j], sizeRank[j], bright[j]);
+		    String s = e.makeSvg(cx, cy);	    
+		    v.add(s);
+		}
 		j++;
 	    }
 	}
@@ -642,7 +665,15 @@ public class Composite extends ImageObject {
 	    Composite b = d.sample(random);
 	    System.err.println("b=" + b);
 	    System.out.println( b.getSvg());
-	    ov.add(b);	
+	    ov.add(b);
+
+	    // extra testing
+	    String key = b.getKey();
+	    System.err.println("key=" + key);
+	    Composite c = (Composite) ImageObject.obtainImageObjectPlain(null, key, false);
+	    System.err.println("c=" + c);
+	    
+	    
 	}
 
 
@@ -741,7 +772,7 @@ public class Composite extends ImageObject {
 		sum += size[j] = compo[j].familySize();
 	    }
 	    sumSize = sum;
-	    if (sumSize<1) throw new IllegalArgumentException("Appaently empty set of composite objects");
+	    if (sumSize<1) throw new IllegalArgumentException("Apparently empty set of composite objects");
 	}
 
 	/** Randomly gets the name for one concrete image object */
@@ -763,7 +794,7 @@ public class Composite extends ImageObject {
 	    return Util.joinNonBlank(";", getKeys());
 	}
 	public String describeBrief() {
-	    return "Set of dynamically generated image-and-property-based objects";
+	    return "Set of "+sumSize+" dynamically generated image-and-property-based objects";
 	}
 
     }

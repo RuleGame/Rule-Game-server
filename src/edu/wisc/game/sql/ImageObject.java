@@ -19,6 +19,7 @@ public class ImageObject extends HashMap<String,String> {
     
 
     public String key;
+    public String getKey() { return key; }
     /** For static objects, this is the SVG file for the image. For
 	dynamically generated ones, null.
      */

@@ -18,6 +18,7 @@ import edu.wisc.game.reflect.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.formatter.*;
+import edu.wisc.game.svg.Composite;
 
 /** The "Check my experiment plan" service. */
 @Path("/CheckPlanService") 
@@ -119,6 +120,7 @@ public class CheckPlanService extends GameService2 {
 	v.add(fm.h2("Checking the trial lists"));
 	String info = null;
 	try {
+	    RandomRG random = new RandomRG();
 	    Vector<String> lists = TrialList.listTrialLists(exp);	    
 	    v.add(fm.para("Found " + lists.size() + " trial lists for experiment plan " + fm.tt(exp)));
 	    for(String key: lists) {
@@ -138,7 +140,7 @@ public class CheckPlanService extends GameService2 {
 		int j=0;
 		for( ParaSet para: trialList) {
 		    j++;
-		    v.add(fm.para("Checking para set no. " + j + " out of "+npara+"..."));
+		    v.add(fm.para(fm.h4("Checking para set no. " + j + " out of "+npara+"...")));
 
 		    para.checkImages();
 		    boolean ipb = (para.imageGenerator!=null);
@@ -147,13 +149,23 @@ public class CheckPlanService extends GameService2 {
 		    boolean useDynamicImages = (ipb && !(para.imageGenerator instanceof ImageObject.PickFromList));
 
 		    
-		    if (ipb && !useDynamicImages) {
-			v.add(fm.para("This is an image-and-properties-based para set, which uses "+para.imageGenerator.describeBrief()));
+		    if (ipb) {
+			String[] keys;
+			if (useDynamicImages) {
+			    Composite.Generator g = (Composite.Generator)para.imageGenerator;
+			    v.add(fm.para("This is an image-and-properties-based para set with dynamic image generation,  which uses a "+
+					  g.describeBrief() + ". (Keys="+g.asList()+"). Some of these objects are shown below"));
+			    keys = g.getSomeConcreteKeys(random);
+			} else {
+			    v.add(fm.para("This is an image-and-properties-based para set, which uses "+para.imageGenerator.describeBrief()));
+			    ImageObject.PickFromList g = (ImageObject.PickFromList)para.imageGenerator;
+			    keys = g.getKeys();
+			}
 		
 			rows = new Vector<>();
+			
 
-			ImageObject.PickFromList g = (ImageObject.PickFromList)para.imageGenerator;
-			for(String k: g.getKeys()) {
+			for(String k: keys) {
 			    String z = "<img width='80' src=\"../../GetImageServlet?image="+k+"\">";
 			    ImageObject io = ImageObject.obtainImageObjectPlain(null, k, false);
   			    
@@ -166,15 +178,18 @@ public class CheckPlanService extends GameService2 {
 			    
 			}
 			v.add( fm.table("border='1'", rows));
-			v.add( fm.para("All properties used by the objects involved in this trial list, and all values found for these properties, are listed in the following table:"));
+			v.add( fm.para((useDynamicImages? "Some" : "All") +
+				       " properties used by the objects involved in this trial list, and all values found for these properties"+
+				       (useDynamicImages? " in a sample of objects" : "") +
+				       ", are listed in the following table:"));
 			rows.clear();
 			rows.add(fm.tr(fm.th("Property") + fm.th("Values")));
 			for(String p: propValues.keySet()) {
 			    rows.add(fm.tr(fm.td(p) + fm.td( Util.joinNonBlank(", ",propValues.get(p)))));
 			}
 			v.add( fm.table("border='1'", rows));
-		    } else if (useDynamicImages) {
-			v.add(fm.para("This is an image-and-properties-based para set with dynamic image generation,  which uses "+para.imageGenerator.describeBrief() + ". Sample display is not supported yet"));
+			//} else if (useDynamicImages) {
+			//v.add(fm.para("This is an image-and-properties-based para set with dynamic image generation,  which uses "+para.imageGenerator.describeBrief() + ". Sample display is not supported yet"));
 		    } else {
 			v.add(fm.para("Images are not used in this para set, which means that this is a shapes-and-colors para set"));
 
