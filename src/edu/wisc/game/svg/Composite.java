@@ -491,12 +491,9 @@ public class Composite extends ImageObject {
 		String[] w = s.split("=");
 		if (w.length==2) {
 		    String key = w[0], val=w[1];
-		    int[] vals = parseVal(val);
 		    
-		    //System.out.println(key + " = " +  Util.joinNonBlank("", vals));
-		    
-		    if (key.equals("d")) sizeRank=vals;
-		    else if (key.equals("b")) bright=vals;
+		    if (key.equals("d")) sizeRank= parseVal(val);
+		    else if (key.equals("b")) bright= parseVal(val);
 		    else if (key.equals("allShapes")) {
 			    allShapes=val.split("");
 			    if (allShapes.length==0)  throw new IllegalArgumentException("Invalid value for allShapes="+val +" in name=" + name);
@@ -510,7 +507,7 @@ public class Composite extends ImageObject {
 		if (pp.length==2) {
 			s = pp[0];
 			multi = Integer.parseInt(pp[1]);
-		}
+		} else if (pp.length>2) throw new IllegalArgumentException("Cannot parse component="+s+" (too many carets) in name=" + name);
 		if (s.length()!=2)  throw new IllegalArgumentException("Illegal length of component="+s+" (expected 2 chars, e.g. 'rq', found "+s+") in name=" + name);
 		char c = s.charAt(0);
 		wild = wild ||  (c=='?');
