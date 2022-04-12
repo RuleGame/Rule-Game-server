@@ -277,9 +277,11 @@ public class Composite extends ImageObject {
     
     /** Shapes and colors of all elements. 'q', 't' etc, or 'r', 'g', 'b'. May also contain '?' or 'x'*/
     String[] shapes, colors;
-    /** "x" goes in position 0, so that it can be excluded in random selection */
-    final static String[] allShapes = {"x", "c", "s", "q", "t"},
-	allColors={"x", "r","g","b"};
+    final static String[] defaultAllShapes = {"q", "s", "c", "t"},
+	allColors={"r","g","b"};
+    /** The shapes of elements are picked from this set. The first element is the default value */	
+    String[] allShapes = defaultAllShapes;
+    
     
     private String svg;
     public String getSvg() { return svg; }
@@ -330,8 +332,9 @@ public class Composite extends ImageObject {
 	return s;
     }
 
-    /** @param val Could be "123", "*", "1*", "1?2" etc. 
-	@return Input split into 3 digits (possibly ANY)
+    /** Parses the value string for d=... or b=.....
+        @param val Could be "123", "*", "1*", "1?2" etc. 
+	@return Input split into N digits (some of which may be '?', i.e. ANY)
     */
     private int[] parseVal(String val) {
 	
@@ -353,9 +356,9 @@ public class Composite extends ImageObject {
 		wild = true;
 		while(k<N())  q[k++] = ANY;
 	    }
-	    else throw new IllegalArgumentException("Character " + c + " is not allowed. String=" + val);
+	    else throw new IllegalArgumentException("Character " + c + " is not allowed in the value string. Value string=" + val);
 	}
-	if (k<N())  throw new IllegalArgumentException("String too short: " + val +"; expected " + N() + " digits");
+	if (k<N())  throw new IllegalArgumentException("Value string too short: " + val +"; expected " + N() + " digits");
 	return q;
     }
 
@@ -377,7 +380,6 @@ public class Composite extends ImageObject {
 	bright=new int[N()];
 	Arrays.fill(bright, M);
 	
-
 	shapes=new String[N()];
 	colors=new String[N()];
 	
@@ -396,8 +398,8 @@ public class Composite extends ImageObject {
 	    bright[j] = (p.bright[j]==ANY)? 1+random.nextInt(M) : p.bright[j];
 	}
 	for(int j=0; j<N(); j++) {
-	    shapes[j] = p.shapes[j].equals("?")? allShapes[1+random.nextInt(allShapes.length-1)] : p.shapes[j];
-	    colors[j] = p.colors[j].equals("?")? allColors[1+random.nextInt(allColors.length-1)] : p.colors[j];
+	    shapes[j] = p.shapes[j].equals("?")? allShapes[random.nextInt(allShapes.length)] : p.shapes[j];
+	    colors[j] = p.colors[j].equals("?")? allColors[random.nextInt(allColors.length)] : p.colors[j];
 	}
 	key = mkName();
 	svg = makeFullSvg();
@@ -417,8 +419,8 @@ public class Composite extends ImageObject {
 	    if (bright[j]==ANY)  n *= M;
 	}
 	for(int j=0; j<N(); j++) {
-	    if (shapes[j].equals("?")) n *= allShapes.length-1; // ignore 'x'
-	    if (colors[j].equals("?")) n *= allColors.length-1;
+	    if (shapes[j].equals("?")) n *= allShapes.length; 
+	    if (colors[j].equals("?")) n *= allColors.length;
 	}	
 	return n;
     }
@@ -451,10 +453,6 @@ public class Composite extends ImageObject {
 
 	//System.err.println("name="  +name+", geo="+g+", N=" + N());
 	
-	for(int j=0; j<N(); j++) {
-	    shapes[j] = "q";
-	    colors[j] = "r";
-	}
 	    
 	if (!isCompositeName(name)) throw new IllegalArgumentException("Illegal name: " + name + ". Names must start with " + prefix);
 	
@@ -499,10 +497,20 @@ public class Composite extends ImageObject {
 		    
 		    if (key.equals("d")) sizeRank=vals;
 		    else if (key.equals("b")) bright=vals;
+		    else if (key.equals("allShapes")) {
+			    allShapes=vals.split("");
+			    if (allShapes.length==0)  throw new IllegalArgumentException("Invalid value for allShapes="+vals +" in name=" + name);
+		    }
 		    else  throw new IllegalArgumentException("Unknown key="+key+" in name=" + name);
 		} else  throw new IllegalArgumentException("Cannot parse component="+s+" in name=" + name);
-	    } else if (k<N()) {  // rq
+	    } else if (k<N()) {  // rq ;  rq^5
 		// System.out.println("piece = " +  s);
+		int multi = 1;
+		int pp = s.split("^");
+		if (pp.length()==2) {
+			s = pp[0];
+			multi = Integer.parseInt(pp[1]);
+		}
 		if (s.length()!=2)  throw new IllegalArgumentException("Illegal length of component="+s+" (expected 2 chars, e.g. 'rq', found "+s+") in name=" + name);
 		char c = s.charAt(0);
 		wild = wild ||  (c=='?');
@@ -514,18 +522,33 @@ public class Composite extends ImageObject {
 		shapes[k] = choose(c, allShapes);
 		if (shapes[k] == null) throw new IllegalArgumentException("Illegal shape char '" + c +"' in component="+s+", in name=" + name);
 
-		if (colors[k].equals("x") && !shapes[k].equals("x"))  throw new IllegalArgumentException("Color 'x' cannot be used unless the shape is also 'x'");
-		
+		if (colors[k].equals("x") && !shapes[k].equals("x"))  throw new IllegalArgumentException("Color 'x' cannot be used unless the shape is also 'x'");		
+		int k0 = k;
 		k++;		
+		if (multi>1) {
+		    for(; k<k0+multi; k++) {
+			    if (k>=N()) throw new IllegalArgumentException("Multiplicity=" + multi+ " is too high in name=" + name);
+			    shapes[k] = shapes[k0];
+			    colors[k] = colors[k0];
+		    }
+		} 
 	    }
 	    else  throw new IllegalArgumentException("Extra component="+s+" in name=" + name);
 	}
+	    
+	for(; k<N(); k++) {
+	    shapes[k] = allShapes[0];
+	    colors[k] = allColors[0];
+	}
+	
+	    
 	svg = makeFullSvg();
 	if (!wild) computeProperties();
     }
 
+    /** Checks if the given character is one of the allowed shape or color chars, or '?' or 'x' */
     static private String choose(char c, String[] all) {
-	if (c=='?') return  "" + c;
+	if (c=='?' || c=='x') return  "" + c;
 	for(String z: all) {
 	    if (z.equals(""+c)) return z;
 	}
