@@ -498,15 +498,15 @@ public class Composite extends ImageObject {
 		    if (key.equals("d")) sizeRank=vals;
 		    else if (key.equals("b")) bright=vals;
 		    else if (key.equals("allShapes")) {
-			    allShapes=vals.split("");
-			    if (allShapes.length==0)  throw new IllegalArgumentException("Invalid value for allShapes="+vals +" in name=" + name);
+			    allShapes=val.split("");
+			    if (allShapes.length==0)  throw new IllegalArgumentException("Invalid value for allShapes="+val +" in name=" + name);
 		    }
 		    else  throw new IllegalArgumentException("Unknown key="+key+" in name=" + name);
 		} else  throw new IllegalArgumentException("Cannot parse component="+s+" in name=" + name);
 	    } else if (k<N()) {  // rq ;  rq^5
 		// System.out.println("piece = " +  s);
 		int multi = 1;
-		int pp = s.split("^");
+		String[] pp = s.split("\\^");
 		if (pp.length()==2) {
 			s = pp[0];
 			multi = Integer.parseInt(pp[1]);
