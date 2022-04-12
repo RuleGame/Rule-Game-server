@@ -275,7 +275,7 @@ public class Composite extends ImageObject {
     private void initMMM() {
     }
     
-    /** Shapes and colors of all elements. 'q', 't' etc, or 'r', 'g', 'b'. May also contain '?' */
+    /** Shapes and colors of all elements. 'q', 't' etc, or 'r', 'g', 'b'. May also contain '?' or 'x'*/
     String[] shapes, colors;
     /** "x" goes in position 0, so that it can be excluded in random selection */
     final static String[] allShapes = {"x", "c", "s", "q", "t"},
@@ -425,7 +425,7 @@ public class Composite extends ImageObject {
   
     /** If this is a wildcard description, generates a "concrete" (non-wildcard)
 	desription of a matching composite object */
-    Composite sample( Random random) {
+    public Composite sample( Random random) {
 	if (!wild) return this;
 	Composite q = new Composite(this, random);
 	return q;

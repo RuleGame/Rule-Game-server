@@ -13,7 +13,14 @@ ImageObjectReport main	= new ImageObjectReport(request, response);
 <%
 } else {
 %>
-<p>Name: <tt><%= main.name %>
+<% if (main.wild) { %>
+<p>Wildcard expression: <tt><%= main.name0 %></tt>
+<p>Sample matching name: <tt><%= main.name %></tt> (If you reload this page, you'll get another sample!)
+<% } else {
+%>
+<p>Name: <tt><%= main.name0 %>
+<%
+} %>
 <p><img src="GetImageServlet?image=<%= main.name %>">
 <p>Properties:
 <ul>
@@ -25,6 +32,16 @@ main.io.listProperties("\n<li>")
 
 <% 
 } %>
+
+<hr>
+
+<form method="get" action="image-object-report.jsp">
+	<input type="text" name="image" size="120" value="<%= main.name0 %>"><br>
+	<button type="submit"> Show this object! </button>
+</form>	       
+
+
+
 
 <hr>
 <p><small>Info Message: <%= main.infomsg%></small>

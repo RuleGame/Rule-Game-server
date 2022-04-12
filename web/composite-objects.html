@@ -6,7 +6,7 @@
  </head>
 <body>
   <h1>Composite Image objects</h1>
-  <div    align="center">Updated: April 10, 2022, for GS ver. 4.011</div>
+  <div    align="center">Updated: April 11, 2022, for GS ver. 4.011</div>
 
   <p>Since version 3.*, the Game Server <a href="object-properties.html">supports Image-and-property-based objects.</a> This document discusses a particular class of such objects, the <strong>composite image objects</strong> introduced in GS 4.009. Unlike the images for the objects previously available in the Game Server, the composite image objects are not pre-generated and stored in /opt/tomcat/game-data (and the GitHub repository); instead, they are generated dynamically in the Game Server whenever they are needed.
 
@@ -192,11 +192,11 @@ We can add more orderable features in the future, e.g. texture pattern or tilt.
 
   <h2>Test form</h2>
 
-  <p>You can use the form below to see the image and properties associated with any legal composite-object name. No wildcards in this form, please.
+  <p>You can use the form below to see the image and properties associated with any legal composite-object name. (You can use a wildcard expression too, and will be shown one of the matching composite objects).
 	
 <!-- form method="get" action="GetImageServlet" -->
 <form method="get" action="image-object-report.jsp">
-	<input type="text" name="image" size="120" value="/composite/h/d=123/b=321/rq/rq/rq"><br>
+	<input type="text" name="image" size="120" value="/composite/h/d=123/b=321/?q/?q/?q"><br>
 	<button type="submit">	Show this object! </button>
 	       </form>
 
