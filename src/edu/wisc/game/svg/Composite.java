@@ -507,7 +507,7 @@ public class Composite extends ImageObject {
 		// System.out.println("piece = " +  s);
 		int multi = 1;
 		String[] pp = s.split("\\^");
-		if (pp.length()==2) {
+		if (pp.length==2) {
 			s = pp[0];
 			multi = Integer.parseInt(pp[1]);
 		}
