@@ -279,7 +279,8 @@ public class Composite extends ImageObject {
     String[] shapes, colors;
     final static String[] defaultAllShapes = {"q", "s", "c", "t"},
 	allColors={"r","g","b"};
-    /** The shapes of elements are picked from this set. The first element is the default value */	
+    /** If this object has wildcards in element description, the shapes of any "sample" elements will be picked from this set when a '?' is encountered. 
+    The first element is the default value. */	
     String[] allShapes = defaultAllShapes;
     
     
@@ -398,8 +399,8 @@ public class Composite extends ImageObject {
 	    bright[j] = (p.bright[j]==ANY)? 1+random.nextInt(M) : p.bright[j];
 	}
 	for(int j=0; j<N(); j++) {
-	    shapes[j] = p.shapes[j].equals("?")? allShapes[random.nextInt(allShapes.length)] : p.shapes[j];
-	    colors[j] = p.colors[j].equals("?")? allColors[random.nextInt(allColors.length)] : p.colors[j];
+	    shapes[j] = p.shapes[j].equals("?")? p.allShapes[random.nextInt(p.allShapes.length)] : p.shapes[j];
+	    colors[j] = p.colors[j].equals("?")? p.allColors[random.nextInt(p.allColors.length)] : p.colors[j];
 	}
 	key = mkName();
 	svg = makeFullSvg();
