@@ -515,6 +515,8 @@ public class Composite extends ImageObject {
 			s = pp[0];
 			multi = Integer.parseInt(pp[1]);
 		} else if (pp.length>2) throw new IllegalArgumentException("Cannot parse component="+s+" (too many carets) in name=" + name);
+		if (s.equals("x")) s="xx";  // shorthand "x" for "xx"
+		if (s.equals("*")) s="??";  // shorthand "*" for "??"
 		if (s.length()!=2)  throw new IllegalArgumentException("Illegal length of component="+s+" (expected 2 chars, e.g. 'rq', found "+s+") in name=" + name);
 		char c = s.charAt(0);
 		wild = wild ||  (c=='?');
