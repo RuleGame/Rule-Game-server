@@ -6,7 +6,7 @@
  </head>
 <body>
   <h1>Composite Image objects</h1>
-  <div    align="center">Updated: April 11, 2022, for GS ver. 4.011</div>
+  <div    align="center">Updated: April 13, 2022, for GS ver. 4.012</div>
 
   <p>Since version 3.*, the Game Server <a href="object-properties.html">supports Image-and-property-based objects.</a> This document discusses a particular class of such objects, the <strong>composite image objects</strong> introduced in GS 4.009. Unlike the images for the objects previously available in the Game Server, the composite image objects are not pre-generated and stored in /opt/tomcat/game-data (and the GitHub repository); instead, they are generated dynamically in the Game Server whenever they are needed.
 
@@ -117,7 +117,7 @@
 <h2>Names of composite image objects</h2>
 
 
-<p>Each individual  composite image object is identified by its name, which describes the elements from which the composite image is constructed.  Consider the following image object as an example:
+<p>Each individual  composite image object is identified by its name, which describes the elements from which the composite image is constructed.  Consider the following image object names as examples:
    <ul>
       <li>
 	<tt>/composite/h3/d=331/b=313/rt/bq/gc</tt>
@@ -133,6 +133,13 @@
       <br>
       For grid objects, the orientation part has the form <tt>/g<em>RC</em></tt>, consisting of <tt>/g</tt> and two digits specifying the number of rows and columns, respectively. E.g. <tt>/g34</tt> for a grid with 12 elements (3 rows and 4 columns).
 
+    <li>An optional part, not shown here, using for providing certain defaults, which are particularly useful when wildcards are used 
+	    (as discussed in the next section). This may include:
+	    <ul>
+		    <li><tt>/allColors=gr</tt> : the colors (when "wildcarded" or "defaulted") will be chosen from the set of green and red.
+		    <li><tt>/allShapes=qx</tt> : the shapes (when "wildcarded" or "defaulted") will be chosen from the set of "square" and "blank"
+	    </ul>
+	    
     <li> <strong>Orderable features</strong>. Some features of elements, namely their size and opacity are considered "orderable", that is a player is supposed to figure that there is something special about a composite image consisting e.g. of elements ordered in the order of increasing sizes:
     <ul>
       <li>
@@ -160,7 +167,8 @@ We can add more orderable features in the future, e.g. texture pattern or tilt.
 
 <br>For a grid composite object, the number of digits in the <tt>d=...</tt> and <tt>b=...</tt> strings should be equal to the number of rows times the number of columns. They describe the elements one by one, arrangede by row.
 
-<li> <strong>Colors and shapes of elements</strong>. The last section of the name decribes the colors and shapes of individual elements, in the <em>/ColorShape/ColorShape/...</em> format, with the one-letter codes as follows:
+<li> <strong>Colors and shapes of elements</strong>. The last section of the name decribes the colors and shapes of individual elements,
+	in the <em>/ColorShape/ColorShape/...</em> format, with the one-letter codes as follows:
   <table border="1">
     <tr><td colspan="2">Colors</tr>
     <tr><td>r <td>red </tr>
@@ -183,8 +191,14 @@ We can add more orderable features in the future, e.g. texture pattern or tilt.
    <br>
    This part of the name can be omitted as well. If omitted, the default element, red square, will be used.
 
-   <br>For a grid composite objects with R rows and C columns, this component needs to describe all R*C elements, arranged by row, unless you want to use the default color and shape (red squares).
+   <br>For brevity, you can use /x (instead of the normal /xx) to describe a blank element. After all, blanks don't have colors.
+	
+   <br>For a grid composite objects with R rows and C columns, this component needs to describe all R*C elements, arranged by row, unless you want to use the default color and shape
+	(red squares, or whatever is provided as the first elements of your "allColors" and "allShapes").
    
+	<br>To save space, one can use the caret ("<tt>^</tt>") notation for multiple identical items. E.g. you can write <tt>/bc^10<tt> to specify 10 blue circles; 
+	you can write <tt>/*^5</tt> instead of <tt>/*/*/*/*/*</tt> or <tt>/??/??/??/??/??</tt> to indicate 5 elements of random shapes and colors.
+	
   </ol>
 
 
@@ -253,11 +267,22 @@ Thus a predicate referring to all non-decreasing orders will haves the form <cod
 	</ul>
 	Analogous properties can be added for any other orderable features that may be introduced later.
 
-	<li>sameshape = 0 or 1  (with 1 = true)
+<li>sameshape = 0 or 1  (with 1 = true)
 
 <li>samecolor = 0 or 1 (with 1=true)
 	</ul>
+	
+<li><tt>occupied</tt> is an integer-valued property indicating the number of grid cells that contain visible elements, i.e. are not blank. For an R*C grid, the value of this property may range from 0 to R*C .
 
+<li><tt>opacity</tt> is an integer-valued property ranging from 0 to 100. It is computed as the average of the opacity-times-size-scale-factor values of all elements of 
+	the grid (the opacity of a blank cell being 0), multiplied by 100.
+	If the composite image is composed entirely of squares (of varying opacity and sizes) and blanks, then this value fairly 
+	represents percentage the "average opacity" of the object. If you mix shapes (e.g. squares and circles and stars), then, at present
+	(GS 4.12) this measure is not accurate, as it does not take into account the fact that the surface area of a large circle is smaller than
+	that of a large square, and that of a large star is even smaller.
+	
+		
+		
   <h2>Sample experiment plans</h2>
   
 <p>To illustrate using composite image objects, an experiment plan (<tt>vm/composite-01</tt>) has been created. You can play it in GS 4.009, 
@@ -265,7 +290,14 @@ Thus a predicate referring to all non-decreasing orders will haves the form <cod
 	<a href="https://github.com/lupyanlab/Rule-Game-game-data/tree/master/trial-lists/vm/composite-01">trial list files</a> and 
 	<a href="https://github.com/lupyanlab/Rule-Game-game-data/tree/master/rules/vm/composite-01"?> rule set files</a> on GitHub).
 	
-
+<p>You may want to try pasting the names of objects from the sample trial list files into the form above, to see how wildcard expressions work, 
+	and how properties are computed. Or you can just use the <a href="check-plan-form.jsp">validation tool on those plans</a>; it will give
+	you similar information.
+	
+	
+<p>Other plans are <tt>vm/composite-02</tt> (picking game pieces in the order of the number of "occupied" elements in the piece) and 
+	<tt>vm/composite-03</tt> (picking pieces in the order of their average opacity).
+	
 <p>To make the details of composite images more visible, you may want to make the 6x6 board appear as large as possible. To do that, use a compute with a large monitor; maximize the visual area of the web browser window (with F11); turn off the "Debug" mode of the GUI client.
 
   <h2>Command-line unit testing</h2>
