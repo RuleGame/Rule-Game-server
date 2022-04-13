@@ -627,12 +627,12 @@ public class Composite extends ImageObject {
 	put("opacity", ""+opacity);
 
 	// translation invariance of the pattern				       
-	String labels[] = {trans_h, trans_v, trans_asc, trans_desc};
+	String labels[] = {"trans_h", "trans_v", "trans_asc", "trans_desc"};
 	int dr[] = {0, 1, 1, 1};
  	int dc[] = {1, 0, -1, 1};
  	for(int m=0; m<labels.length; m++) {
 	   boolean invar= invTest(dr[m], dc[m]);
-	   put(labels[j], invar? "1": "0");
+	   put(labels[m], invar? "1": "0");
 	}
     }
 
