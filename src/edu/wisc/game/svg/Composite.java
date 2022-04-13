@@ -628,7 +628,7 @@ public class Composite extends ImageObject {
 		
 	    }
 	}
-	double opacity = sop / N();
+	int opacity = (int)(100* sop / N());
 	put("occupied", ""+s);
 	put("opacity", ""+opacity);
 
