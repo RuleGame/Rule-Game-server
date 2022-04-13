@@ -52,7 +52,7 @@ public class Composite extends ImageObject {
 
     // for 0 1 2 3
     static final double opacityValues[] = {0, 0.15, 0.4, 1.0};
-    static final double scaling[] = {0, 0.6, 0.8, 0.1};
+    static final double scaling[] = {0, 0.6, 0.8, 1.0};
 	    
     /** A single element (circle, square, star, triangle) of the composite image */
     private static class Element {
@@ -613,7 +613,8 @@ public class Composite extends ImageObject {
 	put("samecolor", allSame(colors)? "1":"0");
 
 
-	int s=0, sop=0;
+	int s=0;
+	double sop=0;
 	for(int j=0; j<N(); j++) {
 	    if (!shapes[j].equals("x")) {
 		s++;
