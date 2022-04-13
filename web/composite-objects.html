@@ -281,6 +281,15 @@ Thus a predicate referring to all non-decreasing orders will haves the form <cod
 	(GS 4.12) this measure is not accurate, as it does not take into account the fact that the surface area of a large circle is smaller than
 	that of a large square, and that of a large star is even smaller.
 	
+	<li><strong>Translational invariance</strong>: A group of "boolean-values" (0 or 1) properties test the invariance of the pattern formed by the elements of the grid with respect to horizontal, 
+	vertical, or diagonal translation. Namely, <tt>trans_h</tt> = 1 if each element is identical (same shape, color, brightness) 
+	to its neighbors to the right and left (i.e., in the horizontal direction). Thus, it will be 1 for an composite object that looks like
+	a set of horizontal bands; it will be 0 otherwise. Similarly, <tt>trans_v</tt> = 1 for a composite object that looks like a set of vertical bands.
+	<tt>trans_asc</tt> = 1  for a composite object whose elements appear arranged in ascending diagonal stripes (running SW to NE), while 
+	<tt>trans_desc</tt> = 1  for a composite object whose elements appear arranged in descending diagonal stripes (running NW to SE).
+		For an example of using this group of properties, see experiment plan <tt>vm/composite-04</tt>.
+
+	
 		
 		
   <h2>Sample experiment plans</h2>
