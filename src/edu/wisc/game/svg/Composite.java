@@ -284,10 +284,10 @@ public class Composite extends ImageObject {
     /** Shapes and colors of all elements. 'q', 't' etc, or 'r', 'g', 'b'. May also contain '?' or 'x'*/
     String[] shapes, colors;
     final static String[] defaultAllShapes = {"q", "s", "c", "t"},
-	allColors={"r","g","b"};
+	defaultAllColors={"r","g","b"};
     /** If this object has wildcards in element description, the shapes of any "sample" elements will be picked from this set when a '?' is encountered. 
     The first element is the default value. */	
-    String[] allShapes = defaultAllShapes;
+    String[] allShapes = defaultAllShapes, allColors=defaultAllColors;
     
     
     private String svg;
@@ -504,6 +504,9 @@ public class Composite extends ImageObject {
 		    else if (key.equals("allShapes")) {
 			    allShapes=val.split("");
 			    if (allShapes.length==0)  throw new IllegalArgumentException("Invalid value for allShapes="+val +" in name=" + name);
+		    } else if (key.equals("allColors")) {
+			    allColors=val.split("");
+			    if (allColors.length==0)  throw new IllegalArgumentException("Invalid value for allColors="+val +" in name=" + name);
 		    }
 		    else  throw new IllegalArgumentException("Unknown key="+key+" in name=" + name);
 		} else  throw new IllegalArgumentException("Cannot parse component="+s+" in name=" + name);
