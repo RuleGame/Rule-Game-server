@@ -648,6 +648,7 @@ public class Composite extends ImageObject {
 	      for(int col=0; col<g.NC; col++) {
 	          int col1 = col + dc;
 		  if (col1<0 || col1>=g.NC) continue;
+		  int j= row*g.NC + col;
 	          int j1= j + dr*g.NC + dc;
 		  if (shapes[j1].equals("x") && shapes[j].equals("x")) continue;
 		  if (!shapes[j1].equals(shapes[j]) || 		       
