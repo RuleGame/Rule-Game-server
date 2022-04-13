@@ -52,7 +52,8 @@ public class Composite extends ImageObject {
 
     // for 0 1 2 3
     static final double opacityValues[] = {0, 0.15, 0.4, 1.0};
-    
+    static final double scaling[] = {0, 0.6, 0.8, 0.1};
+	    
     /** A single element (circle, square, star, triangle) of the composite image */
     private static class Element {
 
@@ -132,9 +133,8 @@ public class Composite extends ImageObject {
 	    // Was:   0.4 : 0.7 : 1
 	    // Paul wants: 3: 4: 5,   i.e. 0.6: 0.8: 0.1
 	    //static
-	    double sizes[] = {0, 0.6, 0.8, 0.1};
 	    //int r = (int)( (1 - 0.2*(3-sizeRank))  *R);
-	    int r = (int)( sizes[sizeRank] *R);
+	    int r = (int)( scaling[sizeRank] *R);
 
 	    String w="";
 
@@ -617,17 +617,47 @@ public class Composite extends ImageObject {
 	for(int j=0; j<N(); j++) {
 	    if (!shapes[j].equals("x")) {
 		s++;
-		sop += opacityValues[bright[j]];
+		double scale = scaling[sizeRank[j];
+		sop += opacityValues[bright[j]] * scale*scale;
 		
 	    }
 	}
 	double opacity = sop / N();
 	put("occupied", ""+s);
 	put("opacity", ""+opacity);
-	
-	
+
+	// translation invariance of the pattern				       
+	String labels[] = {trans_h, trans_v, trans_asc, trans_desc};
+	int dr[] = {0, 1, 1, 1};
+ 	int dc[] = {1, 0, -1, 1};
+ 	for(int m=0; m<labels.length; m++) {
+	   boolean invar= invTest(dr[m], dc[m]);
+	   put(labels[j], invar? "1": "0");
+	}
     }
-	
+
+/** Is the pattern of elements in the grid invariant with respect to the specified translation?
+     (Vertical, horizontal, ascending or descending diagonal?).
+     For blank elements, colors and sizes don't matter; for non-blank ones,
+     we compare all properties to establish identity.
+     */
+    private boolean invTest(int dr, int dc) {
+	   for(int row=0; row<g.NR; row++) {
+	      int row1 = row + dr;
+	      if (row1<0 || row1>=g.NR) continue;
+	      for(int col=0; col<g.NC; col++) {
+	          int col1 = col + dc;
+		  if (col1<0 || col1>=g.NC) continue;
+	          int j1= j + dr*g.NC + dc;
+		  if (shapes[j1].equals("x") && shapes[j].equals("x")) continue;
+		  if (!shapes[j1].equals(shapes[j]) || 		       
+		      !colors[j1].equals(colors[j]) || 		       
+		      sizeRank[j1]!=sizeRank[j] || bright[j1]!=bright[j]) return false;
+	      }
+	   }
+	   return true;
+    }
+				       
     /** The SVG code for the composite image, not yet wrapped into  the top-level SVG element */
     private String makeSvg() {
 	if (wild) {
