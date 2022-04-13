@@ -617,7 +617,7 @@ public class Composite extends ImageObject {
 	for(int j=0; j<N(); j++) {
 	    if (!shapes[j].equals("x")) {
 		s++;
-		double scale = scaling[sizeRank[j];
+		double scale = scaling[sizeRank[j]];
 		sop += opacityValues[bright[j]] * scale*scale;
 		
 	    }
