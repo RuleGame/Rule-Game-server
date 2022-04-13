@@ -49,6 +49,9 @@ public class Composite extends ImageObject {
 	return "<"+name + " " + mkSvgParams(nameVal) +
  	    "/>";
     }
+
+    // for 0 1 2 3
+    static final double opacityValues[] = {0, 0.15, 0.4, 1.0};
     
     /** A single element (circle, square, star, triangle) of the composite image */
     private static class Element {
@@ -128,7 +131,10 @@ public class Composite extends ImageObject {
 	    String name=null;
 	    // Was:   0.4 : 0.7 : 1
 	    // Paul wants: 3: 4: 5,   i.e. 0.6: 0.8: 0.1
-	    int r = (int)( (1 - 0.2*(3-sizeRank))  *R);
+	    //static
+	    double sizes[] = {0, 0.6, 0.8, 0.1};
+	    //int r = (int)( (1 - 0.2*(3-sizeRank))  *R);
+	    int r = (int)( sizes[sizeRank] *R);
 
 	    String w="";
 
@@ -155,7 +161,7 @@ public class Composite extends ImageObject {
 		a.add(color);
 		if (bright!=3) {
 		    a.add( "fill-opacity");
-		    double opa = (bright==1)? 0.15: 0.4;
+		    double opa =  opacityValues[bright];
 		    a.add("" + opa);
 		}
 		w += elt(name, a.toArray(new String[0]));
@@ -605,6 +611,21 @@ public class Composite extends ImageObject {
 	    
 	put("sameshape", allSame(shapes)? "1":"0");
 	put("samecolor", allSame(colors)? "1":"0");
+
+
+	int s=0, sop=0;
+	for(int j=0; j<N(); j++) {
+	    if (!shapes[j].equals("x")) {
+		s++;
+		sop += opacityValues[bright[j]];
+		
+	    }
+	}
+	double opacity = sop / N();
+	put("occupied", ""+s);
+	put("opacity", ""+opacity);
+	
+	
     }
 	
     /** The SVG code for the composite image, not yet wrapped into  the top-level SVG element */
