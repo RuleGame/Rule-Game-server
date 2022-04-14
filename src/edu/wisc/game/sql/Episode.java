@@ -848,8 +848,12 @@ public class Episode {
 		//-- the background color of TD
 		String z = "<img ";
 		if (needBorder) z += "style='border: 5px solid "+hexColor+"' ";
-
-		z += "width='"+cellWidth+"' src=\"../../GetImageServlet?image="+sh+"\">";
+		String ke = null;
+		try {
+		    ke  = java.net.URLEncoder.encode(sh, "UTF-8");
+		} catch( UnsupportedEncodingException ex) {}
+		
+		z += "width='"+cellWidth+"' src=\"../../GetImageServlet?image="+ke+"\">";
 		//z = (lastMove!=null && lastMovePos==pos) ?    "[" + z + "]" :
 		//    ruleLine.isMoveable[pos]?     "(" + z + ")" :
 		//    "&nbsp;" + z + "&nbsp;";

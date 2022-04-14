@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 import java.text.*;
+import java.math.BigInteger;
 
 import  edu.wisc.game.formatter.*;
 import  edu.wisc.game.util.*;
@@ -312,7 +313,9 @@ public class Composite extends ImageObject {
     }
     
     /** Computes a name based on stored parameters. This is useful during 
-	random sample generation */
+	random sample generation. This is also useful to get rid of carets,
+	which are not welcome by the GUI client.
+    */
     private String mkName() {
 	String s = prefix + g.toPrefix();
 	s += field("d", sizeRank);
@@ -328,7 +331,7 @@ public class Composite extends ImageObject {
     private int N() { return g.N(); }
     
     public String toString() {
-	String s = "[Composite ImageObject Description: orientation="+g.getOrientation()+", sizes=" + joinInt(sizeRank) +
+	String s = "[Composite ImageObject Description: geometry="+g+", sizes=" + joinInt(sizeRank) +
 	    ", brightness=" + joinInt(bright) +
 	    ", pieces=";
 	Vector<String> v = new Vector<>();
@@ -413,21 +416,23 @@ public class Composite extends ImageObject {
 	computeProperties();
     }
 
+    
+
     /** How many distinct concrete Composite ImageObjects does this Composite
 	object describe? The result is based on the number of wildcards in 
-	this object.
+	this object. BigInteger is used because the number can be combinatorially large.
      */
-    public int familySize() {
-  	if (!wild) return 1;
-	int n = 1;
-	if (g.any) n*=2;
+    public BigInteger familySize() {
+	BigInteger n =  BigInteger.ONE;
+  	if (!wild) return n;
+	if (g.any) n = n.multiply( BigInteger.valueOf(2));
 	for(int j=0; j<N(); j++) {
-	    if (sizeRank[j]==ANY) n *= M;
-	    if (bright[j]==ANY)  n *= M;
+	    if (sizeRank[j]==ANY) n = n.multiply( BigInteger.valueOf(M));
+	    if (bright[j]==ANY)   n = n.multiply( BigInteger.valueOf(M));
 	}
 	for(int j=0; j<N(); j++) {
-	    if (shapes[j].equals("?")) n *= allShapes.length; 
-	    if (colors[j].equals("?")) n *= allColors.length;
+	    if (shapes[j].equals("?")) n = n.multiply( BigInteger.valueOf(allShapes.length)); 
+	    if (colors[j].equals("?")) n = n.multiply( BigInteger.valueOf(allColors.length)); 
 	}	
 	return n;
     }
@@ -456,7 +461,7 @@ public class Composite extends ImageObject {
     public Composite(String name) {
 	this(Geometry.extractGeometry(name));
 	key = name;
-
+	boolean hasMulti = false;
 
 	//System.err.println("name="  +name+", geo="+g+", N=" + N());
 	
@@ -510,7 +515,7 @@ public class Composite extends ImageObject {
 		    }
 		    else  throw new IllegalArgumentException("Unknown key="+key+" in name=" + name);
 		} else  throw new IllegalArgumentException("Cannot parse component="+s+" in name=" + name);
-	    } else if (k<N()) {  // rq ;  rq^5
+	    } else if (k<N()) {  // rq ;  *; r?;  rq^5 ; 
 		// System.out.println("piece = " +  s);
 		int multi = 1;
 		String[] pp = s.split("\\^");
@@ -535,8 +540,9 @@ public class Composite extends ImageObject {
 		int k0 = k;
 		k++;		
 		if (multi>1) {
+		    hasMulti=true;
 		    for(; k<k0+multi; k++) {
-			    if (k>=N()) throw new IllegalArgumentException("Multiplicity=" + multi+ " is too high in name=" + name);
+			if (k>=N()) throw new IllegalArgumentException("Multiplicity=" + multi+ " is too high in name=" + name +", for k0="+k0+", N=" + N());
 			    shapes[k] = shapes[k0];
 			    colors[k] = colors[k0];
 		    }
@@ -549,8 +555,10 @@ public class Composite extends ImageObject {
 	    shapes[k] = allShapes[0];
 	    colors[k] = allColors[0];
 	}
+
+	// get rid of carets
+	if (hasMulti) key = mkName();
 	
-	    
 	svg = makeFullSvg();
 	if (!wild) computeProperties();
     }
@@ -739,7 +747,7 @@ public class Composite extends ImageObject {
 	    Composite d = new  Composite(a);
 	    System.err.println("d=" + d);
 	    v.add(d);
-	    int n = d.familySize();
+	    BigInteger n = d.familySize();
 	    System.err.println("Expands to " + n + " concrete objects");
 	    Composite b = d.sample(random);
 	    System.err.println("b=" + b);
@@ -820,7 +828,7 @@ public class Composite extends ImageObject {
 	/** The families */
 	final private Composite[] compo;
 	/** Family sizes, and their sum */
-	final private int size[], sumSize;
+	final private BigInteger size[], sumSize;
 	
 	public String[] getKeys() {
 	    String[] v = new String[compo.length];
@@ -845,18 +853,20 @@ public class Composite extends ImageObject {
 	
 	public Generator( Composite[] _compo) {
 	    compo = _compo;
-	    size = new int[compo.length];
-	    int sum=0;
+	    size = new BigInteger[compo.length];
+	    BigInteger sum= BigInteger.ZERO;
 	    for(int j=0; j<compo.length; j++) {
-		sum += size[j] = compo[j].familySize();
+		size[j] = compo[j].familySize();
+		sum = sum.add(size[j]);
 	    }
 	    sumSize = sum;
-	    if (sumSize<1) throw new IllegalArgumentException("Apparently empty set of composite objects");
+	    if (sumSize.compareTo( BigInteger.ONE)<0) throw new IllegalArgumentException("Apparently empty set of composite objects");
 	}
 
 	/** Randomly gets the name for one concrete image object */
 	 public //ImageObject
 	     String getOneKey(Random random) {
+	     /*
 	     int k = random.nextInt(sumSize);
 	     int sum=0;
 	     int j=0;
@@ -864,6 +874,9 @@ public class Composite extends ImageObject {
 		 j++;
 		 if (j>=compo.length) throw new IllegalArgumentException("Internal error");
 	     }
+	     */
+	     int j = random.nextInt( compo.length);
+	     
 	     Composite a = compo[j];
 	     Composite b = a.sample( random );
 	     b.enlist();

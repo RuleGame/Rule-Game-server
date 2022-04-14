@@ -12,7 +12,7 @@ import edu.wisc.game.svg.*;
 public class ImageObjectReport  extends ResultsBase  {
 
     public boolean wild=false;
-    public String name0 = null, name=null;
+    public String name0 = null, name=null, nameEncoded=null;
     public ImageObject io = null;
     
     public ImageObjectReport(HttpServletRequest request, HttpServletResponse response)  {
@@ -31,10 +31,12 @@ public class ImageObjectReport  extends ResultsBase  {
 	    } else {
 		io = ImageObject.obtainImageObjectPlain(null, name, false);
 	    }
+	    nameEncoded =  java.net.URLEncoder.encode(name, "UTF-8");
 	} catch(Exception ex) {
 	    hasException(ex);
 	}
 
-      }
+    }
+
     
 }

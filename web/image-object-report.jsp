@@ -21,7 +21,7 @@ ImageObjectReport main	= new ImageObjectReport(request, response);
 <p>Name: <tt><%= main.name0 %>
 <%
 } %>
-<p><img src="GetImageServlet?image=<%= main.name %>">
+<p><img src="GetImageServlet?image=<%= main.nameEncoded %>">
 <p>Properties:
 <ul>
 <li>

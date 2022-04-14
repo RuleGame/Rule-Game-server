@@ -166,7 +166,8 @@ public class CheckPlanService extends GameService2 {
 			
 
 			for(String k: keys) {
-			    String z = "<img width='80' src=\"../../GetImageServlet?image="+k+"\">";
+			    String ke = java.net.URLEncoder.encode(k, "UTF-8");
+			    String z = "<img width='80' src=\"../../GetImageServlet?image="+ ke+"\">";
 			    ImageObject io = ImageObject.obtainImageObjectPlain(null, k, false);
   			    
 			    rows.add(fm.tr(fm.td(k) + fm.td(z) + fm.td(io.listProperties())));

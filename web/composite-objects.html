@@ -92,13 +92,12 @@
 	<tt>/composite/v/d=111/rt/gq/bs</tt><br>
 	<img src="GetImageServlet?image=/composite/v/d=111/rt/gq/bs">
       <td>
-	<tt>/composite/v/d=222/rt/gq/bs</tt><br>s
+	<tt>/composite/v/d=222/rt/gq/bs</tt><br>
 	<img src="GetImageServlet?image=/composite/v/d=222/rt/gq/bs">
       <td>
 	<tt>/composite/v/d=333/rt/gq/bs</tt><br>
 	<img src="GetImageServlet?image=/composite/v/d=333/rt/gq/bs">
     </tr>
-
     
   </table>
 
@@ -133,7 +132,7 @@
       <br>
       For grid objects, the orientation part has the form <tt>/g<em>RC</em></tt>, consisting of <tt>/g</tt> and two digits specifying the number of rows and columns, respectively. E.g. <tt>/g34</tt> for a grid with 12 elements (3 rows and 4 columns).
 
-    <li>An optional part, not shown here, using for providing certain defaults, which are particularly useful when wildcards are used 
+    <li><strong>Changing defaults.</strong> An optional part, not shown here, using for providing certain defaults, which are particularly useful when wildcards are used 
 	    (as discussed in the next section). This may include:
 	    <ul>
 		    <li><tt>/allColors=gr</tt> : the colors (when "wildcarded" or "defaulted") will be chosen from the set of green and red.
@@ -196,7 +195,7 @@ We can add more orderable features in the future, e.g. texture pattern or tilt.
    <br>For a grid composite objects with R rows and C columns, this component needs to describe all R*C elements, arranged by row, unless you want to use the default color and shape
 	(red squares, or whatever is provided as the first elements of your "allColors" and "allShapes").
    
-	<br>To save space, one can use the caret ("<tt>^</tt>") notation for multiple identical items. E.g. you can write <tt>/bc^10<tt> to specify 10 blue circles; 
+	<br>To save space, one can use the caret ("<tt>^</tt>") notation for multiple identical items. E.g. you can write <tt>/bc^10</tt> to specify 10 blue circles; 
 	you can write <tt>/*^5</tt> instead of <tt>/*/*/*/*/*</tt> or <tt>/??/??/??/??/??</tt> to indicate 5 elements of random shapes and colors.
 	
   </ol>
