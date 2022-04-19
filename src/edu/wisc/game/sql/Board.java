@@ -387,7 +387,7 @@ public class Board {
 	or shapes that cannot be displayed */
     public void checkShapesAndColors(ColorMap cm) throws IOException {
 
-	HashSet<Long> h = new HasSet<>();
+	HashSet<Long> h = new HashSet<>();
 	
 	for(Piece p: value) {
 	    long id = p.getId();
