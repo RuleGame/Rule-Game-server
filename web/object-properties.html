@@ -6,7 +6,7 @@
  </head>
 <body>
   <h1>Image-and-property-based description of objects</h1>
-  <div    align="center">Updated: April 1, 2022, for GS ver. 4.009</div>
+  <div    align="center">Updated: April 18, 2022, for GS ver. 4.012</div>
 
 <p>This document describes image-and-property-based objects, which have been made available since  Game Server ver. 3.*. It is based on the proposal documents:
 <ul>  
@@ -206,20 +206,19 @@ will include all image files from
 
     <p>As of GS 2.*, the <a href="arithmetic.html">expression</a> used as the last element of the atom makes use of the variables <tt>ps</tt> and <tt>pc</tt>, which refer to "the most recent bucket into which an object of this shape was put" and  "the most recent bucket into which an object of this shape was put". This syntax is not available for  IPB objects.
 
-<p><em>
-      A proposal wes made, but never implemented, to extend this syntax to apply to IPB objects, so that we could express concepts such as e.g. "the most recent bucket into which an object with this orientation was put". I propose to use the following syntax:
+This syntax has been extended to apply to IPB objects, so that we can express concepts such as e.g. "the most recent bucket into which an object with this orientation was put". The following syntax is used for variable names:
     <pre>
       p.<em>property</em>
     </pre>
     where <em>property</em> is the name of the property in question. So, for example, if our objects have the property <tt>species</tt>, the variable named
-<tt>p.species</tt> will refer to  "the most recent bucket into which an object sof this species was put".
+<tt>p.species</tt> refers to  "the most recent bucket into which an object sof this species was put".
 </em>
     
     <h2><a name="json">Describing a board as a JSON structure</a></h2>
 
 <p>The Game Engine exports the informastion about the current state of the board in JSON format when the Web-based Game Server transmits this information to the GUI client, or when the Captive Game Server sends this information to the ML program that has spawned the CGS.
 	
-<p>When a JSON representation is former for sending to the GUI client, each IPB game piece is identified just by the <tt>image</tt> attribut. The GUI client does not need to know about the properties associated with this object in the properties table, since all it needs is the image.
+<p>When a JSON representation is former for sending to the GUI client, each IPB game piece is identified just by the <tt>image</tt> attribute. The GUI client does not need to know about the properties associated with this object in the properties table, since all it needs is the image.
 
     <h3><a name="ml">How will this work with ML?</a></h3>
 

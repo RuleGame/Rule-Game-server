@@ -386,12 +386,26 @@ public class Board {
     /** Checking that a board description does not include any colors
 	or shapes that cannot be displayed */
     public void checkShapesAndColors(ColorMap cm) throws IOException {
+
+	HashSet<Long> h = new HasSet<>();
+	
 	for(Piece p: value) {
-	    Piece.Color color =p.xgetColor();
-	    if (!cm.hasColor(color)) throw new IOException("Color " + color + " is not in the color map");
-	    Piece.Shape shape =p.xgetShape();
-	    File f = Files.getSvgFile(shape);
-	    if (!f.canRead())  throw new IOException("For shape "+shape+",  Cannot read shape file: " + f);
+	    long id = p.getId();
+	    if (h.contains(id)) throw new IOException( "Id="+id+" occurs in more than one game piece. The second piece: "+p);
+	    h.add(id);
+	    
+	    if (p.getImage()!=null) {
+		ImageObject io = p.getImageObject();
+		if (io==null) throw new IOException( "Cannot load image object named '"+p.getImage()+"' for game piece: "+p);
+	    } else {	    
+		Piece.Color color =p.xgetColor();
+		if (color==null) throw new IOException("Game piece has no color: " + p);
+		if (!cm.hasColor(color)) throw new IOException("Color " + color + " is not in the color map");
+		Piece.Shape shape =p.xgetShape();
+		if (shape==null) throw new IOException("Game piece has no shape: " + p);
+		File f = Files.getSvgFile(shape);
+		if (!f.canRead())  throw new IOException("For shape "+shape+",  Cannot read shape file: " + f);
+	    }
 	}
     }
     
