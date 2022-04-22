@@ -320,7 +320,7 @@ public class CheckPlanService extends GameService2 {
     private static int bucketVarCheck(RuleSet rules, Set<String> knownProps, Vector<String> v) {	    
 	    int errcnt = 0, propCnt=0;
 	    HashSet<String> bv = rules.listAllBucketVars();
-	    String varNames[] = bv.toArray(new String[]);
+	    String varNames[] = bv.toArray(new String[0]);
 	    Arrays.sort(varNames);
 	    if (varNames.length>0) {
 		  v.add("The rule set uses " + varNames.length + " bucket variables: " + String.join(", ", varNames));
