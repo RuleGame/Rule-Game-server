@@ -278,7 +278,7 @@ public class CheckPlanService extends GameService2 {
 			}
 		    }
 			
-		    errCnt += bucketVarCheck(rules, w==null? null: w.keySet(), v);
+		    errcnt += bucketVarCheck(rules, w==null? null: w.keySet(), v);
 				
 		    int[] e ={0};
 		    v.addAll(stalemateCheck(rules,para,e));
@@ -320,7 +320,7 @@ public class CheckPlanService extends GameService2 {
     private static int bucketVarCheck(RuleSet rules, Set<String> knownProps, Vector<String> v) {	    
 	    int errcnt = 0, propCnt=0;
 	    HashSet<String> bv = rules.listAllBucketVars();
-	    for(Strting varName : bv) {
+	    for(String varName : bv) {
 		try {
 		    Enum.valueOf( RuleSet.BucketSelector.class, varName);
 		    continue; // Skip known built-in vars
