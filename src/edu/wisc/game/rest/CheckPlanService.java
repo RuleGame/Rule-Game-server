@@ -243,8 +243,10 @@ public class CheckPlanService extends GameService2 {
 		    v.add(fm.para("The rules have been compiled as follows:"));
 		    v.add(fm.para(fm.tt(rules.toSrc().replaceAll("\n",fm.br()))));
 
+		    TreeMap<String,TreeSet<String>> w = null;
+			
 		    if (ipb && !useDynamicImages) {
-			TreeMap<String,TreeSet<String>> w = rules.listAllPropValues();
+			w = rules.listAllPropValues();			
 			for(String p: w.keySet()) {
 			    TreeSet<String> h = propValues.get(p);
 			    if (h==null) {
@@ -269,13 +271,15 @@ public class CheckPlanService extends GameService2 {
 			    }
 			}
 			for(Piece.Color color:  rules.listAllColors()) {
-			    if (!cm.hasColor(color))  {
-		    
+			    if (!cm.hasColor(color))  {    
 				v.add(fm.para("Warning: Rule set " + para.getRuleSetName() + " mentions color " + color +", which is not listed in the color map file. Was a different color intended?"));
 				errcnt ++;
 			    }
 			}
 		    }
+			
+		    errCnt += bucketVarCheck(rules, w==null? null: w.keySet(), v);
+				
 		    int[] e ={0};
 		    v.addAll(stalemateCheck(rules,para,e));
 		    errcnt += e[0];
@@ -307,6 +311,37 @@ public class CheckPlanService extends GameService2 {
 
 	return fm.html(title, body);	
 
+    }
+	
+    /** Checks whether any variables occurring in bucket expressions in a given RuleSet may be undefined.
+        @param rules The RuleSet to analyze
+	@param If not null, this set contains the names of all properties that may occur in the game pieces. The param may be null if such data is not available
+    	@return Number of errors */
+    private static int bucketVarCheck(RuleSet rules, Set<String> knownProps, Vector<String> v) {	    
+	    int errcnt = 0, propCnt=0;
+	    HashSet<String> bv = rules.listAllBucketVars();
+	    for(Strting varName : bv) {
+		try {
+		    Enum.valueOf( RuleSet.BucketSelector.class, varName);
+		    continue; // Skip known built-in vars
+		} catch(IllegalArgumentException ex) {}
+		if (varName.startsWith("p.")) {
+			propCnt++;
+			String prop = varName.substring(2);
+			if (knownProps!=null) {
+				if (!knownProps.contains(prop)) v.add("Warning: A bucket expression in the rule set refers to property <tt>" +  prop +
+								      "</tt>, which may not occur in the objects used in this game");
+			}
+		} else {
+			v.add("A bucket expression in the rule set uses unknown variable <tt>" + varName + "</tt>");
+			errcnt ++;
+		}
+	    }
+	    if (knownProps==null && propCnt>0) {
+		    v.add("Note: Bucket expression(s) in this rule set refer to properties of objects (the <tt>p.</tt> syntax), "+
+			  "but the validator does not support analysis of properties in games of this type (maybe because of the use of dynamically generated objects");
+	    }
+	    return errcnt;
     }
 
 
