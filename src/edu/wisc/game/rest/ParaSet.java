@@ -42,9 +42,10 @@ public class ParaSet extends HashMap<String, Object> {
     /** Will be set as appropriate if specified in the CSV file "colors" column */
     public Piece.Shape[] shapes = Piece.Shape.legacyShapes;
     public Piece.Color[] colors = Piece.Color.legacyColors;
-    /** Will be set as appropriate if specified in the CSV file "images" column. The array elements are keys used for the image lookup. */
-    //    public String[] images=null;
+    /** Will be set as appropriate if specified in the CSV file "images" column. The array elements are keys used for the image lookup. 
+     Otherwise, null */
     public ImageObject.Generator imageGenerator=null;
+    //    public String[] images=null;
 
     /** For JSON */
     public String getColors() {

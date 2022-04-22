@@ -6,7 +6,7 @@
  </head>
 <body>
   <h1>Image-and-property-based description of objects</h1>
-  <div    align="center">Updated: April 18, 2022, for GS ver. 4.012</div>
+  <div    align="center">Updated: April 21, 2022, for GS ver. 4.012</div>
 
 <p>This document describes image-and-property-based objects, which have been made available since  Game Server ver. 3.*. It is based on the proposal documents:
 <ul>  
@@ -285,6 +285,60 @@ The new IPB objects will leave the  <tt>shape</tt> and <tt>color</tt> columns em
     <div align="center">
       [<a href="index.html">DOCS HOME</a>]
       </div>
+
+    <h2>Examples</h2>
+
+    <h3>vm/jigsaw-01</h3>
+
+<p>The experiment plan   <tt>vm/jigsaw-01</tt> illustrates the use of:
+  <ul>
+    <li>Image-and-property based objects
+    <li>Predefined boards
+    <li><a href="arithmetic.html">Bucket expression arithmetic</a> in rules
+    <li>Use of custom properties in bucket expressions
+  </ul>
+
+<p>The goal is as follows. Suppose we have a figure built out of several game pieces, each one with a different image on it, sort of like a jigsaw puzzle is made out of several pieces the pictures on which are supposed to come together into a big picture. 
+
+<p>
+  <img src="img/jigsaw-01.png" width="600">
+  <br>
+  <em>(Picture by Charles Davis).</em>
+
+<p>For example, the 4 game pieces one sees on the playing board in the image above are supposed to come together into a design shown below:
+  <table>
+    <tr><td>(NW) <img src="img/jigsaw-01/b1-nw.svg"><td><img src="img/jigsaw-01/b1-ne.svg"> (NE)
+    <tr><td>(SW) <img src="img/jigsaw-01/b1-sw.svg"><td><img src="img/jigsaw-01/b1-se.svg"> (SE)
+  </table>
+
+<p>The player is tasked with picking the 4 pieces (named NW, NE, SW, SE) from the board (which may also contain other, non-related game pieces) and putting them into the same board. Moreover, he must pick them in some order that imitates assembling the picture in a contiguous way -- that is, at every point during the assembly process, the set of already-picked pieces must form a contiguous section of the big picture. The player can start from an arbitrary piece; but once he has picked the first piece (say, NW), the next piece to pick must be a piece that touches the already picked piece along an edge (that is, NE or SW, but not SE). After several contiguous pieces have been picked, the next piece must be one that's adjacent to at least one of the already-picked pieces.   This means that the picking orders (NW, NE, SE, SW) or (SW, NW, SE, NE) are allowed, but the order (NW, SE, NE, SW) is not allowed (one cannot pick SE when only NW has been picked so far, since SE is not adjacent to NW).
+
+<p>In a more generalized way, one can describe these rule set as follows: There is a  set of pieces which are thought of as the vertices of an imaginary graph. They are connected in some ways by edges of this graph. The player can start picking pieces of this set from any pieces, but, as he picks more pieces, at every move he can only pick a piece that's connected by an edge to at least one already-picked piece.
+
+<P>To create a rule set implementing the policy described above, we follow the following approach. For every graph edge, we introduce a unique property, whose value is "true" (or, rather, is equal to 1) for only the two game pieces connected by that edge. We then use that property in a rule atom which applies only to pieces where this property = 1, and which has a bucket expression that evaluates to a non-empty bucket set only if any pieces with this property have already been put to a bucket. For example, we have property named <tt>jn</tt> associated with the edge connecting the game pieces NE and NW (actually called <tt>b1-ne</tt> and <tt>b2-nw</tt> in our property file). We then have the atom
+  <pre>
+    (jn:1, bucket:p.jn)
+  </pre>
+This atom only applies to a game piece in which jn=1 (i.e., the NE and NW pieces). The set of buckets into which it allows to put the piece is [p.jn], i.e. will only allow the player to put the piece to the same bucket into the most recently moved piece with the same value of jn (i.e. jn=1) was put. Thus, if the piece NE or NW has been previously put into some bucket, then this atom will allow you to pick the other piece with jn=1 (i.e. NW or NE, respectively), and to put it into the same bucket. But if none of these two game pieces have been moved yet, then the bucket expression will evaluate to the empty set, and therefore this atom won't allow any moves.
+
+<p>The above technique would allows us to use the following <a href="syntax.html">rule set</a>:
+  <pre>
+1 (body:1) 
+(jn:1, bucket:[p.jn]) (js:1, bucket:[p.js]) (je:1, bucket:[p.je]) (jw:1, bucket:[p.jw])
+</pre>
+  In this rule set, the only atom in the first line makes use of the property <tt>body</tt>, whose value = 1 for all pieces in the first picture  to be assembled (the red loop made out of 4 pieces). This atom has no other restrictions, which means that it allows the player to pick any piece of this picture.
+
+<p>Since the first line of the rule set is not metered, it will allow the player to only pick one piece, after which the control drops to the second line.
+
+<p>The second line of the rule set has 4 items. Each item applies to only ................
+
   
+<pre>
+  1 (body:1) (body:2, bucket:p+1)
+(jn:1, bucket:[p.jn]) (js:1, bucket:[p.js]) (je:1, bucket:[p.je]) (jw:1, bucket:[p.jw])
+(kn:1, bucket:[p.kn]) (ks:1, bucket:[p.ks]) (ke:1, bucket:[p.ke]) (kw:1, bucket:[p.kw]) 
+</pre>
+  
+    
 </body>
 </html>

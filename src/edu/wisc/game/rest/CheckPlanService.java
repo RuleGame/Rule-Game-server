@@ -314,17 +314,22 @@ public class CheckPlanService extends GameService2 {
     private static Vector<String> stalemateCheck(RuleSet rules,ParaSet para, int errcnt[])    {
 
 	Vector<String> v = new Vector<>();
-	if (!(para.imageGenerator instanceof  ImageObject.PickFromList)) {
-	    v.add(fm.para("This game uses a dynamic ImageObject generator; stalemate testing is not supported"));
-	    return v;
+
+	String[] allImages = null;
+	if (para.imageGenerator!=null) {
+	    if (!(para.imageGenerator instanceof  ImageObject.PickFromList)) {
+		v.add(fm.para("This game uses a dynamic ImageObject generator ("+para.imageGenerator.getClass()+"); stalemate testing is not supported"));
+		return v;
+	    }
+	    ImageObject.PickFromList g = (ImageObject.PickFromList)para.imageGenerator;
+	    allImages = g.getKeys();
 	}
-	ImageObject.PickFromList g = (ImageObject.PickFromList)para.imageGenerator;
-	
+	    
 	StalemateTester tester = new StalemateTester(rules);
 
 	//Piece.Shape.legacyShapes, Piece.Color.legacyColors, para.images);
 	
-	Board stalemated = tester.canStalemate(para.shapes, para.colors, g.getKeys());
+	Board stalemated = tester.canStalemate(para.shapes, para.colors, allImages);
 	
 	if (stalemated!=null) {
 	    v.add(fm.para("Error: this rule set can stalemate"));

@@ -29,7 +29,12 @@ public class StalemateTester {
 	private MBoard() {}
 	
     /** Creates an initial multi-board, which has each possible piece in 
-	each cell. */
+	each cell. 
+
+	@param allImages For a game with image-and-properties based
+	objects, the set of all ImageObject keys. For a game with the
+	traditional color-and-shape objects, null.
+    */
 	MBoard(Piece.Shape[] shapes, Piece.Color[] colors,
 	       String[] allImages) {
 

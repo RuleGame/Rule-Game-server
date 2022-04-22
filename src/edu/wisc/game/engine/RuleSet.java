@@ -123,7 +123,10 @@ public class RuleSet {
     }
 
     /** A BucketList represents the information about the destination
-	buckets given in the "buckets" field of an atom.
+	buckets given in the "buckets" field of an atom. It is a list of
+	arithmetic expressions, each of which can be a numeric constant
+	or a more complicated expressions making use of the "bucket arithmetic"
+	and "bucket variables".
     */
     public static class BucketList extends Vector<Expression.ArithmeticExpression>{
 	/** Star is allowed in Kevin's syntax, and means "any bucket" */
@@ -145,8 +148,8 @@ public class RuleSet {
 	}
 	*/
 	
-	BucketList(Expression.ArithmeticExpression num)  {
-	    add(num);
+	BucketList(Expression.ArithmeticExpression ae)  {
+	    add(ae);
 	}
 
 	public String toString() {
