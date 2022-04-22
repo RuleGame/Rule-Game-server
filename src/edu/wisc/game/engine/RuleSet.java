@@ -182,6 +182,16 @@ public class RuleSet {
 	    return q;
 	}
 	
+	/** The list of variables mentioned in this BucketSelector */
+	public HashSet<String> listAllVars() {
+	    HashSet<String> r = new HashSet<>();
+	    for(Expression.ArithmeticExpression ae: this) {
+		r.addAll(ae.listAllVars());
+	    }
+	    return r;	    
+	}
+
+	
     }
 
     /** a0 &le; x &le; a1 */
@@ -625,6 +635,15 @@ public class RuleSet {
 	    return propValues;
 	}
 	
+        /** The list of variables mentioned in the bucket expressions in this row */
+	//public HashSet<String> listAllBucketVars() {
+	  //  HashSet<String> r = new HashSet<>();
+	  //  for(Atom atom: this) {		
+	  //       r.addAll(atom.bucketList.listAllVars());
+	  //  }
+	  //  return r;	    
+	//}	    
+	    
     }
 
     /** All orders */
@@ -788,6 +807,18 @@ public class RuleSet {
 	return propValues;
     }
 
+    /** The list of variables mentioned in the bucket expressions in this row */
+    public HashSet<String> listAllBucketVars() {
+	HashSet<String> r = new HashSet<>();
+	for(Row row: rows) {
+	    for(Atom atom: row) {		
+	         r.addAll(atom.bucketList.listAllVars());
+	    }
+	}		
+	return r;	    
+    }	    
+	
+	
     /** Creates a "lite" rule set based on this rule set. A lite set is one
 	which has all atoms in the same row, nothing is metered, and 
 	all destination  buckets are allowed. Such sets are used in 
