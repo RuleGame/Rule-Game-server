@@ -27,7 +27,7 @@ or <tt>R:bottomLeft_then_topRight:simple</tt>
 
    <form method="post" action="game-data/CheckPlanService/checkPlan"
 	 enctype="application/x-www-form-urlencoded">
-	 <input type="text" name="exp" size="40">
+	 <input type="text" name="exp" size="80">
 	 <br>
      <button type="submit">Check</button>
    </form>

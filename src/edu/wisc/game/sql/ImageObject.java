@@ -12,7 +12,7 @@ import edu.wisc.game.svg.Composite;
 
 
 /** Describes an image-and-properties-based object. For details, see
-<a href="../../../../../proposal-object-properties.html">Image-and-property-based description of objects</a>
+<a href="../../../../../object-properties.html">Image-and-property-based description of objects</a>
  */
 public class ImageObject extends HashMap<String,String> {
 
@@ -301,7 +301,9 @@ public class ImageObject extends HashMap<String,String> {
     public String listProperties() {
 	return listProperties(", ");
     }
-    
+
+    /** Produces a "key1:val1, key2:val2, ..." list, with a desired separator.
+     */
     public String listProperties(String sep) {
 	String[] keys = keySet().toArray(new String[0]);
 	Arrays.sort(keys);

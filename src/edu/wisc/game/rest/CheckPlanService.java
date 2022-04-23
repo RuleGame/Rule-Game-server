@@ -48,10 +48,8 @@ public class CheckPlanService extends GameService2 {
 	    RuleSet rules = new RuleSet(rulesText);
 	    v.add(fm.para("The rules have been compiled as follows:"));
 	    v.add(fm.para(fm.tt(rules.toSrc().replaceAll("\n",fm.br()))));
-
-	    int[] e ={0};
-	    v.addAll(stalemateCheck(rules, ParaSet.legacy, e));
-	    errcnt += e[0];
+	    errcnt += bucketVarCheck(rules, null, v);
+	    errcnt += stalemateCheck(rules, ParaSet.legacy, v);
 	    
 	} catch(Exception ex) {
 	    if (info != null) v.add(fm.para(info));
@@ -65,9 +63,9 @@ public class CheckPlanService extends GameService2 {
        
 	v.add("<hr>");
 	if (errcnt>0) {
-	    v.add(fm.para("Found " + errcnt + " errors. You may want to fix them before inviting players into this experiment plan"));
+	    v.add(fm.para(fm.strong("Found " + errcnt + " errors. You may want to fix them before inviting players into this experiment plan")));
 	} else {
-	    v.add(fm.para("Found no errors."));
+	    v.add(fm.para(fm.strong("Found no errors.")));
 	}
 
 
@@ -127,7 +125,8 @@ public class CheckPlanService extends GameService2 {
 		v.add(fm.h3("Checking trial list " + fm.tt(key)));
 		TrialList trialList  = new TrialList(exp, key);
 		if (trialList.error) {
-		    v.add(fm.para("Error: failed to create trial list <tt>" + key + "</tt>. Error=" + trialList.errmsg));
+		    v.add(fm.para("Error: failed to create trial list " +
+				  fm.tt(key) + ". Error=" + trialList.errmsg));
 		    errcnt ++;
 		    continue;
 		}
@@ -250,17 +249,17 @@ public class CheckPlanService extends GameService2 {
 			for(String p: w.keySet()) {
 			    TreeSet<String> h = propValues.get(p);
 			    if (h==null) {
-				v.add(fm.para("Warning: Rule set " + para.getRuleSetName() + " makes use of property <tt>" + p +"</tt>, which does not appear in any of the image-based objects of this parameter set. Therefore, any references to this property in the rule set won't affect the game."));
+				v.add(fm.para("Warning: Rule set " + para.getRuleSetName() + " makes use of property " + fm.tt(p) +", which does not appear in any of the image-based objects of this parameter set. Therefore, any references to this property in the rule set won't affect the game."));
 			    }
 			    TreeSet<String> z= new TreeSet<>();
 			    z.addAll(w.get(p));
 			    z.removeAll(h);
 			    if (!z.isEmpty()) {
-				v.add(fm.para("Warning: When rule set " + para.getRuleSetName() + " has conditions referring to property <tt>" + p +"</tt>, it makes use of "+z.size()+" values of this property (<tt>" + Util.joinNonBlank(", ", z) +"</tt>), which do not appear in any of the image-based objects of this parameter set."));
+				v.add(fm.para("Warning: When rule set " + para.getRuleSetName() + " has conditions referring to property " +fm.tt(p) +", it makes use of "+z.size()+" values of this property (" + fm.tt(String.join(", ", z)) +"), which do not appear in any of the image-based objects of this parameter set."));
 			    }
 			}
 		    } else if (useDynamicImages) {
-			v.add("Use dynamic image objects -- cannot analyze properties yet");
+			v.add(fm.para("Use dynamic image objects -- cannot analyze properties yet"));
 		    } else {
 			for(Piece.Shape shape:  rules.listAllShapes()) {
 			    File f = Files.getSvgFile(shape);
@@ -278,11 +277,10 @@ public class CheckPlanService extends GameService2 {
 			}
 		    }
 			
-		    errcnt += bucketVarCheck(rules, w==null? null: w.keySet(), v);
-				
-		    int[] e ={0};
-		    v.addAll(stalemateCheck(rules,para,e));
-		    errcnt += e[0];
+		    errcnt += bucketVarCheck(rules,w==null? null: w.keySet(),v);
+
+		    errcnt += stalemateCheck(rules,para,v);
+
 		}
 
 	    }
@@ -301,9 +299,9 @@ public class CheckPlanService extends GameService2 {
 	//-- put together
 	v.add("<hr>");
 	if (errcnt>0) {
-	    v.add(fm.para("Found " + errcnt + " errors. You may want to fix them before inviting players into this experiment plan"));
+	    v.add(fm.para(fm.strong("Found " + errcnt + " errors. You may want to fix them before inviting players into this experiment plan")));
 	} else {
-	    v.add(fm.para("Found no errors."));
+	    v.add(fm.para(fm.strong("Found no errors.")));
 	}
 
 		
@@ -323,9 +321,9 @@ public class CheckPlanService extends GameService2 {
 	    String varNames[] = bv.toArray(new String[0]);
 	    Arrays.sort(varNames);
 	    if (varNames.length>0) {
-		  v.add("The rule set uses " + varNames.length + " bucket variables: " + String.join(", ", varNames));
+		v.add(fm.para("The rule set uses " + varNames.length + " bucket variables: " + fm.tt(String.join(", ", varNames))));
 	    } else {
-		  v.add("The rule set uses no bucket variables.");
+		v.add(fm.para("The rule set uses no bucket variables."));
 	    }
 	    
 	    for(String varName : bv) {
@@ -337,32 +335,33 @@ public class CheckPlanService extends GameService2 {
 			propCnt++;
 			String prop = varName.substring(2);
 			if (knownProps!=null) {
-				if (!knownProps.contains(prop)) v.add("Warning: A bucket expression in the rule set refers to property <tt>" +  prop +
-								      "</tt>, which may not occur in the objects used in this game");
+			    if (!knownProps.contains(prop)) v.add(fm.para("Warning: A bucket expression in the rule set refers to property " + fm.tt(prop) +
+									  ", which may not occur in the objects used in this game"));
 			}
 		} else {
-			v.add("A bucket expression in the rule set uses unknown variable <tt>" + varName + "</tt>");
-			errcnt ++;
+		    v.add(fm.para("Error: A bucket expression in the rule set uses unknown variable " + fm.tt(varName)));
+		    errcnt ++;
 		}
 	    }
 	    if (knownProps==null && propCnt>0) {
-		    v.add("Note: Bucket expression(s) in this rule set refer to properties of objects (the <tt>p.</tt> syntax), "+
-			  "but the validator does not support analysis of properties in games of this type (maybe because of the use of dynamically generated objects");
+		v.add(fm.para("Note: Bucket expression(s) in this rule set refer to properties of objects (the <tt>p.</tt> syntax), "+
+			      "but the validator does not support analysis of properties in games of this type (maybe because of the use of dynamically generated objects"));
 	    }
 	    return errcnt;
     }
 
 
-    /**  check the rule set for stalemates */
-    private static Vector<String> stalemateCheck(RuleSet rules,ParaSet para, int errcnt[])    {
+    /**  check the rule set for stalemates
+	 @return errcnt
+     */
+    private int stalemateCheck(RuleSet rules,ParaSet para, Vector<String> v) {
 
-	Vector<String> v = new Vector<>();
-
+	int errcnt = 0;
 	String[] allImages = null;
 	if (para.imageGenerator!=null) {
 	    if (!(para.imageGenerator instanceof  ImageObject.PickFromList)) {
 		v.add(fm.para("This game uses a dynamic ImageObject generator ("+para.imageGenerator.getClass()+"); stalemate testing is not supported"));
-		return v;
+		return errcnt;
 	    }
 	    ImageObject.PickFromList g = (ImageObject.PickFromList)para.imageGenerator;
 	    allImages = g.getKeys();
@@ -381,11 +380,11 @@ public class CheckPlanService extends GameService2 {
 		BoardDisplayService.doBoardAscii(stalemated);
 	    	    
 	    v.add(fm.para("Sample stalemate board:" + fm.br() + picture));	    	    		
-	    errcnt[0]++;
+	    errcnt++;
 	} else {
 	    v.add(fm.para("This rule will not stalemate"));
 	}
-	return v;
+	return errcnt;
     }
    
     @POST

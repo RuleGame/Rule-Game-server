@@ -6,7 +6,7 @@
  </head>
 <body>
   <h1>Image-and-property-based description of objects</h1>
-  <div    align="center">Updated: April 21, 2022, for GS ver. 4.012</div>
+  <div    align="center">Updated: April 22, 2022, for GS ver. 4.013</div>
 
 <p>This document describes image-and-property-based objects, which have been made available since  Game Server ver. 3.*. It is based on the proposal documents:
 <ul>  
@@ -280,15 +280,10 @@ The new IPB objects will leave the  <tt>shape</tt> and <tt>color</tt> columns em
 
 <p>A single rule set file may also have atoms with the legacy 5-tuple structure, and atoms in the new format. Internally, an SC object is handled the same way as an IPB object that has exactly 2 properties defined (shape and color), and a 5-tuple rule atom has the same effect as a new-format rule that explicitly refers to these two properties.
 
-    <hr>
-
-    <div align="center">
-      [<a href="index.html">DOCS HOME</a>]
-      </div>
 
     <h2>Examples</h2>
 
-    <h3>vm/jigsaw-01</h3>
+    <h3><a name="jigsaw-01">vm/jigsaw-01</a></h3>
 
 <p>The experiment plan   <tt>vm/jigsaw-01</tt> illustrates the use of:
   <ul>
@@ -330,15 +325,46 @@ This atom only applies to a game piece in which jn=1 (i.e., the NE and NW pieces
 
 <p>Since the first line of the rule set is not metered, it will allow the player to only pick one piece, after which the control drops to the second line.
 
-<p>The second line of the rule set has 4 items. Each item applies to only ................
+<p>The second line of the rule set has 4 items. Each item applies to only the pieces having a particular property set. E.g. the atom
+<pre>
+(jn:1, bucket:[p.jn])
+</pre>
+only applies to the two pieces with <tt>jn=1</tt>, i.e. the NW and NE piece. The <tt>bucket</tt> field specifies that the piece can be moved to the same bucket into which the most recently moved piece with the same value of jn. Thus, if the NW piece has been moved already, this atom will allow the NE piece to be moved to the same bucket, and vice versa. If neither of the NE and NW pieces has been moved yet, the bucket expression will yield the empty set (since p.jn is not defned yet), and therefore this atom won't allow any move.
 
+<p>The other 3 atoms on the same row similarly apply to the pairs of game pieces connected by other edges.
+
+<p>We can now make our game a bit more complex, by adding to the board another
+"picture", also composed of 4 game pieces. This is what the actual rule set file look like:
   
 <pre>
   1 (body:1) (body:2, bucket:p+1)
 (jn:1, bucket:[p.jn]) (js:1, bucket:[p.js]) (je:1, bucket:[p.je]) (jw:1, bucket:[p.jw])
 (kn:1, bucket:[p.kn]) (ks:1, bucket:[p.ks]) (ke:1, bucket:[p.ke]) (kw:1, bucket:[p.kw]) 
 </pre>
+
+The game pieces in the two pictures are distinguished by the value of the property <tt>body</tt> (1 and 2, respectuively). The first one around, the second atom of the first line does not allow any moves (since <tt>p</tt> is not defined yet), and therefore only the first atom can be used. The player will use it to move one of the pieces of picture 1. The edges of the graph of that picture have properties jn, js, je, jw, and the corresponding atoms of the second line will be used to remove all pieces of that picture from the board.
+
+<p>After that, the control goes back to the first line, and the player can now pick a piece from the second picture (the one with body=2). The edges of the second picture have properties kn, ks, ke, kw, and, accordingly, its pieces will be picked as the player uses the atoms of the second line again.
+
+  <h3>Can this be done simpler?</h3>
+
+<p>Can we have a rule set functionally equivalent to vm/jigsaw-01, but without so many properties? It appears that this can be done if we expand the semantics of  IPB objects by allowing a given property of an object to have multiple values simultaneously.   (Technically, in a given object each property name will be mapped not to a single string, but to a set of strings). As of GS 4.013, such an extension has not been implemented yet.
+
+<p>With such an extension, in this case, we could describe the topology of our picture with just a single property (<tt>edgeNo</tt>); each  edge will be given a unique ID number; for each piece, the value of its property <tt>edgeNo</tt> will be the set of the ID numbers of all edges conected to that game piece. The appropriate rule set could then look as follows:
+  <pre>
+    1 (body:1)  (bucket:p+1)
+    (bucket:p.edgeNo)
+  </pre>
+
+<p>
+  What this will mean is the following. For a given piece whose property <tt>edgeNo</tt> has a given set of values, the bucket expression <tt>p.edgeNo</tt> will evaluate to the set of buckets which last accepted game pieces which had these values among their sets of  edgeNo values. Thus the control will stay in line 2 until an  entire contiguous picture will be collected; after this the control will go to the first line to continue with another picture.
   
+    <hr>
+
+    <div align="center">
+      [<a href="index.html">DOCS HOME</a>]
+      </div>
+
     
 </body>
 </html>
