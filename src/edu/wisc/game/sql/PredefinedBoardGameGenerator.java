@@ -38,6 +38,7 @@ public class PredefinedBoardGameGenerator extends GameGenerator {
 	} 
 	    
 	Board b = boards[pos];
+	b.scrubDropped();  // wipe out traces of previous use
 	next();
 	return new Game(rules, b);
     }

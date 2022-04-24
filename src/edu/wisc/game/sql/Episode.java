@@ -980,7 +980,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
 
 
-    public static final String version = "4.013";
+    public static final String version = "4.014";
 
     public static String getVersion() { return version; }
 

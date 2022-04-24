@@ -409,5 +409,14 @@ public class Board {
 	}
     }
     
-  
+
+    /** Removes the "dropped" field from all game pieces. This method can be used when an already-played board is to
+	be reused (e.g. in a PredefinedBoardGameGenerator) 
+     */
+    public void scrubDropped() {
+	for(Piece p: value) {
+	    p.setDropped(null);
+	}
+    }
+    
 }

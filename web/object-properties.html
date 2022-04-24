@@ -306,7 +306,7 @@ The new IPB objects will leave the  <tt>shape</tt> and <tt>color</tt> columns em
     <tr><td>(SW) <img src="img/jigsaw-01/b1-sw.svg"><td><img src="img/jigsaw-01/b1-se.svg"> (SE)
   </table>
 
-<p>The player is tasked with picking the 4 pieces (named NW, NE, SW, SE) from the board (which may also contain other, non-related game pieces) and putting them into the same board. Moreover, he must pick them in some order that imitates assembling the picture in a contiguous way -- that is, at every point during the assembly process, the set of already-picked pieces must form a contiguous section of the big picture. The player can start from an arbitrary piece; but once he has picked the first piece (say, NW), the next piece to pick must be a piece that touches the already picked piece along an edge (that is, NE or SW, but not SE). After several contiguous pieces have been picked, the next piece must be one that's adjacent to at least one of the already-picked pieces.   This means that the picking orders (NW, NE, SE, SW) or (SW, NW, SE, NE) are allowed, but the order (NW, SE, NE, SW) is not allowed (one cannot pick SE when only NW has been picked so far, since SE is not adjacent to NW).
+<p>The player is tasked with picking the 4 pieces (named NW, NE, SW, SE) from the board (which may also contain other, non-related game pieces) and putting them into the same bucket. Moreover, he must pick them in some order that imitates assembling the picture in a contiguous way -- that is, at every point during the assembly process, the set of already-picked pieces must form a contiguous section of the big picture. The player can start from an arbitrary piece; but once he has picked the first piece (say, NW), the next piece to pick must be a piece that touches the already picked piece along an edge (that is, NE or SW, but not SE). After several contiguous pieces have been picked, the next piece must be one that's adjacent to at least one of the already-picked pieces.   This means that the picking orders (NW, NE, SE, SW) or (SW, NW, SE, NE) are allowed, but the order (NW, SE, NE, SW) is not allowed (one cannot pick SE when only NW has been picked so far, since SE is not adjacent to NW).
 
 <p>In a more generalized way, one can describe these rule set as follows: There is a  set of pieces which are thought of as the vertices of an imaginary graph. They are connected in some ways by edges of this graph. The player can start picking pieces of this set from any pieces, but, as he picks more pieces, at every move he can only pick a piece that's connected by an edge to at least one already-picked piece.
 
@@ -323,7 +323,7 @@ This atom only applies to a game piece in which jn=1 (i.e., the NE and NW pieces
 </pre>
   In this rule set, the only atom in the first line makes use of the property <tt>body</tt>, whose value = 1 for all pieces in the first picture  to be assembled (the red loop made out of 4 pieces). This atom has no other restrictions, which means that it allows the player to pick any piece of this picture.
 
-<p>Since the first line of the rule set is not metered, it will allow the player to only pick one piece, after which the control drops to the second line.
+<p>Since the first line of the rule set is metered with count=1, it will allow the player to only pick one piece, after which the control drops to the second line.
 
 <p>The second line of the rule set has 4 items. Each item applies to only the pieces having a particular property set. E.g. the atom
 <pre>
