@@ -8,6 +8,16 @@ import edu.wisc.game.sql.Episode;
 
 public interface Expression {
 
+   
+    static Integer toInteger(Object o) {
+	if (o instanceof Integer) return (Integer) o;
+	else if (o instanceof String) {
+	    try {
+		return new Integer((String)o);
+	    } catch(Exception ex) { return null; }
+	} else return null;	
+    }
+
     /** A Mapper is something that can take a variable
 	(Expression.Id) and produce another Expression (e.g. by
 	substituting the value of the variable). This is used 
@@ -87,6 +97,17 @@ public interface Expression {
 	    return r;
 	}
 
+
+	public HashSet<Object> evalSet2(VarMap2 h) {
+	    HashSet<Object> r = new HashSet<>();
+	    for(Expression _x: this) {
+		ArithmeticExpression x = (ArithmeticExpression)_x;
+		r.addAll(x.evalSet2(h));
+	    }
+	    return r;
+	}
+
+	
 	public HashSet<String> listAllVars() {
 	    HashSet<String> r = new HashSet<>();
 	    for(Expression _x: this) {
@@ -114,6 +135,16 @@ public interface Expression {
     };
 
 
+    static class VarMap extends HashMap<String, HashSet<Integer>> {}
+
+
+    static class PropMap extends HashMap<String,String>{};
+    
+    /** Objects in question may be Integer, String, or PropMap
+	(ImageObject or equivalent) */
+    static class VarMap2 extends HashMap<String, HashSet<Object>> {}
+    
+
     /** An arithmetic expression is composed of variables, constants,
 	and arithmetic operations; parentheses can be used for
 	ordering operations.  The value of the expression can be
@@ -128,6 +159,7 @@ public interface Expression {
 	    @return the set of the possible values of the expression, or an empty set if the expression  uses a variable whose value is not in h
 	 */
 	HashSet<Integer> evalSet(HashMap<String, HashSet<Integer>> h);
+	HashSet<Object> evalSet2(VarMap2 h);
 	HashSet<String> listAllVars();
 
     }
@@ -148,6 +180,12 @@ public interface Expression {
 	    hr.add(nVal);
 	    return hr;
 	}
+	public HashSet<Object> evalSet2(VarMap2 h) {
+	    HashSet<Object> hr=new HashSet<>();
+	    hr.add(nVal);
+	    return hr;
+	}
+
 	public String toString() {
 	    return "" + nVal;
 	}
@@ -185,6 +223,12 @@ public interface Expression {
 	    HashSet<Integer> q= h.get(sVal);
 	    return q==null? new HashSet<Integer>() : q;
 	}
+	public HashSet<Object> evalSet2(VarMap2 h) {
+	    HashSet<Object> q= h.get(sVal);
+	    return q==null? new HashSet<Object>() : q;
+	}
+
+	
 	public String toString() {
 	    return sVal;
 	}
@@ -204,13 +248,32 @@ public interface Expression {
     /** A.B */
     public static class QualifiedId extends Id {
 	final public Id prefix;
-	QualifiedId(Token t1, Token t2) throws RuleParseException  {
+	QualifiedId(Id _prefix, Token t2) throws RuleParseException  {
 	    super(t2);
-	    prefix = new Id(t1);	    
+	    prefix = _prefix;
 	}
 	public HashSet<Integer> evalSet(HashMap<String, HashSet<Integer>> h) {
 	    HashSet<Integer> q= h.get(prefix + "."+ sVal);
 	    return q==null? new HashSet<Integer>() : q;
+	}
+	/** Trying different interpretations */
+	public HashSet<Object> evalSet2(VarMap2 h) {
+	    HashSet<Object> v = new HashSet<>();
+	    v.addAll( h.get(prefix + "."+ sVal));
+	    HashSet<Object> z = prefix.evalSet2(h);
+	    for(Object o: z) {
+		if (o instanceof PropMap) {
+		    String a = ((PropMap)o).get(sVal);
+		    if (a!=null) {
+			Integer ai = null;
+			try { ai=new Integer(a); } catch(Exception ex) {}
+			if (ai!=null) v.add(ai);
+			else v.add(a);			    
+		    }
+		}
+	    }
+	    return v;
+
 	}
 
 	public String toString() {
@@ -246,6 +309,13 @@ public interface Expression {
 	    return h;
 	}
 
+	public HashSet<Object> evalSet2(VarMap2 hh) {
+	    HashSet<Object> hs = body.evalSet2(hh);
+	    HashSet<Object> h = new HashSet<>();
+	    if (hs.isEmpty()) h.add(1);
+	    return h;	    
+	}
+	
 	/** Applies the mapper to each component */
 	public Expression map(Mapper mapper)   throws RuleParseException{
 	    ArithmeticExpression body1 =
@@ -305,7 +375,27 @@ public interface Expression {
 	    return h;
 	}
 
-     
+	private static Integer doOp(Token op, Integer s, Integer q) {
+	    Integer r;
+	    if (q.intValue()==0 && (op.cVal == '/' || op.cVal == '%')) {
+		return null; // no result from division by zero
+	    }
+
+	    
+	    //if (op.equals(Token.EQQ)) {
+	    //	if (s.equals(q)) r = 1;
+	    //	else continue;
+	    //} else
+
+	    if (op.cVal == '+') r = s+q;
+	    else if (op.cVal == '-') r = s-q;
+	    else if (op.cVal == '*') r = s*q;
+	    else if (op.cVal == '/') r = s/q;
+	    else if (op.cVal == '%') r = s%q;
+	    else throw new IllegalArgumentException("Illegal operation " + op + " in an additive or multiplicative expression");
+	    return r;
+	}
+	
 	public HashSet<Integer> evalSet(HashMap<String, HashSet<Integer>> hh) {
 	    HashSet<Integer> hs = firstElement().evalSet(hh);
 	    for(int j=1; j<size(); j++) {
@@ -316,23 +406,10 @@ public interface Expression {
 
 		HashSet<Integer> hr = new HashSet<>();
 
-		for(Integer s: hs) {
+		for(Integer s: hs) {		    
 		    for(Integer q: hq) {
-			int r;
-			if (q.intValue()==0 && (op.cVal == '/' || op.cVal == '%')) {
-			    continue; // no result from division by zero
-			}
-
-			if (op.equals(Token.EQQ)) {
-				if (s.equals(q)) r = 1;
-				else continue;
-			} else if (op.cVal == '+') r = s+q;
-			else if (op.cVal == '-') r = s-q;
-			else if (op.cVal == '*') r = s*q;
-			else if (op.cVal == '/') r = s/q;
-			else if (op.cVal == '%') r = s%q;
-			else throw new IllegalArgumentException("Illegal operation " + op + " in an additive or multiplicative expression");
-			hr.add(r);
+			Integer r = doOp(op, s,q);
+			if (r!=null) hr.add(r);
 		    }
 		}
 		hs = hr;
@@ -340,6 +417,28 @@ public interface Expression {
 	    return hs;
 	}
 
+	public HashSet<Object> evalSet2(VarMap2 hh) {
+	    HashSet<Object> hs = firstElement().evalSet2(hh);
+	    for(int j=1; j<size(); j++) {
+		if (hs.size()==0) return hs;	
+		HashSet<Object> hq =get(j).evalSet2(hh);
+		if (hq.size()==0) return hq;
+		Token op = ops.get(j-1);
+
+		HashSet<Object> hr = new HashSet<>();
+
+		for(Object s: hs) {
+		    for(Object q: hq) {
+			Integer r = doOp(op, toInteger(s), toInteger(q));
+			if (r!=null) hr.add(r);
+		    }
+		}
+		hs = hr;
+	    }
+	    return hs;
+	    
+	}
+	
 	/** Applies the mapper to each component */
 	Vector<ArithmeticExpression> doMap(Mapper mapper)  throws RuleParseException {
 	    Vector<ArithmeticExpression> w = new Vector<>();
@@ -355,23 +454,45 @@ public interface Expression {
 
 
     /** Has exactly two operands, and the operator is '==' */
-    public static class EqualityExpression extends SerialExpression  {
+    public static class ComparisonExpression extends SerialExpression  {
 	//ArithmeticExpression[] aa = new ArithmeticExpression[2];
-	EqualityExpression(ArithmeticExpression a, ArithmeticExpression b) {
+	ComparisonExpression(Token token, ArithmeticExpression a, ArithmeticExpression b) {
 	    add(a);
 	    add(b);
-	    ops.add(Token.EQQ);
+	    //ops.add(Token.EQQ);
+	    ops.add(token);
 	}
+	
+	/** Carries out numeric comparison (as per the operator in
+	    this ComparisonExpression) if both values are non-null and
+	    represent the same number. Otherwise just returns false. */
+	private boolean cmp(Integer s, Integer q) {
+	    if (s==null || q==null) return false;
+	    Token t = ops.get(0);
 
+	    if  (t==Token.EQQ) return s.equals(q);
+	    
+	    int cmp = s.compareTo(q);
+	    return
+		(t==Token.LT)? cmp < 0:
+		(t==Token.LE)? cmp <= 0:
+		(t==Token.GT)? cmp > 0:
+		(t==Token.GE)? cmp >= 0:
+		false;		    
+	}
+	
 	public HashSet<Integer> evalSet(HashMap<String, HashSet<Integer>> hh) {
 	    HashSet<Integer> hs0 = get(0).evalSet(hh), hs1=get(1).evalSet(hh);
 
 	    if (hs0.size()==0 || hs1.size()==0) return hs0;	
+	    Token t = ops.get(0);
 
 	    boolean e=false;
 	    for(Integer s: hs0) {
+		if (e) break;
 		for(Integer q: hs1) {
-		    e = (e || (s!=null && q!=null && s.equals(q)));
+		    if (e) break;
+		    e = cmp(s,q);		    
 		}
 	    }
 	    HashSet<Integer> hr = new HashSet<>();
@@ -380,10 +501,31 @@ public interface Expression {
 	}	
 
 
+	public HashSet<Object> evalSet2(VarMap2 hh) {
+	    HashSet<Object> hs0 = get(0).evalSet2(hh), hs1=get(1).evalSet2(hh);
+
+	    if (hs0.size()==0 || hs1.size()==0) return hs0;	
+	    Token t = ops.get(0);
+
+	    boolean e=false;
+	    for(Object s: hs0) {
+		if (e) break;
+		Integer is = toInteger(s);
+		for(Object q: hs1) {
+		    if (e) break;
+		    e = (t==Token.EQQ)?  s.equals(q):
+			cmp(is, toInteger(q));
+		}
+	    }
+	    HashSet<Object> hr = new HashSet<>();
+	    if (e) hr.add(1);
+	    return hr;	    
+	}
+	
 	/** Applies the mapper to each component */
 	public Expression map(Mapper mapper)   throws RuleParseException{
 	    Vector<ArithmeticExpression> w = doMap( mapper);
-	    EqualityExpression e = new EqualityExpression(w.get(0),w.get(1));
+	    ComparisonExpression e = new ComparisonExpression(ops.get(0), w.get(0),w.get(1));
 	    return mapper.apply(e);
 	}
 
@@ -578,10 +720,11 @@ public interface Expression {
 	ArithmeticExpression q = mkLongestE4(tokens);
 	if (tokens.size()==0) return q;
 	Token a = tokens.firstElement();
-	if (!a.equals(Token.EQQ)) return q;
+	
+	if (a.type != Token.Type.CMP) return q;
 	tokens.remove(0);	    
 	ArithmeticExpression q2 = mkLongestE4(tokens);
-	return new EqualityExpression( q, q2);
+	return new ComparisonExpression(a, q, q2);
     }
 
     //private
@@ -636,7 +779,7 @@ public interface Expression {
 		tokens.remove(0);
 		Token b = tokens.firstElement();
 		tokens.remove(0);
-		return new QualifiedId(a,b);
+		return new QualifiedId(new Id(a),b);
 	    } else {
 		return new Id(a);
 	    }

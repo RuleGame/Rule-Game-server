@@ -16,8 +16,8 @@ public class RuleSet {
      */
     public Vector<String> description=new Vector<>();
     
-    /** The list of variables that can be used in the bucket
-	expression */
+    /** The list of "legacy" variables that can be used in the bucket
+	expression. (More variables were added later, such as "p.*"  */
     public enum BucketSelector {
 	p, pc, ps,
 	//Nearby= into the nearest bucket

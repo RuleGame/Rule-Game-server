@@ -422,20 +422,7 @@ public class Episode {
 	    doneMoveCnt++;
 
 	    // Remember where this piece was moved
-	    if (move.piece.xgetColor()!=null) pcMap.put(move.piece.xgetColor(), move.bucketNo);
-	    if (move.piece.xgetShape()!=null) psMap.put(move.piece.xgetShape(), move.bucketNo);
-
-	    ImageObject io = move.piece.getImageObject();
-	    if (io!=null) {
-		for(String key: io.keySet()) {
-		    HashMap<String, Integer> h=propMap.get(key);
-		    if (h==null) propMap.put(key,h=new HashMap<>());
-		    h.put(io.get(key), move.bucketNo);
-		}
-	    }
-	    //System.out.println("DEBUG: propMap=\n" + showPropMap());
-	    
-	    pMap = move.bucketNo;
+	    enterMovedPieceToMaps(move.piece, move.bucketNo);
 
 	    pieces[move.pos].setBuckets(new int[0]); // empty the bucket list for the removed piece
 	    removedPieces[move.pos] = pieces[move.pos];
@@ -455,6 +442,50 @@ public class Episode {
 	    return  move.code=CODE.ACCEPT;
 	}
 
+
+	/** For each (propName, propValue), what was the most recently
+	    removed game piece with that propName:propValue pair?
+	*/
+	@Transient
+	private HashMap<String, HashMap<String, Piece>> qMap = new HashMap<>();
+
+	/** Record the fact that a game piece with a particular 
+	    propertyName:propertyValue pair has just been removed.
+	    @param key Property name
+	    @param value Propety value 
+	*/
+	private void savePair(String key, String value, Piece piece, int bucketNo) {
+	    HashMap<String, Integer> h=propMap.get(key);
+	    if (h==null) propMap.put(key,h=new HashMap<>());
+	    h.put(value, bucketNo);
+	}
+	
+
+	/** Remember where this piece was moved, for future used
+	    in bucket vars etc
+	 */
+	private void enterMovedPieceToMaps(Piece piece, int bucketNo) {
+	    pMap = bucketNo;
+
+	    if (piece.xgetColor()!=null) {
+		pcMap.put(piece.xgetColor(), bucketNo);
+
+	    }
+	    if (piece.xgetShape()!=null) psMap.put(piece.xgetShape(), bucketNo);
+
+	    ImageObject io = piece.getImageObject();
+	    if (io!=null) {
+		for(String key: io.keySet()) {
+		    savePair(key, io.get(key), piece, bucketNo);	    
+		    //HashMap<String, Integer> h=propMap.get(key);
+		    //if (h==null) propMap.put(key,h=new HashMap<>());
+		    //h.put(io.get(key), bucketNo);
+		}
+	    }
+	    //System.out.println("DEBUG: propMap=\n" + showPropMap());
+	    
+	}
+	
     
 	/** Is this row of rules "exhausted", based either on the
 	    global counter for the row, or the individual rules?
@@ -476,7 +507,7 @@ public class Episode {
     
     /** Contains the values of various variables that may be used in 
 	finding the destination buckets for a given piece */
-    class BucketVarMap extends HashMap<String, HashSet<Integer>> {
+    class BucketVarMap extends Expression.VarMap {
 
 	/** @param key A variable name, such as "p", "pc", "ps", or "propName.propValue" */
 	private void pu( String /*BucketSelector*/ key, int k) {
@@ -486,19 +517,25 @@ public class Episode {
 	}
 	
 	/** Puts together the values of the variables that may be used in 
-	    finding the destination buckets */
+	    finding the destination buckets for a particular game piece. */
 	BucketVarMap(Piece p) {
-	    Integer z = (p.xgetColor()==null)? null: pcMap.get(p.xgetColor());
-	    if (z!=null) pu(BucketSelector.pc.toString(), z);
-	    z = (p.xgetShape()==null)? null: psMap.get(p.xgetShape());
-	    if (z!=null) pu(BucketSelector.ps.toString(), z);
+	    if (p.xgetColor()!=null) {
+		Integer z = pcMap.get(p.xgetColor());
+		if (z!=null) pu(BucketSelector.pc.toString(), z);
+	    }
+	    if (p.xgetShape()!=null) {
+		Integer z = psMap.get(p.xgetShape());
+		if (z!=null) pu(BucketSelector.ps.toString(), z);
+	    }
 	    if (pMap!=null) pu(BucketSelector.p.toString(), pMap);
 	    ImageObject io = p.getImageObject();
 	    if (io!=null) {
 		for(String key: io.keySet()) {
 		    String val = io.get(key);
-		    z = (propMap.get(key)==null)?null:propMap.get(key).get(val);
-		    if (z!=null) pu("p."+key, z);
+		    if (propMap.get(key)!=null) {			
+			Integer z = propMap.get(key).get(val);
+			if (z!=null) pu("p."+key, z);
+		    }
 		}
 	    }
 	    Pos pos = p.pos();

@@ -20,7 +20,7 @@
   
   <h2>Defining object types</h2>
 
-<P>There are be two ways of defining objects in Game Engine 3.*.
+<P>There are two ways of defining objects in Game Engine 3.*.
 
 <p>For compatibiliy with  Game Engine 1.* and 2.*, it is still  possible to define an object as a  <a href="colors-and-shapes.html">combination of a color (defined by an entry in the shared color map) and a shape (defined by a color-less SVG file)</a>; e.g. a black square is defined by its color (black) and shape (square, referring to <tt>square.svg</tt> in the shape directory). We will refer to such traditional objects as <strong>shape+color tuple objects</strong>, or <strong>SC objects</strong>.
 
@@ -66,7 +66,7 @@ weasel-03.jpg,weasel-03,weasel,running,right,*,
 
   <p>If, for a particular object, the cell corresponding to property X is empty (contains an empty string), this means that property X is not defined for that object (e.g., all our tigers are striped, and we don't associate a color property with them). This means that any rule atom that only select objects with property X having a particular value won't select this object.
 
-    <p>It is also possible for an object to contain an * in the column for property X. This object will match any X-based selector.
+    <p><em>(Not available yet: It will also be possible for an object to contain an * in the column for property X. This object will match any X-based selector.)</em>
     
       <h3>Reserved names</h3>
 

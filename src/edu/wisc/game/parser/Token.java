@@ -9,7 +9,10 @@ import edu.wisc.game.util.Util;
 /** A token represents an element of the input text. Used in parsing rules. */
 public class Token {
     
-    public enum Type { NUMBER, ID, STRING, COMMA, MULT_OP, ADD_OP, EQQ /* == */, UNARY_OP, OPEN, CLOSE, EQUAL /* = */, COLON, DOT, DOTDOT};
+    public enum Type { NUMBER, ID, STRING, COMMA,
+		       MULT_OP, ADD_OP,
+		       CMP /* == , <=, <, >, >=  */,
+		       UNARY_OP, OPEN, CLOSE, EQUAL /* = */, COLON, DOT, DOTDOT};
     public final Type type;
     public char cVal=0;
     public String sVal=null;
@@ -36,7 +39,7 @@ public class Token {
 	 return
 	     (type == Type.NUMBER) ? ""+nVal:
 	     (type == Type.ID) ? sVal:
-	     (type == Type.EQQ) ? sVal:
+	     (type == Type.CMP) ? sVal:
 	     (type == Type.STRING) ? '"' + sVal + '"':
 	     ""+cVal;
     }   
@@ -48,13 +51,35 @@ public class Token {
 	     (type == Type.NUMBER) ? ""+nVal:
 	     (type == Type.ID) ? sVal:
 	     (type == Type.STRING) ? sVal:
-	     (type == Type.EQQ) ? sVal:
+	     (type == Type.CMP) ? sVal:
 	     ""+cVal;
     }   
 
+    /** Only used to create a few constants such as Token.EQQ and
+	Token.DOTDOT. This constructor should only be used once for
+	each type, so that the resulting objects can be compared with
+	the '==' operator.
+	@param _sVal Something like  "==", "<=", ">=", ">", "<" , etc
+     */
+    private Token(Type _type, String _sVal) { //throws RuleParseException {
+	type = _type;
+	sVal = _sVal;
+	if (sVal.length()==1) cVal=sVal.charAt(0);
+    }
+
+
     /** Init based on the first character */
-    private Token(char c) throws RuleParseException {
-	type =
+    private static Token mkToken(char c) throws RuleParseException {
+	Token t =
+	    (c== '=')? EQUAL:
+	    (c== '<')? LT:
+	    (c== '>')? GT:
+	    (c== '!')? BANG:
+	    (c== '*')? STAR:
+	    null;
+	if (t!=null) return t;
+	
+	Token.Type type =
 	    Character.isDigit(c)? Type.NUMBER:
 	    Character.isJavaIdentifierStart(c)? Type.ID:
 	    c==','? Type.COMMA:
@@ -62,34 +87,33 @@ public class Token {
 	    c=='.'? Type.DOT:
 	    c=='+' || c=='-'? Type.ADD_OP:
 	    c=='*' || c=='/' || c=='%' ? Type.MULT_OP:
-	    c=='!' ? Type.UNARY_OP:
 	    c=='(' || c=='['? Type.OPEN:
 	    c==')' || c==']'? Type.CLOSE:
 	    c=='"' ? Type.STRING:
-	    c=='=' ? Type.EQUAL:
 	    null;
-	if (type==null) throw new RuleParseException("Illegal character: " + c);
-	cVal=c;
-	sVal= (type==Type.STRING)? "" :  "" + c;
+	if (type==null) throw new RuleParseException("Illegal character: "+ c);
+	
+	t = new Token(type,  (type==Type.STRING)? "" :  "" + c);
+	t.cVal = c; // this will be corrected in t.complete()
+	return t;
     }
-
-    /** Only used for Type.EQQ */
-    private Token(Type _type, String _sVal) { //throws RuleParseException {
-	type = _type;
-	sVal = _sVal;
-    }
-
 
     private static Token wrapToken(char c) {
 	try {
-	    return new Token(c);
+	    return mkToken(c);
 	} catch(Exception ex) { return null; }
     }
     
-    static final Token EQQ = new Token(Type.EQQ, "==");
+    static final Token EQUAL = new Token(Type.EQUAL, "=");
+    static final Token EQQ = new Token(Type.CMP, "==");
+    static final Token LT = new Token(Type.CMP, "<");
+    static final Token LE = new Token(Type.CMP, "<=");
+    static final Token GT = new Token(Type.CMP, ">");
+    static final Token GE = new Token(Type.CMP, ">=");
     static final Token DOTDOT = new Token(Type.DOTDOT, "..");
-    static final Token BANG = wrapToken('!');
-    static final Token STAR = wrapToken('*');
+    static final Token BANG = new Token(Type.UNARY_OP, "!"); 
+    static final Token STAR = new Token(Type.MULT_OP, "*");
+
     
     /** Sets other fields based on type and sVal */
     private void complete() {
@@ -97,7 +121,7 @@ public class Token {
 	    nVal = Integer.parseInt(sVal);
 	    cVal=0;
 	} else if (type==Type.ID || type==Type.STRING
-		   || type==Type.EQQ || type==Type.DOTDOT ) {
+		   || type==Type.CMP || type==Type.DOTDOT ) {
 	    cVal=0;
 	} else {
 	    cVal=sVal.charAt(0);
@@ -142,9 +166,19 @@ public class Token {
 			currentToken.sVal += c;
 			return;
 		    }
-		} else if (currentToken.type==Type.EQUAL && c=='=') {
+		} else if (currentToken==EQUAL && c=='=') {
 		    // Instead of EQUAL '=' it is now EQQ '=='		    
 		    currentToken=EQQ;
+		    flush();
+		    return;
+		} else if (currentToken==LT && c=='=') {
+		    // Instead of LT '<' it is now LE '<='		    
+		    currentToken=LE;
+		    flush();
+		    return;
+		} else if (currentToken==GT && c=='=') {
+		    // Instead of GT '>' it is now GE '>='		    
+		    currentToken=GE;
 		    flush();
 		    return;
 		} else if (currentToken.type==Type.DOT && c=='.') {
@@ -163,7 +197,7 @@ public class Token {
 		commentHasStarted = true;
 		return;
 	    }
-	    currentToken= new Token(c);	
+	    currentToken= mkToken(c);	
 	}
     }
 	
@@ -194,10 +228,17 @@ public class Token {
     	h.put("three", 3);
 	h.put("four", 4);
 	HashMap<String, HashSet<Integer>> hh = new HashMap<>();
+	Expression.VarMap2 hh2 = new Expression.VarMap2();
 	for(String key: h.keySet()) {
 	    HashSet<Integer> z = new HashSet<>();
 	    z.add(h.get(key));
 	    hh.put(key, z);
+
+
+	    HashSet<Object> z2 = new HashSet<>();
+	    z2.add(h.get(key));
+	    hh2.put(key, z2);
+
 	}
 
 	InputStream in = System.in;
@@ -216,9 +257,11 @@ public class Token {
 		
 		if (ex instanceof Expression.ArithmeticExpression) {
 		    Expression.ArithmeticExpression ae = (Expression.ArithmeticExpression)ex;
-		    HashSet<Integer> hv = ae.evalSet(hh);
-		    System.out.print("Eval=");
-		    for(Integer x: hv) System.out.print(" " + x);
+		    //HashSet<Integer> hv = ae.evalSet(hh);
+		    HashSet<Object> hv = ae.evalSet2(hh2);
+		    System.out.print("Eval=[" + Util.joinNonBlank(", ",hv) +
+				     "]");
+		    //for(Object x: hv) System.out.print(" " + x);
 		    System.out.println();
 		} else {
 		    System.out.println("Not an arithmetic expression");
