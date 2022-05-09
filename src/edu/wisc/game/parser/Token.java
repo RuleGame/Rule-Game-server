@@ -76,13 +76,13 @@ public class Token {
 	    (c== '>')? GT:
 	    (c== '!')? BANG:
 	    (c== '*')? STAR:
+	    (c== ',')? COMMA:
 	    null;
 	if (t!=null) return t;
 	
 	Token.Type type =
 	    Character.isDigit(c)? Type.NUMBER:
 	    Character.isJavaIdentifierStart(c)? Type.ID:
-	    c==','? Type.COMMA:
 	    c==':'? Type.COLON:
 	    c=='.'? Type.DOT:
 	    c=='+' || c=='-'? Type.ADD_OP:
@@ -110,9 +110,11 @@ public class Token {
     static final Token LE = new Token(Type.CMP, "<=");
     static final Token GT = new Token(Type.CMP, ">");
     static final Token GE = new Token(Type.CMP, ">=");
+    static final Token NE = new Token(Type.CMP, "!=");
     static final Token DOTDOT = new Token(Type.DOTDOT, "..");
     static final Token BANG = new Token(Type.UNARY_OP, "!"); 
     static final Token STAR = new Token(Type.MULT_OP, "*");
+    static final Token COMMA = new Token(Type.COMMA, ",");
 
     
     /** Sets other fields based on type and sVal */
@@ -179,6 +181,11 @@ public class Token {
 		} else if (currentToken==GT && c=='=') {
 		    // Instead of GT '>' it is now GE '>='		    
 		    currentToken=GE;
+		    flush();
+		    return;
+		} else if (currentToken==BANG && c=='=') {
+		    // Instead of BANG '!' it is now NE '!='		    
+		    currentToken=NE;
 		    flush();
 		    return;
 		} else if (currentToken.type==Type.DOT && c=='.') {

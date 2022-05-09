@@ -17,6 +17,9 @@ import edu.wisc.game.sql.Board.Pos;
     is achieved when no piece cannot be removed from the board any more.
     This class may be useful for a rule set designer, to ensure that any
     rule sets offered to players will never stalemate.
+
+    This tool was designed for GS4, and is not meant to work with the GS5
+    rule syntax.
  */
 public class StalemateTester {
 
@@ -173,7 +176,7 @@ public class StalemateTester {
     /** Is this piece accepted as movable by our rules? */
     private boolean pieceCanBeMoved(int posNum, Piece p, EligibilityForOrders eligibleForEachOrder) {	
 	for(RuleSet.Atom atom: rules.rows.get(0)) {
-	    if (!atom.acceptsColorShapeAndProperties(p)) continue;
+	    if (!atom.acceptsColorShapeAndProperties(p,null)) continue;
 	    if (!atom.plist.allowsPicking(posNum, eligibleForEachOrder)) continue;
 	    return true;
 	}

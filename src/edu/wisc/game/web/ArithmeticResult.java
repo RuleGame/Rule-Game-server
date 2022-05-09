@@ -27,6 +27,8 @@ public class ArithmeticResult      extends ResultsBase  {
     public final Vector<String> v = new Vector<>();
 
     static final HTMLFmter fmt = HTMLFmter.htmlFmter;
+
+    public int  version = 5;
     
     public ArithmeticResult(HttpServletRequest request, HttpServletResponse response){
 	super(request,response,false);
@@ -37,10 +39,18 @@ public class ArithmeticResult      extends ResultsBase  {
 	       giveError("No expression specified");
 	       return;
 	   }
+
+	   try {
+	       version = Integer.parseInt( request.getParameter("version"));
+	   } catch(Exception ex) {}
+
+
 	   
 	   // process variable values, which can be set-based, e.g.
 	   // "var.p=1 2 3"
-	   HashMap<String, HashSet<Integer>> hh = new HashMap<>();
+	   Expression.VarMap hh = new Expression.VarMap();
+	   Expression.VarMap2 hh2 = new Expression.VarMap2();
+	   
 	   for(String name: request.getParameterMap().keySet()) {
 	       if (!name.startsWith(prefix)) continue;
 	       String key = name.substring(prefix.length());
@@ -48,11 +58,12 @@ public class ArithmeticResult      extends ResultsBase  {
 	       if (vs==null) continue;
 	       vs = vs.trim();
 	       if (vs.length()==0) continue;
-	       HashSet<Integer> z = new HashSet<>();
 	       for(String s: vs.split("[,\\s]+")) {
-		   z.add( Integer.valueOf(s));
+		   try {
+		       hh.addValue(key, Integer.valueOf(s));
+		   } catch(Exception ex) {}
+		   hh2.addValue(key, s);
 	       }
-	       hh.put(key, z);
 	   }
 
 	   if (hh.size()==0) {

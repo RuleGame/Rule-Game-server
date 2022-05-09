@@ -237,6 +237,8 @@ The Java programming language guarantees that the operands of operators appear t
 	return s.substring(0,1).toUpperCase() + s.substring(1);
     }
 
+    /** Is any value set?
+	@return The "OR" of all elements */
     static public boolean anySet(boolean[] w) {
 	for(boolean b: w) {
 	    if (b) return true;
@@ -289,5 +291,10 @@ The Java programming language guarantees that the operands of operators appear t
 	return result;
     }
 
+    public static <T> HashSet<String> eachToString(Collection<T> v) {
+	HashSet<String> h = new HashSet<>();
+	for(T x: v) h.add(x.toString());
+	return h;
+    }
     
 }

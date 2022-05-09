@@ -17,6 +17,11 @@
 <p>1. If you want any variables used in your expression to have values assigned to them (other than the default, which is an empty set), please enter the valuesbelow. (For a single value, just enter a number; for a set with more than member, just  enter the numbers separated by spaces. Note though that on our board, none of our variables ever has more than value, but you can try multi-valuied vars anyway, just for fun). If a variable has no value assigned to it (as p, pc, and ps are early in each episode), just leave the input box blank.
 
 <form method="post" action="arithmetic-result.jsp">
+
+Engine vesion: <input type="text" name="version" value="5" size="3">
+
+(Use 5 for the "newer" math, 4 for the older version).
+
 <table>
 <% for(RuleSet.BucketSelector varName: RuleSet.BucketSelector.values()) {%>
 <tr>

@@ -11,6 +11,9 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement; 
 import javax.xml.bind.annotation.XmlTransient; 
 
+import edu.wisc.game.parser.Expression.PropMap;
+
+
 /** Represents a piece of a specified type at a specified location. Used
     in board description.
 
@@ -313,6 +316,21 @@ public class Piece  implements Serializable {
     public String toString() {
 	return "["+objectType()+", x="+x+", y="+y+"]";
     }
+
+    /** Converts this Piece, or its ImageObject, to a PropMap object, which stores
+	values as String or Integer, rather than as String only.
+	This is used in expression evaluation.
+     */
+    PropMap toPropMap() {
+	ImageObject io = getImageObject();
+	if (io!=null) return io.toPropMap();
+
+	PropMap pm = new  PropMap();
+	pm.put("shape", getShape());
+	pm.put("color", getColor());
+	return pm;
+    }
+    
 
     
 }

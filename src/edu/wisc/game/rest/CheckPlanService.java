@@ -384,6 +384,7 @@ public class CheckPlanService extends GameService2 {
 	} else {
 	    v.add(fm.para("This rule will not stalemate"));
 	}
+	v.add("Note: stalemate testing is done under GS 4 rules. It is not applicable to rule sets using GS5 syntax");
 	return errcnt;
     }
    

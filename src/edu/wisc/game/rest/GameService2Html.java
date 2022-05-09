@@ -221,7 +221,7 @@ public class GameService2Html extends GameService2 {
     static private String moveForm(Episode.Display _d, String  episodeId) {
 
 	if (!(_d instanceof EpisodeInfo.ExtendedDisplay)) {
-	    return fm.para("Cannot cast to  EpisodeInfo.ExtendedDisplay");
+	    return fm.para("Cannot cast to  EpisodeInfo.ExtendedDisplay; _d=" + _d);
 	}
     
 	EpisodeInfo.ExtendedDisplay d = (EpisodeInfo.ExtendedDisplay)_d;

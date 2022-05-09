@@ -7,6 +7,7 @@ import java.text.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.engine.*;
+import edu.wisc.game.parser.Expression.PropMap;
 import edu.wisc.game.rest.Files;
 import edu.wisc.game.svg.Composite;
 
@@ -354,5 +355,17 @@ public class ImageObject extends HashMap<String,String> {
 
     }
 
+
+    /** Converts this ImageObject to a PropMap object, which stores
+	values as String or Integer, rather than as String only.
+	This is used in expression evaluation.
+     */
+    PropMap toPropMap() {
+	PropMap pm = new  PropMap();
+	for(String key: keySet()) {
+	    pm.putString(key, get(key));
+	}
+	return pm;
+    }
     
 }

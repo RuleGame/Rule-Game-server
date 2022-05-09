@@ -18,6 +18,10 @@ import edu.wisc.game.formatter.*;
 
 import javax.xml.bind.annotation.XmlElement; 
 
+import edu.wisc.game.sql.EpisodeMemory.BucketVarMap;
+import edu.wisc.game.sql.EpisodeMemory.BucketVarMap2;
+
+
 /** An Episode is a single instance of a Game played by a person or
     machine with our game server. It describes the current state of
     the game, and has methods for processing player's actions. The
@@ -132,34 +136,6 @@ public class Episode {
     boolean lost = false;
     boolean earlyWin = false;
     
-    /** Which bucket was the last one to receive a piece of a given color? */
-    @Transient
-    private HashMap<Piece.Color, Integer> pcMap = new HashMap<>();
-    /** Which bucket was the last  one to receive a piece of a given shape? */
-    @Transient
-    private HashMap<Piece.Shape, Integer> psMap = new HashMap<>();
-
-     /** Which bucket was the last  one to receive a piece with a given value of each property? (get(propName).get(propValue)==bucket) */
-    @Transient
-    private HashMap<String, HashMap<String, Integer>> propMap = new HashMap<>();
-
-    private String showPropMap() {
-	Vector<String> v = new Vector<>();       
-	for(String p: propMap.keySet()) {
-	    HashMap<String, Integer> h = propMap.get(p);
-	    Vector<String> w = new Vector<>();
-	    for(String key: h.keySet()) {
-		w.add("("+key+":"+h.get(key)+")");
-	    }
-	    v.add(p + " -> " + String.join(" ", w));
-	}
-	return String.join("\n", v);
-    }
-    
-    /** Which bucket was the last one to receive a piece? */
-    @Transient
-    private Integer pMap=null;
-
     /** Which row of rules do we look at now? (0-based) */
     @Transient
     protected int ruleLineNo = 0;
@@ -167,6 +143,9 @@ public class Episode {
     @Transient
     protected RuleLine ruleLine = null;
 
+    @Transient
+    private EpisodeMemory memory = new EpisodeMemory();
+    
     /** Will return true if this is, apparently, an episode restored
 	from SQL server, and cannot be played anymore because the boad
 	position and the egine state (ruleLine) is not persisted. This
@@ -339,10 +318,11 @@ public class Episode {
 
 	
 	/** Into which buckets, if any, can the specified piece be moved?
+	    (The original method, used in GS 1 thru 4)
 	   @return result[j] is the set of buckets into which the j-th
 	   rule (atom) allows the specified piece to be moved.
 	*/
-	private BitSet[] pieceAcceptance(Piece p,  EligibilityForOrders eligibleForEachOrder) {
+	private BitSet[] pieceAcceptance0(Piece p,  EligibilityForOrders eligibleForEachOrder) {
 	    
 	    //	    System.err.println("DEBUG: pieceAcceptance(p=" +p+")");
 	    if (doneWith) throw new IllegalArgumentException("Forgot to scroll?");
@@ -352,7 +332,7 @@ public class Episode {
 	    // for each rule, the list of accepting buckets
 	    BitSet whoAccepts[] = new BitSet[row.size()];
 	    Pos pos = p.pos();
-	    BucketVarMap  varMap = new  BucketVarMap(p);
+	    BucketVarMap  varMap = memory.new  BucketVarMap(p);
 
 	    //System.err.println("varMap=" + varMap);
 
@@ -361,7 +341,7 @@ public class Episode {
 		whoAccepts[j] = new BitSet(NBU);
 		RuleSet.Atom atom = row.get(j);
 		if (atom.counter>=0 && ourCounter[j]==0) continue;
-		if (!atom.acceptsColorShapeAndProperties(p)) continue;
+		if (!atom.acceptsColorShapeAndProperties(p, null)) continue;
 		//System.err.println("Atom " +j+" shape and color OK");
 		if (!atom.plist.allowsPicking(pos.num(), eligibleForEachOrder)) continue;
 		//System.err.println("DEBUG: Atom " +j+" allowsPicking ok");
@@ -372,6 +352,43 @@ public class Episode {
 	    return whoAccepts;
 	}
 
+	/** For GS 5. Here, we try each bucket separately, as the
+	    destination bucket may affect some variables.
+	 */	
+	private BitSet[] pieceAcceptance(Piece p,  EligibilityForOrders eligibleForEachOrder) {
+	    
+	    //	    System.err.println("DEBUG: pieceAcceptance(p=" +p+")");
+	    if (doneWith) throw new IllegalArgumentException("Forgot to scroll?");
+
+	    if (row.globalCounter>=0 &&  ourGlobalCounter<=0)  throw new IllegalArgumentException("Forgot to set the scroll flag on 0 counter!");
+
+	    
+	    // for each rule, the list of accepting buckets
+	    BitSet whoAccepts[] = new BitSet[row.size()];
+	    for(int j=0; j<row.size(); j++) {
+		whoAccepts[j] = new BitSet(NBU);
+	    }
+	    Pos pos = p.pos();
+
+	    // try each bucket separately
+	    for(int bucketNo=0; bucketNo<NBU; bucketNo++) {
+	    
+		BucketVarMap2  varMap = memory.new BucketVarMap2(p, bucketNo);
+
+		//System.err.println("varMap=" + varMap);
+		
+	    
+		for(int j=0; j<row.size(); j++) {
+		    RuleSet.Atom atom = row.get(j);
+		    if (atom.counter>=0 && ourCounter[j]==0) continue;
+		    if (!atom.acceptsColorShapeAndProperties(p, varMap)) continue;
+		    if (!atom.plist.allowsPicking(pos.num(), eligibleForEachOrder)) continue;
+		    boolean can = atom.bucketList.destinationAllowed( varMap, bucketNo);
+		    if (can) whoAccepts[j].set(bucketNo);
+		}
+	    }
+	    return whoAccepts;
+	}
     
 	/** Requests acceptance for this move or pick. In case of
 	    acceptance of an actual move (not just a pick), decrements
@@ -422,7 +439,7 @@ public class Episode {
 	    doneMoveCnt++;
 
 	    // Remember where this piece was moved
-	    enterMovedPieceToMaps(move.piece, move.bucketNo);
+	    memory.enterMove(move.piece, move.bucketNo);
 
 	    pieces[move.pos].setBuckets(new int[0]); // empty the bucket list for the removed piece
 	    removedPieces[move.pos] = pieces[move.pos];
@@ -443,50 +460,6 @@ public class Episode {
 	}
 
 
-	/** For each (propName, propValue), what was the most recently
-	    removed game piece with that propName:propValue pair?
-	*/
-	@Transient
-	private HashMap<String, HashMap<String, Piece>> qMap = new HashMap<>();
-
-	/** Record the fact that a game piece with a particular 
-	    propertyName:propertyValue pair has just been removed.
-	    @param key Property name
-	    @param value Propety value 
-	*/
-	private void savePair(String key, String value, Piece piece, int bucketNo) {
-	    HashMap<String, Integer> h=propMap.get(key);
-	    if (h==null) propMap.put(key,h=new HashMap<>());
-	    h.put(value, bucketNo);
-	}
-	
-
-	/** Remember where this piece was moved, for future used
-	    in bucket vars etc
-	 */
-	private void enterMovedPieceToMaps(Piece piece, int bucketNo) {
-	    pMap = bucketNo;
-
-	    if (piece.xgetColor()!=null) {
-		pcMap.put(piece.xgetColor(), bucketNo);
-
-	    }
-	    if (piece.xgetShape()!=null) psMap.put(piece.xgetShape(), bucketNo);
-
-	    ImageObject io = piece.getImageObject();
-	    if (io!=null) {
-		for(String key: io.keySet()) {
-		    savePair(key, io.get(key), piece, bucketNo);	    
-		    //HashMap<String, Integer> h=propMap.get(key);
-		    //if (h==null) propMap.put(key,h=new HashMap<>());
-		    //h.put(io.get(key), bucketNo);
-		}
-	    }
-	    //System.out.println("DEBUG: propMap=\n" + showPropMap());
-	    
-	}
-	
-    
 	/** Is this row of rules "exhausted", based either on the
 	    global counter for the row, or the individual rules?
 	    "Control moves to the next row when either all counters OR
@@ -505,58 +478,6 @@ public class Episode {
     
   
     
-    /** Contains the values of various variables that may be used in 
-	finding the destination buckets for a given piece */
-    class BucketVarMap extends Expression.VarMap {
-
-	/** @param key A variable name, such as "p", "pc", "ps", or "propName.propValue" */
-	private void pu( String /*BucketSelector*/ key, int k) {
-	    HashSet<Integer> h = new  HashSet<>();
-	    h.add(k);
-	    put(key/*.toString()*/, h);
-	}
-	
-	/** Puts together the values of the variables that may be used in 
-	    finding the destination buckets for a particular game piece. */
-	BucketVarMap(Piece p) {
-	    if (p.xgetColor()!=null) {
-		Integer z = pcMap.get(p.xgetColor());
-		if (z!=null) pu(BucketSelector.pc.toString(), z);
-	    }
-	    if (p.xgetShape()!=null) {
-		Integer z = psMap.get(p.xgetShape());
-		if (z!=null) pu(BucketSelector.ps.toString(), z);
-	    }
-	    if (pMap!=null) pu(BucketSelector.p.toString(), pMap);
-	    ImageObject io = p.getImageObject();
-	    if (io!=null) {
-		for(String key: io.keySet()) {
-		    String val = io.get(key);
-		    if (propMap.get(key)!=null) {			
-			Integer z = propMap.get(key).get(val);
-			if (z!=null) pu("p."+key, z);
-		    }
-		}
-	    }
-	    Pos pos = p.pos();
-	    put(BucketSelector.Nearby.toString(), pos.nearestBucket());
-	    put(BucketSelector.Remotest.toString(), pos.remotestBucket());
-	    //System.out.println("DEBUG: For piece="+p+ ", BucketVarMap=" + this);
-	}
-
-
-	public String toString() {
-	    Vector<String> v = new Vector<>();
-	    for(String key: keySet()) {
-		Vector<String> w = new Vector<>();
-		for(int z:  get(key)) w.add("" + z);
-		v.add("["+key+":"+ Util.join(",", w)+ "]");
-	    }
-	    return String.join(" ", v);
-	}
-	
-    }
-
     @Transient
     private OutputMode outputMode;
     @Transient
@@ -1017,7 +938,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
 
 
-    public static final String version = "4.014";
+    public static final String version = "4.015";
 
     public static String getVersion() { return version; }
 

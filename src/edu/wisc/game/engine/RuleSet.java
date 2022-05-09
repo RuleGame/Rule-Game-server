@@ -7,6 +7,9 @@ import java.text.*;
 import edu.wisc.game.util.Util;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.parser.*;
+import edu.wisc.game.parser.Expression.ArithmeticExpression;
+import edu.wisc.game.parser.Expression.VarMap2;
+
 
 /** A RuleSet describes the rules of a game. */
 public class RuleSet {
@@ -128,7 +131,7 @@ public class RuleSet {
 	or a more complicated expressions making use of the "bucket arithmetic"
 	and "bucket variables".
     */
-    public static class BucketList extends Vector<Expression.ArithmeticExpression>{
+    public static class BucketList extends Vector<ArithmeticExpression>{
 	/** Star is allowed in Kevin's syntax, and means "any bucket" */
 	BucketList( Expression.Star star) throws RuleParseException {
 	    for(int j=0; j<4; j++) {
@@ -136,19 +139,8 @@ public class RuleSet {
 	    }
 	}
 
-	/*
-	BucketList( Expression.BracketList bex) throws RuleParseException {
-	    for(Expression ex: bex) {
-		if (!(ex instanceof Expression.ArithmeticExpression)) 	throw new RuleParseException("Invalid bucket specifier (not a symbol or an arithmetic expression): " + ex);
-		
-		Expression.ArithmeticExpression g = (Expression.ArithmeticExpression)ex;
-
-		add(g);
-	    }
-	}
-	*/
 	
-	BucketList(Expression.ArithmeticExpression ae)  {
+	BucketList(ArithmeticExpression ae)  {
 	    add(ae);
 	}
 
@@ -158,7 +150,7 @@ public class RuleSet {
 
 	public String toSrc() {
 	    Vector<String> v = new Vector<>();
-	    for(Expression.ArithmeticExpression ex: this) {
+	    for(ArithmeticExpression ex: this) {
 		v.add(ex.toSrc());
 	    }
 	    String s = String.join(",",v);
@@ -166,13 +158,13 @@ public class RuleSet {
 	    return s;
 	}
 
-	/** To which destinations can a piece be taken?
+	/** To which destinations can a piece be taken? (Used in GS1 thru 4)
 	    @param varMap Information about p, ps, pc, Nearby etc for the piece
 	    under consideration*/
-	public BitSet destinations( HashMap<String, HashSet<Integer>> varMap) {
+	public BitSet destinations(Expression.VarMap varMap) {
 	    BitSet q= new BitSet(Board.buckets.length);
 	    
-	    for(Expression.ArithmeticExpression ae: this) {
+	    for(ArithmeticExpression ae: this) {
 		//		System.out.println("DEBUG: EVAL " + ae + " for vars=" + varMap);
 		Set<Integer> h = ae.evalSet(varMap);
 		//		System.out.println("DEBUG: RESULT=(" + Util.joinNonBlank(",", h));
@@ -181,11 +173,22 @@ public class RuleSet {
 	    }
 	    return q;
 	}
+
+	/** Used in GS5 */
+	public boolean destinationAllowed(VarMap2 varMap, int bucketNo) {
+	    for(ArithmeticExpression ae: this) {
+		//		System.out.println("DEBUG: EVAL " + ae + " for vars=" + varMap);
+		Set<Object> h = ae.evalSet2(varMap);
+		//		System.out.println("DEBUG: RESULT=(" + Util.joinNonBlank(",", h));
+		if (Expression.moduloNB2(h).contains(bucketNo)) return true;
+	    }
+	    return false;
+	}
 	
 	/** The list of variables mentioned in this BucketSelector */
 	public HashSet<String> listAllVars() {
 	    HashSet<String> r = new HashSet<>();
-	    for(Expression.ArithmeticExpression ae: this) {
+	    for(ArithmeticExpression ae: this) {
 		r.addAll(ae.listAllVars());
 	    }
 	    return r;	    
@@ -217,14 +220,24 @@ public class RuleSet {
     private static class PropertyCondition {
 	HashSet<String> acceptedValues = new HashSet<>();
 	HashSet<Range> acceptedRanges = new HashSet<>();
-	boolean accepts(String s) {
+	/** GS5 */
+	ArithmeticExpression exp = null;
+	boolean accepts(String s, VarMap2  varMap) {
 	    if (s.equals("*") || acceptedValues.contains(s)) return true;
-	    try {
-		int x = Integer.parseInt(s);
-		for(Range r: acceptedRanges) {
-		    if (r.contains(x)) return true;
-		}
-	    } catch( NumberFormatException ex) {}
+	    if (acceptedRanges.size()>0) {
+		try {
+		    int x = Integer.parseInt(s);
+		    for(Range r: acceptedRanges) {
+			if (r.contains(x)) return true;
+		    }
+		} catch( NumberFormatException ex) {}
+	    }
+	    if (exp != null && varMap !=null) { // GS5
+		Set<Object> w = exp.evalSet2(varMap);
+		if (Util.eachToString(w).contains(s))  return true;
+		
+	    }
+
 	    return false;
 	}
 	void add(String s) {
@@ -237,9 +250,10 @@ public class RuleSet {
 	    Vector<String> v = new Vector<>();
 	    v.addAll(acceptedValues);
 	    for(Range r: acceptedRanges) v.add(r.toString());
-	    String s=String.join(", ", v);
+	    v.add( exp.toString());
+	    String s=String.join(", ", v);		
 	    if (v.size()!=1) s = "["+s+"]";
-	    return s;    
+	    return s;
 	}	
     }
 
@@ -252,17 +266,27 @@ public class RuleSet {
 	/** -1 means "no limit" */
 	public final int counter;
 	/** For shape-and-color pieces, determines acceptable shapes. Null means "no restriction" */
+	/** If null, there are no shape restrictons; if empty or non-empty array, then either one of the elements must match, or (since GS5) permission may be granted via propertyConditions instead) */
 	public final Piece.Shape[] shapes;
+	/** Alternative for GS5 */
+	//ArithmeticExpression shapesExp;
 	//final
 	/** For shape-and-color pieces, determines acceptable colors. Null means "no restriction" */
 	public Piece.Color[] colors;
+	/** Alternative for GS5 */
+	//	ArithmeticExpression colorsExp;
 	public PositionList plist;       	
 	public BucketList bucketList;	
 	HashMap<String,PropertyCondition> propertyConditions=new HashMap<>();
 
 	public String toString() {
-	    return "(" + counter + ","  +showList(shapes) + "," + showList(colors)+","+
-		plist +  "," + bucketList + ")";	       
+	    String s= "(" + counter + ","  +showList(shapes) + "," + showList(colors)+",";
+	    for(String key: propertyConditions.keySet()) {
+		s += key + ":" + propertyConditions.get(key) + ",";
+	    }
+	    
+	    s += plist +  "," + bucketList + ")";
+	    return s;
 	}
 
 
@@ -384,8 +408,8 @@ public class RuleSet {
 	    //System.out.println("plist=" + plist);
 	    g = arms.remove("bucket"); // bucket
 	    if (g!=null && agen!=null) g = g.map(agen.mkMapper("bucket"));
-	    if (g instanceof Expression.ArithmeticExpression)  {
-		bucketList = new BucketList((Expression.ArithmeticExpression)g);
+	    if (g instanceof ArithmeticExpression)  {
+		bucketList = new BucketList((ArithmeticExpression)g);
 	    } else if (g instanceof Expression.Star || g==null) {
 		// for compatibility with Kevin's syntax
 		bucketList = new BucketList((Expression.Star)g);
@@ -399,10 +423,16 @@ public class RuleSet {
 		if (g!=null && agen!=null) g = g.map(agen.mkMapper(key));
 		if (g instanceof Expression.Star) continue;
 		PropertyCondition cond = new PropertyCondition();
-		if (g instanceof Expression.Id || g instanceof Expression.Num) {
+
+		if (g instanceof Expression.QualifiedId) {
+		    // GS5
+		    cond.exp = (ArithmeticExpression)g;
+		} else if (g instanceof Expression.Id || g instanceof Expression.Num) {
 		    if (g instanceof Expression.QualifiedId) throw new RuleParseException("Cannot use Id.Id ("+g+") for prop values");
 		    cond.add( g.toString());
-		} else if (g instanceof Expression.BracketList) {
+		} else if (g instanceof Expression.BracketList &&
+			   ((Expression.BracketList) g).isGS3List()) {
+
 		    for(Expression h: (Expression.BracketList)g) {
 			if (h instanceof Expression.Id || h instanceof Expression.Num) {
 			    if (h instanceof Expression.QualifiedId) throw new RuleParseException("Cannot use Id.Id ("+h+") for shapes");
@@ -414,8 +444,11 @@ public class RuleSet {
 		} else if (g instanceof Expression.RangeExpression) {
 		    Expression.RangeExpression r=(Expression.RangeExpression)g;
 		    cond.addRange( r.a0.nVal, r.a1.nVal);		    
+		} else if (g instanceof ArithmeticExpression) {
+		    // GS5
+		    cond.exp = (ArithmeticExpression)g;
 		} else {
-		    throw new RuleParseException("Invalid value ("+g+") for property "+key+" in: " + pex);
+		    throw new RuleParseException("Invalid value ("+g+") for property '"+key+"' in: " + pex);
 		}		      
 		propertyConditions.put(key, cond);
 	    }
@@ -425,15 +458,15 @@ public class RuleSet {
 	    // System.out.println("Setting shapes from " + g);
 	    if (g==null || g instanceof Expression.Star) {
 		shapes = null;
-	    } else if (g instanceof Expression.Id) {
+	    } else if (g instanceof Expression.Id && !(g instanceof Expression.QualifiedId)) {
 		if (g instanceof Expression.QualifiedId) throw new RuleParseException("Cannot use Id.Id ("+g+")  for shapes");
 		String s = g.toString();
 		shapes = new Piece.Shape[] { Piece.Shape.findShape(s)};
-	    } else if (g instanceof Expression.BracketList) {
+	    } else if (g instanceof Expression.BracketList	&&
+		       ((Expression.BracketList) g).isSimpleIdList()) {
 		Vector<Piece.Shape> w = new Vector();
 		for(Expression h: (Expression.BracketList)g) {
-		    if (h instanceof Expression.Id) {
-			if (h instanceof Expression.QualifiedId) throw new RuleParseException("Cannot use Id.Id ("+h+") for shapes");
+		    if (h instanceof Expression.Id && !(h instanceof Expression.QualifiedId)) {
 			String s = h.toString();
 			w.add(Piece.Shape.findShape(s));
 		    } else  {
@@ -441,8 +474,11 @@ public class RuleSet {
 		    }
 		}
 		shapes = w.toArray(new Piece.Shape[0]);
-	    } else  {
-		throw new RuleParseException("Invalid shape ("+g+") in: " + pex);
+	    } else if (g instanceof ArithmeticExpression) {
+		// GS5: this will be reflected in propertyConditions
+		shapes = new Piece.Shape[0]; 
+	    } else {    
+		throw new RuleParseException("Invalid shape expression ("+g+") in: " + pex);
 	    }
 	    //System.out.println("shapes=" + showList(shapes));
 	    g = arms.remove("color");// color
@@ -452,7 +488,8 @@ public class RuleSet {
 	    } else if (g instanceof Expression.Id) {
 		String s = g.toString();
 		colors = new Piece.Color[]{ Piece.Color.findColor(s)};
-	    } else if (g instanceof Expression.BracketList) {
+	    } else if (g instanceof Expression.BracketList	&&
+		       ((Expression.BracketList) g).isSimpleIdList()) {
 		Vector<Piece.Color> w = new Vector();
 		for(Expression h: (Expression.BracketList)g) {
 		    if (h instanceof Expression.Id) {
@@ -463,6 +500,9 @@ public class RuleSet {
 		    }
 		}
 		colors = w.toArray(new Piece.Color[0]);
+	    } else if (g instanceof ArithmeticExpression) {
+		// GS5: this will be reflected in propertyConditions
+		colors = new Piece.Color[0]; 
 	    } else  {
 		throw new RuleParseException("Invalid color ("+g+") in: " + pex);
 	    }
@@ -486,33 +526,39 @@ public class RuleSet {
 	}
 
 
-	boolean acceptsShape(Piece.Shape x) {
+	boolean acceptsShape(Piece.Shape x,  VarMap2  varMap) {
 	    if (shapes==null) return true;
 	    for(Piece.Shape y: shapes) {
 		if (x==y) return true;
 	    }
-	    return false;	  
+	    
+	    PropertyCondition cond = propertyConditions.get("shape");
+	    return  (cond!=null)  && (varMap!=null) && cond.accepts(x.toString(), varMap);
 	}
-	boolean acceptsColor(Piece.Color x) {
+
+	boolean acceptsColor(Piece.Color x, VarMap2  varMap) {
 	    if (colors==null) return true;
 	    for(Piece.Color y: colors) {
 		if (x==y) return true;
 	    }
-	    return false;	  
+	    PropertyCondition cond = propertyConditions.get("color");
+	    return  (cond!=null)  && (varMap!=null) && cond.accepts(x.toString(), varMap);
 	}
 
 	/** Does this atom accept a specified piece, based on its
-	    shape and color? */
-	public boolean acceptsColorShapeAndProperties(Piece p) {
+	    shape and color? 
+	    @param varMap Map with variable values for expression evaluations. Maybe null before GS5.
+	*/
+	public boolean acceptsColorShapeAndProperties(Piece p, VarMap2  varMap) {
 	    ImageObject io = p.getImageObject();
 	    if (io==null) { // shape-and-color tuple object
-		return acceptsShape(p.xgetShape()) &&
-		    acceptsColor(p.xgetColor());
+		return acceptsShape(p.xgetShape(), varMap) &&
+		    acceptsColor(p.xgetColor(), varMap);
 	    } else { // image-and-property-based object
 		for(String key:  propertyConditions.keySet()) {
 		    PropertyCondition cond = propertyConditions.get(key);
 		    String s = io.get(key);
-		    if (s==null || !cond.accepts(s)) return false;	 
+		    if (s==null || !cond.accepts(s, varMap)) return false;
 		}
 		return true;
 	    }
@@ -623,13 +669,6 @@ public class RuleSet {
 		    if (h==null) propValues.put(p, h=new TreeSet<String>());
 		    PropertyCondition cond = atom.propertyConditions.get(p);
 		    h.addAll( cond.acceptedValues);
-		    /*
-		    for(Range r: cond.acceptedRanges) {
-			for(int x=r.a0; x<=r.a1; x++) {
-			    h.add("" + x);
-			}
-		    }
-		    */
 		}
 	    }
 	    return propValues;

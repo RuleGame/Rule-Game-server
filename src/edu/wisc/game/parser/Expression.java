@@ -11,11 +11,12 @@ public interface Expression {
    
     static Integer toInteger(Object o) {
 	if (o instanceof Integer) return (Integer) o;
-	else if (o instanceof String) {
+	/*else if (o instanceof String) {
 	    try {
 		return new Integer((String)o);
 	    } catch(Exception ex) { return null; }
-	} else return null;	
+	    } */
+	else return null;	
     }
 
     /** A Mapper is something that can take a variable
@@ -131,18 +132,102 @@ public interface Expression {
 	    return (BracketList)mapper.apply(e);
 	}
 
+	/** Is this a list suitable for shapes, colors, and other properties
+	    in GS 3? That is, a list consisting of just simple (not qualified)
+	    IDs and integers. If it isn't, it has to be interpreted as a GS5
+	    expression. */
+	public boolean isGS3List() {
+	    for(Expression x: this) {
+		if (x instanceof QualifiedId) return false;
+		if (!(x instanceof Id || x instanceof Num)) return false;
+	    }
+	    return true;			    
+	}
+
+	/** Is this just a list of simple (not qualified) IDs? This is
+	    what's allowed for shapes in colors before GS5.
+	 */
+	public boolean isSimpleIdList() {
+	    for(Expression x: this) {
+		if (x instanceof QualifiedId) return false;
+		if (!(x instanceof Id)) return false;
+	    }
+	    return true;			    
+	}
 
     };
 
+    /** A HashMap storing a set of values of a given type T for easch key */
+    static public class MapTo<T>  extends HashMap<String, HashSet<T>> {
+	/** Adds a value to the list of values associated with a specified key */
+	public boolean addValue(String key, T val) {
+	    HashSet<T> h = get(key);
+	    if (h==null) put(key, h=new HashSet<>());
+	    return h.add(val);
+	}
 
-    static class VarMap extends HashMap<String, HashSet<Integer>> {}
+	public String toString() {
+	    Vector<String> v = new Vector<>();
+	    for(String key: keySet()) {
+		v.add("["+key+":"+ Util.joinNonBlank(",",  get(key) /*w*/)+ "]");
+	    }
+	    return String.join(" ", v);
+	}
 
+	/** @param key A variable name, such as "p", "pc", "ps", or "propName.propValue" */
+	public void pu( String /*BucketSelector*/ key, T k) {
+	    HashSet<T> h = new  HashSet<>();
+	    h.add(k);
+	    put(key/*.toString()*/, h);
+	}
+	
 
-    static class PropMap extends HashMap<String,String>{};
+	
+    }
+
+    static public class VarMap extends MapTo<Integer> {}
+
+    /** Values are String or Integer */
+    static public class PropMap extends HashMap<String,Object>{
+	/** Stores a String value, as it is, or (if possible) converted to 
+	    Integer */
+	public Object putString(String key, String s) {
+	    try {
+		return super.put(key, new Integer(s));
+	    } catch(Exception ex) { 
+		return super.put(key, s);
+	    }
+	}
+
+	
+	public Object put(String key, Object o) {
+	    if (o instanceof String) {
+		return  putString(key, (String)o);
+	    } else if (o instanceof Integer) {
+		return super.put(key, o);
+	    } else {
+		throw new IllegalArgumentException("Illegal property type ("+o.getClass()+"): " + o);
+	    }
+	}
+    };
     
     /** Objects in question may be Integer, String, or PropMap
 	(ImageObject or equivalent) */
-    static class VarMap2 extends HashMap<String, HashSet<Object>> {}
+    static public class VarMap2 extends MapTo<Object> {
+	public boolean addValue(String key, Object val) {
+	    if (val==null) throw new IllegalArgumentException("An attempt to include a null value for key="+key);
+	    else if (val instanceof Integer) {}
+	    else if (val instanceof String) {
+		try { val = new Integer((String)val); }
+		catch(Exception ex) {}
+	    } else if (val instanceof PropMap) {}
+	    else {
+		throw new IllegalArgumentException("An attempt to include a value of an inappropriate type(" + val.getClass() +") into a variable to be used in set arithmetic: key=" +key+", val=" + val);
+	    }
+	    return super.addValue(key, val);
+	}	
+
+    }
     
 
     /** An arithmetic expression is composed of variables, constants,
@@ -224,16 +309,22 @@ public interface Expression {
 	    return q==null? new HashSet<Integer>() : q;
 	}
 	public HashSet<Object> evalSet2(VarMap2 h) {
-	    HashSet<Object> q= h.get(sVal);
-	    return q==null? new HashSet<Object>() : q;
+	    HashSet<Object> r = new HashSet<>();
+	    if (quoted) {
+		r.add(sVal);
+	    } else {
+		HashSet<Object> q= h.get(sVal);
+		if (q != null) r = q;
+	    }
+	    return r;
 	}
 
 	
 	public String toString() {
-	    return sVal;
+	    return toSrc();
 	}
 	public String toSrc() {
-	    return quoted? "\""+toString()+"\"" : toString();
+	    return quoted? "\""+ sVal+"\"" : sVal;
 	}
 	public HashSet<String> listAllVars() {
 	    HashSet<String> h = new HashSet<String>();
@@ -259,16 +350,14 @@ public interface Expression {
 	/** Trying different interpretations */
 	public HashSet<Object> evalSet2(VarMap2 h) {
 	    HashSet<Object> v = new HashSet<>();
-	    v.addAll( h.get(prefix + "."+ sVal));
-	    HashSet<Object> z = prefix.evalSet2(h);
+	    HashSet<Object> z = h.get(prefix + "."+ sVal);
+	    if (z!=null)   v.addAll( z);
+	    z = prefix.evalSet2(h);
 	    for(Object o: z) {
 		if (o instanceof PropMap) {
-		    String a = ((PropMap)o).get(sVal);
+		    Object a =  ((PropMap)o).get(sVal); // Integer or String
 		    if (a!=null) {
-			Integer ai = null;
-			try { ai=new Integer(a); } catch(Exception ex) {}
-			if (ai!=null) v.add(ai);
-			else v.add(a);			    
+			v.add( a);
 		    }
 		}
 	    }
@@ -277,8 +366,15 @@ public interface Expression {
 	}
 
 	public String toString() {
-	    return prefix.toString() + "." + super.toString();
+	    String s = prefix.toString() + "." + sVal;
+	    if (quoted) s = "\"" + s + "\"";
+	    return s;
 	}  
+	public String toSrc() {
+	    return toString();
+	}
+
+
     }
 
     /** !E evaluates to [1] if E is an empty set, or to [] otherwise */
@@ -375,7 +471,12 @@ public interface Expression {
 	    return h;
 	}
 
-	private static Integer doOp(Token op, Integer s, Integer q) {
+	private static Integer doOp(Token op, Object _s, Object _q) {
+	    Integer s =  toInteger(_s), q = toInteger(_q);
+
+	    if (s==null) throw new IllegalArgumentException("Attempt to apply operation " + op + " to a non-number ("+_s.getClass()+"): " + _s);
+	    if (q==null) throw new IllegalArgumentException("Attempt to apply operation " + op + " to a non-number ("+_q.getClass()+"): " + _q);
+					
 	    Integer r;
 	    if (q.intValue()==0 && (op.cVal == '/' || op.cVal == '%')) {
 		return null; // no result from division by zero
@@ -386,6 +487,8 @@ public interface Expression {
 	    //	if (s.equals(q)) r = 1;
 	    //	else continue;
 	    //} else
+
+	    
 
 	    if (op.cVal == '+') r = s+q;
 	    else if (op.cVal == '-') r = s-q;
@@ -429,7 +532,7 @@ public interface Expression {
 
 		for(Object s: hs) {
 		    for(Object q: hq) {
-			Integer r = doOp(op, toInteger(s), toInteger(q));
+			Integer r = doOp(op, s, q);
 			if (r!=null) hr.add(r);
 		    }
 		}
@@ -852,6 +955,18 @@ public interface Expression {
     public static HashSet<Integer> moduloNB(Set<Integer> h0) {
 	HashSet<Integer> h = new HashSet<>();
 	for(int x: h0) {
+	    x %= Episode.NBU;
+	    if (x<0) x+=Episode.NBU;
+	    h.add(x);
+	}
+	return h;
+    }
+
+    public static HashSet<Integer> moduloNB2(Set<Object> h0) {
+	HashSet<Integer> h = new HashSet<>();
+	for(Object _x: h0) {
+	    if (!(_x instanceof Integer)) continue;
+	    Integer x = (Integer)_x;
 	    x %= Episode.NBU;
 	    if (x<0) x+=Episode.NBU;
 	    h.add(x);
