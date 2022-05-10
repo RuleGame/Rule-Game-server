@@ -350,7 +350,7 @@ public interface Expression {
 	/** Trying different interpretations */
 	public HashSet<Object> evalSet2(VarMap2 h) {
 	    HashSet<Object> v = new HashSet<>();
-	    HashSet<Object> z = h.get(prefix + "."+ sVal);
+	    HashSet<Object> z = h.get( toString() );
 	    if (z!=null)   v.addAll( z);
 	    z = prefix.evalSet2(h);
 	    for(Object o: z) {
@@ -878,14 +878,13 @@ public interface Expression {
 
 	if (a.type == Token.Type.ID) {
 	    tokens.remove(0);
-	    if (tokens.size()>=2 && tokens.get(0).type==Token.Type.DOT && tokens.get(1).type == Token.Type.ID) {
+	    Id id = new Id(a);
+	    while(tokens.size()>=2 && tokens.get(0)==Token.DOT && tokens.get(1).type == Token.Type.ID) {
 		tokens.remove(0);
-		Token b = tokens.firstElement();
-		tokens.remove(0);
-		return new QualifiedId(new Id(a),b);
-	    } else {
-		return new Id(a);
+		Token b = tokens.remove(0);
+		id = new QualifiedId(id,b);
 	    }
+	    return id;	
 	} else if (a.type == Token.Type.STRING) {
 	    // quoted strings are allowed, as if they were IDs, to better handle the "shape" column
 	    tokens.remove(0);

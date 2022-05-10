@@ -77,6 +77,7 @@ public class Token {
 	    (c== '!')? BANG:
 	    (c== '*')? STAR:
 	    (c== ',')? COMMA:
+	    (c== '.')? DOT:
 	    null;
 	if (t!=null) return t;
 	
@@ -84,7 +85,6 @@ public class Token {
 	    Character.isDigit(c)? Type.NUMBER:
 	    Character.isJavaIdentifierStart(c)? Type.ID:
 	    c==':'? Type.COLON:
-	    c=='.'? Type.DOT:
 	    c=='+' || c=='-'? Type.ADD_OP:
 	    c=='*' || c=='/' || c=='%' ? Type.MULT_OP:
 	    c=='(' || c=='['? Type.OPEN:
@@ -115,6 +115,7 @@ public class Token {
     static final Token BANG = new Token(Type.UNARY_OP, "!"); 
     static final Token STAR = new Token(Type.MULT_OP, "*");
     static final Token COMMA = new Token(Type.COMMA, ",");
+    static final Token DOT = new Token(Type.DOT, ".");
 
     
     /** Sets other fields based on type and sVal */

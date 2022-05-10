@@ -247,13 +247,15 @@ public class CheckPlanService extends GameService2 {
 		    if (ipb && !useDynamicImages) {
 			w = rules.listAllPropValues();			
 			for(String p: w.keySet()) {
+			    TreeSet<String> z= new TreeSet<>();
+			    z.addAll(w.get(p));
+
 			    TreeSet<String> h = propValues.get(p);
 			    if (h==null) {
 				v.add(fm.para("Warning: Rule set " + para.getRuleSetName() + " makes use of property " + fm.tt(p) +", which does not appear in any of the image-based objects of this parameter set. Therefore, any references to this property in the rule set won't affect the game."));
+			    } else {
+				z.removeAll(h);
 			    }
-			    TreeSet<String> z= new TreeSet<>();
-			    z.addAll(w.get(p));
-			    z.removeAll(h);
 			    if (!z.isEmpty()) {
 				v.add(fm.para("Warning: When rule set " + para.getRuleSetName() + " has conditions referring to property " +fm.tt(p) +", it makes use of "+z.size()+" values of this property (" + fm.tt(String.join(", ", z)) +"), which do not appear in any of the image-based objects of this parameter set."));
 			    }

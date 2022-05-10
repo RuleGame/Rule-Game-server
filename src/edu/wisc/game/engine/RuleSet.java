@@ -235,7 +235,6 @@ public class RuleSet {
 	    if (exp != null && varMap !=null) { // GS5
 		Set<Object> w = exp.evalSet2(varMap);
 		if (Util.eachToString(w).contains(s))  return true;
-		
 	    }
 
 	    return false;
@@ -276,9 +275,15 @@ public class RuleSet {
 	/** Alternative for GS5 */
 	//	ArithmeticExpression colorsExp;
 	public PositionList plist;       	
-	public BucketList bucketList;	
+	public BucketList bucketList;
+	/** Contains values sets, ranges, or expressions from all
+	    "propName:..." fields (including "shape:" and "color:"),
+	    as well as the "code:..." field.
+	 */
 	HashMap<String,PropertyCondition> propertyConditions=new HashMap<>();
 
+	//ArithemeticExpression code = null;
+	
 	public String toString() {
 	    String s= "(" + counter + ","  +showList(shapes) + "," + showList(colors)+",";
 	    for(String key: propertyConditions.keySet()) {
@@ -424,7 +429,11 @@ public class RuleSet {
 		if (g instanceof Expression.Star) continue;
 		PropertyCondition cond = new PropertyCondition();
 
-		if (g instanceof Expression.QualifiedId) {
+		if (key.equals("code")) {
+		    // For the code: field, only an AEX is expected
+		    if (!(g instanceof ArithmeticExpression)) throw new RuleParseException("The value in the 'code:' field makes no sense here: " + g);
+		    cond.exp = (ArithmeticExpression)g;		    
+		} else 	if (g instanceof Expression.QualifiedId) {
 		    // GS5
 		    cond.exp = (ArithmeticExpression)g;
 		} else if (g instanceof Expression.Id || g instanceof Expression.Num) {
@@ -545,17 +554,28 @@ public class RuleSet {
 	    return  (cond!=null)  && (varMap!=null) && cond.accepts(x.toString(), varMap);
 	}
 
+	
+
 	/** Does this atom accept a specified piece, based on its
-	    shape and color? 
+	    shape, color, and (in GS3+) any other properties? Since
+	    GS5, the "code:" field of the atom is also taken into account.
 	    @param varMap Map with variable values for expression evaluations. Maybe null before GS5.
 	*/
 	public boolean acceptsColorShapeAndProperties(Piece p, VarMap2  varMap) {
+	    
+	    PropertyCondition code = propertyConditions.get("code");
+	    if (code!=null && varMap!=null) {
+		if (code.exp==null) throw new IllegalArgumentException("The 'code:' field w/o an expression");		
+		if (code.exp.evalSet2(varMap).isEmpty()) return false;
+	    }
+
 	    ImageObject io = p.getImageObject();
 	    if (io==null) { // shape-and-color tuple object
 		return acceptsShape(p.xgetShape(), varMap) &&
 		    acceptsColor(p.xgetColor(), varMap);
 	    } else { // image-and-property-based object
 		for(String key:  propertyConditions.keySet()) {
+		    if (key.equals("code")) continue;
 		    PropertyCondition cond = propertyConditions.get(key);
 		    String s = io.get(key);
 		    if (s==null || !cond.accepts(s, varMap)) return false;
