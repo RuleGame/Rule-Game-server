@@ -574,6 +574,7 @@ public interface Expression {
 	    Token t = ops.get(0);
 
 	    if  (t==Token.EQQ) return s.equals(q);
+	    else if  (t==Token.NE) return !s.equals(q);
 	    
 	    int cmp = s.compareTo(q);
 	    return
@@ -617,6 +618,7 @@ public interface Expression {
 		for(Object q: hs1) {
 		    if (e) break;
 		    e = (t==Token.EQQ)?  s.equals(q):
+			(t==Token.NE)?  !s.equals(q):
 			cmp(is, toInteger(q));
 		}
 	    }

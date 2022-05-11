@@ -322,12 +322,16 @@ public class Piece  implements Serializable {
 	This is used in expression evaluation.
      */
     PropMap toPropMap() {
+	PropMap pm;
 	ImageObject io = getImageObject();
-	if (io!=null) return io.toPropMap();
-
-	PropMap pm = new  PropMap();
-	pm.put("shape", getShape());
-	pm.put("color", getColor());
+	if (io!=null) {
+	    pm = io.toPropMap();
+	} else {
+	    pm = new  PropMap();
+	    pm.put("shape", getShape());
+	    pm.put("color", getColor());
+	}
+	pm.put("pos", pos().num());
 	return pm;
     }
     

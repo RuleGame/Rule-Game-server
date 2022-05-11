@@ -1,0 +1,234 @@
+<html>
+  <head><title>Rule file syntax and semantics: what's new in GS5</title>
+  </head>
+<body>
+  <h1>Rule file syntax and semantics: what's new in GS5</h1>
+
+  <div align="center"><em>Updated for ver. 5.000. 2022-05-10</em></div>
+
+  <h2>New features</h2>
+
+  <p>The syntax and semantics of rules have been significantly expanded in Game Server 5.*, in order to allow describing more interesting rules. This section describes  major changes, as  compared to the baseline description (<a href="syntax.html">Syntax</a>).
+
+    <h3>More variables</h3>
+
+  <p>The original GS1 included 3 variables:
+    <ul>
+      <tt>p</tt> -- the number of bucket that accepted the most recently removed game piece
+      <tt>pc</tt> -- the number of bucket that accepted the most recently removed piece of the same color as the piece that the player currently attempts to move ("the current piece")
+      <tt>ps</tt> -- the number of bucket that accepted the most recently removed piece of the same shape as the piece that the player currently attempts to move ("the current piece")
+      <li><tt>Nearby</tt> = the bucket nearest to the location of the piece being picked
+      <li><tt>Remotest</tt> = the bucket farthest from  the location of the piece being picked      
+    </ul>
+
+  <p>Additionally, order names (e.g. <tt>T, B</tt>) evaluated to sets of board positions (depending on the current state of the board).
+    
+  <p>In GS3, when <a href="proposal-object-properties.html">image-and-property-based  objects</a> were introduced, the  <tt>pc</tt> and <tt>ps</tt> were generalized to
+    <ul>
+      <tt>p.<em>propName</em></tt> -- the number of bucket that accepted the most recently removed game piece whose property called <em>propName</em> has the same value as in the current piece. (Thus, <tt>p.color</tt> has the same meaning as the original <tt>pc</tt>, and  <tt>p.shape</tt>, as the original <tt>ps</tt>).
+    </ul>
+
+  <p>In GS5, the set of variables has been further expanded. This includes:
+    <ul>
+      <li><tt>this</tt> -- the current game piece. One uses the dot notation to access its properties, such as <tt>this.color</tt> = the color of the current piece. The syntax  <tt>this.pos</tt> and  <tt>this.bucket</tt> can be used to refer to the position of the current piece on the board, and the number of the bucket to which the player attempts to moves it.
+
+      <li><tt>last</tt> -- the game piece that was most successfully removed from the board most recently. One uses the dot notation to access its properties, such as <tt>last.shape</tt> = the shape of the most recently removed piece. The syntax  <tt>last.pos</tt> and  <tt>last.bucket</tt> can be used to refer to the board position from which a game piece was removed most recently, and the number of the bucket into which a game piece was dropped most recently.  The negation expression (<tt>!last</tt>) evaluates to <tt>[1]</tt> (which is the Game Server's equivalent of "true") if no game piece has been removed yet, and to the empty set <tt>[]</tt> (which is the Game Server's equivalent of "false") otherwise.
+
+      <li><tt>q.<em>propName</em></tt> -- the most recently removed game piece that shared the value of the specified property with the current piece. Thus, for example, <tt>q.shape.bucket</tt> has the same meaning as the legacy variables <tt>p.shape</tt> and <tt>ps</tt>.  All fields can be accessed with the dot notation. For example, in a game where objects have properties called "size" and "orientation", the expression  <tt>q.size.orientation</tt> will evaluate to the orientation of the most recently removed object of the same size as the current object;  <tt>q.size.pos</tt> will evaluate to the position from which that piece was removed. These two expressions (as <tt>q.size</tt> itsel)	will evaluate to an empty set if no game pieces of this size have been removed yet. 
+    </ul>
+  </p>
+  
+  <h3>Can use expressions in all fields of an atom (except for <tt>pos:</tt></h3>
+
+  <p>In GS3 (and GS4), complicated expressions could only be used in the <tt>bucket:</tt> field of a rule atom. (See <a href="arithmetic.html">Bucket expression arithmetic</a>). For other fields, such as <tt>color:</tt> or <tt>shape:</tt>, only constants could be used.
+
+  <p>In GS5, expressions, with essentially the same syntax, can be used in all fields of the rule atom, other than the <tt>count:</tt> field and (for now) ther <tt>pos:</tt> field. Thus, for example, the atom
+    <pre>
+      (color:last.color, bucket:last.bucket)
+    </pre>
+    will allow the player to pick a game piece of the same color as the most recent removed piece, and to put it into the same bucket.
+
+    <h3>The new <tt>code:</tt> field</h3>
+
+  <P>A new field,  <tt>code:</tt>, can now be used in rule atoms. As all other fields, it is optional. If it is present, it needs to evaluate to a true value (i.e. not to an empty set) in order for the move to be allowed.
+
+  <p>For example, the atom
+    <pre>
+      (code:this.pos==last.pos+1)
+    </pre>
+    will allow the player to pick a game piece that is located in the "next cell" to the cell from which the most recently moved piece was picked.
+
+        
+    <h3>Expanded expression syntax</h3>
+
+    <h4>Operators</h4>
+    <p>In addition to the arithmetic operators described in  (See <a href="arithmetic.html">Bucket expression arithmetic</a>), the Rule Game expression syntaxt now also supports comparison operators (<tt>==, <, >, <=, >=, !=</tt>). They return <tt>[1]</tt> on success and <tt>[]</tt> on failure.
+
+      <h4>Data types</h4>
+
+    <p>In the original GS1, one could say that the only data type used in the color, shape fields was string constants and sets of strings, while the only data type used in the position and bucket fields was integer (and sets of integer). As variables and operators have been added in GS3 and now GS5, one can now talk about the constants and values of expressions belonging to the following types:
+
+
+      <table border="1">
+	<tr><th>Type <th>Example <th>Notes
+	</tr>
+	<tr><th>String <td><tt>red</tt>, <tt>"red"</tt>
+	    <td>For compatibility with GS1-GS4, string constants can be
+	      written without quotes in simple expressions in property fields, e.g. <tt>color:red</tt> or <tt>color:[red,green]</tt>. Elsewhere, the use of double quotes is strongly recommended, to avoid confusion with variables.
+	</tr>
+	<tr><th>Integer <td><tt>1</tt>, <tt>3</tt>, <tt>pc</tt>, <tt>last.color.bucket</tt>
+	</tr>
+	<tr>
+	  <th>Integer ranges</th>
+	  <td><tt>[0..30]</tt>
+	  <td>Only used in property fields, for integer-valued properties. Both bounds of the range must be constants.
+	</tr>
+	
+	<tr><th>Sets <td><tt>[1, 3]</tt>,  <tt>[red, green]</tt>
+	      <tt>["red", last.color]</tt>
+	      <tt>!pc</tt>, 	      	      <tt>[]</tt>
+	    <td>(1) Non-empty sets and empty sets are GS's equivalents of "true" and "false". (2) Order variables (T, B, L1, ...) evaluate of sets as well.
+	</tr>
+	
+	<tr><th>Objects
+	    <td><tt>this</tt>,  <tt>last</tt>, <tt>q.color</tt>,
+	      <tt>q.bucket</tt> </td>
+	    <td>One can access their fields (e.g. <tt>last.shape</tt>), or use
+	      them in a negation operator (<tt>!last</tt>)
+	      
+      </table>
+
+    <P>In reality, all of GS arithmetic is set-based, so a single string or a single number is interpreted as a set of 1 element.
+
+    <p>The language used in GS rules is not strongly typed. As in Perl, implicit conversion between integers and strings take places when appropriate and possible.  If the expression contains an "impossible" operation, such as division by zero or an attempt to apply an arithmetic procedure to a string, the result will be an empty set.
+
+    <P>The equality / inequality operators (==, !==) can be applied both to numbers and to strings. The comparison operators  (<tt><, >, <=, >=</tt>) should only be used with numbers. Otherwise, an empty set will be returned.
+
+
+<h2>Examples</h2>
+      
+
+<h3>Example 1: assembling a picture in a specific order</h3>
+
+<strong>Experiment plan: <tt>vm/jigsaw-02</tt></strong>
+
+    
+    <p>
+      Thus, for example, in Charles' last example (assembling a picture in required order), one can assign to each of the four pieces a numerically-valued property  "seq", with values {0,1,2,3}. The property file (shapes/vm/jigsaw-02)  is as follows:
+<pre>
+image,name,seq
+b1-nw.svg,b1-nw,0
+b1-ne.svg,b1-ne,1
+b1-se.svg,b1-se,2
+b1-sw.svg,b1-sw,3
+</pre>
+
+The rule set then can look as follows:
+
+      <pre>
+1  ()
+(seq:(last.seq+1)%4,  bucket:p)     (seq:(last.seq+3)%4,  bucket:p)
+      </pre>
+
+    <p>
+Here, the first rule line of the rule set will allow to pick any piece and to put it into any bucket; the control then goes to the second line. The second line will allow to pick a piece whose property "seq" has a value that's subsequent to the one of the last-used piece (in the first atom, clockwise, i.e. 3 after 2,  0 after 3, etc; in the second atom, counterclockwise, i.e. 1 after 2, etc), and to put it into the same bucket as the previous piece.  
+
+<p>
+As with the bucket arithmetic, the arithmetic for the property fields will be set-based, yielding empty set when "last" is not defined, or when a particular property in the last piece wasn't defined.
+
+<h3>Example 2</h3>
+
+<strong>Experiment plan: <tt>vm/jigsaw-03</tt></strong>
+    
+    <p>
+      If there are several "pictures" on the  board, and the player is allowed to choose any picture to start assembling, but then must assemble the entire picture before proceeding to the next one, we can use the property "body" to identify the picture.   Say, here there are 2 pictures (numbered body=0 thru body=1), within each of which the pieces are numbered with seq=0 thru 3.   The pieces of each picture must be assembled in different buckets (say, the player chooses the bucket for the first picture at will; the pieces of the second picture being put to the next [clockwise] bucket after the one used for the first picture, and so on).
+
+     <p>The property file may look like this:
+<pre>      
+image,name,body,seq
+b1-nw.svg,b1-nw,1,0
+b1-ne.svg,b1-ne,1,1
+b1-sw.svg,b1-sw,1,2
+b1-se.svg,b1-se,1,3
+b2-nw.svg,b2-nw,2,0
+b2-ne.svg,b2-ne,2,1
+b2-sw.svg,b2-sw,2,2
+b2-se.svg,b2-se,2,3
+</pre>
+      
+<p>The rules:
+<pre>
+1 (bucket:[  !p*[0,1,2,3],  p+1]  )
+(body:last.body, seq:[(last.seq+1)%4, (last.seq+3)%4], bucket:p)
+</pre>
+
+<p>One can also write an equivalent rule set differently, for example like this:
+ <pre>
+1 (code:!p) (bucket:p+1)
+(body:last.body, seq:(last.seq+1)%4, bucket:p) (body:last.body, seq:(last.seq+3)%4],  bucket:p) 
+</pre>
+
+
+<h3>Example 3</h3>
+
+<p>
+What if we have several pictures on the board, and we allow the player to work  on them in parallel, with a different destination bucket for the pieces of each picture?  Let's first design a game where the destination bucket for the pieces of each picture is predetermined by the designer. Thus, the pieces of the picture with body=0 go to bucket No. 0, etc. 
+
+<strong>Experiment plan: <tt>vm/jigsaw-04</tt></strong>
+
+<pre>
+(code:!q.body, bucket:this.body)  (seq:(q.body.seq+[1,3])%4, bucket:this.body)
+</pre>
+
+<p>
+(The first atom allows picking pieces for which q.body.seq is not defined, i.e. pieces of pictures that have not been worked on yet; the other  atom allows assembly clockwsise and counterclockwise).
+
+<strong><em>The examples below have not been tested yet, so the rules may need some minor corrections.</em></strong>
+
+
+<h3>Example 4</h3>
+
+<p>
+What if, as in the previous example, we want the player to "assemble" each picture in a different bucket, allow him to work on them all in parallel, and we want to allow the player to independently choose the destination bucket for each picture?
+
+<pre>
+(seq:(!q.body)*[0,1,2,3], bucket:(!q.bucket.body)*this.bucket)   (seq:(q.body.seq+[1,3])%4, bucket:p.body)
+</pre>
+
+<p>
+Here, the first atom allows picking a piece from a "not-started-yet" picture, and putting it into any empty bucket. (One on which q.bucket.body is not defined yet). The other atom provides for the clockwise and counterclockwise assembly of the already-started pictures.
+
+<p>
+The first atom can be more elegantly written with the "code:" field,
+
+<pre>
+(code:!q.body.body,   code:!q.bucket.body)     (seq:[ q.body.seq+1)%4,  q.body.seq+3)%4], bucket:p.body)
+</pre>
+
+<p>
+The above clearly shows that there are two conditions for the first atom to apply: q.body should not be defined (i.e. the current piece belongs  to a picture from which no piece has been moved yet), and q.bucket is not defined (i.e. no piece has been put into the current bucket -- thus, it's empty).
+
+<h3>Example 5</h3>
+
+<p>
+This game pieces represent playing cards, with the properties "suite" (= "spades", "clubs", etc) and "value" (= 2,3,...,14). The player must put different suites into different buckets (of his own choice), in the order of increasing values. (I.e. a queen of spades can be put on top of a jack or 10 of 9 of spades, but not on top of a king or ace of spades, and not on top of a card of a dfferent suite).
+
+<p>
+Note that this game allows stalemates. If, for example, the player put the queen of spades into a bucket before the jack of spades has been removed, then this jack won't be able to ever leave the board.
+
+<h3>Example 6</h3>
+
+    <p>This comes from Paul's  2021-04-30 message.
+      <blockquote>
+Rule_PK2n: alternately clear all of the highest row and then all of the lowest row of the displayed objects  (and iterate). The first object can go anywhere, but after that the objects must be placed in clockwise order.
+      </blockquote>
+
+<pre>
+1 (pos:T, bucket: [!p*[0.1,2,3],  p+1)
+(code: (pos-1)/6 = (last.pos-1)/6),    bucket:p+1)
+1 (pos:B, bucket:p+1)
+(code: (pos-1)/6 = (last.pos-1)/6),    bucket:p+1)
+</pre>
+
+</body>
+</html>
