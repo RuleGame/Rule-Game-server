@@ -10,7 +10,9 @@
     <h2>Preparing the experiment control files</h2>
 
     <h3>The control files</h3>
-  <p>As discussed in the <a href="data.html">Rule Game server data guide</a>, a number of files need to be prepared in the <strong>server's game data directory</strong> (/opt/tomcat/game-data) in order to control the players' experience during your experiment. To summarize, this should include, at a minimum:
+  <p>As discussed in the <a href="data.html">Rule Game server data guide</a>, a number of files need to be prepared in the <strong>server's game data directory</strong>    in order to control the players' experience during your experiment.  (The game data directory on <tt>sapir</tt> at UWM is <tt>/opt/tomcat/game-data</tt>. An administrator setting up an instance of Game Server at a host in another institution can choose a different location, and indicate it in the <tt>GAME_DATA</tt> variable in the <a href="setup/setup-config.html">master config file</a>).
+
+    <p>To summarize, this set of files needed to run an experiment should include, at a minimum:
     <ul>
       <li>The experiment plan directory (a subdirectory under /opt/tomcat/game-data/trial-lists), containing one or several trial list files. The server will <a href="balancing.html">pseudo-randomly assign</a> players, in a balanced manner, to different trial lists, so each of the trial list files will be the top-level file defining the experiences of a particulalry (randomly selected) subgroup of the participants of your experiment.
       <li>For each rule set mentioned in the trial list files, a  <a href="syntax.html">rule set file</a> must be created in the rules directory, /opt/tomcat/game-data/rules. If you are creating a group of rule set files to be used in just one experiment, or in some series of experiments, it would make sense to place them into a new, specially created subdirectory under the rules directory. This will make it easier to manage rule set files.

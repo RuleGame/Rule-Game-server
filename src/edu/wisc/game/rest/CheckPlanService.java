@@ -231,7 +231,8 @@ public class CheckPlanService extends GameService2 {
 		    GameGenerator gg = GameGenerator.mkGameGenerator(Episode.random, para);
 		    info = null;
 		    Game game = gg.nextGame();
-
+		    
+		    
 		    //-- Checking initial boards
 		    if (gg instanceof PredefinedBoardGameGenerator) {
 			v.add(fm.para("Checking predefined boards..."));

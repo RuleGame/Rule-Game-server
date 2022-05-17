@@ -1,0 +1,35 @@
+<html>
+  <head><title>Setup: master config file</title></head>
+  <body>
+
+    <h1>Setup: master config file</h1>
+
+    <p>The master configuration file can be created to override the default values of some parameters.
+
+    <p>If you want to have a master configuration file, you need to place it to the location <tt>/opt/w2020/w2020.conf</tt>.  You will need to use the <tt>sudo</tt> command  to create the directory for that file.
+
+    <p>The content of that file may look as follows:
+
+<pre>
+#--- This is the master configuration file for the Rule Game Server.
+#--- It is located in /opt/w2020/w2020.conf
+
+#--- The Rule Game server input data directory. The Game Server will read
+#--- experiment control files from it
+FILES_GAME_DATA = "/opt/tomcat/game-data";
+
+#----The Rule Game server saved data directory.
+#--- The Game Server will write transcript files etc to it.
+FILES_SAVED =  "/opt/tomcat/saved";
+
+#---- The user name for the MySQL server
+JDBC_USER = "game"
+#---- The password for the MySQL server
+JDBC_PASSWORD = "Meerkat-w2020";	
+</pre>	
+
+
+As you can see, you can use this file to modify the locations of the Game Server <a href="../data.html">data directories</a>, as well as the user name and password for the MySQL server account used by the Game Server.
+
+  </body>
+  </html>

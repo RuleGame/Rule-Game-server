@@ -1,0 +1,62 @@
+<html>
+  <head><title>Setup: Tomcat</title></head>
+  <body>
+
+    <h1>Setup: Tomcat</h1>
+
+    <p>We suggest that you run the Apache Tomcat as user <tt>tomcat</tt>. You can follow fairly standard installation and configuration instructions compiled by  Justin Ellingwood at <a href="https://www.digitalocean.com/community/tutorials/how-to-install-apache-tomcat-8-on-ubuntu-16-04">this site</a>.
+
+<p>In particular, you'll need to create a Linux user group named <tt>tomcat</tt>, and a user of the same name:      
+<pre>    
+sudo groupadd tomcat
+sudo useradd -s /bin/false -g tomcat -d /opt/tomcat tomcat
+</pre>
+Also, do not forget to do:
+<pre>
+chmod +x /opt/tomcat/bin/*.sh
+chown tomcat:tomcat /opt/tomcat/conf
+</pre>
+
+<p>(This is to avoid this problem:
+<pre>
+  30-Jun-2020 01:58:03.276 SEVERE [main] org.apache.catalina.startup.HostConfig.beforeStart Unable to create directory for deployment: [/opt/apache-tomcat-9.0.36/conf/Catalina/localhost]
+</pre>)
+
+<p>We recommend that you intall Tomcat in <tt>/opt/tomcat/</tt> (which usually is the default location). If you install it elsewhere, you may need to adjust some scripts and configuration files.
+      
+
+<p>You can check whether tomcat is running with something like
+  <pre>
+    ps -auxw | grep tomcat
+  </pre>
+If it is not, you can start it with
+  <pre>
+sudo systemctl start tomcat
+  </pre>
+  or
+  <pre>
+sudo service tomcat start
+  </pre>
+  , depending on how your OS is set up.
+
+<p>If the tomcat is running properly, you can see the tomcat's main page by going to an appropriate URL in your browser, such as http://localhost:8080/ . (The port number, of course, is based on how you have configured the Tomcat; you may have chosen to change 8080 to 80, which can be omitted in URLs).
+
+  <h2>Create data directories for Game Server</h2>
+
+<p>You need to create the the Game Server <a href="../data.html">data directories</a>. At our site, we have the Rule Game server input data directory at
+  <tt>/opt/tomcat/game-data</tt>, and the saved data directory, at <tt>/opt/tomcat/saved</tt>. If you prefer, you can choose to put these two directories elsewhere, e.g. under <tt>/opt/w2020</tt>.
+
+  <p>Once you have created these two directories, set the values for the two relevant variables in your  <a href="setup-config.html">config file</a> accordingly, e.g.
+<pre>
+FILES_GAME_DATA = "/opt/tomcat/game-data";
+FILES_SAVED =  "/opt/tomcat/saved";
+</pre>
+
+  <p>When creating those two directories, make sure that the Linux user <tt>tomcat</tt> (which runs the Tomcat server) can write to those directories, e.g. by transferring their ownership to that user:
+    <pre>
+sudo mkdir /opt/tomcat/game-data /opt/tomcat/saved
+sudo chown tomcat.tomcat  /opt/tomcat/game-data /opt/tomcat/saved
+    </pre>
+    
+  </body>
+  </html>

@@ -1,0 +1,88 @@
+<html>
+  <head><title>Setting up the Rule Game Server and Client</title></head>
+  <body>
+
+    <h1>Setting up the Rule Game Server and Client</h1>
+
+<p align="center"><em>Draft 2022-05-12</em></p>
+
+<p>
+  This document descibes the process for setting up the Rule Game (a.k.a. Game of Hidden Rules - GOHR) software on youer own web site, so that your team could design experiments and process experimental results independently of the University of Wisconsin - Madison team.
+
+  <p>For an overview of the main concepts of the Game Server, see <a href="../concepts.html">Main Rule Game server concepts</a>.
+
+  
+<h2>Rule Game software components</h2>
+
+<p>The Rule Game system used by the players and researchers consists of the following components:
+
+  <ul>
+    <li><strong>The Rule Game GUI Client.</strong> This an application written in TypeScript (a language built on top of JavaScript), which runs in a player's web browser (such as Chrome or Firefox). The GUI client is loaded into the player's web browser when the player goes to a certain URL. Depending on your team's need, you can have the players load the GUI client from our server at UWM, or from your own server; in the latter case, you can have the GUI client code customized as needed (e.g. to provide different introductory screens).
+
+    <li><strong>The Rule Game Server</strong>r is a server-side web application. The GUI client continuously "talks" to the Game Server dring a game. We run a Game Server instance on our host at UWM; your team will need to set up its own instance of the Game Server at your own host, so that you can easily create and modify experiment plans and process collected data. Typically, to install the Rule Game Server, you need to install an Apache Tomcat Web Server, and to place a WAR file with the Rule Game web app code into the web app directory of the Tomcat server.   You can use the WAR file we provide (in which case, you will have an exact copy of a recent version of our Rule Game Server code), or you can download our source code, modify it as desired, and build the WAR file from source.
+
+    <li><strong>The SQL database.</strong> To run your instance of Rule Game Server, you need to have it "talk" to a relational database server (such as a MySQL server), which will contain a database named <tt>game</tt>. In that database the Game Server will store some types of information that it needs to continiually create, read, and modify, such as the record of the progress of a player through a series of episodes. (For details, see "Read-and-write data" in the <a href="../data.html">Game Server Data Guide</a>). You probably will want to run the SQL server on the same host as your Rule Game Server.
+
+    <li><strong>The experiment control files.</strong> To define the set of experiments (games) that the players can play, you need to place an appropriate set of experiment control files to a specified directory on your server host. (From the Rule Game Server's point of view, Those files are "read-only file", because it is you, the experiment manager, who create and modify them, while the game server only reads them. This is how they are referred to in the <a href="../data.html">Data Guide</a>).
+
+    <li><strong>Server output files.</strong> You need to designate some directory on your server hosts for the files that the Game Server will write, recording the players' game transcripts etc. Those are the game server's "write-only files" (as per the  <a href="../data.html">Data Guide</a> terminology). You may later analyze those files with the tools supplied with the server, or with your own tools.      
+  </ul>
+
+  <h2>Setup Option A: server binary install + client from the UWM host</h2>
+
+<p>There are several ways to set up your Rule Game software. Option A is the simplest one. If you follow this option, you will install on your server host the WAR file (Web application ARchive file) pre-built by our team at UWM, and you will guide the players to load the GUI client from the UWM web site (while instructing it to talk to the server instance at your site). Here are the step-by-step instructions.
+
+  <ol>
+    <li><strong>The SQL database.</strong> You need to install a relational database  server, if you don't have one already. Our team uses a freely available MySQL server, but if you're running something else (such as the Microsoft, Sybase, or Oracle SQL server), it probably will do fine as well. At the server, create the datbase named <tt>game</tt>, and the user account named  <tt>game</tt> as well. For more detailed instructions, see <a href="setup-mysql.html">SQL database setup guide.</a>
+
+    <li><strong>The master configuration file.</strong> This file will, among other things, tell your Rule Game Server how to connect to the database server. See <a href="setup-config.html">config file setup</a> for details.
+
+    <li><strong>Tomcat.</strong> Assuming that you have chosen the Apache Tomcat as your web server, install it (if you don't have it yet) and configure it for running the Game Server web app on it. For instructions, see <a href="setup-tomcat.html">Tomcat setup guide.</a>  Once the Tomcat is running, you should be able to verify that it's running by going to the appropriate URL, such as <tt>http://MY_HOST:MY_PORT/ </tt>. (Put your host name and port number instead of <tt>MY_HOST</tt> and <tt>MY_PORT</tt> in the URL).
+
+    <li><strong>WAR file.</strong> In this option, you will simply download a recent version of our application WAR file, and put that file into the web apps directory of your Tomcat (<tt>/opt/tomcat/webapps</tt>, if you followed our defaults). You can do it by simply copying the download WAR file to that directory, or you can use Tomcat's web interace for loading applications. 
+(DOWNLOAD LINK GOES HERE).
+      
+    <li><strong>Experiment control files.</strong> To be able to run experiments, you need to populate the experiment control file directory (<tt>/opt/tomcat/game-data</tt>, if you followed our defaults) with control files for some experments. See the  <a href="setup-game-data.html">control file setup guide.</a>
+
+    <li><strong>Testing!</strong> Now that everything is in place, you can test some components of the software system you have just set up, to see if it actually works. See the   <a href="setup-testing.html">testing guide</a> to get started.
+
+      </ol>
+
+  <h2><a name="B">Setup Option B: server source code install + client from the UWM host</a></h2>
+
+<p>Instead of downloading the WAR file, you may choose to download the Game Server source code and the necessary third-party libraries, and carry out the build process, compiling the source code and building the WAR file. This approach is appropriate if:
+  <ul>
+    <li>... you want to continuously update  your Game Server instance as we check in source code updates to the GitHub repository, without having to download a huge WAR file every time.
+    <li>... you want to customize the Game Server source code (e.g. because you want to create your own extension of the rule syntax).
+    <li>... you want to use off-line data analysis tools (scripts for processing transcript files etc), the sorce code for which comes as part of the Game Sersver code base.
+  </ul>
+
+<p>The setup process is as follows:
+
+  <ol>
+    <li>Set up the SQL database, exactly as in step 1 of Option A.
+    <li>Set up the master configuration file, exactly as in step 2 of Option A.
+    <li>Set up Tomcat, exactly as in step 3 of Option A.
+    <li>Download the necessary third-party libraries, as well as the tools necessary for compilation. (You would not need to do that with Option A, because those libraries are already included into the WAR file). <a href="setup-lib.html">See the list here</a>.
+
+    <li>Download the source code of the Rule Game Server from our  Github repository: <a href="https://github.com/vmenkov/Rule-Game-server">Rule-Game-server</a>, compile it, and build a WAR file. For instructions, see the <a href="setup-compile.html">Rule Game Server build Guide.</a> You can also make any code changes here, if desired.
+      <li>Work on your control files, as per Step 5 in Option A.
+      <li>Proceed with testing, as per Step 6 in Option A.   
+      </ol>
+      
+  <h2>Setup Option C: server source code install + client install</h2>
+
+<p>If you want to install the GUI client on your server host as well (so that the players' browsers will download it from your host, rather than from the one at UWM), follow the Option C instructions. This is appropriate if you want to customize the client in some way, or if you want to make sure not to rely on any part of the UWM infrastructure. (This would be a very wise plan if you expect the funding for your server to last longer than the funding we have at UWM for our server!).
+
+  <ol>
+    <li>Plan goes here...
+  </ol>
+
+  
+    <h2></h2>
+    <h2></h2>
+    <h2></h2>
+
+
+  </body>
+</html>

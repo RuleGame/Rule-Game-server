@@ -7,6 +7,9 @@ import java.net.*;
 import javax.persistence.*;
 
 import org.apache.openjpa.persistence.jdbc.*;
+import org.apache.openjpa.persistence.JPAProperties;
+
+
 import edu.wisc.game.util.*;
 
 public class Main {
@@ -37,15 +40,32 @@ public class Main {
 
     private static EntityManagerFactory factory = null;
 
+    /** The location of a site-specific config file */
+
+    
    /** Initializes the EntityManagerFactory using the System properties.
-        The "icd" name will be used to configure based on the
+        The "w2020" name will be used to configure based on the
         corresponding name in the META-INF/persistence.xml file
+
+
+// org.apache.openjpa.lib.util.ParseException: 
+// Equivalent property keys "openjpa.ConnectionPassword" and "javax.persistence.jdbc.password" are specified in configuration.
+
+
     */
     public static synchronized  EntityManagerFactory getFactory() {
-        if (factory == null) {
+        if (factory == null) {	    
+	    Properties prop = System.getProperties();
+	    Hashtable<Object,Object>  h = (Hashtable<Object,Object>) prop.clone();
+
+	    String s = MainConfig.getString("JDBC_USER", null);
+	    if (s!=null) h.put("openjpa.ConnectionUserName" , s);
+
+	    s = MainConfig.getString("JDBC_PASSWORD", null);
+	    if (s!=null) h.put("openjpa.ConnectionPassword" , s);
+
             factory = Persistence.
-                createEntityManagerFactory(persistenceUnitName,
-                                           System.getProperties());
+                createEntityManagerFactory(persistenceUnitName, h);
         }
         return factory;
     }

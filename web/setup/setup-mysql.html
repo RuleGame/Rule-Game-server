@@ -1,0 +1,93 @@
+<html>
+  <head><title>Setup: MySQL</title></head>
+  <body>
+
+    <h1>Setup: database server</h1>
+
+    <p>The Game Server will need to use a relational database server to store some of its <a href="../data.html">data</a>. We at UWM use a MySQL server, and the instructions below will assume that you use one as well. If you happen to be using some other database server, such as Sybase, Microsoft, or Oracle SQL Server, you may need to modify the instructions accordingly.
+
+    <p>If you want to install the MySQL server on an Ubuntu host, you can, for example, follow the MySQL intallation & config advice <a href="https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-18-04">here</a>.
+
+      <h2>Download and install the SQL server</h2>
+
+<pre>
+sudo apt update
+sudo apt install mysql-server
+sudo mysql_secure_installation
+</pre>
+      
+<p>
+  During the installation, you may want to:
+  <ul>
+<li>Set the root password for MySQL server
+<li>Remove anon user
+<li>Disallow remote login (i.e., only login from localhost is allowed)
+<li>Keep the "test" database, just in case. (The Game Server does not use it, though)
+</ul>
+
+
+<p>Alternatively, instead of setting up a password for the <tt>root</tt> user, you can keep the <tt>auth_socket</tt>   access to the mysql root account. In this case, you won't need the root password (and won't be able to use it); you will simply type
+  <pre>
+    sudo mysql
+  </pre>
+  on the shell command line to login to the MySQL server as <tt>root</tt>.
+
+  <p>Once you have logged in to the MySQL server, this is how you can check the auth methods in effect:
+<pre>
+SELECT user,authentication_string,plugin,host FROM mysql.user;
+</pre>
+
+<p>Depnding on the server configuation, you may need to also explicitly install the plugin dealing with the socket authentication:
+<pre>
+INSTALL PLUGIN auth_socket  SONAME 'auth_socket.so';
+</pre>
+
+<h2>Create the database and user accounts</h2>
+
+  <p>You will need to create the database named <tt>game</tt> in which the Game Server will store some of its data. You will also need to create a MySQL server user name  (say, <tt>game</tt>) with which the Game Server will access that database, and pick a password (say, <tt>Meerkat-w2020</tt>, in the example below) for that user, by typing, on the MySQL prompt:
+
+<pre>    
+create database game;
+
+CREATE USER 'game'@'localhost' IDENTIFIED BY 'Meerkat-w2020';
+GRANT ALL ON game.* TO 'game'@'localhost';
+</pre>
+
+<p>You can test that the new user account is operational by typing on the Unix command line
+
+<pre> 
+ mysql -u game -p 
+</pre>
+and then typing that user's password when prompted. That shoudl log you in to the MySQL server as user  <tt>game</tt>.
+
+<p>For your personal convenience -- e.g., to explore the data in the SQL database in the future -- you can also create your own personal account on the MySQL server. It would be convenient to pick the MySQL user name the same as your Linux user name, and enable "passwordless" access (i.e. MySQL server authetication based on your Linux user name). Additionally, in order to carry out data-exporting operations later on, you may want to grant yourself the <tt>FILE</tt> privilege.  So, for example, if your Linux user name is <ttt>johndoe</tt>, you can create an eponymous MySQL server account as follows:
+
+<pre>
+CREATE USER 'johndoe@'localhost' IDENTIFIED WITH 'auth_socket';
+GRANT ALL ON game.* TO 'johndoe'@'localhost';
+GRANT FILE ON *.* TO 'johndoe'@'localhost' ;
+FLUSH PRIVILEGES;
+</pre>
+
+
+<h2>For later: enabling data export</h2>
+
+
+<p>This step is not necessary during the initial setup process; but it may be handy later in your work with the Game Server, when you want to export the accumulated server data into CSV files. We have scripts for doing that, but in order to use them, you need to grant yourself some privileges on the Linux side as well. Namely, you need to add your user account to group <tt>mysql</tt>, and, later on (when you actually want to export data), you may need to modify file permissions:
+
+<pre>
+sudo usermod -a -G mysql vmenkov
+
+sudo chmod a+rX  /var/lib/mysql-file
+sudo chmod g+rwX  /var/lib/mysql-files
+</pre>
+
+<p>Later, you can use you newly acquired rights to e.g. remove temporary files (created during previous export sessions):
+<pre?  
+newgrp mysql
+rm /var/lib/mysql-files/*
+</pre>
+
+
+  </body>
+  </html>

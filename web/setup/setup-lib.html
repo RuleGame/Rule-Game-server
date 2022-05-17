@@ -1,0 +1,17 @@
+<html>
+  <head><title>Setup: Third-party libraries</title></head>
+  <body>
+
+    <h1>Setup: Third-party libraries</h1>
+
+<p>If you follow <a href="index.html#B">Setup Option B</a>, you will need to download a few third-party libraries before you can compile the Rule Game Server from source.
+    
+<ul>
+  <li>Apache OpenJPA: from <a href="https://openjpa.apache.org/downloads.html">OpenJPA Downloads</a>. This is a library used by the Game Server to store data in the SQL server in an "object-oriented way".  On our development host we have OpenJPA 3.1, and have it installed in <tt>/opt/apache-openjpa-3.1.0</tt>. You may choose to download a more recent version, or to install OpenJPA to a different location; if you do that, then, before compiling the Rule Game Server from source, you will need to modify as appropriate the following line in <tt>build.xml</tt>:
+<pre>    
+  &lt;property name="openjpa"  location="/opt/apache-openjpa-3.1.0"/&gt;
+</pre>
+</ul>
+
+  </body>
+  </html>

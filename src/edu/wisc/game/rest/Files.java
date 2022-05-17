@@ -14,8 +14,8 @@ public class Files {
 	an analysis script may use an archive copy of these data from
 	a different location
      */
-    static File savedDir = new File("/opt/tomcat/saved");
-    static File inputDir = new File("/opt/tomcat/game-data");
+    static File savedDir = new File( MainConfig.getString("FILES_SAVED", "/opt/tomcat/saved"));
+    static File inputDir = new File( MainConfig.getString("FILES_GAME_DATA", "/opt/tomcat/game-data"));
 
     /** Sets the path to the input directory, which is the root
 	of the tree that contains the experiment control files.
