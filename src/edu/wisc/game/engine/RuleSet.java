@@ -249,7 +249,7 @@ public class RuleSet {
 	    Vector<String> v = new Vector<>();
 	    v.addAll(acceptedValues);
 	    for(Range r: acceptedRanges) v.add(r.toString());
-	    v.add( exp.toString());
+	    if (exp!=null) v.add( exp.toString());
 	    String s=String.join(", ", v);		
 	    if (v.size()!=1) s = "["+s+"]";
 	    return s;

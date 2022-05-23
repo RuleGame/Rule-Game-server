@@ -83,7 +83,7 @@ class EpisodeMemory {
 	for(String key: thisPiece.keySet()) {
 	    savePair(key, thisPiece.get(key).toString(), thisPiece, bucketNo);
 	}
-	System.out.println("DEBUG: pMap=\n" + showPMap());
+	//System.out.println("DEBUG: pMap=\n" + showPMap());
 	
     }
 	
@@ -159,7 +159,7 @@ class EpisodeMemory {
 	    put(BucketSelector.Nearby.toString(),anySetToOset( pos.nearestBucket()));
 	    put(BucketSelector.Remotest.toString(),anySetToOset( pos.remotestBucket()));
 
-	    System.out.println("DEBUG: For piece="+p+ " moved to "+bucketNo+", VarMap2=" + this);
+	    //System.out.println("DEBUG: For piece="+p+ " moved to "+bucketNo+", VarMap2=" + this);
 
 	}
     }
