@@ -5,7 +5,7 @@
 <body>
 <h1>How to set up APP and MLC launch pages: instructions for the experiment manager</h1>
 
-   <p align="center"><em>Updated 2021-11-20 for Game Server ver. 4.002</em></p>
+   <p align="center"><em>Updated 2022-05-24 for Game Server ver. 4.002</em></p>
 
 <p>This document helps the experiment manager to set up the "launch pages" for the APP and MLC users.
 
@@ -20,7 +20,7 @@
 <p>The <strong>Part A table</strong>  consists of experiment plans which you have chosen to appear there. There are two ways to get an experiment plan to appear in that table:
   <ul>
     <lI>You can list the experiment plan as one of the entries in the "launch file", <tt>launch/launch-app.csv</tt> under the main control file directory (<tt>/opt/tomcat/game-data</tt>). The launch file is a 2-column CSV file; the first column contains an experiment plan name (e.g. <tt>foo</tt> for an experiment plan whose trial list files are in the directory  <tt>trial-lists/foo</tt> under the main control file directory), and the second column contain an arbitrary text which will be displayed by the server as part of the plan's description.
-      <li>Alternatively, you can place the experiment plan's directory within the directory   <tt>rules/APP</tt> under the main control file directory. (This can be at any  depth in the directory tree).
+      <li>Alternatively, you can place the experiment plan's directory within the directory   <tt>trial-lists/APP</tt> under the main control file directory. (This can be at any  depth in the directory tree).
   </ul>
   
 <p>
