@@ -295,6 +295,9 @@ public interface Expression {
 	    if (t.type!=Token.Type.ID &&
 		t.type!=Token.Type.STRING)
 		throw new  RuleParseException("Not an id");
+
+	    //System.out.println("DEBUG: Id(t.sVal=" +t.sVal+")");
+	    
 	    sVal = t.sVal;
 	    quoted = (t.type==Token.Type.STRING);
 	}
@@ -319,9 +322,10 @@ public interface Expression {
 	    return r;
 	}
 
-	
+	/** Returns bare string (never quotes), so that it can be correctly used in 
+	    RuleSer.PropertyCondition */
 	public String toString() {
-	    return toSrc();
+	    return sVal;
 	}
 	public String toSrc() {
 	    return quoted? "\""+ sVal+"\"" : sVal;

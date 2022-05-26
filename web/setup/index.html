@@ -11,10 +11,17 @@
 
   <p>For an overview of the main concepts of the Game Server, see <a href="../concepts.html">Main Rule Game server concepts</a>.
 
-  
 <h2>Rule Game software components</h2>
 
-<p>The Rule Game system used by the players and researchers consists of the following components:
+  <p>The Rule Game project at University of Wisconsin - Madison has developed two products:
+    <ul>
+      <li>The Captive Game Server (CGS) is a computer program which can be installed on a researchers computer so that his Machine Learning software can "play" with it. (A human can play with the CGS as well, but this is not particularly convenient, as you'd have to use a simple command-line interface). <strong>For the complete instructions on how to install and use the CGS, see the <a href="../captive.html">Captive Game Server page</a>. </strong>
+      <li>The Rule Game web application, which allows human players to play the Game of Hidden Rules using a graphical user interface (GUI), while the researchers operating the application server can define new games and analyze the players' records.  <strong>The rest of this document describes the process for installing and configuring the Rule Game web application server at your site. </strong>
+    </ul>
+
+<p>The two applications described above can be installed and used completely independently from each other, even though the share much of their code base. (This means, in particular, that if you want to build both applications from source, you need to download the source code from our GitHub repository only once).
+
+<p>The Rule Game web application system used by the players and researchers consists of the following components:
 
   <ul>
     <li><strong>The Rule Game GUI Client.</strong> This an application written in TypeScript (a language built on top of JavaScript), which runs in a player's web browser (such as Chrome or Firefox). The GUI client is loaded into the player's web browser when the player goes to a certain URL. Depending on your team's need, you can have the players load the GUI client from our server at UWM, or from your own server; in the latter case, you can have the GUI client code customized as needed (e.g. to provide different introductory screens).
@@ -27,6 +34,33 @@
 
     <li><strong>Server output files.</strong> You need to designate some directory on your server hosts for the files that the Game Server will write, recording the players' game transcripts etc. Those are the game server's "write-only files" (as per the  <a href="../data.html">Data Guide</a> terminology). You may later analyze those files with the tools supplied with the server, or with your own tools.      
   </ul>
+
+  <h2>Necessary third-party software</h2>
+
+<h3>Client side</h3>
+  
+<p>To play games, a player need a computer with a modern web browser, such as Chrome or Firefox.
+
+<h3>Server side</h3>
+
+  
+<p>We are running the Rule Game web application server on a Linux machine (the OS version is Ubuntu 18.04), but if you like challenge, you probably can set it up on a MacOS or MS Windows machine as well. The necessary third-party software includes the following.
+
+<p>Mandatory (sufficient if you want to install the pre-built WAR file):
+  <ul>
+    <li>Java virtual machine (JRE). (Type <tt>which java</tt> on your console to see if you have one already).
+    <li>Apache Tomcat web server (or any other web server that supports WAR format)
+  </ul>
+
+<p>Optional (needed if you want to build the server from source):
+   <ul>
+     <li>Java compiler (JDK). (Type <tt>which javac</tt> on your console to see if you have one already).
+     <li>A Github client, to conveniently get source code from the GitHub server. (Type <tt>which git</tt> on your console to see if you need one).
+    <li><a href="https://ant.apache.org/Apache Ant">Apache Ant</a>, to control the build process.
+    <li>A number of third-party libraries, as <a href="setup-lib.html">documented elsewhere</a>.
+   </ul>
+
+
 
   <h2>Setup Option A: server binary install + client from the UWM host</h2>
 

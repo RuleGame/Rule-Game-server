@@ -200,8 +200,11 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
 <target name="captive-jar" depends="compile"
         description="Builds a Jar file that will include all  class files. This version uses non-enhanced class files, to run a captive server without persistence; thus no JPA needed.">
   <echo message="lib=${lib}, our=${our.jar}. Preparing jar file ${lib}/${our.jar}, from ${classes}"/>
- <jar destfile="${lib}/captive.jar"   basedir="${classes}">
-  </jar>
+  <jar destfile="${lib}/captive.jar"   basedir="${classes}">
+    <manifest>
+      <attribute name="Main-Class" value="edu.wisc.game.engine.Captive"/>   
+    </manifest>
+ </jar>
 </target>
 
 
