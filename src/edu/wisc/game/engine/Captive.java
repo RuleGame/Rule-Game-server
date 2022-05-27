@@ -32,6 +32,7 @@ public class Captive {
 	System.err.println("Usage:\n");
 	System.err.println("  java [options]  edu.wisc.game.engine.Captive game-rule-file.txt board-file.json");
 	System.err.println("  java [options]  edu.wisc.game.engine.Captive game-rule-file.txt npieces [nshapes ncolors]");
+	System.err.println("  java [options]  edu.wisc.game.engine.Captive trial-list-file.csv rowNumber");
 	System.err.println("Each of 'npieces', 'nshapes', and 'ncolors' is either 'n' (for a single value) or 'n1:n2' (for a range). '0' means 'any'");
 	if (msg!=null) 	System.err.println(msg + "\n");
 	System.exit(1);

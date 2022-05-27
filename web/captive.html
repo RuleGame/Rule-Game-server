@@ -3,7 +3,7 @@
   <body>
     <h1>Captive Game Server</h1>
 
-<div align="center"><em>Updated 2022-05-25 for ver 4.002</em></div>
+<div align="center"><em>Updated 2022-05-25 for ver 5.001</em></div>
     
     <h2>What is the Captive Game Server?</h2>
 
@@ -17,21 +17,49 @@
 
     <p>For the convenience of some application, we also have the socket-based version of the CGS, discussed later in this document, which communicates with clients over sockets, rather than a pipe.
 
-  <h2>Third-part JAR files</h2>
+  <h2>Installation</h2>
+    <p>If you're a UWM team member using CGS instaled on <tt>sapir</tt>, you can safely ignore this section.    But if you are installing the CGS on your own machine (especially at a different institution), please follow the instructions below to obtain the Captive Game Server distribution and the necessary third-party files.
+      
+      <h3>Main prerequisites</h3>
 
-    <p>If you're a UWM team member using CGS instaled on <tt>sapir</tt>, you can safely ignore this section. But if you are installing the CGS on your own machine (especially at a different institution), you also need to obtain a set of third-party JAR files that are used for working with JSON-format data. This is how: You can download a file such as jaxrs-ri-2.31.zip (from e.g. https://mvnrepository.com/artifact/org.glassfish.jersey.bundles/jaxrs-ri ) and unpack it on your machine in such a way that, for example, if you have the CGS code unpacked in   <tt>~/somedir/game</tt> (that's the directory in which various shell scripts are), then you also have the directory <tt>~/somedir/jaxrs-ri</tt>.</p>
+    <p>We are normally using the CGS on Linux machines, but if you want, you probably can install it on a MacOS or MS Windows machine as well, likely with some minimal changes to the shell scripts used to run it.
 
+    <p>You need to have a  Java Runtime Environment (JRE) (i.e. the system for running pre-compiled Java code) installed on your machine. Type <tt>which java</tt> on your console to see if you have one already; if you don't, you can get one from Oracle (<a href="https://java.com/en/download/help/download_options.html">How do I install Java?</a>) or from OpenJDK (<a href="https://openjdk.java.net/install/index.html">How to download and install prebuilt OpenJDK packages</a>).
+ 
+      <h3>Choosing a directory</h3>
 
-    <p>For example: suppose you have downloaded both the CGS distribution file (e.g. captive-1.003-2020-08-07.zip, or a later version) and jaxrs-ri-2.31.zip into your home directory. Then you do the following to unpack the files into properly positioned directories:
+ <p>You can install the Captive Game Server anywhere on you computer. For the rest of the discussion, let's assume that you have decided to install it under <trt>~/captive</tt>
+
+      
+  <h3>Third-part JAR files</h3>
+
+<p>
+  You need to obtain a set of third-party JAR files that are used for working with JSON-format data (a "JAX-RS RI bundle"). This is how:
+  <ul>
+    <li>
+      You can download a 
+      file such as jaxrs-ri-2.31.zip, or a more recent version. (To do that, you can start from e.g. <a href="https://mvnrepository.com/artifact/org.glassfish.jersey.bundles/jaxrs-ri">https://mvnrepository.com/artifact/org.glassfish.jersey.bundles/jaxrs-ri -Jersey Bundles JAXRS RI </a>, clicking on a version number such as <tt>3.1.0-M2</tt>, and then, in a page such as https://mvnrepository.com/artifact/org.glassfish.jersey.bundles/jaxrs-ri/3.1.0-M2 , clicking on <tt>View all</tt>, you get to a directory listing such as <a href="https://repo1.maven.org/maven2/org/glassfish/jersey/bundles/jaxrs-ri/3.1.0-M2/">org/glassfish/jersey/bundles/jaxrs-ri/3.1.0-M2</a>. In that page, you choose a ZIP file, such as <tt>jaxrs-ri-3.1.0-M2.zip</tt>).
+    <li>Unpack it on your machine under   <tt>~/captive</tt>:
       <pre>
-	cd
-	mkdir captive
-	cd captive
-	unzip ~/captive-1.003-2020-08-07.zip
-	unzip ~/jaxrs-ri-2.31.zip
+	cd ~/captive
+	unzip jaxrs-ri-3.1.0-M2.zip
       </pre>
+      This will create the directory  <tt>~/captive/jaxrs-ri</tt>, with the JAX-RS stuff in it.
+  </ul>				     
+   
+</p>
 
+<h3>Download and install CGS</h3>
 
+<p>Download a recent version of CGS from our server's <a href="/download">Download Area</a>. Choose a file with a name such as <tt>captive-5.001-2022-05-26.zip</tt>. Unzip it under <tt>~/captive</tt>:
+    
+      <pre>
+	cd ~/captive
+	unzip ~/captive-5.001-2022-05-26.zip
+      </pre>
+This will  create the directory  <tt>~/captive/game</tt>, with all the CGS stuff in it.
+
+      <!--
     <p>
 In this way CGS can find relevant JAR files (used for handling JSON) in <tt>../jaxrs-ri/ext/*.jar</tt>, relative to the directory  where the scripts are. This is how the class path is set in the shell scripts (specifically, in <tt>set-var-captive.sh</tt>, which is included into <tt>captive-brief.sh</tt> and other scripts).</p>
 
@@ -58,18 +86,28 @@ https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-multi
 https://commons.apache.org/proper/commons-math/userguide/optimization.html
 Apache Commons Math
 </ul>
+-->
+
+      <h2>Sample data</h2>
+
+<p>To play with the CGS, you need to tell it what game to play. This is done by means of giving it some <a href="data.html"> experiment control files</a>: at the very least, a rule set file, and possibly some other files as well.
+      
+<P>If you're a UWM team member working on <tt>sapir</tt>, you have access to the full set of our <a href="data.html"> experiment control files</a> in <tt>/opt/tomcat/game-data</tt>. If you are running the CGS on your own machine, but you have also <a href="setup/">installed the web-based Game Server</a> on that machine, you have the  experiment control files in the same or similar location as well. Otherwise, you can use a smaller set of sample experiment control files that came with the CGS distribution; they are found in <tt>~/captive/game/game-data</tt>.
 
     <h2>Starting the Captive Game Server</h2>
 
-    <p>The CGS is presently installed on sapir, in the directory <tt>/home/vmenkov/captive.</tt> The CGS can play one game at a time; to choose a game, one needs to provide the CGS with a game rule file (a few of which can be found in  /home/vmenkov/captive/game/rules/ ) and the initial number of pieces. 
+<p>If you are a UWM Rule Game team member using The CGS on <tt>sapir</tt>, it is installed in the directory <tt>/home/vmenkov/captive</tt>. Otherwise (if you're running the CGS on your own machine, installed as described above), replace <tt>	/home/vmenkov/captive</tt> in the commands below with <tt>~/captive</tt>
 
-      <p>To use CGS, you need to add the directory <tt>/opt/jdk-14.0.2/bin</tt> into your path. Alternatively, you can modify the shell scripts mentioned below, so that they use <tt>/opt/jdk-14.0.2/bin/java</tt> rather than just <tt>java</tt>.
+      <p>
+      The CGS can play one game at a time. An easy way to choose a game is  to provide the CGS with a game rule file (a few of which can be found in  <tt>/home/vmenkov/captive/game/game-data/rules/</tt> ) and the initial number of pieces. 
+
+      <p>To use CGS, you need to add the directory in which your Java interpreter (<tt>java</tt>) is installed (such as <tt>/opt/jdk-14.0.2/bin</tt>, on <tt>sapir</tt>) into your <tt>PATH</tt>. Alternatively, you can modify the shell scripts mentioned below, so that they use <tt>/opt/jdk-14.0.2/bin/java</tt> rather than just <tt>java</tt>.
 
       
     <p>
       You can run the CGS from the command line as follows:
       <pre>
-/home/vmenkov/captive/game/captive-full.sh /home/vmenkov/captive/game/rules/rules-02.txt 8
+/home/vmenkov/captive/game/captive-full.sh /home/vmenkov/captive/game/game-data/rules/rules-02.txt 8
       </pre>
 In this example, you will start a session using the rule description from the specified file; each episode will use a random initial board with 8 pieces. During the session, you can play one or several episodes.
 
@@ -97,6 +135,7 @@ In this example, you will start a session using the rule description from the sp
 
       <p>
 	<pre>
+cd ~/captive/game	  
 ./captive-full.sh game-data/rules/farthest.txt game-data/boards/four-corners.json 
 	</pre>
 	If you do that, every episode in your session will start with the same identical initial board.
@@ -185,8 +224,20 @@ Since the trial list file implicitly refers to files in various directories unde
  ./captive-full.sh /opt/tomcat/game-data/rules/MLC/vm/test-05.txt 3 seed=5
 </pre>
 
-    
+
+<h2>Your Machine Learning application talking to the CGS</h2>
+
+    <p>It is likely that you have installed the CGS so that your ML application can "play" with it. Since the pipe-based CGS interacts with your ML application via pipes, the general idea is as following:
+      <ul>
+	<li>Your ML app spawns the CGS as a child process.
+	<li>Your ML open an output stream asociated with the stdin of the CGS, and an input stream associated with the stdout of the CGS.
+	<li>Your ML writes its commands to the output stream, and reads the CGS's response via the input stream.
+      </ul>
+
+      <p>Additional details are found below.
+
 <h3>Talking to the CGS from a Java application</h3>
+
     
     <p>If your ML application is in Java, you can use the <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/ProcessBuilder.html">ProcessBuilder</a> API to spawn child processes and deal with their I/O. You create a <tt>Process</tt> object, write your commands to the stream returned by <tt>Process.getInputStream()</tt>, and read responses from the stream returned by <tt>Process.getOutputStream()</tt></p>
 
@@ -289,7 +340,7 @@ Order fromOutsideIn=[ [1,2,3,4,5,6, 7,13,19,25, 31,32,33,34,35,36, 30,24,18,12],
 
 <p>Three output modes are available: brief, standard, and full. The full mode contains a large number of comment lines (in particular, a graphic board display); the other two modes don't have comment lines, or only have very few of them. The CGS can be started in any of these modes using one of the 3 scripts provided (captive-full.sh, captive-standard.sh, or captive-brief.sh).
 
-  <h2>The API</h2>
+  <h2>The CGS API</h2>
 
 <p>The following are the commands you'll need</p>
 
