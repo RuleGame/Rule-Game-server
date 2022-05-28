@@ -7,7 +7,7 @@
     
     <h2>What is the Captive Game Server?</h2>
 
-    <p>The Captive Game Server (CGS) is a small Java application that contains the same game engine as the Web Game Server, but does not have a SQL database, does not write transcript files, and does not communicate with clients using HTTP.
+    <p>The Captive Game Server (CGS) is a small Java application that contains the same game engine as the Web Game Server, but does not have a SQL database, does not write transcript files, and does not communicate with clients using HTTP. It can be used by a Machine Learning researcher who wants a ML program to learn how to play a Rule Game game as a counterparty for his ML program to play with.
 
     <p>The Captive Game Server can be run in two ways: <strong>pipe-based</strong> and  <strong>socket-based</strong>.
 
@@ -92,7 +92,9 @@ Apache Commons Math
 
 <p>To play with the CGS, you need to tell it what game to play. This is done by means of giving it some <a href="data.html"> experiment control files</a>: at the very least, a rule set file, and possibly some other files as well.
       
-<P>If you're a UWM team member working on <tt>sapir</tt>, you have access to the full set of our <a href="data.html"> experiment control files</a> in <tt>/opt/tomcat/game-data</tt>. If you are running the CGS on your own machine, but you have also <a href="setup/">installed the web-based Game Server</a> on that machine, you have the  experiment control files in the same or similar location as well. Otherwise, you can use a smaller set of sample experiment control files that came with the CGS distribution; they are found in <tt>~/captive/game/game-data</tt>.
+<P>If you're a UWM team member working on <tt>sapir</tt>, you have access to the full set of our <a href="data.html"> experiment control files</a> in <tt>/opt/tomcat/game-data</tt>.    If you are running the CGS on your own machine, but you have also <a href="setup/">installed the web-based Game Server</a> on that machine, you have the  experiment control files in the same or similar location as well (its locaiton may be overridden by the paramter <tt>FILES_GAME_DATA</tt> in the <a href="setup/setup-config.html">master config file</a>.
+
+<p> Otherwise, you can use a smaller set of sample experiment control files that came with the CGS distribution; they are found in <tt>~/captive/game/game-data</tt>.
 
     <h2>Starting the Captive Game Server</h2>
 
@@ -186,11 +188,14 @@ To specify the sets from which colors and/or shapes will be drawn by the initial
 <P>One is allowed to use <tt>*</tt> to mean "use all shapes for which SVG files exist in the appropriate subdirectory of the main shapes directory". Thus, <tt>'shapes=arrows/*;weather/*'</tt> is equivalent to listing every shape from  <tt>/opt/tomcat/game-data/shapes/arrows</tt> and <tt>/opt/tomcat/game-data/shapes/weather</tt>
       
       <p>
-	If you're using custom shapes and/or custom colors, it is necessary that a list of colors and a set of shapes SVG files are found at the appropriate locations under <tt>/opt/tomcat/game-data</tt>, as explained in the document <a href="colors-and-shapes.html">Using custom shapes and colors in Rule Game Server 2.*</a>. If you're running your Captive Game Server on <tt>sapir</tt> (the server used for the human subjects), and are playing a game that human subjects are already playing, then you're all set, because the human-player experiment team has already set up the necessary files in   <tt>/opt/tomcat/game-data</tt>. If you're running  your Captive Game Server on another host, you may need to create a copy of sapir's <tt>/opt/tomcat/game-data</tt> directory on your host, either by copying the files directly, or (in the future) by checking out the experiment controle files from Aria's GitHub repository. (Ask Aria for details).
+	If you're using custom shapes and/or custom colors, it is necessary that a list of colors and a set of shapes SVG files are found at the appropriate locations under <tt>/opt/tomcat/game-data</tt>, as explained in the document <a href="colors-and-shapes.html">Using custom shapes and colors in Rule Game Server 2.*</a>. If you're running your Captive Game Server on <tt>sapir</tt> (the server used for the human subjects), and are playing a game that human subjects are already playing, then you're all set, because the human-player experiment team has already set up the necessary files in   <tt>/opt/tomcat/game-data</tt>. If you're running  your Captive Game Server on another host, you may choose to create a copy of sapir's <tt>/opt/tomcat/game-data</tt> directory with control files on your host,
+<!--
+    , either by copying the files directly, or (in the future) by checking out the experiment controle files from Aria's GitHub repository. (Ask Aria for details). -->
+or you can use <tt>~/captive/game/game-data</tt> as you control file directory.
       </p>
       
 	<p>
-	   If the root of your server data directory is somewhere else than in <tt>/opt/tomcat/game-data</tt> directory (e.g. because you just copied the directory tree from sapir to somewhere under your home directory), you can specify this  by an additional parameter on the command line, e.g. <tt>inputDir=/home/myname/my-game-data</tt>
+	   If the root of your server data directory is somewhere else than in <tt>/opt/tomcat/game-data</tt> directory, you can specify this  by an additional parameter on the command line. This can be specified with e.g. <tt>-inputDir ~/captive/game/game-data</tt> as a parameter to a script such as <tt>captive-full.sh</tt>, or with <tt>-DinputDir=~/captive/game/game-data</tt> as a parameter to <tt>java</tt> in your own shell script.
 	</p>
 	
 	<h4>7. Use a trial list file</h4>
@@ -207,7 +212,7 @@ The CGS figures the file type based on the extension: the ".csv" extension means
 	  The CGS will read the trial list file and extract the parameter set with the specified number. It will then create a game generator with the same parameters that the web-based Game Server would use when running on that parameter set; depending  <a href="para-set.html">on the parameter set</a>, that may involve random initial boards (with appropriate shapes, colors, and number of pieces) or predefined initial boards. As you play more episodes (starting each episode, after the first one, with the <a href="#cmd.new"><tt>NEW</tt></a> command), the CGS will generate a sequence of initial boards in the same way as a web-based Game Server would, i.e. eiher randomly or by following a prescribed sequence of predefined boards. As in the web-based Game Server, the rule set specified in that parameter set will be used in each episode.</p>
 
 	<p>
-Since the trial list file implicitly refers to files in various directories under the server data directory (by default, <tt>/opt/tomcat/game-data</tt>), you must either have that directory, with all relevant files, on your computer, or use the <tt>inputDir=...</tt> parameter on the command line, just as in Example 6 above.
+Since the trial list file implicitly refers to files in various directories under the server data directory (by default, <tt>/opt/tomcat/game-data</tt>), you must either have that directory, with all relevant files, on your computer, or use the <tt>-inputDir</tt> parameter on the command line, just as in Example 6 above.
     </p>
 
 

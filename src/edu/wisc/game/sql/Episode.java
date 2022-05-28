@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.text.*;
 
-import javax.json.*;
+import jakarta.json.*;
 import javax.persistence.*;
 
 import edu.wisc.game.util.*;
@@ -16,7 +16,7 @@ import edu.wisc.game.rest.ColorMap;
 import edu.wisc.game.engine.RuleSet.BucketSelector;
 import edu.wisc.game.formatter.*;
 
-import javax.xml.bind.annotation.XmlElement; 
+import jakarta.xml.bind.annotation.XmlElement; 
 
 import edu.wisc.game.sql.EpisodeMemory.BucketVarMap;
 import edu.wisc.game.sql.EpisodeMemory.BucketVarMap2;
@@ -938,7 +938,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
 
 
-    public static final String version = "5.001";
+    public static final String version = "5.002";
 
     public static String getVersion() { return version; }
 

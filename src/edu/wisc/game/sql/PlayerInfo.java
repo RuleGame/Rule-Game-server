@@ -6,7 +6,7 @@ import javax.persistence.*;
 
 import org.apache.openjpa.persistence.jdbc.*;
 
-import javax.xml.bind.annotation.XmlElement; 
+import jakarta.xml.bind.annotation.XmlElement; 
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.parser.*;

@@ -2,7 +2,7 @@ package edu.wisc.game.rest;
 
 import java.io.*;
 import java.util.*;
-import javax.json.*;
+import jakarta.json.*;
 //import javax.persistence.*;
 
 

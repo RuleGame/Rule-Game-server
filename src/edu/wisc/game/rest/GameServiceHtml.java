@@ -2,20 +2,20 @@ package edu.wisc.game.rest;
 
 import java.io.*;
 import java.util.*;
-import javax.servlet.http.HttpServletResponse;
-import javax.json.*;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.json.*;
 
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.*;
 
 // For database work
 import javax.persistence.*;
 
 
 // test
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.reflect.*;

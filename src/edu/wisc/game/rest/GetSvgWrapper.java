@@ -5,8 +5,8 @@ import java.util.*;
 import java.text.*;
 //import java.util.zip.*;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
 
 import edu.wisc.game.util.*;
 

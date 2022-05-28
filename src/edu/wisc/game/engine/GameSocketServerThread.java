@@ -6,7 +6,7 @@ import java.util.regex.*;
 import java.text.*;
 import java.net.*;
 
-import javax.json.*;
+import jakarta.json.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.sql.*;

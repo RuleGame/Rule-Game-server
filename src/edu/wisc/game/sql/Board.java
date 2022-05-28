@@ -7,10 +7,10 @@ import java.net.*;
 import java.lang.reflect.*;
 
 import javax.persistence.*;
-import javax.json.*;
+import jakarta.json.*;
 
-import javax.xml.bind.annotation.XmlElement; 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlElement; 
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 import org.apache.openjpa.persistence.jdbc.*;
 

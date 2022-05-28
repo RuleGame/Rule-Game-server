@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
-import javax.xml.bind.annotation.XmlElement; 
+import jakarta.xml.bind.annotation.XmlElement; 
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.reflect.*;

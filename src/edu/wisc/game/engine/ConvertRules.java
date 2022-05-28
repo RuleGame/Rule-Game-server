@@ -9,7 +9,7 @@ import edu.wisc.game.sql.*;
 import edu.wisc.game.parser.*;
 
 
-import javax.json.*;
+import jakarta.json.*;
     
           
 /** This class is used for a one-off project: converting the list of rules found in 

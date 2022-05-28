@@ -2,11 +2,11 @@ package edu.wisc.game.rest;
 
 import java.io.*;
 import java.util.*;
-import javax.json.*;
+import jakarta.json.*;
 
 
-import javax.xml.bind.annotation.XmlElement; 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlElement; 
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.engine.*;

@@ -3,11 +3,11 @@ package edu.wisc.game.rest;
 import java.io.*;
 import java.util.*;
 import java.text.*;
-import javax.servlet.*;
-import javax.servlet.http.*;
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
 import javax.persistence.*;
 
-import javax.xml.bind.annotation.XmlElement; 
+import jakarta.xml.bind.annotation.XmlElement; 
 
 import edu.wisc.game.sql.*;
 import edu.wisc.game.util.*;

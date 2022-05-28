@@ -12,7 +12,7 @@ import edu.wisc.game.parser.*;
 import edu.wisc.game.rest.ParaSet;
 import edu.wisc.game.rest.ParaSet.Incentive;
 
-import javax.xml.bind.annotation.XmlElement; 
+import jakarta.xml.bind.annotation.XmlElement; 
 
 /** An EpisodeInfo instance extends an Episode, containing additional
     information related to it being played as part of an

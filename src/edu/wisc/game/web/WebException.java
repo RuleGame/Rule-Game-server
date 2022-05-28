@@ -1,6 +1,6 @@
 package edu.wisc.game.web;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 /** This is used when a lower-level function can tell a higher-level function
     what kind of error it shoudl report to the end user.

@@ -3,7 +3,7 @@ package edu.wisc.game.reflect;
 import java.util.*;
 import java.text.*;
 import javax.persistence.*;
-import javax.json.*;
+import jakarta.json.*;
 
 import java.lang.reflect.*;
 import edu.wisc.game.util.Logging;

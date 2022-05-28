@@ -3,11 +3,11 @@ package edu.wisc.game.web;
 import java.io.*;
 import java.util.*;
 import java.text.*;
-import javax.servlet.*;
-import javax.servlet.http.*;
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
 
-//import javax.xml.bind.annotation.XmlTransient; 
-//import javax.json.*;
+//import jakarta.xml.bind.annotation.XmlTransient; 
+//import jakarta.json.*;
 
 import edu.wisc.game.util.*;
 //import edu.wisc.game.reflect.*;

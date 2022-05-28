@@ -191,7 +191,7 @@ public class Reflect {
 		continue;
 	    }
 
-	    if (e.g.getAnnotation(javax.xml.bind.annotation.XmlTransient.class)!=null) {
+	    if (e.g.getAnnotation(jakarta.xml.bind.annotation.XmlTransient.class)!=null) {
 		// This annotation is used to prevent REST from converting a field
 		// to JSON... so we should ignore this field too.
 		// I use it to prevent infinite looping on back links

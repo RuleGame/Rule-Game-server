@@ -58,7 +58,7 @@
                 specify the values via System properties.
             -->
 	    <!-- see https://docs.oracle.com/javaee/7/tutorial/persistence-intro005.htm -->
-	       <property name="javax.persistence.schema-generation.database.action"
+	       <property name="jakarta.persistence.schema-generation.database.action"
                   value="create"/>
      
 

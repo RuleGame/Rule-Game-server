@@ -3,7 +3,7 @@ package edu.wisc.game.engine;
 import java.io.*;
 import java.util.*;
 import java.text.*;
-import javax.json.*;
+import jakarta.json.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.sql.*;

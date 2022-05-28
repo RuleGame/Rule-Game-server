@@ -4,9 +4,9 @@ import java.io.*;
 import java.util.*;
 import java.text.*;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
-//import javax.servlet.jsp.PageContext;
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
+//import jakarta.servlet.jsp.PageContext;
 
 import javax.persistence.*;
 

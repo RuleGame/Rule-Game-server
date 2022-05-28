@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.text.*;
 
-import javax.json.*;
+import jakarta.json.*;
 import javax.persistence.*;
 
 
