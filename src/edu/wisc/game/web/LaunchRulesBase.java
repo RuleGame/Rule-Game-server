@@ -27,6 +27,8 @@ import edu.wisc.game.rest.*;
 */
 public class LaunchRulesBase      extends ResultsBase  {
 
+    private ContextInfo ci;
+       
     protected HashMap<String,Vector<PlayerInfo>> allPlayers;
 
     public String tableText = "NO DATA";
@@ -53,27 +55,32 @@ public class LaunchRulesBase      extends ResultsBase  {
     
     protected String mkForm(String text1, String text2, String exp, String pid, String buttonText) {
 
-	final boolean isDev = cp.startsWith("/w2020-dev");
+	//final boolean isDev = cp.startsWith("/w2020-dev");
 					    
 	//String action="http://sapir.psych.wisc.edu/rule-game/prod/";
 	// As of Oct 2021, only dev supports the server= option 
-	String action= (atHome || isDev || mustUseDevClient)?
-	    "http://sapir.psych.wisc.edu/rule-game/dev/":
-	    "http://sapir.psych.wisc.edu/rule-game/prod/";
+	//String action= (atHome || ci.dev || mustUseDevClient)?
+	//	    "http://sapir.psych.wisc.edu/rule-game/dev/":
+	//	    "http://sapir.psych.wisc.edu/rule-game/prod/";
 	
-					    
+	String action= ci.clientUrl;
+
+	
 	String text = "<FORM METHOD='GET' ACTION='"+action+"'>\n";
 	
 	// If we're not running in prod, we need to tell the
 	// client which Game Server to hit with REST requests
-	if (atHome) {
-	    String url="http://localhost:8080/w2020";
-	    // http://sapir.psych.wisc.edu:7150/w2020
-	    text+=Tools.inputHidden("server", url);
-	}  else if (isDev) {
-	    String url="http://sapir.psych.wisc.edu:7150/w2020-dev";
-	    text+=Tools.inputHidden("server", url);
-	}
+
+	text+=Tools.inputHidden("server", ci.serverUrl);
+
+	
+	//if (atHome) {
+	//	    String url="http://localhost:8080/w2020";
+	//	    text+=Tools.inputHidden("server", url);
+	//	}  else if (isDev) {
+	//	    String url="http://sapir.psych.wisc.edu:7150/w2020-dev";
+	//	    text+=Tools.inputHidden("server", url);
+	//	}
 	text+=Tools.inputHidden("intro", false);
 	text+=Tools.inputHidden("exp", exp);
 	text+=Tools.inputHidden("uid", uid);
@@ -137,6 +144,12 @@ public class LaunchRulesBase      extends ResultsBase  {
     public LaunchRulesBase(HttpServletRequest request, HttpServletResponse response){
 	super(request,response,true);
 	if (error || !loggedIn()) return;
+	ci = new ContextInfo(request,  response);
+	if (ci.error) {
+	    giveError(ci);
+	    return;
+	}
+
     }	
 
     

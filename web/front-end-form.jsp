@@ -74,9 +74,7 @@ or <tt>R:bottomLeft_then_topRight:simple</tt>
 <br><input type="radio" name="intro" value="false">Skip intro
 <br>
 
-    <input type="radio" name="intro" value="true" checked>Show intro
-    <input type="radio" name="intro" value="false">Skip intro
-
+ 
     <strong><button type="submit">Play (<%=main.devProd()%>)</button></strong>
     </form>
 </div>

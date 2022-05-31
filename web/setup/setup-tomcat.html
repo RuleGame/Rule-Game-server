@@ -64,10 +64,13 @@ sudo chown tomcat.tomcat  /opt/tomcat/game-data /opt/tomcat/saved
 
     <h3>Extra libraries</h3>
 
-  <p>You will need an extra JAR file installed ....
+  <p>You will need an extra JAR file installed to provide for connectivity between the Java applications (such as the Game Server) and your relational database. If your database server is the MySQL server, then the     necessary JAR file can be downloaded from the  <a href="https://dev.mysql.com/downloads/connector/j/">Connector/J</a> site. At that site, choose the appropriate version for your OS.
 
-    
-bixi-Latitude-E5420:/opt/tomcat/lib> sudo ln -s /usr/share/java/mysql-connector-java-8.0.20.jar
+    <p>On our system, we have put that JAR file into <tt>/usr/share/java</tt>, and sym-linked it to Tomcat's library directory, so that the web application could find it in run time:
+    <pre>
+    cd /opt/tomcat/lib
+    sudo ln -s /usr/share/java/mysql-connector-java-8.0.20.jar
+</pre>
 
     
   </body>

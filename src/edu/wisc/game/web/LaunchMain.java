@@ -52,11 +52,12 @@ The columns of the table for this researcher challenge should provide these opti
 </pre>
 
 */
-public class LaunchMain      extends LaunchRulesBase  {
+public class LaunchMain  extends LaunchRulesBase  {
 
-  public LaunchMain(HttpServletRequest request, HttpServletResponse response)  {
+    public LaunchMain(HttpServletRequest request, HttpServletResponse response)  {
 	super(request,response);
 	if (error || !loggedIn()) return;
+			  
 	String z = "APP"; // can use APP's mods for now
 	String[] modsLong = {z + "/" + z + "-no-feedback",
 			     z + "/" + z + "2-some-feedback",
@@ -173,8 +174,5 @@ public class LaunchMain      extends LaunchRulesBase  {
 	
       }
 
-
-    //    private 
-
-    
+ 
 }

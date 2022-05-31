@@ -1,5 +1,7 @@
 <html>
-  <head><title>Setup: master config file</title></head>
+  <head><title>Setup: master config file</title>
+ <link rel="stylesheet" type="text/css" href="../css/rule-game.css"/>
+  </head>
   <body>
 
     <h1>Setup: master config file</h1>
@@ -10,7 +12,7 @@
 
     <p>The content of that file may look as follows:
 
-<pre>
+<pre class="yellow">
 #--- This is the master configuration file for the Rule Game Server.
 #--- It is located in /opt/w2020/w2020.conf
 
@@ -26,10 +28,16 @@ FILES_SAVED =  "/opt/tomcat/saved";
 JDBC_USER = "game"
 #---- The password for the MySQL server
 JDBC_PASSWORD = "Meerkat-w2020";	
+
+#---- The URL for the Rule Game GUI Client (prod and dev versions)
+GUI_PROD = "http://sapir.psych.wisc.edu/rule-game/prod/";
+GUI_DEV = "http://sapir.psych.wisc.edu/rule-game/dev/";
 </pre>	
 
-
+<p>
 As you can see, you can use this file to modify the locations of the Game Server <a href="../data.html">data directories</a>, as well as the user name and password for the MySQL server account used by the Game Server.
+
+<p>The parameters <tt>GUI_PROD</tt> and <tt>GUI_DEV</tt> specify the URLs for the GUI client, i.e. the URLs to which your server will link from its launch pages, such as <a href="../front-end-form.jsp">main launch page</a></strong>, or the <a href="../launch/">MLC launch  page</a>
 
   </body>
   </html>

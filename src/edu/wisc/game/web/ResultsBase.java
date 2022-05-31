@@ -34,7 +34,13 @@ public class ResultsBase {
 	setError(true);
 	setErrmsg(msg);
     }
-
+    
+    /** Propagate error from another class */
+    protected void giveError(ResultsBase other) {
+	giveError(other.errmsg);
+	if (other.ex!=null) ex=other.ex;
+    }
+    
     final HttpServletRequest request;
     final String cp;
     SessionData sd;
