@@ -44,12 +44,12 @@ INSTALL PLUGIN auth_socket  SONAME 'auth_socket.so';
 
 <h2>Create the database and user accounts</h2>
 
-  <p>You will need to create the database named <tt>game</tt> in which the Game Server will store some of its data. You will also need to create a MySQL server user name  (say, <tt>game</tt>) with which the Game Server will access that database, and pick a password (say, <tt>Meerkat-w2020</tt>, in the example below) for that user, by typing, on the MySQL prompt:
+  <p>You will need to create the database named <tt>game</tt> in which the Game Server will store some of its data. You will also need to create a MySQL server user name  (say, <tt>game</tt>) with which the Game Server will access that database, and pick a password (say, <tt>meerkat</tt>, in the example below) for that user, by typing, on the MySQL prompt:
 
 <pre>    
 create database game;
 
-CREATE USER 'game'@'localhost' IDENTIFIED BY 'Meerkat-w2020';
+CREATE USER 'game'@'localhost' IDENTIFIED BY 'meerkat';
 GRANT ALL ON game.* TO 'game'@'localhost';
 </pre>
 
@@ -73,17 +73,17 @@ FLUSH PRIVILEGES;
 <h2>For later: enabling data export</h2>
 
 
-<p>This step is not necessary during the initial setup process; but it may be handy later in your work with the Game Server, when you want to export the accumulated server data into CSV files. We have scripts for doing that, but in order to use them, you need to grant yourself some privileges on the Linux side as well. Namely, you need to add your user account to group <tt>mysql</tt>, and, later on (when you actually want to export data), you may need to modify file permissions:
+<p>This step is not necessary during the initial setup process; but it may be handy later in your work with the Game Server, when you want to export the accumulated server data into CSV files. We have scripts for doing that, but in order to use them, you need to grant yourself some privileges on the Linux side as well. Namely, you need to add your user account to group <tt>mysql</tt>, and, later on (when you actually want to export data), you may need to modify file permissions. For example, if <tt>johndoe</tt> is your Linux user name (of the user name of a team member who will want to do data export):
 
 <pre>
-sudo usermod -a -G mysql vmenkov
+sudo usermod -a -G mysql johndoe
 
 sudo chmod a+rX  /var/lib/mysql-file
 sudo chmod g+rwX  /var/lib/mysql-files
 </pre>
 
 <p>Later, you can use you newly acquired rights to e.g. remove temporary files (created during previous export sessions):
-<pre?  
+<pre>  
 newgrp mysql
 rm /var/lib/mysql-files/*
 </pre>

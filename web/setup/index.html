@@ -58,13 +58,13 @@
    <ul>
      <li>Java compiler (JDK). (Type <tt>which javac</tt> on your console to see if you have one already).
      <li>A Github client, to conveniently get source code from the GitHub server. (Type <tt>which git</tt> on your console to see if you need one).
-    <li><a href="https://ant.apache.org/Apache Ant">Apache Ant</a>, to control the build process.
+    <li><a href="https://ant.apache.org/">Apache Ant</a>, to control the build process.
     <li>A number of third-party libraries, as <a href="setup-lib.html">documented elsewhere</a>.
    </ul>
 
 
 
-  <h2>Setup Option A: server binary install + client from the UWM host</h2>
+  <h2><a name="A">Setup Option A: server binary install + client from the UWM host</a></h2>
 
 <p>There are several ways to set up your Rule Game software. Option A is the simplest one. If you follow this option, you will install on your server host the WAR file (Web application ARchive file) pre-built by our team at UWM, and you will guide the players to load the GUI client from the UWM web site (while instructing it to talk to the server instance at your site). Here are the step-by-step instructions.
 
@@ -73,10 +73,10 @@
 
     <li><strong>The master configuration file.</strong> This file will, among other things, tell your Rule Game Server how to connect to the database server. See <a href="setup-config.html">config file setup</a> for details.
 
-    <li><strong>Tomcat.</strong> Assuming that you have chosen the Apache Tomcat as your web server, install it (if you don't have it yet) and configure it for running the Game Server web app on it. For instructions, see <a href="setup-tomcat.html">Tomcat setup guide.</a>  Once the Tomcat is running, you should be able to verify that it's running by going to the appropriate URL, such as <tt>http://MY_HOST:MY_PORT/ </tt>. (Put your host name and port number instead of <tt>MY_HOST</tt> and <tt>MY_PORT</tt> in the URL).
+    <li><strong>Tomcat.</strong> Assuming that you have chosen the Apache Tomcat as your web server, install it (if you don't have it yet) and configure it for running the Game Server web app on it. For the instructions (which also ask you to install an additional library), see <a href="setup-tomcat.html">Tomcat setup guide</a>.  Once Tomcat is running, you should be able to verify that it's running by going to the appropriate URL, such as <tt>http://MY_HOST:MY_PORT/ </tt>. (Put your host name and port number instead of <tt>MY_HOST</tt> and <tt>MY_PORT</tt> in the URL; if you are sitting at your server's console, and are using the default port number 8080, that would be  <tt>http://localhost:8080/</tt> )
 
-    <li><strong>WAR file.</strong> In this option, you will simply download a recent version of our application WAR file, and put that file into the web apps directory of your Tomcat (<tt>/opt/tomcat/webapps</tt>, if you followed our defaults). You can do it by simply copying the download WAR file to that directory, or you can use Tomcat's web interace for loading applications. 
-(DOWNLOAD LINK GOES HERE).
+    <li><strong>WAR file.</strong> In this option, you will simply download a recent version of our application WAR file our server's <a href="/download">Download Area</a> (look for a recent file with a name such as <tt>w2020-5.002-2022-06-01.war</tt>, rename it to <tt>w2020.war</tt>,  and put that file into the web apps directory of your Tomcat (<tt>/opt/tomcat/webapps</tt>, if you followed our defaults). You can do it by simply copying the download WAR file to that directory, or you can use Tomcat's management web interace  for loading applications ( <tt>http://localhost:8080/manager/html</tt> , if you are sitting in front of your server). 
+            
       
     <li><strong>Experiment control files.</strong> To be able to run experiments, you need to populate the experiment control file directory (<tt>/opt/tomcat/game-data</tt>, if you followed our defaults) with control files for some experments. See the  <a href="setup-game-data.html">control file setup guide.</a>
 
@@ -106,12 +106,17 @@
       <li>Proceed with testing, as per Step 6 in Option A.   
       </ol>
       
-  <h2>Setup Option C: server source code install + client install</h2>
+  <h2><a name="C">Setup Option C: server source code install + client install</a></h2>
 
 <p>If you want to install the GUI client on your server host as well (so that the players' browsers will download it from your host, rather than from the one at UWM), follow the Option C instructions. This is appropriate if you want to customize the client in some way, or if you want to make sure not to rely on any part of the UWM infrastructure. (This would be a very wise plan if you expect the funding for your server to last longer than the funding we have at UWM for our server!).
 
   <ol>
     <li>Plan goes here...
+
+    <li>If you are using different versions of some libraries than those we did, you will have compilation errors or runtime errors ("Class not found", "Cannot obtain a JDBC connection", etc), because the Java compiler or the Java runtime cannot find them. If that happens, edit <tt>build.xml</tt> and <tt>scripts/ scripts/set-var.sh</tt>, modifying library paths as appropriate. E.g. references to
+      <tt>/opt/apache-openjpa-3.1.0</tt>,  <tt>commons-math3-3.6.1</tt>,
+<tt>/usr/share/java/mysql-connector-java-8.0.20.jar</tt>    etc may need to be updated.
+
   </ol>
 
   
