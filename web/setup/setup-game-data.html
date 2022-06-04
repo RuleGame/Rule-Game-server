@@ -6,7 +6,7 @@
 
     <h1>Setup: Experiment Control Files </h1>
 
-    <p>To run experiments (i.e. let people play according to the rules you have set up), you need a set of experiment control files for each experiment you want to be played.
+    <p>To run experiments (i.e. let people play according to the rules you have set up, with s), you need a set of experiment control files for each experiment you want to be played.
 
     <p>For some background on how experiment plans describe an experiment, see "Experiment plans and trial lists" in <a href="../concepts.html">The main concepts</a>, and  Read-only data: experiment control files
       in the <a href="../data.html#in">Data guide</a>. More practical details are found in <a href="../sop-experiment.html">Standard Operating Procedures: Preparing and running an experiment with the Rule Game Server</a>, and in other documents in the  "<a href="../index.html/design">Designing an experiment</a>" section of our documentation library.
@@ -48,9 +48,18 @@ Later on, as we add more control files to the repository, you can update your lo
 
 <h2>Creating your own experiment control files</h2>
 
-<p>Once you have understood, with the help of the <a href="../data.html#in">Data guide</a>,  some examples supplied via our GitHub repository, a
- 
-  
+<p>Once you have understood, with the help of the <a href="../data.html#in">Data guide</a> and the <a href="../syntax.html">Rule Syntax Guide</a>,  some of the examples supplied via our GitHub repository, you may want to start creating your own experiment plans.
+
+<p>The simplest way to do that is by creating the necessary files (typically, this means creating at least one trial list file and at least one rule set file), and manually placing them in appropriate subdirectory under your <em>FILES_GAME_DATA</em> directory). While this is fine for a small project, we will suggest that if you plan to do a substantial amount of experiment plan development, you should invest in creating your own repository on GitHub (or with some other version-control system) for storing your experiment control files.
+
+<p>
+  If the entirety of your development work will take place on the same computer that runs your Game Server, then, in principle, you can simply treat your  <em>FILES_GAME_DATA</em> directory as the local directory associate with the GitHub repository, and edit the files right there. If your project has a more complicated organization (various people editing files on their personal computers; some others prefer doing editing via the GitHub web interface), then you may consider creating a framework similar to what we do at Lupyan Lab. You can arrange for either  manual or automatic updates. For manual updates, you can establish a standard operating procedure whereby a team member who checks some updates to your data repository will need to login (<tt>ssh</tt>) to your server, check out the data to his local directory, and then copy them over to the   <em>FILES_GAME_DATA</em> directory. (As an example, see our <a href="../sop-experiment.html">Standard Operating Procedures: Preparing and running an experiment with the Rule Game Server</a>). Or if you want to set up automatic deployments, you can use the package developed by Kevin Mui,  <a href="https://github.com/kmui2/github-actions-server">github-actions-server</a>; you can install it on your server (similarly to how we have installed it on our server, <tt>sapir</tt>), so that it will  monitor a specified GitHub repository, and whenever someone checks in an update to the repository, it will deploy the updated data to your server's   <em>FILES_GAME_DATA</em> directory. For additional instructions on how to configure that tool with a GitHub data repository's, see Kevin's <a href="game-data-README.md">README.md</a> file. 
+
+
+<hr>
+
+<p align="center">
+  [<a href="./">Back to Setup</a>]
     
   </body>
   </html>
