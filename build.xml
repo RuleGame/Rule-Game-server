@@ -217,7 +217,12 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
 	   link="https://docs.oracle.com/en/java/javase/11/docs/api/"
 	   header="&lt;em&gt;Rule Game&lt;/em&gt;"   
 	   windowtitle="Rule Game web API documentation" 
-	   additionalparam="-Xdoclint:none" />
+	   additionalparam="-Xdoclint:none">
+    <footer>
+      <![CDATA[<p>Software Copyright University Wisconsin-Madison, under <a href="https://opensource.org/licenses/Apache-2.0">Apache License, Version 2.0</a></p>]]>
+      
+    </footer>
+  </javadoc>
 </target>
 
 <!--	   overview="${src.doc}/html/api/overview.html" -->
