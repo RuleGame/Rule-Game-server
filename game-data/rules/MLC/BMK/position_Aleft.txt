@@ -1,0 +1,3 @@
+# intended to be a very easy position rule
+# Order L = left to right 
+(*,*,*,L, Nearby)

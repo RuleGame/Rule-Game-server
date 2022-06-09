@@ -1,0 +1,3 @@
+# intended to be a very easy position rule
+# Order L1 = reading order. 
+(*,*,*,L1, [0,1,2,3])

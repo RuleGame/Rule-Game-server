@@ -7,25 +7,43 @@
 <p>If you follow <a href="index.html#B">Setup Option B</a>, you will need to download a few third-party libraries before you can compile the Rule Game Server from source.
     
 <ul>
-  <li>Apache OpenJPA: from <a href="https://openjpa.apache.org/downloads.html">OpenJPA Downloads</a>. This is a library used by the Game Server to store data in the SQL server in an "object-oriented way".  On our development host we have OpenJPA 3.1, and have it installed in <tt>/opt/apache-openjpa-3.1.0</tt>. You may choose to download a more recent version, or to install OpenJPA to a different location; if you do that, then, before compiling the Rule Game Server from source, you will need to modify as appropriate the following line in <tt>build.xml</tt>:
+  <li><strong>Apache OpenJPA</strong>: from <a href="https://openjpa.apache.org/downloads.html">OpenJPA Downloads</a>. This is a library used by the Game Server to store data in the SQL server in an "object-oriented way".  On our development host we have OpenJPA 3.1, and have it installed in <tt>/opt/apache-openjpa-3.1.0</tt>. You may choose to download a more recent version, or to install OpenJPA to a different location; if you do that, then, before compiling the Rule Game Server from source, you will need to modify as appropriate the following line in <tt>build.xml</tt>:
 <pre>    
   &lt;property name="openjpa"  location="/opt/apache-openjpa-3.1.0"/&gt;
 </pre>
 </ul>
 
-https://mvnrepository.com/artifact/com.sun.xml.bind/jaxb-ri
-3.0.2
-view all
-jaxb-ri-3.0.2.zip 
+
+<li><strong>The JAX-RS RI bundle.<strong/> It is used for working with JSON-format data, in particular for the REST interface of the Game Server. This is how:
+  <ul>
+    <li>
+      You can download a 
+      file such as jaxrs-ri-2.31.zip, or a more recent version. (To do that, you can start from e.g. <a href="https://mvnrepository.com/artifact/org.glassfish.jersey.bundles/jaxrs-ri">https://mvnrepository.com/artifact/org.glassfish.jersey.bundles/jaxrs-ri -Jersey Bundles JAXRS RI </a>, clicking on a version number such as <tt>3.1.0-M2</tt>, and then, in a page such as https://mvnrepository.com/artifact/org.glassfish.jersey.bundles/jaxrs-ri/3.1.0-M2 , clicking on <tt>View all</tt>, you get to a directory listing such as <a href="https://repo1.maven.org/maven2/org/glassfish/jersey/bundles/jaxrs-ri/3.1.0-M2/">org/glassfish/jersey/bundles/jaxrs-ri/3.1.0-M2</a>. In that page, you choose a ZIP file, such as <tt>jaxrs-ri-3.1.0-M2.zip</tt>).
+    <li>Unpack it on your machine under   <tt>~/w2020</tt>:
+      <pre>
+	cd ~/w2020
+	unzip jaxrs-ri-3.1.0-M2.zip
+      </pre>
+      This will create the directory  <tt>~/w2020/jaxrs-ri</tt>, with the JAX-RS stuff in it.
+  </ul>				 
 
 
---------
-Jersey Media Multipart
-https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-multipart
-3.0.4
-https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-multipart/3.0.4
-view all
-jersey-media-multipart-3.0.4.jar 
+<li><strong>JAXB-RI,</strong> the XML binding library. To download it, one can start with
+  <a href="https://mvnrepository.com/artifact/com.sun.xml.bind/jaxb-ri">
+    https://mvnrepository.com/artifact/com.sun.xml.bind/jaxb-ri</a>, choose a recent version (e.g. 3.0.2), then "View all", and finally download a file such as <tt>jaxb-ri-3.0.2.zip</tt>. Unpack the downloaded ZIP file on your machine under   <tt>~/w2020</tt>:
+      <pre>
+	cd ~/w2020
+	unzip jaxb-ri-3.0.2.zip
+      </pre>
+      This will create the directory  <tt>~/w2020/jaxb-ri</tt>, with the JAXB-RI stuff in it.
+  </ul>		
+
+<li><strong>Jersey Media Multipart</strong> library. Download it from <a href="https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-multipart">https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-multipart</a>. Pick a recent version such as 3.0.4, which will take you to a pagae such as 
+https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-multipart/3.0.4 ; there, click on <tt>View all</tt>, and download a file such as <tt>
+    jersey-media-multipart-3.0.4.jar</tt>. Put it into the directory <tt>~/w2020/other-lib</tt>
+
+  
+
 
   </body>
   </html>

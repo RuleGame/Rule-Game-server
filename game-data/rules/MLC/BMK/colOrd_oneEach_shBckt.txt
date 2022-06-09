@@ -1,0 +1,6 @@
+# this takes the colores in order, one of each, but the bucket is 
+# controlled by shape
+1 (*,SQUARE,RED,*,[0]) (*,TRIANGLE,RED,*,[1]) (*,STAR,RED,*,[2]) (*,CIRCLE,RED,*,[3])
+1 (*,SQUARE,BLUE,*,[0]) (*,TRIANGLE,BLUE,*,[1]) (*,STAR,BLUE,*,[2]) (*,CIRCLE,BLUE,*,[3])
+1 (*,SQUARE,YELLOW,*,[0]) (*,TRIANGLE,YELLOW,*,[1]) (*,STAR,YELLOW,*,[2]) (*,CIRCLE,YELLOW,*,[3])
+1 (*,SQUARE,BLACK,*,[0]) (*,TRIANGLE,BLACK,*,[1]) (*,STAR,BLACK,*,[2]) (*,CIRCLE,BLACK,*,[3])

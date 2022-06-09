@@ -3,11 +3,11 @@
   <body>
     <h1>Captive Game Server</h1>
 
-<div align="center"><em>Updated 2022-05-25 for ver 5.001</em></div>
+<div align="center"><em>Updated 2022-06-08 for GS ver 5.002</em></div>
     
     <h2>What is the Captive Game Server?</h2>
 
-    <p>The Captive Game Server (CGS) is a small Java application that contains the same game engine as the Web Game Server, but does not have a SQL database, does not write transcript files, and does not communicate with clients using HTTP. It can be used by a Machine Learning researcher who wants a ML program to learn how to play a Rule Game game as a counterparty for his ML program to play with.
+    <p>The Captive Game Server (CGS) is a small Java application that contains the same game engine as the Web Game Server, but does not have a SQL database, does not write transcript files, and does not communicate with clients using HTTP. It can be used by a Machine Learning researcher (in particular, a participant in the <a href="mlc.html">The Machine Learning Challenge (MLC)</a>) who wants a ML program to learn how to play a Rule Game game as a counterparty for his ML program to play with.
 
     <p>The Captive Game Server can be run in two ways: <strong>pipe-based</strong> and  <strong>socket-based</strong>.
 
@@ -16,6 +16,29 @@
     <p>Since the Captive Game Server is run by the owner of the ML program, the latter has complete control how many times it's run, and with what data. It is a complete "honor system", so to speak. Thus, it is up to the owner of the ML program to keep track of how the CGS is used, how many game episodes were played, and how many moves were attempted in each episode.</p>
 
     <p>For the convenience of some application, we also have the socket-based version of the CGS, discussed later in this document, which communicates with clients over sockets, rather than a pipe.
+     
+  <h2>The Rule Game / Game of Hidden Rules</h2>
+
+    <P>For general information on the  Rule Game (a.k.a. the  Game of Hidden Rules, GOHR), please see the <strong><a href="./">main documentation page</a></strong>. In particular, the following links may be useful:
+
+      <ul>
+	<li><a href="concepts.html">The main concepts of the Rule Game</a>. 
+	<li><a href="syntax.html">About the syntax of rule set files</a>
+	<li><a href="syntax-gs5.html">About the syntax of rule set files: GS5 extension</a>
+	<li><a href="arithmetic.html">Bucket expression arithmetic</a>: more about the expressions used to compute the accepting bucket number(s)
+	<li><a href="arithmetic-form.jsp">Try out your arithmetic expressions!</a>
+	<li><a href="colors-and-shapes.html">Using custom colors and shapes in Game Server 2.*</a>
+	<li><a href="object-properties.html">Image-and-property-based objects in Game Server 3.*</a>
+	<li><a href="composite-objects.html">Composite image objects</a>, available in Game Server 4.009.	
+       
+      </ul>
+
+      <h2>The Machine Learning Challenge (MLC)</h2>
+
+    <p>For further information on the  Machine Learning Challenge, see:
+      <ul>
+      <li><a href="mlc.html">The Machine Learning Challenge (MLC)</a>
+      </ul>
 
   <h2>Installation</h2>
     <p>If you're a UWM team member using CGS instaled on <tt>sapir</tt>, you can safely ignore this section.    But if you are installing the CGS on your own machine (especially at a different institution), please follow the instructions below to obtain the Captive Game Server distribution and the necessary third-party files.

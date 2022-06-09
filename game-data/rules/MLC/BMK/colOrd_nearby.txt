@@ -1,0 +1,6 @@
+# colors are in order and must go in nearest bucket.
+(*,*,RED,*,[Nearby])
+(*,*,BLUE,*,[Nearby])
+(*,*,YELLOW,*,[Nearby])
+(*,*,BLACK,*,[Nearby])
+

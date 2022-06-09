@@ -1,0 +1,6 @@
+# color Order Red Blue Yellow Black
+(*,*,RED,*,[0, 1, 2, 3])
+(*,*,BLUE,*,[0, 1, 2, 3])
+(*,*,YELLOW,*,[0, 1, 2, 3])
+(*,*,BLACK,*,[0, 1, 2, 3])
+

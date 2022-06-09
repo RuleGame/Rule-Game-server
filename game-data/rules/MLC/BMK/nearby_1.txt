@@ -1,0 +1,2 @@
+# ruleArrayName=nearby
+(*,*,*,*,[Nearby])
