@@ -215,12 +215,13 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
 	   destdir="web/api"
            use="true"
 	   link="https://docs.oracle.com/en/java/javase/11/docs/api/"
-	   header="&lt;em&gt;Rule Game&lt;/em&gt;"   
 	   windowtitle="Rule Game web API documentation" 
 	   additionalparam="-Xdoclint:none">
+    <header>
+        <![CDATA[<em>The Rule Game (a.k.a. the Game of Hidden Rules)</em>]]>
+    </header>   
     <footer>
-      <![CDATA[<p>Software Copyright University Wisconsin-Madison, under <a href="https://opensource.org/licenses/Apache-2.0">Apache License, Version 2.0</a></p>]]>
-      
+      <![CDATA[<p>Software Copyright University Wisconsin-Madison, under <a href="https://opensource.org/licenses/Apache-2.0">Apache License, Version 2.0</a></p>]]>     
     </footer>
   </javadoc>
 </target>

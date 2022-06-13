@@ -1,0 +1,88 @@
+<html>
+  <head><title>Setup: Testing</title></head>
+  <body>
+
+    <h1>Setup: Testing</h1>
+
+    <p>You have completed all steps of   <a href="index.html#A">Setup Option A</a> or <a href="index.html#B">Option B (or C)</a>, and installed the Game Server on your server host. Now, let's do some testing to see if everything is in place!
+
+      <h2>Is the MySQL Server running?</h2>
+
+    <p>Assuming you have set up your MySQL server as per our <a href="setup-mysql.html">instructions</a>, you should be able to log in to it with the user name and password of user <tt>game</tt>:
+
+      <pre>
+	mysql -u game -p
+      </pre>
+
+    <p>Once connected to the MySQL server, you can switch to database <tt>game</tt> and check what tables it has now:
+
+<pre>      
+mysql> use game;
+
+mysql> show tables;
+</pre>
+
+    <p>Early on, the list of tables shown to you may be empty. But if you try the same query later on, after you have done some playing, you may see a list similar to this:
+
+      <pre>
+	mysql> show tables;
+
++------------------------+
+| Tables_in_game         |
++------------------------+
+| Board                  |
+| Episode                |
+| Foo                    |
+| OPENJPA_SEQUENCE_TABLE |
+| Piece                  |
+| PlayerInfo             |
+| Test                   |
+| TestParent             |
+| User                   |
+| foo                    |
+| user_roles             |
+| users                  |
+| users_clear            |
++------------------------+
+13 rows in set (0.00 sec)
+      </pre>
+
+      <h2>Is the Tomcat web server running?</h2>
+
+<p>Once you have set up Tomcat as per the        <a href="setup-tomcat.html">Tomcat setup guide</a>, you should be able to verify that it's running by going to the appropriate URL, such as <tt>http://<em>MY_HOST:MY_PORT</em>/ </tt>. (Put your host name and port number instead of <tt><em>MY_HOST</em></tt> and <tt><em>MY_PORT</em></tt> in the URL; if you are sitting at your server's console, and are using the default port number 8080, that would be  <tt>http://localhost:8080/</tt> )
+
+  <h2>Is the Game Server web app deployed?</h2>
+
+<p>If you have put the Game Server WAR file, <tt>w2020.war</tt>,  to the /opt/tomcat/webapps directory, Tomcat should automatically deploy your application. If you go to the URL <tt>http://MY_HOST:MY_PORT/w2020 </tt>, you should see the main page of that application (the documentation page), which looks <a href="../">look this</a>.
+
+<p>The page you are reading right now is part of that application, so if you go to the URL  <tt>http://<em>MY_HOST:MY_PORT</em>/w2020/setup/setup-testing.html</tt>, you should see the same text you are reading now -- but your browser's URL bar will show that you're reading it from your own server, and not from our server (<tt>sapir.psych.wisc.edu</tt>).
+
+<p><em><strong>The rest of this document will assume that you're reading it as it's served to you from your own server. This means that the links will go to active pages of your server. (Otherwise, by clicking on links you'll be merely testing our own server at U. Wisconsin, which is probably not what you want).</em></strong>
+
+  <h2>Check the REST API components</h2>
+
+<p>Now that you're viewing this page on your own server, you can go to the Web API: <a href="../game-api-2.html">Web API page</a>. You don't particularly need to know what different things there do (they are responsible for the communication between the GUI client and the Game Server), but at least you can click on the first button in that page,  <a href="../game-data/GameService2/getVersion?">/GetVersion</a>, and if the Game Server is running, it should tell you its version number. (As of June 2022, it's 5.002).
+
+  <h2>Validate an experiment plan</h2>
+
+<P>Again, assuming that you're viewing this page on your own game server, you can go to the <a href="../check-plan-form.jsp">experiment plan validation tool</a>. That page will show the list of experiment plans installed on your server; each plan corresponds to one subdirectory under your <tt><a href="setup-config.html"><em>FILES_GAME_DATA</em>/trial-lists</tt> directory. Pick a plan, and click on the "Check" button. The server will then try to do all the things it normally does when it loads an experiment plan that a player starts using, i.e. compiling the rule set file etc, reporting any errors that may occur.
+
+<p>The sample experiment plans we are distributing via are public repository are not supposed to produce error messages, but once you start creating your own plans, you probably will see some errors :-)
+
+  <h2>Try to play a game</h2>
+
+<P>Again, assuming that you're viewing this page on your own game server, you can go to the <a href="../front-end-form.jsp">GUI play launch page</a>. That page will show the list of experiment plans installed on your server; each plan corresponds to one subdirectory under your <tt><a href="setup-config.html"><em>FILES_GAME_DATA</em>/trial-lists</tt> directory.
+
+<p>Pick a plan, enter an arbitrary unique player name (e.g. <tt>john-doe-2022-01-01-a</tt>. and click on "Play". That should start a game with the GUI interface.
+
+  <h2>Exporting the data</h2>
+
+<p>After you (or other players) have played some episodes, you can check what data have been saved by the server.
+
+  <p>
+    The transcript files and initial board files, described in the Data Guide under "<a href="../data.html#saved">Write-only files</a>" can be found in your  <tt><a href="setup-config.html"><em>FILES_SAVED</em></tt> directory.
+
+<p>    The data recorded in the database server can be viewed via the <tt>mysql</tt> command (the MySQL client), or with the tools that you have built from our source if you have followed the Setup Option B (or C). (The script would be in ~/w2020/game/scripts/export.sh, if you used the same directory as suggested in the <a href="setup-compile.html">Build Guide</a>. For more details on what it exports, see "<a href="data.html#export">Exporting</a>" in the Data Guide.
+      
+  </body>
+  </html>

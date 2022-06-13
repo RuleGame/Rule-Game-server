@@ -18,6 +18,9 @@
      <button type="submit">Check</button>
    </form>
 
+<hr>
+<br>
+
 
 <h2>Dynamic experiment plans</h2>
 
@@ -31,6 +34,10 @@ or <tt>R:bottomLeft_then_topRight:simple</tt>
 	 <br>
      <button type="submit">Check</button>
    </form>
+
+<hr>
+<br>
+
 
 <h2>Individual rule sets</h2>
 
