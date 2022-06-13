@@ -9,8 +9,36 @@
     <P>We assume that you already have a Java compiler (<tt>javac</tt>) and Apache Ant, and that you have downloaded the  <a href="setup-lib.html">required libraries</a> into the recommended directories under <tt>~/w2020</tt>.
 
     <p>Now you need to download the source code of the server from the GitHub repository. You can do it as follows:
+  <pre>
+  cd   ~/w2020	     
+  mkdir game
+  cd game
+  git init
+  git remote add origin https://github.com/vmenkov/Rule-Game-server.git
+  git pull origin master	   </pre>	   
+<p>If you have Apache Ant installed, you can now compile the source  code and build a WAR file:
+<pre>
+  cd ~/w2020/game
+  ant clean javadoc war
+</pre>
 
-      ......................
+<p>You can then install the WAR file on your Tomcat server:
+<pre>  
+  cp ../w2020.war /opt/tomcat/webapps	     </pre>
+
+<h2>Adjusting library references</h2>
+
+  <p>If you are using different versions of some libraries than those we did, you will have compilation errors or runtime errors ("Class not found", "Cannot obtain a JDBC connection", etc), because the Java compiler or the Java runtime cannot find them. If that happens, edit <tt>build.xml</tt> and <tt>scripts/ scripts/set-var.sh</tt>, modifying library paths as appropriate. E.g. references to
+      <tt>/opt/apache-openjpa-3.1.0</tt>,  <tt>commons-math3-3.6.1</tt>,
+<tt>/usr/share/java/mysql-connector-java-8.0.20.jar</tt>    etc may need to be updated.
+
+
+
+<h2>Modifying the application</h2>
+
+<p>If you are interested in customizing the Game Server for your needs (e.g. extending the rule syntax), you can study the source code, the <a href="../api/">class documentation (Java API)</a>, and <a href="../">general documentation</a>, and edit the source code as needed. Then build the WAR application file with <tt>ant</tt>, and install, as per the above section.
+
+<p>If you are doing a substantial amount of development, using multiple computers, you may consider setting up your own GitHub repository for your source code, and have a "standard operating procedure" for managing the code and deployments, similar to <a href="../deploy.html">what we have</a>.
 
       
   </body>

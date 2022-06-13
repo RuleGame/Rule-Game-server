@@ -1,5 +1,7 @@
 <html>
-  <head><title>Setting up the Rule Game Server and Client</title></head>
+  <head>
+<link rel="stylesheet" type="text/css" href="../css/rule-game.css"/>
+    <title>Setting up the Rule Game Server and Client</title></head>
   <body>
 
     <h1>Setting up the Rule Game Server and Client</h1>
@@ -110,20 +112,27 @@
 
 <p>If you want to install the GUI client on your server host as well (so that the players' browsers will download it from your host, rather than from the one at UWM), follow the Option C instructions. This is appropriate if you want to customize the client in some way, or if you want to make sure not to rely on any part of the UWM infrastructure. (This would be a very wise plan if you expect the funding for your server to last longer than the funding we have at UWM for our server!).
 
-  <ol>
-    <li>Plan goes here...
+<p>If you want to follow this approach, you need to deploy the GUI Client to your Tomcat server as well, as a separate web application.  Let's suppose that you'll be deploying it with the name <tt>rule-game</tt>.
 
-    <li>If you are using different versions of some libraries than those we did, you will have compilation errors or runtime errors ("Class not found", "Cannot obtain a JDBC connection", etc), because the Java compiler or the Java runtime cannot find them. If that happens, edit <tt>build.xml</tt> and <tt>scripts/ scripts/set-var.sh</tt>, modifying library paths as appropriate. E.g. references to
-      <tt>/opt/apache-openjpa-3.1.0</tt>,  <tt>commons-math3-3.6.1</tt>,
-<tt>/usr/share/java/mysql-connector-java-8.0.20.jar</tt>    etc may need to be updated.
-
-  </ol>
 
   
-    <h2></h2>
-    <h2></h2>
-    <h2></h2>
 
+
+ <ol>
+    <li>Set up the SQL database, exactly as in step 1 of Option A.
+    <li>Set up the master configuration file, similarly to step 2 of Option A, except that you set the two following variables as appropriate, based on the location where you plan to install your instance of the GUI Client, with your own host name and port name instead of <tt>sapir</tt>:
+      <pre class="yellow">
+	GUI_PROD = "http://<em>MY_HOST:MY_PORT</em>/rule-game/prod/";
+	GUI_DEV = "http://<em>MY_HOST:MY_PORT</em>/rule-game/dev/";
+	</pre>
+    <li>Set up Tomcat, exactly as in step 3 of Option A.
+    <li>Download the necessary third-party libraries, same as step 4 of Option B.
+    <li>Download the source code of the Game Server; build, and install, same as step 5 of Option B.
+    <li>Download the source code of the GUI Client; build, and install. <em>I will inserte detailed instructions from Kevin here.</em>
+    <li>Work on your control files, as per Step 5 in Option A.
+    <li>Proceed with testing, as per Step 6 in Option A.   
+ </ol>
+      
 
   </body>
 </html>
