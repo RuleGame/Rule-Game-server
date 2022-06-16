@@ -3,7 +3,7 @@
   <body>
     <h1>Captive Game Server</h1>
 
-<div align="center"><em>Updated 2022-06-08 for GS ver 5.002</em></div>
+<div align="center"><em>Updated 2022-06-15 for GS ver 5.002</em></div>
     
     <h2>What is the Captive Game Server?</h2>
 
@@ -48,6 +48,8 @@
     <p>We are normally using the CGS on Linux machines, but if you want, you probably can install it on a MacOS or MS Windows machine as well, likely with some minimal changes to the shell scripts used to run it.
 
     <p>You need to have a  Java Runtime Environment (JRE) (i.e. the system for running pre-compiled Java code) installed on your machine. Type <tt>which java</tt> on your console to see if you have one already; if you don't, you can get one from Oracle (<a href="https://java.com/en/download/help/download_options.html">How do I install Java?</a>) or from OpenJDK (<a href="https://openjdk.java.net/install/index.html">How to download and install prebuilt OpenJDK packages</a>).
+
+    <p>Our shell scripts are written in <tt>csh</tt>, so your system should have  <tt>csh</tt> installed. (Most Linux / UNIX system already have, and if yours don't, you should be able to easily <a href="https://www.cyberciti.biz/faq/howto-install-csh-shell-on-linux/">install it</a>). Alternatively, you can re-write the scripts for your favorite shell (<tt>sh, bash, ksh,</tt> whatever).
  
       <h3>Choosing a directory</h3>
 
@@ -130,7 +132,7 @@ Apache Commons Math
 
       
     <p>
-      You can run the CGS from the command line as follows:
+      You can run the CGS from the command line as follows, with a <tt>csh</tt> script:
       <pre>
 /home/vmenkov/captive/game/captive-full.sh /home/vmenkov/captive/game/game-data/rules/rules-02.txt 8
       </pre>

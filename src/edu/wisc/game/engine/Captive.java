@@ -55,7 +55,7 @@ public class Captive {
   	
 	//System.out.println("output mode=" +  outputMode);
 	int ja=0;
-	if (argv.length<2) throw new IllegalInputException("No params specified");
+	if (argv.length<1) throw new IllegalInputException("No params specified");
 	String fname = argv[ja++];
 	/*
 	if (fname.length()>=2 &&
@@ -64,11 +64,24 @@ public class Captive {
 	    fname = fname.substring(1, fname.length()-1);
 	}
 	*/
-	File f = new File(fname);
+	boolean isR = fname.startsWith("R:"); // R:ruleSet:modifier
+
+	if (isR) {
+	    TrialList trialList = new TrialList(fname, null);
+	    ParaSet para = trialList.elementAt(0);
+	    return  GameGenerator.mkGameGenerator(random, para);
+	}
+
+	
+	File f =  new File(fname);
 	if (!f.canRead())  throw new IllegalInputException("Cannot read file " + f);
 
+
+	if (argv.length<2) throw new IllegalInputException("No params specified");
 	String b = argv[ja++];
 
+	//System.out.println("isR=" + isR+"; fname=" + fname);
+	
 	if (f.getName().endsWith(".csv")) { // Trial list file + row number
 	    TrialList trialList = new TrialList(f);
 	    int rowNo = Integer.parseInt(b);

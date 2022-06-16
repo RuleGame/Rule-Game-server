@@ -1082,7 +1082,10 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	cleared, or a stalemate is reached, or the player gives up
 	(sends an EXIT or NEW command). The episode takes commands from
 	the reader.
-	@return true if another episode is requested */
+	@return true if another episode is requested, i.e. the player
+	has entered a NEW command. false is returned if the player
+	enters an EXIT command, or simply closes the input stream.
+    */
     public boolean playGame(int gameCnt) throws IOException {
 	try {
 	String msg = "# Hello. This is Captive Game Server ver. "+version+". Starting a new game (no. "+gameCnt+")";

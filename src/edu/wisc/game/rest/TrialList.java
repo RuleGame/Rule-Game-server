@@ -40,7 +40,7 @@ public class TrialList extends Vector<ParaSet> {
 	files (with the extension removed), asscociated with a
 	particular experiment plan. For an R: plan, returns the name
 	of the rule set, because that's what will be recorded as the
-	"trialListId" field in the PlauyerInfo table.
+	"trialListId" field in the PlayerInfo table.
 	
 	@param exp The name of the experiment plan (static or dynamic)
     */
@@ -194,7 +194,10 @@ public class TrialList extends Vector<ParaSet> {
     /** Reads a trial list from the  file that corresponds to a given
 	experiment plan  and the specified trial list id within that
 	experiment. 
-	@parame exp The name of an experiment plan (static or dynamic)
+	@param exp The name of an experiment plan (static or dynamic)
+	@param The trial list id (typically, file name of the trial
+	list file, relative to the plan's directory, and 
+	fwithout extension). This should be null for R:-type dynamic plans.
     */
     public TrialList(String exp, String trialListId) throws IOException,IllegalInputException  {
 	this(false, "No error");
@@ -205,7 +208,7 @@ public class TrialList extends Vector<ParaSet> {
 		File mainFile = new File(eph.mainDir,  trialListId + suff);
 		setPath(mainFile.getPath());	    
 		readTrialListFile(this, mainFile);
-	    } else if (eph.mainRuleSetName!=null) {
+	    } else if (eph.mainRuleSetName!=null) {  // R:-type
 		setPath(null);	    
 		add( ParaSet.ruleNameToParaSet(eph.mainRuleSetName));
 	    }

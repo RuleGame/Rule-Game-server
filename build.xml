@@ -170,6 +170,7 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
       <!-- include name="Piece.class" />
       <include name="Board.class" / -->
       <include name="User.class" />
+      <include name="Role.class" />
       <include name="PlayerInfo.class" />
       <include name="EpisodeInfo.class" />
       <include name="Episode.class" />

@@ -202,6 +202,10 @@ public class ParaSet extends HashMap<String, Object> {
 
     /** Makes a para set with just 1 column. This is used in "R:" dynamic 
 	experiment plans.
+	@param ruleSetName  This is in the format normally seen in trial
+	list files, i.e. a file name relative to the main rule set directory,
+	without extension. Other formats are also possible, as long
+	as they are understood by Files.rulesFile() 
      */
     static ParaSet ruleNameToParaSet(String ruleSetName) {
 	ParaSet q = new ParaSet();

@@ -143,21 +143,24 @@ public class Files {
 
 
     /**
-       @param name If it starts with a "/", it is understand as an
-       absolute path, which is handy for development (to point to
-       files in researchers' home directories); in this case, it is
-       also expected to already have an extension. Otherwise, it is
-       understood as to refer to files in the Tomcat game data
-       directory; in this case, an extension will be added.
+       @param name If it starts with a "/" or "~", it is understand as
+       an absolute path, which is handy for development (to point to
+       files in researchers' home directories) or in the Captive Game
+       Server environment; in this case, it is also expected to
+       already have an extension. Otherwise, it is understood as
+       referring to files in some subdirectory of the Tomcat game data
+       directory; in this case, an extension will be added, if it's
+       missing.
        @param subdir The subdirectory of the  Tomcat game data directory
-       where we will look for the file.
+       where we will look for the file. (The "name" is understood as relative
+       to that subdirectory).
        @param ext The extension (e.g. ".txt" or ".json") that we will
        add to the name.
      */    
     private static File inputFile(String name, String subdir, String ext) throws IOException {
 	//System.out.println("DEBUG: inputFile(name=" +name+", subdir=" + subdir+", ext=" + ext+")");
 	if (name==null || name.equals("")) throw new IOException("File name not specified");
-	if (name.startsWith("/")) {
+	if (name.startsWith("/") || name.startsWith("~")) {
 	    return new File(name);
 	} else {     
 	    File base = new File(inputDir, subdir);

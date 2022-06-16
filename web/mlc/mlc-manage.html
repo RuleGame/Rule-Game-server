@@ -1,0 +1,40 @@
+<html>
+  <head><title>Managing MLC submissions</title>
+ <link rel="stylesheet" type="text/css" href="../css/rule-game.css"/>
+  </head>
+  <body>
+
+    <h1>Managing MLC submissions</h1>
+
+<div align="center"><em>Updated 2022-06-14  for GS 5.003</em></div>
+    
+    <h2>Registering participants</h2>
+
+    <P>At present, the participants in the MLC (Machine Learning Challenge) are registered by the project staff manually. Once a prospective participant has contacted Paul or Eric, and his applcation has been approved, the MLC manager should login on sapir and run the following command:
+
+      <pre class="yellow">
+/home/vmenkov/scripts/create-mlc-user.sh <em>nickname email password</em>
+      </pre>
+
+For example:      
+      
+      <pre class="yellow">
+/home/vmenkov/scripts/create-mlc-user.sh bob1 bob1@yahoo.com xxxbob1
+      </pre>
+
+    <p>Here, <em>nickname</em> is an identifying name for the project participant (a person, a team, or a ML algorithm). This should appear as part of the first column of the CSV files that the participant will be submitting. (In that file, the particicpant's nickname will be separated by a '+' sign from the rule set name).
+
+    <p>As a confirmation, the script will print out the list of all users in the system, one of which should be your new user:
+
+      <pre>
+	....
+	User record: <strong>id</strong>: 11; <strong>nickname</strong>: bob1; <strong>digest</strong>: 702F09166EEFAB06F3DDA3262EF8DF75; <strong>roles</strong>: [mlc];
+	....
+</pre>
+
+    <p>You can now send the nickname and the password to the participant, for use in future uploads.
+
+    <p>If a particular ML research team wants to enter several algorithms into the MLC, we will register several nicknames for them (one per algorithm), so that all data they submit can be easily identified as belonging to specific algorithms. In this case, it's OK to run the script several times, with different nicknames but the same email and password.
+      
+  </body>
+  </html>

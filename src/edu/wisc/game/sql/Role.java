@@ -10,26 +10,8 @@ import edu.wisc.game.reflect.*;
 
 /** A role is simply a database-storable wrapper around the role name */
 @Entity    
-    @Table(name="arxiv_Role")
-   public class Role 
-{   
-    /** @Enumerated(EnumType.STRING)  means, "store string", as per
-	http://openjpa.apache.org/builds/latest/docs/manual/manual.html#jpa_overview_mapping_enum
-     */
-    /*
-    @Id  
-	@Display(editable=false, order=1) 
-	@Enumerated(EnumType.STRING) 
-	@Column(length=15)
-    	private Name
-	role;   
-
-    public Name getRole() { return role; }
-    public void setRole( Name x) { role = x; }
-    */
-
-    //    public Name getRole() { return Enum.valueOf( Name.class, role); }
-    //public void setRole( Name x) { role = x.toString(); }
+//   @Table(name="arxiv_Role")
+   public class Role {   
   
     @Id  
 	@Display(editable=false, order=1) 
@@ -45,7 +27,8 @@ import edu.wisc.game.reflect.*;
 
 
     public static enum Name {
-	admin, researcher, subscriber
+	//admin, researcher, subscriber
+	mlc
     };
 
     public String toString() {
