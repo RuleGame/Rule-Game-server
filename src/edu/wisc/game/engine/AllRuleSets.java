@@ -29,7 +29,9 @@ public class AllRuleSets extends HashMap<String, RuleSet> {
 	if (!f.canRead())  throw new IOException("Cannot read rule file: " + f);
 	Logging.info("Reading rule set file " + f);
 	String text = Util.readTextFile(f);
-	return new RuleSet(text);
+	RuleSet r = new RuleSet(text);
+	r.file = f;
+	return r;
     }
 
     /** Gets the RuleSet from the table (if it's already cached in the table),

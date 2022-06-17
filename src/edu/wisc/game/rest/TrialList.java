@@ -125,12 +125,12 @@ public class TrialList extends Vector<ParaSet> {
     
     /** Identifies an experiment plan as a static or dynamic (P: or R: type)
 	one */
-    static class ExperimentPlanHandle {
+    static public class ExperimentPlanHandle {
 	/** The main directory which contains the plans' trial list file
 	    (which can be modified by a modifier), or null (in the "R:" mode). */
 	final File mainDir;
 	/** Normally null; rule set name in "R:" mode */
-	final String mainRuleSetName;
+	final public String mainRuleSetName;
 	/** Normally null; a File in R: or P: mode */
 	final File modifierFile;
 

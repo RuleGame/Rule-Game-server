@@ -30,7 +30,7 @@ def readLine(inx):
 #-- val = a list of piece description, pulled in from the JSON string
 #-- returned by the server.
 #----------------------------------------------------------------------
-def chooseMove(val):
+def chooseMoveCheating(val):
     #print("Value:\n")
     #print(val);
     m = len(val)
@@ -47,6 +47,29 @@ def chooseMove(val):
             return [y, x, by, bx]
 
     print("Cannot decide on making a move, because cannot find a moveable piece!\n")
+    exit()
+
+#----------------------------------------------------------------------        
+#-- makes a move by picking a random piece and trying to move
+#-- it to a random bucket.
+#-- val = a list of piece description, pulled in from the JSON string
+#-- returned by the server.
+#----------------------------------------------------------------------
+def chooseMove(val):
+    #print("Value:\n")
+    #print(val);
+    m = len(val)
+    sys.stdout.write( repr(m) + " pieces still on the board\n")
+    j = random.randint(0, m-1);
+    v = val[j]
+    buckets = v["buckets"]
+    x = v["x"]
+    y = v["y"]
+    #-- pick random bucket
+    bx = 7 * random.randint(0,1) 
+    by = 7 * random.randint(0,1) 
+    return [y, x, by, bx]
+
     exit()
 
 # inx=proc.stdout

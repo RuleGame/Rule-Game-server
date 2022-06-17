@@ -1,0 +1,5 @@
+#-- The standard parameters for the MLC examples. As proposed by Paul,
+#-- "I think we should always use trial files that set four colors minimum and maximum and the same for shapes. As to how many pieces I would suggest that we choose either six or nine and simply use it all the time."
+
+min_objects,max_objects,min_shapes,max_shapes,min_colors,max_colors
+9,9,4,4,4,4

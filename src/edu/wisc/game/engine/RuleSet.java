@@ -14,6 +14,12 @@ import edu.wisc.game.parser.Expression.VarMap2;
 /** A RuleSet describes the rules of a game. */
 public class RuleSet {
 
+    /** The file from which this RuleSet was read. This is an optional
+	field, and is non-zero only in RuleSet objects that have actually
+	been read from files. It is only used for reporting.
+     */
+    File file = null;
+    
     /** An optional verbal description of the rule set, which may have
 	been found in the comment lines on top of the rule set file.
      */

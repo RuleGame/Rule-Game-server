@@ -1077,18 +1077,19 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	    earlyWin?  "You won by a long error-free stretch" :
 	    null;
     }
-    
+
     /** Lets this episode play out until either all pieces are
 	cleared, or a stalemate is reached, or the player gives up
 	(sends an EXIT or NEW command). The episode takes commands from
 	the reader.
+	@param log If not null, save the result of each episode there
 	@return true if another episode is requested, i.e. the player
 	has entered a NEW command. false is returned if the player
 	enters an EXIT command, or simply closes the input stream.
     */
     public boolean playGame(int gameCnt) throws IOException {
 	try {
-	String msg = "# Hello. This is Captive Game Server ver. "+version+". Starting a new game (no. "+gameCnt+")";
+	String msg = "# Hello. This is Captive Game Server ver. "+version+". Starting a new episode (no. "+gameCnt+")";
 	if (stalemate) {
 	    respond(CODE.STALEMATE, msg + " -- immediate stalemate. Our apologies!");
 	} else {
@@ -1181,10 +1182,10 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 		continue;
 	    }
 	}
+	return false;
 	} finally {
 	    out.flush();
 	}
-	return false;
     }
 
     public enum OutputMode {
