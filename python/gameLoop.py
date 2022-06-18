@@ -74,7 +74,23 @@ def chooseMove(val):
 
 # inx=proc.stdout
 # outx=proc.stdin
+
+#--- Playe 1 episode and EXIT
 def mainLoop(inx,outx): 
+    mainLoopA(inx,outx);
+    outx.write("EXIT\n");
+    outx.flush();
+
+#-- Play N episodes and EXIT     
+def severalEpisodes(inx,outx,N):
+    for j in range(0, N):
+        mainLoopA(inx,outx);
+        cmd = "EXIT\n" if (j==N-1) else "NEW\n";
+        outx.write(cmd);
+        outx.flush();
+
+    
+def mainLoopA(inx,outx): 
     #----------------------------------------------------------------------
     #-- Keep playing until the episode is finished
     while True:
@@ -123,6 +139,4 @@ def mainLoop(inx,outx):
         outx.write(send + "\n")
         outx.flush()
     
-    outx.write("EXIT\n")
-    outx.flush()
 

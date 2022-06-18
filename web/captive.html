@@ -404,10 +404,44 @@ Cleared board in 12 steps
 
 <h4>Sample Python app that also does MLC logging</h4>
 
-./captive-python-2.sh inputDir=game-data logappend=test.csv log.nickname=JohnDoe log.run=0 R:MLC/BMK/farthest_1.txt:MLC/BMK/bmk.csv
+    <p>We have provided a sample shell script for the  <a href="mlc.html">Machine Learning Challenge (MLC)</a> participants who wants their ML program to play with the Captive Game Server and to save a results file for submission to the MLC Leader Board. The can model their scripts on the <tt>csh</tt> script
+      <tt>scrupts/captive-python-mlc.sh</tt>, which in its turn uses
+      <tt>python/client-2.py</tt>.
 
+    <p>Usage:
+      <pre>
+	~/w2020/game/scripts/captive-python-mlc.sh
+      </pre>
 
- <a href="mlc.html">The Machine Learning Challenge (MLC)</a>) who wants a ML program to learn how to play a Rule Game game as a counterparty for his ML program to play with.
+    <p>If you look inside this script, you'll see that it:
+      <ul>
+	<li>Lists all rule files from <tt>game-data/rules/MLC/BMK</tt>;
+	<li>For each file, it makes 2 runs, by invoking
+<pre>
+  python/client-2.py inputDir=${in} logappend=${log} log.nickname=RandomTest log.run=${run} R:${r}:MLC/BMK/bmk.csv </pre>
+with appropriate values for the shell variables in question.
+      </ul>
+
+    <p>In each run, the script <tt>python/client-2.py</tt> runs 5 episodes. Thus, the results file (test.csv) has 10 lines for each of the 15 rule set files. The results file may look like this:
+      <pre>
+nickname,rule_name,trial_id,board_id,number_of_pieces,number_of_moves,move_acc,if_clear
+RandomTest,alternateShape2Bucket_color2Bucket,0,0,9,29,0.3103448275862069,1
+RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
+RandomTest,alternateShape2Bucket_color2Bucket,0,2,9,70,0.12857142857142856,1
+RandomTest,alternateShape2Bucket_color2Bucket,0,3,9,39,0.23076923076923078,1
+RandomTest,alternateShape2Bucket_color2Bucket,0,4,9,55,0.16363636363636364,1
+RandomTest,alternateShape2Bucket_color2Bucket,1,0,9,36,0.25,1
+RandomTest,alternateShape2Bucket_color2Bucket,1,1,9,58,0.15517241379310345,1
+RandomTest,alternateShape2Bucket_color2Bucket,1,2,9,21,0.42857142857142855,1
+RandomTest,alternateShape2Bucket_color2Bucket,1,3,9,63,0.14285714285714285,1
+RandomTest,alternateShape2Bucket_color2Bucket,1,4,9,25,0.36,1
+RandomTest,colOrd_nearby,0,0,9,111,0.08108108108108109,1
+RandomTest,colOrd_nearby,0,1,9,137,0.06569343065693431,1
+RandomTest,colOrd_nearby,0,2,9,76,0.11842105263157894,1
+...
+      </pre>
+
+    <p>The sample Python screen is a fairly poor player, as it makes its moves completely at random (picking a random game piece and trying to move it to a randomly chosen bucket). If your ML program is any good, you should hope to obtain, on average, better values of <tt>move_acc</tt>, at least once it has learned something!
 
 
     <h2>Game description</h2>
