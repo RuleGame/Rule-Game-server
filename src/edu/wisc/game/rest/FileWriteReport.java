@@ -4,9 +4,6 @@ import java.io.*;
 import java.util.*;
 import java.text.*;
 import java.net.*;
-//import javax.persistence.*;
-
-//import org.apache.openjpa.persistence.jdbc.*;
 
 import jakarta.xml.bind.annotation.XmlElement; 
 import jakarta.xml.bind.annotation.XmlRootElement;

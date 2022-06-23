@@ -42,7 +42,7 @@ public class GameService2 {
 				       @DefaultValue("false") @FormParam("anon") boolean anon)
     {
 
-	return new UserResponse(email, nickname, anon);
+	return new UserResponse(email, nickname, null, anon);
     }
 
     

@@ -104,6 +104,17 @@ public class Files {
 	return new File(inputDir, "shapes");
     }
 
+    /** The upload directory for a particular MLC participant. It is created if it does not exist yet */
+    public static File mlcUploadDir(String nickname, boolean readOnly) throws IOException {
+
+	File d = new File(savedDir, "mlc");
+	if (!readOnly) testWriteDir(d);
+	File m = new File(d, nickname);
+	if (!readOnly) testWriteDir(m);
+	return m;
+    }
+
+   
 
     static final String RULES_EXT = ".txt";
     

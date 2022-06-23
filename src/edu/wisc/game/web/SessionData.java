@@ -146,6 +146,8 @@ public class SessionData {
     /** Something to print, which can be email or nickname or "anonymous"  */
     private String storedDisplayName = null;
 
+    private boolean passwordMatched = false;
+    
     /** Unlike getRemoteUser(), this method does not recheck the
 	extended  session cookie. It is safe to use if we know
 	that  getRemoteUser() has been recently called.
@@ -156,6 +158,10 @@ public class SessionData {
 
     public String getStoredDisplayName() {
 	return  storedDisplayName;
+    }
+
+    public boolean  getPasswordMatched() {
+	return  passwordMatched;
     }
 
     
@@ -171,12 +177,17 @@ public class SessionData {
 
      */
     String getRemoteUser(HttpServletRequest request, StringBuffer msgBuffer) {
+	return getRemoteUser(request, msgBuffer, true);
+    }
+
+    String getRemoteUser(HttpServletRequest request, StringBuffer msgBuffer,
+			 boolean allowExtended			 ) {
 	msgBuffer.setLength(0);
 	String u;
 	// first, check this server session
 	u = storedUserName;
 	String msg = "gRemoteUser: stored="+u;
-	if (u==null) {
+	if (u==null && allowExtended) {
 	    // maybe there is an extended session?
 	    Cookie cookie =  ExtendedSessionManagement.findCookie(request);
 	    if (cookie!=null) {
@@ -185,7 +196,7 @@ public class SessionData {
 		try {
 		    User user=  ExtendedSessionManagement.getValidEsUser( em, cookie);
 		    if (user!=null) {
-			storeUserInfo(user);
+			storeUserInfo(user, false);
 			u = storedUserName;
 			msg += "; user="+user.getId();
 		    } else {
@@ -214,7 +225,7 @@ public class SessionData {
     /** Saves the user name (received from the [validated] login form, 
 	or recovered via a persistent cookie) into the session's memory.
      */
-    public void storeUserInfo(User user) {
+    public void storeUserInfo(User user, boolean _passwordMatched) {
 
 
 	String u = "" + user.getId();
@@ -224,7 +235,7 @@ public class SessionData {
 	if (nickname != null) 		storedDisplayName  = nickname;
 	else if (email!=null)  	storedDisplayName  = email;
 	else 	storedDisplayName  = "An anonymous session-based user";	
-	
+	passwordMatched = _passwordMatched;
     }
 
  

@@ -46,6 +46,7 @@ public class ResultsBase {
     SessionData sd;
     /** The numeric user id (converted to string) associated with the current session, or null */
     public String uid=null;
+    /** Same as nickname */
     public String displayName=null;
 
     public boolean loggedIn() { return uid!=null; }
@@ -58,11 +59,14 @@ public class ResultsBase {
     boolean atHome;
     final HTMLFmter fm = HTMLFmter.htmlFmter;
     
-    
+    ResultsBase(HttpServletRequest _request, HttpServletResponse response,
+		 boolean requiresUser) {
+	this( _request,  response, requiresUser, false);
+    }
     /** This one is to be used in all pages where we want to identify the 
 	user to some extent (even as an anon with a cookie-based session) */
     ResultsBase(HttpServletRequest _request, HttpServletResponse response,
-		 boolean requiresUser) {
+		boolean requiresUser, boolean requirePassword) {
 
 	long tid=Thread.currentThread().getId();
 
@@ -77,7 +81,7 @@ public class ResultsBase {
 	infomsg += " [sd="+sd+"]";
 
 	StringBuffer msgBuffer=new StringBuffer();
-	uid = sd.getRemoteUser(request,  msgBuffer);
+	uid = sd.getRemoteUser(request,  msgBuffer, !requirePassword);
 	infomsg += msgBuffer;
 	
 	displayName= sd.getStoredDisplayName();

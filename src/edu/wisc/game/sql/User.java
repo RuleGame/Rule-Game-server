@@ -53,10 +53,8 @@ public class User extends OurTable {
      is   disabled, because the digest of any string is a non-empty string. */
     public  String getDigest() { return digest; }
     public void setDigest(       String x) { digest = x; }
-  
-   /** Encrypts the passed password, and stores the encrypted
-     * value. This enables the user for logging in */
-    public void encryptAndSetPassword( String clearPassword) {
+
+    private static String encryptPassword( String clearPassword) {
 
 	final String algo="MD5";
 	try {
@@ -67,11 +65,26 @@ public class User extends OurTable {
     
 	    //String x = org.apache.catalina.realm.RealmBase.Digest(clearPassword, "MD5", "utf-8" );
 	    System.err.println("Hash=" + x);
-	    setDigest( x);
+	    return x;
 	} catch( NoSuchAlgorithmException ex) {
 	    System.err.println("No such digest algo: " + algo);
+	    return null;
 	}
- }
+    }
+    
+   /** Encrypts the passed password, and stores the encrypted
+     * value. This enables the user for logging in */
+    public void encryptAndSetPassword( String clearPassword) {
+
+	String enc = encryptPassword( clearPassword);
+	if (enc != null) 	    setDigest( enc);
+   }
+
+    public boolean passwordMatches( String clearPassword) {
+	if (clearPassword==null) return false;
+	String enc = encryptPassword( clearPassword);
+	return enc!=null && enc.equals(getDigest());
+    }
 
     
     public String toString() {

@@ -97,6 +97,21 @@ See also https://stackoverflow.com/questions/45625925/what-exactly-is-the-resour
   </servlet-mapping>
 
   <servlet>
+    <servlet-name>MlcLoginServlet</servlet-name>
+    <description>
+      Test
+    </description>
+    <servlet-class>edu.wisc.game.web.MlcLoginServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>MlcLoginServlet</servlet-name>
+    <url-pattern>/MlcLoginServlet</url-pattern>
+  </servlet-mapping>
+
+
+  
+  <servlet>
     <servlet-name>LogoutServlet</servlet-name>
     <description>
       Test

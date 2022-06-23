@@ -16,6 +16,8 @@ public class MlcLog {
     }
 	
     PrintWriter w;
+    /** Opens the file for writing (or appending) and writes the header line
+	if necessary. */
     public void open() throws IOException {
 	long len = (append && f.exists())? f.length(): 0;
 	w = new PrintWriter(new FileWriter(f, append));
@@ -28,6 +30,11 @@ public class MlcLog {
     private void writeHeader() {
 	w.println("nickname,rule_name,trial_id,board_id,number_of_pieces,number_of_moves,move_acc,if_clear");
     }
+
+    /** Computes the ratios etc and writes the entry for a specified episode 
+	@param boardNo Sequential number (0-based) of the episode in the series
+	(run)
+     */
     public void logEpisode(Episode e, int boardNo) {
 	Vector<String> v = new Vector<>();
 	v.add(nickname);

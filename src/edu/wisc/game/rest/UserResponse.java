@@ -28,6 +28,11 @@ public class UserResponse extends ResponseBase {
     void setNewlyRegistered(boolean _newlyRegistered) { newlyRegistered = _newlyRegistered; }
 
 
+    /** Is set to true if the user has been successfully identified by password */
+    boolean passwordMatched=false;
+    public boolean getPasswordMatched() { return passwordMatched; }
+   
+
     static private User findUser(EntityManager em, String queryText, String val) {
 	Query q = em.createQuery(queryText);
 	q.setParameter("c",val);
@@ -45,8 +50,9 @@ public class UserResponse extends ResponseBase {
     }
 
 
-	
-    public UserResponse(String email, String nickname, boolean anon) {
+    /** @param password If null, ignored; otherwise, password match is required
+     */	
+    public UserResponse(String email, String nickname, String password, boolean anon) {
 	email = regularize(email);
 	nickname = regularize(nickname);
 
@@ -55,6 +61,31 @@ public class UserResponse extends ResponseBase {
 	boolean isAnon = false;
 	    
 	try {
+
+
+	    if (password!=null) { // login by nickname + password only
+		if (nickname==null) {
+		    hasError("Missing nickname");
+		    return;
+		}
+		if (em==null) em=Main.getNewEM();
+		u = findUser(em, "select u from User u where u.nickname=:c", nickname);
+		if (u == null) {
+		    hasError("No such nickname: " + nickname);
+		    return;
+		}
+		    
+		if (!u.passwordMatches( password)) {
+		    hasError("Wrong password");
+		    return;
+		}
+
+		passwordMatched=true;
+		return;
+	    }
+
+
+	    
 	    if (nickname==null && email==null) {
 		if (anon) {
 		    isAnon =true;
@@ -63,9 +94,7 @@ public class UserResponse extends ResponseBase {
 		    return;
 		}
 	    } else if (email!=null) {
-		boolean mustClose=(em==null);
-		
-		
+		//boolean mustClose=(em==null);		
 		if (em==null) em=Main.getNewEM();
 		u = findUser(em, "select u from User u where u.email=:c", email);
 		if (u != null) {			 
