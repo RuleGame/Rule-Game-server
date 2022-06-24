@@ -11,6 +11,7 @@ import edu.wisc.game.sql.*;
 import edu.wisc.game.util.*;
 import edu.wisc.game.formatter.*;
 import edu.wisc.game.rest.UserResponse;
+import edu.wisc.game.rest.MlcUploadService;
 
 
 public class LoginServlet extends HttpServlet {
@@ -67,9 +68,14 @@ public class LoginServlet extends HttpServlet {
 	     refuse(response, ur.getErrmsg());
 	     return;
 	 }
-
+	 
 	 User u = ur.getUser();
 
+	 // Register this user's key for REST tools
+	 if (pw!=null) {
+	     MlcUploadService.giveKey(nickname);
+	 }
+	 
 	 SessionData sd = SessionData.getSessionData(request);
 	 sd.storeUserInfo(u, ur.getPasswordMatched());
 

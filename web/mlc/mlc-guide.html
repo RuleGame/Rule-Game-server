@@ -1,0 +1,52 @@
+<html>
+  <head><title>The Machine Learning Challenge</title></head>  
+  <body>
+    <h1>The Machine Learning Challenge (MLC)</h1>
+
+<div align="center"><em>Updated 2022-06-23</em></div>
+    
+    <h2>Prepare the software</h2>
+
+    <p>Download and install the <a href="../captive.html">Captive Game Server</a>. This is a tool "against" which your ML program will play.
+
+    <p>The Captive Game Server page explains how a ML program can play against (or, rather, with) the CGS. In the document, look for a section for "Sample Python app that also does MLC logging" (captive-python-mlc.sh). Get it (or, rather, the Python app it invokes) to work, so that it will play a few "runs" of episodess and produce a result file.
+    
+    <h2>The problems</h2>
+
+    <p>The rule set files on which the participants can train and test their ML programs can be found in our public GitHub repository, at <tt><a href="https://github.com/vmenkov/Rule-Game-server/tree/master/game-data/rules/MLC/BMK">game-data/rules/MLC/BMK</a></tt>.
+
+    <p>If you have installed the Captive Game Server on your machine, these rule set files are also found in the ZIP file you have downloaded, under <tt>game-data/rules/MLC/BMK</tt>
+
+      <h2>The MLC rules</h2>
+
+      <h3>How we measure learning</h3>
+
+      <p>To participate in the MLC, you need to get your ML program to play with the CGS, in the same way as our sample program does -- with the key difference that our program does not learn, and yours should. It should play a series of episodes (a "run") with a specified rule set, letting the CGS run a result file, which will be a CSV file  containing 1 row of data per episode.
+
+      <p>It is our intent that the participants' programs can learn to play an arbitrary game described by any rule set described by the <a href="../syntax.html">syntax of rule set files of Game Server 3.*</a>. At this point, we are not asking you to teach your program to learn games from a wider set, the one described by  <a href="../syntax-gs5.html">syntax of rule set files of GS 5.*.</a>
+
+      <p>Obviously, it is easy to write a program that will <em>eventually</em> clear any board in a non-stalemating game. For example, it can simply repeatedly try every piece, trying to move it to each bucket in turn, deterministically or randomly. (Our sample program does the latter). In the MLC, you are invited to develop ML algorithms that will play better than that, i.e. learn to clear boards with fewer "errors" (failed move attempts) than a random player would. We say that a ML program has "learned" a rule set if it clear every board with no errors at all. (That is, it can clear any board with N game pieces in just N move attempts).
+
+      <p>As a program starts playing a series of episodes (a "run") with a parricular rule set, its performance (in terms of the error rate in each episode) will hopefully improve. In our judging the results, we will assume that a program has fully "learned" a rule set if it can clear 10 consecutive board without a single error, i.e. to demonstrate 100% accuracy in 10 consecutive episodes.
+
+      <p>Therefore, we ask that once your ML program believes that it has fully learned a particular rule set, it plays 10 more episodes (clears 10 more boards). Its error-free performance on those episodes will be evidenced by the 10 last lines of the run's results file all having 1.0 in the <tt>move_acc</tt> column and 1 in the  <tt>if_cleared</tt>  column. This will serve as an evidence for our analysis tools that your ML program has achieved full learning on this run.
+	  
+      <p>In our analysis of your results, we will view the total number of errors (failed move attempts) your ML program has made in a given run before it has fully learned the rule set as a measure of its (in)efficiency, i.e. the cost of the learning experience.
+
+	<h3>Preparing the results file</h3>
+
+      <p>As illsutrated by our sample (non-)learning script, we want you to produce a result file which will contain, for every rule set which your ML program can fully learn, the results for 100 runs, each run demonstrating successful learning by having at least 10 error-free episodes at the end. Thus, for example, if you submit data for 5 rule sets, with 100 runs for each rule set, and, on average, 200 episodes in each run, then your results file will have ca. 5*100*200 = 100,000 lines. That will be several megabytes of data.
+
+	<h3>Submitting the results file</h3>
+
+	<p>Name your results file <tt>results.csv.</tt>
+
+	<p>To submit the results file, you need to first obtain a password from Paul and Eric. Let them know the nickname you would like to assign to the ML algorithm you enter into compettion (e.g. <tt>JohnDoeAlgo01</tt>). With your nickname and the password, log in to the <a href="index.jsp">MLC Participant's Dashboard</a> and upload your results file. Once you have uploaded a file, the dahsboard will show its name and size. If needed, you can upload an updated version of your file later, using the same nickname and password; this will replace the original version.
+
+	<p>At a later point, we plan to add more features to the dashboard, such as a comparison of results of different participants.
+	
+
+
+</body>
+					  
+</html>

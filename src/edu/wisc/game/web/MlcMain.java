@@ -22,7 +22,9 @@ public class MlcMain  extends ResultsBase  {
 
     private static HTMLFmter fm = new HTMLFmter();
 
+    public String key = "";
     public String report = "";
+    public String nickname = null;
     
     public MlcMain(HttpServletRequest request, HttpServletResponse response)  {
 	super(request,response,true);
@@ -38,11 +40,16 @@ public class MlcMain  extends ResultsBase  {
 	}
 
 	try {
-	    final String nickname = displayName;
+	    nickname = displayName;
 	    if (nickname==null) {
-		hasError("Nickname not specified");
+		giveError("Nickname not specified");
 		return;
 	    }
+
+
+	    key = MlcUploadService.giveKey(nickname);
+
+	    
 	    File d = Files.mlcUploadDir(nickname, false);
 
 	    Vector<String> rows = new Vector<>();
@@ -55,10 +62,12 @@ public class MlcMain  extends ResultsBase  {
 		rows.add( fm.row(fname, "" +  cf.length() + " bytes"));
 	    }
 
-	    report += fm.para(rows.size()==0?
-			      "We have no files uploaded by you so far":
-			      "We have "+rows.size()+" files uploaded by you so far");
-	    report += fm.para( fm.table("", rows));
+	    if (rows.size()==0) {
+		report += fm.para("We have no files uploaded by you so far.");
+	    } else {
+		report += fm.para("We have "+rows.size()+" files uploaded by you so far.");
+		report += fm.para( fm.table("border=\"1\"", rows));
+	    }
 	} catch(Exception ex) {
 	    hasException(ex);
 	}

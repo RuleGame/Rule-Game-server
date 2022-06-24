@@ -18,7 +18,8 @@ public class MlcLoginServlet extends LoginServlet {
   private static final String START_PAGE =	"/mlc/index.jsp";
 
     public void service(HttpServletRequest request,HttpServletResponse response) {
-	service0( request, response, START_PAGE, true); 
+	service0( request, response, START_PAGE, true);
+	
     }
 
 	

@@ -23,8 +23,8 @@
 
       <ul>
 	<li><a href="concepts.html">The main concepts of the Rule Game</a>. 
-	<li><a href="syntax.html">About the syntax of rule set files</a>
-	<li><a href="syntax-gs5.html">About the syntax of rule set files: GS5 extension</a>
+	<li><a href="syntax.html">About the syntax of rule set files (GS 3.*)</a>
+	<li><a href="syntax-gs5.html">About the syntax of rule set files: GS 5.* extension</a>
 	<li><a href="arithmetic.html">Bucket expression arithmetic</a>: more about the expressions used to compute the accepting bucket number(s)
 	<li><a href="arithmetic-form.jsp">Try out your arithmetic expressions!</a>
 	<li><a href="colors-and-shapes.html">Using custom colors and shapes in Game Server 2.*</a>
@@ -583,7 +583,9 @@ The second number, the <strong>finish code</strong> reports the current state: 0
 
     <h2>Logging</h2>
 
-    <p>There is no logging at present. The ML program is to count its games, and to record displays (e.g. the initial boards) if it so desires.
+    <p>Until ver 5.003, there was no logging. The ML program was to count its games, and to record displays (e.g. the initial boards) if it so desires.
+
+    <p>Some elementary logging (one line per episode) was introduced in CGS 5.003; see above.
 
 
       <h2>Socket interface</h2>
