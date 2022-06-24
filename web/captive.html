@@ -7,7 +7,7 @@
     
     <h2>What is the Captive Game Server?</h2>
 
-    <p>The Captive Game Server (CGS) is a small Java application that contains the same game engine as the Web Game Server, but does not have a SQL database, does not write transcript files, and does not communicate with clients using HTTP. It can be used by a Machine Learning researcher (in particular, a participant in the <a href="mlc.html">The Machine Learning Challenge (MLC)</a>) who wants a ML program to learn how to play a Rule Game game as a counterparty for his ML program to play with.
+    <p>The Captive Game Server (CGS) is a small Java application that contains the same game engine as the Web Game Server, but does not have a SQL database, does not write transcript files, and does not communicate with clients using HTTP. It can be used by a Machine Learning researcher (in particular, a participant in the <a href="mlc/mlc-guide.html">The Machine Learning Challenge (MLC)</a>) who wants a ML program to learn how to play a Rule Game game as a counterparty for his ML program to play with.
 
     <p>The Captive Game Server can be run in two ways: <strong>pipe-based</strong> and  <strong>socket-based</strong>.
 
@@ -35,10 +35,13 @@
 
       <h2>The Machine Learning Challenge (MLC)</h2>
 
-    <p>For further information on the  Machine Learning Challenge, see:
-      <ul>
-      <li><a href="mlc.html">The Machine Learning Challenge (MLC)</a>
-      </ul>
+    <p>For further information on the  Machine Learning Challenge (MLC), see:
+	  <ul>
+	    <li><a href="mlc/mlc-guide.html">MLC Participant's Guide</a>
+	    <li><a href="mlc/mlc-manage.html">MLC Manager's Guide</a>
+	    <li><a href="mlc/">MLC Participant's Dashboard (submit results here; nickname password required -- obtain it from Paul or Eric)</a>
+	  </ul>
+   
 
   <h2><a name="install">Installation</a></h2>
     <p>If you're a UWM team member using CGS installed on <tt>sapir</tt>, you can safely ignore this section.    But if you are installing the CGS on your own machine (especially at a different institution), please follow the instructions below to obtain the Captive Game Server distribution and the necessary third-party files.
@@ -271,8 +274,9 @@ Since the trial list file implicitly refers to files in various directories unde
   </pre>
 as the main argument on your command line. Both  <em>ruleSet</em> and <em>modifier</em> can be specified as absolute file paths (i.e. starting with a <tt>/</tt> or with a <tt>~</tt>). Alternatively, you can use the <tt>inputDir</tt> parameter to specify the root input data directory; if you do that, the  <em>ruleSet</em> and <em>modifier</em> can be specified as relative paths, relative to the <tt>rules</tt> and <tt>modifiers</tt> subdirectories of the  input data directory.
 
-<p>Here's an example, which uses a sample rule set file (<tt>game-data/rules/MLC/BMK/colOrd_nearby.txt</tt>) and a sample modifier file that we distribute for the <a href="mlc.html">MLC</a> participants:
-
+<p>Here's an example, which uses a sample rule set file (<tt>game-data/rules/MLC/BMK/colOrd_nearby.txt</tt>) and a sample modifier file that we distribute for the <a href="mlc/mlc-guide.html">The Machine Learning Challenge (MLC)</a>
+	   participants:
+       
 <pre>
   cd ~/w2020/game     
   ./captive-full.sh inputDir=game-data R:MLC/BMK/colOrd_nearby.txt:MLC/BMK/bmk.csv
@@ -296,7 +300,7 @@ as the main argument on your command line. Both  <em>ruleSet</em> and <em>modifi
 
 <h3>Generating a results file</h3>
 
-<p>For the convenience of <a href="mlc.html">MLC</a> participants, you can get the Captive Game Server produce a results file, each line of which will record the outcome of one episode. Sample usage:
+<p>For the convenience of <a href="mlc/mlc-guide.html">MLC</a> participants, you can get the Captive Game Server produce a results file, each line of which will record the outcome of one episode. Sample usage:
 
 <pre>  
   ./captive-full.sh inputDir=game-data log=sample.csv log.nickname=JohnDoe log.run=0  R:MLC/BMK/colOrd_nearby.txt:MLC/BMK/bmk.csv
@@ -404,7 +408,7 @@ Cleared board in 12 steps
 
 <h4>Sample Python app that also does MLC logging</h4>
 
-    <p>We have provided a sample shell script for the  <a href="mlc.html">Machine Learning Challenge (MLC)</a> participants who wants their ML program to play with the Captive Game Server and to save a results file for submission to the MLC Leader Board. The can model their scripts on the <tt>csh</tt> script
+    <p>We have provided a sample shell script for the  <a href="mlc/mlc-guide.html">Machine Learning Challenge (MLC)</a> participants who wants their ML program to play with the Captive Game Server and to save a results file for submission to the MLC Leader Board. The can model their scripts on the <tt>csh</tt> script
       <tt>scrupts/captive-python-mlc.sh</tt>, which in its turn uses
       <tt>python/client-2.py</tt>.
 
