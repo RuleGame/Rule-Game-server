@@ -31,7 +31,7 @@ public class LoginServlet extends HttpServlet {
 	return x!=null && x.toLowerCase().equals("true");
     }
 
-    private static final String START_PAGE =	 "/launch/index.jsp";
+    static final String START_PAGE =	 "/launch/index.jsp";
 
     public void service(HttpServletRequest request,HttpServletResponse response) {
 	service0( request, response, START_PAGE, false);
