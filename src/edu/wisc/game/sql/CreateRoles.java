@@ -40,11 +40,19 @@ public class CreateRoles {
 	    u = new User();
 	    u.setNickname(nickname);
 	    u.encryptAndSetPassword(pw);
+
+	    Date now = new Date();
+	    u.setIdCode( User.buildCodeId("mlc", now));
+	    u.setDate( now );
+	    if (email!=null) u.setEmail(email);
+
 	    em.persist(u);
 	} else {
-	    System.out.println("User already exists: " + nickname );
-	    System.out.println("Setting his password to " + pw);
+	    System.out.println("User already exists with this nickname: " + nickname );
+	    System.out.println("Setting password to " + pw);
 	    u.encryptAndSetPassword(pw);
+	    System.out.println("Setting email to " + email);
+	    if (email!=null) u.setEmail(email);	    
 	    em.persist(u);
 	}
 	em.getTransaction().commit();

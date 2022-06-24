@@ -72,7 +72,7 @@ public class LoginServlet extends HttpServlet {
 	 User u = ur.getUser();
 
 	 // Register this user's key for REST tools
-	 if (pw!=null) {
+	 if (pw!=null && nickname!=null) {
 	     MlcUploadService.giveKey(nickname);
 	 }
 	 

@@ -2,6 +2,7 @@ package edu.wisc.game.sql;
 
 import java.io.*;
 import java.util.*;
+import java.text.*;
 import javax.persistence.*;
 
 import java.security.*;
@@ -193,6 +194,14 @@ public class User extends OurTable {
 	    s += " " + r;
 	}
 	return s; 	
+    }
+
+    static final DateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");    
+
+    /** Creates a more or less unique ID that can be used as 
+	a "secret ID" for a User object */
+    static public String buildCodeId(String prefix, Date now) {
+	return prefix + "-" + sdf.format(now) + "-" + Episode.randomWord(6);
     }
 
  

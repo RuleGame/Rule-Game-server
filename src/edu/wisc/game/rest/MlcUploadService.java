@@ -44,6 +44,8 @@ public class MlcUploadService {
 
     /** Used by the MlcLoginServlet etc */
     public static synchronized String giveKey(String nickname) {
+	if (nickname==null) return null;
+	
 	String s = userKeyTable.get(nickname);
 	if (s==null) {
 	    byte bytes[] = new byte[10];	    
@@ -59,6 +61,7 @@ public class MlcUploadService {
     }
 
     private boolean matched(String  nickname, String key) {
+	if (nickname==null) return false;
 	String s = userKeyTable.get(nickname);
 	return s!=null && s.equals(key);
     }
