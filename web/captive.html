@@ -679,11 +679,11 @@ Connection closed by foreign host.
     <p>For the convenience of ML researchers who may want their ML application written in Python communicate with the socket CGS, we provide a sample Python client doing exactly that.
       </p>
 
-    <p>To see how this works, run the script
+    <p>To see how this works, run the script	<tt>captive-python-socket.sh</tt>, indicating the host and port to connect, and the game to play, e.g.:
       <pre>
-	./captive-python-socket.sh
+	 ./captive-python-socket.sh localhost 7501 /opt/tomcat/game-data/rules/Rule-001.txt 4
       </pre>
-      with no arguments. It will set the CLASSPATH as needed to include all relevant JAR files, and will then invoke <tt>python/client-socket.py</tt> with some arguments (host name, port number, rule file and piece count), which opens a socket connection and plays an episode of the specified game.
+ It will set the CLASSPATH as needed to include all relevant JAR files, and will then invoke <tt>python/client-socket.py</tt> with the same arguments (host name, port number, rule file and piece count), which opens a socket connection and plays an episode of the specified game.
     <p>
 
       <p>You may want to modify the script <tt>captive-python-socket.sh</tt> as needed to use a different host, port, or rule file.</p>
