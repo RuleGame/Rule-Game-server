@@ -16,7 +16,7 @@ import gameLoop
 jarg =  ['java', '-Doutput=STANDARD', 'edu.wisc.game.engine.Captive']
 jarg.extend( sys.argv[1:])
 
-print "Spawning CGS with the following command: " , jarg
+print( "Spawning CGS with the following command: " + " ".join(jarg))
 
 #----------------------------------------------------------------------
 #-- Spawn a CGS as a child process

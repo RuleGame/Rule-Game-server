@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+#-- !/usr/bin/python3
+
 #----------------------------------------------------------------------
 #-- This is a sample Python program that spawns a Captive Game Server
 #-- and plays with it using pipe I/O

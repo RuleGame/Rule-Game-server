@@ -16,9 +16,12 @@ import subprocess, sys, re, random, json
 def readLine(inx):
     while True:
         s = inx.readline()
-        sys.stdout.write("Received: "+ s + "\n")
+        sys.stdout.write("Received: "+ str(s) + "\n")
+        # sys.stdout.write("Received type="+ str(type(s)) + "\n")
         if not s:
             return s
+
+        s = s.decode()  #-- for Python3
         if s.startswith('#'):
             continue
         else:
@@ -75,10 +78,10 @@ def chooseMove(val):
 # inx=proc.stdout
 # outx=proc.stdin
 
-#--- Playe 1 episode and EXIT
+#--- Play 1 episode and EXIT
 def mainLoop(inx,outx): 
     mainLoopA(inx,outx);
-    outx.write("EXIT\n");
+    outx.write("EXIT\n".encode());  #-- for Python3
     outx.flush();
 
 #-- Play N episodes and EXIT     
@@ -86,7 +89,7 @@ def severalEpisodes(inx,outx,N):
     for j in range(0, N):
         mainLoopA(inx,outx);
         cmd = "EXIT\n" if (j==N-1) else "NEW\n";
-        outx.write(cmd);
+        outx.write(cmd.encode());  #-- for Python3
         outx.flush();
 
     
@@ -136,7 +139,8 @@ def mainLoopA(inx,outx):
         send = "MOVE " + " ".join( map(repr, moveData))
         sys.stdout.write("Sending: "+ send + "\n")
         
-        outx.write(send + "\n")
+#        outx.write(send + "\n")
+        outx.write((send + "\n").encode())
         outx.flush()
     
 
