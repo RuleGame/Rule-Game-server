@@ -51,6 +51,7 @@
         <class>edu.wisc.game.sql.Test</class>
         <class>edu.wisc.game.sql.TestParent</class>
         <class>edu.wisc.game.sql.TestChild</class>
+        <class>edu.wisc.game.sql.MlcEntry</class>
 
         <properties>
             <!--

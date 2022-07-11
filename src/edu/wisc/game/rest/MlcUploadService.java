@@ -223,7 +223,7 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 			s += fm.td("" + e.getEpisodesUntilLearned() ) +
 			    fm.td("" +e.getMovesUntilLearned());
 		    }
-		    rows.add(s);
+		    rows.add(fm.tr(s));
 		}			      
 			  				 
 		body += fm.table(		 "border=\"1\"", rows);
