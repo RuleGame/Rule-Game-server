@@ -36,7 +36,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 public class MlcUploadService {
     private static HTMLFmter  fm = new HTMLFmter();
 
-    /** As REST is stateless, this table is used for authorization, instead of sessions */
+    /** As REST is stateless, this table is used for authorization, instead of sessions. It is worked by MlcLoginServlet (via LoginServlet) */
     private static HashMap<String,String> userKeyTable = new HashMap<String,String>();
 
 
@@ -65,14 +65,21 @@ public class MlcUploadService {
 	String s = userKeyTable.get(nickname);
 	return s!=null && s.equals(key);
     }
-   
+
+
+    /**
+nickname,rule_name,trial_id,board_id,number_of_pieces,number_of_moves,move_acc,if_clear
+RandomTest,alternateShape2Bucket_color2Bucket,0,0,9,29,0.3103448275862069,1
+RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
+...
+    */
     @Path("/uploadFile")
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_HTML)
-    public String displayBoardFile(@FormDataParam("nickname") String nickname,
-				   @FormDataParam("key") String key,
-				   @FormDataParam("file") FormDataBodyPart parts				    ) {
+    public String uploadFile(@FormDataParam("nickname") String nickname,
+			     @FormDataParam("key") String key,
+			     @FormDataParam("file") FormDataBodyPart parts				    ) {
 	
 	String title="", body="";
 
@@ -87,14 +94,14 @@ public class MlcUploadService {
 	    }
 
 	    if (parts==null) {
-		throw new IllegalInputException("No board description JSON supplied");		
+		throw new IllegalInputException("No data uploaded");		
 	    }
 
-	    title ="File uploading for participant " + fm.tt(nickname);
+	    title ="File uploading for MLC participant " + fm.tt(nickname);
 
 	    File d = Files.mlcUploadDir(nickname, false);
 
-
+	    Date now = new Date();
 	    
 	    for(BodyPart part : parts.getParent().getBodyParts()){
 		InputStream file = part.getEntityAs(InputStream.class);
@@ -107,6 +114,7 @@ public class MlcUploadService {
 		body += fm.para("Writing "+ fm.tt(fileName) + " ...");
 
 		File g = new File(d, fileName);
+		/*
 		OutputStream out = new FileOutputStream(g);
 		int b;
 		int cnt=0;
@@ -115,12 +123,110 @@ public class MlcUploadService {
 		    cnt ++;
 		}
 		out.close();
+		*/
 
-		body += fm.para("Read " + cnt + " bytes, wrote " +  g.length() + " bytes");	
+		PrintWriter w = new PrintWriter(new FileWriter(g));
+		InputStreamReader r0 = new InputStreamReader(file);
+		LineNumberReader r = new LineNumberReader(r0);
+		String line = null;
+		long lineCnt = 0, charCnt=0;
+		Vector<MlcEntry> results = new Vector<>();
+		MlcEntry e = null;
+		while((line = r.readLine())!=null) {
+		    if (lineCnt==0) {
+			String h0 = "nickname,rule_name,trial_id,board_id,number_of_pieces,number_of_moves,move_acc,if_clear";
+			if (!line.trim().equals(h0)) {
+			    body += fm.para("Error: unexpected header. Expected: " + fm.pre(h0) + "Found: " + fm.pre(line));
+			    break;
+			} 
+		    } else {
+			
+			String q[] = line.trim().split(",");
+			int M = 8;
+			if (q.length!=M) {
+			    body += fm.para("Error: unexpected number of columns in line "+(lineCnt+1)+" Expected: " + M+ " columns, found " + q.length + ". Line: " + fm.pre(line));
+			    break;
+			}	
+		    
+			String _nickname = q[0];
+			if (!_nickname.equals(nickname)) {
+			      body += fm.para("Error: unexpected nickname in line "+(lineCnt+1)+" Expected: " + nickname+ " columns, found " + _nickname + ". Line: " + fm.pre(line));
+			    break;
+			}
+		    			
+			String rule_name = q[1];
+			int runNo = Integer.parseInt(q[2]);
+
+			if (e!=null && e.matches(nickname, rule_name, runNo)) {
+			    // keep going
+			} else {
+			    e = new MlcEntry(nickname, rule_name, runNo, now);
+			    results.add(e);
+			}
+		 			  
+			
+			int episodeNo = Integer.parseInt(q[3]);			
+			int number_of_pieces =Integer.parseInt(q[4]);
+			int number_of_moves=Integer.parseInt(q[5]);
+			double move_acc = Double.parseDouble(q[6]);
+			boolean if_clear = Boolean.parseBoolean(q[7]);
+
+			StringBuffer errmsg = new StringBuffer();
+			if (!e.addEpisode( episodeNo,
+					   number_of_pieces,
+					   number_of_moves,
+					   move_acc,
+					   if_clear,
+					   errmsg)) {
+	
+			    body += fm.para("Error in line "+(lineCnt+1)+". " + errmsg + ". Line: " + fm.pre(line));
+			    break;
+			    
+			}
+		    }
+		    w.print(line);
+		    lineCnt++;
+		    charCnt += line.length();
+		}
+		file.close();
+		w.close();
+		
+		body += fm.para("Copied " + lineCnt + " lines, wrote file "+ g+ " with the length of " +  g.length() + " bytes");	
 
 		body += fm.para(fm.a("../../mlc/", "Back to the MLC participant's dashboard"));
 
+		body += fm.para("Processed data for " + results.size() + " runs");
 
+		Vector<String> rows = new Vector<>();
+		rows.add( fm.tr( fm.th("Rule Set") +
+				 fm.th("Run No.") +
+				 fm.th("Episodes") +
+				 fm.th("Total moves") +
+				 fm.th("Total errors") +
+				 fm.th("Learned?") +
+				 fm.th("Episodes till learned") +
+				 fm.th("Moves till learned")));
+		String lastRule = "";
+		for(MlcEntry _e: results) {
+		    e = _e;
+		    String rule = e.getRuleSetName();
+
+		    String s = 	(rule.equals(lastRule))? fm.td(""): fm.td(rule);
+		    lastRule = rule;
+		    s +=
+			fm.td( ""+e.getRunNo())+
+			fm.td( ""+e.getTotalEpisodes()) +		      
+			fm.td("" +e.getTotalMoves()) +		      
+			fm.td("" +e.getTotalErrors()) +		      
+			fm.th(e.getLearned()? "Yes" : "No");
+		    if (e.getLearned()) {
+			s += fm.td("" + e.getEpisodesUntilLearned() ) +
+			    fm.td("" +e.getMovesUntilLearned());
+		    }
+		    rows.add(s);
+		}			      
+			  				 
+		body += fm.table(		 "border=\"1\"", rows);
 		
 	    }
 	} catch(Exception ex) {
