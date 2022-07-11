@@ -147,6 +147,8 @@ public class Captive {
      */
     public static void main(String[] argv) throws IOException,  RuleParseException, ReflectiveOperationException, IllegalInputException{ 
 
+	// The captive server does not need the master conf file in /opt/w2020
+	MainConfig.setPath(null);
 	ParseConfig ht = new ParseConfig();
 
 	// allows seed=... , colors=.... etc among argv

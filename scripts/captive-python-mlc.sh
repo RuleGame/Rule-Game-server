@@ -1,5 +1,11 @@
 #!/bin/csh
 
+#--------------------------------------------------------------------------
+# This is the main script for generating a sample results file, as a sample
+# on which MLC participants can model their programs' output.
+#--------------------------------------------------------------------------
+
+
 #-- The directory where this script is
 set sc=`dirname $0`
 set h=`(cd $sc/..; pwd)`
@@ -9,6 +15,7 @@ source "$sc/set-var-captive.sh"
 #--- the main input data directory 
 set in=$h/game-data
 
+#-- the list of rule sets
 set rules=`(cd $in/rules; ls MLC/BMK/*.txt)`
 set log=test.csv
 echo "Will collect results in file $log"

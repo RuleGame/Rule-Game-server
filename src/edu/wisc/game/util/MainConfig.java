@@ -16,21 +16,32 @@ public class MainConfig //extends ParseConfig
 {
 
     /** The file location */
-    static final private String path = "/opt/w2020/w2020.conf";
+    static private String path = "/opt/w2020/w2020.conf";
 
     static private ParseConfig ht = null;
 
-    static {
+    /** Used by the Captive Server, with null argument, to disable the
+	attempts to look for the master config file (which CGS users
+	likely won't have).
+     */
+    public static void setPath(String _path) {
+	path = _path;
+	initConf();
+    }
+    
+    static private void initConf() {
 	try {
+	    if (path==null) return;
 	    ht = new ParseConfig(path);
 	} catch(Exception ex) {
-	    System.err.println("ERROR: Problem reading master configuration file '"+path +"'. Will use built-in default values instead, which can cause problems accessing the database server and data files. " + ex);
+	    System.err.println("Warning: Problem reading master configuration file '"+path +"'. Will use built-in default values instead, which can cause problems accessing the database server and data files. If you are running the Captive Server, you can ignore this message. " + ex);
 	    ex.printStackTrace(System.err);
 	}
     }
 
     static public String getString(String name, String defVal) {
-	return ht.getString(name, defVal);
+	if (ht==null) initConf();
+	return (ht==null)? defVal: ht.getString(name, defVal);
     }
 
     /** The URL string for the Rule Game GUI Client.
