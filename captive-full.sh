@@ -12,6 +12,9 @@
 #   ./captive-full.sh   /opt/tomcat/game-data/trial-lists/vmColorTest/trial_1.csv 1
 #
 #   ./captive-full.sh  -inputDir /home/vmenkov/my-game-data ~/my-game-data/trial-lists/vmColorTest/trial_1.csv 1
+#
+# ./captive-full.sh inputDir=game-data log=sample.csv log.nickname=JohnDoe log.run=0  R:MLC/BMK/colOrd_nearby.txt:MLC/BMK/bmk.csv
+#
 #---------------------------------------------------------------------
 
 

@@ -426,6 +426,8 @@ Cleared board in 12 steps
 	~/w2020/game/scripts/captive-python-mlc.sh
       </pre>
 
+    <p>If you are an <a href="mlc/mlc-guide.html">MLC</a> participants, you may want to read this script (and the Python scripts it invokes), and insert functionally similar code into your application, so that it gets the CGS to generate necessary results files.
+      
     <p>If you look inside this script, you'll see that it:
       <ul>
 	<li>Lists all rule files from <tt>game-data/rules/MLC/BMK</tt>;
@@ -455,7 +457,7 @@ RandomTest,colOrd_nearby,0,2,9,76,0.11842105263157894,1
       </pre>
 
     <p>The sample Python screen is a fairly poor player, as it makes its moves completely at random (picking a random game piece and trying to move it to a randomly chosen bucket). If your ML program is any good, you should hope to obtain, on average, better values of <tt>move_acc</tt>, at least once it has learned something!
-
+      
 
     <h2>Game description</h2>
 

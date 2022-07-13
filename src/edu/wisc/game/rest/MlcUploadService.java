@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.json.*;
 
+import javax.persistence.*;
+
 
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
@@ -169,7 +171,7 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 			int number_of_pieces =Integer.parseInt(q[4]);
 			int number_of_moves=Integer.parseInt(q[5]);
 			double move_acc = Double.parseDouble(q[6]);
-			boolean if_clear = Boolean.parseBoolean(q[7]);
+			boolean if_clear = q[7].equals("1");
 
 			StringBuffer errmsg = new StringBuffer();
 			if (!e.addEpisode( episodeNo,
@@ -227,6 +229,8 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 		}			      
 			  				 
 		body += fm.table(		 "border=\"1\"", rows);
+
+		saveToDatabase(results, nickname);
 		
 	    }
 	} catch(Exception ex) {
@@ -242,5 +246,32 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 	return fm.html(title, body);		
     }
     
- 
+    void saveToDatabase(Vector<MlcEntry> results, String nickname) {	
+	EntityManager em=null;
+	try {
+	    em = Main.getNewEM();
+	    em.getTransaction().begin();
+
+	    Query q = em.createQuery("select m from MlcEntry m where m.nickname=:n");
+	    q.setParameter("n", nickname);
+	    List<MlcEntry> res = (List<MlcEntry>)q.getResultList();
+	    for(MlcEntry e: res) {
+		em.remove(e);
+	    }
+	    for(MlcEntry e: results) {
+		em.persist(e);	
+	    }
+
+	    
+	    em.getTransaction().commit();
+
+	} finally {	
+	    if (em!=null) try {
+		    em.close();
+		} catch(Exception ex) {}
+	}
+
+    }
+
+    
 }
