@@ -127,6 +127,14 @@ public class Files {
 	return inputFile(ruleSetName, "rules", RULES_EXT);
     }
 
+    private static boolean canCacheAllRules = false;
+
+    /** This can be used (typically, in the captive server context) to allow caching all rules,
+	for greater efficiency */
+    public  static void allowCachingAllRules(boolean x) {	
+	canCacheAllRules=x;
+    }
+
     /** Can the game server cache this rule set? The convention is, names not
 	starting with a slash refer to files in the tomcat directory,
 	whose content is supposed to be stable; therefore, they can be
@@ -135,7 +143,7 @@ public class Files {
 	and thus possibly not stable; so the game server does not cache those.
      */
     public static boolean rulesCanBeCached(String ruleSetName) {
-	return !ruleSetName.startsWith("/");
+	return canCacheAllRules || !ruleSetName.startsWith("/");
     }
     
     public static File initialBoardFile(String boardName ) throws IOException {

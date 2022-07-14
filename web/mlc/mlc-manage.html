@@ -4,9 +4,9 @@
   </head>
   <body>
 
-    <h1>Managing MLC submissions</h1>
+    <h1>Managing MLC results submissions</h1>
 
-<div align="center"><em>Updated 2022-06-23  for GS 5.004</em></div>
+<div align="center"><em>Updated 2022-07-13  for GS 5.006</em></div>
     
     <h2>Registering participants</h2>
 
@@ -21,7 +21,7 @@ For example:
       <pre class="yellow">
 /home/vmenkov/w2020/game/scripts/create-mlc-user.sh bob1 bob1@yahoo.com xxxbob1
       </pre>
-
+      
     <p>Here, <em>nickname</em> is an identifying name for the project participant (a person, a team, or a ML algorithm). This should appear as part of the first column of the CSV files that the participant will be submitting. (In that file, the particicpant's nickname will be separated by a '+' sign from the rule set name).
 
     <p>As a confirmation, the script will print out the list of all users in the system, one of which should be your new user:
@@ -32,6 +32,12 @@ For example:
 	....
 </pre>
 
+    <P>One can save the output into an HTML file and then view it in a web browser:
+       <pre class="yellow">
+/home/vmenkov/w2020/game/scripts/create-mlc-user.sh bob1 bob1@yahoo.com xxxbob1 > tmp.html
+      </pre>
+      
+      
 <p>As the list may be old, and it also includes the participants for the old APP and MLC launch pages, you may want to pipe it through <tt>more</tt>, or to save it in a file.
       
     <p>You can now send the nickname and the password to the participant, for use in future uploads.
@@ -44,7 +50,37 @@ For example:
 
     <p>Once the files have been uploaded, they go to /opt/tomcat/saved/mlc, each participant's data going to a separate directory named after their nickname. Our research team can later process those data with its tools.
 
-      <p>We will add various tools ("leader board" etc) to the Participants' Dashboard later on.
+    <P>The summary of each run is recorded as a row in the SQL table <tt>MlcEntryM</tt>.
+
+      <h2>Fake learning methods</h2>
+
+    <p>Since, as of July 2022, I don't have any "real" learning data in the desired format at my disposal, and the scope of my emplotyment does not involve building actual machine learning tools, I have set up a <strong>fake</strong> machine learning script, so that I could have some test data to test the uploading process. The "fake learner" plays randomly (i.e. without any learning at all) for a certain number of episodes, and then starts cheating, by using the list of allowed buckets that the server shows to it (but which a true learner must not use). So you can make it demonstrate "full learning" after a desired number of episodes.
+
+    <p>Sample command line:
+
+      <pre class="yellow">
+	/home/vmenkov/w2020/game/scripts/captive-python-mlc-fake.sh 15 >& t.tmp &
+      </pre>
+
+    <p>The command-line argument (15, in the example above) indicates at which point (after how many episodes) in each run the player will start cheating.
+
+    <p>The scripts completes 100 runs, with 100 episodes each, for each of the 15 sample rule sets of the MLC. This takes about 1.5 hours of clock time on sapir. The resulting file (which is automatically named <tt>Fake-15.csv</tt> by the script, based on the parameter value) contains 15*100*100=150,000 data lines (plus the header line), and is about 6.5 MB in size:
+      
+<pre>
+vmenkov@SAPIR:~$ wc Fake-1*.csv
+  150001   150001  6380450 Fake-10.csv
+  150001   150001  6484567 Fake-15.csv
+</pre>
+
+
+    <p>The "imitation participants" <tt>Fake-10</tt>, <tt>Fake-15</tt>, <tt>Fake-20</tt> imitate learners who have "fully learned" all rules (because the can demonstrate a streak of at least 10 error-free episodes at the end of each run), while <tt>Fake-80</tt> imitates  successful learning in only some runs (because it only rarely manage to get all of episodes No. 90 thru 99 error-free, and then the run ends).
+
+    <p>Eventually, of course, we should purge the data for these "fake learners" from the server.
+
+   <h2>Dashboard tools</h2>
+
+      
+      <p>The <a href="index.jsp">Participants' Dashboard</a> shows the basic information about the file(s) the participant has uploaded, as well as links to the "summary" and "comparison" (leader board) pages for each rule set the participant has competed on.
       
   </body>
   </html>
