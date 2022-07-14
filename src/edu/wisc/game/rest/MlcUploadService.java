@@ -528,9 +528,12 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 		    if (e.getLearned())  learnedRuns++;
 		}
 		double avgErrorRate = totalE/totalM;
+
+		String learnedWord = (learnedRuns==0)? "Not learned" : "Sometimes learned";
+
 		
 		rows.add( fm.tr( fm.th(nick) +
-				 fm.td("Not learned ("+learnedRuns+"/"+(runs-learnedRuns)+")") +
+				 fm.td(learnedWord + " ("+learnedRuns+"/"+(runs-learnedRuns)+")") +
 				 fm.td("") +
 				 fm.td("" + runs) +
 				 fm.td("") +
