@@ -38,6 +38,7 @@ public class MlcMain  extends ResultsBase  {
 	    giveError("Apparently you have logged in through a wrong page, or too long ago. Please log out and then log in again. (Nickname="+displayName+")");
 	    return;	    
 	}
+	EntityManager em=null;
 
 	try {
 	    nickname = displayName;
@@ -68,9 +69,48 @@ public class MlcMain  extends ResultsBase  {
 		report += fm.para("We have "+rows.size()+" files uploaded by you so far.");
 		report += fm.para( fm.table("border=\"1\"", rows));
 	    }
+
+	    em = Main.getNewEM();
+	    Query q = em.createQuery("select distinct m.ruleSetName from MlcEntry m where m.nickname=:n");
+	    q.setParameter("n", nickname);
+	    List<String> myRules = (List<String>)q.getResultList();
+	    if (myRules.size()>0) {
+		report += fm.h2("Compare your results");
+		report += fm.para("You have submitted results for this algorithm's performance on " + myRules.size() + " rule set(s). You can use links in the table below to see how these results compare to those obtained by other algorithms");
+		rows.clear();
+		rows.add( fm.tr( fm.th("Rule Set") +
+				 fm.th("My data summary") +
+				 fm.th("Comparison to others")));
+
+		final String base = "../game-data/MlcUploadService";
+		
+		for(String rule: myRules) {
+		    String sumLink = base+"/summary?nickname="+nickname+"&rule=" + rule;
+		    String aSum = fm.a(sumLink, "summary", null);
+
+		    String cmpLink = base+"/compare?nickname="+nickname+"&rule=" + rule;
+		    String aCmp = fm.a(cmpLink, "compare", null);
+
+		    
+		    rows.add( fm.tr( fm.td(rule) +
+				     fm.th(aSum) +
+				     fm.th(aCmp)));
+		    
+		}
+		report += fm.table(	 "border=\"1\"", rows);
+
+	    }	      
+			
+
+	    
 	} catch(Exception ex) {
 	    hasException(ex);
+	} finally {	
+	    if (em!=null) try {
+		    em.close();
+		} catch(Exception ex) {}
 	}
+
 
     }
 

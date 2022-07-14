@@ -29,8 +29,8 @@ public class SessionData {
     static String getWhoSync() { return whoSync; }
 
     private static void addSync(String msg) {
-	Logging.info(msg);
-	whoSync += "; " + msg;	
+	//Logging.info(msg);
+	//whoSync += "; " + msg;	
     }
 
 

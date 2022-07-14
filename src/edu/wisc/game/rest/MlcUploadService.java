@@ -9,7 +9,6 @@ import jakarta.json.*;
 
 import javax.persistence.*;
 
-
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
 
@@ -18,6 +17,7 @@ import edu.wisc.game.reflect.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.formatter.*;
+import edu.wisc.game.math.*;
 
 
 import org.glassfish.jersey.media.multipart.BodyPart;
@@ -26,9 +26,6 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-//import org.springframework.stereotype.Component;
-
-
 
 /** Uploading results files by MLC participants
 
@@ -152,7 +149,7 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 		    
 			String _nickname = q[0];
 			if (!_nickname.equals(nickname)) {
-			      body += fm.para("Error: unexpected nickname in line "+(lineCnt+1)+" Expected: " + nickname+ " columns, found " + _nickname + ". Line: " + fm.pre(line));
+			    body += fm.para("Error: unexpected nickname in line "+(lineCnt+1)+" Expected: " + fm.tt(nickname)+ ", found " + fm.tt(_nickname) + ". Line: " + fm.pre(line));
 			    break;
 			}
 		    			
@@ -195,42 +192,19 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 		
 		body += fm.para("Copied " + lineCnt + " lines, wrote file "+ g+ " with the length of " +  g.length() + " bytes");	
 
+		body += fm.para("Processed data for " + results.size() + " runs");
+			  				 
+		body += summaryTable(results);
+
+
+		body += fm.hr();
 		body += fm.para(fm.a("../../mlc/", "Back to the MLC participant's dashboard"));
 
-		body += fm.para("Processed data for " + results.size() + " runs");
-
-		Vector<String> rows = new Vector<>();
-		rows.add( fm.tr( fm.th("Rule Set") +
-				 fm.th("Run No.") +
-				 fm.th("Episodes") +
-				 fm.th("Total moves") +
-				 fm.th("Total errors") +
-				 fm.th("Learned?") +
-				 fm.th("Episodes till learned") +
-				 fm.th("Moves till learned")));
-		String lastRule = "";
-		for(MlcEntry _e: results) {
-		    e = _e;
-		    String rule = e.getRuleSetName();
-
-		    String s = 	(rule.equals(lastRule))? fm.td(""): fm.td(rule);
-		    lastRule = rule;
-		    s +=
-			fm.td( ""+e.getRunNo())+
-			fm.td( ""+e.getTotalEpisodes()) +		      
-			fm.td("" +e.getTotalMoves()) +		      
-			fm.td("" +e.getTotalErrors()) +		      
-			fm.th(e.getLearned()? "Yes" : "No");
-		    if (e.getLearned()) {
-			s += fm.td("" + e.getEpisodesUntilLearned() ) +
-			    fm.td("" +e.getMovesUntilLearned());
-		    }
-		    rows.add(fm.tr(s));
-		}			      
-			  				 
-		body += fm.table(		 "border=\"1\"", rows);
 
 		saveToDatabase(results, nickname);
+
+		//if (myRules.size()>0) {    body += fm.h2("Compare ");	     }
+		
 		
 	    }
 	} catch(Exception ex) {
@@ -273,5 +247,315 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 
     }
 
-    
+    /** Produces a summary table for a player's data on a given 
+	rule set, or on several rule sets */
+    private static String summaryTable(Collection<MlcEntry> entries) {
+
+	Vector<String> rows = new Vector<>();
+	rows.add( fm.tr( fm.th("Rule Set") +
+			 fm.th("Run No.") +
+			 fm.th("Episodes") +
+			 fm.th("Total moves") +
+			 fm.th("Total errors") +
+			 fm.th("Learned?") +
+			 fm.th("Episodes till learned") +
+			 fm.th("Moves till learned")));
+	String lastRule = "";
+	//Vector<String> myRules = new Vector<>();
+	//	HashSet<String> myRulesHash = new HashSet<>();
+	
+	for(MlcEntry e: entries) {
+	    String rule = e.getRuleSetName();
+
+	    String s = 	(rule.equals(lastRule))? fm.td(""): fm.td(rule);
+	    lastRule = rule;
+	    s +=
+		fm.td( ""+e.getRunNo())+
+		fm.td( ""+e.getTotalEpisodes()) +		      
+		fm.td("" +e.getTotalMoves()) +		      
+		fm.td("" +e.getTotalErrors()) +		      
+		fm.th(e.getLearned()? "Yes" : "No");
+	    if (e.getLearned()) {
+		s += fm.td("" + e.getEpisodesUntilLearned() ) +
+		    fm.td("" +e.getMovesUntilLearned());
+	    }
+	    rows.add(fm.tr(s));
+	    
+	    //  if (!myRulesHash.contains(rule)) {
+	    //	myRulesHash.add(rule);
+	    //	myRules.add(rule);			
+	    //}
+	    
+	}			      
+			  				 
+	return fm.table( "border=\"1\"", rows);
+    }
+	
+
+   
+    /** Prints the summary of a specified player's performance on 
+	a particular rule set */
+    @GET
+    @Path("/summary")
+    @Produces(MediaType.TEXT_HTML)
+    public String summary(@QueryParam("nickname") String nickname,
+			  @QueryParam("rule") String rule) {
+	String title="", body="", errmsg = null;
+	EntityManager em=null;
+
+	try {
+
+	    
+	    if (nickname==null || nickname.trim().equals("")) {
+		throw new IllegalInputException("No nickname parameter in the form.");		
+	    } else if (rule==null || rule.trim().equals(""))  {
+		throw new IllegalInputException("No rule parameter in the form.");		
+	    }
+
+	    em = Main.getNewEM();
+
+	    Query q = em.createQuery("select m from MlcEntry m where m.nickname=:n and m.ruleSetName=:r");
+	    q.setParameter("n", nickname);
+	    q.setParameter("r", rule);
+	    List<MlcEntry> res = (List<MlcEntry>)q.getResultList();
+
+	    title = "Submitted results for algorithm " + nickname +
+		" on rule set " + rule;
+	    
+	    body += fm.h2("Summary of " + res.size() + " runs by "+fm.tt(nickname)+" on rule set " +
+			  fm.tt(rule));
+	    body += summaryTable(res);
+
+	    
+	} catch(Exception ex) {
+	    title = "Error";
+	    body = fm.para(ex.toString());
+	    ex.printStackTrace(System.err);
+	} finally {	
+	    if (em!=null) try {
+		    em.close();
+		} catch(Exception ex) {}
+	}
+
+	return fm.html(title, body);		
+ 
+    }
+
+
+ /** Prints the summary of a specified player's performance on 
+	a particular rule set */
+    @GET
+    @Path("/compare")
+    @Produces(MediaType.TEXT_HTML)
+    public String compare(@QueryParam("nickname") String nickname,
+			  @QueryParam("rule") String rule) {
+	String title="Results comparison on rule set " + rule, body="", errmsg = null;
+	EntityManager em=null;
+
+	try {
+
+	    body += fm.h1("Results comparison on rule set " + fm.tt(rule));
+	    
+	    em = Main.getNewEM();
+
+	    Query q = em.createQuery("select m from MlcEntry m where  m.ruleSetName=:r");
+	    q.setParameter("r", rule);
+	    List<MlcEntry> res = (List<MlcEntry>)q.getResultList();
+
+	    HashMap<String,Integer> nicksOrder = new HashMap<>();
+	    Vector<String> nicks = new Vector<>();
+	    Vector<Integer> counts = new Vector<>();
+	    
+	    // How many nicknames
+	    int n = 0;
+	    for(MlcEntry e: res) {
+		String nick  =e.getNickname();
+		boolean isNew = (nicksOrder.get(nick)==null);
+		
+		int j = isNew? n++ :  nicksOrder.get(nick);
+		if (isNew) {
+		    nicksOrder.put( nick, j);
+		    nicks.add(nick);
+		    counts.add(1);
+		} else {		
+		    int m = counts.get(j);
+		    counts.set(j,m+1);
+		}
+	    }
+
+	    // All entries separated by nickname
+	    MlcEntry [][]w = new MlcEntry[n][];
+	    for(int j=0; j<n; j++) w[j] = new MlcEntry[ counts.get(j) ];
+	    int p[] = new int[n];
+	    for(MlcEntry e: res) {
+		int j = nicksOrder.get( e.getNickname());
+		//w[j][ p[j]++] = e;
+		
+		MlcEntry [] row = w[j];
+		int k = p[j]++;
+		row[k] = e;
+
+	    }
+
+	    // only those who have learned the game successfully
+	    boolean[] learned = new boolean[n];
+	    int nLearned = 0;
+	    for(int j=0; j<n; j++) {
+		boolean failed = false;
+		for(int k=0; k<w[j].length; k++) {
+		    failed = failed || !w[j][k].getLearned();
+		}
+		learned[j] = !failed;
+		if (learned[j]) nLearned ++;
+	    }
+
+	    // nicknames of successful learners only. 
+	    int goodNicks[] = new int[nLearned];
+	    int ptr = 0;
+	    for(int j=0; j<n; j++) {
+		if (learned[j])  goodNicks[ptr++] = j;
+	    }
+
+
+	    int a[][] = new int[nLearned][];
+	    for(int j=0; j<nLearned; j++) {
+		int j0 =  goodNicks[j];
+		a[j] = new int[ w[j0].length ];
+		 for(int k=0; k<w[j0].length; k++) {
+		     a[j][k] = w[j0][k].getTotalErrors();
+		 }
+	    }
+
+	    double[][] z = MannWhitney.rawMatrix(a);
+	    double[][] zr = MannWhitney.ratioMatrix(z);
+	    
+	    double[] ev = MannWhitney.topEigenVector(zr);
+	    Vector<Integer> order = new Vector<>();
+	    for(int j=0; j<nLearned; j++) order.add(j);
+	    order.sort((o1,o2)-> ((ev[o2]<ev[o1])?-1:ev[o2]==ev[o1]?0:1));
+
+
+
+	    body += fm.h3("Raw M-W matrix");
+	    	    
+	    Vector<String> v = new Vector<>();
+
+	    for(int h=0; h< nLearned; h++) {
+		int k=order.get(h);
+		String nick = nicks.get(goodNicks[k]);
+		String s =nick + "\t";
+
+		double[] c = new double[nLearned];		
+		for(int i=0; i< nLearned; i++) c[i] = z[k][order.get(i)];
+		
+		s += Util.joinNonBlank("\t", c);
+		v.add(s);
+	    }
+	    body += fm.pre(String.join("\n", v));
+
+	    
+
+	    body += fm.h3("M-W ratio matrix");
+	    v.clear();
+	    for(int h=0; h< nLearned; h++) {
+		int k=order.get(h);
+		String nick = nicks.get(goodNicks[k]);
+		String s =nick + "\t";
+		double[] c = new double[nLearned];		
+		for(int i=0; i< nLearned; i++) c[i] = zr[k][order.get(i)];
+		
+		s += Util.joinNonBlank("\t", c);
+		v.add(s);
+	    }
+	    body += fm.pre(String.join("\n", v));
+
+
+	    
+	    body += fm.h3("Comparison of algorithms");
+
+	    
+	    Vector<String> rows = new Vector<>();
+	    rows.add( fm.tr( fm.th("Algo nickname") +
+			     fm.th("Learned? (learned/not learned)") +
+			     fm.th("EV score") +
+			     fm.th("Runs") +
+			     fm.th("Avg. episodes till learned") +
+			     fm.th("Avg. errors till learned") +
+			     fm.th("Avg. moves till learned") +
+			     fm.th("Avg. error rate")
+			     ));
+
+	    // the learned ones
+	    for(int k=0; k< nLearned; k++) {
+		int j=order.get(k);
+		double evScore = ev[j];
+		int j0 = goodNicks[j];
+		String nick = nicks.get(j0);
+		MlcEntry [] ee = w[j0];
+		int runs = ee.length;
+		double avgE=0, avgM=0, avgEp=0;
+		for(MlcEntry e: ee) {
+		    avgE += e.getTotalErrors();
+		    avgEp += e.getEpisodesUntilLearned();
+		    avgM += e.getMovesUntilLearned();
+		}
+		avgE /= runs;
+		avgEp /= runs;
+		avgM /= runs;
+
+		rows.add( fm.tr( fm.th(nick) +
+			     fm.td("Learned ("+runs+"/0)") +
+			     fm.td("" + evScore) +
+			     fm.td("" + runs) +
+			     fm.td("" + avgEp) +
+			     fm.td("" + avgE) +
+			     fm.td("" + avgM) +
+			     fm.td("")	 ));		
+	    }
+
+	    // the non-learned ones
+	    for(int j0=0; j0<n; j0++) {
+		if (learned[j0]) continue;
+		String nick = nicks.get(j0);
+		MlcEntry [] ee = w[j0];
+		int runs = ee.length;
+	
+		double totalM=0, totalE=0;
+		int learnedRuns =0;
+		for(MlcEntry e: ee) {
+		    totalE += e.getTotalErrors();
+		    totalM += e.getTotalMoves();
+		    if (e.getLearned())  learnedRuns++;
+		}
+		double avgErrorRate = totalE/totalM;
+		
+		rows.add( fm.tr( fm.th(nick) +
+				 fm.td("Not learned ("+learnedRuns+"/"+(runs-learnedRuns)+")") +
+				 fm.td("") +
+				 fm.td("" + runs) +
+				 fm.td("") +
+				 fm.td("") +
+				 fm.td("") +
+				 fm.td("" + avgErrorRate)));		
+	
+	    }
+
+	    body += fm.table( "border=\"1\"", rows);
+	    
+	} catch(Exception ex) {
+	    title = "Error";
+	    body = fm.para(ex.toString());
+	    ex.printStackTrace(System.err);
+	} finally {	
+	    if (em!=null) try {
+		    em.close();
+		} catch(Exception ex) {}
+	}
+
+
+	
+	return fm.html(title, body);		
+ 
+    }
+
 }
