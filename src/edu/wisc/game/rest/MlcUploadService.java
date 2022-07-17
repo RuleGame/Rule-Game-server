@@ -432,8 +432,7 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 	    double[] ev = MannWhitney.topEigenVector(zr);
 	    Vector<Integer> order = new Vector<>();
 	    for(int j=0; j<nLearned; j++) order.add(j);
-	    order.sort((o1,o2)-> ((ev[o2]<ev[o1])?-1:ev[o2]==ev[o1]?0:1));
-
+	    order.sort((o1,o2)-> (int)Math.signum(ev[o2]-ev[o1]));
 
 
 	    body += fm.h3("Raw M-W matrix");
@@ -460,12 +459,16 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 	    for(int h=0; h< nLearned; h++) {
 		int k=order.get(h);
 		String nick = nicks.get(goodNicks[k]);
-		String s =nick + "\t";
-		double[] c = new double[nLearned];		
-		for(int i=0; i< nLearned; i++) c[i] = zr[k][order.get(i)];
+		StringWriter sw = new StringWriter();
+		PrintWriter pw = new PrintWriter(sw);
+		pw.print(nick);
+		double[] c = new double[nLearned];
+		for(int i=0; i< nLearned; i++) {
+		    c[i] = zr[k][order.get(i)];
+		    pw.format("\t%8.4f", c[i]);
+		}
 		
-		s += Util.joinNonBlank("\t", c);
-		v.add(s);
+		v.add(sw.toString());
 	    }
 	    body += fm.pre(String.join("\n", v));
 
@@ -514,6 +517,9 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 	    }
 
 	    // the non-learned ones
+	    order.clear();
+	    Vector<String> rows2 = new Vector<>();
+	    Vector<Double> avgErrorRates   = new Vector<>();
 	    for(int j0=0; j0<n; j0++) {
 		if (learned[j0]) continue;
 		String nick = nicks.get(j0);
@@ -528,11 +534,11 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 		    if (e.getLearned())  learnedRuns++;
 		}
 		double avgErrorRate = totalE/totalM;
-
+	
 		String learnedWord = (learnedRuns==0)? "Not learned" : "Sometimes learned";
 
-		
-		rows.add( fm.tr( fm.th(nick) +
+		order.add(rows2.size());
+		rows2.add( fm.tr( fm.th(nick) +
 				 fm.td(learnedWord + " ("+learnedRuns+"/"+(runs-learnedRuns)+")") +
 				 fm.td("") +
 				 fm.td("" + runs) +
@@ -540,15 +546,22 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 				 fm.td("") +
 				 fm.td("") +
 				 fm.td("" + avgErrorRate)));		
+		avgErrorRates.add(avgErrorRate);
 	
 	    }
-
+	    order.sort((o1,o2)->(int)Math.signum(avgErrorRates.get(o1)-avgErrorRates.get(o2)));
+	    for(int j: order) rows.add(rows2.get(j));
+	    
 	    body += fm.table( "border=\"1\"", rows);
 	    
 	} catch(Exception ex) {
 	    title = "Error";
-	    body = fm.para(ex.toString());
+	    body = fm.para(ex.toString()) +
+		fm.para(fm.wrap("small", "Details:"+ Util.stackToString(ex)));
+
+	    System.err.println("" + ex);
 	    ex.printStackTrace(System.err);
+
 	} finally {	
 	    if (em!=null) try {
 		    em.close();

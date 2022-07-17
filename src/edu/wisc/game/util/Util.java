@@ -296,5 +296,12 @@ The Java programming language guarantees that the operands of operators appear t
 	for(T x: v) h.add(x.toString());
 	return h;
     }
-    
+
+    public static String stackToString(Exception ex) {
+	StringWriter sw = new StringWriter();
+	ex.printStackTrace(new PrintWriter(sw));
+	return sw.toString();
+    }
+
+
 }

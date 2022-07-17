@@ -2,7 +2,6 @@ package edu.wisc.game.math;
 
 import java.io.*;
 import java.util.*;
-//import java.text.*;
 
 import edu.wisc.game.util.*;
 
@@ -91,13 +90,13 @@ public class MannWhitney {
 	    for(int j=0; j<n; j++) {
 		y[j] /= lambda;
 		double d  = y[j]-x[j];
-		r *= d*d;
+		r += d*d;
 	    }	    
 	    cnt ++;
 	    double[] tmp = x;
 	    x = y;
 	    y = tmp;
-	    if (r < 1e-8) break;
+	    if (r < 1e-12) break;
 	}
 	System.out.println("EV converged in " + cnt + " iterations, lambda=" + lambda);
 	return x;
