@@ -203,6 +203,11 @@ public class  Fmter {
     }
 
 
-    
+    public String sprintf(String fmt, Object... data) {
+	StringWriter sw = new StringWriter();
+	PrintWriter pw = new PrintWriter(sw);
+	pw.format(fmt, data);
+	return sw.toString();
+    }
 
 }

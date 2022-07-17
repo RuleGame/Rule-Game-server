@@ -507,13 +507,13 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 		avgM /= runs;
 
 		rows.add( fm.tr( fm.th(nick) +
-			     fm.td("Learned ("+runs+"/0)") +
-			     fm.td("" + evScore) +
-			     fm.td("" + runs) +
-			     fm.td("" + avgEp) +
-			     fm.td("" + avgE) +
-			     fm.td("" + avgM) +
-			     fm.td("")	 ));		
+				 fm.td("Learned ("+runs+"/0)") +
+				 fm.td(fm.sprintf("%6.4g", evScore)) +
+				 fm.td("" + runs) +
+				 fm.td(fm.sprintf("%5.2f", avgEp)) +
+				 fm.td(fm.sprintf("%6.2f",avgE)) +
+				 fm.td(fm.sprintf("%6.2f",avgM)) +
+				 fm.td("")	 ));		
 	    }
 
 	    // the non-learned ones
@@ -539,13 +539,13 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 
 		order.add(rows2.size());
 		rows2.add( fm.tr( fm.th(nick) +
-				 fm.td(learnedWord + " ("+learnedRuns+"/"+(runs-learnedRuns)+")") +
-				 fm.td("") +
-				 fm.td("" + runs) +
-				 fm.td("") +
-				 fm.td("") +
-				 fm.td("") +
-				 fm.td("" + avgErrorRate)));		
+				  fm.td(learnedWord + " ("+learnedRuns+"/"+(runs-learnedRuns)+")") +
+				  fm.td("") +
+				  fm.td("" + runs) +
+				  fm.td("") +
+				  fm.td("") +
+				  fm.td("") +
+				  fm.td(fm.sprintf("%4.3f", avgErrorRate))));
 		avgErrorRates.add(avgErrorRate);
 	
 	    }

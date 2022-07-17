@@ -68,7 +68,10 @@ public class MannWhitney {
     }
 
     /** Given a dense matrix with positive elements, find the eigenvector
-	corresponding to the largest eigenvalue */
+	corresponding to the largest eigenvalue. By Perron-Frobenius theorem,
+	we know that such a vector exists, and is composed of positive
+	elements.
+    */
     static public double[] topEigenVector(double a[][]) {
 	int n = a.length;
 	double[] x = new double[n], y = new double[n];
