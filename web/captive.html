@@ -546,12 +546,18 @@ The response_code is 0 for acceptance (successful move), positive for rejection 
 	    STALEMATE=2,
 	// move rejected, because there is no piece in the cell
 	    EMPTY_CELL= 3,
-	// move rejected, because this destination is not allowed
+        // Move rejected, because this destination is not allowed
+        // (even though the piece can perhaps be moved to some other bucket)
 	    DENY = 4,
 	// Exit requested
 	    EXIT = 5,
 	// New game requested
-	    NEW_GAME = 6;
+            NEW_GAME = 6,
+        // Move rejected, because this game piece is immovable (cannot
+        // be moved to any bucket).
+	    IMMOVABLE = 7;
+
+    
 	
 	public static final int
 	    INVALID_COMMAND= -1,
@@ -573,6 +579,9 @@ The response_code is 0 for acceptance (successful move), positive for rejection 
 
    }	    
 </pre>
+
+<p><strong>Note:</strong> Prior to GS 5.007 (July 2022), response code 7 (<tt>IMMOVABLE</tt>) did not exist, and attempts to move an immovable game piece resulted in response code 4 (<tt>DENY</tt>). These two codes have been "split" since GS 5.007 in order to enable a ML program to identify an immovable game piece in a single move attempt (rather than 4 attempts). This will make robots' playing experience more similar to that of humans playing via the web GUI, who can identify immovable pieces in a single attempt.
+
 
 <p>
 The second number, the <strong>finish code</strong> reports the current state: 0=can play (there are pieces on the board, and some can be moved), 1=finish (no pieces left on the board), 2=stalemate (there are pieces on the board, but none of them can be moved anymore).

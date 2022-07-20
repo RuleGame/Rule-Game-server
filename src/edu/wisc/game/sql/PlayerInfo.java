@@ -770,9 +770,9 @@ public class PlayerInfo {
 	specified episode belongs. This is used by Kevin's GUI tool
 	in the DOUBLING incentive scheme display (ver 4.006)
 	
-Ignoring successful picks to keep players from gaming the system.
+	Ignoring successful picks to keep players from gaming the system.
 
-@param epi We pass it in so that everything will work
+	@param epi We pass it in so that everything will work
 	correctly even if this is part of a /move call that ended
 	the last episode of the series, and currentSeriesNo may already be
 	referring to the next series.
@@ -786,8 +786,8 @@ Ignoring successful picks to keep players from gaming the system.
 	    Vector<Episode.Pick> t=e.transcript;
 	    if (t==null) continue;
 	    for(Episode.Pick pick: t) {
-if (pick instanceof Episode.Move ||
-pick.code==Episode.CODE.DENY)
+		if (pick instanceof Episode.Move ||
+		    pick.code!=Episode.CODE.ACCEPT)
 		v.add( pick.code==Episode.CODE.ACCEPT);
 	    }
 	}

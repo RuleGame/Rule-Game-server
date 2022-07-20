@@ -282,7 +282,8 @@ public class Episode {
 	}
 	
 	/** For each piece currently on the board, find which rules in the 
-	    current rule line allow this piece to be moved, and to which buckets.
+	    current rule line allow this piece to be moved, and to which buckets. This method fills acceptanceMap[] and isMoveable[].
+	
 	    @return true if at least one piece can be moved
 	*/
 	private boolean buildAcceptanceMap() {
@@ -409,11 +410,14 @@ public class Episode {
 	    pick.piece =pieces[pick.pos];
 	    if (pick.piece==null) return pick.code=CODE.EMPTY_CELL;	    
 	    pick.pieceId = (int)pick.piece.getId();
-	    
-	    if (!(pick instanceof Move)) {
-		pick.code = isMoveable[pick.pos]? CODE.ACCEPT: CODE.DENY;
-		return pick.code;
+
+	    if (!isMoveable[pick.pos]) {  // immovable piece
+		return pick.code =  CODE.IMMOVABLE;
+	    } else if (!(pick instanceof Move)) {  // accepted pick
+		return pick.code = CODE.ACCEPT;
 	    }
+
+	    // Move attempted on a moveable piece
 	    Move move  = (Move) pick;
 
 	    BitSet[] r = acceptanceMap[pick.pos];
@@ -577,14 +581,21 @@ public class Episode {
 	    (stalemate). This means that the rule set is bad, and we
 	    owe an apology to the player */
 	    STALEMATE=2,
-	/** move rejected, because there is no piece in the cell */
+	/** Move rejected, because there is no piece in the cell */
 	    EMPTY_CELL= 3,
-	/** move rejected, because this destination is not allowed */
+	/** Move rejected, because this destination is not allowed.
+	    (Prior to GS 5.007, this code was also returned instead of
+	    IMMOVABLE).  */
 	    DENY = 4,
 	/** Exit requested */
 	    EXIT = 5,
 	/** New game requested */
-	    NEW_GAME = 6
+	    NEW_GAME = 6,
+	/** Move rejected, because no destination is allowed for this
+	    game piece. (Similar to DENY, but with extra info that the
+	    piece cannot be moved to any bucket). (Introduced in GS 5.007;
+	    previouslsy, DENY was returned in this situation). */
+	    IMMOVABLE = 7
 	    ;
 	
 	public static final int
@@ -938,7 +949,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
 
 
-    public static final String version = "5.006";
+    public static final String version = "5.007";
 
     public static String getVersion() { return version; }
 
