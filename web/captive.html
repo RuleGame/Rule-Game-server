@@ -1,13 +1,15 @@
 <html>
-  <head><title>Captive Game Server</title></head>  
+  <head><title>Captive Game Server</title>
+ <link rel="stylesheet" type="text/css" href="css/rule-game.css"/>
+  </head>  
   <body>
     <h1>Captive Game Server</h1>
 
-<div align="center"><em>Updated 2022-06-15 for GS ver 5.002</em></div>
+<div align="center"><em>Updated 2022-07-20 for GS ver 5.007</em></div>
     
     <h2>What is the Captive Game Server?</h2>
 
-    <p>The Captive Game Server (CGS) is a small Java application that contains the same game engine as the Web Game Server, but does not have a SQL database, does not write transcript files, and does not communicate with clients using HTTP. It can be used by a Machine Learning researcher (in particular, a participant in the <a href="mlc/mlc-guide.html">The Machine Learning Challenge (MLC)</a>) who wants a ML program to learn how to play a Rule Game game as a counterparty for his ML program to play with.
+    <p>The Captive Game Server (CGS) is a small Java application that contains the same game engine as the Web Game Server, but does not have a SQL database, does not write transcript files, and does not communicate with clients using HTTP. It can be used by a Machine Learning researcher (in particular, a participant in the <a href="mlc/mlc-guide.html">The Machine Learning Challenge (MLC)</a>) who wants a ML program to learn how to play the Game of Hidden Rules (GOHR, a.k.a. the Rule Game) as a counterparty for his ML program to play with.
 
     <p>The Captive Game Server can be run in two ways: <strong>pipe-based</strong> and  <strong>socket-based</strong>.
 
@@ -557,8 +559,6 @@ The response_code is 0 for acceptance (successful move), positive for rejection 
         // be moved to any bucket).
 	    IMMOVABLE = 7;
 
-    
-	
 	public static final int
 	    INVALID_COMMAND= -1,
 	    INVALID_ARGUMENTS= -2,
@@ -580,8 +580,13 @@ The response_code is 0 for acceptance (successful move), positive for rejection 
    }	    
 </pre>
 
-<p><strong>Note:</strong> Prior to GS 5.007 (July 2022), response code 7 (<tt>IMMOVABLE</tt>) did not exist, and attempts to move an immovable game piece resulted in response code 4 (<tt>DENY</tt>). These two codes have been "split" since GS 5.007 in order to enable a ML program to identify an immovable game piece in a single move attempt (rather than 4 attempts). This will make robots' playing experience more similar to that of humans playing via the web GUI, who can identify immovable pieces in a single attempt.
+<p>When a "competent" (human or robotic) player (i.e. one who does not mistype command, does not grab at empty cells, etc) plays with the CGS, the only response code that can come back in response to a <tt>MOVE</tt> command are 0 (<tt>ACCEPT</tt>, indicating a successful move), 4 (<tt>DENY</tt>), and 7 (<tt>IMMOVABLE</tt>), the last two indicating a failed move attempt.
 
+<div class="pink">
+  <p><strong>Note:</strong> Prior to GS 5.007 (July 2022), response code 7 (<tt>IMMOVABLE</tt>) did not exist, and attempts to move an immovable game piece resulted in response code 4 (<tt>DENY</tt>). These two codes have been "split" since GS 5.007 in order to enable a ML program to identify an immovable game piece in a single move attempt (rather than 4 attempts). This will make robots' playing experience more similar to that of humans playing via the web GUI, who can identify immovable pieces in a single attempt.
+</div>
+
+  <p>If you are designing a ML algorithm playing the Game of Hidden Rules with the CGS, it is to your advantage to fully use the information provided by these two response code. The <tt>IMMOVABLE</tt> code means that not only the game piece you tried to move cannot be moved to your chosen bucket, but it also cannot be moved to any other bucket at this point in the game. On the other hand, the <tt>DENY</tt> code tells you  that the game piece <em>can</em> be moved to some other bucket.
 
 <p>
 The second number, the <strong>finish code</strong> reports the current state: 0=can play (there are pieces on the board, and some can be moved), 1=finish (no pieces left on the board), 2=stalemate (there are pieces on the board, but none of them can be moved anymore).
