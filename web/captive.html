@@ -124,7 +124,7 @@ Apache Commons Math
       
 <P>If you're a UWM team member working on <tt>sapir</tt>, you have access to the full set of our <a href="data.html"> experiment control files</a> in <tt>/opt/tomcat/game-data</tt> (or another directory, as per the variable  <tt>FILES_GAME_DATA</tt> in the  <a href="setup/setup-config.html">master config file</a>).
 
-<p>If you are running the CGS on your own machine, but you have also <a href="setup/">installed the web-based Game Server</a> on that machine, you have the  experiment control files in the same or similar location as well (its locaiton may be overridden by the paramter <tt>FILES_GAME_DATA</tt> in the <a href="setup/setup-config.html">master config file</a>.
+<p>If you are running the CGS on your own machine, but you have also <a href="setup/">installed the web-based Game Server</a> on that machine, you have the  experiment control files in the same or similar location as well (its location may be overridden by the paramter <tt>FILES_GAME_DATA</tt> in the <a href="setup/setup-config.html">master config file</a>.
 
 <p> Otherwise, you can use a smaller set of sample experiment control files that came with the CGS distribution; they are found in <tt>~/captive/game/game-data</tt>.
 
@@ -133,7 +133,7 @@ Apache Commons Math
 <p>If you are a UWM Rule Game team member using The CGS on <tt>sapir</tt>, it is installed in the directory <tt>/home/vmenkov/captive</tt>. Otherwise (if you're running the CGS on your own machine, installed as described above), replace <tt>	/home/vmenkov/captive</tt> in the commands below with <tt>~/captive</tt>
 
       <p>
-      The CGS can play one game at a time. An easy way to choose a game is  to provide the CGS with a game rule file (a few of which can be found in  <tt>/home/vmenkov/captive/game/game-data/rules/</tt> ) and the initial number of pieces. 
+      The CGS can play one game at a time. An easy way to choose a game is  to provide the CGS with a game rule file (a few of which can be found in  <tt>/home/vmenkov/captive/game/game-data/rules/</tt> or  <tt>~/captive/game/game-data/rules/</tt>, as the case may be) and the initial number of pieces. 
 
       <p>To use CGS, you need to add the directory in which your Java interpreter (<tt>java</tt>) is installed (such as <tt>/opt/jdk-14.0.2/bin</tt>, on <tt>sapir</tt>) into your <tt>PATH</tt>. Alternatively, you can modify the shell scripts mentioned below, so that they use <tt>/opt/jdk-14.0.2/bin/java</tt> rather than just <tt>java</tt>.
 
