@@ -189,7 +189,7 @@ public class PlayerInfo {
 		findXFactor()==4;
 	}
 
-	
+ 	
     }
 
 
@@ -563,7 +563,7 @@ public class PlayerInfo {
 	subseries we are on, and persists this object. This is the
 	only place in the code where the current series number can be
 	incremented. If the series number reaches the last possible
-	value (the one beyond the range of parameter set numbers, the
+	value (the one beyond the range of parameter set numbers), the
 	completion code is set.
      */
     synchronized private void goToNextSeries() {
