@@ -9,6 +9,7 @@ import jakarta.xml.bind.annotation.XmlElement;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.sql.Board;
+import edu.wisc.game.rest.ParaSet.Incentive;
 
 public class TrialList extends Vector<ParaSet> {
     
@@ -221,6 +222,8 @@ public class TrialList extends Vector<ParaSet> {
 		    para.modifyBy(mf);		    
 		}
 	    }	    
+
+	    checkContinue();
 	    
 	} catch(IOException ex) {
 	    setError(true);
@@ -242,5 +245,34 @@ public class TrialList extends Vector<ParaSet> {
 	    setErrmsg( ex.getMessage());
 	}
    }
+
+
+    /** Throws an exception is something related to super-series is configured
+	incorrectly in this TrialList.  */
+    private void checkContinue() throws IllegalInputException {
+	boolean lastCont = false;
+	for(int j=0; j<size(); j++) {
+	    ParaSet para = get(j);
+	    boolean cont = para.getCont();
+	    Incentive ince = para.getIncentive();
+	    if (cont) {
+		if (j==size()-1) {
+		    throw new  IllegalInputException("The last parameter set of this trial list has continue==true, which is prohibited. (This flag indicates that the current series is 'continued' by the next one)");
+		}
+		if (ince!=null) {
+		    throw new  IllegalInputException("ParaSet["+j+"] specifies incentive scheme " + ince +". This is prohibied, because no incentives are allowed in super-series (other than in the last line of the super-series)");
+		}
+	    } else if (lastCont) {
+		if (ince==Incentive.DOUBLING) {
+		    throw new  IllegalInputException("ParaSet["+j+"], which is tthe last line of a super-series specifies incentive scheme " + ince +". This is not allowed (feature not supported).");
+		}		
+	    }
+	    lastCont = cont;
+	}	    
+    }
+
+    
+
+
     
 }

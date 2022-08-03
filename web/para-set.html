@@ -119,7 +119,7 @@ As you can see, in the first series, the board files are used in the alphabetic 
 
   <p>To be clear on the terminology, will call the sequence of episodes played with the same rule set an <strong>internal series</strong>, and a concatenation of several "internal series" presented to the player as one series, a <strong>super-series</strong>.
 
-  <p>Each "internal series" will be controlled by its own parameter set, i.e. its own line in the trial list file, just like all series have been prior to the addition of the "super-series" feature. For the experiment designer to be able to indicate which internal series are "merged" into a super-series, an additional optional column, called <tt>continue</tt>, will be added to the trial list files. If that column is present and contains <tt>true</tt> in a given row, it means that this row's series is "merged" with the one of next row into a super-series. Thus if a super-series consists of N internal series, than N-1 of the corresponding rows (all but the last one) will contain  <tt>true</tt> in the <tt>continue</tt>  column.
+  <p>Each "internal series" will be controlled by its own parameter set, i.e. its own line in the trial list file, just like all series have been prior to the addition of the "super-series" feature. For the experiment designer to be able to indicate which internal series are "merged" into a super-series, an additional optional column, called <strong><tt>continue</tt></strong>, will be added to the trial list files. If that column is present and contains <tt>true</tt> in a given row, it means that this row's series is "merged" with the one of next row into a super-series. Thus if a super-series consists of N internal series, than N-1 of the corresponding rows (all but the last one) will contain  <tt>true</tt> in the <tt>continue</tt>  column.
 
   <p><strong>Numbering of series and episodes.</strong> The introduction of superseries will result in the appearance of a "split" between internal numbering of series and episodes and the "visible" numbering (displayed in the GUI client). Internally, the series and episodes in them will be numbered as they always were, at the level of internal series; these numbers will be appear, for example, in the SQL database and in any <a href="data.html">data files</a> saved by the server. Externally (in the GUI display), each super-series will appear as a single entity.
 
@@ -133,9 +133,15 @@ As you can see, in the first series, the board files are used in the alphabetic 
   <p><strong>Initial board generation.</strong> Each "internal series" of which a super-series is composed will have its initial board generator defined by the appropriate parameters in the corresponding row. You, as the experiment designer, may, of course, choose to have the same parameters (e.g. those of a 6-parameter random board generator) in each series; but you may also change the generator from on internal series to the next. For example, the first internal series may be run with several simple predefined boards, while the second series may use prefedeined boards from a different set, or a random board generator. 
     
  <p><strong>Feedback options.</strong> Similarly, each "internal series" may have its own set of feedback options; so, if the experiment designer so desires, he may choose, for example, to go from the "feedback_switches=fixed" to "feedback_switches=free", or whatever.
-    
+
+
+ <p><strong>Giving up.</strong> At this point, giving up during any inner series within a super-series is not allowed.
   <p>
    
-   
+    <h4>Example</h4>
+
+<p>Experiment plan  <tt>vm/composite-01-super</tt>. It has 2 super-series, each consisting of 2 internal series.
+
+    
 </body>
 </html>

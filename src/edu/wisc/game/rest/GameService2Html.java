@@ -51,7 +51,9 @@ public class GameService2Html extends GameService2 {
 	v.add("Response: " + fm.para(  ""+JsonReflect.reflectToJSONObject(pr, true)));
 
 	String title = "?";
+	String body = "";
 
+	try {
 	
 	if (pr.getError()) {
 	    v.add(fm.para("Error happened: " + pr.getErrmsg()));
@@ -79,9 +81,14 @@ public class GameService2Html extends GameService2 {
 	    v.add(fm.para(form));
 	}
 
-	String body = String.join("\n", v);
+	body = String.join("\n", v);
 	    
-
+	} catch(Exception ex) {
+	    title = "Error";
+	    body =
+		fm.para(ex.toString()) + 
+		fm.pre(Util.stackToString(ex));
+	}
 	return fm.html(title, body);	
 	
     }
@@ -190,6 +197,9 @@ public class GameService2Html extends GameService2 {
 	return fm.html(head, body);	
     }
 
+    /** Draws the board with the current position, and shows the player's
+	history as well.
+     */
     static private String showHistoryAndPosition(EpisodeInfo epi,
 						 EpisodeInfo.ExtendedDisplay d
 						 ) {
@@ -229,6 +239,13 @@ public class GameService2Html extends GameService2 {
 	String body = "";
 	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
 
+	String s = "Rule " + (d.getDisplaySeriesNo()+1);
+	if (d.getDisplaySeriesNo() != d.getSeriesNo()) s += " (internally "+(d.getSeriesNo()+1)+")";
+	body += fm.para(s);
+	s = "Episode " + (d.getDisplayEpisodeNo()+1) + " of "+ d.getTotalBoardsPredicted();
+	body += fm.para(s);
+
+	
 	int[][] rxv = d.getRewardsAndFactorsPerSeries();
 	if (rxv!=null) {
 	    Vector<String> v = new Vector<>();

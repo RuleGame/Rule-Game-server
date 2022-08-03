@@ -318,6 +318,14 @@ public class ParaSet extends HashMap<String, Object> {
 	return getDouble(key, false, 0);
     }
 
+    public boolean getBoolean(String key, Boolean defVal) {
+	Object o = get(key);
+	if (o==null) return defVal;
+	else if (o instanceof Boolean) return  (Boolean)o;
+	else throw new IllegalArgumentException("Parameter set has not a boolean value ("+o+") for key="+key);
+    }
+
+
     /**
        @param optional If true, this method will not throw an exception, and will return defaultValue, if the parameter is absent in the set
        @param defaultValue Only used if optional==true
@@ -363,7 +371,12 @@ public class ParaSet extends HashMap<String, Object> {
 	return x == (double)(int)x;
     }
     
+    public boolean getCont() {
+	return getBoolean("continue", false);
+    }
 
+
+    
     /** Makes sure that this parameter set's color list (used for generating
 	random boards) only contains valid colors (present in the color map)
      */
@@ -397,7 +410,7 @@ public class ParaSet extends HashMap<String, Object> {
 	}
     }
 
-    
+
     /** True if the player is not told which pieces are movable.
 	(free = no objects are marked with X. Seeking to move an object is counted as some fraction of a move.)
     */

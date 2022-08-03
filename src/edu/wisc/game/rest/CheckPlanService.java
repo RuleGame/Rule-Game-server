@@ -141,6 +141,9 @@ public class CheckPlanService extends GameService2 {
 		    j++;
 		    v.add(fm.para(fm.h4("Checking para set no. " + j + " out of "+npara+"...")));
 
+		    para.checkIncentive();
+
+		    
 		    para.checkImages();
 		    boolean ipb = (para.imageGenerator!=null);
 		    // All values of all properties occurring in our objects

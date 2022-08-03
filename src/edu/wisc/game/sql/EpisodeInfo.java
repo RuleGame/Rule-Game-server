@@ -24,7 +24,7 @@ public class EpisodeInfo extends Episode {
 
     /** Since 4.007, this will fully activate the mode proposed by
 	Erick Pulick, "to treat stalemates identical with board
-	clearings */
+	clearings" */
     static final boolean stalematesAsClears = true;
 
     
@@ -81,6 +81,9 @@ public class EpisodeInfo extends Episode {
     public int getSeriesNo() { return seriesNo; }
     public void setSeriesNo(int _seriesNo) { seriesNo = _seriesNo; }
 
+    private int displaySeriesNo;
+ 
+    
     private PlayerInfo.Series mySeries() {
 	return  getPlayer().getSeries(getSeriesNo());
     }
@@ -149,20 +152,22 @@ public class EpisodeInfo extends Episode {
     EpisodeInfo(Game game, ParaSet _para) {
 	super(game, Episode.OutputMode.BRIEF, null, null);
 	para = _para;
-	clearingThreshold = (para==null)? 1.0: para.getClearingThreshold();
+	clearingThreshold = (para!=null && xgetIncentive()==Incentive.BONUS)?
+	    para.getClearingThreshold(): 1.0;
     }
 
 
     /** Creates a new episode, whose rules and initial board are based (with 
 	appropriate randomization) on a specified parameter set */
-    static EpisodeInfo mkEpisodeInfo(int seriesNo, GameGenerator gg, ParaSet para, boolean bonus)
+    static EpisodeInfo mkEpisodeInfo(int seriesNo, int displaySeriesNo, GameGenerator gg, ParaSet para, boolean bonus)
 	throws IOException, RuleParseException {
 	   
 	Game game = gg.nextGame();
 	EpisodeInfo epi = new EpisodeInfo(game, para);
 	epi.bonus = bonus;
 	epi.seriesNo = seriesNo;
-
+	epi.displaySeriesNo = displaySeriesNo;
+	
 	epi.cache();
 	return epi;	    	      
     }
@@ -347,15 +352,16 @@ public class EpisodeInfo extends Episode {
 	    super(_code, _errmsg);
 	    bonus = EpisodeInfo.this.isBonus();
 	    seriesNo = EpisodeInfo.this.getSeriesNo();
+	    displaySeriesNo = EpisodeInfo.this.displaySeriesNo;
 
 	    if (getPlayer()!=null) {
 		PlayerInfo p = getPlayer();
 
-
 		trialListId = p.getTrialListId();
-
 		
 		episodeNo = p.seriesSize(seriesNo)-1;	    
+		displayEpisodeNo = p.getSuperseriesSize(seriesNo)-1;	    
+
 		bonusEpisodeNo = bonus? p.countBonusEpisodes(seriesNo)-1 : 0;
 
 		canActivateBonus = p.canActivateBonus();
@@ -412,13 +418,26 @@ public class EpisodeInfo extends Episode {
 	    This can also be interpreted as the number of the preceding series that have been completed or given up by this player.
 	*/
 	public int getSeriesNo() { return seriesNo; }
+
+	int displaySeriesNo;
+	/** The number of the current super-series (zero-based) among all super-series in the trial list. This is used in the "Rule XXX" display element in the GUI. (Introduced in GS ver. 5.008)
+	*/
+	public int getDisplaySeriesNo() { return displaySeriesNo; }
+
 	
 	int episodeNo;
-	/** The number of this episode within the current series (zero-based).
+	/** The number of this episode within the current (internal) series (zero-based).
 	    This can also be interpreted as the number of the preceding episodes (completed or given up) in this series.
 	*/
 	public int getEpisodeNo() { return episodeNo; }
 
+	int displayEpisodeNo;
+	/** Introduced in ver. 5.008, this represent the number of
+	    this episode within the current super-series (zero-based).
+	*/
+	public int getDisplayEpisodeNo() { return displayEpisodeNo; }
+
+	
 	
 	int bonusEpisodeNo;
 	/** The number of bonus episodes that have been completed (or given up) prior to

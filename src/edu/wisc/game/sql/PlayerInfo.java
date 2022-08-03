@@ -115,11 +115,18 @@ public class PlayerInfo {
      */
     class Series {
 	final ParaSet para;
+	/** This is true when this series "continues" into the next
+	    series, forming a super-series. (It may continue further 
+	    beyond, if the next series also has cont==true, and so on).
+	*/
+	final boolean cont;
 	final GameGenerator gg;
 	Vector<EpisodeInfo> episodes = new Vector<>();
-
+	int size() { return episodes.size(); }
+	
 	Series(ParaSet _para) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
 	    para = _para;
+	    cont = para.getBoolean("continue", Boolean.FALSE);
 	    gg = GameGenerator.mkGameGenerator(Episode.random, para);
 	}
 	
@@ -198,7 +205,8 @@ public class PlayerInfo {
     }
     
     /** Retrieves a link to the currently played series, or null if this player
-	has finished all his series */
+	has finished all his series. (Since 5.008, this refers to the 
+	internal series, not super-series) */
     Series getCurrentSeries() {
 	return alreadyFinished()? null: allSeries.get(currentSeriesNo);
     }
@@ -215,15 +223,45 @@ public class PlayerInfo {
 	of episodes that can be run within the current series? 
 	(Until max_boards is reached, if in the main subseries, 
 	or until the bonus is earned, if in the bonus subseries).
+
+	Since ver 5.008, we count allowed episodes over the entire superseries.
     */
     int totalBoardsPredicted() {
 	Series ser = getCurrentSeries();	
-	return ser==null? 0:
-	    inBonus? ser.episodes.size() +    ser.para.getInt("clear_how_many")-
-	    countBonusEpisodes(currentSeriesNo):	    
-	    getCurrentSeries().para.getMaxBoards();
+	if (ser==null) return 0;
+	if (inBonus) return ser.size() +    ser.para.getInt("clear_how_many")-
+			 countBonusEpisodes(currentSeriesNo);
+	int n = 0;
+
+	for(int j = currentSeriesNo; j<allSeries.size(); j++) {
+	    n += allSeries.get(j).para.getMaxBoards();
+	    if (!allSeries.get(j).cont) break;
+	}
+
+	for(int j = currentSeriesNo-1;   j>=0 && allSeries.get(j).cont; j--) {
+	    n += allSeries.get(j).size();
+	}
+	
+
+	return n;
     }
 
+    /** How many episodes are in the current super-series? 
+	@param k (internal) series number. It is assumed that this
+	is the last (internal) series in its super-series.
+     */
+    public int getSuperseriesSize(int k) {
+	Series ser= allSeries.get(k);
+	int n = ser.size();
+	for(int j = k-1;   j>=0 && allSeries.get(j).cont; j--) {
+	    n += allSeries.get(j).size();
+	}
+	
+	return n;
+    }
+
+    
+    
     
     /** @return true if an "Activate Bonus" button can be displayed, i.e. 
 	the player is eligible to start bonus episodes, but has not done that yet */
@@ -235,15 +273,15 @@ public class PlayerInfo {
 	int at = ser.para.getInt("activate_bonus_at");
 	// 0-based index of the episode on which activation will be in
 	// effect, if it happens
-	int nowAt = ser.episodes.size();
-	if (ser.episodes.size()>0) {
+	int nowAt = ser.size();
+	if (ser.size()>0) {
 	    if (!ser.episodes.lastElement().isCompleted()) nowAt--;
 	}
 	// 1-based
 	nowAt++;
 
 	boolean answer = (nowAt >= at);
-	//System.err.println("canActivateBonus("+playerId+")="+answer+", for series No. "+currentSeriesNo+", size="+ser.episodes.size()+", at="+at);
+	//System.err.println("canActivateBonus("+playerId+")="+answer+", for series No. "+currentSeriesNo+", size="+ser.size()+", at="+at);
 	return answer;
     } 
 
@@ -261,7 +299,7 @@ public class PlayerInfo {
 	inBonus = true;
 
 	Series ser=getCurrentSeries();
-	if (ser!=null && ser.episodes.size()>0) {
+	if (ser!=null && ser.size()>0) {
 	    EpisodeInfo epi = ser.episodes.lastElement();
 	    // if the current episode is still running, make it a bonus episode too
 	    if (!epi.isCompleted()) {
@@ -269,7 +307,7 @@ public class PlayerInfo {
 		System.err.println("Bonus activated for current episode " + epi.episodeId);
 	    }
 	}
-	System.err.println("Bonus activated: player="+playerId+", series No. "+currentSeriesNo+", size="+ser.episodes.size());
+	System.err.println("Bonus activated: player="+playerId+", series No. "+currentSeriesNo+", size="+ser.size());
 	// this saves the new value of inBonus
 	em.getTransaction().begin();	    
 	em.getTransaction().commit();	        
@@ -287,7 +325,7 @@ public class PlayerInfo {
 	if (seriesNo!=currentSeriesNo) throw new IllegalArgumentException("Cannot give up on series " + seriesNo +", because we presently are on series " + currentSeriesNo);
 	if (seriesNo>=allSeries.size())  throw new IllegalArgumentException("Already finished all "+allSeries.size()+" series");
 	Series ser=getCurrentSeries();
-	if (ser!=null || ser.episodes.size()>0) {
+	if (ser!=null || ser.size()>0) {
 	    EpisodeInfo epi = ser.episodes.lastElement();
 	    // give up on the currently active episode, if any
 	    if (!epi.isCompleted()) {
@@ -311,7 +349,7 @@ public class PlayerInfo {
 	if (ser==null) return false;
 	if (ser.seriesEndedByX4()) return false;
 	if (inBonus) return false;
-	return  ser.episodes.size()<ser.para.getMaxBoards();
+	return  ser.size()<ser.para.getMaxBoards();
     } 
 
     /** Can a new bonus episode be started in the current series? */
@@ -322,7 +360,7 @@ public class PlayerInfo {
 	System.err.println("ser=" + ser+", earned=" +  ser.bonusHasBeenEarned());
 	if (!inBonus || ser.bonusHasBeenEarned()) return false;
 	int cnt=0;
-	System.err.println("Have " +  ser.episodes.size() + " episodes to look at");
+	System.err.println("Have " +  ser.size() + " episodes to look at");
 	for(EpisodeInfo x: ser.episodes) {
 	    System.err.println("looking at "+(x.isBonus()? "bonus":"main")+
 			       " episode " + x.episodeId + ", completed=" + x.isCompleted());
@@ -348,7 +386,7 @@ public class PlayerInfo {
 
     /** How many episodes are currently in series No. k? */
     public int seriesSize(int k) {
-	return allSeries.get(k).episodes.size();
+	return allSeries.get(k).size();
     }
 
     /** How many bonus episodes (complete or not) are currently in series No. k? */
@@ -367,13 +405,18 @@ public class PlayerInfo {
     private int currentSeriesNo=0;
     public int getCurrentSeriesNo() { return currentSeriesNo; }
 
+    /** Introduced in ver. 5.008 This gives the series number that would be displayed in the GUI client. This is based on the super-series.
+     */
+    private int currentDisplaySeriesNo=0;
+    //public int getCurrentSeriesNo() { return currentSeriesNo; }
+
     /** Will the next episode be a part of a bonus subseries? (Or, if the current 
 	episode is not completed, is it a part of  a bonus subseries?)
      */
     private boolean inBonus;
 
     
-    /** This is usesd when a player is first registered and a PlayerInfo object is first created */
+    /** This is usesd when a player is first registered and a PlayerInfo object is first created.  */
     public void initSeries(TrialList trialList) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
 
 	if (allSeries.size()>0) throw new IllegalArgumentException("Attempt to initialize PlayerInfor.allSeries again");
@@ -440,7 +483,7 @@ public class PlayerInfo {
 		}
 		ser.episodes.add(epi);
 	    }
-	    ser.gg.advance(ser.episodes.size());
+	    ser.gg.advance(ser.size());
 	    if (needSave) saveMe();
 	}
 
@@ -452,7 +495,7 @@ public class PlayerInfo {
     public EpisodeInfo mostRecentEpisode() {
 	for(int k= Math.min(currentSeriesNo, allSeries.size()-1); k>=0; k--) {
 	    Series ser=allSeries.get(k);
-	    if (ser.episodes.size()>0) return ser.episodes.lastElement();
+	    if (ser.size()>0) return ser.episodes.lastElement();
 	}
 	return null;
     }
@@ -470,7 +513,7 @@ public class PlayerInfo {
 	try {
 	while(currentSeriesNo < allSeries.size()) {	    
 	    Series ser=getCurrentSeries();
-	    if (ser!=null && ser.episodes.size()>0) {
+	    if (ser!=null && ser.size()>0) {
 
 		if (inBonus && ser.bonusHasBeenEarned()) {
 		    goToNextSeries();
@@ -495,14 +538,17 @@ public class PlayerInfo {
 	    
 	    EpisodeInfo epi = null;
 	    if (canHaveAnotherRegularEpisode()) {
-		epi = EpisodeInfo.mkEpisodeInfo(currentSeriesNo, ser.gg, ser.para, false);
+		epi = EpisodeInfo.mkEpisodeInfo(currentSeriesNo, currentDisplaySeriesNo,
+
+						ser.gg, ser.para, false);
 	    } else if (canHaveAnotherBonusEpisode()) {
-		epi = EpisodeInfo.mkEpisodeInfo(currentSeriesNo, ser.gg, ser.para, true);
+		epi = EpisodeInfo.mkEpisodeInfo(currentSeriesNo,  currentDisplaySeriesNo,
+						ser.gg, ser.para, true);
 	    }
 
 	    if (epi!=null) {
 		// The error-free sstretch continues across episode border
-		if (ser.episodes.size()>0) {
+		if (ser.size()>0) {
 		    epi.setLastStretch(ser.episodes.lastElement().getLastStretch());
 		}
 		
@@ -564,10 +610,11 @@ public class PlayerInfo {
 	only place in the code where the current series number can be
 	incremented. If the series number reaches the last possible
 	value (the one beyond the range of parameter set numbers), the
-	completion code is set.
+	completion code for this player is set.
      */
     synchronized private void goToNextSeries() {
 	if (alreadyFinished()) return;
+	if (!getCurrentSeries().cont) currentDisplaySeriesNo++;
 	currentSeriesNo++;
 	inBonus=false;
 
@@ -692,7 +739,9 @@ public class PlayerInfo {
 	    v.add(s);
 	    j++;
 	}
-	v.add("id="+id+", curSer="+currentSeriesNo+" b="+inBonus+", R=$"+getTotalRewardEarned());
+	v.add("id="+id+", curSer="+currentSeriesNo+
+	      (currentDisplaySeriesNo!=currentSeriesNo? " (display "+currentDisplaySeriesNo+")":"") +
+	      " b="+inBonus+", R=$"+getTotalRewardEarned());
 	return String.join("\n", v);
     }
 
