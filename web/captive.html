@@ -5,7 +5,8 @@
   <body>
     <h1>Captive Game Server</h1>
 
-<div align="center"><em>Updated 2022-07-20 for GS ver 5.007</em></div>
+    <div align="center"><em>Updated 2022-07-20 for GS ver 5.007;
+	edited 2022-09-28</em></div>
     
     <h2>What is the Captive Game Server?</h2>
 
@@ -21,7 +22,8 @@
      
   <h2>The Rule Game / Game of Hidden Rules</h2>
 
-    <P>For general information on the  Rule Game (a.k.a. the  Game of Hidden Rules, GOHR), please see the <strong><a href="./">main documentation page</a></strong>. In particular, the following links may be useful:
+    <P><!-- For general information on the  Rule Game (a.k.a. the  Game of Hidden Rules, GOHR), please see the <strong><a href="./">main documentation page</a></strong>. In particular, the following links may be useful: -->
+      More information on the  Rule Game (a.k.a. the  Game of Hidden Rules, GOHR), is provided in the following documents:
 
       <ul>
 	<li><a href="concepts.html">The main concepts of the Rule Game</a>. 
@@ -40,13 +42,19 @@
     <p>For further information on the  Machine Learning Challenge (MLC), see:
 	  <ul>
 	    <li><a href="mlc/mlc-guide.html">MLC Participant's Guide</a>
-	    <li><a href="mlc/mlc-manage.html">MLC Manager's Guide</a>
-	    <li><a href="mlc/">MLC Participant's Dashboard (submit results here; nickname password required -- obtain it from Paul or Eric)</a>
+<!--	    <li><a href="mlc/mlc-manage.html">MLC Manager's Guide</a> -->
+	    <li><a href="mlc/">MLC Participant's Dashboard (submit results here; nickname password required -- obtain it through the article review platform, or, after publication, from one of the authors
+		<!-- obtain it from Paul or Eric -->)</a>
 	  </ul>
    
 
   <h2><a name="install">Installation</a></h2>
-    <p>If you're a UWM team member using CGS installed on <tt>sapir</tt>, you can safely ignore this section.    But if you are installing the CGS on your own machine (especially at a different institution), please follow the instructions below to obtain the Captive Game Server distribution and the necessary third-party files.
+    <p>If you're
+
+      one of our own team members, and use the CGS on a server where it's already installed,
+      <!-- a UWM team member using CGS installed on <tt>sapir</tt>, -->
+
+      you can safely ignore this section.    But if you are installing the CGS on your own machine (especially at a different institution), please follow the instructions below to obtain the Captive Game Server distribution and the necessary third-party files.
       
       <h3>Main prerequisites</h3>
 
@@ -130,10 +138,15 @@ Apache Commons Math
 
     <h2>Starting the Captive Game Server</h2>
 
+    <!--
 <p>If you are a UWM Rule Game team member using The CGS on <tt>sapir</tt>, it is installed in the directory <tt>/home/vmenkov/captive</tt>. Otherwise (if you're running the CGS on your own machine, installed as described above), replace <tt>	/home/vmenkov/captive</tt> in the commands below with <tt>~/captive</tt>
+-->
 
+    <p>The following assumes that you have installed the CGS as described above, in  <tt>~/captive</tt>. If it was installed elsewhere, adjust the commands as appropriate.
+    
+  
       <p>
-      The CGS can play one game at a time. An easy way to choose a game is  to provide the CGS with a game rule file (a few of which can be found in  <tt>/home/vmenkov/captive/game/game-data/rules/</tt> or  <tt>~/captive/game/game-data/rules/</tt>, as the case may be) and the initial number of pieces. 
+      The CGS can play one game at a time. An easy way to choose a game is  to provide the CGS with a game rule file (a few of which can be found in  <tt>~/captive/game/game-data/rules/</tt> or  <tt>~/captive/game/game-data/rules/</tt>, as the case may be) and the initial number of pieces. 
 
       <p>To use CGS, you need to add the directory in which your Java interpreter (<tt>java</tt>) is installed (such as <tt>/opt/jdk-14.0.2/bin</tt>, on <tt>sapir</tt>) into your <tt>PATH</tt>. Alternatively, you can modify the shell scripts mentioned below, so that they use <tt>/opt/jdk-14.0.2/bin/java</tt> rather than just <tt>java</tt>.
 
@@ -141,7 +154,7 @@ Apache Commons Math
     <p>
       You can run the CGS from the command line as follows, with a <tt>csh</tt> script:
       <pre>
-/home/vmenkov/captive/game/captive-full.sh /home/vmenkov/captive/game/game-data/rules/rules-02.txt 8
+~/captive/game/captive-full.sh ~/captive/game/game-data/rules/rules-02.txt 8
       </pre>
 In this example, you will start a session using the rule description from the specified file; each episode will use a random initial board with 8 pieces. During the session, you can play one or several episodes.
 
@@ -465,7 +478,7 @@ RandomTest,colOrd_nearby,0,2,9,76,0.11842105263157894,1
 
 <em><p>This section is somewhat obsolete and mostly superfluous now, as a more detailed and updated description of the rule file syntax is <a href="syntax.html">now available elsewehere.</a></em>
     
-    <P>A few game rule description files have been supplied in  <tt>/home/vmenkov/captive/game/rules/</tt>. The rule description language is mostly described in a document that Paul has posted on Google Docs; ask him for a share link. There are some extensions to this language though. In particular:
+    <P>A few game rule description files have been supplied in  <tt>~/captive/game/rules/</tt>. The rule description language is mostly described in a Google Sheets documents (<a href="https://docs.google.com/spreadsheets/d/1OuTWqSsHKMVtWAWvsKuxaJJa1_BaGsrv3WCjkyWlXc8/edit#gid=0"> Design Checklist</a>; if you cannot access it, ask the article authors for a share link). There are some extensions to this language though. In particular:
 
       <ul>
 	<li>Lines starting with a <tt>#</tt> character are comments (purely for human readers, ignored by the engine)
@@ -486,7 +499,11 @@ Order fromOutsideIn=[ [1,2,3,4,5,6, 7,13,19,25, 31,32,33,34,35,36, 30,24,18,12],
 	    (*,star,*,fromInsideOut,[0])
 	  </pre>
 	  says that any number of stars of any color can be picked, as long as they are among the "most inside" pieces of all pieces on the board; once picked, they must be put into bucket no. 0.
-	<li>The buckets are numbered clockwise starting from the <strong>top left</strong>. This is in agreement with the current functionality in Paul's and Kevin's GUI app, rather than with Jerry's specs. This, bucket 0 is (7, 0), bucket 1 is (7,7) etc.
+	<li>The buckets are numbered clockwise starting from the <strong>top left</strong>. This is in agreement with the current functionality in
+	  the GUI app.
+<!--
+    Paul's and Kevin's GUI app, rather than with Jerry's specs. -->
+This, bucket 0 is (7, 0), bucket 1 is (7,7) etc.
 </ul>	 
 
     <p>For more information, see the detailed guide for the <a href="syntax.html">Rule file syntax and semantics</a>.
