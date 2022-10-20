@@ -210,17 +210,11 @@ public class LaunchRulesBase      extends ResultsBase  {
 	return q.toArray(new String[0]);
     }
 
-    
-    /** Builds Part A and Part B tables 
-	@param z "APP" or "MLC"
-	@param modsShort Modifiers for Part A
-	@param modsLong Modifiers for Part B
+    /**
+       @param knownRuleSetNames Output parameter: here the rule sets used in Part A will be put, so that we won't use them again in Part B.
     */
-    protected void buildTable(String[] modsShort, String[] modsLong,   final String z, File launchFile) {
+    private String buildPartA(String[] modsShort,  	    String[] hm,  final String z, File launchFile,   HashSet<String> knownRuleSetNames ) throws Exception {
 
-	if (!launchFile.exists()) {
-	    infomsg += " [The control file " + launchFile + " does not exist on the server]";
-	}
 	CsvData launchList = null;	
 	try {
 	    launchList = new CsvData(launchFile, true, false, new int[] {2});	
@@ -228,69 +222,84 @@ public class LaunchRulesBase      extends ResultsBase  {
 	    infomsg += "[Ignoring the control file "+launchFile + " due to an error: " + ex.getMessage()+"]";
 	}
    
+	Vector<String> rows = new Vector<>();
+	Vector<String> cells = new Vector<>();
+		
+	String text = fm.para("Part A: Experiment plans from <tt>trial-lists/"+z+"</tt>");
+
+	rows.add(fm.tr("<TH rowspan=2>Experiment plan &amp; its rule set(s)</TH><TH colspan="+hm.length+">Actions</TH>"));
+	cells.clear();
+	for(String h: hm) cells.add(fm.th(h));	    
+	rows.add(fm.tr(String.join("",cells)));
+	    
+	String[] allPlanNames = Files.listSAllExperimentPlansInTree(z);
+	HashMap<String, String> csvPlanDescriptions = new HashMap<>();
+	allPlanNames = mergePlanLists( launchList,  allPlanNames,
+				       csvPlanDescriptions);
+
+	for(String p:  allPlanNames) {
+	    cells.clear();
+
+		
+	    Vector<String> trialLists = TrialList.listTrialLists(p);
+	    
+	    if (trialLists.size()!=1) {
+		cells.add(fm.td("Cannot use experiment plan " + p +": it has " + trialLists.size() + " trial lists, and we want exactly 1"));
+		rows.add(fm.tr(String.join("",cells)));
+		continue;
+	    }
+	    
+	    TrialList tlist = new TrialList( p, trialLists.get(0));
+	    
+	    String descr2 = csvPlanDescriptions.get(p);
+	    
+	    String descr = "Plan: " + fm.strong(fm.tt(p));
+	    if (descr2!=null) descr += " " + descr2;
+	    descr += ":<br>" +
+		describeTrialList(tlist, knownRuleSetNames);
+	    cells.add( fm.td(descr));
+	    
+	    for(String mod: modsShort) {
+		String exp = "P:" + p + ":"+mod;
+		cells.add( mkCell(exp));
+	    }
+	    rows.add(fm.tr(String.join("",cells)));
+	}
+	
+
+	text += fm.para("This table covers " +  knownRuleSetNames.size() + " rule sets: " + Util.joinNonBlank(", ", knownRuleSetNames));
+	text += fm.table( "border=\"1\"", rows);
+
+	return text;
+
+    }
+    
+    /** Builds Part A and Part B tables 
+	@param z "APP" or "MLC"
+	@param modsShort Modifiers for Part A
+	@param modsLong Modifiers for Part B
+    */
+    protected void buildTable(String[] modsShort, String[] modsLong,  	    String[] hm,
+ final String z, File launchFile) {
+
+	if (!launchFile.exists()) {
+	    infomsg += " [The control file " + launchFile + " does not exist on the server]";
+	}
+
+	// The rule sets used in Part A. We won't use them again in Part B
+	HashSet<String> knownRuleSetNames = new HashSet<>();
 	
 	EntityManager em = Main.getNewEM();
 	try {
 
 	    allPlayers = findPlayers( em,  new Integer(uid));
 
+
+	    if (modsShort!=null)   tableText +=  buildPartA(modsShort, hm, z, launchFile, knownRuleSetNames);
+
 	    Vector<String> rows = new Vector<>();
 	    Vector<String> cells = new Vector<>();
-
-	    String[] hm = {"No feedback",
-			   "Some feedback",
-			   "More feedback",
-			   "Max feedback" };
-	    
-	    tableText = fm.para("Part A: Experiment plans from <tt>trial-lists/"+z+"</tt>");
-
-	    rows.add(fm.tr("<TH rowspan=2>Experiment plan &amp; its rule set(s)</TH><TH colspan="+hm.length+">Actions</TH>"));
-	    cells.clear();
-	    for(String h: hm) cells.add(fm.th(h));	    
-	    rows.add(fm.tr(String.join("",cells)));
-
-	    // The rule sets used in Part A. We won't use them again in Part B
-	    HashSet<String> knownRuleSetNames = new HashSet<>();
-	    
-	    String[] allPlanNames = Files.listSAllExperimentPlansInTree(z);
-	    HashMap<String, String> csvPlanDescriptions = new HashMap<>();
-	    allPlanNames = mergePlanLists( launchList,  allPlanNames,
-					   csvPlanDescriptions);
-
-	    for(String p:  allPlanNames) {
-		cells.clear();
-
-		
-		Vector<String> trialLists = TrialList.listTrialLists(p);
-
-		if (trialLists.size()!=1) {
-		    cells.add(fm.td("Cannot use experiment plan " + p +": it has " + trialLists.size() + " trial lists, and we want exactly 1"));
-		    rows.add(fm.tr(String.join("",cells)));
-		    continue;
-		}
-
-		TrialList tlist = new TrialList( p, trialLists.get(0));
-
-		String descr2 = csvPlanDescriptions.get(p);
-		
-		String descr = "Plan: " + fm.strong(fm.tt(p));
-		if (descr2!=null) descr += " " + descr2;
-		descr += ":<br>" +
-		    describeTrialList(tlist, knownRuleSetNames);
-		cells.add( fm.td(descr));
-	
-		for(String mod: modsShort) {
-		    String exp = "P:" + p + ":"+mod;
-		    cells.add( mkCell(exp));
-		}
-		rows.add(fm.tr(String.join("",cells)));
-	    }
-
-
-	    tableText += fm.para("This table covers " +  knownRuleSetNames.size() + " rule sets: " + Util.joinNonBlank(", ", knownRuleSetNames));
-
-	    tableText += fm.table( "border=\"1\"", rows);
-
+  
 	    tableText += fm.para("Part B: Rule sets from <tt>rules/"+z+"</tt> not covered in Part A");
 	    
 	    rows.clear();

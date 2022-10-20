@@ -39,8 +39,14 @@ public class LaunchRules      extends LaunchRulesBase  {
 			  "APP-short/APP2-short-more-feedback",
 			  "APP-short/APP-short-max-feedback" };
 
+	String[] hm = {"No feedback",
+		       "Some feedback",
+		       "More feedback",
+		       "Max feedback" };
+
+
 	File launchFile = Files.getLaunchFileAPP();
-	buildTable(modsShort, modsLong, "APP", launchFile);
+	buildTable(modsShort, modsLong, hm, "APP", launchFile);
     }
 
 
