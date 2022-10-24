@@ -1,7 +1,7 @@
 <%@include file="../include/imports.jsp" %>
 <%
    String sp="launch/launch-rules.jsp";
-   LaunchRules main=new LaunchRules(request, response);
+   LaunchRules main=new LaunchRules(request, response, LaunchRules.Mode.APP);
 %>
 <html>
 <head>

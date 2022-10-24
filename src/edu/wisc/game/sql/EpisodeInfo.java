@@ -133,10 +133,18 @@ public class EpisodeInfo extends Episode {
     @XmlElement
     public void setXFactor(int _xFactor) { xFactor = _xFactor; }
 
-    
+    /** If the default no-arg constructor is used when restoring a series
+	from the SQL database, the ParaSet needs to be set again */
     @Transient
-    final private ParaSet para;
+    //final
+	private ParaSet para;
     public ParaSet xgetPara() { return para;}
+
+    /** This is used after the episode has been restored from the database */
+    void restorePara(ParaSet _para) {
+	if (para==null) para=_para;
+    }
+
 	
     double xgetPickCost() {
 	return para.getPickCost();

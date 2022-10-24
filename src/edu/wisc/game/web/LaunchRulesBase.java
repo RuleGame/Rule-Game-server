@@ -210,10 +210,12 @@ public class LaunchRulesBase      extends ResultsBase  {
 	return q.toArray(new String[0]);
     }
 
-    /**
+    /** Builds the Part A table, based on preexisting trial list, with P:-type
+	plans constructed around them.
+	
        @param knownRuleSetNames Output parameter: here the rule sets used in Part A will be put, so that we won't use them again in Part B.
     */
-    private String buildPartA(String[] modsShort,  	    String[] hm,  final String z, File launchFile,   HashSet<String> knownRuleSetNames ) throws Exception {
+    private String buildPartA(String[] modsShort,   String[] hm,  final String z, File launchFile,   HashSet<String> knownRuleSetNames ) throws Exception {
 
 	CsvData launchList = null;	
 	try {
@@ -273,6 +275,49 @@ public class LaunchRulesBase      extends ResultsBase  {
 	return text;
 
     }
+
+    /** Builds the Part B table. Here, the rule set files are the base, and 
+	R:-type dynamic plans are created.
+     */
+    private String buildPartB(String[] modsLong, String[] hm,  final String z,
+			      HashSet<String> knownRuleSetNames ) throws Exception {
+	    Vector<String> rows = new Vector<>();
+	    Vector<String> cells = new Vector<>();
+  
+	    String text = "";
+	    if (z.equals("APP")) {
+		text += fm.para("Part B: Rule sets from <tt>rules/"+z+"</tt> not covered in Part A");
+	    }
+	    
+	    rows.add(fm.tr("<TH rowspan=2>Rule Set</TH><TH colspan="+hm.length+">Actions</TH>"));
+
+	    for(String h: hm) cells.add(fm.th(h));	    
+	    rows.add(fm.tr(String.join("",cells)));
+	    
+	    String[] allRuleNames = Files.listAllRuleSetsInTree(z);
+	    for(String r:  allRuleNames) {
+
+		RuleSet ruleSet = AllRuleSets.obtain(r);
+		String descr = String.join("<br>", ruleSet.description);
+
+		cells.clear();
+		String t = fm.tt(r) + " " + descr;
+		cells.add( fm.td(t));
+
+		if (knownRuleSetNames.contains(r)) {
+		    cells.add( fm.wrap("td","colspan="+modsLong.length, "See Part A"));
+		}  else {		
+		    for(String mod: modsLong) {
+			String exp = "R:" + r + ":"+mod;
+			cells.add( mkCell(exp));
+		    }
+		}
+		rows.add(fm.tr(String.join("",cells)));
+	    }
+
+	    text += fm.table( "border=\"1\"", rows);
+	    return text;
+   }
     
     /** Builds Part A and Part B tables 
 	@param z "APP" or "MLC"
@@ -297,41 +342,9 @@ public class LaunchRulesBase      extends ResultsBase  {
 
 	    if (modsShort!=null)   tableText +=  buildPartA(modsShort, hm, z, launchFile, knownRuleSetNames);
 
-	    Vector<String> rows = new Vector<>();
-	    Vector<String> cells = new Vector<>();
-  
-	    tableText += fm.para("Part B: Rule sets from <tt>rules/"+z+"</tt> not covered in Part A");
-	    
-	    rows.clear();
-	    rows.add(fm.tr("<TH rowspan=2>Rule Set</TH><TH colspan="+hm.length+">Actions</TH>"));
+	    if (modsLong!=null)   tableText +=  buildPartB(modsLong, hm, z, knownRuleSetNames);
 
 
-	    cells.clear();
-	    for(String h: hm) cells.add(fm.th(h));	    
-	    rows.add(fm.tr(String.join("",cells)));
-	    
-	    String[] allRuleNames = Files.listAllRuleSetsInTree(z);
-	    for(String r:  allRuleNames) {
-
-		RuleSet ruleSet = AllRuleSets.obtain(r);
-		String descr = String.join("<br>", ruleSet.description);
-
-		cells.clear();
-		String text = fm.tt(r) + " " + descr;
-		cells.add( fm.td(text));
-
-		if (knownRuleSetNames.contains(r)) {
-		    cells.add( fm.wrap("td","colspan="+modsLong.length, "See Part A"));
-		}  else {		
-		    for(String mod: modsLong) {
-			String exp = "R:" + r + ":"+mod;
-			cells.add( mkCell(exp));
-		    }
-		}
-		rows.add(fm.tr(String.join("",cells)));
-	    }
-
-	    tableText += fm.table( "border=\"1\"", rows);
 	} catch(Exception ex) {
 	    hasException(ex);
 	} finally {

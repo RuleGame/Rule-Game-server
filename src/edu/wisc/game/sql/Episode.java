@@ -318,7 +318,7 @@ public class Episode {
 	}
 
 	
-	/** Into which buckets, if any, can the specified piece be moved?
+	/** (OBSOLETE) Into which buckets, if any, can the specified piece be moved?
 	    (The original method, used in GS 1 thru 4)
 	   @return result[j] is the set of buckets into which the j-th
 	   rule (atom) allows the specified piece to be moved.
@@ -376,7 +376,7 @@ public class Episode {
 	    
 		BucketVarMap2  varMap = memory.new BucketVarMap2(p, bucketNo);
 
-		//System.err.println("varMap=" + varMap);
+		System.err.println("#DEBUG: varMap=" + varMap);
 		
 	    
 		for(int j=0; j<row.size(); j++) {

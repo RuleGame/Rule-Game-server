@@ -469,6 +469,7 @@ public class PlayerInfo {
 	    while(k<allEpisodes.size() && allEpisodes.get(k).seriesNo==j) {
 		System.err.print("Restore: check series=" + j +", ae["+k+"]=");
 		EpisodeInfo epi = allEpisodes.get(k++);
+		epi.restorePara(para);
 		System.err.println(epi.report()+", completed=" + epi.isCompleted());
 
 		epi.setRules(rules); // just in case the GUI client needs them

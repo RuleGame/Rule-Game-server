@@ -5,6 +5,7 @@ import java.util.*;
 import java.text.*;
 import edu.wisc.game.util.Util;
 import edu.wisc.game.sql.Episode;
+import edu.wisc.game.engine.RuleSet.BucketSelector;
 
 public interface Expression {
 
@@ -157,7 +158,7 @@ public interface Expression {
 
     };
 
-    /** A HashMap storing a set of values of a given type T for easch key */
+    /** A HashMap storing a set of values of a given type T for each key */
     static public class MapTo<T>  extends HashMap<String, HashSet<T>> {
 	/** Adds a value to the list of values associated with a specified key */
 	public boolean addValue(String key, T val) {
@@ -178,9 +179,17 @@ public interface Expression {
 	public void pu( String /*BucketSelector*/ key, T k) {
 	    HashSet<T> h = new  HashSet<>();
 	    h.add(k);
-	    put(key/*.toString()*/, h);
+	    put(key, h);
 	}
-	
+
+	public void pu(BucketSelector key, T k) {
+	    pu( key.toString(), k);
+	}
+
+	public void putSet(BucketSelector key, HashSet<T> h) {
+	    put( key.toString(), h);
+	}
+
 
 	
     }

@@ -70,12 +70,17 @@ public class LaunchMain  extends LaunchRulesBase  {
 			     z1 + "/" + z + "2-short-more-feedback",
 			     z1 + "/" + z + "-short-max-feedback"};
 
+	String[] hm = {"No feedback",
+		       "Some feedback",
+		       "More feedback",
+		       "Max feedback" };
+
 
 	// As per Paul's request, give them debug mode
 	mustUseDevClient = true;
 	z = "MLC";
 	File launchFile = Files.getLaunchFileMLC();
-	buildTable(modsShort, modsLong, z, launchFile);
+	buildTable(modsShort, modsLong, hm, z, launchFile);
     }
 
     

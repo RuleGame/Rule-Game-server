@@ -510,10 +510,15 @@ The shape names are given using the same case as in the file names. They are not
 	      enctype="application/x-www-form-urlencoded">
 
 	  Player ID: <input name="playerId" type="text" size="25" value="AnyText01"><br>
-     Experiment plan (<tt>vmColorTest</tt> or <tt>default</tt>): <input name="exp" type="text" size="25" value="">
+     Experiment plan (<tt>vmColorTest</tt> or <tt>default</tt>): <input name="exp" type="text" size="60" value="">
 	  <input type="submit">
 	</form>
+	<small>(You can also use a dynamic plan name above, e.g. <tt>R:CGS/b23-then-b01:APP/APP-max-feedback</tt>)</small>
 
+	<!--
+R:CGS/color-match:APP/APP-max-feedback
+R:CGS/test-01:APP/APP-max-feedback
+-->	
     
 <li>POST <strong><tt>/mostRecentEpisodeHtml</tt>: Look up the most recent episode for a specified user:</strong>
         <form method="post" action="game-data/GameService2Html/mostRecentEpisodeHtml"

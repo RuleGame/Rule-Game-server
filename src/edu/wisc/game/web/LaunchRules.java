@@ -2,10 +2,10 @@ package edu.wisc.game.web;
 
 import java.io.*;
 import java.util.*;
-import java.text.*;
+//import java.text.*;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
-import javax.persistence.*;
+//import javax.persistence.*;
 
 
 import edu.wisc.game.util.*;
@@ -13,7 +13,6 @@ import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.formatter.*;
 import edu.wisc.game.rest.*;
-//import edu.wisc.game.parser.*;
 
 
 /** The Launch page that allows one to play all rule sets from rules/APP.
@@ -26,27 +25,40 @@ import edu.wisc.game.rest.*;
 */
 public class LaunchRules      extends LaunchRulesBase  {
 
-    public LaunchRules(HttpServletRequest request, HttpServletResponse response)  {
+    /** The name refers to the directory from whih trial lists or rule sets 
+	are read */
+    public enum Mode { APP, CGS };
+
+    public LaunchRules(HttpServletRequest request, HttpServletResponse response, Mode mode)  {
 	super(request,response);
 	if (error || !loggedIn()) return;
+	
+	
 	String[] modsLong = {"APP/APP-no-feedback",
-			 "APP/APP2-some-feedback",
-			 "APP/APP2-more-feedback",
-			 "APP/APP-max-feedback" };
+			     "APP/APP2-some-feedback",
+			     "APP/APP2-more-feedback",
+			     "APP/APP-max-feedback" };
 
 	String[] modsShort = {"APP-short/APP-short-no-feedback",
-			  "APP-short/APP2-short-some-feedback",
-			  "APP-short/APP2-short-more-feedback",
-			  "APP-short/APP-short-max-feedback" };
+			      "APP-short/APP2-short-some-feedback",
+			      "APP-short/APP2-short-more-feedback",
+			      "APP-short/APP-short-max-feedback" };
 
 	String[] hm = {"No feedback",
 		       "Some feedback",
 		       "More feedback",
 		       "Max feedback" };
 
+	if (mode==Mode.CGS) {
+	    modsShort = null;
+	    modsLong = new String[] {"APP/APP-no-feedback"};
+	    hm = new String[] {""};
+	}
+    
 
+	
 	File launchFile = Files.getLaunchFileAPP();
-	buildTable(modsShort, modsLong, hm, "APP", launchFile);
+	buildTable(modsShort, modsLong, hm, mode.name(), launchFile);
     }
 
 

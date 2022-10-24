@@ -98,13 +98,13 @@ class EpisodeMemory {
 	BucketVarMap(Piece p) {
 	    if (p.xgetColor()!=null) {
 		Integer z = pcMap.get(p.xgetColor());
-		if (z!=null) pu(BucketSelector.pc.toString(), z);
+		if (z!=null) pu(BucketSelector.pc, z);
 	    }
 	    if (p.xgetShape()!=null) {
 		Integer z = psMap.get(p.xgetShape());
-		if (z!=null) pu(BucketSelector.ps.toString(), z);
+		if (z!=null) pu(BucketSelector.ps, z);
 	    }
-	    if (pp!=null) pu(BucketSelector.p.toString(), pp);
+	    if (pp!=null) pu(BucketSelector.p, pp);
 	    ImageObject io = p.getImageObject();
 	    if (io!=null) {
 		for(String key: io.keySet()) {
@@ -116,8 +116,8 @@ class EpisodeMemory {
 		}
 	    }
 	    Pos pos = p.pos();
-	    put(BucketSelector.Nearby.toString(), pos.nearestBucket());
-	    put(BucketSelector.Remotest.toString(), pos.remotestBucket());
+	    putSet(BucketSelector.Nearby, pos.nearestBucket());
+	    putSet(BucketSelector.Remotest, pos.remotestBucket());
 	    //System.out.println("DEBUG: For piece="+p+ ", BucketVarMap=" + this);
 	}
 	
@@ -134,7 +134,7 @@ class EpisodeMemory {
      */
     class BucketVarMap2 extends Expression.VarMap2 {
 	BucketVarMap2(Piece p, int bucketNo)  {
-	    if (pp!=null) pu(BucketSelector.p.toString(), pp);
+	    if (pp!=null) pu(BucketSelector.p, pp);
 
 	    PropMap thisPiece = p.toPropMap();
 	    thisPiece.put("bucket", bucketNo);
@@ -144,7 +144,13 @@ class EpisodeMemory {
 		String val = thisPiece.get(key).toString();
 		if (pMap.get(key)!=null) {			
 		    Integer z = pMap.get(key).get(val);
-		    if (z!=null) pu("p."+key, z);
+		    if (z!=null) {
+			pu("p."+key, z);
+			// For backward compatibility, we set
+			// variables "ps" and "pc" as well.
+			if (key.equals("shape")) pu(BucketSelector.ps, z);
+			else if (key.equals("color")) pu(BucketSelector.pc, z);
+		    }
 		}
 		if (qMap.get(key)!=null) {			
 		    PropMap z = qMap.get(key).get(val);
@@ -156,8 +162,8 @@ class EpisodeMemory {
 	    if (lastPiece!=null) addValue("last", lastPiece);
 	    
 	    Pos pos = p.pos();
-	    put(BucketSelector.Nearby.toString(),anySetToOset( pos.nearestBucket()));
-	    put(BucketSelector.Remotest.toString(),anySetToOset( pos.remotestBucket()));
+	    putSet(BucketSelector.Nearby,anySetToOset( pos.nearestBucket()));
+	    putSet(BucketSelector.Remotest,anySetToOset( pos.remotestBucket()));
 
 	    //System.out.println("DEBUG: For piece="+p+ " moved to "+bucketNo+", VarMap2=" + this);
 
