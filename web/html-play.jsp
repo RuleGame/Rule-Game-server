@@ -17,7 +17,7 @@
 <p>
   <ul>
 <li>
-    POST <strong><tt>/playerHtml</tt>: Register a new player in an experiment plan of your choice:</strong>
+    POST <strong><tt>/playerHtml</tt> (pick the plan from the list): Register a new player in an experiment plan of your choice:</strong>
         <form method="post" action="game-data/GameService2Html/playerHtml"
 	      enctype="application/x-www-form-urlencoded">
 
@@ -30,7 +30,18 @@ Choose an experiment plan:<br>
    <button type="submit">Register player</button>
 	</form>
 
-    
+
+<li>POST <strong><tt>/playerHtml</tt> (type the plan name): Register a new player in an experiment plan of your choice:</strong>
+        <form method="post" action="game-data/GameService2Html/playerHtml"
+	      enctype="application/x-www-form-urlencoded">
+
+	  Player ID: <input name="playerId" type="text" size="25" value="AnyText01"><br>
+     Experiment plan (<tt>vmColorTest</tt> or <tt>default</tt>): <input name="exp" type="text" size="60" value="">
+	  <input type="submit">
+	</form>
+	
+	<small>(You can also use a dynamic plan name above, e.g. <tt>R:CGS/b23-then-b01:APP/APP-max-feedback</tt>)</small>
+
 <li>POST <strong><tt>/mostRecentEpisodeHtml</tt>: Look up the most recent episode for a specified user:</strong>
         <form method="post" action="game-data/GameService2Html/mostRecentEpisodeHtml"
 	 enctype="application/x-www-form-urlencoded">

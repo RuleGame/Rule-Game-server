@@ -5,7 +5,7 @@
 <body>
   <h1>Standard Operating Procedures: Preparing and running an experiment with the Rule Game Server</h1>
 
-    <p align="center"><em>Updated 2021-12-15 for Game Server ver. 4.003</em></p>
+    <p align="center"><em>Updated 2022-10-24 for Game Server ver. 4.003</em></p>
 
     <h2>Preparing the experiment control files</h2>
 
@@ -105,7 +105,34 @@ Make sure to have thus information recorded in your experiment log. (Note that t
 
     <p>See the <a href="data.html#export">section on exporting data from the Game Srever's SQL tables</a>, and the <a href="data.html#saved">section on files saved by the Game Server</a> in the Data Guide for guidance on what data are recorded during the experiment, and how they can be extracted from the server.
 
-    
+
+      <h2>Appendix: Tips and tricks for rule set development</h2>
+
+    <p>
+Editing existing rules is always somewhat problematic.  The issue is, even if you have cleared the server tables, the particular player in whose "persona" you are playing already has its own compiled version of the rule set, and it is going to be used for the duration of that player's current series. This means that clearing the tables will affect the players created in the future, but not the players who are currently playing a series of episodes.
+
+<p>
+This is likely to inconvenience experiment designers who keep modifying the same rule set, testing it again and again. However, there are a number of techniques to go around it. They are described below.
+
+<h3>Approach 1</h3>
+
+Suppose you like doing your testing from a page such as http://sapir.psych.wisc.edu:7150/w2020-dev/launch/launch-rules-cgs.jsp . In this case, you can do the following:
+<ul>
+<li> Every time you edit your rule set file, you put the new version in a separate file with a new name (e.g. test-01.txt, test-02.txt, test-03.txt, etc), and manually copy it to the directory the server takes it from ( /opt/tomcat/game-data/rules/CGS ), instead of using the normal deployment process (checking in to GitHub). 
+<li> Once a new file (e.g. test-03.txt) has been copied to the server directory, you reload the lunch page, and the new rule set now appears in the table as a new row. Click on the "PLAY" button in that row, and a new player will be created (under your usual username), which is guaranteed to use the brand-new rule.
+<li> Once you have finished your development of the new rule, delete all these temp files (test-*.txt) from your own directory and frome the /opt/tomcat/game-data tree, while renaming the final version so that it has its permanent name (e.g. my-good-rule.txt). Then you can do the proper deployment, by adding the new rule to the GitHub repository ("git add my-good-rule.txt", if it has not been done before) and committing it to the repository ("git commit -a; git push origin master"), which will deploy it under that permanent name.
+</ul>
+
+<h3>Approach 2</h3>
+
+If you like doing testing through the developers' launch page ( http://sapir.psych.wisc.edu:7150/w2020-dev/front-end-form.jsp  for the GUI client, or http://sapir.psych.wisc.edu:7150/w2020-dev/game-api-2.html#html for the HTML Play), then it's even simpler:
+<ul>
+  <li>
+    You have modified the rule test set file, and have deployed it to the /opt/tomcat/game-data tree, either through the official SOP process (Github checkin), or simply by copying it there manually for the time being.
+    <li> You clear the server tables.
+    <li> You go to one of the launch pages mentioned above. In the player name field you enter a unique name that has never been used used yet (e.g. john-doe-2022-10-24-a). In the sexperiment plan name you can enter a so-called "dynamic plan name of the R: type", which is composed of the prefix "R:", the name of the rule set, and the modifier name. For example, R:CGS/color-match:APP/APP-max-feedback  will test the rule set that lives in rules/CGS/color-match.txt, with one of the modifiers from modifiers/APP.
+</ul>
+      
 <hr>
 [<a href="index.html">Main page</a>]
 [<a href="data.html">Rule Game Server data guide</a>]

@@ -66,7 +66,7 @@ or <tt>R:bottomLeft_then_topRight:simple</tt>
 
 <br>Game Server: <input type=text name="server" size=80 value="<%=main.serverUrl%>"><br>
 
-<br>Experiment plan: (e.g. <tt>pilot06</tt>): <input type="text" name="exp" size="60" value="">
+<br>Experiment plan: (e.g. <tt>pilot06</tt>): <input type="text" name="exp" size="80" value="">
 
 <br>Player Id (e.g. <tt>pk-2022-05-31-a</tt>): <input type="text" name="workerId" size="30" value="">
 
