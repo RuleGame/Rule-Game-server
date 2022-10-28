@@ -344,7 +344,7 @@ public class AnalyzeTranscripts {
 	    for(Long uid: uids) {
 		Query q = em.createQuery("select p from PlayerInfo p where p.user.id=:u");
 	    
-		q.setParameter("p", uid);
+		q.setParameter("u", uid);
 		addAll((List<PlayerInfo>)q.getResultList());
 	    }
 

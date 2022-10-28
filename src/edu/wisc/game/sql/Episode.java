@@ -376,7 +376,7 @@ public class Episode {
 	    
 		BucketVarMap2  varMap = memory.new BucketVarMap2(p, bucketNo);
 
-		System.err.println("#DEBUG: varMap=" + varMap);
+		//System.err.println("#DEBUG: varMap=" + varMap);
 		
 	    
 		for(int j=0; j<row.size(); j++) {
