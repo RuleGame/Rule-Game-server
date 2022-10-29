@@ -191,6 +191,43 @@ analyze-transcripts.sh -pid -file my-pid-list.csv
 
   <p>The values of F and f reset to 0 once a piece is successfully removed from the board and the board position changes. In other words, an MCP does not retain any memory of his actions from one position to the next.
  
+    <h2><a name="again">Post processing: "try again" numbers</a></h2>
+
+  <p>As per Paul's request (Oct 2022) we have a post-processing script, which can be applied to split transcript files (computed with the -pre option) to compute a measure of the player's procilivity to try moving the same game piece.
+
+  <p>The usage is
+    <pre>
+      ~vmenkov/w2020/game/scripts/does-try-again.pl -out=<em>outputFile.csv</em> <em>files_or_directories</em>
+    </pre>
+
+    <p>
+      The command-line arguments(s) are CSV files (*.split-transcripts.csv) produced by the Analyze Transcript tool, or directories containing such files. If directories appear among the arguments, each directory will be processed recursively.
+
+    <p>If the -out=... option specifies the name of the output file to be created. If omitted, the file will be named <tt>out.csv</tt>.
+
+    <p>Example:
+      <pre>
+	~vmenkov/w2020/game/scripts/does-try-again.pl .
+      </pre>
+      This will recursively process all split transcript files in the current directory, and write fill out.csv.
+
+      <p>For more details, see Example 2 below.
+
+      <p>The analysis in this script categorizes all actions (other than the last one, which is not followed by another action) into 3 groups: [doesTryAgain] , [doesNotTryAgain],  [other], as follows:
+
+	<ul>
+<li>(a) Failed pick, followed by an attempt at a different piece. [other] (The only correct action)
+<li>(b) Failed pick, followed by another attempt at the same piece.  [doesTryAgain]  (Misguided: probably results from misunderstanding, poor memory, or a slip of the fingers)
+<li>(c) Successful pick, followed by an attempt at a different piece. [doesNotTryAgain]  (of course successful picks are a strange action; from my point of view, they are either misguided, or a slip of the fingers; but as you say, may be part of a strategy)
+<li>(d) Successful pick, followed by an attempt at the same  piece. [doesTryAgain] 
+<li>(e) Failed move,  followed by an attempt at a different piece. [doesNotTryAgain]
+<li>(f) Failed move,  followed by an attempt at the same piece. [doesTryAgain]
+<li>(g) Successful move,  followed by an attempt at a different piece. [other]  (no other choice here, unless the player likes grabbing at empty cells)
+	</ul>
+
+      <p>In other words, the [other] group includes succesful moves and failed picks, because both of them ought to be followed (in the former case, physically; in the latter, logically) by an attempt at some other piece. All other actions are categorized into  [doesNotTryAgain] or  [doesTryAgain] based on whether the subsequent action involved the same piece as this action.
+
+	
   <h2>Examples</h2>
 
   <h3>Example 1</h3>
@@ -229,7 +266,39 @@ java.io.IOException: Cannot read rule file: /opt/tomcat/game-data/rules/Rule-002
 This particular message is only relevant in runs with <tt>-p0</tt> on, since we need to know the rules to compute p0. Thus it's likely that there will be fewer split transcripts in the analyses with p0 than in those without p0.
 
 <P>
-Such phenomena usually result from the research team occasionally rearranging the experiment control files. Still, despite such defects, you will have plenty of remaining good data to work with.
+  Such phenomena usually result from the research team occasionally rearranging the experiment control files. Still, despite such defects, you will have plenty of remaining good data to work with.
+
+  <h3>Example 2</h3>
+
+  <P>Make a list of player IDs of all M-Turk players:
+  <pre>
+    cd /opt/tomcat/saved/transcripts
+    ls A*.csv | perl -pe 's/.transcripts.csv//' > ~/list.tmp
+  </pre>
+
+  <p>Produce split transcripts for all of these players (1511, as of Oct 2022)
+    <pre>
+      cd
+      ~vmenkov/w2020/game/scripts/analyze-transcripts.sh -pre -pid -file list.tmp > out.log
+    </pre>
+    The process will take a few minutes. A few errors will be reported, as some of those players played experiment plans that no longer exist, etc. It produces over 4500 split transcripts:
+    <pre>
+     find tmp -type f -name '*transcripts.csv'|wc
+   4513    4513  259944
+</pre>
+
+    <p>For each player and "experience" compute the doesTryAgain/doesNotTryAgain numbers:
+    <pre>
+    cd tmp
+    ~vmenkov/w2020/game/scripts/does-try-again.pl -out=again.csv .
+     wc again.csv 
+  4514   4514 362094 again.csv
+    cd
+    mv tmp tmp.again-1
+    </pre>
+
+
+  
 
 </body>
 </html>
