@@ -29,6 +29,9 @@ public class LaunchRules      extends LaunchRulesBase  {
 	are read */
     public enum Mode { APP, CGS };
 
+    /** Generates the table for the APP or CGS launch page.
+	@param mode Which page to generate?
+     */
     public LaunchRules(HttpServletRequest request, HttpServletResponse response, Mode mode)  {
 	super(request,response);
 	if (error || !loggedIn()) return;

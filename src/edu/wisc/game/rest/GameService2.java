@@ -64,13 +64,16 @@ public class GameService2 {
 	return new PlayerResponse( playerId, exp, uid);
     }
 
+    /** Changed to existing=false on 2022-11-04, due to an error reported by 
+	Paul. */
     @POST
     @Path("/mostRecentEpisode") 
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
     public NewEpisodeWrapper2
 	mostRecentEpisode(@FormParam("playerId") String playerId) {
-	return new NewEpisodeWrapper2(playerId, true, false, false);
+	//return new NewEpisodeWrapper2(playerId, true, false, false);
+	return new NewEpisodeWrapper2(playerId, false, false, false);
     }
 
 
