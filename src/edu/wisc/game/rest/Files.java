@@ -117,7 +117,8 @@ public class Files {
     }
 
    
-
+    /** Append this to convert a rule set name to the file name (relative
+	to the main rules directory, of course) */
     static final String RULES_EXT = ".txt";
     
     /** @param  ruleSetName Either a complete absolute path name ("/home/vmenkov/foo.txt") starting with a slash, or just a file name without the extension ("foo"). In the later case, the file is assumed to be in the standard rules directory.
@@ -322,7 +323,9 @@ public class Files {
 	return w;
     }
 
-    
+    /**@param root Look for rule set files in the tree rooted at this point.
+       @return The names of all rule sets whose files are in a given tree. These are generally not complete rule set names, but their names relative to the specified root directory.
+     */
     private static String[] listAllRuleSetsInTree(File root) throws IOException {
 	if (!root.isDirectory()) throw new IOException("" + root + " is not a directory");
 	File[] files = root.listFiles();
@@ -371,7 +374,12 @@ public class Files {
 	return inputFile(modifierName, "modifiers", ".csv");
     }
 
-    
+
+    /** The directory where the bundle pregame experience files is stored for 
+	a specific experience name */
+    public static File pregameDir(String pregame) throws IOException {
+	return new File( new File(inputDir, "pregame"), pregame);
+    }
 }
 
     

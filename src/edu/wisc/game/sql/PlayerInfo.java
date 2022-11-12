@@ -586,6 +586,15 @@ public class PlayerInfo {
 	return  whoseEpisode(epi).para;
     }
 
+    /** Gives a link to the first ParaSet. This is used for things
+	that are determined by the first ParaSet, e.g. the pregame 
+	experience. */
+    public ParaSet getFirstPara() {
+	Series s = getSeries(0);
+	if (s==null) return null;
+	return s.para;
+    }
+
 
     private String completionCode;
     /** The completion code, a string that the player can report as a proof of 

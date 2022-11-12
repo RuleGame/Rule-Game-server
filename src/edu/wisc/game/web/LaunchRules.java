@@ -27,14 +27,21 @@ public class LaunchRules      extends LaunchRulesBase  {
 
     /** The name refers to the directory from whih trial lists or rule sets 
 	are read */
-    public enum Mode { APP, CGS };
+    public enum Mode { APP, CGS, BRM };
 
     /** Generates the table for the APP or CGS launch page.
-	@param mode Which page to generate?
+	@param request May contain rule=XXXX, to just use this one set (under the mode's rule directory)
+	@param mode Which page to generate? We have several launch page for different audiences.
      */
     public LaunchRules(HttpServletRequest request, HttpServletResponse response, Mode mode)  {
 	super(request,response);
 	if (error || !loggedIn()) return;
+
+	String chosenRuleSet = request.getParameter("rule");
+	if (chosenRuleSet==null || chosenRuleSet.equals("null") ||
+	    chosenRuleSet.trim().equals("")) {
+	    chosenRuleSet = null;
+	}
 	
 	
 	String[] modsLong = {"APP/APP-no-feedback",
@@ -52,7 +59,7 @@ public class LaunchRules      extends LaunchRulesBase  {
 		       "More feedback",
 		       "Max feedback" };
 
-	if (mode==Mode.CGS) {
+	if (mode==Mode.CGS || mode==Mode.BRM) {
 	    modsShort = null;
 	    modsLong = new String[] {"APP/APP-no-feedback"};
 	    hm = new String[] {""};
@@ -61,7 +68,7 @@ public class LaunchRules      extends LaunchRulesBase  {
 
 	
 	File launchFile = Files.getLaunchFileAPP();
-	buildTable(modsShort, modsLong, hm, mode.name(), launchFile);
+	buildTable(modsShort, modsLong, hm, mode.name(), launchFile, chosenRuleSet);
     }
 
 

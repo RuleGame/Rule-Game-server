@@ -31,7 +31,7 @@ public class LaunchRulesBase      extends ResultsBase  {
        
     protected HashMap<String,Vector<PlayerInfo>> allPlayers;
 
-    public String tableText = "NO DATA";
+    public String tableText = "<!-- TABLES START HERE-->\n";
 
     /** Finds the PlayerInfo object associated with the specified repeat user */
     static HashMap<String,Vector<PlayerInfo>> findPlayers(EntityManager em, int uid) {
@@ -278,54 +278,75 @@ public class LaunchRulesBase      extends ResultsBase  {
 
     /** Builds the Part B table. Here, the rule set files are the base, and 
 	R:-type dynamic plans are created.
+	@param  chosenRuleSet If not null, just show this set
      */
     private String buildPartB(String[] modsLong, String[] hm,  final String z,
-			      HashSet<String> knownRuleSetNames ) throws Exception {
-	    Vector<String> rows = new Vector<>();
-	    Vector<String> cells = new Vector<>();
-  
-	    String text = "";
-	    if (z.equals("APP")) {
-		text += fm.para("Part B: Rule sets from <tt>rules/"+z+"</tt> not covered in Part A");
-	    }
+			      HashSet<String> knownRuleSetNames, String chosenRuleSet ) throws Exception {
+	Vector<String> rows = new Vector<>();
+	Vector<String> cells = new Vector<>();
 	    
-	    rows.add(fm.tr("<TH rowspan=2>Rule Set</TH><TH colspan="+hm.length+">Actions</TH>"));
-
-	    for(String h: hm) cells.add(fm.th(h));	    
-	    rows.add(fm.tr(String.join("",cells)));
+	String text = "";
+	if (z.equals("APP")) {
+	    text += fm.para("Part B: Rule sets from <tt>rules/"+z+"</tt> not covered in Part A");
+	}
 	    
-	    String[] allRuleNames = Files.listAllRuleSetsInTree(z);
-	    for(String r:  allRuleNames) {
+	rows.add(fm.tr("<TH rowspan=2>Rule Set</TH><TH colspan="+hm.length+">Actions</TH>"));
 
-		RuleSet ruleSet = AllRuleSets.obtain(r);
-		String descr = String.join("<br>", ruleSet.description);
+	for(String h: hm) cells.add(fm.th(h));	    
+	rows.add(fm.tr(String.join("",cells)));
+	
+	    
+	String[] allRuleNames;
 
-		cells.clear();
-		String t = fm.tt(r) + " " + descr;
-		cells.add( fm.td(t));
+	if ( chosenRuleSet!=null ) {
+	    String r =  z +  File.separator + chosenRuleSet;
+	    // make this call in order to have an exception thrown if
+	    // the file does not exist or has bad content	   
+	    RuleSet ruleSet = AllRuleSets.obtain(r);
+	
+	    //File f = new File(r + Files.RULES_EXT);
+	    //if (!f.exists()) {
+	    //	throw new IOException("Rule set file '" + f + "' does not exist");
+	    //}
+				 
+	    allRuleNames = new String[]{ r };
+	} else {	    
+	    allRuleNames = Files.listAllRuleSetsInTree(z);
+	}
+	
 
-		if (knownRuleSetNames.contains(r)) {
-		    cells.add( fm.wrap("td","colspan="+modsLong.length, "See Part A"));
-		}  else {		
-		    for(String mod: modsLong) {
-			String exp = "R:" + r + ":"+mod;
-			cells.add( mkCell(exp));
-		    }
+	for(String r:  allRuleNames) {
+	    
+	    RuleSet ruleSet = AllRuleSets.obtain(r);
+	    String descr = String.join("<br>", ruleSet.description);
+	    
+	    cells.clear();
+	    String t = fm.tt(r) + " " + descr;
+	    cells.add( fm.td(t));
+	    
+	    if (knownRuleSetNames.contains(r)) {
+		cells.add( fm.wrap("td","colspan="+modsLong.length, "See Part A"));
+	    }  else {		
+		for(String mod: modsLong) {
+		    String exp = "R:" + r + ":"+mod;
+		    cells.add( mkCell(exp));
 		}
-		rows.add(fm.tr(String.join("",cells)));
 	    }
-
-	    text += fm.table( "border=\"1\"", rows);
-	    return text;
+	    rows.add(fm.tr(String.join("",cells)));
+	}
+	
+	text += fm.table( "border=\"1\"", rows);
+	return text;
    }
     
     /** Builds Part A and Part B tables 
-	@param z "APP" or "MLC"
-	@param modsShort Modifiers for Part A
-	@param modsLong Modifiers for Part B
+	@param z "APP" or "MLC". This is the name of the directory (under the main rule set directory) in which to look for the rule set files.
+	@param modsShort Modifiers for Part A. If null, skip this part
+	@param modsLong Modifiers for Part B. If null, skip this part.
+	@param chosenRuleSet If not null, we just show this rule set in Part B table
     */
     protected void buildTable(String[] modsShort, String[] modsLong,  	    String[] hm,
- final String z, File launchFile) {
+			      final String z, File launchFile, String chosenRuleSet) {
 
 	if (!launchFile.exists()) {
 	    infomsg += " [The control file " + launchFile + " does not exist on the server]";
@@ -342,7 +363,7 @@ public class LaunchRulesBase      extends ResultsBase  {
 
 	    if (modsShort!=null)   tableText +=  buildPartA(modsShort, hm, z, launchFile, knownRuleSetNames);
 
-	    if (modsLong!=null)   tableText +=  buildPartB(modsLong, hm, z, knownRuleSetNames);
+	    if (modsLong!=null)   tableText +=  buildPartB(modsLong, hm, z, knownRuleSetNames, chosenRuleSet);
 
 
 	} catch(Exception ex) {

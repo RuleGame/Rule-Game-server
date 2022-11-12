@@ -80,7 +80,7 @@ public class LaunchMain  extends LaunchRulesBase  {
 	mustUseDevClient = true;
 	z = "MLC";
 	File launchFile = Files.getLaunchFileMLC();
-	buildTable(modsShort, modsLong, hm, z, launchFile);
+	buildTable(modsShort, modsLong, hm, z, launchFile, null);
     }
 
     
