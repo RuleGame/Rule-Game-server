@@ -96,7 +96,7 @@ public class PregameService {
 		    } else if (init == 11) {
 			// INSTRUCTIONS_11 = [I11_1 ... ] = doubling_scheme
 			pregame = "doubling";
-		    } else if (init == 11) {
+		    } else if (init == 2) {
 			// INSTRUCTIONS_2 = [I2_1 ... ] = stalemate_instructions
 			pregame = "stalemate";
 		    } else {

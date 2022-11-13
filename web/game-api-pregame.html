@@ -6,7 +6,7 @@
 
   <p align="center"><em>Version 6.000,  2022-11-12</em></p>
 
-  <p>This document describes an addition to the <a href="game-api-2.html">Rule Game Web API</a>, designed to provide the client with the bundle of files controlling the player's pregame and postgame experience (PGE). This was discussed by Vladimir and Kevin with Paul and Gary around 2022-11-10.
+  <p>This document describes an addition to the <a href="game-api-2.html">Rule Game Web API</a>, designed to provide the client with the bundle of files controlling the player's pregame and postgame experience (PGE). This was discussed in email by Vladimir and Kevin with Paul and Gary around 2022-11-10.
 
     <h2>API calls</h2>
     
@@ -60,20 +60,20 @@ In the above call, if an error has occurred, it will be detected through the HTT
 default/  doubling/  relational/  stalemate/
   </pre>
 
-  <h2>How the server determines which pregame experience to offer to a given player?</h2>
+  <h2>How the server determines which pregame experience to offer to a given player</h2>
 
   <ul>
     <li>If the player's trial list file contains the column named <tt>pregame</tt>, its value (from the first line of the file) is understood to be the name of the PGE offered to the player.
       
   <li>Otherwise, for the sake of backward compatibility, we check if the trial list has column namd <tt>init</tt>. If it exists, it's mapped to the PGE as follows:
   <pre>
-    if (init === 3) {
+    if (init == 3) {
        // INSTRUCTIONS_R =  [R1, R2, R3, R4, R5, R6, R7, R8] = instructions_relational
        pregame = "relational";
-    } else if (init === 11) {
+    } else if (init == 11) {
        // INSTRUCTIONS_11 = [I11_1 ... ] = doubling_scheme
        pregame = "doubling";
-    } else if (init === 11) {
+    } else if (init == 2) {
        // INSTRUCTIONS_2 = [I2_1 ... ] = stalemate_instructions
        pregame = "stalemate";
     } else {
@@ -86,7 +86,7 @@ default/  doubling/  relational/  stalemate/
 
   <h2><a name="sop">Advice to experiment designers</a></h2>
 
-<p>Once Kevin has added the support for customized PGEs to the client, this is the suggested Standard Operating Procedure for researchers to use when creating a new customized PGE for a series of experiments.
+<p>Once Kevin has added the support for customized PGEs to the client, researchers can start using the following suggested Standard Operating Procedure when creating a new customized PGE for a series of experiments.
 
   <ul>
     <li>Review the <a href="sop-experiment.html">SOP for experiment design</a>. The PGE file bundles are managed in a similar way to trial list files, rule set files, etc. They live in subdirectory <tt>pregame</tt> under the main <tt>game-data</tt> directory. 
