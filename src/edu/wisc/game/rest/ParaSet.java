@@ -339,12 +339,24 @@ public class ParaSet extends HashMap<String, Object> {
 	if (o instanceof Integer) {
 	    Integer q = (Integer)get(key);	    
 	    return q.intValue();
-	} else {
+	} else 	if (o instanceof Double) {
 	    Double q = (Double)get(key);	    
 	    return q.doubleValue();
-	}
-	
+	} else 	throw new IllegalArgumentException("The value of parameter named '"+key + "' cannot be converted to Double");
     }
+    
+    public double getInt(String key, boolean optional, double defaultValue) {
+	Object o = get(key);
+	if (o==null) {
+	    if (optional) return defaultValue;
+	    else throw new IllegalArgumentException("Parameter set has no variable named "+key);
+	}
+	if (o instanceof Integer) {
+	    Integer q = (Integer)get(key);	    
+	    return q.intValue();
+	} else 	throw new IllegalArgumentException("The value of parameter named '"+key + "' cannot be converted to Integer");
+    }
+    
 
     public int getMaxBoards() {
 	return getInt("max_boards");

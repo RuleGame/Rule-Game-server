@@ -1,0 +1,122 @@
+<html>
+  <head><title>Web API for the use by the Rule Game client: pregame experience</title>
+  </head>
+<body>
+  <h1>Web API for the use by the Rule Game client: pregame experiencet</h1>
+
+  <p align="center"><em>Version 6.000,  2022-11-12</em></p>
+
+  <p>This document describes an addition to the <a href="game-api-2.html">Rule Game Web API</a>, designed to provide the client with the bundle of files controlling the player's pregame and postgame experience (PGE). This was discussed by Vladimir and Kevin with Paul and Gary around 2022-11-10.
+
+    <h2>API calls</h2>
+    
+<p>All web calls use the GET method.
+    
+  <p>API calls returning JSON structures
+    <ul>
+      <li><a href="game-data/PregameService/getPage?name=consent.html&playerId=vm-2022-10-23-a">Get page consent.html</a>  (This can be done with the query parameter <tt>name</tt> being any of (<tt>consent.html  debriefing.html  debriefing.uid.html  demographics_instructions.html  demographics.json</tt>))
+	
+      <li><a href="game-data/PregameService/getBookletSize?playerId=vm-2022-10-23-a">Get booklet size</a>; the result is in the field <tt>bookletSize</tt>
+    </ul>
+
+    <p>
+   The return structures for the two above calls have the fields <tt>error</tt> and (if error==true) <tt>errmsg</tt>. The caller should check the error field, and if it is true, prominently display  <tt>errmsg</tt>.
+
+<p>API call returning an image:   
+      <li><a href="GetBookletPageServlet?playerId=vm-2022-10-23-a&pageNo=0">Get booklet page No. 0</a> (Regardless of how pages are numbered in the instruction booklet directory, here they are retrieved under numbers 0 through n-1, where n is the number returned by getBookletSize)
+  </ul>
+
+In the above call, if an error has occurred, it will be detected through the HTTP response code not being equal to the usual 200.
+
+<h2>What calls the client may need to make</h2>
+
+<p>
+  For a given playerId, say <tt>foo</tt>, the client will likely need to make the following calls, more or less how they are listed in PAGE_ORDER:
+  <ul>
+    <li><code>game-data/PregameService/getPage?playerId=foo&name=consent.html</code> -- As with all calls returning a JSON structure, check the error field in the returned JSON structure. If error==true, report the error (print the errmsg field). If false, get the HTML snippet from the <tt>value</tt> field, for use instead of   Page.CONSENT. (The HTML snippet does not include the checkbox and CONTINUE button; they need to be appended).
+      
+    <li><code>game-data/PregameService/getBookletSize?playerId=foo</code> -- the <tt>bookletSize</tt> field will contain the number of images (pages) in the instruction booklet.
+
+    <li>For each <em>j</em> in the range [0 .. bookletSize-1], make the call <code>GetBookletPageServlet?playerId=foo&pageNo=<em>j</em></code>. This will give the image data (PNG, JPEG, etc) for the j-th page, similarly to how GetImageServlet returns a custom image of a game piece. (Note: you don't have to number your image files on the server starting from 0. You can start numbering from 1, have gaps, etc; the server will sort them by file name taking into account the numberic part of the name, and will offer them to the client in this order).
+
+    <li>We don't customize the string for LOADING_TRIALS, since nobody asked for that.
+      
+    <li><code>game-data/PregameService/getPage?playerId=foo&name=consent.html</code>
+
+    <li><code>game-data/PregameService/getPage?playerId=foo&name=demographics_instructions.html</code>, for       Page.DEMOGRAPHICS_INSTRUCTIONS
+
+    <li><code>game-data/PregameService/getPage?playerId=foo&name=demographics.json</code> -- here, the <tt>value</tt> field contains the <strong>text</strong> text of the JSON file corresponding to what's found in client's <tt>demographics.ts</tt>. The client will have to interpret it as JSON (I assume there's a JSON parser in TypeScript?), and if a parsing error occurs, report an error. The JSON data  can then be used to build DEMOGRAPHICS just like the code from <tt>demographics.ts</tt> is used now.
+
+    <li>Either <code>game-data/PregameService/getPage?playerId=foo&name=debriefing.html</code>  (if <tt>!HAS_UID</tt>) or  <code>game-data/PregameService/getPage?playerId=foo&name=debriefing.uid.html</code>  (if <tt>HAS_UID</tt>). This is HTML code, but it has   <code>{completionCode}</code> inside, to be filled in by the client.
+  </ul>
+  
+  <h2>Where the server gets the files</h2>
+
+<p>From <tt>game-data/pregame/<em>pregameExperienceName</em></tt>. The default experience is called <tt>default</tt>. At present, there are 3 others:
+  <pre>
+:/opt/tomcat/game-data/pregame> pwd
+/opt/w2020/game-data/pregame
+:/opt/tomcat/game-data/pregame> ls
+default/  doubling/  relational/  stalemate/
+  </pre>
+
+  <h2>How the server determines which pregame experience to offer to a given player?</h2>
+
+  <ul>
+    <li>If the player's trial list file contains the column named <tt>pregame</tt>, its value (from the first line of the file) is understood to be the name of the PGE offered to the player.
+      
+  <li>Otherwise, for the sake of backward compatibility, we check if the trial list has column namd <tt>init</tt>. If it exists, it's mapped to the PGE as follows:
+  <pre>
+    if (init === 3) {
+       // INSTRUCTIONS_R =  [R1, R2, R3, R4, R5, R6, R7, R8] = instructions_relational
+       pregame = "relational";
+    } else if (init === 11) {
+       // INSTRUCTIONS_11 = [I11_1 ... ] = doubling_scheme
+       pregame = "doubling";
+    } else if (init === 11) {
+       // INSTRUCTIONS_2 = [I2_1 ... ] = stalemate_instructions
+       pregame = "stalemate";
+    } else {
+       pregame = "default";
+    }	
+    </pre>
+
+  <li>Otherwise, the <tt>default PGE</tt> is used.
+  </ul>
+
+  <h2><a name="sop">Advice to experiment designers</a></h2>
+
+<p>Once Kevin has added the support for customized PGEs to the client, this is the suggested Standard Operating Procedure for researchers to use when creating a new customized PGE for a series of experiments.
+
+  <ul>
+    <li>Review the <a href="sop-experiment.html">SOP for experiment design</a>. The PGE file bundles are managed in a similar way to trial list files, rule set files, etc. They live in subdirectory <tt>pregame</tt> under the main <tt>game-data</tt> directory. 
+    
+    <li>In your local copy of the game-data directory (update it from the GitHub repository first, if you have not done so lately!), go to <tt>pregame</tt>, and see which experience bundles are there already. Take one of them as your example, e.g. <tt>default</tt>
+
+    <li>Copy the entire bundle to a new directory (under  <tt>pregame</tt> as well), e.g.
+      <pre>
+	cd pregame
+	cp -pa defaul my-new-experience
+      </pre>
+
+    <li>In your new experience directory, edit the consent page, debriefing page, etc, as needed for your planned group of experiments.
+
+    <li>If you have produced a new bunch of image files (e.g. PNG or JPG) for the instruction booklet, put them into <tt>my-new-experience/instructions</tt> instead of the default image files.  It is up to you how you name the files, but in order for them to be presented to the player in the desired order, make sure they have a numerical component in the file names, so that the server can discern your desired order. For example, slide-1.png, slide-2.png, ... slide-12.png, slide-13.png. 
+
+    <li>In the trial list files for your new experiments, put the name of the new experiment in the <tt>pregame</tt> column. (This supersedes the technique of putting the hard-coded instruction bundle ID number in the <tt>init</tt> column, which you may have done in the past, prior to server ver 6.*; that's obsoleted now).
+
+    <li>Check everything into the GitHub repository. Thanks to Kevin's auto-deployment magic, the files should show in /opt/tomcat/game-data on sapir pretty soon.
+      
+    <li>For testing purposes, it's suggested that you create a "quick play" experiment plan, whose trial list will have just 1 line (1 rule set), with only 1 or 2 episodes to play. Then use the <a href="front-end-form.jsp">GUI play launch page</a> to start a session with your test plan. Go through all the steps, from the consent page to the debriefing page, to see if the GUI client reports any errors (e.g. missing or unparseable files), or something looks wrong.
+      
+  </ul>
+
+  
+<hr>
+
+[<a href=".">HOME</a>]
+				
+
+
+</body>
+</html>

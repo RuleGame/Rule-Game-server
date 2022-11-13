@@ -74,13 +74,27 @@ See also https://stackoverflow.com/questions/45625925/what-exactly-is-the-resour
     <description>
       Get image servlet retrieves image files for objects
     </description>
-    <servlet-class>edu.wisc.game.rest.GetImageServlet</servlet-class>
+    <servlet-class>edu.wisc.game.web.GetImageServlet</servlet-class>
     <load-on-startup>1</load-on-startup>
   </servlet>
   <servlet-mapping>
     <servlet-name>GetImageServlet</servlet-name>
     <url-pattern>/GetImageServlet</url-pattern>
     <url-pattern>/GetImageServlet/*</url-pattern>
+  </servlet-mapping>
+
+   <servlet>
+    <servlet-name>GetBookletPageServlet</servlet-name>
+    <description>
+      Get image servlet retrieves image files for objects
+    </description>
+    <servlet-class>edu.wisc.game.web.GetBookletPageServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>GetBookletPageServlet</servlet-name>
+    <url-pattern>/GetBookletPageServlet</url-pattern>
+    <url-pattern>/GetBookletPageServlet/*</url-pattern>
   </servlet-mapping>
 
    <servlet>

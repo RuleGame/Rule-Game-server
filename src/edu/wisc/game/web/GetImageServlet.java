@@ -1,4 +1,4 @@
-package edu.wisc.game.rest;
+package edu.wisc.game.web;
 
 import java.io.*;
 import java.util.*;
@@ -10,10 +10,14 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 
 import edu.wisc.game.util.*;
+import edu.wisc.game.rest.*;
 import edu.wisc.game.sql.ImageObject;
 import edu.wisc.game.svg.Composite;
 
-/** Returns the content of the SVG file for the specified shape */
+/** Returns the content of an image file (SVG, PNG, etc) for the
+    specified shape. There is also a provision for generating an SVG
+    image on the fly, for use with composite images.
+*/
 public class GetImageServlet  extends HttpServlet {
 
     private static String[] mimeExtAndType = {
@@ -47,29 +51,10 @@ public class GetImageServlet  extends HttpServlet {
 		String mime = "image/svg+xml";
 		sendData(response, bis, svgBytes.length, mime);
 	    } else {
-	    
-	    
-	    File f = Files.getImageFile(shape);
-	    if (f==null)  throw new IOException("No matching file exists for image=" + shape);
-	    if (!f.isFile() || !f.canRead())  throw new IOException("Cannot read file " + f);
-
-	    String s  = f.getName().toLowerCase();
-	    String q[] = s.split("\\.");
-	    String mime =  mimeTypes.get(q[q.length-1]);
-	    if (mime==null) mime = "application/octet-stream";
-	    //response.setContentType(mime);
-	    //response.setContentLengthLong(f.length());
-	    FileInputStream fileInputStream=new FileInputStream(f);
-	    sendData(response, fileInputStream,f.length(), mime);
-	    /*
-	    ServletOutputStream out = response.getOutputStream();
-	    int aByte;   
-	    while ((aByte=fileInputStream.read()) != -1) {  
-		out.write(aByte);   
-	    }   
-	    fileInputStream.close();
-	    out.close();
-	    */
+	    	    
+		File f = Files.getImageFile(shape);
+		if (f==null)  throw new IOException("No matching file exists for image=" + shape);
+		sendFile(response, f);
 	    }
 	    
 	} catch (Exception e) {
@@ -80,9 +65,27 @@ public class GetImageServlet  extends HttpServlet {
         }	    
 		
     }
+    
+    /** Writes the data from a file into the servlet response. This is
+	supposed to work well with binary files, too.
+     */
+    static  void sendFile(HttpServletResponse response, File f)  throws IOException {
 
+	if (!f.isFile() || !f.canRead())  throw new IOException("Cannot read file " + f);
+		
+	String s  = f.getName().toLowerCase();
+	String q[] = s.split("\\.");
+	String mime =  mimeTypes.get(q[q.length-1]);
+	if (mime==null) mime = "application/octet-stream";
+	//response.setContentType(mime);
+	//response.setContentLengthLong(f.length());
+	FileInputStream fileInputStream=new FileInputStream(f);
+	sendData(response, fileInputStream,f.length(), mime);
+    }
+
+    
     /** Writes the data from a given stream to the HTTP connection */
-    private void sendData(HttpServletResponse response, InputStream in, long len, String mime) throws IOException {
+    static void sendData(HttpServletResponse response, InputStream in, long len, String mime) throws IOException {
 	response.setContentType(mime);
 	response.setContentLengthLong(len);
 	ServletOutputStream out = response.getOutputStream();

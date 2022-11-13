@@ -33,7 +33,7 @@ public class GetBookletPageWrapper {
 	   File f = b.bookletPages[n];
 	   if (!f.canRead())  throw new IOException("Cannot read file: " + f);
 	   
-	   response.setContentType("image/png");   
+	   response.setContentType(PregameService.getMimeTime(f.getName()));
 
 	   int x;
 	   FileInputStream r=new FileInputStream(f);
