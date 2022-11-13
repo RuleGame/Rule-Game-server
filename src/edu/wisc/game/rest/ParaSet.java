@@ -345,7 +345,7 @@ public class ParaSet extends HashMap<String, Object> {
 	} else 	throw new IllegalArgumentException("The value of parameter named '"+key + "' cannot be converted to Double");
     }
     
-    public double getInt(String key, boolean optional, double defaultValue) {
+    public int getInt(String key, boolean optional, int defaultValue) {
 	Object o = get(key);
 	if (o==null) {
 	    if (optional) return defaultValue;

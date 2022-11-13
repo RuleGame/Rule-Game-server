@@ -90,13 +90,13 @@ public class PregameService {
 		    int init = para.getInt("init", true, -1);
 		    if (init < 0) {
 			pregame = "default";
-		    } else if (init === 3) {
+		    } else if (init == 3) {
 			// INSTRUCTIONS_R =  [R1, R2, R3, R4, R5, R6, R7, R8] = instructions_relational
 			pregame = "relational";
-		    } else if (init === 11) {
+		    } else if (init == 11) {
 			// INSTRUCTIONS_11 = [I11_1 ... ] = doubling_scheme
 			pregame = "doubling";
-		    } else if (init === 11) {
+		    } else if (init == 11) {
 			// INSTRUCTIONS_2 = [I2_1 ... ] = stalemate_instructions
 			pregame = "stalemate";
 		    } else {
