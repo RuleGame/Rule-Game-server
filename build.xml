@@ -29,7 +29,8 @@
 
 
 <!-- where to look for OpenJPA -->
-<property name="openjpa"  location="/opt/apache-openjpa-3.1.0"/>
+<!-- property name="openjpa"  location="/opt/apache-openjpa-3.1.0"/ -->
+<property name="openjpa"  location="/opt/apache-openjpa"/>
 
 <!-- property name="javamail.lib"  location="../javax-mail-1.6.2"/ -->
 

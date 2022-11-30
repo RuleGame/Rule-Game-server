@@ -72,6 +72,19 @@ sudo chown tomcat.tomcat  /opt/tomcat/game-data /opt/tomcat/saved
     sudo ln -s /usr/share/java/mysql-connector-java-8.0.20.jar
 </pre>
 
+
+    <h2>MacOS notes</h2>
+
+    <p>
+      If your server runs on MacOS, rather than Linux, then it's likely that your Tomcat has been installed using Homebrew, and lives somewhere like /usr/local/opt/tomcat/libexec/ rather than /opt/tomcat. In this case you may need to either change the line in build.xml that refers to the tomcat library directory, or, for compatibility's sake, provide a few symlinks:
+
+      <pre>
+	mkdir /opt
+	cd /opt
+	ln -s /usr/local/opt/tomcat/libexec tomcat
+	</pre>
+      
+
     
   </body>
   </html>

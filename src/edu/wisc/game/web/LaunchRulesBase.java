@@ -27,6 +27,11 @@ import edu.wisc.game.rest.*;
 */
 public class LaunchRulesBase      extends ResultsBase  {
 
+    /** The name refers to the directory from whih trial lists or rule sets 
+	are read */
+    public enum Mode { APP, MLC, CGS, BRM };
+
+    
     private ContextInfo ci;
        
     protected HashMap<String,Vector<PlayerInfo>> allPlayers;
@@ -215,7 +220,7 @@ public class LaunchRulesBase      extends ResultsBase  {
 	
        @param knownRuleSetNames Output parameter: here the rule sets used in Part A will be put, so that we won't use them again in Part B.
     */
-    private String buildPartA(String[] modsShort,   String[] hm,  final String z, File launchFile,   HashSet<String> knownRuleSetNames ) throws Exception {
+    private String buildPartA(String[] modsShort,   String[] hm,  final Mode z, File launchFile,   HashSet<String> knownRuleSetNames ) throws Exception {
 
 	CsvData launchList = null;	
 	try {
@@ -234,7 +239,7 @@ public class LaunchRulesBase      extends ResultsBase  {
 	for(String h: hm) cells.add(fm.th(h));	    
 	rows.add(fm.tr(String.join("",cells)));
 	    
-	String[] allPlanNames = Files.listSAllExperimentPlansInTree(z);
+	String[] allPlanNames = Files.listSAllExperimentPlansInTree(z.name());
 	HashMap<String, String> csvPlanDescriptions = new HashMap<>();
 	allPlanNames = mergePlanLists( launchList,  allPlanNames,
 				       csvPlanDescriptions);
@@ -280,13 +285,13 @@ public class LaunchRulesBase      extends ResultsBase  {
 	R:-type dynamic plans are created.
 	@param  chosenRuleSet If not null, just show this set
      */
-    private String buildPartB(String[] modsLong, String[] hm,  final String z,
+    private String buildPartB(String[] modsLong, String[] hm,  final Mode z,
 			      HashSet<String> knownRuleSetNames, String chosenRuleSet ) throws Exception {
 	Vector<String> rows = new Vector<>();
 	Vector<String> cells = new Vector<>();
 	    
 	String text = "";
-	if (z.equals("APP")) {
+	if (z==Mode.APP) {
 	    text += fm.para("Part B: Rule sets from <tt>rules/"+z+"</tt> not covered in Part A");
 	}
 	    
@@ -299,7 +304,7 @@ public class LaunchRulesBase      extends ResultsBase  {
 	String[] allRuleNames;
 
 	if ( chosenRuleSet!=null ) {
-	    String r =  z +  File.separator + chosenRuleSet;
+	    String r =  z.name() +  File.separator + chosenRuleSet;
 	    // make this call in order to have an exception thrown if
 	    // the file does not exist or has bad content	   
 	    RuleSet ruleSet = AllRuleSets.obtain(r);
@@ -311,7 +316,7 @@ public class LaunchRulesBase      extends ResultsBase  {
 				 
 	    allRuleNames = new String[]{ r };
 	} else {	    
-	    allRuleNames = Files.listAllRuleSetsInTree(z);
+	    allRuleNames = Files.listAllRuleSetsInTree(z.name());
 	}
 	
 
@@ -346,7 +351,7 @@ public class LaunchRulesBase      extends ResultsBase  {
 	@param chosenRuleSet If not null, we just show this rule set in Part B table
     */
     protected void buildTable(String[] modsShort, String[] modsLong,  	    String[] hm,
-			      final String z, File launchFile, String chosenRuleSet) {
+			      final Mode z, File launchFile, String chosenRuleSet) {
 
 	if (!launchFile.exists()) {
 	    infomsg += " [The control file " + launchFile + " does not exist on the server]";

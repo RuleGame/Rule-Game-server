@@ -78,106 +78,10 @@ public class LaunchMain  extends LaunchRulesBase  {
 
 	// As per Paul's request, give them debug mode
 	mustUseDevClient = true;
-	z = "MLC";
 	File launchFile = Files.getLaunchFileMLC();
-	buildTable(modsShort, modsLong, hm, z, launchFile, null);
+	buildTable(modsShort, modsLong, hm, Mode.MLC, launchFile, null);
     }
 
     
-    public void old_LaunchMain(HttpServletRequest request, HttpServletResponse response){
-	//super(request,response);
-	if (error || !loggedIn()) return;
-
-	mustUseDevClient = true;
-	
-	EntityManager em = Main.getNewEM();
-
-	try {
-
-	    allPlayers = findPlayers( em,  new Integer(uid));
-
-	    //String[] allRuleNames = Files.listAllRuleSetsInTree("APP");
-
-	    Vector<String> rows = new Vector<>();
-
-	    String[] hm = {"No feedback",
-			   "Some feedback",
-			   "More feedback",
-			   "Max feedback" };
-	    String[] mods = {"APP/APP-no-feedback",
-			     "APP/APP-some-feedback",
-			     "APP/APP-more-feedback",
-			     "APP/APP-max-feedback" };
-
-	    rows.add(fm.tr("<TH rowspan=2>Experiment plan</TH><TH colspan="+hm.length+">Actions</TH>"));
-	    Vector<String> cells = new Vector<>();
-	    for(String h: hm) cells.add(fm.th(h));	    
-	    rows.add(fm.tr(String.join("",cells)));
-
-	    
-	    File launchFile = Files.getLaunchFileMLC();
-	    if (!launchFile.exists()) throw new IOException("The control file " + launchFile + " does not exist on the server");;
-	    CsvData csv = new CsvData(launchFile, true, false, new int[] {2});	
-	    for(CsvData.LineEntry _e: csv.entries) {
-		cells.clear();
-
-		CsvData.BasicLineEntry e= (CsvData.BasicLineEntry)_e;
-		String plan = e.getKey();
-		String descr = e.getCol(1);
-
-		cells.add( fm.td(fm.strong(fm.code(plan)) + ": " + descr));
-
-		int ntr = 0;
-		try {
-		    ntr = TrialList.listTrialLists(plan).size();
-		} catch(IOException ex) {}
-		if (ntr==0) {
-		    cells.add( fm.wrap("td", "colspan=" + mods.length, "Plan not valid - check the plan directory!"));		    
-		    rows.add(fm.tr(String.join("",cells)));
-		    continue;
-		}
-		
-
-		for(String mod: mods) {
-		    String exp = "P:" + plan + ":"+mod;	
-		    Vector<PlayerInfo> players = allPlayers.get(exp);	    
-		    Vector<String> pv = new Vector<>();
-
-		    int buttonCnt=0;
-		    if (players!=null) {
-			for(PlayerInfo p: players) {
-			    String t;
-			    int ne = p.getAllEpisodes().size();
-			    if (p.getCompletionCode()!=null) {
-				t = "[COMPLETED ROUND (" +ne+ " episodes)]";
-			    } else {
-				t=mkForm("[STARTED (done "+ne+" episodes); ","]",
-					 exp, p.getPlayerId(), "CONTINUE!");
-				buttonCnt++;
-			    }
-			    pv.add(t);
-			}
-		    }
-
-		    if (buttonCnt==0) {
-			String bt = (pv.size()==0)? "PLAY!": "Play another round!";
-			String t =mkForm("","", exp, null, bt);
-			pv.add(t);
-		    }
-		    
-		    String t = String.join(" ", pv);
-		    cells.add( fm.td(t));
-		}
-		rows.add(fm.tr(String.join("",cells)));
-	    }
-
-	    tableText = fm.table( "border=\"1\"", rows);
-	} catch(Exception ex) {
-	    hasException(ex);
-	}
-
-	
-      }
-
  
 }

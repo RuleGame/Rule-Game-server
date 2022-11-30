@@ -5,10 +5,10 @@
 %>
 <html>
 <head>
-<title>Sample Games Launch Page</title>
+<title>Sample Games Launch Page (CGS)</title>
 </head>
 <body>
-<h1>Sample Games Launch Page</h1>
+<h1>Sample Games Launch Page (CGS)</h1>
 
 <h2>Try out a few rule sets!</h2>
 

@@ -1,14 +1,11 @@
 package edu.wisc.game.web;
 
-//import java.io.*;
-//import java.util.*;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
-//import edu.wisc.game.formatter.*;
 import edu.wisc.game.rest.*;
 
 

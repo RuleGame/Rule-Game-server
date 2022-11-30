@@ -15,8 +15,11 @@ import edu.wisc.game.formatter.*;
 import edu.wisc.game.rest.*;
 
 
-/** The Launch page that allows one to play all rule sets from rules/APP.
-    As requested by Paul on 2021-10-12 and 2021-10-13.
+/** The Launch page that allows one to play all rule sets from a specific
+    subdirectory of the rules directory, such as rules/APP, rules/BRM, or rules/CGS.
+    
+    As requested by Paul on 2021-10-12 and 2021-10-13, with an additional
+    expansion (CGS) in the fall of 2022.
 
 <pre>
   The M need not provide bonuses, and can use the standard 4 colors and shapes. I'd suggest either 5 to 8 pieces (a random number). People should be able to give up even at the first screen, if that is supported.
@@ -24,10 +27,6 @@ import edu.wisc.game.rest.*;
 
 */
 public class LaunchRules      extends LaunchRulesBase  {
-
-    /** The name refers to the directory from whih trial lists or rule sets 
-	are read */
-    public enum Mode { APP, CGS, BRM };
 
     /** Generates the table for the APP or CGS launch page.
 	@param request May contain rule=XXXX, to just use this one set (under the mode's rule directory)
@@ -68,7 +67,7 @@ public class LaunchRules      extends LaunchRulesBase  {
 
 	
 	File launchFile = Files.getLaunchFileAPP();
-	buildTable(modsShort, modsLong, hm, mode.name(), launchFile, chosenRuleSet);
+	buildTable(modsShort, modsLong, hm, mode, launchFile, chosenRuleSet);
     }
 
 

@@ -228,7 +228,7 @@ public class RuleSet {
 	HashSet<Range> acceptedRanges = new HashSet<>();
 	/** GS5 */
 	ArithmeticExpression exp = null;
-	boolean accepts0(String s, VarMap2  varMap) {
+	boolean accepts(String s, VarMap2  varMap) {
 	    if (s.equals("*") || acceptedValues.contains(s)) return true;
 	    if (acceptedRanges.size()>0) {
 		try {
@@ -245,12 +245,6 @@ public class RuleSet {
 
 	    return false;
 	}
-	boolean accepts(String s, VarMap2  varMap) {
-	    boolean r= accepts0(s,  varMap);
-	    //System.out.println("DEBUG: PC.accepts(" +s+", cond="+this+", varMap=" +varMap+"), PC_result=" + r);
-	    return r;
-	}
-
 	
 	void add(String s) {
 
