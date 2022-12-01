@@ -25,6 +25,7 @@
       This will create the directory  <tt>~/w2020/jaxrs-ri</tt>, with the JAX-RS stuff in it.
   </ul>				 
 
+  <br>NOTE: <strong>if you are using Tomcat 10.1 or above, it is strongly recommended that you download and use jaxrs-ri-3.2.0 or above.</strong> This is due to a compatibility issue with the servlet API library: an older version of jaxrs-ri may use a method (e.g. HttpServletRequest.setStatus(String,int)) which has been not just deprecated, but fully removed from the version of servlet-api.jar shipped with Tomcat starting with Tomcat 10.1.
 
 <li><strong>JAXB-RI,</strong> the XML binding library. To download it, one can start with
   <a href="https://mvnrepository.com/artifact/com.sun.xml.bind/jaxb-ri">

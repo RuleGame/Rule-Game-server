@@ -11,13 +11,12 @@ import javax.persistence.*;
 import edu.wisc.game.util.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
-import edu.wisc.game.formatter.*;
+//import edu.wisc.game.formatter.*;
 import edu.wisc.game.rest.*;
-//import edu.wisc.game.parser.*;
 
 
-/** The common base for the Launch page that allows one to play all
-    rule sets from rules/APP and rules/MLC. As requested by Paul on
+/** The common base for the Launch pages that allows one to play all
+    rule sets from rules/APP, rules/MLC, and others. As requested by Paul on
     2021-10-12 and 2021-10-13.
 
 <pre>
