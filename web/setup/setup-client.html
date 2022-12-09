@@ -1,0 +1,36 @@
+<html>
+  <head><title>Setup: GUI client</title></head>
+  <body>
+
+    <h1>Setup: GUI client</h1>
+
+    <p>If you want to install your own
+
+      About the Option C steps:
+
+      <ol>
+	<li>
+	  Download the client source from GitHub https://github.com/lupyanlab/Rule-Game
+	<li>
+	     Install the Node.js programming language https://nodejs.org/en/ (preferably LTS version)
+	<li>
+	  Run “npm install” from the top directory
+<li>Run “npm run build” from the top directory
+<li>Copy all of the files inside the generated folder called “build/” to where you are hosting static files using a web server. For example,
+  <pre>
+    mkdir /opt/tomcat/webapps/game-data
+    cp -pa build /opt/tomcat/webapps/game-data/prod
+</pre>
+  </ol>
+
+<p>If you know TypeScript, you can modify the client's source code as needed before compiling.
+      
+  <hr>
+
+  [<a href="../..">MAIN</a>]  &nbspl 
+  [<a href="../">SETUP</a>]  &nbspl 
+      
+
+
+  </body>
+  </html>
