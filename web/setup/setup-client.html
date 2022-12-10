@@ -4,15 +4,29 @@
 
     <h1>Setup: GUI client</h1>
 
-    <p>If you want to install your own
-
-      About the Option C steps:
+    <p>If you want to install your own instance of the GUI client (for Option C):
 
       <ol>
 	<li>
 	  Download the client source from GitHub https://github.com/lupyanlab/Rule-Game
 	<li>
-	     Install the Node.js programming language https://nodejs.org/en/ (preferably LTS version)
+	  Install the Node.js programming language https://nodejs.org/en/ (preferably LTS version)
+	<li>In the terminal window where you are going to carry out the compilation, set up 2 environment variables:
+	  <table borders=1>
+	    <tr><th>Variable name</th>	    <th>Variable value</th>
+	      	    <tr><th>Comments</th>
+<tr><td>
+    <tt>setenv REACT_APP_DEBUG_MODE_ENABLED</tt>
+  <td><tt>true</tt>  or <tt>false</tt>  
+  <td>Use <tt>true</tt> if compiling the production version of the client,
+    or <tt>false</tt>  for the development version (which will show more debugging information)
+    </tr>
+    <tr><td><tt>REACT_APP_APP_API_HOST_ORIGIN</tt>
+      <td>The Game Server URL
+      <td>E.g.
+	<tt>http://myhost.come/w2020</tt> (if your server runs on that host on port 80), or 	<tt>http://localhost:8080/w2020</tt> (if, for testing purposes, you have installed the server on your laptop, and only plan to access it from the web browser running on the same laptop)
+	</tr>
+</table>
 	<li>
 	  Run “npm install” from the top directory
 <li>Run “npm run build” from the top directory
