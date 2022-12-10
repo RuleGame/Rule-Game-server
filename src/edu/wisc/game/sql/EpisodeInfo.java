@@ -7,6 +7,7 @@ import java.net.*;
 import javax.persistence.*;
 
 import edu.wisc.game.util.*;
+import edu.wisc.game.reflect.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.rest.ParaSet;
@@ -36,8 +37,8 @@ public class EpisodeInfo extends Episode {
     public PlayerInfo getPlayer() { return player; }
     public void setPlayer(PlayerInfo _player) { player = _player; }
 
-    public static HashMap<String, Episode> globalAllEpisodes = new HashMap<>();
-    public static Episode locateEpisode(String eid) {
+    public static HashMap<String, EpisodeInfo> globalAllEpisodes = new HashMap<>();
+    public static EpisodeInfo locateEpisode(String eid) {
 	return globalAllEpisodes.get(eid);
     }
     public void cache() {
@@ -156,8 +157,14 @@ public class EpisodeInfo extends Episode {
     
     @Transient
     final private double clearingThreshold;
-	
-    EpisodeInfo(Game game, ParaSet _para) {
+
+    /** Dummy episode, used for sending error mesages only */
+    public EpisodeInfo() {
+	super();
+	clearingThreshold = 1.0; // does not matter
+    }
+
+    public EpisodeInfo(Game game, ParaSet _para) {
 	super(game, Episode.OutputMode.BRIEF, null, null);
 	para = _para;
 	clearingThreshold = (para!=null && xgetIncentive()==Incentive.BONUS)?
@@ -226,12 +233,12 @@ public class EpisodeInfo extends Episode {
 	failed to complete a bonus episode on time, this is the place
 	that sets the "lost" flag.
      */
-    public Display doMove(int y, int x, int by, int bx, int _attemptCnt) throws IOException {
+    public ExtendedDisplay doMove(int y, int x, int by, int bx, int _attemptCnt) throws IOException {
 	Display _q = super.doMove(y, x, by, bx, _attemptCnt);
 	return processMove(_q, true);
     }
 
-    public Display doPick(int y, int x, int _attemptCnt) throws IOException {
+    public ExtendedDisplay doPick(int y, int x, int _attemptCnt) throws IOException {
 	Display _q = super.doPick(y, x, _attemptCnt);
 	return processMove(_q, false);
     }
@@ -260,7 +267,7 @@ public class EpisodeInfo extends Episode {
 	to prevent the player from gaming the system.
 
  */
-    private Display processMove(Display _q, boolean isMove) throws IOException  {
+    private ExtendedDisplay processMove(Display _q, boolean isMove) throws IOException  {
 	justReachedX2=justReachedX4=false;
 
 	if (_q.code==CODE.ACCEPT) {
@@ -356,8 +363,17 @@ public class EpisodeInfo extends Episode {
 	GUI tool needs to render the board and messages around it.
      */
     public class ExtendedDisplay extends Display {
-	ExtendedDisplay(int _code, 	String _errmsg) {
+
+	ExtendedDisplay(int _code,  String _errmsg) {
+	    this(_code, _errmsg, false);
+	}
+ 
+	/** @param dummy If true, the returned structure will contain
+	    just the error message and no real data.
+	*/
+	private ExtendedDisplay(int _code, 	String _errmsg, boolean dummy) {
 	    super(_code, _errmsg);
+	    if (dummy) return;
 	    bonus = EpisodeInfo.this.isBonus();
 	    seriesNo = EpisodeInfo.this.getSeriesNo();
 	    displaySeriesNo = EpisodeInfo.this.displaySeriesNo;
@@ -403,7 +419,10 @@ public class EpisodeInfo extends Episode {
 		faces =p.computeFaces(EpisodeInfo.this);
 
 		
-	    }	       
+	    }
+	    //	    Logging.info("Prepared EpisodeInfo.ExtendedDisplay=" +
+	    //		 JsonReflect.reflectToJSONObject(this, true));
+
 	}
 	ExtendedDisplay(Display d) {
 	    this(d.code, d.errmsg);
@@ -554,8 +573,12 @@ try {
     }
     
     /** Builds a display to be sent out over the web UI */
-    public Display mkDisplay() {
+    public ExtendedDisplay mkDisplay() {
     	return new ExtendedDisplay(Episode.CODE.JUST_A_DISPLAY, "Display requested");
+    }
+
+    public ExtendedDisplay dummyDisplay(int _code, 	String _errmsg) {
+	return new ExtendedDisplay(_code, _errmsg, true);
     }
 
 

@@ -92,33 +92,37 @@ public class GameService2 {
     @GET
     @Path("/display") 
     @Produces(MediaType.APPLICATION_JSON)
-    public Episode.Display display(@QueryParam("episode") String episodeId)   {
-	Episode epi = EpisodeInfo.locateEpisode(episodeId);
-	if (epi==null) return dummyEpisode.new Display(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID");
-	//return epi.new Display(Episode.CODE.JUST_A_DISPLAY, "Display requested");
-	return epi.mkDisplay();
+    public EpisodeInfo.ExtendedDisplay display(@QueryParam("episode") String episodeId)   {
+	EpisodeInfo epi = EpisodeInfo.locateEpisode(episodeId);
+	if (epi==null) return dummyEpisode.dummyDisplay(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID");
+	//return epi.dummyDisplay(Episode.CODE.JUST_A_DISPLAY, "Display requested");
+	EpisodeInfo.ExtendedDisplay dis = epi.mkDisplay();
+
+	Logging.info("/display("+episodeId+") returning: "+ JsonReflect.reflectToJSONObject(dis, true));
+	return dis;
+
     }
   
     @POST
     @Path("/move") 
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
-    public Episode.Display move(@FormParam("episode") String episodeId,
+    public EpisodeInfo.ExtendedDisplay move(@FormParam("episode") String episodeId,
 				@FormParam("x") int x,
 				@FormParam("y") int y,
 				@FormParam("bx") int bx,
 				@FormParam("by") int by,
 				@FormParam("cnt") int cnt
 				)   {
-	Episode.Display rv=null;
-	Episode epi = EpisodeInfo.locateEpisode(episodeId);
-	if (epi==null) return dummyEpisode.new Display(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID: "+episodeId);
+	EpisodeInfo.ExtendedDisplay rv=null;
+	EpisodeInfo epi = EpisodeInfo.locateEpisode(episodeId);
+	if (epi==null) return dummyEpisode.dummyDisplay(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID: "+episodeId);
 	try {	    
 	    return rv=epi.doMove(y,x,by,bx, cnt);
 	} catch( Exception ex) {
 	    System.err.print("/move: " + ex);
 	    ex.printStackTrace(System.err);
-	    return rv=epi.new Display(Episode.CODE.INVALID_ARGUMENTS, ex.getMessage());
+	    return rv=epi.dummyDisplay(Episode.CODE.INVALID_ARGUMENTS, ex.getMessage());
 	} finally {
 	    Logging.info("move(epi=" +  episodeId +", ("+x+","+y+") to ("+bx+","+by+"), cnt="+cnt+"), return " + JsonReflect.reflectToJSONObject(rv, true));
 	}
@@ -128,27 +132,27 @@ public class GameService2 {
     @Path("/pick") 
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
-    public Episode.Display move(@FormParam("episode") String episodeId,
+    public EpisodeInfo.ExtendedDisplay move(@FormParam("episode") String episodeId,
 				@FormParam("x") int x,
 				@FormParam("y") int y,
 				@FormParam("cnt") int cnt
 				)   {
-	Episode.Display rv=null;
-	Episode epi = EpisodeInfo.locateEpisode(episodeId);
-	if (epi==null) return dummyEpisode.new Display(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID: "+episodeId);
+	EpisodeInfo.ExtendedDisplay rv=null;
+	EpisodeInfo epi = EpisodeInfo.locateEpisode(episodeId);
+	if (epi==null) return dummyEpisode.dummyDisplay(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID: "+episodeId);
 	try {	    
 	    return rv=epi.doPick(y,x, cnt);
 	} catch( Exception ex) {
 	    System.err.print("/pick: " + ex);
 	    ex.printStackTrace(System.err);
-	    return rv=epi.new Display(Episode.CODE.INVALID_ARGUMENTS, ex.getMessage());
+	    return rv=epi.dummyDisplay(Episode.CODE.INVALID_ARGUMENTS, ex.getMessage());
 	} finally {
 	    Logging.info("pick(epi=" +  episodeId +", ("+x+","+y+"), cnt="+cnt+"), return " + JsonReflect.reflectToJSONObject(rv, true));
 	}
     }
 
     
-    private static Episode dummyEpisode = new Episode();
+    private static EpisodeInfo dummyEpisode = new EpisodeInfo();
 
     @POST
     @Path("/activateBonus") 

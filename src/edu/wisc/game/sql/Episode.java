@@ -948,7 +948,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	return json.toString();
     }
    
-    public static final String version = "6.000";
+    public static final String version = "6.001";
 
     public static String getVersion() { return version; }
 
@@ -1031,7 +1031,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 
     /** Builds a Display objecy to be sent out over the web UI upon a /display
 	call (rather than a /move or /pick) */
-    public Display mkDisplay() {
+    public Display mkDisplay0() {
     	return new Display(Episode.CODE.JUST_A_DISPLAY, "Display requested");
     }
 

@@ -69,7 +69,8 @@ public class NewEpisodeWrapper extends ResponseBase {
 				 Piece.Shape.legacyShapes,
 				 Piece.Color.legacyColors);
 	    }
-	    Episode epi = new Episode(game, Episode.OutputMode.BRIEF, null, null); //in, out);
+	    //Episode epi = new Episode(game, Episode.OutputMode.BRIEF, null, null); 
+	    EpisodeInfo epi = new EpisodeInfo(game, null);
 
 	    board = epi.getCurrentBoard();
 	    
