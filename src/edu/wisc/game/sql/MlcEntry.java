@@ -12,8 +12,14 @@ import edu.wisc.game.util.*;
 import jakarta.xml.bind.annotation.XmlElement; 
 
 /** An MlcEntry contains the data for a (participant, ruleset, run)
-    tuple. The data is condensed from the appropriate lines of CSV
+    tuple. The data is condensed from the appropriate lines of a CSV
     file submitted by an MLC participant.
+
+    <p>
+    An MlcEntry has the "learned" boolean field, which indicates
+    whether the participant (an ML algo) has demonstrated its
+    mastering of the rule set (in this run, at any rate) by ending
+    the run with a required number of error-free episodes.
  */
 
 @Entity
@@ -24,39 +30,39 @@ public class MlcEntry {
 
     /* When this entry was uploaded to the server */
     Date uploadTime;    
-  public Date getUploadTime() { return uploadTime; }
-  @XmlElement
-  public void setUploadTime(Date _uploadTime) { uploadTime = _uploadTime; }
+    public Date getUploadTime() { return uploadTime; }
+    @XmlElement
+    public void setUploadTime(Date _uploadTime) { uploadTime = _uploadTime; }
     
     @Basic
     private String nickname;
-  public String getNickname() { return nickname; }
-   @XmlElement
-   public void setNickname(String _nickname) { nickname = _nickname; }
+    public String getNickname() { return nickname; }
+    @XmlElement
+    public void setNickname(String _nickname) { nickname = _nickname; }
 
     @Basic
     private String ruleSetName;
-  public String getRuleSetName() { return ruleSetName; }
+    public String getRuleSetName() { return ruleSetName; }
     @XmlElement
     public void setRuleSetName(String _ruleSetName) { ruleSetName = _ruleSetName; }
 
     @Basic
     private int runNo;
       public int getRunNo() { return runNo; }
-  @XmlElement
-  public void setRunNo(int _runNo) { runNo = _runNo; }
+    @XmlElement
+    public void setRunNo(int _runNo) { runNo = _runNo; }
  
     @Basic
     private boolean learned;
-   public boolean getLearned() { return learned; }
+    public boolean getLearned() { return learned; }
     @XmlElement
     public void setLearned(boolean _learned) { learned = _learned; }
 
     @Basic
     private int episodesUntilLearned;
-  public int getEpisodesUntilLearned() { return episodesUntilLearned; }
-   @XmlElement
-   public void setEpisodesUntilLearned(int _episodesUntilLearned) { episodesUntilLearned = _episodesUntilLearned; }
+    public int getEpisodesUntilLearned() { return episodesUntilLearned; }
+    @XmlElement
+    public void setEpisodesUntilLearned(int _episodesUntilLearned) { episodesUntilLearned = _episodesUntilLearned; }
 
     /** The total number of attempts (successful + failed) until learned, 
 	or (if not learned) until the end of transcript. This is rounded up,
@@ -64,21 +70,21 @@ public class MlcEntry {
      */
     @Basic
     private int movesUntilLearned;
- public int getMovesUntilLearned() { return movesUntilLearned; }
-   @XmlElement
-   public void setMovesUntilLearned(int _movesUntilLearned) { movesUntilLearned = _movesUntilLearned; }
+    public int getMovesUntilLearned() { return movesUntilLearned; }
+    @XmlElement
+    public void setMovesUntilLearned(int _movesUntilLearned) { movesUntilLearned = _movesUntilLearned; }
 
     /** The total move attempts (including after the "full learning") point */
     @Basic
     private int totalMoves;
-   public int getTotalMoves() { return totalMoves; }
-   @XmlElement
-   public void setTotalMoves(int _totalMoves) { totalMoves = _totalMoves; }
+    public int getTotalMoves() { return totalMoves; }
+    @XmlElement
+    public void setTotalMoves(int _totalMoves) { totalMoves = _totalMoves; }
 
     /** The total number of errors */
     @Basic
     private int totalErrors;
-   public int getTotalErrors() { return totalErrors; }
+    public int getTotalErrors() { return totalErrors; }
     @XmlElement
     public void setTotalErrors(int _totalErrors) { totalErrors = _totalErrors; }
     
@@ -93,13 +99,13 @@ public class MlcEntry {
 	at the end of the transcript. This will be 0 if not even the last episode is error-free */
     @Basic
     private int endStreakMoves;
-  public int getEndStreakMoves() { return endStreakMoves; }
+    public int getEndStreakMoves() { return endStreakMoves; }
     @XmlElement
     public void setEndStreakMoves(int _endStreakMoves) { endStreakMoves = _endStreakMoves; }
 
     @Basic
     private int endStreakEpisodes;
-  public int getEndStreakEpisodes() { return endStreakEpisodes; }
+    public int getEndStreakEpisodes() { return endStreakEpisodes; }
     @XmlElement
     public void setEndStreakEpisodes(int _endStreakEpisodes) { endStreakEpisodes = _endStreakEpisodes; }
 

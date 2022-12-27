@@ -15,7 +15,12 @@ public class MannWhitney {
      */
     public static double count(int a[], int b[]) {
 	double sum = 0;
-	int ltCount=0; 
+	int ltCount=0;  // this number non-decreases from a[j] to a[j+1], so we don't need to re-initialize it inside the loop
+
+	for(int j=0; j<a.length; j++) {
+	    if (j>0 && a[j]<a[j-1]) throw new IllegalArgumentException("a[] is not ascending sorted");
+	}
+	
 	for(int j=0; j<b.length; j++) {
 	    if (j>0 && b[j]<b[j-1]) throw new IllegalArgumentException("b[] is not ascending sorted");
 	    while(ltCount<a.length && a[ltCount] < b[j]) ltCount++;

@@ -27,7 +27,8 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
-/** Uploading results files by MLC participants
+/** Uploading results files by MLC participants. Discussed in email
+    in June-July 2022.
 
  */
 
@@ -343,12 +344,42 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 
 
  /** Prints the summary of a specified player's performance on 
-	a particular rule set */
+	a particular rule set.
+	@param nickname The nickname of the player being compared to
+	others.  It does not actually affect the content of the table
+	(as it will show all players who have learned the rule set),
+	but we will display the table row for this player in bold.
+
+	<p>Sample URL:
+	<code>
+	http://sapir.psych.wisc.edu:7150/w2020/game-data/MlcUploadService/compare?nickname=RandomTest&rule=position_A
+	</code>
+ */
     @GET
     @Path("/compare")
     @Produces(MediaType.TEXT_HTML)
     public String compare(@QueryParam("nickname") String nickname,
-			  @QueryParam("rule") String rule) {
+			  @QueryParam("rule") String rule
+			  ) {
+
+	MannWhitneyComparison mwc = new MannWhitneyComparison(MannWhitneyComparison.Mode.CMP_ALGOS);
+	
+	return mwc.doCompare(nickname, rule, fm);
+    }
+
+    @GET
+    @Path("/compareRules")
+    @Produces(MediaType.TEXT_HTML)
+    public String compareRules(@QueryParam("nickname") String nickname,
+			       @QueryParam("rule") String rule
+			       ) {
+
+	MannWhitneyComparison mwc = new MannWhitneyComparison(MannWhitneyComparison.Mode.CMP_RULES);
+	
+	return mwc.doCompare(nickname, rule, fm);
+    }
+
+    static String doCompare( String nickname,  String rule, Fmter fm) {
 	String title="Results comparison on rule set " + rule, body="", errmsg = null;
 	EntityManager em=null;
 
@@ -358,7 +389,7 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 	    
 	    em = Main.getNewEM();
 
-	    Query q = em.createQuery("select m from MlcEntry m where  m.ruleSetName=:r");
+	    Query q = em.createQuery("select m from MlcEntry m where m.ruleSetName=:r");
 	    q.setParameter("r", rule);
 	    List<MlcEntry> res = (List<MlcEntry>)q.getResultList();
 
@@ -442,23 +473,24 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 	    for(int h=0; h< nLearned; h++) {
 		int k=order.get(h);
 		String nick = nicks.get(goodNicks[k]);
+		boolean isMe = nick.equals(nickname); // the player we specifically  care about in this display
 		String s =nick + "\t";
 
 		double[] c = new double[nLearned];		
 		for(int i=0; i< nLearned; i++) c[i] = z[k][order.get(i)];
 		
 		s += Util.joinNonBlank("\t", c);
+		if (isMe) s = fm.strong(s);
 		v.add(s);
 	    }
 	    body += fm.pre(String.join("\n", v));
-
-	    
 
 	    body += fm.h3("M-W ratio matrix");
 	    v.clear();
 	    for(int h=0; h< nLearned; h++) {
 		int k=order.get(h);
 		String nick = nicks.get(goodNicks[k]);
+		boolean isMe = nick.equals(nickname); // the player we specifically  care about in this display
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
 		pw.print(nick);
@@ -468,14 +500,13 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 		    pw.format("\t%8.4f", c[i]);
 		}
 		
-		v.add(sw.toString());
+		String s = sw.toString();
+		if (isMe) s = fm.strong(s);
+		v.add(s);
 	    }
 	    body += fm.pre(String.join("\n", v));
 
-
-	    
 	    body += fm.h3("Comparison of algorithms");
-
 	    
 	    Vector<String> rows = new Vector<>();
 	    rows.add( fm.tr( fm.th("Algo nickname") +
@@ -494,6 +525,7 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 		double evScore = ev[j];
 		int j0 = goodNicks[j];
 		String nick = nicks.get(j0);
+		boolean isMe = nick.equals(nickname); // the player we specifically  care about in this display
 		MlcEntry [] ee = w[j0];
 		int runs = ee.length;
 		double avgE=0, avgM=0, avgEp=0;
@@ -506,17 +538,26 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 		avgEp /= runs;
 		avgM /= runs;
 
-		rows.add( fm.tr( fm.th(nick) +
-				 fm.td("Learned ("+runs+"/0)") +
-				 fm.td(fm.sprintf("%6.4g", evScore)) +
-				 fm.td("" + runs) +
-				 fm.td(fm.sprintf("%5.2f", avgEp)) +
-				 fm.td(fm.sprintf("%6.2f",avgE)) +
-				 fm.td(fm.sprintf("%6.2f",avgM)) +
-				 fm.td("")	 ));		
+		String w2[] = {
+		    "Learned ("+runs+"/0)",
+		    fm.sprintf("%6.4g", evScore),
+		    "" + runs,
+		    fm.sprintf("%5.2f", avgEp),
+		    fm.sprintf("%6.2f",avgE),
+		    fm.sprintf("%6.2f",avgM),
+		    ""};
+
+		
+		String row = fm.th(nick);
+		for(String s: w2) {
+		    if (isMe) s = fm.strong(s);
+		    row += fm.td(s);
+		}
+
+		rows.add(fm.tr(row));
 	    }
 
-	    // the non-learned ones
+	    // Algos who have never learned this rule
 	    order.clear();
 	    Vector<String> rows2 = new Vector<>();
 	    Vector<Double> avgErrorRates   = new Vector<>();
@@ -538,14 +579,22 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 		String learnedWord = (learnedRuns==0)? "Not learned" : "Sometimes learned";
 
 		order.add(rows2.size());
-		rows2.add( fm.tr( fm.th(nick) +
-				  fm.td(learnedWord + " ("+learnedRuns+"/"+(runs-learnedRuns)+")") +
-				  fm.td("") +
-				  fm.td("" + runs) +
-				  fm.td("") +
-				  fm.td("") +
-				  fm.td("") +
-				  fm.td(fm.sprintf("%4.3f", avgErrorRate))));
+		String []w2 = { learnedWord + " ("+learnedRuns+"/"+(runs-learnedRuns)+")",
+				"",
+				"",
+				"",
+				"",
+				"",
+				fm.sprintf("%4.3f", avgErrorRate) };
+
+		String row = fm.th(nick);
+		for(String s: w2) {
+		    //if (isMe) s = fm.strong(s);
+		    row += fm.td(s);
+		}
+
+		rows2.add(fm.tr(row));
+
 		avgErrorRates.add(avgErrorRate);
 	
 	    }
@@ -567,9 +616,6 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 		    em.close();
 		} catch(Exception ex) {}
 	}
-
-
-	
 	return fm.html(title, body);		
  
     }

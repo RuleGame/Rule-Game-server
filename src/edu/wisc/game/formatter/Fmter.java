@@ -119,7 +119,7 @@ public class  Fmter {
     }
 
     final public  String tr(String text) {
-	return wrap("tr", text) + "\n";
+	return wrap("tr", text);
     }
 
     /** Generates a TABLE ... /TABLE structure.

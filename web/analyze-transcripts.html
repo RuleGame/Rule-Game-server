@@ -14,8 +14,7 @@
 <h2>Usage - overview</h2>
   
   <p>In general, the usage of the script can be described as follows:
-
-<re>
+<pre>
       /home/vmenkov/w2020/game/scripts/analyze-transcripts.sh <em>[options]</em> <em>data_selector</em>
 </pre>
     where <em>data_selector</em> specifies the set of transcripts to extract, and  <em>options</em> specify the mode of processing.
@@ -24,7 +23,7 @@
     <h2>Data selection</h2>
 <p>There are several data selection modes, illustrated below. To save space, the script name in the examples below is given without the full path, which in reality you will need to indicate. The output goes to directory named <tt>tmp</tt> (or another chosen directory -- see <tt>-out</tt>, below). If that directory does not exist, the tool will create it.
 
-  <h3>1. Select experiment plans</h3>
+  <h3>1. Select by experiment plan name</h3>
   <pre>      
 analyze-transcripts.sh <em>[options] plan1 [plan2...]</em>
   </pre>
@@ -38,14 +37,14 @@ analyze-transcripts.sh '%OCT26%'
   </pre>
 
 <p>
-(You can also write <code>analyze-transcripts.sh -plan '%OCT26%'</code>, but the <tt>-plan</tt> option is unnecessary, since selection by plan name is the default selection method).
+(You can also write <code>analyze-transcripts.sh -plan '%OCT26%'</code>, but the <tt>-plan</tt> option is unnecessary, since selection by plan name is the default selection method). 
 
 <p>
-As the above example shows, the percent character can be used for wildcard-based selection, to select all matching plans. The percent character can also be used in all other selectors discussed below.  (We use '%' rather than '*' because that's what used in the SQL server. It also avoids certain problems with  command line processing).
+As the above example shows, the percent character can be used for wildcard-based selection, to select all matching plans. The percent sign can also be used in all other selectors discussed below.  (We use <tt>%</tt> rather than <tt>*</tt> because that's what used in the SQL server. It also avoids certain problems with  command line processing).
 
 <p>Specifying an experiment plan is equivalent to specifying a list of player IDs (see 2 below) that includes all player IDs assigned to that experiment plan.
 
-    <h3>2. Select player IDs</h3>
+    <h3>2. Select by player IDs</h3>
 
 <p>In the Rule Game Server, a player ID corresponds to a round of one or several series of episodes played according to a particular trial list. An M-Turker has a single player id, while a repeat user may have multiple ones.
   <pre>      

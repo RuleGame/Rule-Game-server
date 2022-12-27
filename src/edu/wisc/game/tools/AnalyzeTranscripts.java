@@ -19,7 +19,9 @@ import edu.wisc.game.saved.*;
 import edu.wisc.game.reflect.*;
 import edu.wisc.game.parser.RuleParseException;
 
-/** Methods for the statistical analysis of game transcripts */
+/** Methods for the statistical analysis of game transcripts.
+    For documentation, including usage, see analyze-transcripts.html
+ */
 public class AnalyzeTranscripts {
 
     static private void usage() {
@@ -66,12 +68,14 @@ public class AnalyzeTranscripts {
 	names, player IDs, etc. */
     enum ArgType { PLAN, PID, UID, UNICK};
     
-    // for each rule set name, keep the list of all episodes
-    static TreeMap<String, Vector<EpisodeHandle>> allHandles= new TreeMap<>();
-
-    /** This is a map which, for each player, contains the list of episodes...
+    /** This is a map which, for each player, contains the list of episodes
+	played by that player.
      */
-    private static class EpisodesByPlayer extends TreeMap<String,Vector<EpisodeHandle>> {
+    static class EpisodesByPlayer extends TreeMap<String,Vector<EpisodeHandle>> {
+
+	/** for each rule set name, keep the list of all episodes */
+	TreeMap<String, Vector<EpisodeHandle>> allHandles= new TreeMap<>();
+
 	void doOnePlayer(PlayerInfo p,  TrialListMap trialListMap,
 			 Vector<EpisodeHandle> handles) {
 		
@@ -106,6 +110,7 @@ public class AnalyzeTranscripts {
     }
 
     static boolean weWantPredecessorEnvironment  = false;
+
     
     public static void main(String[] argv) throws Exception {
 
@@ -181,8 +186,8 @@ public class AnalyzeTranscripts {
 				  
 		for(String b: v) {
 		    if (argType==ArgType.PLAN) 	plans.add(b);
-		    else if (argType==ArgType.UNICK) 	nicknames.add(b);
-		    else if (argType==ArgType.UID) 	uids.add(new Long(b));
+		    else if (argType==ArgType.UNICK)  nicknames.add(b);
+		    else if (argType==ArgType.UID)  uids.add(Long.parseLong(b));
 		    else if (argType==ArgType.PID)  pids.add(b);
 		}
 	    }
@@ -259,8 +264,8 @@ public class AnalyzeTranscripts {
 	}
 
 	// Create subdirectories for all relevant rule sets
-	for(String ruleSetName: allHandles.keySet()) {
-	    System.out.println("For rule set=" +ruleSetName+", found " + allHandles.get(ruleSetName).size()+" good episodes"); //:"+Util.joinNonBlank(" ",allHandles.get(ruleSetName) ));
+	for(String ruleSetName: ph.allHandles.keySet()) {
+	    System.out.println("For rule set=" +ruleSetName+", found " + ph.allHandles.get(ruleSetName).size()+" good episodes"); //:"+Util.joinNonBlank(" ",ph.allHandles.get(ruleSetName) ));
 	    File d=new File(base, ruleSetName);
 	    if (d.exists()) {
 		if (!d.isDirectory() || !base.canWrite())  throw new IOException("Not a writeable directory: " + d);
@@ -300,7 +305,7 @@ public class AnalyzeTranscripts {
 
     /** Reads a list of something (e.g. player IDs) from teh first column
 	of a CSV file */
-    private static String[] readList(File f) throws IOException, IllegalInputException{
+    static String[] readList(File f) throws IOException, IllegalInputException{
 	Vector<String> v=new Vector<>();
 	CsvData csv = new CsvData(f, true, false, null);
 	for(CsvData.LineEntry _e: csv.entries) {
@@ -312,7 +317,7 @@ public class AnalyzeTranscripts {
     
     
     /** An ordered list of unique PlayerInfo objects */
-    private static class PlayerList extends Vector<PlayerInfo> {
+    static class PlayerList extends Vector<PlayerInfo> {
 	private HashSet<Long> h = new HashSet<>();	
 	public boolean addAll(Collection<? extends PlayerInfo > c) {
 	    int cnt=0;
@@ -365,7 +370,7 @@ public class AnalyzeTranscripts {
     
     /** Expands '%' in plan names. Only includes plans that have any
 	non-empty episodes associated with them. */
-    private static Vector<String> expandPlans(EntityManager em, Vector<String> v0) throws Exception  {
+    static Vector<String> expandPlans(EntityManager em, Vector<String> v0) throws Exception  {
 	Vector<String> v = new 	Vector<>();
 	Query q = em.createQuery("select distinct e.player.experimentPlan from  EpisodeInfo e where e.player.experimentPlan like :p and e.attemptCnt>0");
 
@@ -386,7 +391,7 @@ public class AnalyzeTranscripts {
     /**
     	@param base The main output directory
     */
-    private AnalyzeTranscripts(String _playerId, File _base, PrintWriter _wsum) {
+    AnalyzeTranscripts(String _playerId, File _base, PrintWriter _wsum) {
 	base = _base;
 	wsum = _wsum;
 	playerId = _playerId;
