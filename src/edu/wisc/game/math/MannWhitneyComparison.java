@@ -55,11 +55,12 @@ public class MannWhitneyComparison {
     public String doCompare( String nickname,  String rule, Fmter fm) {
 
 	final String myKey = (mode==Mode.CMP_ALGOS)? nickname: rule;
+	final String pivot = (mode==Mode.CMP_ALGOS)? rule: nickname;
 	String titlePrefix = (mode==Mode.CMP_ALGOS)?
 	    "Results comparison on rule set ":
 	    "Comparing rule sets with respect to algo ";
 			
-	String h1= titlePrefix + fm.tt(myKey), title=titlePrefix + myKey;
+	String h1= titlePrefix + fm.tt(pivot), title=titlePrefix + pivot;
 	String body="", errmsg = null;
 	EntityManager em=null;
 
