@@ -96,6 +96,15 @@ public class MlcMain  extends ResultsBase  {
 		}
 		report += fm.table(	 "border=\"1\"", rows);
 
+		report += fm.h2("Compare rule sets to each other");
+		report += fm.para("Use the link below to see which rule sets were easier for your algorithm, and which were more difficult");
+
+		String cmpLink = base+"/compareRules?nickname="+nickname;
+		String aCmp = fm.a(cmpLink, "Compare rule sets", null);
+
+		report += fm.para(aCmp);
+		
+		
 	    }	      
 			
 
