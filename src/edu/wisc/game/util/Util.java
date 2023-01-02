@@ -67,12 +67,12 @@ public class Util {
 
     public static <T> String joinNonBlank(String sep, int[] z) {
 	Integer v[] = new Integer[z.length];
-	for(int j=0; j<z.length; j++) v[j] =new Integer(z[j]);
+	for(int j=0; j<z.length; j++) v[j] = z[j];
 	return joinNonBlank(sep,v);
     }
     public static <T> String joinNonBlank(String sep, double[] z) {
 	Double v[] = new Double[z.length];
-	for(int j=0; j<z.length; j++) v[j] =new Double(z[j]);
+	for(int j=0; j<z.length; j++) v[j] = z[j];
 	return joinNonBlank(sep,v);
     }
 

@@ -18,6 +18,8 @@ import edu.wisc.game.engine.*;
 import edu.wisc.game.saved.*;
 import edu.wisc.game.reflect.*;
 import edu.wisc.game.parser.RuleParseException;
+import edu.wisc.game.math.*;
+import edu.wisc.game.formatter.*;
 
 import edu.wisc.game.sql.Episode.CODE;
 
@@ -105,7 +107,9 @@ public class MwByHuman extends AnalyzeTranscripts {
 	PrintWriter wsum =null;
 	File gsum=new File("wm-human.csv");
 	wsum = new PrintWriter(new FileWriter(gsum, false));
-	wsum.println( MWSeries.header);
+	wsum.println( MwSeries.header);
+
+	Vector<MwSeries> allMws = new Vector<>();
 	
 	for(String playerId: ph.keySet()) {
 	    Vector<EpisodeHandle> v = ph.get(playerId);
@@ -113,7 +117,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 		MwByHuman atr = new MwByHuman(playerId, null, null); //base, wsum);
 		atr.analyzePlayerRecord(v);
 
-		for(MWSeries ser: atr.savedMws) {
+		allMws.addAll( atr.savedMws);
+		for(MwSeries ser: atr.savedMws) {
 		    wsum.println(ser.toCsv());
 		}
 
@@ -127,9 +132,17 @@ public class MwByHuman extends AnalyzeTranscripts {
 
 	if (wsum!=null) wsum.close();
 
-
-
+	//-- now, the MW Test
+	Fmter plainFm = new Fmter();
+	MannWhitneyComparison.Mode mode = MannWhitneyComparison.Mode.CMP_RULES_HUMAN;
+	MannWhitneyComparison mwc = new MannWhitneyComparison(mode);
 	
+	Comparandum[][] allComp = Comparandum.mkMlcComparanda(allMws.toArray(new MwSeries[0]));
+	
+
+	String text =  mwc.doCompare("humans", null, allComp, plainFm);
+	System.out.println(text);
+
   }
 
     
@@ -143,9 +156,9 @@ achieved10
 m*
 </pre>
      */
-    static class MWSeries {
+    public static class MwSeries {
 
-	final String ruleSetName;
+	public final String ruleSetName;	
 	/** Which other rules preceded this rule in the trial list? */
 	final Vector<String> precedingRules;
 	final String exp;
@@ -165,7 +178,8 @@ m*
 	/** The number of errors until the first  "winning streak" has been
 	    achieved, or the large default number otherwise */
 	int mStar=0;
-	MWSeries(EpisodeHandle o) {
+	public int getMStar() { return mStar; }
+	MwSeries(EpisodeHandle o) {
 	    ruleSetName = o.ruleSetName;
 	    precedingRules = o.precedingRules;
 	    exp = o.exp;
@@ -175,7 +189,7 @@ m*
 	}
 
 	static final String header="#ruleSetName,precedingRules,"+
-	    "exp,trialListId,seriesNo,playerId,errcnt,mStar";
+	    "exp,trialListId,seriesNo,playerId,learned,errcnt,mStar";
 
 	String toCsv() {
 	    String[] v = { ruleSetName,
@@ -184,6 +198,7 @@ m*
 			   trialListId,
 			   ""+seriesNo,
 			   playerId,
+			   ""+learned,
 			   ""+errcnt,
 			   ""+mStar};
 	    return ImportCSV.escape(v);
@@ -192,7 +207,7 @@ m*
     }
 
     /** Info about each episode gets added here */
-    private Vector<MWSeries> savedMws = new Vector<>();
+    private Vector<MwSeries> savedMws = new Vector<>();
     
       /** Saves the data for a single (player, ruleSet) pair
 	@param section A vector of arrays, each array representing the recorded
@@ -209,14 +224,14 @@ m*
 
 	int je =0;
 
-	MWSeries ser = null;
+	MwSeries ser = null;
 	int streak=0;       
 	
 	for(TranscriptManager.ReadTranscriptData.Entry[] subsection: section) {
 	    EpisodeHandle eh = includedEpisodes.get(je ++);
 
 	    if (ser==null || !ser.ruleSetName.equals(eh.ruleSetName)) {
-		savedMws.add(ser = new MWSeries(eh));
+		savedMws.add(ser = new MwSeries(eh));
 		streak=0;
 		ser.errcnt = 0;
 		ser.mStar = defaultMStar;

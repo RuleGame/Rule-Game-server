@@ -363,8 +363,8 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 			  ) {
 
 	MannWhitneyComparison mwc = new MannWhitneyComparison(MannWhitneyComparison.Mode.CMP_ALGOS);
-	
-	return mwc.doCompare(nickname, rule, fm);
+	Comparandum[][] allComp = mwc.mkMlcComparanda(nickname,  rule);
+	return mwc.doCompare(nickname, rule, allComp, fm);
     }
 
     @GET
@@ -375,8 +375,9 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 			       ) {
 
 	MannWhitneyComparison mwc = new MannWhitneyComparison(MannWhitneyComparison.Mode.CMP_RULES);
-	
-	return mwc.doCompare(nickname, rule, fm);
+	Comparandum[][] allComp = mwc.mkMlcComparanda(nickname,  rule);
+
+	return mwc.doCompare(nickname, rule, allComp, fm);
     }
 
     static String doCompare( String nickname,  String rule, Fmter fm) {

@@ -44,54 +44,16 @@ public class MannWhitneyComparison {
 	    e.getRuleSetName();
     }
 
-    /** Represents a thing to be compared: either an algo
-	(which is to be compared with other algos based on its
-	performance on some rule set), or a rule set (which is
-	being compare to other rule set based on how a particular
-	algo, or the set of humans, perform on it).
-     */
-    static class Comparandum implements Comparable<Comparandum> {
-	/** The name of this algo or this rule set, as the case may be */
-	final String key;
-	final boolean learned;
-	final int[] a;
-	final MlcEntry[] mlc;
-	private double ev;
-	
-	/** Initializes a Comparandum based on a set of MlcEntry objects */
-	Comparandum(String _name, boolean _learned, MlcEntry[] z) {
-	    mlc = z;
-	    learned = _learned;
-	    //cm.name = w[j0][0].getKey();
-	    key = _name;
-	    a = new int[ z.length ];
-
-	    for(int k=0; k<z.length; k++) {
-		a[k] = z[k].getTotalErrors();
-	    }
-	}
-
-	static int[][] asArray(Comparandum []q) {
-	    int[][] a = new int[q.length][];
-	    for(int j=0; j<q.length; j++) a[j] = q[j].a;
-	    return a;
-	}
-
-	void setEv(double _ev) { ev= _ev; }
-	
-	public int	compareTo(Comparandum o) {
-	    return (int)Math.signum(	o.ev - ev);
-	}
-
-    }
-
     /** Creates a list of comparanda based on MLC data, either to compare
 	ML algos or to compare rule sets.
        @return {learnedOnes[], nonLearnedOnes[]}
      */
-    private Comparandum[][] mkMlcComparanda(EntityManager em,  String nickname,  String rule) {
-	
+    public Comparandum[][] mkMlcComparanda(String nickname,  String rule) {
 
+	
+	EntityManager em=null;
+
+	try {
 	em = Main.getNewEM();
 
 	Query q = mkQuery(em, nickname, rule);
@@ -147,6 +109,11 @@ public class MannWhitneyComparison {
 	Comparandum [] dummy = new Comparandum[0];
 	Comparandum [][] allComp = {learnedOnes.toArray(dummy), unlearnedOnes.toArray(dummy)};
 	return allComp;
+	} finally {	
+	    if (em!=null) try {
+		    em.close();
+		} catch(Exception ex) {}
+	}
 	
     }
 
@@ -159,7 +126,9 @@ public class MannWhitneyComparison {
 	and the rule sets are ranked by their ease for this algorithm; thus
 	the rule sets names are keys.
      */
-    public String doCompare( String nickname,  String rule, Fmter fm) {
+    public String doCompare( String nickname,  String rule,
+			     Comparandum[][] allComp,
+			     Fmter fm) {
 
 	final String myKey = (mode==Mode.CMP_ALGOS)? nickname:
 	    (mode==Mode.CMP_RULES)? rule: "";
@@ -173,18 +142,14 @@ public class MannWhitneyComparison {
 			
 	String h1= titlePrefix + fm.tt(pivot), title=titlePrefix + pivot;
 	String body="", errmsg = null;
-	EntityManager em=null;
 
 	try {
-
-	    Comparandum[][] allComp = mkMlcComparanda(em,  nickname,  rule);
+	    //Comparandum[][] allComp = mkMlcComparanda(nickname,  rule);
 	    Comparandum[] learnedOnes = allComp[0];
 	    Comparandum[] unlearnedOnes = allComp[1];
 	    
 	    body += fm.h1(h1);
 	    
-	    em = Main.getNewEM();
-
 	    double[][] z = MannWhitney.rawMatrix(Comparandum.asArray(learnedOnes));
 	    double[][] zr = MannWhitney.ratioMatrix(z);
 	    
@@ -365,11 +330,7 @@ public class MannWhitneyComparison {
 	    System.err.println("" + ex);
 	    ex.printStackTrace(System.err);
 
-	} finally {	
-	    if (em!=null) try {
-		    em.close();
-		} catch(Exception ex) {}
-	}
+    }
 	return fm.html(title, body);		 
     }
 
@@ -381,8 +342,9 @@ public class MannWhitneyComparison {
 	String rule=argv[ja++];
 
 	MannWhitneyComparison mwc = new MannWhitneyComparison(mode);
+	Comparandum[][] allComp = mwc.mkMlcComparanda(nickname,  rule);
 
-	String text =  mwc.doCompare(nickname, rule, plainFm);
+	String text =  mwc.doCompare(nickname, rule, allComp, plainFm);
 	System.out.println(text);
 	
     }
