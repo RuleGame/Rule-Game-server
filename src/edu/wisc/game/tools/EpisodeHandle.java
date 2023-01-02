@@ -3,13 +3,14 @@ package edu.wisc.game.tools;
 import java.io.*;
 import java.util.*;
 
-
 import edu.wisc.game.util.*;
 import edu.wisc.game.rest.*;
 import edu.wisc.game.sql.*;
 
-/** An auxiliary structure used to keep track who and when played 
-    episodes
+/** An auxiliary structure containing an episode's metadata. (Most of
+    them come from the episode's EpisodeInfo structure, completed with
+    the context info from the relevant TrialList and PlayerInfo). It
+    is used to keep track who and when played which episodes.
 */
 class EpisodeHandle {
     final String ruleSetName;

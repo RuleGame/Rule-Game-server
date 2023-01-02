@@ -189,7 +189,21 @@ analyze-transcripts.sh -pid -file my-pid-list.csv
   Here, F is the number of "known impossible moves", which includes all (piece,bucket) pairs which can be inferred from a failed move or from a failed pick. (A failed pick, of course, results in  4 such known impossible pairs). Similarly, f is the number of "known immovable pieces", which counts pieces for which the player has had a failed pick in the current position, or 4 failed moves (trying all 4 buckets) in the current position.
 
   <p>The values of F and f reset to 0 once a piece is successfully removed from the board and the board position changes. In other words, an MCP does not retain any memory of his actions from one position to the next.
- 
+
+    <h2><a name="output">Output format</a></h2>
+
+  <p>The Analyze Transcript files produces multiple output files. It creates a directory tree, with a directory for every rule set involved. Each directory contains a number of CSV files, one file for each player who played that rule set.
+
+  <p>Each CSV file, with 1 line per move, contains at least the following columns:
+    <pre>ruleSetName,playerId,experimentPlan,trialListId,seriesNo,orderInSeries,episodeId,moveNo,timestamp,y,x,by,bx,code
+    </pre>
+    The first 7 columns describe the episode (who played it, under which rule set, and where that fits in that player's overall history). The subsequent columns describe an individual move.
+
+    <p>
+    
+    Depending on options, this may be followed by some of the following additional columns:
+    <pre>p0,board,precedingRules</pre>
+
     <h2><a name="again">Post processing: "try again" numbers</a></h2>
 
   <p>As per Paul's request (Oct 2022) we have a post-processing script, which can be applied to split transcript files (computed with the -pre option) to compute a measure of the player's procilivity to try moving the same game piece.

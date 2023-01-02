@@ -13,7 +13,8 @@ import edu.wisc.game.sql.Episode.Pick;
 import edu.wisc.game.sql.Episode.Move;
 
 
-/** An auxiliary class for writing and reading transcript files.
+/** An auxiliary class for writing and reading transcript files. It is used
+    both in the server in real time, and during later post factum analysis.
 */
 public class TranscriptManager {
 

@@ -76,6 +76,10 @@ public class AnalyzeTranscripts {
 	/** for each rule set name, keep the list of all episodes */
 	TreeMap<String, Vector<EpisodeHandle>> allHandles= new TreeMap<>();
 
+	/** Adds to this map the data about all episodes played by a specified player.
+	    @param p The player in question
+	    @param  trialListMap Lists all trial lists of the relevant plan
+	 */
 	void doOnePlayer(PlayerInfo p,  TrialListMap trialListMap,
 			 Vector<EpisodeHandle> handles) {
 		
@@ -258,7 +262,8 @@ public class AnalyzeTranscripts {
 
 	PrintWriter wsum =null;
 	if (weWantFitting) {
-	    File gsum=new File(base, needP0? "summary-p0-"+randomPlayerModel+".csv" : "summary-flat.csv");	    wsum = new PrintWriter(new FileWriter(gsum, false));
+	    File gsum=new File(base, needP0? "summary-p0-"+randomPlayerModel+".csv" : "summary-flat.csv");
+	    wsum = new PrintWriter(new FileWriter(gsum, false));
 	    String sumHeader = "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,yy,B,C,t_I,k,Z,n,L/n,AIC/n";
 	    wsum.println(sumHeader);
 	}
@@ -292,7 +297,8 @@ public class AnalyzeTranscripts {
 	if (wsum!=null) wsum.close();
     }
 
-    /** ... List all trial lists for a plan */
+    /** Lists all trial lists for an experiment plan. The keys are
+	trial list IDs */
     static class TrialListMap extends HashMap<String,TrialList> {
 	TrialListMap(String exp) throws IOException, IllegalInputException {
 	    Vector<String> trialListNames = TrialList.listTrialLists(exp);
@@ -389,7 +395,9 @@ public class AnalyzeTranscripts {
 
     
     /**
-    	@param base The main output directory
+    	@param _base The main output directory. If null, no files will be
+	written
+	@param _wsum If non-null, the summary file will go there
     */
     AnalyzeTranscripts(String _playerId, File _base, PrintWriter _wsum) {
 	base = _base;
@@ -401,12 +409,13 @@ public class AnalyzeTranscripts {
     final private PrintWriter wsum;
     final String playerId;
 
-    /** Saves the data for a single (player, ruleSet) pair
+    /** Saves the data for a single (player, ruleSet) pair. This method
+	can only be called is base!=null.
 	@param section A vector of arrays, each array representing the recorded
 	moves for one episode.
 	@param includedEpisodes All non-empty episodes played by this player in this rule set
     */
-    private void saveAnyData(Vector<TranscriptManager.ReadTranscriptData.Entry[]> section,
+    protected void saveAnyData(Vector<TranscriptManager.ReadTranscriptData.Entry[]> section,
 			     Vector<EpisodeHandle> includedEpisodes)
 	throws  IOException, IllegalInputException,  RuleParseException {
 
@@ -613,7 +622,7 @@ public class AnalyzeTranscripts {
 	@param playerId The player whose record we want to analyze
 	@param v The list of episodes played by this player
     */
-    private  void    analyzePlayerRecord(Vector<EpisodeHandle> v) throws  IOException, IllegalInputException,  RuleParseException{
+    protected  void    analyzePlayerRecord(Vector<EpisodeHandle> v) throws  IOException, IllegalInputException,  RuleParseException{
 
 	HashMap <String,Boolean> useImages = new HashMap<>();
 	for(EpisodeHandle eh: v) {
