@@ -7,16 +7,12 @@ import java.text.*;
 
 import javax.persistence.*;
 
-import org.apache.commons.math3.optim.*;
-import org.apache.commons.math3.optim.nonlinear.scalar.*;
-import org.apache.commons.math3.optim.nonlinear.scalar.gradient.*;
-
 import edu.wisc.game.util.*;
 import edu.wisc.game.rest.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.saved.*;
-import edu.wisc.game.reflect.*;
+//import edu.wisc.game.reflect.*;
 import edu.wisc.game.parser.RuleParseException;
 import edu.wisc.game.math.*;
 import edu.wisc.game.formatter.*;
@@ -30,6 +26,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 
     private MwByHuman(String _playerId, File _base, PrintWriter _wsum) {
 	super( _playerId, _base, _wsum);
+	quiet = true;
     }
 
     
@@ -75,13 +72,13 @@ public class MwByHuman extends AnalyzeTranscripts {
 
 	// for each experiment plan...
 	for(String exp: plans) {		
-	    System.out.println("Experiment plan=" +exp);
+	    //System.out.println("Experiment plan=" +exp);
 
 	    try {
 	    
 	    // ... List all trial lists 
 	    TrialListMap trialListMap=new TrialListMap(exp);
-	    System.out.println("Experiment plan=" +exp+" has " + trialListMap.size() +" trial lists: "+ Util.joinNonBlank(", ", trialListMap.keySet()));
+	    //System.out.println("Experiment plan=" +exp+" has " + trialListMap.size() +" trial lists: "+ Util.joinNonBlank(", ", trialListMap.keySet()));
 	    
 	    Vector<EpisodeHandle> handles= new Vector<>();
 
@@ -93,7 +90,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 		ph.doOnePlayer(p,  trialListMap, handles);
 	    }
 	    
-	    System.out.println("For experiment plan=" +exp+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
+	    //System.out.println("For experiment plan=" +exp+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
 	    } catch(Exception ex) {
 		String msg = "ERROR: Skipping plan=" +exp+" due to an exception:";
 		System.out.println(msg);
@@ -179,6 +176,13 @@ m*
 	/** The number of errors until the first  "winning streak" has been
 	    achieved, or the large default number otherwise */
 	int mStar=0;
+	/** Total failed attempt (including those after the "achievement of learning") */
+	int totalErrors=0;
+	public int getTotalErrors() { return totalErrors; }
+	/** Total move and pick attempts (successful and unsuccessful) */
+	int totalMoves=0;
+	public int getTotalMoves() { return totalMoves; }
+	
 	public int getMStar() { return mStar; }
 	MwSeries(EpisodeHandle o) {
 	    ruleSetName = o.ruleSetName;
@@ -210,7 +214,9 @@ m*
     /** Info about each episode gets added here */
     private Vector<MwSeries> savedMws = new Vector<>();
     
-      /** Saves the data for a single (player, ruleSet) pair
+    public static final int targetStreak = 10;
+
+    /** Saves the data for a single (player, ruleSet) pair
 	@param section A vector of arrays, each array representing the recorded
 	moves for one episode.
 	@param includedEpisodes All non-empty episodes played by this player in this rule set. This array is aligned with section[]
@@ -220,7 +226,6 @@ m*
 			     Vector<EpisodeHandle> includedEpisodes)
 	throws  IOException, IllegalInputException,  RuleParseException {
 
-	final int targetStreak = 10;
 	final int defaultMStar = 300;
 
 	int je =0;
@@ -238,11 +243,11 @@ m*
 		ser.mStar = defaultMStar;
 	    }
 
-
 	    // skip the rest of transcript for the rule set (i.e. this
 	    // series) if the player has already demonstrated his
 	    // mastery of this rule set
-	    for(int j=0; j<subsection.length && !ser.learned; j++) {
+	    int j=0;
+	    for(; j<subsection.length && !ser.learned; j++) {
 		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
 		if (!eh.episodeId.equals(e.eid)) throw new IllegalArgumentException("Array mismatch");
 		
@@ -251,6 +256,7 @@ m*
 		} else {
 		    streak = 0;
 		    ser.errcnt ++;
+		    ser.totalErrors++;
 		}
 
 		if (streak>=targetStreak) {
@@ -259,6 +265,22 @@ m*
 		}
 		
 	    }
+
+	    // Any post-learning-success errors
+	    for(; j<subsection.length; j++) {
+		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
+		if (!eh.episodeId.equals(e.eid)) throw new IllegalArgumentException("Array mismatch");
+		
+		if (e.code!=CODE.ACCEPT) {
+		    ser.totalErrors ++;
+		}
+	    }
+
+	    
+	    ser.totalMoves += subsection.length;
+	    
+
+
 	}
 
 	section.clear();

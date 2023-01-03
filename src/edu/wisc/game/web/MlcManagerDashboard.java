@@ -39,33 +39,7 @@ public class MlcManagerDashboard  extends ResultsBase  {
 	EntityManager em=null;
 
 	try {
-	    /*
-	    nickname = displayName;
-	    if (nickname==null) {
-		giveError("Nickname not specified");
-		return;
-	    }
-
-
-	    File d = Files.mlcUploadDir(nickname, false);
-
-	    Vector<String> rows = new Vector<>();
-	
-	    File[] files = d.listFiles();
-	    Vector<String> v = new Vector<String>();
-	    for(File cf: files) {
-		if (!cf.isFile()) continue;
-		String fname = cf.getName();
-		rows.add( fm.row(fname, "" +  cf.length() + " bytes"));
-	    }
-
-	    if (rows.size()==0) {
-		report += fm.para("We have no files uploaded by you so far.");
-	    } else {
-		report += fm.para("We have "+rows.size()+" files uploaded by you so far.");
-		report += fm.para( fm.table("border=\"1\"", rows));
-	    }
-	    */
+	    
 	    
 	    em = Main.getNewEM();
 	    Query q = em.createQuery("select m.nickname, m.ruleSetName, count(m) from MlcEntry m group by  m.nickname, m.ruleSetName order by  m.nickname, m.ruleSetName");

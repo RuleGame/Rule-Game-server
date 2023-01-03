@@ -24,6 +24,8 @@ import edu.wisc.game.parser.RuleParseException;
  */
 public class AnalyzeTranscripts {
 
+    protected boolean quiet = false;
+    
     static private void usage() {
 	usage(null);
     }
@@ -642,7 +644,7 @@ public class AnalyzeTranscripts {
 	
 	
 	// One subsection per episode
-	System.out.println("Player "+playerId+": split the transcript ("+transcript.size()+" moves) into "+subsections.size()+ " episode sections");
+	if (!quiet) System.out.println("Player "+playerId+": split the transcript ("+transcript.size()+" moves) into "+subsections.size()+ " episode sections");
 	    
 	String lastRid="";
 	// all episodes' subsections for a given rule sets
