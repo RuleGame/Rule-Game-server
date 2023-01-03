@@ -48,7 +48,7 @@ public class PlanStats {
  
 	    em = Main.getNewEM();
 
-	    Query q = em.createQuery("select p.experimentPlan, count(p), count(p.allEpisodes) from PlayerInfo p group by p.experimentPlan order by p.experimentPlan");
+	    Query q = em.createQuery("select p.experimentPlan, count(distinct p), count(e) from PlayerInfo p, IN(p.allEpisodes) e group by p.experimentPlan order by p.experimentPlan");
 
 	    List<Object[]> results = (List<Object[]>)q.getResultList();
 
