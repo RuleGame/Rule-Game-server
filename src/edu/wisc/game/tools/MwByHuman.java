@@ -172,6 +172,7 @@ m*
 
 	
 	boolean learned=false;
+	public boolean getLearned() { return learned; }
 	/** The number of errors until the first "winning streak" has been
 	    achieved, or in the entire series (if no winning streak) */
 	int errcnt=0;

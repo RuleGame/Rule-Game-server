@@ -9,6 +9,8 @@ import javax.persistence.*;
 import edu.wisc.game.util.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.formatter.*;
+import edu.wisc.game.tools.MwByHuman;
+import edu.wisc.game.tools.MwByHuman.MwSeries;
 
 /** Comparing players or rules based on the Mann-Whitney test
  */
@@ -113,8 +115,7 @@ public class MannWhitneyComparison {
 	    if (em!=null) try {
 		    em.close();
 		} catch(Exception ex) {}
-	}
-	
+	}	
     }
 
     
@@ -144,7 +145,6 @@ public class MannWhitneyComparison {
 	String body="", errmsg = null;
 
 	try {
-	    //Comparandum[][] allComp = mkMlcComparanda(nickname,  rule);
 	    Comparandum[] learnedOnes = allComp[0];
 	    Comparandum[] unlearnedOnes = allComp[1];
 	    
@@ -222,7 +222,7 @@ public class MannWhitneyComparison {
 		new String[] {keyCell,
 		"Learned/not learned",
 		"EV score",
-		"m* (errors till learned)",
+		"Avg. m* (errors till learned)",
 	    };
 	    
 
@@ -244,19 +244,22 @@ public class MannWhitneyComparison {
 		double evScore = ev[j];
 
 		boolean isMe = key.equals(myKey);
-		MlcEntry [] ee = q.mlc;
-		int runs = ee.length;
-		double avgE=0, avgM=0, avgEp=0;
-		for(MlcEntry e: ee) {
-		    avgE += e.getTotalErrors();
-		    avgEp += e.getEpisodesUntilLearned();
-		    avgM += e.getMovesUntilLearned();
-		}
-		avgE /= runs;
-		avgEp /= runs;
-		avgM /= runs;
+		String w2[]={};
 
-		String w2[] = {
+		if (q.mlc!=null) {
+		    MlcEntry [] ee = q.mlc;
+		    int runs = ee.length;
+		    double avgE=0, avgM=0, avgEp=0;
+		    for(MlcEntry e: ee) {
+			avgE += e.getTotalErrors();
+			avgEp += e.getEpisodesUntilLearned();
+			avgM += e.getMovesUntilLearned();
+		    }
+		    avgE /= runs;
+		    avgEp /= runs;
+		    avgM /= runs;
+
+		    w2 = new String[]{
 		    "Learned ("+runs+"/0)",
 		    fm.sprintf("%6.4g", evScore),
 		    "" + runs,
@@ -264,7 +267,22 @@ public class MannWhitneyComparison {
 		    fm.sprintf("%6.2f",avgE),
 		    fm.sprintf("%6.2f",avgM),
 		    ""};
-
+		} else if (q.humanSer!=null) { // human
+		    //"Learned/not learned",
+		    //"EV score",
+		    //"m* (errors till learned)",
+		    int learnedCnt=0, sumMStar=0;
+		    for(MwSeries ser: q.humanSer) {
+			if (ser.getLearned())  learnedCnt++;
+			sumMStar += ser.getMStar();
+		    }
+		    double avgMStar = sumMStar/(double)q.humanSer.length;
+		    w2 = new String[]{
+			""+learnedCnt+"/" + (q.humanSer.length-learnedCnt),
+			fm.sprintf("%6.4g", evScore),
+			fm.sprintf("%6.2f",avgMStar)
+		    };
+		} else throw new IllegalArgumentException();
 		
 		row = fm.th(key);
 		for(String s: w2) {
