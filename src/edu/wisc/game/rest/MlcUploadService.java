@@ -176,7 +176,7 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 
 			String q[] = line.trim().split(",");
 			StringBuffer errmsg = new StringBuffer();
-			boolean z=false;
+			Boolean z=null;
 
 			if (format == LogFormat.Long) {
 			    int M = 8;
@@ -249,7 +249,7 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 			    }
 
 			} else throw new IllegalArgumentException("Illegal format: " + format);
-			if (!z) {
+			if (z!=null && !z) {
 			    body += fm.para("Error in line "+(lineCnt+1)+". " + errmsg + ". Line: " + fm.pre(line))
 				+ fm.para("Message: " + errmsg)
 				+ fm.para("Format=" + format);
