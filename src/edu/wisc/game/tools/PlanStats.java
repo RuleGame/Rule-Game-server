@@ -85,7 +85,7 @@ public class PlanStats {
     public static String listSAllExperimentPlansHtml()  throws IOException{
 	Vector<String> v=new Vector<>();
 	for(PlanStats q: listPlans()) {
-	    v.add( Tools.radio("exp", q.exp, q.exp + "("+q.realPlayerCnt +" episodes)", true));
+	    v.add( Tools.radio("exp", q.exp, q.exp + "("+q.realPlayerCnt +" players, "+q.episodeCnt +" episodes)", true));
 	}
 	return String.join("<br>\n", v);
     }

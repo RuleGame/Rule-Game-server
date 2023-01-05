@@ -143,6 +143,28 @@ public class MlcEntry {
 			       boolean if_clear,
 			       StringBuffer errmsg) {
 
+	int err = (int)Math.round(number_of_moves * (1.0 - move_acc));
+	if (if_clear) {
+	    if (err != number_of_moves-number_of_pieces) {
+		errmsg.append( "Unexpected value of  move_acc=" + move_acc +". Expected " + number_of_pieces  +"/"+ number_of_moves + "=" + ((double)number_of_pieces/(double)number_of_moves) );
+		 return false;
+	    }
+	}
+	return addEpisode2( episodeNo,
+			    number_of_moves,
+			    err,
+			    if_clear,
+			    errmsg);
+
+    }
+
+	
+    public boolean addEpisode2( int episodeNo,
+			       int number_of_moves,
+			       int number_of_errors,
+			       boolean if_clear,
+			       StringBuffer errmsg) {
+
 	if (episodeNo!=getTotalEpisodes()) {
 	    errmsg.append( "Unexpected episode number (board_id). Expected: " +getTotalEpisodes() + ", found " + episodeNo);
 	    return false;
@@ -151,17 +173,9 @@ public class MlcEntry {
 
 	totalMoves += number_of_moves;
 
-	int err = (int)Math.round(number_of_moves * (1.0 - move_acc));
-	if (if_clear) {
-	    if (err != number_of_moves-number_of_pieces) {
-		errmsg.append( "Unexpected value of  move_acc=" + move_acc +". Expected " + number_of_pieces  +"/"+ number_of_moves + "=" + ((double)number_of_pieces/(double)number_of_moves) );
-		 return false;
-	    }
-	}
-		
-	totalErrors += err;
+	totalErrors += number_of_errors;
 
-	if (if_clear && err==0) {
+	if (if_clear && number_of_errors==0) {
 	    // an error-free full-board-cleared episode
 	    endStreakEpisodes ++;
 	    endStreakMoves += number_of_moves;

@@ -121,11 +121,13 @@ public class Episode {
 	including successful and unsuccessful ones. If cost_pick!=1,
 	this value may be different from attemptCnt. */
     double attemptSpent=0;
-    /** All successful moves so far.  Since each successful move removes
+    /** All successful moves (not picks) so far.  Since each successful move removes
 	a game piece, the number of pieces remaining on the board can be 
 	computed as (nPiecesStart - doneMoveCnt).
      */
-    int doneMoveCnt;
+    int doneMoveCnt=0;
+    /** The count of successful picks (not moves) so far */
+    int successfulPickCnt=0;
     @Transient
     Vector<Pick> transcript = new Vector<>();
   
@@ -414,6 +416,7 @@ public class Episode {
 	    if (!isMoveable[pick.pos]) {  // immovable piece
 		return pick.code =  CODE.IMMOVABLE;
 	    } else if (!(pick instanceof Move)) {  // accepted pick
+		successfulPickCnt++;
 		return pick.code = CODE.ACCEPT;
 	    }
 

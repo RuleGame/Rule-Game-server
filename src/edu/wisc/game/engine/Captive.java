@@ -114,6 +114,7 @@ public class Captive {
 	}
     }
 
+    
     /** Creates an MLC results logger object, if required by the command
 	line params.
 	@return an MLC results logger object, or null if one is not requested
@@ -130,6 +131,8 @@ public class Captive {
 	if (logFileName==null) return null;
 
 	MlcLog log = new MlcLog(new File(logFileName), append);
+
+	log.format=ht. getOptionEnum(MlcLog.LogFormat.class,"log.format", MlcLog.LogFormat.Long);
 	
 	log.nickname=ht.getOption("log.nickname", log.nickname);
 	log.run=ht.getOption("log.run", log.run);

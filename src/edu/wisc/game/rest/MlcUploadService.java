@@ -18,7 +18,7 @@ import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.formatter.*;
 import edu.wisc.game.math.*;
-
+import edu.wisc.game.sql.MlcLog.LogFormat;
 
 import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
@@ -132,57 +132,121 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 		long lineCnt = 0, charCnt=0;
 		Vector<MlcEntry> results = new Vector<>();
 		MlcEntry e = null;
+
+		LogFormat format = null;
+		int episodeNo=0;
+		
 		while((line = r.readLine())!=null) {
 		    if (lineCnt==0) {
-			String h0 = "nickname,rule_name,trial_id,board_id,number_of_pieces,number_of_moves,move_acc,if_clear";
-			if (!line.trim().equals(h0)) {
-			    body += fm.para("Error: unexpected header. Expected: " + fm.pre(h0) + "Found: " + fm.pre(line));
+			String s = line.trim().replaceAll("^#", "");
+			
+			String [] hLong =  LogFormat.Long.header(),
+			    hCompact =  LogFormat.Compact.header();
+
+			if (s.equals(hLong[0])) {
+			    format = LogFormat.Long;
+			} else if (s.equals(hCompact[0])) {
+			    line = r.readLine();
+			    if (line==null) {
+				body += fm.para("Error: unexpected end of file after the first header line");
+				break;
+			    }
+
+
+			    s = line.trim().replaceAll("^#", "");
+			    if (s.equals(hCompact[1])) {
+				format = LogFormat.Compact;
+			    } else {
+				body += fm.para("Error: unexpected 2nd line of header. Expected: " + fm.pre(hCompact[1]) + "Found: " + fm.pre(line));
+				break;
+			    }
+
+			} else  {
+			    body += fm.para("Error: unexpected header. Expected: " + fm.pre(hLong[0]) + ", or "+fm.pre(hCompact[0])+". Found: " + fm.pre(line));
 			    break;
 			} 
-		    } else {
-			
-			String q[] = line.trim().split(",");
-			int M = 8;
-			if (q.length!=M) {
-			    body += fm.para("Error: unexpected number of columns in line "+(lineCnt+1)+" Expected: " + M+ " columns, found " + q.length + ". Line: " + fm.pre(line));
-			    break;
-			}	
-		    
-			String _nickname = q[0];
-			if (!_nickname.equals(nickname)) {
-			    body += fm.para("Error: unexpected nickname in line "+(lineCnt+1)+" Expected: " + fm.tt(nickname)+ ", found " + fm.tt(_nickname) + ". Line: " + fm.pre(line));
-			    break;
-			}
-		    			
-			String rule_name = q[1];
-			int runNo = Integer.parseInt(q[2]);
+		    } else { // normal (non-header) line
 
-			if (e!=null && e.matches(nickname, rule_name, runNo)) {
-			    // keep going
-			} else {
-			    e = new MlcEntry(nickname, rule_name, runNo, now);
-			    results.add(e);
-			}
+			String q[] = line.trim().split(",");
+			StringBuffer errmsg = new StringBuffer();
+			boolean z=false;
+
+			if (format == LogFormat.Long) {
+			    int M = 8;
+			    if (q.length!=M) {
+				body += fm.para("Error: unexpected number of columns in line "+(lineCnt+1)+" Expected: " + M+ " columns, found " + q.length + ". Line: " + fm.pre(line));
+				break;
+			    }	
+			    
+			    String _nickname = q[0];
+			    if (!_nickname.equals(nickname)) {
+				body += fm.para("Error: unexpected nickname in line "+(lineCnt+1)+" Expected: " + fm.tt(nickname)+ ", found " + fm.tt(_nickname) + ". Line: " + fm.pre(line));
+				break;
+			    }
+			    
+			    String rule_name = q[1];
+			    int runNo = Integer.parseInt(q[2]);
+			    
+			    if (e!=null && e.matches(nickname, rule_name, runNo)) {
+				// keep going
+			    } else {
+				e = new MlcEntry(nickname, rule_name, runNo, now);
+				results.add(e);
+			    }
 		 			  
 			
-			int episodeNo = Integer.parseInt(q[3]);			
-			int number_of_pieces =Integer.parseInt(q[4]);
-			int number_of_moves=Integer.parseInt(q[5]);
-			double move_acc = Double.parseDouble(q[6]);
-			boolean if_clear = q[7].equals("1");
+			    episodeNo = Integer.parseInt(q[3]);			
+			    int number_of_pieces =Integer.parseInt(q[4]);
+			    int number_of_moves=Integer.parseInt(q[5]);
+			    double move_acc = Double.parseDouble(q[6]);
+			    boolean if_clear = q[7].equals("1");
+			
+			    z = e.addEpisode( episodeNo,
+					      number_of_pieces,
+					      number_of_moves,
+					      move_acc,
+					      if_clear,
+					      errmsg);
+			} else if (format == LogFormat.Compact) {
+			    if (q[0].startsWith(".")) {
+				//.RandomTest,alternateShape2Bucket_color2Bucket,0
+				
+				episodeNo = 0;
 
-			StringBuffer errmsg = new StringBuffer();
-			if (!e.addEpisode( episodeNo,
-					   number_of_pieces,
-					   number_of_moves,
-					   move_acc,
-					   if_clear,
-					   errmsg)) {
-	
+				String _nickname = q[0];
+				if (!_nickname.equals(nickname)) {
+				    body += fm.para("Error: unexpected nickname in line "+(lineCnt+1)+" Expected: " + fm.tt(nickname)+ ", found " + fm.tt(_nickname) + ". Line: " + fm.pre(line));
+				    break;
+				}
+			    
+				String rule_name = q[1];
+				int runNo = Integer.parseInt(q[2]);
+			    
+				if (e!=null && e.matches(nickname, rule_name, runNo)) {
+				   // keep going
+				} else {
+				    e = new MlcEntry(nickname, rule_name, runNo, now);
+				    results.add(e);
+				}
+			    } else {
+				if (e==null) throw new IllegalArgumentException("episodeNo etc not set");
+				int number_of_moves=Integer.parseInt(q[1]);
+				int number_of_errors =Integer.parseInt(q[2]);
+				boolean if_clear = q[3].equals("1");
+			    
+				z = e.addEpisode2( episodeNo,
+						   number_of_moves,
+						   number_of_errors,
+						   if_clear,
+						   errmsg);
+			    }
+
+			} else throw new IllegalArgumentException("Illegal format: " + format);
+			if (!z) {
 			    body += fm.para("Error in line "+(lineCnt+1)+". " + errmsg + ". Line: " + fm.pre(line));
 			    break;
-			    
 			}
+								   
 		    }
 		    w.print(line);
 		    lineCnt++;
@@ -220,7 +284,11 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 	}
 	return fm.html(title, body);		
     }
-    
+
+    /** Removes from the database any data already stored for this
+	algo nickname, and saves the new data instead.
+	@param results the new data (summarizing the content of an uploaded file)
+     */
     void saveToDatabase(Vector<MlcEntry> results, String nickname) {	
 	EntityManager em=null;
 	try {

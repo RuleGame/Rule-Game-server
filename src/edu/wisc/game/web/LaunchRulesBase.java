@@ -362,7 +362,7 @@ public class LaunchRulesBase      extends ResultsBase  {
 	EntityManager em = Main.getNewEM();
 	try {
 
-	    allPlayers = findPlayers( em,  new Integer(uid));
+	    allPlayers = findPlayers( em, Integer.parseInt(uid));
 
 
 	    if (modsShort!=null)   tableText +=  buildPartA(modsShort, hm, z, launchFile, knownRuleSetNames);

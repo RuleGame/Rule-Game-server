@@ -168,8 +168,6 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
 
     <fileset dir="${classes}/edu/wisc/game/sql">
       <!-- include name="**/*.class"/ -->
-      <!-- include name="Piece.class" />
-      <include name="Board.class" / -->
       <include name="User.class" />
       <include name="Role.class" />
       <include name="PlayerInfo.class" />
