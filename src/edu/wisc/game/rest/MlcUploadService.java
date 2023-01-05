@@ -250,7 +250,9 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 
 			} else throw new IllegalArgumentException("Illegal format: " + format);
 			if (!z) {
-			    body += fm.para("Error in line "+(lineCnt+1)+". " + errmsg + ". Line: " + fm.pre(line)) + fm.para("Format=" + format);
+			    body += fm.para("Error in line "+(lineCnt+1)+". " + errmsg + ". Line: " + fm.pre(line))
+				+ fm.para("Message: " + errmsg)
+				+ fm.para("Format=" + format);
 			    break;
 			}
 								   
