@@ -17,7 +17,7 @@ set in=$h/game-data
 
 #-- the list of rule sets
 set rules=`(cd $in/rules; ls MLC/BMK/*.txt)`
-set log=test-compact.csv
+set log=test-long.csv
 echo "Will collect results in file $log"
 
 rm $log
@@ -28,7 +28,7 @@ foreach r ($rules)
 
         echo "Rule set $r, run No. $run"
 
-	$h/python/client-2.py inputDir=${in} logappend=${log} log.format=Compact log.nickname=RandomTest log.run=${run} R:${r}:MLC/BMK/bmk.csv
+	$h/python/client-2.py inputDir=${in} logappend=${log} log.format=Long log.nickname=RandomTest log.run=${run} R:${r}:MLC/BMK/bmk.csv
 
     end
      
