@@ -67,6 +67,13 @@ public class MlcUploadService {
     }
 
 
+    private static String prepareHeaderLine(String s) {
+	s=s.trim();
+	if (!s.startsWith("#")) s = "#" + s;
+	return s;
+    }
+
+    
     /**
 nickname,rule_name,trial_id,board_id,number_of_pieces,number_of_moves,move_acc,if_clear
 RandomTest,alternateShape2Bucket_color2Bucket,0,0,9,29,0.3103448275862069,1
@@ -138,7 +145,7 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 		
 		while((line = r.readLine())!=null) {
 		    if (lineCnt==0) {
-			String s = line.trim().replaceAll("^#", "");
+			String s = prepareHeaderLine(line);
 			
 			String [] hLong =  LogFormat.Long.header(),
 			    hCompact =  LogFormat.Compact.header();
@@ -153,7 +160,7 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 			    }
 
 
-			    s = line.trim().replaceAll("^#", "");
+			    s = prepareHeaderLine(line);
 			    if (s.equals(hCompact[1])) {
 				format = LogFormat.Compact;
 			    } else {
