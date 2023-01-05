@@ -220,7 +220,7 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 				
 				episodeNo = 0;
 
-				String _nickname = q[0];
+				String _nickname = q[0].substring(1);
 				if (!_nickname.equals(nickname)) {
 				    body += fm.para("Error: unexpected nickname in line "+(lineCnt+1)+" Expected: " + fm.tt(nickname)+ ", found " + fm.tt(_nickname) + ". Line: " + fm.pre(line));
 				    break;
