@@ -237,9 +237,9 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 				}
 			    } else {
 				if (e==null) throw new IllegalArgumentException("episodeNo etc not set");
-				int number_of_moves=Integer.parseInt(q[1]);
-				int number_of_errors =Integer.parseInt(q[2]);
-				boolean if_clear = q[3].equals("1");
+				int number_of_moves=Integer.parseInt(q[0]);
+				int number_of_errors =Integer.parseInt(q[1]);
+				boolean if_clear = q[2].equals("1");
 			    
 				z = e.addEpisode2( episodeNo++,
 						   number_of_moves,
