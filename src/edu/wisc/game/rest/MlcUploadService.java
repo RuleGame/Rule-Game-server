@@ -241,7 +241,7 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 				int number_of_errors =Integer.parseInt(q[2]);
 				boolean if_clear = q[3].equals("1");
 			    
-				z = e.addEpisode2( episodeNo,
+				z = e.addEpisode2( episodeNo++,
 						   number_of_moves,
 						   number_of_errors,
 						   if_clear,
@@ -250,7 +250,7 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 
 			} else throw new IllegalArgumentException("Illegal format: " + format);
 			if (!z) {
-			    body += fm.para("Error in line "+(lineCnt+1)+". " + errmsg + ". Line: " + fm.pre(line));
+			    body += fm.para("Error in line "+(lineCnt+1)+". " + errmsg + ". Line: " + fm.pre(line)) + fm.para("Format=" + format);
 			    break;
 			}
 								   
