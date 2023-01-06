@@ -5,8 +5,7 @@
   <body>
     <h1>Captive Game Server</h1>
 
-    <div align="center"><em>Updated 2022-07-20 for GS ver 5.007;
-	edited 2022-09-28</em></div>
+    <div align="center"><em>Updated 2023-01-06 for GS ver 6.002</em></div>
     
     <h2>Test the Rule Game</h2>
 
@@ -317,9 +316,9 @@ as the main argument on your command line. Both  <em>ruleSet</em> and <em>modifi
 
 <p>Passing the seed value <tt>0</tt> will start the random number generator with a random seed (i.e. it will produce a different sequence of random numbers on different runs).
 
-<h3>Generating a results file</h3>
+<h3><a name="results">Generating a results file</a></h3>
 
-<p>For the convenience of <a href="mlc/mlc-guide.html">MLC</a> participants, you can get the Captive Game Server produce a results file, each line of which will record the outcome of one episode. Sample usage:
+<p>For the convenience of <a href="mlc/mlc-guide.html">MLC</a> participants, you can get the Captive Game Server produce a results file, each line of which will record the outcome of one episode. (This is the file the MLC participants are asked to submit so that their results can be compared to those of other participants' algortithms). Sample usage:
 
 <pre>  
   ./captive-full.sh inputDir=game-data log=sample.csv log.nickname=JohnDoe log.run=0  R:MLC/BMK/colOrd_nearby.txt:MLC/BMK/bmk.csv
@@ -332,7 +331,38 @@ as the main argument on your command line. Both  <em>ruleSet</em> and <em>modifi
     <li><tt>log.run=0</tt> specifies the sequential number of your run, within the sets of runs you carry out for a particular rule set. The numbers should start with 0.
   </ul>
 
-  <p>Below is an example of a results file that has been generated after 2 runs:
+  <h4>Compact format</h4>
+<p>Several results file formats are supported. As of ver. 6.002 (Jan 2023), the default format (which the MLC participants are advised to use) is the so-called "compact format", which looks like this:
+
+<pre>
+#.nickname,rule_name,trial_id
+#number_of_moves,number_of_errors,if_clear
+.RandomTest,alternateShape2Bucket_color2Bucket,0
+47,38,1
+36,27,1
+29,20,1
+35,26,1
+45,36,1
+.RandomTest,alternateShape2Bucket_color2Bucket,1
+31,22,1
+40,31,1
+61,52,1
+42,33,1
+30,21,1
+   <em>..... etc ....</em>
+</pre>
+
+<p>Here, the first 2 lines are the header. The rest of the file consists of sections, one section per run. Each run's section starts with the "run introduction line", which begins with a dot ("."), followed by the algorithm's name (the same throughout the entire file), the rule set name, and the zero-based run number.
+
+<p>The run introduction line is followed by lines describing the outcome of individual episodes. Each line has 3 numbers: the number of moves (counting all move and pick attempts in the episode, both successful and failed), the number of errors (the failed move and pick attempts), and the "if_clear" bit, which is 1 if the board has been cleared at the end of the episode and 0 otherwise (i.e. if the algorithm gave up on this board, or a stalemate has occurred).
+
+<p>You can compare the content of the results file produced by the server with what your own ML algorithm has calculated as its number of moves and errors in each episode. If there is a mismatch, then there is something wrong with the accounting, either in the server or in your code!  
+
+  <h4>Long format</h4>
+
+<p>For backward compatibility with older versions, the CGS also supports the "long format" of the results file, which has more redundant information. If for some reason you desire to use it, include <tt>log.format=Long</tt> into the CGS command line, along with all the other log-related options.
+  
+  <p>Below is an example of a long-format results file that has been generated after 2 runs:
 <pre>
 nickname,rule_name,trial_id,board_id,number_of_pieces,number_of_moves,move_acc,if_clear
 JohnDoe,colOrd_nearby,0,0,9,3,1.0,0

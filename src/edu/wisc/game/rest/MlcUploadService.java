@@ -28,7 +28,7 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 /** Uploading results files by MLC participants. Discussed in email
-    in June-July 2022.
+    in June-July 2022.  Extended in Jan 2023 to support compact format.
 
  */
 
@@ -153,6 +153,7 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 			if (s.equals(hLong[0])) {
 			    format = LogFormat.Long;
 			} else if (s.equals(hCompact[0])) {
+			    w.println(line);
 			    line = r.readLine();
 			    if (line==null) {
 				body += fm.para("Error: unexpected end of file after the first header line");
@@ -257,7 +258,7 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 			}
 								   
 		    }
-		    w.print(line);
+		    w.println(line);
 		    lineCnt++;
 		    charCnt += line.length();
 		}

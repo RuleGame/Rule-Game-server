@@ -3,7 +3,7 @@
   <body>
     <h1>The Machine Learning Challenge (MLC)</h1>
 
-<div align="center"><em>Updated 2022-06-23</em></div>
+<div align="center"><em>Updated 2023-01-06 for CGS ver 6.002</em></div>
     
     <h2>Prepare the software</h2>
 
@@ -31,15 +31,15 @@
 
       <p>As a program starts playing a series of episodes (a "run") with a parricular rule set, its performance (in terms of the error rate in each episode) will hopefully improve. In our judging the results, we will assume that a program has fully "learned" a rule set if it can clear 10 consecutive board without a single error, i.e. to demonstrate 100% accuracy in 10 consecutive episodes.
 
-      <p>Therefore, we ask that once your ML program believes that it has fully learned a particular rule set, it plays 10 more episodes (clears 10 more boards). Its error-free performance on those episodes will be evidenced by the 10 last lines of the run's results file all having 1.0 in the <tt>move_acc</tt> column and 1 in the  <tt>if_cleared</tt>  column. This will serve as an evidence for our analysis tools that your ML program has achieved full learning on this run.
+      <p>Therefore, we ask that once your ML program believes that it has fully learned a particular rule set, it plays 10 more episodes (clears 10 more boards). Its error-free performance on those episodes will be evidenced by the 10 consecutive lines in the run's results file all having 0 in the <tt>total_errors</tt> column and 1 in the  <tt>if_cleared</tt>  column. This will serve as an evidence for our analysis tools that your ML program has achieved full learning on this run.
 	  
-      <p>In our analysis of your results, we will view the total number of errors (failed move attempts) your ML program has made in a given run before it has fully learned the rule set as a measure of its (in)efficiency, i.e. the cost of the learning experience.
+      <p>In our analysis of your results, we will view the total number of errors (failed move attempts) your ML program has made in a given run before it has achieved a 10-episode error-free streak as a measure of its (in)efficiency, i.e. the cost of the learning experience.  (If the ML program made some more errors <em>after</em> after its 10-error-free-episodes streak, we won't count those errors, i.e. the program won't be penalized for them).
 
 	<h3>Preparing the results file</h3>
 
       <p>As illsutrated by our sample (non-)learning script, we want you to produce a result file which will contain, for every rule set which your ML program can fully learn, the results for 100 runs, each run demonstrating successful learning by having at least 10 error-free episodes at the end. Thus, for example, if you submit data for 5 rule sets, with 100 runs for each rule set, and, on average, 200 episodes in each run, then your results file will have ca. 5*100*200 = 100,000 lines. That will be several megabytes of data.
 
-	<h4>Supported formats</h4>
+	<p>You don't need to explicitly add results-file producing functionality to your ML program's code. Instead, you simply need to include several log-related options into the CGS command line, similarly to how it's done in the sample script (captive-python-mlc.sh). This is explained in more details in the CGS guide, under <a href="../captive.html#results">Generating a results file</a>.
 
 	<h3>Submitting the results file</h3>
 

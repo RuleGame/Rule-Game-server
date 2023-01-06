@@ -51,7 +51,10 @@ public class MlcEntry {
       public int getRunNo() { return runNo; }
     @XmlElement
     public void setRunNo(int _runNo) { runNo = _runNo; }
- 
+
+    /** Since ver 6.003, redefined as true if "first streak that is good
+	enough" (FSTIGE) exists. (Before 6.003, this required such a streak
+	at the end of the run) */
     @Basic
     private boolean learned;
     public boolean getLearned() { return learned; }
@@ -74,6 +77,12 @@ public class MlcEntry {
     @XmlElement
     public void setMovesUntilLearned(int _movesUntilLearned) { movesUntilLearned = _movesUntilLearned; }
 
+    @Basic
+    private int errorsUntilLearned;
+    public int getErrorsUntilLearned() { return errorsUntilLearned; }
+    @XmlElement
+    public void setErrorsUntilLearned(int _errorsUntilLearned) { errorsUntilLearned = _errorsUntilLearned; }
+
     /** The total move attempts (including after the "full learning") point */
     @Basic
     private int totalMoves;
@@ -81,7 +90,7 @@ public class MlcEntry {
     @XmlElement
     public void setTotalMoves(int _totalMoves) { totalMoves = _totalMoves; }
 
-    /** The total number of errors */
+    /**  the total number of errors */
     @Basic
     private int totalErrors;
     public int getTotalErrors() { return totalErrors; }
@@ -120,6 +129,7 @@ public class MlcEntry {
 	endStreakEpisodes =  endStreakMoves = 0;
 	learned = false;
 	movesUntilLearned = 0;
+	errorsUntilLearned = 0;
     };
 
     public boolean matches(String _nickname, String _ruleSetName, int _runNo ) {
@@ -179,14 +189,24 @@ public class MlcEntry {
 	    // an error-free full-board-cleared episode
 	    endStreakEpisodes ++;
 	    endStreakMoves += number_of_moves;
-	    learned = (endStreakEpisodes >= REQUIRED_STREAK_EPISODES);
+	    //-- learned = (endStreakEpisodes >= REQUIRED_STREAK_EPISODES);
+	    learned = learned || (endStreakEpisodes >= REQUIRED_STREAK_EPISODES);
 	    
 	} else {
 	    endStreakEpisodes =  endStreakMoves = 0;
-	    learned = false;
+	    //-- learned = false;
+	    //-- episodesUntilLearned = totalEpisodes;
+	    //-- movesUntilLearned = totalMoves;
+	}
+
+	if (!learned) {
 	    episodesUntilLearned = totalEpisodes;
 	    movesUntilLearned = totalMoves;
+	    errorsUntilLearned = totalErrors;
+
 	}
+
+	
 	return true;
 	
     }

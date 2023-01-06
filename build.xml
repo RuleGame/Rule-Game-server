@@ -234,7 +234,7 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
 <target name="war" depends="init,jar">
 <war destfile="../${dist.war}" webxml="WEB-INF/web.xml">
   <fileset dir="web" excludes=".svn" />
-  <lib dir="${lib}"><include name="**/*.jar"/></lib>
+  <lib dir="${lib}"><include  name="${our.jar}"/></lib> 
   <lib dir="${main}/../jaxrs-ri/api">    <include name="*.jar"/> </lib>
   <lib dir="${main}/../jaxrs-ri/ext">    <include name="*.jar"/> </lib>
   <lib dir="${main}/../jaxrs-ri/lib">    <include name="*.jar"/> </lib>
