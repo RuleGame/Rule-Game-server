@@ -24,14 +24,14 @@ import edu.wisc.game.sql.Episode.CODE;
  */
 public class MwByHuman extends AnalyzeTranscripts {
 
-    private MwByHuman(String _playerId, File _base, PrintWriter _wsum) {
-	super( _playerId, _base, _wsum);
+    private MwByHuman(String _playerId, File _base, PrintWriter _wsum, int _targetStreak) {
+	super( _playerId, _base, _wsum);	
 	quiet = true;
+	targetStreak = _targetStreak;
     }
 
     
   public static void main(String[] argv) throws Exception {
-      	EntityManager em = Main.getNewEM();
 
 	ArgType argType = ArgType.PLAN;
 	boolean fromFile = false;
@@ -41,6 +41,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 	Vector<String> nicknames = new Vector<>();
 	Vector<Long> uids = new Vector<>();
 
+	int targetStreak = 10;
+	
 	for(int j=0; j<argv.length; j++) {
 	    String a = argv[j];
 
@@ -50,6 +52,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 		throw new IllegalArgumentException("Unknown option: " + a);
 	    } else if  (a.equals("-file")) {
 		fromFile=true;
+	    } else if (j+1< argv.length && a.equals("-targetStreak")) {
+		targetStreak = Integer.parseInt( argv[++j] );
 	    } else {
 
 		String[] v=  fromFile? readList(new File(a)):  new String[]{a};
@@ -65,7 +69,29 @@ public class MwByHuman extends AnalyzeTranscripts {
 
 	}
 
+	File gsum=new File("wm-human.csv");
+	Fmter plainFm = new Fmter();
+	String text = process(plans, pids, nicknames, uids, targetStreak, gsum, plainFm);
+	System.out.println(text);
+
+  }
+
+    static public String process(Vector<String> plans,
+				 Vector<String> pids,
+				 Vector<String> nicknames,
+				 Vector<Long> uids,
+				 int targetStreak,
+				 File gsum,
+				 Fmter fm
+				 ) throws Exception {
+
+	StringBuffer result = new StringBuffer();
+      	EntityManager em = Main.getNewEM();
+
+
+	try {
 	plans = expandPlans(em, plans);
+
 
 	PlayerList plist = new 	PlayerList(em,  pids,  nicknames,   uids);
 	EpisodesByPlayer ph =new EpisodesByPlayer();
@@ -93,7 +119,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    //System.out.println("For experiment plan=" +exp+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
 	    } catch(Exception ex) {
 		String msg = "ERROR: Skipping plan=" +exp+" due to an exception:";
-		System.out.println(msg);
+		result.append(fm.para(msg));
 		System.err.println(msg);
 		System.err.println(ex);
 		ex.printStackTrace(System.err);
@@ -102,26 +128,28 @@ public class MwByHuman extends AnalyzeTranscripts {
 	}	
 
 	PrintWriter wsum =null;
-	File gsum=new File("wm-human.csv");
-	wsum = new PrintWriter(new FileWriter(gsum, false));
-	wsum.println( MwSeries.header);
+
+	wsum = gsum==null? null: new PrintWriter(new FileWriter(gsum, false));
+	if (wsum!=null) 	wsum.println( MwSeries.header);
 
 	Vector<MwSeries> allMws = new Vector<>();
 	
 	for(String playerId: ph.keySet()) {
 	    Vector<EpisodeHandle> v = ph.get(playerId);
 	    try {
-		MwByHuman atr = new MwByHuman(playerId, null, null); //base, wsum);
+		MwByHuman atr = new MwByHuman(playerId, null, null, targetStreak); //base, wsum);
 		atr.analyzePlayerRecord(v);
 
 		allMws.addAll( atr.savedMws);
 		for(MwSeries ser: atr.savedMws) {
-		    wsum.println(ser.toCsv());
+		    if (wsum!=null) wsum.println(ser.toCsv());
 		}
 
 		
 	    } catch(Exception ex) {
-		System.err.println("ERROR: Cannot process data for player=" +playerId+" due to missing data. The problem is as follows:");
+		String msg = "ERROR: Cannot process data for player=" +playerId+" due to missing data. The problem is as follows:";
+		result.append(fm.para(msg));
+		System.err.println(msg);
 		System.err.println(ex);
 		ex.printStackTrace(System.err);
 	    }
@@ -130,16 +158,21 @@ public class MwByHuman extends AnalyzeTranscripts {
 	if (wsum!=null) wsum.close();
 
 	//-- now, the MW Test
-	Fmter plainFm = new Fmter();
 	MannWhitneyComparison.Mode mode = MannWhitneyComparison.Mode.CMP_RULES_HUMAN;
 	MannWhitneyComparison mwc = new MannWhitneyComparison(mode);
 	
 	Comparandum[][] allComp = Comparandum.mkMlcComparanda(allMws.toArray(new MwSeries[0]));
 	
 
-	String text =  mwc.doCompare("humans", null, allComp, plainFm);
-	System.out.println(text);
+	result.append( fm.para("Using targetStreak=" + targetStreak));
+	result.append( mwc.doCompare("humans", null, allComp, fm));
+	return result.toString();
 
+	} finally {	
+	    if (em!=null) try {
+		    em.close();
+		} catch(Exception ex) {}
+	}	
   }
 
     
@@ -214,7 +247,7 @@ m*
     /** Info about each episode gets added here */
     private Vector<MwSeries> savedMws = new Vector<>();
     
-    public static final int targetStreak = 10;
+    private final int targetStreak;
 
     /** Saves the data for a single (player, ruleSet) pair
 	@param section A vector of arrays, each array representing the recorded
@@ -275,12 +308,8 @@ m*
 		    ser.totalErrors ++;
 		}
 	    }
-
 	    
 	    ser.totalMoves += subsection.length;
-	    
-
-
 	}
 
 	section.clear();

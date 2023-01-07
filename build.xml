@@ -239,6 +239,7 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
   <lib dir="${main}/../jaxrs-ri/ext">    <include name="*.jar"/> </lib>
   <lib dir="${main}/../jaxrs-ri/lib">    <include name="*.jar"/> </lib>
   <lib dir="${main}/../jaxb-ri/mod">    <include name="*.jar"/> </lib>
+  <lib dir="${main}/../commons-math3-3.6.1">    <include name="*.jar"/> </lib>
   <lib dir="${main}/../other-lib">     <include name="*.jar"/>   </lib>
   <lib dir="${openjpa}">  <include name="*.jar"/> </lib>
   <webinf dir="WEB-INF"/>
