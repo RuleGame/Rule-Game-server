@@ -82,12 +82,40 @@ public class MlcManagerDashboard  extends ResultsBase  {
 		    for(String x: v) s += fm.td(x);
 		    rows.add( fm.tr( s));
 		}
-		
-		report += fm.table(	 "border=\"1\"", rows);
-
-		
+		report += fm.table(	 "border=\"1\"", rows);		
 	    }	      
-			
+
+
+	    report += fm.h2("Rule sets involved");
+	    q = em.createQuery("select m.ruleSetName, count(distinct m.nickname) from MlcEntry m group by  m.ruleSetName order by  m.ruleSetName");
+
+	    results = (List<Object[]>)q.getResultList();
+
+	    if (results.size()==0) {
+		report += fm.para("No submissions for any rule set have been recorded in the database");
+	    } else {
+			Vector<String> rows = new Vector<>();
+		rows.add( fm.tr( fm.th("Rule Set") +
+				 fm.th("Number of algos") +
+				 fm.th("Actions")));
+
+		String lastNick = "";
+
+		for(Object[] line: results) {
+		    String rule = (String)(line[0]);
+		    Long cnt = (Long)(line[1]);
+		    final String base = "../game-data/MlcUploadService";
+		    String cmpLink = base+"/compare?rule="+rule;
+		    String aCmp = fm.a(cmpLink, "Compare ML algos on this rule set", null);
+		    String[] v = { rule, "" + cnt, aCmp};
+
+		    String s="";
+		    for(String x: v) s += fm.td(x);
+		    rows.add( fm.tr( s));
+		}
+		report += fm.table(	 "border=\"1\"", rows);	
+		
+	    }
 
 	    
 	} catch(Exception ex) {
