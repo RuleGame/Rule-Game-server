@@ -35,9 +35,14 @@ public class ManagerDashboardService {
     public String summary(@QueryParam("exp") List<String> _plans,
 			  @DefaultValue("10") @QueryParam("targetStreak") int targetStreak,
 
-			  @DefaultValue("naive") @QueryParam("prec") String precString
+			  @DefaultValue("Naive") @QueryParam("prec") String precString
 			  
 			  ) {
+
+	MwByHuman.PrecMode precMode = Enum.valueOf(MwByHuman.PrecMode.class, 
+						   precString);
+
+	
 	String title="", body="", errmsg = null;
 	EntityManager em=null;
 
@@ -52,7 +57,8 @@ public class ManagerDashboardService {
 
 	    body += fm.para("Taking into account players assigned to the following experiment plans: " + fm.tt( String.join(", " , plans)));
 		
-	    body +=  MwByHuman.process(plans, pids, nicknames, uids, targetStreak, null, fm);
+	    body +=  MwByHuman.process(plans, pids, nicknames, uids,
+				       targetStreak, precMode, null, fm);
 
 
 	    

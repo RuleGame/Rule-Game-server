@@ -198,8 +198,6 @@ public class MannWhitneyComparison {
 		"Comparison of rule sets";
 	    body += fm.h3(h3);
 
-	    //	    body += fm.para("In the table below, 'learning' means demonstrating the ability to make a desired number of consecutive moves with no errorrs");
-
 	    String keyCell =	(mode==Mode.CMP_ALGOS)? "Algo nickname":
 		"Rule set name";
 	    

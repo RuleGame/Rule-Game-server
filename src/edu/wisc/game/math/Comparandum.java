@@ -73,7 +73,7 @@ public class Comparandum implements Comparable<Comparandum> {
 	on human performance data for these rule sets.
        @return {learnedOnes[], nonLearnedOnes[]}
      */
-    public static Comparandum[][] mkMlcComparanda(MwSeries[] res) {
+    public static Comparandum[][] mkHumanComparanda(MwSeries[] res, 	MwByHuman.PrecMode precMode) {
 	
 	// distinct keys
 	Vector<String> keys = new Vector<>();
@@ -85,7 +85,8 @@ public class Comparandum implements Comparable<Comparandum> {
 	// How many distinct keys (algo nicknames or rule set names)
 	int n = 0;
 	for(MwSeries ser: res) {
-	    String key  = ser.ruleSetName;
+	    String key  = ser.getKey( precMode);
+	    if (key==null) continue;
 	    boolean isNew = (keysOrder.get(key)==null);
 	    
 	    int j = isNew? n++ :  keysOrder.get(key);
@@ -104,7 +105,9 @@ public class Comparandum implements Comparable<Comparandum> {
 	for(int j=0; j<n; j++) w[j] = new MwSeries[ counts.get(j) ];
 	int p[] = new int[n];
 	for(MwSeries ser: res) {
-	    int j = keysOrder.get( ser.ruleSetName);
+	    String key  = ser.getKey( precMode);
+	    if (key==null) continue;
+	    int j = keysOrder.get( key );
 	    MwSeries [] row = w[j];
 	    int k = p[j]++;
 	    row[k] = ser;	    

@@ -26,9 +26,13 @@ ContextInfo main = new ContextInfo(request,response);
 <td valign="top">   
 Learning attainment criterion: <input type="text" name="targetStreak" size="4" value="10"> consecutive error-free moves
 
-<br><input type="radio" name="prec" value="naive" checked>For each rule sets, only include "naive" players (those who played this rule set as their first rule set)
-<br><input type="radio" name="prec" value="every">Consider each (rule set + preceding set) combination as a separate experience to be ranked
-<br><input type="radio" name="prec" value="ignire">When analyzing a set, ignore preceding rule sets
+<br><input type="radio" name="prec" value="Naive" checked>Naive: For each rule sets, only include "naive" players (those who played this rule set as their first rule set)
+<br><input type="radio" name="prec" value="Every">Every: Consider each (rule set + preceding set) combination as a separate experience to be ranked
+<br><input type="radio" name="prec" value="Ignore">Ignore: When viewing a rule set's series, ignore preceding rule sets. (In other words, the R1 data from
+<strong>R1</strong>:R2:R3,  
+R2:<strong>R1</strong>:R3, and
+R2:R3:<strong>R1</strong> are merged, viewed as the same experience).
+
 <br>
 	    
 	    <strong><button type="submit">Compare rule sets</button></strong>

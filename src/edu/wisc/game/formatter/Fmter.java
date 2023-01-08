@@ -113,6 +113,9 @@ public class  Fmter {
     final public  String th(String text) {
 	return wrap("th", text) + "\t";
     }
+    final public  String th(String extra, String text) {
+	return wrap("th", extra, text) + "\t";
+    }
 
     final public  String td(String extra, String text) {
 	return wrap("td", extra, text) + "\t";
@@ -191,7 +194,7 @@ public class  Fmter {
     }
 
     public String rowTh(String key, String tdExtra, String... cols) {
-	String s = th(key);
+	String s = th("align='left'", key);
 	for(String col: cols) s +=  td(tdExtra, col);
 	return tr(s);
     }

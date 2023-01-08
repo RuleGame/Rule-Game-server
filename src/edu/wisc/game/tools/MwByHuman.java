@@ -42,6 +42,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	Vector<Long> uids = new Vector<>();
 
 	int targetStreak = 10;
+	PrecMode precMode = PrecMode.Naive;
 	
 	for(int j=0; j<argv.length; j++) {
 	    String a = argv[j];
@@ -54,6 +55,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 		fromFile=true;
 	    } else if (j+1< argv.length && a.equals("-targetStreak")) {
 		targetStreak = Integer.parseInt( argv[++j] );
+	    } else if (j+1< argv.length && a.equals("-precMode")) {
+		precMode = Enum.valueOf(MwByHuman.PrecMode.class, argv[++j]);
 	    } else {
 
 		String[] v=  fromFile? readList(new File(a)):  new String[]{a};
@@ -71,7 +74,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 
 	File gsum=new File("wm-human.csv");
 	Fmter plainFm = new Fmter();
-	String text = process(plans, pids, nicknames, uids, targetStreak, gsum, plainFm);
+	String text = process(plans, pids, nicknames, uids,
+			      targetStreak, precMode, gsum, plainFm);
 	System.out.println(text);
 
   }
@@ -81,6 +85,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 				 Vector<String> nicknames,
 				 Vector<Long> uids,
 				 int targetStreak,
+				 MwByHuman.PrecMode precMode,
 				 File gsum,
 				 Fmter fm
 				 ) throws Exception {
@@ -137,8 +142,10 @@ public class MwByHuman extends AnalyzeTranscripts {
 	for(String playerId: ph.keySet()) {
 	    Vector<EpisodeHandle> v = ph.get(playerId);
 	    try {
-		MwByHuman atr = new MwByHuman(playerId, null, null, targetStreak); //base, wsum);
-		atr.analyzePlayerRecord(v);
+		MwByHuman atr = new MwByHuman(playerId, null, null, targetStreak);
+
+		// This puts the data for (player,rule) pairs into atr.savedMws
+		atr.analyzePlayerRecord(v);  
 
 		allMws.addAll( atr.savedMws);
 		for(MwSeries ser: atr.savedMws) {
@@ -161,10 +168,13 @@ public class MwByHuman extends AnalyzeTranscripts {
 	MannWhitneyComparison.Mode mode = MannWhitneyComparison.Mode.CMP_RULES_HUMAN;
 	MannWhitneyComparison mwc = new MannWhitneyComparison(mode);
 	
-	Comparandum[][] allComp = Comparandum.mkMlcComparanda(allMws.toArray(new MwSeries[0]));
+	Comparandum[][] allComp = Comparandum.mkHumanComparanda(allMws.toArray(new MwSeries[0]),  precMode);
 	
 
-	result.append( fm.para("Using targetStreak=" + targetStreak));
+	result.append( fm.para("In the tables below, 'learning' means demonstrating the ability to make "+targetStreak+" consecutive moves with no errorrs"));
+
+	result.append( fm.para("mStar is the number of errors the player make until he 'learns' by the above definition. Those who have not learned, or take more than "+defaultMStar+" errors to learn, are assigned mStar="+defaultMStar));
+		       
 	result.append( mwc.doCompare("humans", null, allComp, fm));
 	return result.toString();
 
@@ -175,6 +185,15 @@ public class MwByHuman extends AnalyzeTranscripts {
 	}	
   }
 
+    /** Used to control how series are assigned to comparanda */
+    public enum PrecMode {       
+	//For each rule sets, only include "naive" players (those who played this rule set as their first rule set
+	Naive,
+	//Consider each (rule set + preceding set) combination as a separate experience to be ranked
+	Every,
+	//When analyzing a set, ignore preceding rule sets
+	Ignore
+    }
     
     /**  The data for a series (group of episodes played by a player under the same rule set) needed to contribute a number to an M-W Comparandum. For each episode, we need these data:
 	 <pre>
@@ -199,6 +218,16 @@ m*
 	final String playerId;
 	//final boolean useImages;
 	//final ParaSet para;
+
+	/** The 'key' (what comparandum, if any, this series belongs to) depends on the mode */
+	public String getKey(PrecMode mode) {
+	    switch (mode) {
+	    case Ignore: return ruleSetName;	    
+	    case Every: return String.join(":", precedingRules) +":"+ ruleSetName;
+	    case Naive: return (precedingRules.size()==0)? ruleSetName: null;
+	    default: throw new IllegalArgumentException("" + mode);
+	    }
+	}
 
 	
 	boolean learned=false;
@@ -248,6 +277,7 @@ m*
     private Vector<MwSeries> savedMws = new Vector<>();
     
     private final int targetStreak;
+    static final int defaultMStar = 300;
 
     /** Saves the data for a single (player, ruleSet) pair
 	@param section A vector of arrays, each array representing the recorded
@@ -259,7 +289,6 @@ m*
 			     Vector<EpisodeHandle> includedEpisodes)
 	throws  IOException, IllegalInputException,  RuleParseException {
 
-	final int defaultMStar = 300;
 
 	int je =0;
 
