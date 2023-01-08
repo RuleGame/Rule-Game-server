@@ -13,6 +13,10 @@ ContextInfo main = new ContextInfo(request,response);
 <h2>Choose experiment plans</h2>
 <div>
 
+<p>Note: there is also a command-line inteface for this tool, scripts/analyze-transcripts-mwh.sh. Documentation is coming...
+
+<hr>
+
 <p>Choose one or several experiment plans from the list below. All rule sets included in those plans will be compared.<p>
 
 <form method="get" action="../game-data/ManagerDashboardService/compareRulesForHumans">
@@ -24,11 +28,13 @@ ContextInfo main = new ContextInfo(request,response);
 	 <%= PlanStats.listSAllExperimentPlansHtml() %>
 	 </tt>    
 <td valign="top">   
-<h3>Processing parameters</h3>
+<h3>Data processing parameters</h3>
 <br>
-Learning attainment criterion: <input type="text" name="targetStreak" size="4" value="10"> consecutive error-free moves
+Learning attainment criterion:
+<input type="text" name="targetStreak" size="4" value="10"> consecutive error-free moves
 
-<br>Default mStar = <input type="text" name="defaultMStar" size="6" value="300">  (You can also enter the value <tt>Infinity</tt>)
+<br>Default mStar =
+<input type="text" name="defaultMStar" size="6" value="300">  (You can also enter the value <tt>Infinity</tt>)
 
 
 <br><input type="radio" name="prec" value="Naive" checked>Naive: For each rule sets, only include "naive" players (those who played this rule set as their first rule set)
