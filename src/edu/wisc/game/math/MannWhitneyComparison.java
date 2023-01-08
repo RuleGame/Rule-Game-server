@@ -168,43 +168,37 @@ public class MannWhitneyComparison {
 		Comparandum q = learnedOnes[k];
 		String key = q.key;
 		boolean isMe = key.equals(myKey);
-		String s =key + "\t";
+		Vector<String> c = new Vector<>(), cc = new Vector<>();
+		
+		for(int i=0; i< order.size(); i++) {
+		    c.add( ""+z[k][order.get(i)]);
 
-		StringWriter sw = new StringWriter();
-		PrintWriter pw = new PrintWriter(sw);
-		pw.print(key);
-
-
-		double[] c = new double[order.size()];		
-		double[] cc = new double[order.size()];		
-		for(int i=0; i< c.length; i++) {
-		    c[i] = z[k][order.get(i)];
-		    cc[i] = zr[k][order.get(i)];
-		    pw.format("\t%8.4f", cc[i]);
+		    StringWriter sw = new StringWriter();
+		    PrintWriter pw = new PrintWriter(sw);
+		    pw.format("\t%8.4f", zr[k][order.get(i)]);
+		    cc.add( sw.toString());
 		}
 		
-		s += Util.joinNonBlank("\t", c);
-		if (isMe) s = fm.strong(s);
-		v.add(s);
+		if (isMe) eachStrong(fm,c);
+		if (isMe) eachStrong(fm,cc);
+		v.add( fm.rowTh(key, "align='right'", c));
+		vv.add( fm.rowTh(key, "align='right'", cc));
 
-
-		s = sw.toString();
-		if (isMe) s = fm.strong(s);
-		vv.add(s);
 
 	    }
 	    body += fm.h3("Raw M-W matrix");	    	    
-	    body += fm.pre(String.join("\n", v));
-	    body += fm.h3("M-W ratio matrix");
-	    body += fm.pre(String.join("\n", vv));
+	    //	    body += fm.pre(String.join("\n", v));
+	    body += fm.table("",v);
 
-	    //Arrays.sort(learnedOnes);
+	    body += fm.h3("M-W ratio matrix");
+	    //body += fm.pre(String.join("\n", vv));
+	    body += fm.table("",vv);
 
 	    String h3 =	(mode==Mode.CMP_ALGOS)? "Comparison of algorithms":
 		"Comparison of rule sets";
 	    body += fm.h3(h3);
 
-	    body += fm.para("In the table below, 'learning' means demonstrating the ability to make " + MwByHuman.targetStreak + " consecutive moves with no errorrs");
+	    //	    body += fm.para("In the table below, 'learning' means demonstrating the ability to make a desired number of consecutive moves with no errorrs");
 
 	    String keyCell =	(mode==Mode.CMP_ALGOS)? "Algo nickname":
 		"Rule set name";
@@ -290,14 +284,9 @@ public class MannWhitneyComparison {
 			fm.sprintf("%4.2f",avgE)
 		    };
 		} else throw new IllegalArgumentException();
-		
-		row = fm.th(key);
-		for(String s: w2) {
-		    if (isMe) s = fm.strong(s);
-		    row += fm.td(s);
-		}
 
-		rows.add(fm.tr(row));
+		if (isMe) eachStrong(fm,w2);
+		rows.add( fm.rowTh(key, "align='right'", w2));
 	    }
 
 	    // Algos who have never learned this rule
@@ -331,13 +320,8 @@ public class MannWhitneyComparison {
 				"",
 				fm.sprintf("%4.3f", avgErrorRate) };
 
-		row = fm.th(key);
-		for(String s: w2) {
-		    if (isMe) s = fm.strong(s);
-		    row += fm.td(s);
-		}
-
-		rows2.add(fm.tr(row));
+		if (isMe) eachStrong(fm,w2);
+		rows2.add(fm.rowTh(key, "align='right'", w2));
 
 		avgErrorRates.add(avgErrorRate);
 	
@@ -373,5 +357,18 @@ public class MannWhitneyComparison {
 	System.out.println(text);
 	
     }
+
+    static private void eachStrong(Fmter fm, String[] w) {
+	for(int j=0; j<w.length; j++)  {
+	    w[j] = fm.strong(w[j]);
+	}
+    }
+
+    static private void eachStrong(Fmter fm, Vector<String> w) {
+	for(int j=0; j<w.size(); j++)  {
+	    w.set(j, fm.strong(w.get(j)));
+	}
+    }
+
 
 }

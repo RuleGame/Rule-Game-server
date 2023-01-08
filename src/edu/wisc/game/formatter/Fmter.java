@@ -181,13 +181,26 @@ public class  Fmter {
     }
 
     
-    /** Generates a table row (a TR element) */
+    /** Generates a table row (a TR element).
+	@param cols The content of columns (without the TD wrapping; the wrapping will be done in this method)
+     */
     public String row(String... cols) {
 	String s = "";
 	for(String col: cols) s +=  td(col);
 	return tr(s);
     }
 
+    public String rowTh(String key, String tdExtra, String... cols) {
+	String s = th(key);
+	for(String col: cols) s +=  td(tdExtra, col);
+	return tr(s);
+    }
+
+    public String rowTh(String key, String tdExtra, Vector<String> cols) {
+	return rowTh(key, tdExtra, cols.toArray(new String[0]));
+    }
+
+    
     public String rowExtra(String extra, String... cols) {
 	String s = "";
 	for(String col: cols) s +=  td(extra, col);
