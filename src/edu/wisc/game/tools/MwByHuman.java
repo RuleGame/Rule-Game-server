@@ -127,7 +127,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    
 	    //System.out.println("For experiment plan=" +exp+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
 	    } catch(Exception ex) {
-		String msg = "ERROR: Skipping plan=" +exp+" due to an exception:";
+		String msg = "ERROR: Skipping plan=" +exp+" due to an exception:" + ex;
 		result.append(fm.para(msg));
 		System.err.println(msg);
 		System.err.println(ex);
