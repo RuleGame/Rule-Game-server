@@ -50,7 +50,9 @@ public class Comparandum implements Comparable<Comparandum> {
 	    key = ruleSetName;
 	    a = new int[ z.length ];
 	    for(int k=0; k<z.length; k++) {
-		a[k] = z[k].getMStar();
+		// if an infinity is stored in m*, we replace it with a very
+		// large integer, which is OK for comparison
+		a[k] = z[k].getMStarInt();
 	    }
 	    mlc=null;
 	    humanSer=z;

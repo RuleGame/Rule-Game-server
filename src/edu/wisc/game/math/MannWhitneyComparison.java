@@ -267,7 +267,9 @@ public class MannWhitneyComparison {
 		    //"Learned/not learned",
 		    //"EV score",
 		    //"m* (errors till learned)",
-		    int learnedCnt=0, sumMStar=0, sumTotalMoves=0, sumTotalErrors=0;
+		    int learnedCnt=0;
+		    double sumMStar=0;
+		    int sumTotalMoves=0, sumTotalErrors=0;
 		    double harmonicMStar = 0;
 		    for(MwSeries ser: q.humanSer) {
 			if (ser.getLearned())  learnedCnt++;

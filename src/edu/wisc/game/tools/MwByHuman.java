@@ -241,7 +241,7 @@ m*
 	int errcnt=0;
 	/** The number of errors until the first  "winning streak" has been
 	    achieved, or the large default number otherwise */
-	int mStar=0;
+	double mStar=0;
 	/** Total failed attempt (including those after the "achievement of learning") */
 	int totalErrors=0;
 	public int getTotalErrors() { return totalErrors; }
@@ -249,7 +249,13 @@ m*
 	int totalMoves=0;
 	public int getTotalMoves() { return totalMoves; }
 	
-	public int getMStar() { return mStar; }
+	public double getMStar() { return mStar; }
+	/** An integer approimation to MStar */
+	public int getMStarInt() {
+	    return (mStar >= Integer.MAX_VALUE)? Integer.MAX_VALUE:
+		(int)Math.round(mStar);
+	}
+
 	MwSeries(EpisodeHandle o) {
 	    ruleSetName = o.ruleSetName;
 	    precedingRules = o.precedingRules;
@@ -307,7 +313,8 @@ m*
 		savedMws.add(ser = new MwSeries(eh));
 		streak=0;
 		ser.errcnt = 0;
-		ser.mStar = (defaultMStar >= Integer.MAX_VALUE)? Integer.MAX_VALUE: (int)Math.round(defaultMStar);
+		ser.mStar = defaultMStar;
+
 	    }
 
 	    // skip the rest of transcript for the rule set (i.e. this
