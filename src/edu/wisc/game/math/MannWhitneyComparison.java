@@ -217,6 +217,7 @@ public class MannWhitneyComparison {
 		"Learned/not learned",
 		"EV score",
 		"Avg m* (errors till learned)",
+		"Harmonic mean m*",
 		"Avg error rate"
 	    };
 	    
@@ -267,18 +268,23 @@ public class MannWhitneyComparison {
 		    //"EV score",
 		    //"m* (errors till learned)",
 		    int learnedCnt=0, sumMStar=0, sumTotalMoves=0, sumTotalErrors=0;
+		    double harmonicMStar = 0;
 		    for(MwSeries ser: q.humanSer) {
 			if (ser.getLearned())  learnedCnt++;
 			sumMStar += ser.getMStar();
+			harmonicMStar += 1.0/(double)ser.getMStar();
 			sumTotalMoves += ser.getTotalMoves();
 			sumTotalErrors += ser.getTotalErrors();
 		    }
-		    double avgMStar = sumMStar/(double)q.humanSer.length;
-		    double avgE = sumTotalErrors/sumTotalMoves;
+		    double n = (double)q.humanSer.length;
+		    double avgMStar = sumMStar/n;
+		    harmonicMStar = n/harmonicMStar;
+		    double avgE = sumTotalErrors/(double)sumTotalMoves;
 		    w2 = new String[]{
 			""+learnedCnt+"/" + (q.humanSer.length-learnedCnt),
 			fm.sprintf("%6.4g", evScore),
 			fm.sprintf("%6.2f",avgMStar),
+			fm.sprintf("%6.2f",harmonicMStar),
 			fm.sprintf("%4.2f",avgE)
 		    };
 		} else throw new IllegalArgumentException();
@@ -305,7 +311,7 @@ public class MannWhitneyComparison {
 		    totalM += e.getTotalMoves();
 		    if (e.getLearned())  learnedRuns++;
 		}
-		double avgErrorRate = totalE/totalM;
+		double avgErrorRate = totalE/(double)totalM;
 	
 		String learnedWord = (learnedRuns==0)? "Not learned" : "Sometimes learned";
 

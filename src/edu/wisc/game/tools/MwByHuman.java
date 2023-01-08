@@ -12,7 +12,6 @@ import edu.wisc.game.rest.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.saved.*;
-//import edu.wisc.game.reflect.*;
 import edu.wisc.game.parser.RuleParseException;
 import edu.wisc.game.math.*;
 import edu.wisc.game.formatter.*;
@@ -24,10 +23,11 @@ import edu.wisc.game.sql.Episode.CODE;
  */
 public class MwByHuman extends AnalyzeTranscripts {
 
-    private MwByHuman(String _playerId, File _base, PrintWriter _wsum, int _targetStreak) {
+    private MwByHuman(String _playerId, File _base, PrintWriter _wsum, int _targetStreak, double _defaultMStar) {
 	super( _playerId, _base, _wsum);	
 	quiet = true;
 	targetStreak = _targetStreak;
+	defaultMStar = _defaultMStar;
     }
 
     
@@ -42,6 +42,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	Vector<Long> uids = new Vector<>();
 
 	int targetStreak = 10;
+	double defaultMStar=300;
 	PrecMode precMode = PrecMode.Naive;
 	
 	for(int j=0; j<argv.length; j++) {
@@ -55,6 +56,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 		fromFile=true;
 	    } else if (j+1< argv.length && a.equals("-targetStreak")) {
 		targetStreak = Integer.parseInt( argv[++j] );
+	    } else if (j+1< argv.length && a.equals("-defaultMStar")) {
+		defaultMStar = Double.parseDouble( argv[++j] );
 	    } else if (j+1< argv.length && a.equals("-precMode")) {
 		precMode = Enum.valueOf(MwByHuman.PrecMode.class, argv[++j]);
 	    } else {
@@ -75,7 +78,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	File gsum=new File("wm-human.csv");
 	Fmter plainFm = new Fmter();
 	String text = process(plans, pids, nicknames, uids,
-			      targetStreak, precMode, gsum, plainFm);
+			      targetStreak, defaultMStar, precMode, gsum, plainFm);
 	System.out.println(text);
 
   }
@@ -85,6 +88,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 				 Vector<String> nicknames,
 				 Vector<Long> uids,
 				 int targetStreak,
+				 double defaultMStar,
 				 MwByHuman.PrecMode precMode,
 				 File gsum,
 				 Fmter fm
@@ -142,7 +146,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	for(String playerId: ph.keySet()) {
 	    Vector<EpisodeHandle> v = ph.get(playerId);
 	    try {
-		MwByHuman atr = new MwByHuman(playerId, null, null, targetStreak);
+		MwByHuman atr = new MwByHuman(playerId, null, null, targetStreak, defaultMStar);
 
 		// This puts the data for (player,rule) pairs into atr.savedMws
 		atr.analyzePlayerRecord(v);  
@@ -171,9 +175,9 @@ public class MwByHuman extends AnalyzeTranscripts {
 	Comparandum[][] allComp = Comparandum.mkHumanComparanda(allMws.toArray(new MwSeries[0]),  precMode);
 	
 
-	result.append( fm.para("In the tables below, 'learning' means demonstrating the ability to make "+targetStreak+" consecutive moves with no errorrs"));
+	result.append( fm.para("In the tables below, 'learning' means demonstrating the ability to make "+fm.tt(""+targetStreak)+" consecutive moves with no errorrs"));
 
-	result.append( fm.para("mStar is the number of errors the player make until he 'learns' by the above definition. Those who have not learned, or take more than "+defaultMStar+" errors to learn, are assigned mStar="+defaultMStar));
+	result.append( fm.para("mStar is the number of errors the player make until he 'learns' by the above definition. Those who have not learned, or take more than "+fm.tt(""+defaultMStar)+" errors to learn, are assigned mStar="+defaultMStar));
 		       
 	result.append( mwc.doCompare("humans", null, allComp, fm));
 	return result.toString();
@@ -277,7 +281,8 @@ m*
     private Vector<MwSeries> savedMws = new Vector<>();
     
     private final int targetStreak;
-    static final int defaultMStar = 300;
+    /** It is double rather than int so that Infinity could be represented */
+    private final double  defaultMStar;
 
     /** Saves the data for a single (player, ruleSet) pair
 	@param section A vector of arrays, each array representing the recorded
@@ -302,7 +307,7 @@ m*
 		savedMws.add(ser = new MwSeries(eh));
 		streak=0;
 		ser.errcnt = 0;
-		ser.mStar = defaultMStar;
+		ser.mStar = (defaultMStar >= Integer.MAX_VALUE)? Integer.MAX_VALUE: (int)Math.round(defaultMStar);
 	    }
 
 	    // skip the rest of transcript for the rule set (i.e. this
@@ -323,7 +328,7 @@ m*
 
 		if (streak>=targetStreak) {
 		    ser.learned=true;
-		    ser.mStar = Math.min( ser.errcnt, defaultMStar);
+		    ser.mStar = Math.min( ser.errcnt, ser.mStar);
 		}
 		
 	    }

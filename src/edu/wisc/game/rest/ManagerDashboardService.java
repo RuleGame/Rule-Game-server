@@ -19,8 +19,6 @@ import edu.wisc.game.engine.*;
 import edu.wisc.game.formatter.*;
 import edu.wisc.game.math.*;
 import edu.wisc.game.tools.MwByHuman;
-//import edu.wisc.game.sql.MlcLog.LogFormat;
-
 
 /** Tools for the manager dashboard. Essentially, a web interface for what MwByHumans command-line tool does.
  */
@@ -34,11 +32,13 @@ public class ManagerDashboardService {
     @Produces(MediaType.TEXT_HTML)
     public String summary(@QueryParam("exp") List<String> _plans,
 			  @DefaultValue("10") @QueryParam("targetStreak") int targetStreak,
+			  @DefaultValue("300") @QueryParam("defaultMStar") double defaultMStar,
 
 			  @DefaultValue("Naive") @QueryParam("prec") String precString
 			  
 			  ) {
 
+	
 	MwByHuman.PrecMode precMode = Enum.valueOf(MwByHuman.PrecMode.class, 
 						   precString);
 
@@ -57,30 +57,9 @@ public class ManagerDashboardService {
 
 	    body += fm.para("Taking into account players assigned to the following experiment plans: " + fm.tt( String.join(", " , plans)));
 		
-	    body +=  MwByHuman.process(plans, pids, nicknames, uids,
-				       targetStreak, precMode, null, fm);
+	    body += MwByHuman.process(plans, pids, nicknames, uids,
+				      targetStreak, defaultMStar, precMode, null, fm);
 
-
-	    
-	    //if (rule==null || rule.trim().equals(""))  {
-	    //	throw new IllegalInputException("No rule parameter in the form.");		
-	    //}
-
-	    /*
-	    em = Main.getNewEM();
-
-	    Query q = em.createQuery("select m from MlcEntry m where m.nickname=:n and m.ruleSetName=:r");
-	    q.setParameter("n", nickname);
-	    q.setParameter("r", rule);
-	    List<MlcEntry> res = (List<MlcEntry>)q.getResultList();
-
-	    title = "Submitted results for algorithm " + nickname +
-		" on rule set " + rule;
-	    
-	    body += fm.h2("Summary of " + res.size() + " runs by "+fm.tt(nickname)+" on rule set " +
-			  fm.tt(rule));
-	    body += summaryTable(res);
-	    */
 	    
 	} catch(Exception ex) {
 	    title = "Error";
