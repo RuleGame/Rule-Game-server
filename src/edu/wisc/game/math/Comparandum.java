@@ -71,13 +71,15 @@ public class Comparandum implements Comparable<Comparandum> {
 	}
 
 
-    /** Creates a list of comparanda for a number of rule sets, based
-	on human performance data for these rule sets.
+    /** Creates a list of comparanda for a number of rule sets. The
+	Comparandum for a rule set (or, more generally, "an
+	experience") is based on the on human performance data for
+	this rule set.
        @return {learnedOnes[], nonLearnedOnes[]}
      */
     public static Comparandum[][] mkHumanComparanda(MwSeries[] res, 	MwByHuman.PrecMode precMode) {
 	
-	// distinct keys
+	// distinct keys (i.e. rule set names, or experience names)
 	Vector<String> keys = new Vector<>();
 	// maps each key to its position in the "keys" array
 	HashMap<String,Integer> keysOrder = new HashMap<>();

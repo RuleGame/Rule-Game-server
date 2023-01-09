@@ -227,7 +227,10 @@ m*
 	public String getKey(PrecMode mode) {
 	    switch (mode) {
 	    case Ignore: return ruleSetName;	    
-	    case Every: return String.join(":", precedingRules) +":"+ ruleSetName;
+	    case Every:
+		String s = String.join(":", precedingRules);
+		if (s.length()>0) s += ":";
+		return s + ruleSetName;
 	    case Naive: return (precedingRules.size()==0)? ruleSetName: null;
 	    default: throw new IllegalArgumentException("" + mode);
 	    }
