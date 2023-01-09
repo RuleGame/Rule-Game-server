@@ -292,7 +292,7 @@ public class MannWhitneyComparison {
 		    double avgMStar = sumMStar/n;
 		    double avgMStarLearned = sumMStarLearned/learnedCnt;
 		    harmonicMStar = n/harmonicMStar;
-		    harmonicMStarLearned = n/harmonicMStarLearned;
+		    harmonicMStarLearned = learnedCnt/harmonicMStarLearned;
 
 		    double avgE = sumTotalErrors/(double)sumTotalMoves;
 		    w2 = new String[]{
