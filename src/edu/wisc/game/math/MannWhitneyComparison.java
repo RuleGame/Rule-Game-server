@@ -259,6 +259,10 @@ public class MannWhitneyComparison {
 		    fm.sprintf("%6.2f",avgE),
 		    fm.sprintf("%6.2f",avgM),
 		    ""};
+
+		    if (isMe) eachStrong(fm,w2);
+		    rows.add( fm.rowTh(key, "align='right'", w2));
+
 		} else if (q.humanSer!=null) { // human
 		    //"Learned/not learned",
 		    //"EV score",
@@ -295,7 +299,9 @@ public class MannWhitneyComparison {
 		    harmonicMStarLearned = learnedCnt/harmonicMStarLearned;
 
 		    double avgE = sumTotalErrors/(double)sumTotalMoves;
+		    String fkey = formatHumanKey(fm, key);
 		    w2 = new String[]{
+			fkey,
 			""+learnedCnt+"/" + (q.humanSer.length-learnedCnt),
 			fm.sprintf("%6.4g", evScore),
 			fm.sprintf("%6.2f",avgMStarLearned) + "/" +
@@ -307,10 +313,14 @@ public class MannWhitneyComparison {
 			fm.sprintf("%6.2f",harmonicMStar),
 			fm.sprintf("%4.2f",avgE)
 		    };
+
+		    if (isMe) eachStrong(fm,w2);
+		    rows.add( fm.rowExtra( "align='right'", w2));
+
+
+		    
 		} else throw new IllegalArgumentException();
 
-		if (isMe) eachStrong(fm,w2);
-		rows.add( fm.rowTh(key, "align='right'", w2));
 	    }
 
 	    // Algos who have never learned this rule
@@ -404,5 +414,12 @@ public class MannWhitneyComparison {
 	}
     }
 
+    /** Bolds the most important section (R3) of the R1:R2:R3 key only, leaving
+	the preceding rule sets un-bolded */
+    static private String formatHumanKey(Fmter fm, String key) {
+	String z[] = key.split(":");
+	z[z.length-1] = fm.strong(z[z.length-1]);
+	return String.join(":", z);
+    }
 
 }
