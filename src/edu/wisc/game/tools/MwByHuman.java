@@ -23,8 +23,8 @@ import edu.wisc.game.sql.Episode.CODE;
  */
 public class MwByHuman extends AnalyzeTranscripts {
 
-    private MwByHuman(String _playerId, File _base, PrintWriter _wsum, int _targetStreak, double _defaultMStar) {
-	super( _playerId, _base, _wsum);	
+    public MwByHuman( int _targetStreak, double _defaultMStar) {
+	super( null, null);	
 	quiet = true;
 	targetStreak = _targetStreak;
 	defaultMStar = _defaultMStar;
@@ -77,26 +77,87 @@ public class MwByHuman extends AnalyzeTranscripts {
 
 	File gsum=new File("wm-human.csv");
 	Fmter plainFm = new Fmter();
-	String text = process(plans, pids, nicknames, uids,
-			      targetStreak, defaultMStar, precMode, gsum, plainFm);
+	MwByHuman processor = new MwByHuman( targetStreak, defaultMStar);
+	processor.setFm(plainFm);
+
+	// Extract the data from the transcript, and put them into savedMws
+	processor.processStage1(plans, pids, nicknames, uids);
+
+	processor.exportSavedMws(gsum);
+
+	// M-W test on the data from savedMws
+	processor.processStage2( precMode);
+
+
+	String text = processor.getReport();
+
 	System.out.println(text);
 
   }
 
-    static public String process(Vector<String> plans,
+
+    /** The printable report. Various parts of processStage1 and Stage2
+	add lines to it */
+    private StringBuffer result = new StringBuffer();
+    public String getReport() { return result.toString(); }
+
+
+    boolean error=false;
+    String errmsg=null;
+   /** The JSP page should always print this message. Most often
+        it is just an empty string, anyway; but it may be used
+        for debugging and status messages. */
+    public String infomsg = "";
+  
+    public boolean getError() { return error; }
+    public void setError(boolean _error) { error = _error; }
+    
+    public String getErrmsg() { return errmsg; }
+    public void setErrmsg(String _errmsg) { errmsg = _errmsg; }
+
+    /** Sets the error flag and the error message */
+    protected void giveError(String msg) {
+	setError(true);
+	setErrmsg(msg);
+    }
+
+    protected void giveError(Exception _ex) {
+	setError(true);
+	setErrmsg(ex.getMessage());
+	ex = _ex;
+    }
+
+
+    
+    /** Propagate error from another class */
+    //protected void giveError(ResultsBase other) {
+    //	giveError(other.errmsg);
+    //if (other.ex!=null) ex=other.ex;
+    //}
+    
+    Exception ex=null;
+    public Exception getEx() { return ex; }
+    public String exceptionTrace() {
+        StringWriter sw = new StringWriter();
+        try {
+            if (ex==null) return "No exception was caught";
+            ex.printStackTrace(new PrintWriter(sw));
+            sw.close();
+        } catch (IOException _ex){}
+        return sw.toString();
+    }
+
+    private Fmter fm=new Fmter();
+    public void setFm(Fmter _fm) { fm = _fm; }
+
+
+    
+    public void processStage1(Vector<String> plans,
 				 Vector<String> pids,
 				 Vector<String> nicknames,
-				 Vector<Long> uids,
-				 int targetStreak,
-				 double defaultMStar,
-				 MwByHuman.PrecMode precMode,
-				 File gsum,
-				 Fmter fm
-				 ) throws Exception {
+				 Vector<Long> uids ) throws Exception {
 
-	StringBuffer result = new StringBuffer();
       	EntityManager em = Main.getNewEM();
-
 
 	try {
 	plans = expandPlans(em, plans);
@@ -138,25 +199,12 @@ public class MwByHuman extends AnalyzeTranscripts {
 
 	PrintWriter wsum =null;
 
-	wsum = gsum==null? null: new PrintWriter(new FileWriter(gsum, false));
-	if (wsum!=null) 	wsum.println( MwSeries.header);
 
-	Vector<MwSeries> allMws = new Vector<>();
-	
 	for(String playerId: ph.keySet()) {
 	    Vector<EpisodeHandle> v = ph.get(playerId);
 	    try {
-		MwByHuman atr = new MwByHuman(playerId, null, null, targetStreak, defaultMStar);
-
-		// This puts the data for (player,rule) pairs into atr.savedMws
-		atr.analyzePlayerRecord(v);  
-
-		allMws.addAll( atr.savedMws);
-		for(MwSeries ser: atr.savedMws) {
-		    if (wsum!=null) wsum.println(ser.toCsv());
-		}
-
-		
+		// This puts the data for (player,rule) pairs into savedMws
+		analyzePlayerRecord(playerId, v);  		
 	    } catch(Exception ex) {
 		String msg = "ERROR: Cannot process data for player=" +playerId+" due to missing data. The problem is as follows:";
 		result.append(fm.para(msg));
@@ -166,13 +214,43 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    }
 	}
 
-	if (wsum!=null) wsum.close();
+	} catch(Exception _ex) {
+	    giveError(_ex.getMessage());
+	    ex = _ex;
+	    throw ex;
+	} finally {	
+	    if (em!=null) try {
+		    em.close();
+		} catch(Exception ex) {}
+	}	
 
-	//-- now, the MW Test
+    }
+
+    /** Exports the data generated in  Stage1 */
+    public void exportSavedMws(File gsum) throws IOException {
+	PrintWriter wsum = new PrintWriter(new FileWriter(gsum, false));
+	wsum.println( MwSeries.header);
+	
+	for(MwSeries ser: savedMws) {
+	    wsum.println(ser.toCsv());
+	}
+
+	wsum.close();
+    }
+
+    /** Now, the MW Test, using savedMws computed in stage1
+     */
+    public //static
+	void processStage2(
+			   MwByHuman.PrecMode precMode				 )// throws Exception
+    {
+	if (error) return;
+
+		
 	MannWhitneyComparison.Mode mode = MannWhitneyComparison.Mode.CMP_RULES_HUMAN;
 	MannWhitneyComparison mwc = new MannWhitneyComparison(mode);
 	
-	Comparandum[][] allComp = Comparandum.mkHumanComparanda(allMws.toArray(new MwSeries[0]),  precMode);
+	Comparandum[][] allComp = Comparandum.mkHumanComparanda(savedMws.toArray(new MwSeries[0]),  precMode);
 	
 
 	result.append( fm.para("In the tables below, 'learning' means demonstrating the ability to make "+fm.tt(""+targetStreak)+" consecutive moves with no errorrs"));
@@ -180,13 +258,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	result.append( fm.para("mStar is the number of errors the player make until he 'learns' by the above definition. Those who have not learned, or take more than "+fm.tt(""+defaultMStar)+" errors to learn, are assigned mStar="+defaultMStar));
 		       
 	result.append( mwc.doCompare("humans", null, allComp, fm));
-	return result.toString();
 
-	} finally {	
-	    if (em!=null) try {
-		    em.close();
-		} catch(Exception ex) {}
-	}	
   }
 
     /** Used to control how series are assigned to comparanda */
@@ -269,7 +341,7 @@ m*
 	}
 
 	static final String header="#ruleSetName,precedingRules,"+
-	    "exp,trialListId,seriesNo,playerId,learned,errcnt,mStar";
+	    "exp,trialListId,seriesNo,playerId,learned,total_moves,total_errors,mStar";
 
 	String toCsv() {
 	    String[] v = { ruleSetName,
@@ -279,7 +351,8 @@ m*
 			   ""+seriesNo,
 			   playerId,
 			   ""+learned,
-			   ""+errcnt,
+			   ""+getTotalMoves(),
+			   ""+getTotalErrors(),
 			   ""+mStar};
 	    return ImportCSV.escape(v);
 	}

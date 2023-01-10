@@ -288,8 +288,8 @@ public class AnalyzeTranscripts {
 	for(String playerId: ph.keySet()) {
 	    Vector<EpisodeHandle> v = ph.get(playerId);
 	    try {
-		AnalyzeTranscripts atr = new AnalyzeTranscripts(playerId, base, wsum);
-		atr.analyzePlayerRecord(v);
+		AnalyzeTranscripts atr = new AnalyzeTranscripts(base, wsum);
+		atr.analyzePlayerRecord(playerId, v);
 	    } catch(Exception ex) {
 		System.err.println("ERROR: Cannot process data for player=" +playerId+" due to missing data. The problem is as follows:");
 		System.err.println(ex);
@@ -401,15 +401,13 @@ public class AnalyzeTranscripts {
 	written
 	@param _wsum If non-null, the summary file will go there
     */
-    AnalyzeTranscripts(String _playerId, File _base, PrintWriter _wsum) {
+    AnalyzeTranscripts( File _base, PrintWriter _wsum) {
 	base = _base;
 	wsum = _wsum;
-	playerId = _playerId;
     }
 
     final private File base;
     final private PrintWriter wsum;
-    final String playerId;
 
     /** Saves the data for a single (player, ruleSet) pair. This method
 	can only be called is base!=null.
@@ -624,7 +622,7 @@ public class AnalyzeTranscripts {
 	@param playerId The player whose record we want to analyze
 	@param v The list of episodes played by this player
     */
-    protected  void    analyzePlayerRecord(Vector<EpisodeHandle> v) throws  IOException, IllegalInputException,  RuleParseException{
+    protected  void    analyzePlayerRecord(String playerId, Vector<EpisodeHandle> v) throws  IOException, IllegalInputException,  RuleParseException{
 
 	HashMap <String,Boolean> useImages = new HashMap<>();
 	for(EpisodeHandle eh: v) {

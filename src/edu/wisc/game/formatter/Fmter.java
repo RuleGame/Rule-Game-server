@@ -25,6 +25,12 @@ public class  Fmter {
     public String br() { 
        return "\n";
    }
+    
+    /** Generates a BR in HTML mode, and a space otherwise. Handy for
+	breaks in table headers. */
+    public String brHtml() {
+	return " ";
+    }
 
 
     public String hr() {

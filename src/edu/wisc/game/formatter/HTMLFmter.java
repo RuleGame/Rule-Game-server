@@ -41,6 +41,12 @@ public class HTMLFmter extends Fmter {
 	return "<br>\n";
     }
 
+    /** Generates a BR in HTML mode, and a space otherwise. Handy for
+	breaks in table headers. */
+    public String brHtml() {
+	return br();
+    }
+
     public  String hr() {
 	return "<hr>\n";
     }

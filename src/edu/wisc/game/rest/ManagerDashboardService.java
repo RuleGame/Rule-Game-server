@@ -56,9 +56,20 @@ public class ManagerDashboardService {
 	    title = "Comparing rule sets w.r.t. their difficulty for human players";
 
 	    body += fm.para("Taking into account players assigned to the following experiment plans: " + fm.tt( String.join(", " , plans)));
-		
-	    body += MwByHuman.process(plans, pids, nicknames, uids,
-				      targetStreak, defaultMStar, precMode, null, fm);
+
+
+
+	    MwByHuman processor = new MwByHuman( targetStreak, defaultMStar);
+	    processor.setFm(fm);
+
+	    // Extract the data from the transcript, and put them into savedMws
+	    processor.processStage1(plans, pids, nicknames, uids);
+
+	    // M-W test on the data from savedMws
+	    processor.processStage2( precMode);
+
+	    body += processor.getReport();
+
 
 	    
 	} catch(Exception ex) {
