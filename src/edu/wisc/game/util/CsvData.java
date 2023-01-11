@@ -13,17 +13,15 @@ import java.text.*;
     CSV files.
  */
 public class CsvData {
-    /** The header line of the CSV file. It is not analyzed, but stored, and
-	can be printed later. A file may or may not have a header line;
-	to decide if there is one, we use a cludge: if the first letter
-	of the first line is a digit, it's not a header, otherwise it is 
-    */
-    public String header=null;
+
     /** Column count */
     private int colCnt=0;
-    /** All data lines, and possibly also comment lines, from the file */
+    /** All data lines (except for, possibly, the first line), and
+     * possibly also comment lines, from the file */
     public LineEntry[] entries;
-
+    /** Unless noHeader=true, this is where we put the first line of the
+	file. The leading '#', if present, is removed. */
+    public BasicLineEntry header=null;
  
     /** Creates a new header line by appending some extra columns to 
 	the stored header line of this file.
@@ -80,14 +78,14 @@ public class CsvData {
 	@param keepComments If true, comment lines from the input file are stored in the object being created; otherwise, they are discarded.
 	@param legalLengths If this is not null, it specifies how many columns the file's lines may contain. For example, {4,6} means that the lines must contain 4 or 6 columns.
      */
-    public CsvData(File csvFile, boolean neverHeader, boolean keepComments, int legalLengths[]) throws IOException, IllegalInputException  {
-	this(csvFile, openFile(csvFile), neverHeader,  keepComments,  legalLengths);
+    public CsvData(File csvFile, boolean noHeader, boolean keepComments, int legalLengths[]) throws IOException, IllegalInputException  {
+	this(csvFile, openFile(csvFile), noHeader,  keepComments,  legalLengths);
     }
 
     /** @param csvFile only passed so that the name of it can be used in error messages. May be null if the data come not from the file.
 	@param r The data to read
      */
-    public CsvData(File csvFile, Reader r, boolean neverHeader, boolean keepComments, int legalLengths[]) throws IOException, IllegalInputException  {
+    public CsvData(File csvFile, Reader r, boolean noHeader, boolean keepComments, int legalLengths[]) throws IOException, IllegalInputException  {
 
 	LineNumberReader reader = new LineNumberReader(r);
 	int n=0;
@@ -108,6 +106,7 @@ public class CsvData {
 	    if (isFirst) {
 		if (s.length()==0) throw new IllegalInputException("Empty first line in " + csvFile);
 		//boolean isHeader = !neverHeader && isHeaderLine(s);
+		boolean isHeader = !noHeader;
 		
 		isFirst=false;
 		String[] csv = ImportCSV.splitCSV(s);
@@ -117,9 +116,12 @@ public class CsvData {
 		    throw new IllegalInputException("Unexpected header line or first line in " + csvFile + ". Found " + colCnt);
 		}
 
-		//		if (isHeader) {
-		//header = s;		    continue;
-		//}
+		if (isHeader) {
+		    s = s.replaceAll("^#", "");
+		    final int nc = (legalLengths==null? -1 : colCnt);
+		    header = (BasicLineEntry)mkEntry(csv, nc); 
+		    continue;
+		}
 	    }
 
 
@@ -164,7 +166,19 @@ public class CsvData {
 	/** @param j zero-based column index */
 	public String getCol(int j) { return j<csv.length? csv[j]: null; }
 	public Integer getColInt(int j) {
-	    return j<csv.length &&  (csv[j]!=null) && (csv[j].length()>0) ? new Integer(csv[j]): null;
+	    return j<csv.length &&  (csv[j]!=null) && (csv[j].length()>0) ? Integer.parseInt(csv[j]): null;
+	}
+
+	/** Picks the value from this line's column with the specified column name.
+	    @param header This is where the column names are
+	    @param name The desired column name
+	    @param defVal The value to return if the header has no column with the desired name, or if this line is too short and does not have that many columns
+	 */
+	public String getColByName(BasicLineEntry header, String name, String defVal) {
+	    for(int j=0; j<header.csv.length && j<csv.length; j++) {
+		if (header.csv[j].equals(name)) return csv[j];
+	    }
+	    return defVal;
 	}
 
 	/** Requires the equality of the strings in all fields */

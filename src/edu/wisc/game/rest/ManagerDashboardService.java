@@ -57,20 +57,15 @@ public class ManagerDashboardService {
 
 	    body += fm.para("Taking into account players assigned to the following experiment plans: " + fm.tt( String.join(", " , plans)));
 
-
-
-	    MwByHuman processor = new MwByHuman( targetStreak, defaultMStar);
-	    processor.setFm(fm);
+	    MwByHuman processor = new MwByHuman(targetStreak, defaultMStar, fm);
 
 	    // Extract the data from the transcript, and put them into savedMws
 	    processor.processStage1(plans, pids, nicknames, uids);
 
 	    // M-W test on the data from savedMws
-	    processor.processStage2( precMode);
+	    processor.processStage2(precMode, false);
 
 	    body += processor.getReport();
-
-
 	    
 	} catch(Exception ex) {
 	    title = "Error";

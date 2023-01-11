@@ -23,13 +23,24 @@ import edu.wisc.game.sql.Episode.CODE;
  */
 public class MwByHuman extends AnalyzeTranscripts {
 
-    public MwByHuman( int _targetStreak, double _defaultMStar) {
+
+    public MwByHuman( int _targetStreak, double _defaultMStar,Fmter _fm    ) {
 	super( null, null);	
 	quiet = true;
 	targetStreak = _targetStreak;
 	defaultMStar = _defaultMStar;
+	fm = _fm; 
     }
 
+
+  static private void usage() {
+	usage(null);
+    }
+    static private void usage(String msg) {
+	System.err.println("For usage, see tools/analyze-transcripts-mwh.html\n\n");
+	if (msg!=null) 	System.err.println(msg + "\n");
+	System.exit(1);
+    }
     
   public static void main(String[] argv) throws Exception {
 
@@ -44,6 +55,9 @@ public class MwByHuman extends AnalyzeTranscripts {
 	int targetStreak = 10;
 	double defaultMStar=300;
 	PrecMode precMode = PrecMode.Naive;
+
+	// At most one of them can be non-null
+	String exportTo = null, importFrom = null;
 	
 	for(int j=0; j<argv.length; j++) {
 	    String a = argv[j];
@@ -51,9 +65,13 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    if  (a.equals("-plan")) {
 		argType = ArgType.PLAN;
 	    } else if (a.startsWith("-")) {
-		throw new IllegalArgumentException("Unknown option: " + a);
+		usage("Unknown option: " + a);
 	    } else if  (a.equals("-file")) {
 		fromFile=true;
+	    } else if (j+1< argv.length && a.equals("-export")) {
+		exportTo = argv[++j];
+	    } else if (j+1< argv.length && a.equals("-import")) {
+		importFrom = argv[++j];
 	    } else if (j+1< argv.length && a.equals("-targetStreak")) {
 		targetStreak = Integer.parseInt( argv[++j] );
 	    } else if (j+1< argv.length && a.equals("-defaultMStar")) {
@@ -69,29 +87,43 @@ public class MwByHuman extends AnalyzeTranscripts {
 		    //else if (argType==ArgType.UNICK)  nicknames.add(b);
 		    //else if (argType==ArgType.UID)  uids.add(Long.parseLong(b));
 		    //else if (argType==ArgType.PID)  pids.add(b);
-		    else 	throw new IllegalArgumentException("Unsupported argType: " + argType);
+		    else usage("Unsupported argType: " + argType);
 		}
 	    }
 
 	}
 
-	File gsum=new File("wm-human.csv");
+	if (exportTo!=null && importFrom!=null) {
+	    usage("You cannot combine the options -export and -import. At most one of them can be used in any single run");
+	}
+	
+
 	Fmter plainFm = new Fmter();
-	MwByHuman processor = new MwByHuman( targetStreak, defaultMStar);
-	processor.setFm(plainFm);
+	MwByHuman processor = new MwByHuman( targetStreak, defaultMStar, plainFm);
 
-	// Extract the data from the transcript, and put them into savedMws
-	processor.processStage1(plans, pids, nicknames, uids);
+	try {
+	if (importFrom==null) {
+	    // Extract the data from the transcript, and put them into savedMws
+	    processor.processStage1(plans, pids, nicknames, uids);
 
-	processor.exportSavedMws(gsum);
+	    if (exportTo!=null) {
+		File gsum=new File(exportTo);
+		processor.exportSavedMws(gsum);
+	    }
+	} else {
+	    File g = new File(importFrom);
+	    MwSeries.readFromFile(g, processor.savedMws);
+	    //throws IOException, IllegalInputException 
+	}
 
+	
 	// M-W test on the data from savedMws
-	processor.processStage2( precMode);
+	processor.processStage2(precMode, importFrom!=null);
 
-
-	String text = processor.getReport();
-
-	System.out.println(text);
+	} finally {
+	    String text = processor.getReport();
+	    System.out.println(text);
+	}
 
   }
 
@@ -226,7 +258,9 @@ public class MwByHuman extends AnalyzeTranscripts {
 
     }
 
-    /** Exports the data generated in  Stage1 */
+    /** Exports the data generated in Stage1
+	@param gsum File to write
+     */
     public void exportSavedMws(File gsum) throws IOException {
 	PrintWriter wsum = new PrintWriter(new FileWriter(gsum, false));
 	wsum.println( MwSeries.header);
@@ -238,28 +272,30 @@ public class MwByHuman extends AnalyzeTranscripts {
 	wsum.close();
     }
 
-    /** Now, the MW Test, using savedMws computed in stage1
+    /** Now, the MW Test, using this.savedMws computed in
+	stage1. Generates a report that's attached to this.results.
+	@param precMode Controls how the series are assigned to "distinct experiences".
+	@param fromFile Indicates that the m* data have come from an extrernal
+	file, and are not internally computed.
      */
-    public //static
-	void processStage2(
-			   MwByHuman.PrecMode precMode				 )// throws Exception
-    {
+    public void processStage2(MwByHuman.PrecMode precMode, boolean fromFile )    {
 	if (error) return;
 
-		
 	MannWhitneyComparison.Mode mode = MannWhitneyComparison.Mode.CMP_RULES_HUMAN;
 	MannWhitneyComparison mwc = new MannWhitneyComparison(mode);
 	
-	Comparandum[][] allComp = Comparandum.mkHumanComparanda(savedMws.toArray(new MwSeries[0]),  precMode);
-	
+	Comparandum[][] allComp = Comparandum.mkHumanComparanda(savedMws.toArray(new MwSeries[0]),  precMode);	
 
-	result.append( fm.para("In the tables below, 'learning' means demonstrating the ability to make "+fm.tt(""+targetStreak)+" consecutive moves with no errorrs"));
+	if (fromFile) {
+	    result.append( fm.para("Processing data from an imported CSV file"));
+	} else {
+	    result.append( fm.para("In the tables below, 'learning' means demonstrating the ability to make "+fm.tt(""+targetStreak)+" consecutive moves with no errorrs"));
 
-	result.append( fm.para("mStar is the number of errors the player make until he 'learns' by the above definition. Those who have not learned, or take more than "+fm.tt(""+defaultMStar)+" errors to learn, are assigned mStar="+defaultMStar));
-		       
+	    result.append( fm.para("mStar is the number of errors the player make until he 'learns' by the above definition. Those who have not learned, or take more than "+fm.tt(""+defaultMStar)+" errors to learn, are assigned mStar="+defaultMStar));
+	}
+	    
 	result.append( mwc.doCompare("humans", null, allComp, fm));
-
-  }
+    }
 
     /** Used to control how series are assigned to comparanda */
     public enum PrecMode {       
@@ -355,6 +391,50 @@ m*
 			   ""+getTotalErrors(),
 			   ""+mStar};
 	    return ImportCSV.escape(v);
+	}
+
+	/** Reads a CSV file with MwSeries entries.
+	    @param into Put the data into this vector
+	 */
+	static void readFromFile(File f, Vector<MwSeries> into) throws IOException, IllegalInputException {
+	    into.clear();
+	    if (!f.exists()) throw new IOException("File does not exist: " + f);
+	    if (!f.canRead()) throw new IOException("Cannot read file: " + f);
+	    CsvData csv = new CsvData(f, false, false, null);
+
+	    if (csv.entries.length<2) throw new IOException("No data found in file: " + f);
+	    CsvData.BasicLineEntry header =  (CsvData.BasicLineEntry)csv.header;
+	    //int nCol = header.nCol();
+	    
+	    for(int j=0; j<csv.entries.length; j++) {
+		CsvData.BasicLineEntry line = (CsvData.BasicLineEntry)csv.entries[j];
+		//System.out.println("DEBUG: TL(f=" + f+"), adding para set " + j);
+		into.add(new MwSeries( header, line));
+	    }
+	}
+	
+	/**  This is basically the inverse of toCsv() */
+	MwSeries(CsvData.BasicLineEntry header, CsvData.BasicLineEntry line) throws  IllegalInputException {
+
+	    // header="#ruleSetName,precedingRules,"+
+	    //"exp,trialListId,seriesNo,playerId,learned,total_moves,total_errors,mStar";
+	    
+	    ruleSetName = line.getColByName(header, "ruleSetName", null);
+	    if (ruleSetName==null) throw new  IllegalInputException("No ruleSetName");
+	    String q =  line.getColByName(header, "precedingRules", "");
+	    precedingRules = Util.array2vector( q.split("[;:]"));
+
+	    exp = line.getColByName(header, "exp", "");
+	    trialListId =  line.getColByName(header, "trialListId", "");
+	    seriesNo =  Integer.parseInt(line.getColByName(header, "seriesNo", "0"));
+	    playerId =  line.getColByName(header, "playerId", "");
+	    learned =  Boolean.parseBoolean(line.getColByName(header, "learned", "false"));
+	    totalMoves = Integer.parseInt(line.getColByName(header, "total_moves", "0"));
+	    totalErrors = Integer.parseInt(line.getColByName(header, "total_errors", "0"));
+	    mStar = Double.parseDouble(line.getColByName(header, "mStar", "-1"));
+	    if (mStar<0)  throw new  IllegalInputException("No mStar value");
+
+
 	}
 	
     }

@@ -287,7 +287,9 @@ public class ParaSet extends HashMap<String, Object> {
     public ParaSet(File f)  throws IOException,  IllegalInputException {
 	this( fileToCsv(f));
     }
-    
+
+    /** @param csv One param per line
+     */
     public ParaSet( CsvData csv)  throws IOException{
 	
 	put("error", false);
