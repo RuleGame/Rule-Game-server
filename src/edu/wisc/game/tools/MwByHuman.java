@@ -3,6 +3,7 @@ package edu.wisc.game.tools;
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
+import java.util.stream.*;
 import java.text.*;
 
 import javax.persistence.*;
@@ -96,7 +97,10 @@ public class MwByHuman extends AnalyzeTranscripts {
 	if (exportTo!=null && importFrom!=null) {
 	    usage("You cannot combine the options -export and -import. At most one of them can be used in any single run");
 	}
-	
+
+	if (importFrom!=null && plans.size()>0) {
+	    usage("If you use the -import option, you should not specify experiment plans!");
+	}
 
 	Fmter plainFm = new Fmter();
 	MwByHuman processor = new MwByHuman( targetStreak, defaultMStar, plainFm);
@@ -113,9 +117,11 @@ public class MwByHuman extends AnalyzeTranscripts {
 	} else {
 	    File g = new File(importFrom);
 	    MwSeries.readFromFile(g, processor.savedMws);
-	    //throws IOException, IllegalInputException 
+	    //System.out.println("Has read " + processor.savedMws.size() + " data lines");
+
 	}
 
+	
 	
 	// M-W test on the data from savedMws
 	processor.processStage2(precMode, importFrom!=null);
@@ -404,6 +410,7 @@ m*
 
 	    if (csv.entries.length<2) throw new IOException("No data found in file: " + f);
 	    CsvData.BasicLineEntry header =  (CsvData.BasicLineEntry)csv.header;
+	    System.out.println("Header=" + header);
 	    //int nCol = header.nCol();
 	    
 	    for(int j=0; j<csv.entries.length; j++) {
@@ -422,7 +429,9 @@ m*
 	    ruleSetName = line.getColByName(header, "ruleSetName", null);
 	    if (ruleSetName==null) throw new  IllegalInputException("No ruleSetName");
 	    String q =  line.getColByName(header, "precedingRules", "");
-	    precedingRules = Util.array2vector( q.split("[;:]"));
+	    precedingRules = new Vector<>( Arrays.stream( q.split("[;:]")).filter(e->!e.isEmpty()).collect(Collectors.toList()));
+
+	    //precedingRules = Util.array2vector( q.split("[;:]"));
 
 	    exp = line.getColByName(header, "exp", "");
 	    trialListId =  line.getColByName(header, "trialListId", "");
