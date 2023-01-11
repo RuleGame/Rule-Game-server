@@ -64,8 +64,6 @@ public class MwByHuman extends AnalyzeTranscripts {
 
 	    if  (a.equals("-plan")) {
 		argType = ArgType.PLAN;
-	    } else if (a.startsWith("-")) {
-		usage("Unknown option: " + a);
 	    } else if  (a.equals("-file")) {
 		fromFile=true;
 	    } else if (j+1< argv.length && a.equals("-export")) {
@@ -78,6 +76,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 		defaultMStar = Double.parseDouble( argv[++j] );
 	    } else if (j+1< argv.length && a.equals("-precMode")) {
 		precMode = Enum.valueOf(MwByHuman.PrecMode.class, argv[++j]);
+	    } else if (a.startsWith("-")) {
+		usage("Unknown option: " + a);
 	    } else {
 
 		String[] v=  fromFile? readList(new File(a)):  new String[]{a};
