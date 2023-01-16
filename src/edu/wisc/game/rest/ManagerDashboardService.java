@@ -34,7 +34,8 @@ public class ManagerDashboardService {
 			  @DefaultValue("10") @QueryParam("targetStreak") int targetStreak,
 			  @DefaultValue("300") @QueryParam("defaultMStar") double defaultMStar,
 
-			  @DefaultValue("Naive") @QueryParam("prec") String precString
+			  @DefaultValue("Naive") @QueryParam("prec") String precString,
+			  @DefaultValue("false") @QueryParam("mDagger") boolean useMDagger			  
 			  
 			  ) {
 
@@ -53,7 +54,7 @@ public class ManagerDashboardService {
 	    Vector<String> nicknames = new Vector<>();
 	    Vector<Long> uids = new Vector<>();
 
-	    title = "Comparing rule sets w.r.t. their difficulty for human players";
+	    title = "Comparing rule sets w.r.t. their difficulty for human players, using " + (useMDagger? "mStar" : "mDagger");
 
 	    body += fm.para("Taking into account players assigned to the following experiment plans: " + fm.tt( String.join(", " , plans)));
 
@@ -63,7 +64,7 @@ public class ManagerDashboardService {
 	    processor.processStage1(plans, pids, nicknames, uids);
 
 	    // M-W test on the data from savedMws
-	    processor.processStage2(precMode, false);
+	    processor.processStage2(precMode, false, useMDagger);
 
 	    body += processor.getReport();
 	    

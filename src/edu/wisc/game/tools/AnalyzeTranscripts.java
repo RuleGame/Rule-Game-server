@@ -324,7 +324,10 @@ public class AnalyzeTranscripts {
     }
     
     
-    /** An ordered list of unique PlayerInfo objects */
+    /** An ordered list of unique PlayerInfo objects. It can be
+	created based on a list of player IDs, repeat user nicknames,
+	and/or experiment plans.
+     */
     static class PlayerList extends Vector<PlayerInfo> {
 	private HashSet<Long> h = new HashSet<>();	
 	public boolean addAll(Collection<? extends PlayerInfo > c) {

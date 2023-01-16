@@ -23,7 +23,7 @@ public class Comparandum implements Comparable<Comparandum> {
 	/** The name of this algo or this rule set, as the case may be */
 	final String key;
 	final boolean learned;
-	final int[] a;
+	final double[] a;
 	final MlcEntry[] mlc;
 	final MwSeries[] humanSer;
 	private double ev;
@@ -35,7 +35,7 @@ public class Comparandum implements Comparable<Comparandum> {
 	    learned = _learned;
 	    //cm.name = w[j0][0].getKey();
 	    key = _name;
-	    a = new int[ z.length ];
+	    a = new double[ z.length ];
 
 	    for(int k=0; k<z.length; k++) {
 		a[k] = z[k].getTotalErrors();
@@ -44,22 +44,27 @@ public class Comparandum implements Comparable<Comparandum> {
 
 	/** Creates a Comparandum for a rule set, based on an array of
 	    MwSeries objects, each of which describes the performance
-	    of a human on the same rule set */
-	Comparandum(String ruleSetName, MwSeries[] z) {
+	    of a human on the same rule set.
+	    @param useMDagger If true, use the mDagger field in lieue of mStar
+	*/
+    Comparandum(String ruleSetName, MwSeries[] z, boolean useMDagger) {
 	    learned = true; // with human populations, this flag does not make much sense, as you never have *everybody* in the population learn
 	    key = ruleSetName;
-	    a = new int[ z.length ];
+	    a = new double[ z.length ];
 	    for(int k=0; k<z.length; k++) {
 		// if an infinity is stored in m*, we replace it with a very
 		// large integer, which is OK for comparison
-		a[k] = z[k].getMStarInt();
+		//a[k] = z[k].getMStarInt();
+		a[k] = useMDagger?
+		    z[k].getMDagger() :
+		    z[k].getMStar();
 	    }
 	    mlc=null;
 	    humanSer=z;
 	}
 	
-	static int[][] asArray(Comparandum []q) {
-	    int[][] a = new int[q.length][];
+	static double[][] asArray(Comparandum []q) {
+	    double[][] a = new double[q.length][];
 	    for(int j=0; j<q.length; j++) a[j] = q[j].a;
 	    return a;
 	}
@@ -77,7 +82,7 @@ public class Comparandum implements Comparable<Comparandum> {
 	this rule set.
        @return {learnedOnes[], nonLearnedOnes[]}
      */
-    public static Comparandum[][] mkHumanComparanda(MwSeries[] res, 	MwByHuman.PrecMode precMode) {
+    public static Comparandum[][] mkHumanComparanda(MwSeries[] res, 	MwByHuman.PrecMode precMode, boolean useMDagger) {
 	
 	// distinct keys (i.e. rule set names, or experience names)
 	Vector<String> keys = new Vector<>();
@@ -121,7 +126,7 @@ public class Comparandum implements Comparable<Comparandum> {
 	    
 	for(int j=0; j<n; j++) {
 	    String key = keys.get(j);
-	    learnedOnes[j]=new Comparandum(key, w[j]);
+	    learnedOnes[j]=new Comparandum(key, w[j], useMDagger);
 	}
 
 	Comparandum [][] allComp = {learnedOnes, dummy};

@@ -1,3 +1,4 @@
+
 <html>
   <head><title>Processing human players' transcripts for Mann-Whitney comparison</title>
   </head>
@@ -33,14 +34,77 @@
 
   <p>(The script is actually in <tt>/home/vmenkov/w2022/game/scripts</tt> on sapir; so you can add that directory to your PATH, or just type the full path).
 
-  <pre>scripts/analyze-transcripts-mwh.sh  <em>[extractionOptions] [MWOptons] [otherOptions] plan1 [plan2 ...]</em>
-  </pre>
+    <pre>scripts/analyze-transcripts-mwh.sh  <em>[extractionOptions] [MWOptons] [otherOptions] data_selector</em>
+</pre>
+    where <em>data_selector</em> specifies the set of transcripts to extract, and  <em>options</em> specify the mode of processing.
+</p>
 
-  Example:
+
+  Examples:
+
+  <p>With selection by experiment plan:
   <pre>scripts/analyze-transcripts-mwh.sh ep/rule_ambiguity/ambiguity1 ep/rule_ambiguity/ambiguity2 ep/rule_ambiguity/ambiguity3 ep/rule_ambiguity/ambiguity4
 </pre>
 
-<p>Extraction options:
+   <h4>Data selection</h4>
+<p>There are several data selection modes, illustrated below. They are exactly the same as for the original <a href="../analyze-transcripts.html">Analyze Transcript</a> tool.
+
+  <p>
+  To save space, the script name in the examples below is given without the full path, which in reality you will need to indicate. The output goes to directory named <tt>tmp</tt> (or another chosen directory -- see <tt>-out</tt>, below). If that directory does not exist, the tool will create it.
+
+  <h5>(A) Select by experiment plan name</h5>
+  <pre>analyze-transcripts-mwh.sh <em>[options] plan1 [plan2...]</em>  </pre>
+   e.g.
+  <pre>analyze-transcripts-mwh.sh pilot06  </pre>
+  or
+  <pre>analyze-transcripts-mwh.sh '%OCT26%'  </pre>
+
+<p>
+(You can also write <code>analyze-transcripts.sh -plan '%OCT26%'</code>, but the <tt>-plan</tt> option is unnecessary, since selection by plan name is the default selection method). 
+
+<p>
+As the above example shows, the percent character can be used for wildcard-based selection, to select all matching plans. The percent sign can also be used in all other selectors discussed below.  (We use <tt>%</tt> rather than <tt>*</tt> because that's what used in the SQL server. It also avoids certain problems with  command line processing).
+
+<p>Specifying an experiment plan is equivalent to specifying a list of player IDs (see 2 below) that includes all player IDs assigned to that experiment plan.
+
+    <h5>(B) Select by player IDs</h5>
+
+<p>In the Rule Game Server, a player ID corresponds to a round of one or several series of episodes played according to a particular trial list. An M-Turker has a single player id, while a repeat user may have multiple ones.
+  <pre>analyze-transcripts-mwh.sh -pid <em>playerId1 [playerId2 ...]</em>  </pre>
+  E.g.
+  <pre>analyze-transcripts-mwh.sh -pid 'pk%'  </pre>
+or
+  <pre>analyze-transcripts-mwh.sh -pid 'RepeatUser-%'  </pre>
+(The second examples picks all player IDs created by GS4's repeat users, since that's what their player IDs look like).      
+
+  <h5>(C) Select by repeat user ID</h5>
+
+<P>Internally, repeat users are identified by unique user IDs. (You can see IDs for various player e.g. by logging in to the SQL server with <tt>mysql</tt> and issuing commands such as
+  <Pre>use game;
+select * from User;  </pre>
+
+<p>
+  One can pass a list of user IDs to the Analyze Transcript tool as well, as follows:
+  <pre>analyze-transcripts-mwh.sh -uid <em>uid1 [uid2 ...]</em>  </pre>
+  E.g.
+  <pre>analyze-transcripts-mwh.sh -uid 2 3 6  </pre>
+</p>
+
+<p>Selecting data by specifying a repeat user ID is equivalent to selecting by player ID and listing all player IDs associated with that repeat user.
+    	 
+<h5>(D) Select by repeat user nickname</h5>
+
+<p>A repeat created via the login screen may have a nickname. You can see the nicknames of repeat users with the same SQL command. The Analyze Transcript tool can take a list of user nicknames instead of a list of user IDs, e.g.  
+  <pre>analyze-transcripts-mwh.sh -nickname 'John%Doe' '%Walrus%'  </pre>
+
+
+<p>Note that one should not use spaces inside command-line arguments. If your nickname has a space inside it, you may use a percent sign (%) on the command line above instead.  
+</p>
+
+<h4>Extraction options</h4>
+
+<p>These options control how the raw transcript data are converted into (player,experience) entries.
+
   <ul>
     <li><tt>-targetStreak 10</tt> : this is how many consecutive error-free moves the player must make in order to demonstrate successful learning.
     <li><tt>-defaultMStar 300</tt> : this value the program will assign as <em>m<sub>*</sub></em> (mStar) to the players who have failed to learn (as per the above criterion) the rule set they were playing. You can use the value <tt>Infinity</tt> to ensure that all non-learners are distinct from all learners; however, any positive value that's larger than the maximum number of moves in any player's series will work just as well. Because M-W is based on comparisons, 300 will work exactly the same way as  <tt>Infinity</tt> as long as no successful player has put more than 300 move attempts into any rule set.
@@ -48,10 +112,13 @@
 
 <p>Other options:
   <ul>
-    <li><tt>-file</tt> : if this option is used, then instead of listing plan names on the command line, you can put them into a file (one name perl line), and put that file name's on the command line. This may be handy if you want to look at data from a large number of plans.
+    <li><tt>-file</tt> : if this option is used, then instead of listing plan names (or player IDs, etc) on the command line, you can put them into a file (one name perl line), and put that file name's on the command line. This may be handy if you want to look at data from a large number of plans.
   </ul>
 
-<p>M-W options:
+  <h4>M-W options</h4>
+
+<p>These options affect the way the (player,experience) entries are used  for the M-W-based ranking of rule sets.
+  
   <ul>
     <li><tt>-precMode [Naive | Every | Ignore]</tt> : This controls how different series are assigned to different "experiences" to be compared. This is how the 3 modes work:
       <ul>
@@ -71,10 +138,12 @@ R2:R3:<strong>R1</strong> are merged, viewed as the same "R1 experience").
   
 <p>Use this mode if you want to post-process the mStar data. 
 
-  <pre>scripts/analyze-transcripts-mwh.sh  <em>[extractionOptions] [otherOptions]</em> -export outputFileName.csv <em>plan1 [plan2 ...]</em>
-</pre>
+  <pre>scripts/analyze-transcripts-mwh.sh  <em>[extractionOptions] [MWOptions] [otherOptions]</em> -export outputFileName.csv <em>data_selector</em>
+  </pre>
 
 <p>The transcript data will be extracted in the same way as in (1), but, in addition to performing the M-W comparison, the extracted and processed data will also be saved in a CSV file to the specified. The program will also carry out the same M-W computations as in (1).
+
+  <p>Therefore, the format of the command line is almost the same as in (1), with the addition of the <tt>-export</tt> option.
 
   <p>The output file will be in the following format:
   
@@ -116,7 +185,7 @@ ep/1_2_color_4m,,ep/rule_ambiguity/ambiguity4,ambiguity4_6,0,A10G8U9316K46H,fals
 <h2>See also</h2>
 
     <ul>
-      <li><a href="../data.html">Gama Server's data</a>
+      <li><a href="../data.html">Game Server's data</a>
       <li><a href="../analyze-transcripts.html">Processing human players' transcripts (main page)</a>
     </ul>
     

@@ -13,7 +13,7 @@ public class MannWhitney {
 	@param a Ascending sorted
 	@param b Ascending sorted
      */
-    public static double count(int a[], int b[]) {
+    public static double count(double a[], double b[]) {
 	double sum = 0;
 	int ltCount=0;  // this number non-decreases from a[j] to a[j+1], so we don't need to re-initialize it inside the loop
 
@@ -37,7 +37,7 @@ public class MannWhitney {
 	@param a Each row of this matrix represent a "cloud" of points to be
 	compared. It will be sorted.
      */
-    public static double[][] rawMatrix(int a[][]) {
+    public static double[][] rawMatrix(double a[][]) {
 	final int n = a.length;
 	double[][] z = new double[n][];
 	for(int j=0; j<n; j++) Arrays.sort(a[j]);
@@ -116,11 +116,14 @@ public class MannWhitney {
 	@param argv   a,b,c,d e,f,g
      */
     public static void test1(String argv[]) {
-	int [][]x=new int[2][];
+	double [][]x=new double[2][];
 	for(int k=0; k<2; k++) {
 	    String q[] = argv[k].split(",");
-	    x[k] = new int[q.length];
-	    for(int j=0; j<q.length; j++) x[k][j] = Integer.parseInt(q[j]);
+	    x[k] = new double[q.length];
+	    for(int j=0; j<q.length; j++) {
+		//x[k][j] = Integer.parseInt(q[j]);
+		x[k][j] = Double.parseDouble(q[j]);
+	    }
 	}
 	double c1 = count(x[0], x[1]);
 	double c2 = count(x[1], x[0]);
@@ -134,11 +137,11 @@ public class MannWhitney {
     public static void test2(String argv[]) {
 	final int n = argv.length;
 	
-	int [][]x=new int[n][];
+	double [][]x=new double[n][];
 	for(int k=0; k<n; k++) {
 	    String q[] = argv[k].split(",");
-	    x[k] = new int[q.length];
-	    for(int j=0; j<q.length; j++) x[k][j] = Integer.parseInt(q[j]);
+	    x[k] = new double[q.length];
+	    for(int j=0; j<q.length; j++) x[k][j] = Double.parseDouble(q[j]);
 	}
 	double[][] z = rawMatrix(x);
 

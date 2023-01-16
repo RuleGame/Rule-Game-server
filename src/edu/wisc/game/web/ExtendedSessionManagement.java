@@ -117,7 +117,7 @@ public class ExtendedSessionManagement {
 	
 	String queryText =  "select u from User u where u.id=:id and u.idCode=:code";
 	Query q = em.createQuery(queryText);	
-	q.setParameter("id", new Long(uid));
+	q.setParameter("id", Long.parseLong(uid));
 	q.setParameter("code",uCode);
 	List<User> res = (List<User>)q.getResultList();
 	if (res.size() == 0) return null;

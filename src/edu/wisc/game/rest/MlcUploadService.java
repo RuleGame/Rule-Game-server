@@ -527,10 +527,10 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 	    }
 
 
-	    int a[][] = new int[nLearned][];
+	    double a[][] = new double[nLearned][];
 	    for(int j=0; j<nLearned; j++) {
 		int j0 =  goodNicks[j];
-		a[j] = new int[ w[j0].length ];
+		a[j] = new double[ w[j0].length ];
 		 for(int k=0; k<w[j0].length; k++) {
 		     a[j][k] = w[j0][k].getTotalErrors();
 		 }

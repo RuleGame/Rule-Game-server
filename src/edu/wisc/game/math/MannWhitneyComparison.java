@@ -119,13 +119,14 @@ public class MannWhitneyComparison {
     }
 
     
-    /** Carries out comparison of the performance for different "keys"
+    /** Carries out the comparison of the performance for different "keys"
 	(algo nicknames or rule sets). In the CMP_ALGOS mode, a particular
 	rule set is chosen, and ML algorithms are ranked by their performance
 	on that rule set; thus the "key" is the algo nickname. In the CMP_RULES
 	mode, a particular algorithm is chosen (the nickname) is specified,
 	and the rule sets are ranked by their ease for this algorithm; thus
 	the rule sets names are keys.
+	@param allComp The things to compare. allComp[0] is the list of "learned" comparanda, and allComp[1] is the list of unlearned ones. The comparison is done under different criteria in each group.
      */
     public String doCompare( String nickname,  String rule,
 			     Comparandum[][] allComp,
@@ -243,7 +244,10 @@ public class MannWhitneyComparison {
 		    int runs = ee.length;
 		    double avgE=0, avgM=0, avgEp=0;
 		    for(MlcEntry e: ee) {
-			avgE += e.getTotalErrors();
+			// Using errors until learned (and not total errors)
+			// since Jan 2023, as per Eric and Paul
+			// avgE += e.getTotalErrors();
+			avgE += e.getErrorsUntilLearned();
 			avgEp += e.getEpisodesUntilLearned();
 			avgM += e.getMovesUntilLearned();
 		    }

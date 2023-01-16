@@ -56,17 +56,26 @@ public class MwByHuman extends AnalyzeTranscripts {
 	int targetStreak = 10;
 	double defaultMStar=300;
 	PrecMode precMode = PrecMode.Naive;
-
+	boolean useMDagger = false;
+    
 	// At most one of them can be non-null
 	String exportTo = null, importFrom = null;
 	
 	for(int j=0; j<argv.length; j++) {
 	    String a = argv[j];
 
-	    if  (a.equals("-plan")) {
+	    if  (a.equals("-nickname")) {
+		argType = ArgType.UNICK;
+	    } else if  (a.equals("-plan")) {
 		argType = ArgType.PLAN;
+	    } else if  (a.equals("-uid")) {
+		argType = ArgType.UID;
+	    } else if  (a.equals("-pid")) {
+		argType = ArgType.PID;
 	    } else if  (a.equals("-file")) {
 		fromFile=true;
+	    } else if (a.equals("-mDagger")) {
+		useMDagger = true;
 	    } else if (j+1< argv.length && a.equals("-export")) {
 		exportTo = argv[++j];
 	    } else if (j+1< argv.length && a.equals("-import")) {
@@ -85,9 +94,9 @@ public class MwByHuman extends AnalyzeTranscripts {
 				  
 		for(String b: v) {
 		    if (argType==ArgType.PLAN) 	plans.add(b);
-		    //else if (argType==ArgType.UNICK)  nicknames.add(b);
-		    //else if (argType==ArgType.UID)  uids.add(Long.parseLong(b));
-		    //else if (argType==ArgType.PID)  pids.add(b);
+		    else if (argType==ArgType.UNICK)  nicknames.add(b);
+		    else if (argType==ArgType.UID)  uids.add(Long.parseLong(b));
+		    else if (argType==ArgType.PID)  pids.add(b);
 		    else usage("Unsupported argType: " + argType);
 		}
 	    }
@@ -120,11 +129,10 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    //System.out.println("Has read " + processor.savedMws.size() + " data lines");
 
 	}
-
 	
 	
 	// M-W test on the data from savedMws
-	processor.processStage2(precMode, importFrom!=null);
+	processor.processStage2(precMode, importFrom!=null, useMDagger);
 
 	} finally {
 	    String text = processor.getReport();
@@ -189,7 +197,11 @@ public class MwByHuman extends AnalyzeTranscripts {
     public void setFm(Fmter _fm) { fm = _fm; }
 
 
-    
+    /** The Stage 1 processing involves scanning the transcripts
+	for the players associated with the relevant experiment
+	plan, and computing the required statistics for
+	all (player,ruleSet) pairs involved.
+     */
     public void processStage1(Vector<String> plans,
 				 Vector<String> pids,
 				 Vector<String> nicknames,
@@ -242,7 +254,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    Vector<EpisodeHandle> v = ph.get(playerId);
 	    try {
 		// This puts the data for (player,rule) pairs into savedMws
-		analyzePlayerRecord(playerId, v);  		
+		analyzePlayerRecord(playerId, v);
+
 	    } catch(Exception ex) {
 		String msg = "ERROR: Cannot process data for player=" +playerId+" due to missing data. The problem is as follows:";
 		result.append(fm.para(msg));
@@ -252,6 +265,10 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    }
 	}
 
+	// Add mDagger to all entries in savedMws
+	MwSeries.computeMDagger(savedMws);
+	       
+	
 	} catch(Exception _ex) {
 	    giveError(_ex.getMessage());
 	    ex = _ex;
@@ -284,13 +301,13 @@ public class MwByHuman extends AnalyzeTranscripts {
 	@param fromFile Indicates that the m* data have come from an extrernal
 	file, and are not internally computed.
      */
-    public void processStage2(MwByHuman.PrecMode precMode, boolean fromFile )    {
+    public void processStage2(MwByHuman.PrecMode precMode, boolean fromFile, boolean useMDagger )    {
 	if (error) return;
 
 	MannWhitneyComparison.Mode mode = MannWhitneyComparison.Mode.CMP_RULES_HUMAN;
 	MannWhitneyComparison mwc = new MannWhitneyComparison(mode);
 	
-	Comparandum[][] allComp = Comparandum.mkHumanComparanda(savedMws.toArray(new MwSeries[0]),  precMode);	
+	Comparandum[][] allComp = Comparandum.mkHumanComparanda(savedMws.toArray(new MwSeries[0]),  precMode, useMDagger);	
 
 	if (fromFile) {
 	    result.append( fm.para("Processing data from an imported CSV file"));
@@ -298,6 +315,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    result.append( fm.para("In the tables below, 'learning' means demonstrating the ability to make "+fm.tt(""+targetStreak)+" consecutive moves with no errorrs"));
 
 	    result.append( fm.para("mStar is the number of errors the player make until he 'learns' by the above definition. Those who have not learned, or take more than "+fm.tt(""+defaultMStar)+" errors to learn, are assigned mStar="+defaultMStar));
+	    result.append( fm.para("M-W matrix is computed based on " + (useMDagger? "mDagger" : "mStar")));
 	}
 	    
 	result.append( mwc.doCompare("humans", null, allComp, fm));
@@ -372,7 +390,15 @@ m*
 	    return (mStar >= Integer.MAX_VALUE)? Integer.MAX_VALUE:
 		(int)Math.round(mStar);
 	}
+	public int getMDaggerInt() {
+	    return (mDagger >= Integer.MAX_VALUE)? Integer.MAX_VALUE:
+		(int)Math.round(mDagger);
+	}
 
+	/** As per PK's messages, 2023-01 */
+	double mDagger=0;
+	public double getMDagger() { return mDagger; }
+	
 	MwSeries(EpisodeHandle o) {
 	    ruleSetName = o.ruleSetName;
 	    precedingRules = o.precedingRules;
@@ -383,7 +409,7 @@ m*
 	}
 
 	static final String header="#ruleSetName,precedingRules,"+
-	    "exp,trialListId,seriesNo,playerId,learned,total_moves,total_errors,mStar";
+	    "exp,trialListId,seriesNo,playerId,learned,total_moves,total_errors,mStar,mDagger";
 
 	String toCsv() {
 	    String[] v = { ruleSetName,
@@ -395,7 +421,8 @@ m*
 			   ""+learned,
 			   ""+getTotalMoves(),
 			   ""+getTotalErrors(),
-			   ""+mStar};
+			   ""+mStar,
+			   ""+mDagger};
 	    return ImportCSV.escape(v);
 	}
 
@@ -442,9 +469,33 @@ m*
 	    totalErrors = Integer.parseInt(line.getColByName(header, "total_errors", "0"));
 	    mStar = Double.parseDouble(line.getColByName(header, "mStar", "-1"));
 	    if (mStar<0)  throw new  IllegalInputException("No mStar value");
+	    // mDagger is optional in input files. (But it had better
+	    // be there if we want to use it, of course!)	    
+	    mDagger = Double.parseDouble(line.getColByName(header, "mStar", "0"));
 
 
 	}
+
+	/** Computes and sets mDagger in every field, as
+	    mDagger(P,E) = mStar(P,E) - Avg( mStar(P,*)),
+	    where averaging is carried over all experiences of P
+	    (i.e. over all rules sets that P played)	    
+	 */
+	static void computeMDagger(Vector<MwSeries> v) {
+	    // maps playerId to {sum, count}
+	    HashMap<String,double[]> h = new HashMap<>();
+	    for(MwSeries ser: v) {
+		double[] z = h.get(ser.playerId);
+		if (z==null) h.put(ser.playerId, z=new double[2]);
+		z[0] += ser.mStar;
+		z[1] += 1;
+	    }
+	    for(MwSeries ser: v) {
+		double[] z = h.get(ser.playerId);
+		ser.mDagger = ser.mStar - z[0]/z[1];
+	    }
+	}
+	
 	
     }
 
