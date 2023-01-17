@@ -202,8 +202,14 @@ ep/1_2_color_4m,,ep/rule_ambiguity/ambiguity4,ambiguity4_6,0,A10G8U9316K46H,fals
   <p>2. Take the input (precomputed mStar) from <tt>a.csv</tt>. Save the M-W results to files in directory <tt>tmp</tt> (which will be automatically created if it does not exist).
 <pre>analyze-transcripts-mwh.sh -import a.csv -csvOut tmp</pre>
 
+  <p>3. Full-cycle analysis on all plans under "ep/". Save the matrices in CSV files in directory <tt>tmp/mstar</tt>. Aditionally, save the output of the first stage (the data for all (P,E) pairs) to <tt>tmp-mstar.csv</tt>.
+    
+    <pre>analyze-transcripts-mwh.sh -plan 'ep/%' -outCsv tmp/mstar  -export tmp-mstar.csv</pre>
 
-
+    <p>4. Full-cycle analysis on all plans under "ep/", using m_dagger instead of m_star for the M-W computation. Save the matrices in CSV files in directory <tt>tmp/mdagger</tt>. Aditionally, save the output of the first stage (the data for all (P,E) pairs) to <tt>tmp-mdagger.csv</tt>.
+    
+    <pre>
+    analyze-transcripts-mwh.sh -plan 'ep/%' -csvOut tmp/mdagger -mDagger -export tmp-mdagger.csv
   
 <h2>See also</h2>
 
