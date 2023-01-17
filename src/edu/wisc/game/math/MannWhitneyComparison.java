@@ -127,10 +127,12 @@ public class MannWhitneyComparison {
 	and the rule sets are ranked by their ease for this algorithm; thus
 	the rule sets names are keys.
 	@param allComp The things to compare. allComp[0] is the list of "learned" comparanda, and allComp[1] is the list of unlearned ones. The comparison is done under different criteria in each group.
+	@param csvOut If non-null, designates 3 files into which the
+	raw M-W matrix, the M-W ratio matrix, and the final table will be written into
      */
     public String doCompare( String nickname,  String rule,
 			     Comparandum[][] allComp,
-			     Fmter fm) {
+			     Fmter fm, File[] csvOut) {
 
 	final String myKey = (mode==Mode.CMP_ALGOS)? nickname:
 	    (mode==Mode.CMP_RULES)? rule: "";
@@ -164,23 +166,39 @@ public class MannWhitneyComparison {
 
 	    Vector<String> v = new Vector<>(), vv = new Vector<>();
 
+	    int nm =order.size()+1;
+	    String[][][] mat = {new String[nm][], new String[nm][]};
+	    for(int h=0; h< nm; h++) {
+		mat[0][h] = new String[nm];
+		mat[1][h] = new String[nm];
+	    }
+	    
+	    mat[0][0][0] = mat[1][0][0] = "#key";
+	    
 	    for(int h=0; h< order.size(); h++) {
 		int k = order.get(h);
 		Comparandum q = learnedOnes[k];
 		String key = q.key;
 		boolean isMe = key.equals(myKey);
 		Vector<String> c = new Vector<>(), cc = new Vector<>();
+
+		mat[0][0][h+1]=	mat[1][0][h+1]=key;
+		mat[0][h+1][0]=	mat[1][h+1][0]=key;
+
 		
-		for(int i=0; i< order.size(); i++) {
-		    c.add( ""+z[k][order.get(i)]);
-		    cc.add( fm.sprintf("%8.4f", zr[k][order.get(i)]));
+		for(int i=0; i< order.size(); i++)  {
+		    double a[] = { z[k][order.get(i)],zr[k][order.get(i)] };
+		    mat[0][h+1][i+1]=""+a[0];
+		    mat[1][h+1][i+1]=""+a[1];
+
+		    c.add( ""+a[0]);
+		    cc.add( fm.sprintf("%8.4f", a[1]));
 		}
 		
 		if (isMe) eachStrong(fm,c);
 		if (isMe) eachStrong(fm,cc);
 		v.add( fm.rowTh(key, "align='right'", c));
 		vv.add( fm.rowTh(key, "align='right'", cc));
-
 	    }
 	    body += fm.h3("Raw M-W matrix");	    	    
 	    //	    body += fm.pre(String.join("\n", v));
@@ -190,33 +208,64 @@ public class MannWhitneyComparison {
 	    //body += fm.pre(String.join("\n", vv));
 	    body += fm.table("",vv);
 
+	    if (csvOut!=null) {
+		for(int k=0; k<2; k++) {
+		    ImportCSV.escapeAndwriteToFile(mat[k],csvOut[k]);
+		}
+	    }
+
 	    String h3 =	(mode==Mode.CMP_ALGOS)? "Comparison of algorithms":
 		"Comparison of rule sets";
 	    body += fm.h3(h3);
 
-	    String keyCell =	(mode==Mode.CMP_ALGOS)? "Algo nickname":
-		"Rule set name";
+	    String keyCell =	(mode==Mode.CMP_ALGOS)? "#Algo nickname":
+		"#Rule set name";
 	    
 	    Vector<String> rows = new Vector<>();
 
-	    String[] headers =
-		(mode==Mode.CMP_ALGOS || mode==Mode.CMP_RULES)?
-		new String[] {keyCell,
+	    String[] headers;
+	    String[][] matt=new String[nm][];
+	    
+	    if (mode==Mode.CMP_ALGOS || mode==Mode.CMP_RULES) {
+		headers=new String[] {keyCell,
 			      "Learned? (learned/not learned)",
 			      "EV score",
 			      "Runs",
 			      "Avg episodes till learned",
 			      "Avg errors till learned",
 			      "Avg moves till learned",
-			      "Avg error rate"}:
-		new String[] {keyCell,
-		"Learned/not learned",
-		"EV score",
-		"Avg m* (errors till learned) " + fm.brHtml() + "(learners/all)",
-		"min-median-max m* "+fm.brHtml()+"(learners)",
-		"Harmonic mean m*" + fm.brHtml() + "(learners/all)",
-		"Avg error rate"
-	    };
+			      "Avg error rate"};
+
+		matt[0] = new String[] {keyCell,
+					"Learned", "Not learned",
+					"EV score",
+					"Runs",
+					"Avg episodes till learned",
+					"Avg errors till learned",
+					"Avg moves till learned",
+					"Avg error rate"};
+
+	    
+
+	    } else {
+		headers=new String[] {keyCell,
+				      "Learned/not learned",
+				      "EV score",
+				      "Avg m* (errors till learned) " + fm.brHtml() + "(learners/all)",
+				      "min-median-max m* "+fm.brHtml()+"(learners)",
+				      "Harmonic mean m*" + fm.brHtml() + "(learners/all)",
+				      "Avg error rate"};
+		
+		matt[0]=new String[] {keyCell,
+				      "Learned", "Not learned",
+				      "EV score",
+				      "Avg m* on learners",  "Avg m* on all",
+				      "min m*", "med m*", "max m*",
+				      "Harmonic mean m* on learners",
+				      "Harmonic mean m* on all",
+				      "Avg error rate"
+		};
+	    }
 	    
 
 	    String row ="";
@@ -263,6 +312,17 @@ public class MannWhitneyComparison {
 		    fm.sprintf("%6.2f",avgE),
 		    fm.sprintf("%6.2f",avgM),
 		    ""};
+
+		    matt[k+1] =  new String[]{
+			key,
+			""+runs,"0",
+			""+ evScore,
+			"" + runs,
+			""+avgEp,
+			""+avgE,
+			""+avgM,
+			""
+		    };
 
 		    if (isMe) eachStrong(fm,w2);
 		    rows.add( fm.rowTh(key, "align='right'", w2));
@@ -312,12 +372,24 @@ public class MannWhitneyComparison {
 			fm.sprintf("%6.2f",avgMStar),
 			(ma.length>0) ? (int)mmm[0] + " - " +
 			fm.sprintf("%6.1f",mmm[1]) +" - " + (int)mmm[2] :
-			"n/a",
+			"",
 			fm.sprintf("%6.2f",harmonicMStarLearned) + "/" +
 			fm.sprintf("%6.2f",harmonicMStar),
 			fm.sprintf("%4.2f",avgE)
 		    };
 
+		    matt[k+1] =  new String[]{
+			fkey,
+			""+learnedCnt, "" + (q.humanSer.length-learnedCnt),
+			""+ evScore,
+			""+avgMStarLearned, ""+avgMStar,
+			(ma.length>0) ? ""+mmm[0]: "",
+			(ma.length>0) ? ""+mmm[1]: "",
+			(ma.length>0) ? ""+mmm[2]: "",
+			""+harmonicMStarLearned, ""+harmonicMStar,
+			""+avgE
+		    };
+		    
 		    if (isMe) eachStrong(fm,w2);
 		    rows.add( fm.rowExtra( "align='right'", w2));
 
@@ -325,8 +397,14 @@ public class MannWhitneyComparison {
 		    
 		} else throw new IllegalArgumentException();
 
+		//for(int i=0; i<w2.length; i++) w2[i] = w2[i].trim();
+		
 	    }
 
+	    if (csvOut!=null) {
+		ImportCSV.escapeAndwriteToFile(matt,csvOut[2]);
+	    }
+	    
 	    // Algos who have never learned this rule
 	    order.clear();
 	    Vector<String> rows2 = new Vector<>();
@@ -401,7 +479,7 @@ public class MannWhitneyComparison {
 	MannWhitneyComparison mwc = new MannWhitneyComparison(mode);
 	Comparandum[][] allComp = mwc.mkMlcComparanda(nickname,  rule);
 
-	String text =  mwc.doCompare(nickname, rule, allComp, plainFm);
+	String text =  mwc.doCompare(nickname, rule, allComp, plainFm, null);
 	System.out.println(text);
 	
     }

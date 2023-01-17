@@ -40,7 +40,7 @@ Learning attainment criterion:
 
 <h3>Stage 2: data interpretation parameters for M-W</h3>
 
-<br><input type="radio" name="prec" value="Naive" checked>Naive: For each rule sets, only include "naive" players (those who played this rule set as their first rule set)
+<input type="radio" name="prec" value="Naive" checked>Naive: For each rule sets, only include "naive" players (those who played this rule set as their first rule set)
 <br><input type="radio" name="prec" value="Every">Every: Consider each (rule set + preceding set) combination as a separate experience to be ranked. (That is,
 the R1 data from <strong>R1</strong>:R2:R3,  
 R2:<strong>R1</strong>:R3, and
@@ -50,7 +50,8 @@ R2:R3:<strong>R1</strong> are viewed as belonging to three distinct experiences,
 R2:<strong>R1</strong>:R3, and
 R2:R3:<strong>R1</strong> are merged, viewed as the same "R1 experience").
 
-<br><checkbox name="mDagger">Check to use mDagger instead of mStar
+<br>
+<br> <input type="checkbox" name="mDagger" value="true">Check to use mDagger instead of mStar
 
 <hr>
 	    <strong><button type="submit">Compare rule sets</button></strong>

@@ -208,7 +208,7 @@ public class CsvData {
   
     /** Stores a comment line from the CSV file. We may choose to store the
         comment lines so that we can read in a CSV file, do some modification 
-	to each data line, and then wriet out the modified data lines along 
+	to each data line, and then write out the modified data lines along 
 	with all the comment lines that appear here and there between the data
 	lines.
     */

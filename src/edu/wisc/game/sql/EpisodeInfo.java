@@ -212,7 +212,7 @@ public class EpisodeInfo extends Episode {
 	if (!para.isFeedbackSwitchesFree() || para.pickCostIsInt()) { // all int
 	    x = (int)x;
 	}
-	return new Double(x);
+	return x;
 	
 	//	return bonus?
 	//	    (int)(getNPiecesStart()*clearingThreshold) -  attemptCnt :

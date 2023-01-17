@@ -334,17 +334,17 @@ public class JsonToJava {
 	    //  Ad hoc: Some IDs are strings in JSON, but long in Java
 	    // Let's check if the string is really a number then...
 	    try {
-		return new Long(s);
+		return Long.parseLong(s);
 	    } catch(NumberFormatException ex) { return null;}
 	} else if (c.isAssignableFrom(Integer.class) || c==Integer.TYPE) {
 	    //  Ad hoc: Some IDs are strings in JSON, but long in Java
 	    // Let's check if the string is really a number then...
 	    try {
-		return new Integer(s);
+		return Integer.parseInt(s);
 	    } catch(NumberFormatException ex) { return null;}
 	} else if (c.isAssignableFrom(Double.class) || c==Double.TYPE) {
 	    try {
-		return new Double(s);
+		return Double.parseDouble(s);
 	    } catch(NumberFormatException ex) { return null;}
 	} else if (c.isAssignableFrom(edu.wisc.game.sql.Piece.Color.class)) {
 	    return edu.wisc.game.sql.Piece.Color.findColor(s);

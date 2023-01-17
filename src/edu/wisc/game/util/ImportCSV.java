@@ -168,10 +168,10 @@ Last Name of Researcher,CFR DQ Crime Category,CFR Subsection,State,Citation to A
     }
     */
 
-    /** Process a string for writing into a CSV file. Escapes any
-	double quotes the string contains, and surrounds it with
-	double quotes if needed. We also replace multiple spaces with
-	single spaces.*/
+    /** Process a string for writing into a CSV file (as the content
+	of a single cell). Escapes any double quotes the string
+	contains, and surrounds it with double quotes if needed. We
+	also replace multiple spaces with single spaces.*/
     public static String escape(String s) {
 	if (s==null) return "";
 	s = s.trim().replaceAll("\\s+", " ");
@@ -190,11 +190,19 @@ Last Name of Researcher,CFR DQ Crime Category,CFR Subsection,State,Citation to A
 	return s;
     }
 
-    /** Processes all Strings for wrting into a CSV file */
+    /** Processes all Strings for writing into a CSV file (as one line) */
     public static String escape(String ss[]) {
 	Vector<String> v= new Vector<>();
 	for(String s: ss) v.add( escape(s));
 	return Util.join(",", v);
+    }
+
+    public static void escapeAndwriteToFile(String lines[][], File f) throws IOException {
+	PrintWriter w = new PrintWriter(new FileWriter(f));
+	for(String [] line: lines) {
+	    w.println(escape(line));
+	}
+	w.close();
     }
 
 }

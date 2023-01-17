@@ -57,9 +57,12 @@ public class MwByHuman extends AnalyzeTranscripts {
 	double defaultMStar=300;
 	PrecMode precMode = PrecMode.Naive;
 	boolean useMDagger = false;
-    
+	File csvOutDir = null;
+	
 	// At most one of them can be non-null
 	String exportTo = null, importFrom = null;
+
+	
 	
 	for(int j=0; j<argv.length; j++) {
 	    String a = argv[j];
@@ -86,6 +89,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 		defaultMStar = Double.parseDouble( argv[++j] );
 	    } else if (j+1< argv.length && a.equals("-precMode")) {
 		precMode = Enum.valueOf(MwByHuman.PrecMode.class, argv[++j]);
+	    } else if (j+1< argv.length && a.equals("-csvOut")) {
+		csvOutDir = new File(argv[++j]);
 	    } else if (a.startsWith("-")) {
 		usage("Unknown option: " + a);
 	    } else {
@@ -132,7 +137,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	
 	
 	// M-W test on the data from savedMws
-	processor.processStage2(precMode, importFrom!=null, useMDagger);
+	processor.processStage2(precMode, importFrom!=null, useMDagger, csvOutDir);
 
 	} finally {
 	    String text = processor.getReport();
@@ -301,9 +306,18 @@ public class MwByHuman extends AnalyzeTranscripts {
 	@param fromFile Indicates that the m* data have come from an extrernal
 	file, and are not internally computed.
      */
-    public void processStage2(MwByHuman.PrecMode precMode, boolean fromFile, boolean useMDagger )    {
+    public void processStage2(MwByHuman.PrecMode precMode, boolean fromFile, boolean useMDagger, File csvOutDir )    {
 	if (error) return;
 
+	File[] csvOut = null;
+	if (csvOutDir!=null) {
+	    csvOutDir.mkdirs();
+	    csvOut = new File[] { new File(csvOutDir, "raw-wm.csv"),
+		new File(csvOutDir, "ratio-wm.csv"),
+		new File(csvOutDir, "ranking.csv")};
+	}
+		
+	
 	MannWhitneyComparison.Mode mode = MannWhitneyComparison.Mode.CMP_RULES_HUMAN;
 	MannWhitneyComparison mwc = new MannWhitneyComparison(mode);
 	
@@ -318,7 +332,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    result.append( fm.para("M-W matrix is computed based on " + (useMDagger? "mDagger" : "mStar")));
 	}
 	    
-	result.append( mwc.doCompare("humans", null, allComp, fm));
+	result.append( mwc.doCompare("humans", null, allComp, fm, csvOut));
     }
 
     /** Used to control how series are assigned to comparanda */
@@ -471,15 +485,18 @@ m*
 	    if (mStar<0)  throw new  IllegalInputException("No mStar value");
 	    // mDagger is optional in input files. (But it had better
 	    // be there if we want to use it, of course!)	    
-	    mDagger = Double.parseDouble(line.getColByName(header, "mStar", "0"));
+	    mDagger = Double.parseDouble(line.getColByName(header, "mStar", "NaN"));
 
 
 	}
 
-	/** Computes and sets mDagger in every field, as
-	    mDagger(P,E) = mStar(P,E) - Avg( mStar(P,*)),
-	    where averaging is carried over all experiences of P
-	    (i.e. over all rules sets that P played)	    
+	/** Computes and sets mDagger in every field, as mDagger(P,E)
+	    = mStar(P,E) - Avg( mStar(P,*)), where averaging is
+	    carried over all "successful" experiences of P (i.e. over
+	    all rules sets that P played and learned).
+
+	    <p>The value of mDagger will be NaN in all (P,E) pairs where
+	    P learned the rules neither in E nor in any other experience.
 	 */
 	static void computeMDagger(Vector<MwSeries> v) {
 	    // maps playerId to {sum, count}
@@ -487,8 +504,10 @@ m*
 	    for(MwSeries ser: v) {
 		double[] z = h.get(ser.playerId);
 		if (z==null) h.put(ser.playerId, z=new double[2]);
-		z[0] += ser.mStar;
-		z[1] += 1;
+		if (ser.learned) {
+		    z[0] += ser.mStar;
+		    z[1] += 1;
+		}
 	    }
 	    for(MwSeries ser: v) {
 		double[] z = h.get(ser.playerId);

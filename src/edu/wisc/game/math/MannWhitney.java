@@ -9,7 +9,8 @@ import edu.wisc.game.util.*;
 /** The Mann-Whitney math */
 public class MannWhitney {
 
-    /** How many pairs (i,j) exist where a[i] &lt; b[j]? Ties are counted as 0.5
+    /** How many pairs (i,j) exist where a[i] &lt; b[j]? Ties are counted as 0.5.
+	
 	@param a Ascending sorted
 	@param b Ascending sorted
      */

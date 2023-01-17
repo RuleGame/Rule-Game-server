@@ -64,7 +64,7 @@ public class ManagerDashboardService {
 	    processor.processStage1(plans, pids, nicknames, uids);
 
 	    // M-W test on the data from savedMws
-	    processor.processStage2(precMode, false, useMDagger);
+	    processor.processStage2(precMode, false, useMDagger, null);
 
 	    body += processor.getReport();
 	    

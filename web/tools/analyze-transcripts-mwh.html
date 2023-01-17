@@ -6,7 +6,7 @@
 
 <h1>Processing human players' transcripts for Mann-Whitney comparison</h1>
 
-<div align="center"><em>Updated 2023-01-09, for Game Server 6.004</em></div>
+<div align="center"><em>Updated 2023-01-16, for Game Server 6.005</em></div>
 
 <p>This document desribes the functionality of the script <tt>scripts/analyze-transcripts-mwh.sh</tt>, which is designed to analyze human players' transcripts in order to compare rule sets with respect to their ease/difficulty for the human players' population.
 
@@ -27,7 +27,14 @@
   <h2>Usage</h2>
 
 <p>There are 3 modes:
+  <ol>
+    <li>You can extract the data from the transcripts and the database and use them for the M-W comparison of rule sets right away.
+    <li>You can perform the extraction and save the data (<tt>-export</tt>) for later post-processing by your own tools.
+    <li>You can import (<tt>-import</tt>) data that you have prepared using your own tools, and use the for the M-W comparison.
+  </ol>
 
+These modes are discussed below.
+  
   <h3>(1) Extracting data from transcripts, and using them for M-W test.</h3>
 
   You just need to specify the names of the experiment plans. All transcripts of players assigned to those plans will be used in the analysis; the M-W compaison will include or rule sets (or, more, precisely, "experiences") experinced by these players.
@@ -40,17 +47,11 @@
 </p>
 
 
-  Examples:
-
-  <p>With selection by experiment plan:
-  <pre>scripts/analyze-transcripts-mwh.sh ep/rule_ambiguity/ambiguity1 ep/rule_ambiguity/ambiguity2 ep/rule_ambiguity/ambiguity3 ep/rule_ambiguity/ambiguity4
-</pre>
-
    <h4>Data selection</h4>
 <p>There are several data selection modes, illustrated below. They are exactly the same as for the original <a href="../analyze-transcripts.html">Analyze Transcript</a> tool.
 
   <p>
-  To save space, the script name in the examples below is given without the full path, which in reality you will need to indicate. The output goes to directory named <tt>tmp</tt> (or another chosen directory -- see <tt>-out</tt>, below). If that directory does not exist, the tool will create it.
+  To save space, the script name in the examples below is given without the full path, which in reality you will need to indicate (unless you simply add the scripts directory to your PATH, of course). 
 
   <h5>(A) Select by experiment plan name</h5>
   <pre>analyze-transcripts-mwh.sh <em>[options] plan1 [plan2...]</em>  </pre>
@@ -120,6 +121,9 @@ select * from User;  </pre>
 <p>These options affect the way the (player,experience) entries are used  for the M-W-based ranking of rule sets.
   
   <ul>
+    <li><tt>-mDagger</tt>: if this option is supplied, the M-W computation will be based on the mDagger values, rather than mStar. Unlike the normal (mStar) mode, players who have not learned any of their rule sets (and therefore have mDagger=NaN) will be ignored in the M-W computation.
+    
+    
     <li><tt>-precMode [Naive | Every | Ignore]</tt> : This controls how different series are assigned to different "experiences" to be compared. This is how the 3 modes work:
       <ul>
 	<li><tt>Naive</tt> (the default mode): For each rule sets, only include "naive" players (those who played this rule set as their first rule set). In other word, if a player played 3 rules sets, R1, R2, and R3, in this order, then only his experience of playing R1 is analyzed.
@@ -148,11 +152,11 @@ R2:R3:<strong>R1</strong> are merged, viewed as the same "R1 experience").
   <p>The output file will be in the following format:
   
 <pre>
-#ruleSetName,precedingRules,exp,trialListId,seriesNo,playerId,learned,total_moves,total_errors,mStar
-ep/1_1_color_4m,,ep/rule_ambiguity/ambiguity4,ambiguity4_4,0,A016079037TD5GXCNYBPH,false,99,47,300.0
-ep/col_ord_rbyg_1_4,ep/1_1_color_4m,ep/rule_ambiguity/ambiguity4,ambiguity4_4,1,A016079037TD5GXCNYBPH,false,90,49,300.0
-ep/shape_ord_SqCTSt_1_4,ep/1_1_color_4m;ep/col_ord_rbyg_1_4,ep/rule_ambiguity/ambiguity4,ambiguity4_4,2,A016079037TD5GXCNYBPH,false,98,58,300.0
-ep/1_2_color_4m,,ep/rule_ambiguity/ambiguity4,ambiguity4_6,0,A10G8U9316K46H,false,52,16,300.0
+#ruleSetName,precedingRules,exp,trialListId,seriesNo,playerId,learned,total_moves,total_errors,mStar,mDagger
+ep/1_1_color_4m,,ep/rule_ambiguity/ambiguity4,ambiguity4_4,0,A016079037TD5GXCNYBPH,false,99,47,300.0,300
+ep/col_ord_rbyg_1_4,ep/1_1_color_4m,ep/rule_ambiguity/ambiguity4,ambiguity4_4,1,A016079037TD5GXCNYBPH,false,90,49,300.0,NaN
+ep/shape_ord_SqCTSt_1_4,ep/1_1_color_4m;ep/col_ord_rbyg_1_4,ep/rule_ambiguity/ambiguity4,ambiguity4_4,2,A016079037TD5GXCNYBPH,false,98,58,300.0,NaN
+ep/1_2_color_4m,,ep/rule_ambiguity/ambiguity4,ambiguity4_6,0,A10G8U9316K46H,false,52,16,300.0,NaN
    ...  ... ...
 </pre>
 
@@ -165,6 +169,7 @@ ep/1_2_color_4m,,ep/rule_ambiguity/ambiguity4,ambiguity4_6,0,A10G8U9316K46H,fals
     <li>total_moves - the total number of move and pick attempts in all episodes of the series
     <li>total_errors - the total number of failed move and pick attempts in the series
     <li>mStar - the number of errors (i.e. failed move and pick attempts) the player has made in this series before he "demonstrated learning", or the <em>defaultMStar</em> value (which can be <tt>infinity</tt>) if the learning was not demonstrated (or if it took more than <em>defaultMStar</em> errors to achieve learning).
+      <li>mDagger(P,E) = mStar(P,E) - Avg(mStar(P,*)), where the everaging is over all experiences where player P successfully learned the rule. If P learned no rules at all, then mDagger is reported as <tt>NaN</tt> for all experiences of that player.
   </ul>
   
     <h3>(3) M-W computations with imported mStar data</h3>
@@ -177,10 +182,24 @@ ep/1_2_color_4m,,ep/rule_ambiguity/ambiguity4,ambiguity4_6,0,A10G8U9316K46H,fals
 
 <p>Note that while you cannot supply the extraction options in this mode, you can still supply M-W options (namely, <tt>-precMode</tt>).
 
-<p>The input file can be in the exactly same format as the one used for the putput file in (2). (Thus, your post-processing script may, for example, simply remove some data rows from the file, e.g. based on the playerId). However, if you produce the mStar data in a different way, you can choose to omit some columns. The only columns you must keep are <tt>ruleSetName</tt> and <tt>mStar</tt>.
+<p>The input file can be in the exactly same format as the one used for the output file in (2). (Thus, your post-processing script may, for example, simply remove some data rows from the file, e.g. based on the playerId). However, if you produce the mStar data in a different way, you can choose to omit some columns. The only columns you must keep are <tt>ruleSetName</tt> and <tt>mStar</tt>.
 
 <p>All other columns are optional. Specifically, if the <tt>precedingRules</tt> column is present, its content can be used together with the ruleSetName to qualify the experience (as per the <tt>-precMode</tt> option). If the columns <tt>learned,total_moves,total_errors</tt> are present, they will be used for various statistics in the report; if they are absent, the corresponding fields of the report table will be blank or zeros or similarly non-informative.
- 
+
+
+<p>If you want to compute the M-W matrix based on mDagger instead of mStar (using the -mDagger option), then of course the mDagger column also should be present. In this case the computation will ignore all entries where the value is NaN (or absent).
+  
+   <h3> Examples</h3>
+
+  <p>1. Full-cycle analysis on the data from several experiment plans:
+  <pre>scripts/analyze-transcripts-mwh.sh ep/rule_ambiguity/ambiguity1 ep/rule_ambiguity/ambiguity2 ep/rule_ambiguity/ambiguity3 ep/rule_ambiguity/ambiguity4
+  </pre>
+
+  <p>2. Take the input (precomputed mStar) from <tt>a.csv</tt>. Save the M-W results to files in directory <tt>tmp</tt> (which will be automatically created if it does not exist).
+<pre>analyze-transcripts-mwh.sh -import a.csv -csvOut tmp</pre>
+
+
+
   
 <h2>See also</h2>
 

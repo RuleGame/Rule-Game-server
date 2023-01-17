@@ -45,20 +45,35 @@ public class Comparandum implements Comparable<Comparandum> {
 	/** Creates a Comparandum for a rule set, based on an array of
 	    MwSeries objects, each of which describes the performance
 	    of a human on the same rule set.
+
+	    <p>From each MwSeries object, either mStar or mDagger is used
+	    as the number representing it, for use in the M-W test. If the
+	    relevant field contains a not-a-number value (NaN), as may
+	    happen in the mDagger mode, it is ignored and not included into the
+	    array.
+	    
 	    @param useMDagger If true, use the mDagger field in lieue of mStar
 	*/
     Comparandum(String ruleSetName, MwSeries[] z, boolean useMDagger) {
 	    learned = true; // with human populations, this flag does not make much sense, as you never have *everybody* in the population learn
 	    key = ruleSetName;
-	    a = new double[ z.length ];
+
+	    double v[] = new double[z.length];
+	    int p=0;
+	    
 	    for(int k=0; k<z.length; k++) {
 		// if an infinity is stored in m*, we replace it with a very
 		// large integer, which is OK for comparison
 		//a[k] = z[k].getMStarInt();
-		a[k] = useMDagger?
+		double x = useMDagger?
 		    z[k].getMDagger() :
 		    z[k].getMStar();
+
+		if (!Double.isNaN(x)) v[p++]=x;
 	    }
+
+	    a = Arrays.copyOf(v, p);
+	    
 	    mlc=null;
 	    humanSer=z;
 	}
