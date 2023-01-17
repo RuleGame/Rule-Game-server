@@ -13,7 +13,7 @@ ContextInfo main = new ContextInfo(request,response);
 <h2>Choose experiment plans</h2>
 <div>
 
-<p>Note: there is also a command-line inteface for this tool, scripts/analyze-transcripts-mwh.sh. Documentation is coming...
+<p>Note: there is also a command-line inteface for this tool, scripts/analyze-transcripts-mwh.sh; it has more modes and options than available via the web interface. Documentation is <a href="analyze-transcripts-mwh.html">here</a>.
 
 <hr>
 
