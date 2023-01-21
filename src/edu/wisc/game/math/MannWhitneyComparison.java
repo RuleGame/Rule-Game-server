@@ -248,9 +248,10 @@ public class MannWhitneyComparison {
 	    
 
 	    } else {
-		String ms = "m*";
-		if (order.size()>0 && 
-		    learnedOnes[order.get(0)].useMDagger) ms = "m!";
+		boolean useMDagger = (order.size()>0 && 
+		    learnedOnes[order.get(0)].useMDagger);
+		String ms = useMDagger? "m<sub>&dagger;</sub>":  "m<sub>*</sub>";
+
 		
 		headers=new String[] {keyCell,
 				      "Learned/not learned",
@@ -260,6 +261,8 @@ public class MannWhitneyComparison {
 				      "Harmonic mean "+ms + fm.brHtml() + "(learners/all)",
 				      "Avg error rate"};
 		
+		ms = useMDagger? "m!":  "m*";
+
 		matt[0]=new String[] {keyCell,
 				      "Learned", "Not learned",
 				      "EV score",

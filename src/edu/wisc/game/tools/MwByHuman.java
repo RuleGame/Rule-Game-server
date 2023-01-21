@@ -130,6 +130,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 		processor.exportSavedMws(gsum);
 	    }
 	} else {
+		processor.savedMws.clear();
 
 		for(String from: importFrom) {
 		    File g = new File(from);
@@ -445,10 +446,9 @@ m*
 	}
 
 	/** Reads a CSV file with MwSeries entries.
-	    @param into Put the data into this vector
+	    @param into Adds the data into this vector.
 	 */
 	static void readFromFile(File f, Vector<MwSeries> into) throws IOException, IllegalInputException {
-	    into.clear();
 	    if (!f.exists()) throw new IOException("File does not exist: " + f);
 	    if (!f.canRead()) throw new IOException("Cannot read file: " + f);
 	    CsvData csv = new CsvData(f, false, false, null);
