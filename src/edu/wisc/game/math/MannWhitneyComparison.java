@@ -256,7 +256,7 @@ public class MannWhitneyComparison {
 		headers=new String[] {keyCell,
 				      "Learned/not learned",
 				      "EV score",
-				      "Avg "+ms+" (errors till learned) " + fm.brHtml() + "(learners/all)",
+				      "Avg "+ms + " (learners/all)",
 				      "min-median-max "+ms+fm.brHtml()+"(learners)",
 				      "Harmonic mean "+ms + fm.brHtml() + "(learners/all)",
 				      "Avg error rate"};
