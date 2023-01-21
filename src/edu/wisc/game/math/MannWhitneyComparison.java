@@ -248,21 +248,25 @@ public class MannWhitneyComparison {
 	    
 
 	    } else {
+		String ms = "m*";
+		if (order.size()>0 && 
+		    learnedOnes[order.get(0)].useMDagger) ms = "m!";
+		
 		headers=new String[] {keyCell,
 				      "Learned/not learned",
 				      "EV score",
-				      "Avg m* (errors till learned) " + fm.brHtml() + "(learners/all)",
-				      "min-median-max m* "+fm.brHtml()+"(learners)",
-				      "Harmonic mean m*" + fm.brHtml() + "(learners/all)",
+				      "Avg "+ms+" (errors till learned) " + fm.brHtml() + "(learners/all)",
+				      "min-median-max "+ms+fm.brHtml()+"(learners)",
+				      "Harmonic mean "+ms + fm.brHtml() + "(learners/all)",
 				      "Avg error rate"};
 		
 		matt[0]=new String[] {keyCell,
 				      "Learned", "Not learned",
 				      "EV score",
-				      "Avg m* on learners",  "Avg m* on all",
-				      "min m*", "med m*", "max m*",
-				      "Harmonic mean m* on learners",
-				      "Harmonic mean m* on all",
+				      "Avg "+ms+" on learners",  "Avg "+ms+" on all",
+				      "min "+ms, "med "+ms, "max "+ms,
+				      "Harmonic mean "+ms+" on learners",
+				      "Harmonic mean "+ms+" on all",
 				      "Avg error rate"
 		};
 	    }
@@ -332,17 +336,18 @@ public class MannWhitneyComparison {
 		    //"EV score",
 		    //"m* (errors till learned)",
 		    int learnedCnt=0;
-		    double sumMStar=0, sumMStarLearned=0;
+		    double sumM=0, sumMLearned=0;
 		    int sumTotalMoves=0, sumTotalErrors=0;
-		    double harmonicMStar = 0, harmonicMStarLearned = 0 ;
+		    double harmonicM = 0, harmonicMLearned = 0 ;
 		    for(MwSeries ser: q.humanSer) {
+			double m = q.getM(ser);
 			if (ser.getLearned())  {
 			    learnedCnt++;
-			    sumMStarLearned += ser.getMStar();
-			    harmonicMStarLearned += 1.0/(double)ser.getMStar();
+			    sumMLearned += m;
+			    harmonicMLearned += 1.0/m;
 			}
-			sumMStar += ser.getMStar();
-			harmonicMStar += 1.0/(double)ser.getMStar();
+			sumM += m;
+			harmonicM += 1.0/m;
 			sumTotalMoves += ser.getTotalMoves();
 			sumTotalErrors += ser.getTotalErrors();
 		    }
@@ -351,16 +356,16 @@ public class MannWhitneyComparison {
 		    int pj = 0;
 		    for(MwSeries ser: q.humanSer) {
 			if (ser.getLearned())  {
-			    ma[pj++] = ser.getMStar();
+			    ma[pj++] = q.getM(ser);
 			}
 		    }
 		    double[] mmm = minMedMax(ma);
 
 		    double n = (double)q.humanSer.length;
-		    double avgMStar = sumMStar/n;
-		    double avgMStarLearned = sumMStarLearned/learnedCnt;
-		    harmonicMStar = n/harmonicMStar;
-		    harmonicMStarLearned = learnedCnt/harmonicMStarLearned;
+		    double avgM = sumM/n;
+		    double avgMLearned = sumMLearned/learnedCnt;
+		    harmonicM = n/harmonicM;
+		    harmonicMLearned = learnedCnt/harmonicMLearned;
 
 		    double avgE = sumTotalErrors/(double)sumTotalMoves;
 		    String fkey = formatHumanKey(fm, key);
@@ -368,13 +373,13 @@ public class MannWhitneyComparison {
 			fkey,
 			""+learnedCnt+"/" + (q.humanSer.length-learnedCnt),
 			fm.sprintf("%6.4g", evScore),
-			fm.sprintf("%6.2f",avgMStarLearned) + "/" +
-			fm.sprintf("%6.2f",avgMStar),
+			fm.sprintf("%6.2f",avgMLearned) + "/" +
+			fm.sprintf("%6.2f",avgM),
 			(ma.length>0) ? (int)mmm[0] + " - " +
 			fm.sprintf("%6.1f",mmm[1]) +" - " + (int)mmm[2] :
 			"",
-			fm.sprintf("%6.2f",harmonicMStarLearned) + "/" +
-			fm.sprintf("%6.2f",harmonicMStar),
+			fm.sprintf("%6.2f",harmonicMLearned) + "/" +
+			fm.sprintf("%6.2f",harmonicM),
 			fm.sprintf("%4.2f",avgE)
 		    };
 
@@ -382,11 +387,11 @@ public class MannWhitneyComparison {
 			fkey,
 			""+learnedCnt, "" + (q.humanSer.length-learnedCnt),
 			""+ evScore,
-			""+avgMStarLearned, ""+avgMStar,
+			""+avgMLearned, ""+avgM,
 			(ma.length>0) ? ""+mmm[0]: "",
 			(ma.length>0) ? ""+mmm[1]: "",
 			(ma.length>0) ? ""+mmm[2]: "",
-			""+harmonicMStarLearned, ""+harmonicMStar,
+			""+harmonicMLearned, ""+harmonicM,
 			""+avgE
 		    };
 		    

@@ -20,29 +20,42 @@ import edu.wisc.game.tools.MwByHuman.MwSeries;
     set of humans, perform on it).
      */
 public class Comparandum implements Comparable<Comparandum> {
-	/** The name of this algo or this rule set, as the case may be */
-	final String key;
-	final boolean learned;
-	final double[] a;
-	final MlcEntry[] mlc;
-	final MwSeries[] humanSer;
-	private double ev;
+    /** The name of this algo or this rule set, as the case may be */
+    final String key;
+    final boolean learned;
+    final double[] a;
+    final MlcEntry[] mlc;
+    final MwSeries[] humanSer;
+    private double ev;
 
-	/** Initializes a Comparandum based on a set of MlcEntry objects */
-	Comparandum(String _name, boolean _learned, MlcEntry[] z) {
-	    mlc = z;
-	    humanSer=null;
-	    learned = _learned;
-	    //cm.name = w[j0][0].getKey();
-	    key = _name;
-	    a = new double[ z.length ];
 
-	    for(int k=0; k<z.length; k++) {
+    /** Set to true in human comparanda using m-dagger instead of m-star.
+	This is mostly used for presentation purposes */
+    final boolean useMDagger;
+    
+    /** Initializes a Comparandum based on a set of MlcEntry objects */
+    Comparandum(String _name, boolean _learned, MlcEntry[] z) {
+	useMDagger=false;
+	mlc = z;
+	humanSer=null;
+	learned = _learned;
+	//cm.name = w[j0][0].getKey();
+	key = _name;
+	a = new double[ z.length ];
+	
+	for(int k=0; k<z.length; k++) {
 		a[k] = z[k].getTotalErrors();
-	    }
 	}
+    }
 
-	/** Creates a Comparandum for a rule set, based on an array of
+    /** Get m-star or m-dagger from a human series, as required */
+    double getM(MwSeries ser) {
+	return useMDagger?
+	    ser.getMDagger() :
+	    ser.getMStar();
+    }
+
+    /** Creates a Comparandum for a rule set, based on an array of
 	    MwSeries objects, each of which describes the performance
 	    of a human on the same rule set.
 
@@ -54,29 +67,29 @@ public class Comparandum implements Comparable<Comparandum> {
 	    
 	    @param useMDagger If true, use the mDagger field in lieue of mStar
 	*/
-    Comparandum(String ruleSetName, MwSeries[] z, boolean useMDagger) {
-	    learned = true; // with human populations, this flag does not make much sense, as you never have *everybody* in the population learn
-	    key = ruleSetName;
+    Comparandum(String ruleSetName, MwSeries[] z, boolean _useMDagger) {
+	useMDagger= _useMDagger;
+	learned = true; // with human populations, this flag does not make much sense, as you never have *everybody* in the population learn
+	key = ruleSetName;
+	mlc=null;
+	humanSer=z;
 
-	    double v[] = new double[z.length];
-	    int p=0;
+	double v[] = new double[z.length];
+	int p=0;
+		    
+	for(int k=0; k<z.length; k++) {
+	    // if an infinity is stored in m*, we replace it with a very
+	    // large integer, which is OK for comparison
+	    //a[k] = z[k].getMStarInt();
+	    double x = getM(z[k]);
 	    
-	    for(int k=0; k<z.length; k++) {
-		// if an infinity is stored in m*, we replace it with a very
-		// large integer, which is OK for comparison
-		//a[k] = z[k].getMStarInt();
-		double x = useMDagger?
-		    z[k].getMDagger() :
-		    z[k].getMStar();
-
-		if (!Double.isNaN(x)) v[p++]=x;
-	    }
-
-	    a = Arrays.copyOf(v, p);
-	    
-	    mlc=null;
-	    humanSer=z;
+	    if (!Double.isNaN(x)) v[p++]=x;
 	}
+	
+	a = Arrays.copyOf(v, p);
+	    
+
+    }
 	
 	static double[][] asArray(Comparandum []q) {
 	    double[][] a = new double[q.length][];

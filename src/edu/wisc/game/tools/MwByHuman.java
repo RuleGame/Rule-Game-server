@@ -60,7 +60,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 	File csvOutDir = null;
 	
 	// At most one of them can be non-null
-	String exportTo = null, importFrom = null;
+	String exportTo = null;
+	Vector<String> importFrom = new Vector<>();
 
 	
 	
@@ -82,7 +83,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    } else if (j+1< argv.length && a.equals("-export")) {
 		exportTo = argv[++j];
 	    } else if (j+1< argv.length && a.equals("-import")) {
-		importFrom = argv[++j];
+		importFrom.add(argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-targetStreak")) {
 		targetStreak = Integer.parseInt( argv[++j] );
 	    } else if (j+1< argv.length && a.equals("-defaultMStar")) {
@@ -108,11 +109,11 @@ public class MwByHuman extends AnalyzeTranscripts {
 
 	}
 
-	if (exportTo!=null && importFrom!=null) {
+	if (exportTo!=null && importFrom.size()>0) {
 	    usage("You cannot combine the options -export and -import. At most one of them can be used in any single run");
 	}
 
-	if (importFrom!=null && plans.size()>0) {
+	if (importFrom.size()>0 && plans.size()>0) {
 	    usage("If you use the -import option, you should not specify experiment plans!");
 	}
 
@@ -120,7 +121,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	MwByHuman processor = new MwByHuman( targetStreak, defaultMStar, plainFm);
 
 	try {
-	if (importFrom==null) {
+	    if (importFrom.size()==0) {
 	    // Extract the data from the transcript, and put them into savedMws
 	    processor.processStage1(plans, pids, nicknames, uids);
 
@@ -129,9 +130,12 @@ public class MwByHuman extends AnalyzeTranscripts {
 		processor.exportSavedMws(gsum);
 	    }
 	} else {
-	    File g = new File(importFrom);
-	    MwSeries.readFromFile(g, processor.savedMws);
-	    //System.out.println("Has read " + processor.savedMws.size() + " data lines");
+
+		for(String from: importFrom) {
+		    File g = new File(from);
+		    MwSeries.readFromFile(g, processor.savedMws);
+		    //System.out.println("Has read " + processor.savedMws.size() + " data lines");
+		}
 
 	}
 	
