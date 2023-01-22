@@ -32,9 +32,14 @@ Welcome <tt><!-- %= main.getDisplayText() % --></tt>
 
 <p>This tool also has command-line script interface (on sapir). It can be used if you wanted to save the M-W matrix and ranking results into CSV files (in the same way as it's done for the <a href="../tools/analyze-transcripts-mwh.html">Human Data M-W analysis tool</a>.
 
-<p>The usage is as follows, as shown in 2 examples:
-<pre>scripts/mann-whitney.sh -mode CMP_ALGOS -rule alternateShape2Bucket_color2Bucket -csvOut tmp
-scripts/mann-whitney.sh -mode CMP_RULES -algo someAlgoName  -csvOut tmp<pre>
+<p>The usage is as follows, as shown in 2 examples.
+
+<p>To compare different ML algorithms' performance on a particular rule set:
+<pre>scripts/mann-whitney.sh -mode CMP_ALGOS -rule alternateShape2Bucket_color2Bucket -csvOut tmp</pre>
+To compare the difficulty of different rule sets for a particular ML algo:
+<pre>scripts/mann-whitney.sh -mode CMP_RULES -algo someAlgoName  -csvOut tmp<pre>
+
+<p>In the above examples, <tt>tmp</tt> is the name of the directory to which M-W CSV files are written by this tool.
 
 <hr>
 <h2>Instructions for the experiment manager</h2>
