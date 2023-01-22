@@ -27,9 +27,12 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
-/** Uploading results files by MLC participants. Discussed in email
-    in June-July 2022.  Extended in Jan 2023 to support compact format.
+/** Uploading and processing results files by MLC
+    participants. Discussed in email in June-July 2022.  Extended in
+    Jan 2023 to support compact format.
 
+    <p>This service includes calls for uploading data, and for
+    various comparison pages.
  */
 
 @Path("/MlcUploadService") 
@@ -66,7 +69,9 @@ public class MlcUploadService {
 	return s!=null && s.equals(key);
     }
 
-
+    /** Enures that the header line appears in the standard
+	format, with the leading '#'
+    */
     private static String prepareHeaderLine(String s) {
 	s=s.trim();
 	if (!s.startsWith("#")) s = "#" + s;
@@ -74,11 +79,14 @@ public class MlcUploadService {
     }
 
     
-    /**
+    /**  Allows an MLC participant to upload a file with the results of his
+	 ML algorithm's performance.
+<pre>
 nickname,rule_name,trial_id,board_id,number_of_pieces,number_of_moves,move_acc,if_clear
 RandomTest,alternateShape2Bucket_color2Bucket,0,0,9,29,0.3103448275862069,1
 RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 ...
+</pre>
     */
     @Path("/uploadFile")
     @POST
@@ -422,7 +430,8 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 
 
  /** Prints the summary of a specified player's performance on 
-	a particular rule set.
+	a particular rule set, in comparison with other players.
+	
 	@param nickname The nickname of the player being compared to
 	others.  It does not actually affect the content of the table
 	(as it will show all players who have learned the rule set),
@@ -445,6 +454,8 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 	return mwc.doCompare(nickname, rule, allComp, fm, null);
     }
 
+    /** The REST call for comparing rule set with respect to an algo
+     */
     @GET
     @Path("/compareRules")
     @Produces(MediaType.TEXT_HTML)
@@ -458,246 +469,4 @@ RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 	return mwc.doCompare(nickname, rule, allComp, fm, null);
     }
 
-    /*
-    static String doCompare( String nickname,  String rule, Fmter fm) {
-	String title="Results comparison on rule set " + rule, body="", errmsg = null;
-	EntityManager em=null;
-
-	try {
-
-	    body += fm.h1("Results comparison on rule set " + fm.tt(rule));
-	    
-	    em = Main.getNewEM();
-
-	    Query q = em.createQuery("select m from MlcEntry m where m.ruleSetName=:r");
-	    q.setParameter("r", rule);
-	    List<MlcEntry> res = (List<MlcEntry>)q.getResultList();
-
-	    HashMap<String,Integer> nicksOrder = new HashMap<>();
-	    Vector<String> nicks = new Vector<>();
-	    Vector<Integer> counts = new Vector<>();
-	    
-	    // How many nicknames
-	    int n = 0;
-	    for(MlcEntry e: res) {
-		String nick  =e.getNickname();
-		boolean isNew = (nicksOrder.get(nick)==null);
-		
-		int j = isNew? n++ :  nicksOrder.get(nick);
-		if (isNew) {
-		    nicksOrder.put( nick, j);
-		    nicks.add(nick);
-		    counts.add(1);
-		} else {		
-		    int m = counts.get(j);
-		    counts.set(j,m+1);
-		}
-	    }
-
-	    // All entries separated by nickname
-	    MlcEntry [][]w = new MlcEntry[n][];
-	    for(int j=0; j<n; j++) w[j] = new MlcEntry[ counts.get(j) ];
-	    int p[] = new int[n];
-	    for(MlcEntry e: res) {
-		int j = nicksOrder.get( e.getNickname());
-		//w[j][ p[j]++] = e;
-		
-		MlcEntry [] row = w[j];
-		int k = p[j]++;
-		row[k] = e;
-
-	    }
-
-	    // only those who have learned the game successfully
-	    boolean[] learned = new boolean[n];
-	    int nLearned = 0;
-	    for(int j=0; j<n; j++) {
-		boolean failed = false;
-		for(int k=0; k<w[j].length; k++) {
-		    failed = failed || !w[j][k].getLearned();
-		}
-		learned[j] = !failed;
-		if (learned[j]) nLearned ++;
-	    }
-
-	    // nicknames of successful learners only. 
-	    int goodNicks[] = new int[nLearned];
-	    int ptr = 0;
-	    for(int j=0; j<n; j++) {
-		if (learned[j])  goodNicks[ptr++] = j;
-	    }
-
-
-	    double a[][] = new double[nLearned][];
-	    for(int j=0; j<nLearned; j++) {
-		int j0 =  goodNicks[j];
-		a[j] = new double[ w[j0].length ];
-		 for(int k=0; k<w[j0].length; k++) {
-		     a[j][k] = w[j0][k].getTotalErrors();
-		 }
-	    }
-
-	    double[][] z = MannWhitney.rawMatrix(a);
-	    double[][] zr = MannWhitney.ratioMatrix(z);
-	    
-	    double[] ev = MannWhitney.topEigenVector(zr);
-	    Vector<Integer> order = new Vector<>();
-	    for(int j=0; j<nLearned; j++) order.add(j);
-	    order.sort((o1,o2)-> (int)Math.signum(ev[o2]-ev[o1]));
-
-
-	    body += fm.h3("Raw M-W matrix");
-	    	    
-	    Vector<String> v = new Vector<>();
-
-	    for(int h=0; h< nLearned; h++) {
-		int k=order.get(h);
-		String nick = nicks.get(goodNicks[k]);
-		boolean isMe = nick.equals(nickname); // the player we specifically  care about in this display
-		String s =nick + "\t";
-
-		double[] c = new double[nLearned];		
-		for(int i=0; i< nLearned; i++) c[i] = z[k][order.get(i)];
-		
-		s += Util.joinNonBlank("\t", c);
-		if (isMe) s = fm.strong(s);
-		v.add(s);
-	    }
-	    body += fm.pre(String.join("\n", v));
-
-	    body += fm.h3("M-W ratio matrix");
-	    v.clear();
-	    for(int h=0; h< nLearned; h++) {
-		int k=order.get(h);
-		String nick = nicks.get(goodNicks[k]);
-		boolean isMe = nick.equals(nickname); // the player we specifically  care about in this display
-		StringWriter sw = new StringWriter();
-		PrintWriter pw = new PrintWriter(sw);
-		pw.print(nick);
-		double[] c = new double[nLearned];
-		for(int i=0; i< nLearned; i++) {
-		    c[i] = zr[k][order.get(i)];
-		    pw.format("\t%8.4f", c[i]);
-		}
-		
-		String s = sw.toString();
-		if (isMe) s = fm.strong(s);
-		v.add(s);
-	    }
-	    body += fm.pre(String.join("\n", v));
-
-	    body += fm.h3("Comparison of algorithms");
-	    
-	    Vector<String> rows = new Vector<>();
-	    rows.add( fm.tr( fm.th("Algo nickname") +
-			     fm.th("Learned? (learned/not learned)") +
-			     fm.th("EV score") +
-			     fm.th("Runs") +
-			     fm.th("Avg. episodes till learned") +
-			     fm.th("Avg. errors till learned") +
-			     fm.th("Avg. moves till learned") +
-			     fm.th("Avg. error rate")
-			     ));
-
-	    // the learned ones
-	    for(int k=0; k< nLearned; k++) {
-		int j=order.get(k);
-		double evScore = ev[j];
-		int j0 = goodNicks[j];
-		String nick = nicks.get(j0);
-		boolean isMe = nick.equals(nickname); // the player we specifically  care about in this display
-		MlcEntry [] ee = w[j0];
-		int runs = ee.length;
-		double avgE=0, avgM=0, avgEp=0;
-		for(MlcEntry e: ee) {
-		    avgE += e.getTotalErrors();
-		    avgEp += e.getEpisodesUntilLearned();
-		    avgM += e.getMovesUntilLearned();
-		}
-		avgE /= runs;
-		avgEp /= runs;
-		avgM /= runs;
-
-		String w2[] = {
-		    "Learned ("+runs+"/0)",
-		    fm.sprintf("%6.4g", evScore),
-		    "" + runs,
-		    fm.sprintf("%5.2f", avgEp),
-		    fm.sprintf("%6.2f",avgE),
-		    fm.sprintf("%6.2f",avgM),
-		    ""};
-
-		
-		String row = fm.th(nick);
-		for(String s: w2) {
-		    if (isMe) s = fm.strong(s);
-		    row += fm.td(s);
-		}
-
-		rows.add(fm.tr(row));
-	    }
-
-	    // Algos who have never learned this rule
-	    order.clear();
-	    Vector<String> rows2 = new Vector<>();
-	    Vector<Double> avgErrorRates   = new Vector<>();
-	    for(int j0=0; j0<n; j0++) {
-		if (learned[j0]) continue;
-		String nick = nicks.get(j0);
-		MlcEntry [] ee = w[j0];
-		int runs = ee.length;
-	
-		double totalM=0, totalE=0;
-		int learnedRuns =0;
-		for(MlcEntry e: ee) {
-		    totalE += e.getTotalErrors();
-		    totalM += e.getTotalMoves();
-		    if (e.getLearned())  learnedRuns++;
-		}
-		double avgErrorRate = totalE/totalM;
-	
-		String learnedWord = (learnedRuns==0)? "Not learned" : "Sometimes learned";
-
-		order.add(rows2.size());
-		String []w2 = { learnedWord + " ("+learnedRuns+"/"+(runs-learnedRuns)+")",
-				"",
-				"",
-				"",
-				"",
-				"",
-				fm.sprintf("%4.3f", avgErrorRate) };
-
-		String row = fm.th(nick);
-		for(String s: w2) {
-		    //if (isMe) s = fm.strong(s);
-		    row += fm.td(s);
-		}
-
-		rows2.add(fm.tr(row));
-
-		avgErrorRates.add(avgErrorRate);
-	
-	    }
-	    order.sort((o1,o2)->(int)Math.signum(avgErrorRates.get(o1)-avgErrorRates.get(o2)));
-	    for(int j: order) rows.add(rows2.get(j));
-	    
-	    body += fm.table( "border=\"1\"", rows);
-	    
-	} catch(Exception ex) {
-	    title = "Error";
-	    body = fm.para(ex.toString()) +
-		fm.para(fm.wrap("small", "Details:"+ Util.stackToString(ex)));
-
-	    System.err.println("" + ex);
-	    ex.printStackTrace(System.err);
-
-	} finally {	
-	    if (em!=null) try {
-		    em.close();
-		} catch(Exception ex) {}
-	}
-	return fm.html(title, body);		
- 
-    }
-    */
 }

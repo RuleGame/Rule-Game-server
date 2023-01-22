@@ -27,7 +27,14 @@ Welcome <tt><!-- %= main.getDisplayText() % --></tt>
 
 <hr>
 
+<hr>
+<h2>Command-line interface</h2>
 
+<p>This tool also has command-line script interface (on sapir). It can be used if you wanted to save the M-W matrix and ranking results into CSV files (in the same way as it's done for the <a href="../tools/analyze-transcripts-mwh.html">Human Data M-W analysis tool</a>.
+
+<p>The usage is as follows, as shown in 2 examples:
+<pre>scripts/mann-whitney.sh -mode CMP_ALGOS -rule alternateShape2Bucket_color2Bucket -csvOut tmp
+scripts/mann-whitney.sh -mode CMP_RULES -algo someAlgoName  -csvOut tmp<pre>
 
 <hr>
 <h2>Instructions for the experiment manager</h2>

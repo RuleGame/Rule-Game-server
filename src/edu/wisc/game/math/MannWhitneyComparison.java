@@ -476,18 +476,54 @@ public class MannWhitneyComparison {
 	return new double[] {a[0], med, a[a.length-1]};
     }
 
+      static private void usage() {
+	usage(null);
+    }
+    static private void usage(String msg) {
+	//	System.err.println("For usage, see tools/analyze-transcripts-mwh.html\n\n");
+	System.err.println("Usage:");
+	System.err.println(" MannWhitneyComparison -mode CMP_ALGOS -rule ruleName [-csvOut dir]");
+	System.err.println(" MannWhitneyComparison -mode CMP_RULES -algo ruleName [-csvOut dir]");
+	if (msg!=null) 	System.err.println(msg + "\n");
+	System.exit(1);
+    }
+
     
     public static void main(String[] argv) {
-	int ja=0;
-	String s = argv[ja++];
-	Mode mode = Enum.valueOf( Mode.class, s.toUpperCase());
-	String nickname = argv[ja++];
-	String rule=argv[ja++];
+	Mode mode = Mode.CMP_RULES;
+	String nickname = null;
+	String rule=null;
+	File csvOutDir = null;
 
+	for(int j=0; j<argv.length; j++) {
+	    String a = argv[j];
+	    if (j+1< argv.length && a.equals("-mode")) {
+		String s = argv[++j];
+		mode = Enum.valueOf( Mode.class, s.toUpperCase());
+	    } else if (j+1< argv.length && a.equals("-algo")) {
+		nickname =  argv[++j];
+	    } else if (j+1< argv.length && a.equals("-rule")) {
+		rule =  argv[++j];
+	    } else if (j+1< argv.length && a.equals("-csvOut")) {
+		csvOutDir = new File(argv[++j]);
+	    } else if (a.startsWith("-")) {
+		usage("Unknown option: " + a);
+	    } else {
+		usage("Don't know what to do with the argument: " + a);
+	    }
+	}
+
+
+	if (mode==Mode.CMP_RULES) {
+	    if (nickname==null) usage("In the mode " + mode + ", must supply -algo");
+	} else	if (mode==Mode.CMP_ALGOS) {
+	    if (rule==null) usage("In the mode " + mode + ", must supply -rule");
+	} else usage("Mode not supported: " + mode);
+	
 	MannWhitneyComparison mwc = new MannWhitneyComparison(mode);
 	Comparandum[][] allComp = mwc.mkMlcComparanda(nickname,  rule);
 
-	String text =  mwc.doCompare(nickname, rule, allComp, plainFm, null);
+	String text =  mwc.doCompare(nickname, rule, allComp, plainFm, expandCsvOutDir(csvOutDir));
 	System.out.println(text);
 	
     }
@@ -512,4 +548,17 @@ public class MannWhitneyComparison {
 	return String.join(":", z);
     }
 
+    /** Suggests names for CSV output files */
+    public static File[] expandCsvOutDir(File csvOutDir) {
+	File[] csvOut = null;
+	if (csvOutDir!=null) {
+	    csvOutDir.mkdirs();
+	    csvOut = new File[] { new File(csvOutDir, "raw-wm.csv"),
+		new File(csvOutDir, "ratio-wm.csv"),
+		new File(csvOutDir, "ranking.csv")};
+	}
+	return csvOut;
+    }
+
+    
 }

@@ -314,14 +314,7 @@ public class MwByHuman extends AnalyzeTranscripts {
     public void processStage2(MwByHuman.PrecMode precMode, boolean fromFile, boolean useMDagger, File csvOutDir )    {
 	if (error) return;
 
-	File[] csvOut = null;
-	if (csvOutDir!=null) {
-	    csvOutDir.mkdirs();
-	    csvOut = new File[] { new File(csvOutDir, "raw-wm.csv"),
-		new File(csvOutDir, "ratio-wm.csv"),
-		new File(csvOutDir, "ranking.csv")};
-	}
-		
+	File[] csvOut = MannWhitneyComparison.expandCsvOutDir(csvOutDir);
 	
 	MannWhitneyComparison.Mode mode = MannWhitneyComparison.Mode.CMP_RULES_HUMAN;
 	MannWhitneyComparison mwc = new MannWhitneyComparison(mode);

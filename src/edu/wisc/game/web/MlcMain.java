@@ -13,6 +13,8 @@ import edu.wisc.game.sql.*;
 import edu.wisc.game.formatter.*;
 import edu.wisc.game.rest.*;
 
+/** The back end behind web/mlc/index.jsp
+ */
 public class MlcMain  extends ResultsBase  {
 
     private ContextInfo ci;
@@ -20,6 +22,7 @@ public class MlcMain  extends ResultsBase  {
     private static HTMLFmter fm = new HTMLFmter();
 
     public String key = "";
+    /** The HTML report to be displayed in the web page */
     public String report = "";
     public String nickname = null;
     
