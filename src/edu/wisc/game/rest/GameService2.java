@@ -23,6 +23,7 @@ import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.formatter.*;
 //import edu.wisc.game.web.LoginServlet.UserResponse;
+import edu.wisc.game.web.LaunchRulesBase;
 
 /** The "Second Batch" of API calls, primarily for use with players constrained by an experiment plan, and playing a sequence of games as outlined in the trial list to which the player is assigned. This API is set up in accordance with Kevin Mui's request, 2020-08-17.
  */
@@ -38,8 +39,8 @@ public class GameService2 {
     /** Can be used by the Android app to register the application.
      */
     public UserResponse registerUser(@DefaultValue("null") @FormParam("email") String email,
-				       @DefaultValue("null") @FormParam("nickname") String nickname,
-				       @DefaultValue("false") @FormParam("anon") boolean anon)
+				     @DefaultValue("null") @FormParam("nickname") String nickname,
+				     @DefaultValue("false") @FormParam("anon") boolean anon)
     {
 
 	return new UserResponse(email, nickname, null, anon);
@@ -234,6 +235,13 @@ public class GameService2 {
     @Produces(MediaType.APPLICATION_JSON)
     public  String getVersion() {
 	return Episode.getVersion();
+    }
+
+    @GET
+    @Path("/findPlans") 
+    @Produces(MediaType.APPLICATION_JSON)
+    public LaunchRulesBase.AndroidRuleInfoReport findPlans(@DefaultValue("-1") @QueryParam("uid") int uid) {
+	return new LaunchRulesBase.AndroidRuleInfoReport(uid);
     }
 
     

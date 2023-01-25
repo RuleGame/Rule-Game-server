@@ -24,6 +24,9 @@ public class RuleSet {
 	been found in the comment lines on top of the rule set file.
      */
     public Vector<String> description=new Vector<>();
+    /** The display name, to show in the Android app, without
+	giving the user too much of a hint. (As per PK, 2023-01-24) */
+    public String display="";
     
     /** The list of "legacy" variables that can be used in the bucket
 	expression. (More variables were added later, such as "p.*"  */
@@ -764,7 +767,10 @@ public class RuleSet {
 	    if (r.startsWith("#") || r.length()==0) {
 		if (!topCommentEnded) {
 		    String s = r.replaceAll("^#+-* *", "");
-		    if (s.length()>0) description.add(s);
+		    String prefix = "Display:";
+		    if (s.startsWith(prefix)) {
+			display = s.substring(prefix.length()).trim();
+		    } else if (s.length()>0) description.add(s);
 		}
 
 		

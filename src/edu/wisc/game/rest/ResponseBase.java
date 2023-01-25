@@ -13,7 +13,8 @@ import edu.wisc.game.util.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.sql.*;
 
-
+/** The parent class for various structures that are returned, in JSON form,'
+    by REST calls. */
 public class ResponseBase {
     boolean error=false;
     String errmsg=null;
@@ -26,14 +27,14 @@ public class ResponseBase {
     @XmlElement
     public void setErrmsg(String _errmsg) { errmsg = _errmsg; }
 
-    ResponseBase( ) {}
+    protected ResponseBase( ) {}
 
-    ResponseBase( boolean _error,     String _errmsg) {
+    protected ResponseBase( boolean _error,     String _errmsg) {
 	setError(_error);
 	setErrmsg( _errmsg);
     }
 
-    void hasError(String msg) {
+    protected void hasError(String msg) {
 	Logging.error(msg);
 	setError(true);
 	setErrmsg(msg);

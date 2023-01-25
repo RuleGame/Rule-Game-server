@@ -2,8 +2,8 @@
 
 #-------------------------------------------------------------------------
 #-- Sample usage
-# scripts/mann-whitney.sh CMP_ALGOS Fake-10 alternateShape2Bucket_color2Bucket
-# scripts/mann-whitney.sh CMP_RULES Fake-10 alternateShape2Bucket_color2Bucket
+# scripts/mann-whitney.sh -mode CMP_ALGOS -rule alternateShape2Bucket_color2Bucket -csvOut tmp
+# scripts/mann-whitney.sh -mode CMP_RULES -algo Fake-10  -csvOut tmp
 #-------------------------------------------------------------------------
 
 #-- The directory where this script is

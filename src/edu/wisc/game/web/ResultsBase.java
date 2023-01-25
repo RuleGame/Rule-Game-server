@@ -57,7 +57,7 @@ public class ResultsBase {
     }
 
     boolean atHome;
-    final HTMLFmter fm = HTMLFmter.htmlFmter;
+    final static HTMLFmter fm = HTMLFmter.htmlFmter;
     
     ResultsBase(HttpServletRequest _request, HttpServletResponse response,
 		 boolean requiresUser) {

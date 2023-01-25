@@ -4,7 +4,7 @@
 <body>
   <h1>Web API for the use by the Rule Game client - second batch</h1>
 
-  <p align="center"><em>Version 4.005,  2022-01-01</em></p>
+  <p align="center"><em>Version 6.007,  2023-01-25</em></p>
 
   <p>This is the "Second Batch" (prefix=<tt>/GameService2</tt>)  of the Game Service web API calls. They are intended for use with a client app that works with players enrolled in experiments; each player is identified by a player ID, and the server assigns each player to a "trial list" (a particular track in the experiment plan with which this player ID is associated with).</p>
 
@@ -19,7 +19,7 @@
 	</form>
 
 
-  <li>POST <strong><tt>/registerUser:</tt> Regsiter a new repeat user.</strong> The Android app should do it when it's first used, before any games are applied. Before making this call, the Androing app can ask the user to either identify himself in some way (by entering an email address and/or a nickname), or to proceed anonymously (by checking the "anonymous" box on the identification screen). 
+  <li>POST <strong><tt>/registerUser:</tt> Regsiter a new repeat user.</strong> The Android app should do it when it's first used, before any games are applied. Before making this call, the Android app can ask the user to either identify himself in some way (by entering an email address and/or a nickname), or to proceed anonymously (by checking the "anonymous" box on the identification screen). 
   <form method="post" action="game-data/GameService2/registerUser"
 	 enctype="application/x-www-form-urlencoded">
     Email: <input name="email" type="text" size="32" value="">
@@ -46,17 +46,52 @@
 {"error":false,"newlyRegistered":true,"user":{"date":"2021-10-20T18:45:44.047Z[UTC]","id":8,"idCode":"anon-20211020-144544-9WGVH3"}}</tt>
       
 
-      <p>Sample return value, when the email and nickname matched an already regiesterd (thus, <tt>newlyRegistered=false</tt>)
+      <p>Sample return value, when the email and nickname matched an already registered (thus, <tt>newlyRegistered=false</tt>)
       <tt>
       {"error":false,"newlyRegistered":false,"user":{"date":"2021-10-12T01:55:21Z[UTC]","email":"vmenkov@gmail.com","id":3,"idCode":"user-5L54KP","nickname":"V Menkov Test 1"}}
       </tt>
+
+<li>GET <strong><tt>/findPlans</tt></strong>: for use in Android app only. This call should be used once you have the repeat user ID (obtained by the initial /registerUser call, and stored since). Shows the dynamic experiment plans offered to this Android app user, so that the app could build a display similar to what the same user would see at <a href="launch/launch-rules-cgs.jsp">sample rules launch page for CGS users</a>.
+
+        <form method="get" action="game-data/GameService2/findPlans"
+	      enctype="application/x-www-form-urlencoded">
+	  uid=<input type="text" name="uid" size="10"> (integer)
+	  <input type="submit">
+	</form>
+
+  <p>Sample response:
+    <pre>{"error":false,
+      "ruleInfo":[
+      {"completed":false,"description":["[Color Match] Each bucket collects pieces of one color"],"display":"Puzzle 1",
+         "episodeCnt":1,"exp":"R:CGS/_1:APP/APP-no-feedback","name":"CGS/_1","playerId":"RepeatUser-7-JRQ5VR-20230125-191032"},
+      {"completed":false,"description":["[Clockwise] Permitted bucket moves in clockwise order, starting anywhere"],"display":"Puzzle 2",
+         "episodeCnt":0,"exp":"R:CGS/_2:APP/APP-no-feedback","name":"CGS/_2"},
+      {"completed":false,"description":["[B23 then B01] Alternate lower and upper buckets"],"display":"Puzzle 3",
+         "episodeCnt":0,"exp":"R:CGS/_3:APP/APP-no-feedback","name":"CGS/_3"},{"completed":false,"description":["[B3 then B1] Alternate B3 (bottom-left) and B1 (top-right)"],"display":"Puzzle 4",
+         "episodeCnt":0,"exp":"R:CGS/_4:APP/APP-no-feedback","name":"CGS/_4"},
+     ... ]]}</pre>
+
+    As with all other calls, the client should check the <tt>error</tt> field first. If error=true, then <tt>ruleInfo</tt> is absent, and the  field   <tt>errmsg</tt> contains the human-readable  error message.
+
+  <p>The field <tt>ruleInfo</tt> is an array, with 1 element per rule set to be displayed. For each rule set:
+    <ul>
+      <li>name: the name of the rule set (based on the rule set file name). Do not show this field to the player, because we don't want to make things to easy for them.
+      <li>description: detailed description of the rule set (from the comments in the rule set file). Comes not as a single string, but as an array of strings (to be able to represent multi-line descriptions). Do not show this field to the player, because we don't want to make things to easy for them.
+      <li>display: a short name of the rule set that we want to show to the users. Comes from the "#Display:" line of the rule set file, and is meant to be cryptic and not too revealing
+      <li>exp: the name of the dynamic experiment plan associated with this rule. This should be sent as YYY in the <tt>/player?uid=XXX&amp;exp=YYY</tt> call to be made if the user clicks this rule set's "PLAY" button.
+
+      <li>completed: false is the button should be enabled, or true if the player has done playing this  rule set, and the button must be disabled.
+      <li>episodeCnt: how many episodes the user has played in this rule set. If non-zero, then, depending on the "completed" field  we either say something like "Played XXX episodes already" + "PLAY MORE" button, or disable the play button, saying something "Finished with this rule (XXX episodes)
+
+      <li>playerId: this is only supplied for rule sets for which this player has already played some episodes. If this field is present, send it as ZZZ in the  <tt>/player?uid=XXX&amp;exp=YYY&amp;playerId=ZZZ</tt> call to be made if the user clicks this rule set's "PLAY MORE" button. 
+    </ul>
       
     <li>POST <strong><tt>/player:</tt> Start a player's interaction with the system, and obtain a randomly selected trial list for this player</strong>. 
   <form method="post" action="game-data/GameService2/player"
 	 enctype="application/x-www-form-urlencoded">
-     Player ID: <input name="playerId" type="text" size="25" value="AnyText01"> -- mandatory, unless Repeat User ID is supplied (in which case the server will create a unique playerId)<br>
-     Experiment plan (optional, e.g <tt>qt</tt> or <tt>pk1</tt>): <input name="exp" type="text" size="25" value=""> -- controls the assignment of the player to an experiment plan. Mandatory (unless you want an assignment based on the player name, which usually makes litlle sense). <br>
-     Repeat User ID: <input name="uid" type="text" size="10" value=""> -- a numerical user ID, if the player belongs to a repeat user. Leave blank otherwise<br>  
+     Player ID: playerId=<input name="playerId" type="text" size="25" value="AnyText01"> -- mandatory, unless Repeat User ID is supplied (in which case the server will create a unique playerId)<br>
+     Experiment plan (optional, e.g <tt>qt</tt> or <tt>pk1</tt>): exp=<input name="exp" type="text" size="25" value=""> -- controls the assignment of the player to an experiment plan. Mandatory (unless you want an assignment based on the player name, which usually makes litlle sense). <br>
+     Repeat User ID: uid=<input name="uid" type="text" size="10" value=""> -- a numerical user ID, if the player belongs to a repeat user. Leave blank otherwise<br>  
 	  <input type="submit">
   </form>
 
@@ -473,6 +508,7 @@ The shape names are given using the same case as in the file names. They are not
 	<pre>
 {"error":true, "errmsg": "And this is why: ..."}
 	</pre>
+
 
 <li><a name="GetImageServlet">(Effective ver. 3.0)</a> GET <strong><tt>GetImageServlet</tt></strong> -- Get an image file:
   <form method="get" action="GetImageServlet">

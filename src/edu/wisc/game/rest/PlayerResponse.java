@@ -15,7 +15,8 @@ import edu.wisc.game.reflect.JsonReflect;
 import edu.wisc.game.parser.RuleParseException;
 
 
-/** The HashMap capability is used for debugging info in debug mode */
+/** The object returned by the /player call.
+ */
 public class PlayerResponse extends ResponseBase {
   
     boolean newlyRegistered;

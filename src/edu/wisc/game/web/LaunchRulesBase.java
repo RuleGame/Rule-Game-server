@@ -2,16 +2,18 @@ package edu.wisc.game.web;
 
 import java.io.*;
 import java.util.*;
-import java.text.*;
+//import java.text.*;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import javax.persistence.*;
+
+//import jakarta.json.*;
+import jakarta.xml.bind.annotation.XmlElement; 
 
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
-//import edu.wisc.game.formatter.*;
 import edu.wisc.game.rest.*;
 
 
@@ -32,12 +34,13 @@ public class LaunchRulesBase      extends ResultsBase  {
 
     
     private ContextInfo ci;
-       
+
+    /** All PlayerInfo objects associated with this repeat user */
     protected HashMap<String,Vector<PlayerInfo>> allPlayers;
 
     public String tableText = "<!-- TABLES START HERE-->\n";
 
-    /** Finds the PlayerInfo object associated with the specified repeat user */
+    /** Finds all PlayerInfo objects associated with the specified repeat user */
     static HashMap<String,Vector<PlayerInfo>> findPlayers(EntityManager em, int uid) {
 	HashMap<String,Vector<PlayerInfo>>  h = new HashMap<>();
 
@@ -100,22 +103,29 @@ public class LaunchRulesBase      extends ResultsBase  {
 
     /** Creates a table cell for a given P: or R: plan, with a "PLAY!"
 	button and information about any previous rounds.
+	@param exp The experiment plan the button(s) for which we are creating
+	@param ri Also add the necessary info to this structure
      */
     protected String mkCell(String exp) {
 	Vector<PlayerInfo> players = allPlayers.get(exp);	    
 	Vector<String> pv = new Vector<>();
 
-	int buttonCnt=0;
+	int buttonCnt=0, episodeCnt=0;
+	String bestPlayerId = null; // code to resume
+	boolean completed = false;
 	if (players!=null) {
 	    for(PlayerInfo p: players) {
 		String t;
 		int ne = p.getAllEpisodes().size();
+		episodeCnt += ne;
 		if (p.getCompletionCode()!=null) {
 		    t = "[COMPLETED ROUND (" +ne+ " episodes)]";
+		    completed = true;
 		} else {
 		    t=mkForm("[STARTED (done "+ne+" episodes); ","]",
 			     exp, p.getPlayerId(), "CONTINUE!");
 		    buttonCnt++;
+		    bestPlayerId = p.getPlayerId();
 		}
 		pv.add(t);
 	    }
@@ -125,10 +135,10 @@ public class LaunchRulesBase      extends ResultsBase  {
 	    String bt = (pv.size()==0)? "PLAY!": "Play another round!";
 	    pv.add( mkForm("","", exp, null, bt));
 	}
-		    
+	
 	return  fm.td( String.join(" ", pv));
     }
-
+    
 
 
     
@@ -280,9 +290,76 @@ public class LaunchRulesBase      extends ResultsBase  {
 
     }
 
+    /** An auxiliary class that can be used to transmit information about
+	the buttons etc the Android app needs to display */
+    static public class RuleInfo {
+	String name;
+	Vector<String> description;
+	String display;
+	String exp;
+	boolean completed;
+	int episodeCnt;
+	String playerId;
+
+  	public String getName() { return name; }
+	@XmlElement
+	public void setName(String _name) { name = _name; }
+	public Vector<String> getDescription() { return description; }
+	@XmlElement
+	public void setDescription(Vector<String> _description) { description = _description; }
+	public String getDisplay() { return display; }
+	@XmlElement
+	public void setDisplay(String _display) { display = _display; }
+
+	public String getExp() { return exp; }
+	@XmlElement
+	public void setExp(String _exp) { exp = _exp; }
+	public boolean getCompleted() { return completed; }
+	@XmlElement
+	public void setCompleted(boolean _completed) { completed = _completed; }
+	public int getEpisodeCnt() { return episodeCnt; }
+	@XmlElement
+	public void setEpisodeCnt(int _episodeCnt) { episodeCnt = _episodeCnt; }
+	public String getPlayerId() { return playerId; }
+	@XmlElement
+	public void setPlayerId(String _playerId) { playerId = _playerId; }
+
+	
+	void mkCellSimplified(HashMap<String,Vector<PlayerInfo>> allPlayers) {
+	    Vector<PlayerInfo> players = allPlayers.get(exp);	    
+
+	    episodeCnt=0;
+	    playerId = null; 
+	    completed = false;
+	    if (players!=null) {
+		for(PlayerInfo p: players) {
+		    int ne = p.getAllEpisodes().size();
+		    episodeCnt += ne;
+		    if (p.getCompletionCode()!=null) {
+			completed = true;
+		    } else {
+			playerId = p.getPlayerId();
+		    }
+		}
+	    }	
+	}
+
+    }
+
+    
     /** Builds the Part B table. Here, the rule set files are the base, and 
-	R:-type dynamic plans are created.
-	@param  chosenRuleSet If not null, just show this set
+	R:-type dynamic plans are created.  (This is the only table that's
+	needed, for example, for the CGS sample page)
+
+	@param modsLong The modifiers for the columns of the table to produce
+	@param hm The display names of the columns
+	@param z Indicates where to get rule set files from. (E.g. Mode.APP or Mode.CGS)
+	
+	@param knowRuleSetNames The set of rule set names that should be ignored, because links for them have already been displayed in the Part A table. (This should be an empty set if there is no Part A table, of course).
+	
+	@param chosenRuleSet If not null, just show this set
+
+	@return The table, which contains, for each relevant rule: the rule name; description; the name of the dynamic experiment plan; how many episodes has been played already; whether more episodes can be played.
      */
     private String buildPartB(String[] modsLong, String[] hm,  final Mode z,
 			      HashSet<String> knownRuleSetNames, String chosenRuleSet ) throws Exception {
@@ -307,17 +384,12 @@ public class LaunchRulesBase      extends ResultsBase  {
 	    // make this call in order to have an exception thrown if
 	    // the file does not exist or has bad content	   
 	    RuleSet ruleSet = AllRuleSets.obtain(r);
-	
-	    //File f = new File(r + Files.RULES_EXT);
-	    //if (!f.exists()) {
-	    //	throw new IOException("Rule set file '" + f + "' does not exist");
-	    //}
-				 
+					 
 	    allRuleNames = new String[]{ r };
 	} else {	    
 	    allRuleNames = Files.listAllRuleSetsInTree(z.name());
 	}
-	
+
 
 	for(String r:  allRuleNames) {
 	    
@@ -330,7 +402,8 @@ public class LaunchRulesBase      extends ResultsBase  {
 	    
 	    if (knownRuleSetNames.contains(r)) {
 		cells.add( fm.wrap("td","colspan="+modsLong.length, "See Part A"));
-	    }  else {		
+	    }  else {
+		
 		for(String mod: modsLong) {
 		    String exp = "R:" + r + ":"+mod;
 		    cells.add( mkCell(exp));
@@ -338,9 +411,39 @@ public class LaunchRulesBase      extends ResultsBase  {
 	    }
 	    rows.add(fm.tr(String.join("",cells)));
 	}
+
 	
 	text += fm.table( "border=\"1\"", rows);
 	return text;
+   }
+
+    /** Used for the Android app */
+    private static RuleInfo[] buildPartBSimplified(HashMap<String,Vector<PlayerInfo>> allPlayers, String[] modsLong, final Mode z) throws Exception {
+	    
+	    
+	String[] allRuleNames = Files.listAllRuleSetsInTree(z.name());
+	
+	//----  for vri, the assumption is that we only need it
+	//---- if there is just 1 column (modsLong.length==1)
+	Vector<RuleInfo> vri = new Vector<>();
+
+	for(String r:  allRuleNames) {
+	    
+	    RuleSet ruleSet = AllRuleSets.obtain(r);
+
+	    RuleInfo ri=new RuleInfo();
+	    ri.name = r;
+	    ri.description=ruleSet.description;
+	    ri.display=ruleSet.display;
+	    
+	    for(String mod: modsLong) {
+		ri.exp = "R:" + r + ":"+mod;
+		ri.mkCellSimplified(allPlayers);
+	    }
+	    vri.add(ri);
+	}
+
+	return vri.toArray(new RuleInfo[0]);
    }
     
     /** Builds Part A and Part B tables 
@@ -377,5 +480,33 @@ public class LaunchRulesBase      extends ResultsBase  {
 	}	
     }    
 
+    /** The list of rule sets to be displayed in the Android app */
+    static public  class AndroidRuleInfoReport extends ResponseBase {
+	RuleInfo[] ruleInfo=null;
+	public RuleInfo[] getRuleInfo() { return ruleInfo; }
+	@XmlElement
+	public void setRuleInfo(RuleInfo[] _ruleInfo) { ruleInfo = _ruleInfo; }
+	
+	public AndroidRuleInfoReport(int uid) {
 
+	    File launchFile = Files.getLaunchFileAPP();
+	    
+	    if (!launchFile.exists()) {
+		hasError("The control file " + launchFile + " does not exist on the server");
+		return;
+	    }
+	
+	    EntityManager em = Main.getNewEM();
+	    try {
+		HashMap<String,Vector<PlayerInfo>> allPlayers = findPlayers(em, uid);
+		String[] modsLong =  {"APP/APP-no-feedback"};
+		ruleInfo = buildPartBSimplified(allPlayers, modsLong, Mode.CGS);
+	    } catch(Exception ex) {
+		hasError(ex.toString());
+	    } finally {
+		try { em.close();} catch(Exception ex) {}
+	    }	
+	}    
+    }
+    
 }
