@@ -51,7 +51,7 @@
       {"error":false,"newlyRegistered":false,"user":{"date":"2021-10-12T01:55:21Z[UTC]","email":"vmenkov@gmail.com","id":3,"idCode":"user-5L54KP","nickname":"V Menkov Test 1"}}
       </tt>
 
-<li>GET <strong><tt>/findPlans</tt></strong>: for use in Android app only. This call should be used once you have the repeat user ID (obtained by the initial /registerUser call, and stored since). Shows the dynamic experiment plans offered to this Android app user, so that the app could build a display similar to what the same user would see at <a href="launch/launch-rules-cgs.jsp">sample rules launch page for CGS users</a>.
+<li><a name="findPlans">GET <strong><tt>/findPlans</tt></strong></a>: for use in Android app only. This call should be used once you have the repeat user ID (obtained by the initial /registerUser call, and stored since). Shows the dynamic experiment plans offered to this Android app user, so that the app could build a display similar to what the same user would see at <a href="launch/launch-rules-cgs.jsp">sample rules launch page for CGS users</a>.
 
         <form method="get" action="game-data/GameService2/findPlans"
 	      enctype="application/x-www-form-urlencoded">
@@ -86,6 +86,8 @@
 
       <li>playerId: this is only supplied for rule sets for which this player has already played some episodes. If this field is present, send it as ZZZ in the  <tt>/player?uid=XXX&amp;exp=YYY&amp;playerId=ZZZ</tt> call to be made if the user clicks this rule set's "PLAY MORE" button. 
     </ul>
+
+    If you are curious where the data come from, see the <a href="launch/launch-setup.html#Android">Launch Page Setup Guide</a>.
       
     <li>POST <strong><tt>/player:</tt> Start a player's interaction with the system, and obtain a randomly selected trial list for this player</strong>. 
   <form method="post" action="game-data/GameService2/player"

@@ -5,7 +5,7 @@
 <body>
 <h1>How to set up APP and MLC launch pages: instructions for the experiment manager</h1>
 
-   <p align="center"><em>Updated 2022-05-24 for Game Server ver. 4.002</em></p>
+   <p align="center"><em>Updated 2023-01-26 for Game Server ver. 6.008</em></p>
 
 <p>This document helps the experiment manager to set up the "launch pages" for the APP and MLC users.
 
@@ -34,9 +34,13 @@ Either way, every experiment plan you include in the Part A table should contain
 
 <h3>Part B: "naked" rule sets</h3>
 
-<p>The <strong>Part B table</strong> is generated directly based on the rule sets you have provided. You need to place those rules set files into <tt>rules/APP</tt> (or anywhere in the directory tree under that directory). 
+<p>The <strong>Part B table</strong> is generated directly based on the rule sets you have provided. There are 2 ways to specify which rule sets are displayed:
+  <ul>
+    <li>You can create a Part B launch file, <tt>launch/launch-app-b.csv</tt>. This is a 2-column CSV file. The first column should have the rule set name (e.g. <tt>APP/foo</tt>, which will refer to the rule set file <tt>APP/foo.txt</tt> under the main rule directory); the second column may be left blank, or it can have a rule description in it. This description is ignored for the web launch pages though. If this file is present, only rule sets from this list will be displayed. Thus having this launch file is convenient if you want to add and remove rule sets to/from the display list at will.
+    <li>If the Part B launch file does not exist, the server will use all rule sets described by rule set files placed by you  into <tt>rules/APP</tt> (or anywhere in the directory tree under that directory).
+  </ul>
 
-<p>If any of the rule set files in the <tt>rules/APP</tt> directory tree is already used in part A (because it's referenced in an experiment plan that appears in this part), it will be ignored by the server in part B, in order to avoid repetition (and also to avoid  presenting such a rule set without its proper custom-designed trial list file, and thus possibly failing to supply some parameters necessary for that rule set).
+<p>If any of the rule sets listed in the Part B launch file (or found in the <tt>rules/APP</tt> directory tree) is already used in part A (because it's referenced in an experiment plan that appears in this part), it will be ignored by the server in part B, in order to avoid repetition (and also to avoid  presenting such a rule set without its proper custom-designed trial list file, and thus possibly failing to supply some parameters necessary for that rule set).
 
 <p>The columns of the table correspond to "long modifier files" from <tt>modifers/APP</tt>; each of those files contains all columns that one would normally find in a "simple" trial list file (one that only uses legacy shapes and legacy colors), with the exception of the ruleSet column. For each table cell, the game server will dynamically create a trial list based on the relevant rule set and the relevant  modifier file. (This is referred to as an "R:" type dynamic experiment plan).  For example, if you have a rule set named <tt>APP/foo</tt>, the dynamic plans will have names such as <tt>R:APP/foo:APP/APP-no-feedback</tt>
 
@@ -45,6 +49,22 @@ Either way, every experiment plan you include in the Part A table should contain
 
 <P>For the <a href="index.jsp">MLC launch page</a>, the setup rules are very similar to those for the APP launch page. Just replace <tt>APP</tt> with <tt>MLC</tt> and  <tt>app</tt> with <tt>mlc</tt> in all directory and file names. (Except for the files and directories for the modifier files; for the moment, we use the APP modifiers for MLC too).
 
+  <h2>Setting up the CGS launch page</h2>
+
+<p>There is also a smaller
+  <a href="launch-rules-cgs.jsp">similar launch page</a> set up for the people interested in the Captive Game Server (CGS). We call it the CGS launch page, although of course the page itself has nothing whatsoever to do with the CGS.  The setup is similar to that of the APP launch page, except that the CGS launch page only has Part B, and no Part A.
+  
+  <h2><a name="Android">Setting up the rule list for the Andorid app</a></h2>
+
+<p>The Android app will display the same rule sets (technically, dynamic experiment plans based on rule sets) that show in the CGS launch page. (The Android app requests the list of these rule sets from the server by the   <a href="../game-api-2.html#findPlans">/findPlans</a> API call).
+
+<p>The preferred way to set up this list is by editing the Part B launch file in the directory <tt>launch/launch-cgs-b.csv</tt> under the main game data directory. (Use the usual SOP for editing experiment control files). This is a 2-column CSV file. The first column should have the rule set name (e.g. <tt>CGS/foo</tt>, which will refer to the rule set file <tt>CGS/foo.txt</tt> under the main rule directory); the second column may be left blank, or it can have a rule description in it. If the desription is given, it will be displayed in the Android app; so you can use a short or somewhat cryptic phrase or nickname here.
+
+<p>If the description field is blank for a particular rule set, the server will send to the Android app the description that you provide in the line
+  <pre>#Display: <em>some text</em></pre>
+  in the rule set file itself.
+    
+  <p>If the Part B launch file does not exist, the server will use all rule sets described by rule set files placed by you  into <tt>rules/CGS</tt> (or anywhere in the directory tree under that directory). This approach is not recommended though, as it will make it impossible for you to cleanly remove existing rule set files. (If you remove a rule set file, you will make it impossible subsequent data processing of experimental results for players who played that rule set).
 
 </body>
 </html>
