@@ -63,8 +63,7 @@ public class LaunchRules      extends LaunchRulesBase  {
     
 
 	
-	File launchFile = Files.getLaunchFileAPP();
-	buildTable(modsShort, modsLong, hm, mode, launchFile, chosenRuleSet);
+	buildTable(modsShort, modsLong, hm, mode,  chosenRuleSet);
     }
 
 

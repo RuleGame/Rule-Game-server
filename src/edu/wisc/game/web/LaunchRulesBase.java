@@ -190,23 +190,10 @@ public class LaunchRulesBase      extends ResultsBase  {
 	return String.join("<br>",v);
     }
 
-    /*
-    protected HashMap<String, String> readPlanDescriptions() {
-	File launchFile = Files.getLaunchFile();
-	if (!launchFile.exists()) throw new IOException("The control file " + launchFile + " does not exist on the server");;
-	CsvData csv = new CsvData(launchFile, true, false, new int[] {2});	
-	for(CsvData.LineEntry _e: csv.entries) {
-	    CsvData.BasicLineEntry e= (CsvData.BasicLineEntry)_e;
-	    String plan = e.getKey();
-	    String descr = e.getCol(1);
-	}
-    }
-    */
-    
     /** @param launchList List from a CSV file in the launch directory
 	@param  allPlanNames List of plan directories from APP
 	@param csvPlanDescriptions Output paramter */
-    private String[] mergePlanLists( CsvData launchList, String[] allPlanNames,
+    private static String[] mergePlanLists( CsvData launchList, String[] allPlanNames,
 				     HashMap<String,String> csvPlanDescriptions
 				     ) {
 	if (launchList==null) return  allPlanNames;
@@ -229,11 +216,12 @@ public class LaunchRulesBase      extends ResultsBase  {
 	
        @param knownRuleSetNames Output parameter: here the rule sets used in Part A will be put, so that we won't use them again in Part B.
     */
-    private String buildPartA(String[] modsShort,   String[] hm,  final Mode z, File launchFile,   HashSet<String> knownRuleSetNames ) throws Exception {
+    private String buildPartA(String[] modsShort, String[] hm, final Mode z,
+			      File launchFile, HashSet<String> knownRuleSetNames ) throws Exception {
 
-	CsvData launchList = null;	
+	CsvData launchList = null;
 	try {
-	    launchList = new CsvData(launchFile, true, false, new int[] {2});	
+	    if (launchFile!=null) launchList = new CsvData(launchFile, true, false, new int[] {2});	
 	} catch(Exception ex) {
 	    infomsg += "[Ignoring the control file "+launchFile + " due to an error: " + ex.getMessage()+"]";
 	}
@@ -346,10 +334,45 @@ public class LaunchRulesBase      extends ResultsBase  {
 
     }
 
+
+    /** Obtains the list of rules to display in the Part B table (or in the Android app)
+	@param csvRuleDescriptions - output parameter
+     */
+    private static String[] getRulesForPartB(Mode z, File launchFile, String chosenRuleSet, HashMap<String, String> csvRuleDescriptions )
+    	throws Exception
+    {
+	CsvData launchList = null;
+	try {
+	    if (launchFile!=null && launchFile.exists()) launchList = new CsvData(launchFile, true, false, new int[] {2});	
+	} catch(Exception ex) {
+	    //infomsg += "[Ignoring the control file "+launchFile + " due to an error: " + ex.getMessage()+"]";
+	    String msg = "[Ignoring the Part B control file "+launchFile + " due to an error: " + ex.getMessage()+"]";
+	    System.err.println(msg);
+	    throw new IllegalArgumentException(msg);
+	}
+
+	String[] allRuleNames;
+
+	if ( chosenRuleSet!=null ) {
+	    String r =  z.name() +  File.separator + chosenRuleSet;
+	    // make this call in order to have an exception thrown if
+	    // the file does not exist or has bad content	   
+	    RuleSet ruleSet = AllRuleSets.obtain(r);
+					 
+	    allRuleNames = new String[]{ r };
+	} else if (launchList!=null) {
+	    allRuleNames = mergePlanLists( launchList,  new String[0],
+					   csvRuleDescriptions);		
+	} else {	    
+	    allRuleNames = Files.listAllRuleSetsInTree(z.name());
+	}
+	return allRuleNames;
+    }
     
     /** Builds the Part B table. Here, the rule set files are the base, and 
 	R:-type dynamic plans are created.  (This is the only table that's
-	needed, for example, for the CGS sample page)
+	needed, for example, for the CGS sample page).
+
 
 	@param modsLong The modifiers for the columns of the table to produce
 	@param hm The display names of the columns
@@ -362,7 +385,10 @@ public class LaunchRulesBase      extends ResultsBase  {
 	@return The table, which contains, for each relevant rule: the rule name; description; the name of the dynamic experiment plan; how many episodes has been played already; whether more episodes can be played.
      */
     private String buildPartB(String[] modsLong, String[] hm,  final Mode z,
+			      File launchFile, 
 			      HashSet<String> knownRuleSetNames, String chosenRuleSet ) throws Exception {
+
+
 	Vector<String> rows = new Vector<>();
 	Vector<String> cells = new Vector<>();
 	    
@@ -375,21 +401,10 @@ public class LaunchRulesBase      extends ResultsBase  {
 
 	for(String h: hm) cells.add(fm.th(h));	    
 	rows.add(fm.tr(String.join("",cells)));
-	
 	    
-	String[] allRuleNames;
-
-	if ( chosenRuleSet!=null ) {
-	    String r =  z.name() +  File.separator + chosenRuleSet;
-	    // make this call in order to have an exception thrown if
-	    // the file does not exist or has bad content	   
-	    RuleSet ruleSet = AllRuleSets.obtain(r);
-					 
-	    allRuleNames = new String[]{ r };
-	} else {	    
-	    allRuleNames = Files.listAllRuleSetsInTree(z.name());
-	}
-
+	HashMap<String, String> csvRuleDescriptions = new HashMap<>();
+	String[] allRuleNames = getRulesForPartB( z, launchFile, chosenRuleSet,
+						  csvRuleDescriptions );
 
 	for(String r:  allRuleNames) {
 	    
@@ -418,10 +433,13 @@ public class LaunchRulesBase      extends ResultsBase  {
    }
 
     /** Used for the Android app */
-    private static RuleInfo[] buildPartBSimplified(HashMap<String,Vector<PlayerInfo>> allPlayers, String[] modsLong, final Mode z) throws Exception {
-	    
-	    
-	String[] allRuleNames = Files.listAllRuleSetsInTree(z.name());
+    private static RuleInfo[] buildPartBSimplified(HashMap<String,Vector<PlayerInfo>> allPlayers, String[] modsLong, final Mode z, File launchFile) throws Exception {
+
+
+	HashMap<String, String> csvRuleDescriptions = new HashMap<>();
+	String[] allRuleNames = getRulesForPartB( z, launchFile, null,
+						  csvRuleDescriptions );
+
 	
 	//----  for vri, the assumption is that we only need it
 	//---- if there is just 1 column (modsLong.length==1)
@@ -434,7 +452,8 @@ public class LaunchRulesBase      extends ResultsBase  {
 	    RuleInfo ri=new RuleInfo();
 	    ri.name = r;
 	    ri.description=ruleSet.description;
-	    ri.display=ruleSet.display;
+	    String d =  csvRuleDescriptions.get(r);	    
+	    ri.display= (d!=null && d.trim().length()>0)? d.trim(): ruleSet.display;
 	    
 	    for(String mod: modsLong) {
 		ri.exp = "R:" + r + ":"+mod;
@@ -452,13 +471,26 @@ public class LaunchRulesBase      extends ResultsBase  {
 	@param modsLong Modifiers for Part B. If null, skip this part.
 	@param chosenRuleSet If not null, we just show this rule set in Part B table
     */
-    protected void buildTable(String[] modsShort, String[] modsLong,  	    String[] hm,
-			      final Mode z, File launchFile, String chosenRuleSet) {
+    protected void buildTable(String[] modsShort, String[] modsLong, String[] hm,
+			      final Mode z, String chosenRuleSet) {
 
-	if (!launchFile.exists()) {
-	    infomsg += " [The control file " + launchFile + " does not exist on the server]";
+	File launchFileA = Files.getLaunchFileA(z);
+
+	if (!launchFileA.exists()) {
+	    infomsg += " [The part A control file " + launchFileA + " does not exist on the server]";
+	    launchFileA= null;
+	}
+	
+
+	File launchFileB = Files.getLaunchFileB(z);
+
+	if (!launchFileB.exists()) {
+	    infomsg += " [The part B control file " + launchFileB + " does not exist on the server]";
+	    launchFileB= null;
 	}
 
+
+	
 	// The rule sets used in Part A. We won't use them again in Part B
 	HashSet<String> knownRuleSetNames = new HashSet<>();
 	
@@ -468,9 +500,9 @@ public class LaunchRulesBase      extends ResultsBase  {
 	    allPlayers = findPlayers( em, Integer.parseInt(uid));
 
 
-	    if (modsShort!=null)   tableText +=  buildPartA(modsShort, hm, z, launchFile, knownRuleSetNames);
+	    if (modsShort!=null)   tableText +=  buildPartA(modsShort, hm, z, launchFileA, knownRuleSetNames);
 
-	    if (modsLong!=null)   tableText +=  buildPartB(modsLong, hm, z, knownRuleSetNames, chosenRuleSet);
+	    if (modsLong!=null)   tableText +=  buildPartB(modsLong, hm, z, launchFileB, knownRuleSetNames, chosenRuleSet);
 
 
 	} catch(Exception ex) {
@@ -489,18 +521,29 @@ public class LaunchRulesBase      extends ResultsBase  {
 	
 	public AndroidRuleInfoReport(int uid) {
 
+	    /*
 	    File launchFile = Files.getLaunchFileAPP();
 	    
 	    if (!launchFile.exists()) {
 		hasError("The control file " + launchFile + " does not exist on the server");
 		return;
 	    }
-	
+	    */
+
+	    File launchFileB = Files.getLaunchFileB(Mode.CGS);
+
+	    /*
+	    if (!launchFileB.exists()) {
+		infomsg += " [The part B control file " + launchFileB + " does not exist on the server]";
+		launchFileB= null;
+	    }
+	    */
+	    
 	    EntityManager em = Main.getNewEM();
 	    try {
 		HashMap<String,Vector<PlayerInfo>> allPlayers = findPlayers(em, uid);
 		String[] modsLong =  {"APP/APP-no-feedback"};
-		ruleInfo = buildPartBSimplified(allPlayers, modsLong, Mode.CGS);
+		ruleInfo = buildPartBSimplified(allPlayers, modsLong, Mode.CGS, launchFileB);
 	    } catch(Exception ex) {
 		hasError(ex.toString());
 	    } finally {

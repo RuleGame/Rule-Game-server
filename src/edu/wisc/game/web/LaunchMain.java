@@ -9,12 +9,9 @@ import javax.persistence.*;
 
 
 import edu.wisc.game.util.*;
-//import edu.wisc.game.reflect.*;
 import edu.wisc.game.sql.*;
-//import edu.wisc.game.engine.*;
 import edu.wisc.game.formatter.*;
 import edu.wisc.game.rest.*;
-//import edu.wisc.game.parser.*;
 
 
 /** As requested by Paul, "Rule Game -- challenge UWisc faculty and staff",
@@ -78,8 +75,7 @@ public class LaunchMain  extends LaunchRulesBase  {
 
 	// As per Paul's request, give them debug mode
 	mustUseDevClient = true;
-	File launchFile = Files.getLaunchFileMLC();
-	buildTable(modsShort, modsLong, hm, Mode.MLC, launchFile, null);
+	buildTable(modsShort, modsLong, hm, Mode.MLC, null);
     }
 
     

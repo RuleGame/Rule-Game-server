@@ -5,6 +5,7 @@ import java.util.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.sql.Piece;
+import edu.wisc.game.web.LaunchRulesBase;
 
 /** Information about the data files the Rule Game web server reads and writes */
 public class Files {
@@ -360,14 +361,19 @@ public class Files {
 	return new File(inputDir, "launch");
     }
 
-    /** The control file for the repeat-user launch page */
-    static public File getLaunchFileAPP() {
-	return new File(launchDir(), "launch-app.csv");
+    /** The control file for the repeat-user launch page
+	@param mode APP, MLC, etc
+     */
+    static public File getLaunchFileA(LaunchRulesBase.Mode mode) {
+	String suffix = mode.toString().toLowerCase();
+	return new File(launchDir(), "launch-"+suffix+".csv");
     }
-    /** The control file for the repeat-user launch page */
-    static public File getLaunchFileMLC() {
-	return new File(launchDir(), "launch-mlc.csv");
+
+    static public File getLaunchFileB(LaunchRulesBase.Mode mode) {
+	String suffix = mode.toString().toLowerCase();
+	return new File(launchDir(), "launch-"+suffix+"-b.csv");
     }
+
 
     public static File modifierFile(String modifierName) throws IOException {
 	if (modifierName==null || modifierName.equals("")) throw new IOException("Modifier name not specified");
