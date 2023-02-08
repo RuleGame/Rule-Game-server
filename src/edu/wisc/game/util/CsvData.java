@@ -74,7 +74,7 @@ public class CsvData {
             
     /** Creates a CsvData object from the content of a CSV file.
 	@param csvFile File to read
-	@param neverHeader If true, we don't expect the input file to connect a header; the file only should have data lines and optional comment lines. If false, we look at the first line of the file to figure if it's a header line or data line or comment line, and process it appropriately.
+	@param noHeader If true, we don't expect the input file to contain a header; the file only should have data lines and optional comment lines. (In reality, of course, the first line may still have header semantics, but it's up to the user of this class to separate and process it). If false, we look at the first line of the file to figure if it's a header line or data line or comment line, and process it appropriately.
 	@param keepComments If true, comment lines from the input file are stored in the object being created; otherwise, they are discarded.
 	@param legalLengths If this is not null, it specifies how many columns the file's lines may contain. For example, {4,6} means that the lines must contain 4 or 6 columns.
      */
@@ -92,38 +92,37 @@ public class CsvData {
 	int errorCnt=0, warnCnt=0;
 	Vector<LineEntry> v = new Vector<LineEntry>();
 	String s= null;
-	boolean isFirst=true;
 	while((s= reader.readLine())!=null) {
+	    n++;
 	    s = s.trim();
 
 	    if (s.equals("")) continue; // ignore blank lines (such as invisible lines of "\r") 
 
-	    if (s.startsWith("#")) {
-		if (keepComments) v.add(new CommentEntry(s.substring(1)));
-		continue; // ignore comment lines
-	    }
-	    	   
-	    if (isFirst) {
-		if (s.length()==0) throw new IllegalInputException("Empty first line in " + csvFile);
-		//boolean isHeader = !neverHeader && isHeaderLine(s);
-		boolean isHeader = !noHeader;
+	    if (n==1 && !noHeader) {
+		if (s.length()==0) throw new IllegalInputException("Empty header line in " + csvFile);
+
+		// regardless of whether there is a '#' or not, interpret
+		// this line as a header
 		
-		isFirst=false;
+		s = s.replaceAll("^#", "");
 		String[] csv = ImportCSV.splitCSV(s);
 		colCnt = csv.length;
 		
 		if (!lengthMatch(colCnt,legalLengths) ) {
 		    throw new IllegalInputException("Unexpected header line or first line in " + csvFile + ". Found " + colCnt);
 		}
-
-		if (isHeader) {
-		    s = s.replaceAll("^#", "");
-		    final int nc = (legalLengths==null? -1 : colCnt);
-		    header = (BasicLineEntry)mkEntry(csv, nc); 
-		    continue;
-		}
+		
+		final int nc = (legalLengths==null? -1 : colCnt);
+		header = (BasicLineEntry)mkEntry(csv, nc);
+		System.out.println("DEBUG: saved header=" + header);
+		continue;
 	    }
 
+	    if (s.startsWith("#")) {
+		if (keepComments) v.add(new CommentEntry(s.substring(1)));
+		continue; // ignore comment lines
+	    }
+	    	   
 
 	    //System.out.println("Line "+(n+1)": " + s);
 	    try {
