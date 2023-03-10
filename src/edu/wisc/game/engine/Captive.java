@@ -52,7 +52,7 @@ public class Captive {
 	line 
 	@param argv The argv array (from the command line or the GAME
 	command in the pipe or socket stream), from which any superfluous 
-	quotes must have already been stripped.
+	quotes must have already been stripped. 
 	@param simpleRuleSetName An output parameter, into which
 	the simplified rule set name (no dir name and no extension)
 	will be put.
@@ -60,7 +60,33 @@ public class Captive {
     static GameGenerator buildGameGenerator(ParseConfig ht, String[] argv//,
 					    // Vector<String> simpleRuleSetName
 					    ) throws IOException,  RuleParseException, ReflectiveOperationException, IllegalInputException{
+	GameGenerator gg = buildGameGenerator(ht, argv);
 
+	String condTrain = ht.getOption("condTrain",null);
+	String condTest = ht.getOption("condTest",null);
+	boolean testing = (condTest!=null);
+	File condFile = null;
+	
+	if (condTrain!=null) {
+	    if (testing) throw new IllegalInputException("Cannot specify condTrain and condTest in the same run. Just choose one initial mode!");
+	    condFile = new File(condTrain);
+	} else if (testing) {
+	    condFile = new File(condTest);
+	}
+		
+	if (condFile!=null) {   
+	    gg.setConditions(testing, AllRuleSets.read(condFile));
+	}
+
+	return gg;
+    }
+
+    /** The inner part of the above */
+    private static GameGenerator buildGameGenerator2(ParseConfig ht, String[] argv//,
+					    // Vector<String> simpleRuleSetName
+					    ) throws IOException,  RuleParseException, ReflectiveOperationException, IllegalInputException{
+
+	
 	long seed = ht.getOptionLong("seed", 0L);
 	//if (seed != 0L) Board.initRandom(seed);
 

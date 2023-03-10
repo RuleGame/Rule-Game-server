@@ -39,8 +39,9 @@ public class PredefinedBoardGameGenerator extends GameGenerator {
 	    
 	Board b = boards[pos];
 	b.scrubDropped();  // wipe out traces of previous use
-	next();
-	return new Game(rules, b);
+	Game game = new Game(rules, b);
+	next(game);
+	return game;
     }
     
     PredefinedBoardGameGenerator(RandomRG _random, String ruleSetName, File boardDir, String modeString) throws  IOException, IllegalInputException, RuleParseException, ReflectiveOperationException {

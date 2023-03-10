@@ -72,5 +72,24 @@ public class Game {
 	//	allImages = _allImages;
     }
 
+    private RuleSet condRules=null;
+    private boolean testing = false;
+    
+    /** For the training/testing restrictions on boards, as introduced in GS 6.010. See email discusion with Paul on 2023-03-08, and captive.html#cond
+     */
+    void setConditions(boolean _testing, RuleSet _condRules) {
+	testing = _testing;
+	condRules = _condRules;
+    }
+
+    /** Checks if the board satisfies any training/testing conditions that
+	may be in effect */
+    boolean boardIsAcceptable(Board board) {
+	if (condRules==null) return true;
+	return true;
+    }
+    
+
+    
     
 }

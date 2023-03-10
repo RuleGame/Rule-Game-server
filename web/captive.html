@@ -5,7 +5,7 @@
   <body>
     <h1>Captive Game Server</h1>
 
-    <div align="center"><em>Updated 2023-01-06 for GS ver 6.002</em></div>
+    <div align="center"><em>Updated 2023-03-09 for GS ver 6.002</em></div>
     
     <h2>Test the Rule Game</h2>
 
@@ -240,6 +240,8 @@ cd ~/captive/game
       </p>
 
       <p>When using ranges, make sure that the upper bound of range of the number of shapes the upper bound of the range of the number of colors do not exceed the lower bound of the range of the number of pieces. Otherwise, the random board generator may be occasionally faced with an impossible task of creating a board which has more distinct colors or shapes than it has pieces!</p>
+
+    <p>When you specify the random boad generation model in this way, the random board generator works in exactly the same way when you provide the parameters for the same <a href="control-flow.html#randomSix">Six-parameter distribution</a> in a trial list file for human player experiments.
       
       <h4>6. Same as the above, but with custom shapes and/or custom colors.</h4>
 
@@ -300,7 +302,49 @@ as the main argument on your command line. Both  <em>ruleSet</em> and <em>modifi
   ./captive-full.sh inputDir=game-data R:MLC/BMK/colOrd_nearby.txt:MLC/BMK/bmk.csv
 </pre>
 
+<h4><a name="cond">9. Train/test: prohibiting or enforcing certain board properties when using the 6-parameter distribution</a></h4>
+		 
+<p><strong>This is a tentative description of a feature to appear in one of the future releases of the CGS. It is subject to changes.</strong>
+		   
+<p>Based on a discussion with Paul on March 8, 2023, a new feature is to be introduced in the CGS starting from version 6.010. It will be possible to run the CGS, with the usual 6-parameter random board generator whose behavior is modified in the following way:
+  <ul>
+    <li>The CGS is aware of whether a given episode is played in the "training mode" or "testing mode".
+    <li>An additional "condition file" is provided, which contains a number of predicated ("conditions") that may apply to game pieces. (E.g. Condition 1 is "the game piece is located in positions 31 or 36"; Condition 2 is "the game piece is red"; Condition 3 is "the game piece is a square").
+    <li>If the episode is played in the training mode, then the board generator ensures that no game piece on the board satisfies any of the specified conditions. (In the above example, the board is guaranteed to have no squares, no red game pieces, and cells no. 31 and no. 36 are guaranteed to be empty).
+    <li>If the episode is played in the testing mode, then  the board generator ensures that at least one game piece on the board satisfies at least one of the specified conditions. (In the above example, the board is guaranteed to either have a square, or a red game pieces, or a game piece in cells no. 31 or no. 36. The board, of course, may satisfy several conditions at once -- e.g. have a black triangle in cell no. 31, and red square somewhere else -- but is not required to do so).
+      </ul>
 
+<p>Note that the sets of the allowed training-mode boards and of the allowed test-mode boards are complementary; in other words, each board that may be generated under the current parameter settings is either a legal training board, or a legal testing board, but it may never be both.
+
+<p><strong>Specifying the conditions</strong>. The conditions are described by the so-called "condition file", whose format (although not semantics) are similar to that of rule set files. (For detailed guide on the rule file syntax, see <a href="syntax.html">rule file syntax in GS 4.*</a>, and how it is <a href="syntax-gs5.html">extended in GS 5.*</a>). For example, the set of three conditions desribed in the example above can be specified by the condition file that looks as follows:
+  <pre>
+    (pos:[31,36])
+    (color:red)
+    (shape:square)
+  </pre>
+Note that you must put one condition per line; thus the above file, with each condition made out of a single atom, prohibits (in the training mode) all red pieces and all squares. If, on the other hand, you have a condition line with multiple atoms, e.g. in the following file with two conditions:
+  <pre>
+    (pos:[31,36]) (shape:circle)
+    (color:red) (shape:[square,triangle])
+  </pre>
+  then you are prohibiting (in the training mode) circles (but no objects of other shapes) in cells no. 31 and 36, and you are prohibiting red squares and red triangles. In the testing mode, all boards will have either at least one circle in cell no. 31 or 36, or at least one red square or red triangle.
+
+<p><strong>Specifying the training or test mode.</strong> To run the CGS starting in the training mode, you need to include <tt>condTrain=<em>conditionFileName.txt</em> on the command line, for example
+    <pre>
+      ./captive-full.sh condTrain=myConditions.txt game-data/rules/farthest.txt 5 1:3 3:4
+    </pre>
+    All boards then will have no game pieces satisfying any of the listed conditions.
+
+    <p>To run the CGS starting in the training mode, you need to include <tt>condTest=<em>conditionFileName.txt</em> on the command line, for example
+    <pre>
+      ./captive-full.sh condTest=myConditions.txt game-data/rules/farthest.txt 5 1:3 3:4
+    </pre>
+    All boards then will have at least one game piece satisfying at least one of the listed conditions.
+
+    <p>If the CGS has been started in the training mode, the ML program can issue the command <tt>MODE test</tt> to switch to the testing mode. It is most convenient to issue this command right before the <tt>NEW</tt> command of your first testing episode. Once the mode has been switched, the CGS will change its behavior accordingly, i.e. will generate boards with some game pieces satisfying some conditions, rather than boards in which no piece satisfies any condition.
+  
+<p><strong>Note:</strong> If you specify conditions that are impossible to fulfill (e.g. prohibiting red and black pieces while requiring that each board contains pieces of at least 3 colors), the CGS won't detect this problem automatically. Instead, it will sit in a tight loop for a while, and then will terminate, with an error message going to its <tt>stderr</tt>. Thus before letting your ML program to play with the CGS using a particularly involved conditions, you may do well by testing the board generation parameters and the condition file, by playing at least one training episode and at least one testing episode from the command ine. (You don't even need to play the episode to the end; just make sure that a board is produced!)
+  
     <h3>Specifying the random generator seed</h3>
 
     <p>
@@ -647,23 +691,39 @@ The second number, the <strong>finish code</strong> reports the current state: 0
 <p>In the standard mode, the status line is followed by a line with the description of the current display, in the same format as in the NEW command. In the brief mode, this line is omitted. You can use the brief mode if your program keeps track of the board itself, and you want to reduce the cost of communication with the CGS.
 
 <p>
-  <pre><strong>EXIT</strong></pre>
+  <pre><strong>MODE train</strong></pre>
+  <pre><strong>MODE test</strong></pre>
 
+  Starting with CGS ver. 6.010, these commands can be used to switch the server between the training mode and the testing mode. (Or back, although that's unlikely to be needed). For the explanation of the training and testing modes, see  <a href="#cond">Example 9. Train/test</a>. As that example indicates, it only makese sense to talk about the training and testing modes when a condition file has been provided to the CGS, so that it actually will behave differently in the two modes.
+
+  <p>Response: <tt>MODE=train</tt> or <tt>MODE=test</tt>, as appropriate, indicating the new mode.
+
+  <p>
+  <pre><strong>MODE</strong></pre>
+
+The <tt>MODE</tt> command with no argument simply reports the current mode, viz. prints  <tt>MODE=train</tt> or <tt>MODE=test</tt>.
+  
+<p>
+  <pre><strong>EXIT</strong></pre>
+Exits the CGS immediately.
+  
 <p>
   <pre><strong>HELP</strong></pre>
-
+Prints some human-readable help info. An ML program is unlikely to ever use this command.
+  
 <p>
   <pre><strong>VERSION</strong></pre>
+  Prints the version number.
   
   <h2>Human-readable output</h2>
 
 <p>In the "full" output mode, human-readable display is printed with each "DISPLAY", "NEW", or "MOVE" command, as a number of comment lines. In the other modes, the same display is available with the "DISPLAYFULL" command.</p>
 
-<p>The following notation is used: O, #, T, * are circles, squares, triangle, and stars, respectively. The color is either not marked at all, or is expressed by a lowercase letter (bLACK, yELLOW, rED, and g for BLUE).  Dots are empty cells. Round parentheses () surround pieces that can be moved presently. Square bracket surround the cell to which the last MOVE was applied; the cell will be empty [.] if the move was successful (the piece has been removed), or non-empty, e.g. [O], if the move was rejected.</p>
+<p>The following "ASCII art" notation is used: O, #, T, * are circles, squares, triangle, and stars, respectively. The color is either not marked at all, or is expressed by a lowercase letter (bLACK, yELLOW, rED, and g for BLUE).  Dots are empty cells. Round parentheses () surround pieces that can be moved presently. Square bracket surround the cell to which the last MOVE was applied; the cell will be empty [.] if the move was successful (the piece has been removed), or non-empty, e.g. [O], if the move was rejected.</p>
 
     <h2>Logging</h2>
 
-    <p>Until ver 5.003, there was no logging. The ML program was to count its games, and to record displays (e.g. the initial boards) if it so desires.
+    <p>Until ver 5.003, there was no logging. The ML program was to count its games, and to record displays (e.g. the initial boards) and the playing statistics if it so desired.
 
     <p>Some elementary logging (one line per episode) was introduced in CGS 5.003; see above.
 

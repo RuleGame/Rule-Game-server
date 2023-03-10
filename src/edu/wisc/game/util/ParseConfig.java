@@ -115,7 +115,8 @@ public final class ParseConfig extends Hashtable<String,Object> {
 			value = token.sval;
 		    } else if (token.ttype == StreamTokenizer.TT_NUMBER) {
 			// A number
-			value = new Double(token.nval);
+			//value = new Double(token.nval);
+			value = token.nval;
 		    } else {
 			System.err.println("Syntax error in config file: unexpected value token type " + token.ttype);
 			continue;
@@ -249,15 +250,14 @@ public final class ParseConfig extends Hashtable<String,Object> {
 		if (obj != null) {
 			if (obj instanceof String) {
 				String v = (String) obj;
-				value = (new Boolean(v)).booleanValue();
+				value = Boolean.parseBoolean(v);
 			} else {
 				String msg = "Property `" + aName + "' read from the config file " + "is not a boolean! Ignored.";
 				System.err.println(msg);
 			}
 		}
 		String property = getPropertySafe(prefix + aName);
-		if (property != null)
-			value = (new Boolean(property)).booleanValue();
+		if (property != null) value = Boolean.parseBoolean(property);
 		return value;
 	}
 
@@ -382,17 +382,7 @@ public final class ParseConfig extends Hashtable<String,Object> {
 
 	    if (m.matches()) {
 		String key=m.group(1), text=m.group(2);
-		Object obj = text;
-		try {
-		    Pattern p1 = Pattern.compile("([0-9]+)");
-		    Pattern p2 = Pattern.compile("([0-9]*)\\.([0-9]+)");
-		    if (p1.matcher(text).matches()) {
-			obj = new Long(text);
-		    } else if (p2.matcher(text).matches()) {
-			obj = new Double(text);
-		    } 
-                } catch(Exception ex) {}
-		put(key, obj);
+		put(key, text2obj(text));
 	    } else {
 		v.add(s);
 	    }
@@ -400,7 +390,19 @@ public final class ParseConfig extends Hashtable<String,Object> {
 	return v.toArray(new String[0]);
     }
     
-
+    private Object text2obj(String text) {
+	try {
+	    final Pattern p1 = Pattern.compile("([0-9]+)");
+	    final Pattern p2 = Pattern.compile("([0-9]*)\\.([0-9]+)");
+	    if (p1.matcher(text).matches()) {
+		return new Long(text);
+	    } else if (p2.matcher(text).matches()) {
+		return new Double(text);
+	    } 
+	} catch(Exception ex) {}
+	return text;
+    }
+    
 	/** 
 	 * Purely for testing.
 	 */

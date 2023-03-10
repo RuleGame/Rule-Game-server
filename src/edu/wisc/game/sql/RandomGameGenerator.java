@@ -61,7 +61,7 @@ public class RandomGameGenerator extends GameGenerator {
 	int nColors = random.getInRange(nColorsRange);
 
 	Game game = new Game(random, rules, nPieces, nShapes, nColors,allShapes,allColors);
-	next();
+	next(game);
 	return game;
     }
 
@@ -90,7 +90,6 @@ public class RandomGameGenerator extends GameGenerator {
 	return z;
     }
     
-
 
     /** Builds a RandomGameGenerator from command-line arguments */
     public static RandomGameGenerator buildFromArgv(RandomRG _random, File f, ParseConfig ht, String[] argv, int ja) throws IOException, RuleParseException {

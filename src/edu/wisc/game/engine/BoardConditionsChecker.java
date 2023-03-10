@@ -1,0 +1,92 @@
+package edu.wisc.game.engine;
+
+import java.io.*;
+import java.util.*;
+import java.text.*;
+
+import jakarta.json.*;
+import javax.persistence.*;
+
+import edu.wisc.game.util.*;
+import edu.wisc.game.reflect.*;
+//import edu.wisc.game.engine.*;
+import edu.wisc.game.sql.*;
+import edu.wisc.game.parser.*;
+import edu.wisc.game.sql.Board.Pos;
+import edu.wisc.game.rest.ColorMap;
+import edu.wisc.game.engine.RuleSet.BucketSelector;
+//import edu.wisc.game.formatter.*;
+
+//import jakarta.xml.bind.annotation.XmlElement; 
+
+//import edu.wisc.game.sql.EpisodeMemory.BucketVarMap;
+import edu.wisc.game.sql.EpisodeMemory.BucketVarMap2;
+
+/** For the training/testing restrictions on boards, as introduced in GS 6.010. See email discusion with Paul on 2023-03-08, and captive.html#cond
+ */
+
+public class BoardConditionsChecker {
+
+    /** In the training mode, the board is acceptable if no game piece
+	satisfies any condition (i.e. is accepted by any row). In the
+	testing mode, the board is acceptable if at least one piece
+	does.
+
+	@param board The board to test
+	@param rules The conditions, formatted as a rule set. Each row of the rule set represents one condition. 
+    */
+	
+    static boolean boardIsAcceptable(Board board, RuleSet rules, boolean testing) {
+
+	Piece[] pieces = board.toPieceList();
+	
+	EligibilityForOrders eligibleForEachOrder = new EligibilityForOrders(rules, Episode.onBoard(pieces));
+
+	int acceptedPiecesCnt=0;
+	for(int pos=0; pos<pieces.length; pos++) {
+	    if (pieceIsAcceptedByHowManyRows(pieces[pos], rules, eligibleForEachOrder)>0) {
+		acceptedPiecesCnt ++;
+	    }
+	}
+
+	return testing? acceptedPiecesCnt>0 : acceptedPiecesCnt==0;
+    }
+
+
+    /** How many rows will accept the specified game piece?
+
+	We do the tests NBU =4) times, with different destination
+	buckets. Normally, this should not be necessary, as the
+	training/testing conditions are not likely to refer to bucket
+	numbers. But if for some reasons they do (e.g. because the
+	experiment designer just reused a rule set file for his conditions),
+	the semantics is, "a piece is considered 'accepted by the row'
+	if a move to any bucket is allowed".
+     */
+    private static int pieceIsAcceptedByHowManyRows(Piece p, RuleSet rules, EligibilityForOrders eligibleForEachOrder) {
+	 EpisodeMemory memory = new EpisodeMemory();
+	 int acceptingRowCnt = 0;
+	 
+	 for(RuleSet.Row row: rules.rows) {
+	    Pos pos = p.pos();
+	    boolean rowAccepts = false;
+	    final int NBU = Board.buckets.length; // 4
+	    for(int bucketNo=0; bucketNo<NBU && !rowAccepts; bucketNo++) {
+		BucketVarMap2  varMap = memory.new BucketVarMap2(p, bucketNo);
+			    
+		for(int j=0; j<row.size() && !rowAccepts; j++) {
+		    RuleSet.Atom atom = row.get(j);
+		    if (!atom.acceptsColorShapeAndProperties(p, varMap)) continue;
+		    if (!atom.plist.allowsPicking(pos.num(), eligibleForEachOrder)) continue;
+		    boolean can = atom.bucketList.destinationAllowed( varMap, bucketNo);
+		    if (can) rowAccepts = true;
+		}
+	    }
+	    if (rowAccepts) acceptingRowCnt++;
+	 }
+	 return  acceptingRowCnt++;
+    }
+    
+
+    
+}

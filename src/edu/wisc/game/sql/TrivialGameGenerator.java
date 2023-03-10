@@ -20,7 +20,7 @@ public class TrivialGameGenerator extends GameGenerator {
 
     /** One more game... always the same! */
     public Game nextGame() {
-	next();
+	next(sameGame);
 	return sameGame;
     }
 

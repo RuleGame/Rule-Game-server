@@ -17,7 +17,7 @@ import edu.wisc.game.parser.Expression.PropMap;
 /** Auxiliary data structures for the Episode class, keeping track of
     "memory variables".
 */
-class EpisodeMemory {
+public class EpisodeMemory {
 
     /** The last bucket to receieve a piece */
     private Integer pp =null;
@@ -132,8 +132,8 @@ class EpisodeMemory {
 	q.bucket -- the piece most recently moved into the same bucket as being tried now
 	
      */
-    class BucketVarMap2 extends Expression.VarMap2 {
-	BucketVarMap2(Piece p, int bucketNo)  {
+    public class BucketVarMap2 extends Expression.VarMap2 {
+	public BucketVarMap2(Piece p, int bucketNo)  {
 	    if (pp!=null) pu(BucketSelector.p, pp);
 
 	    PropMap thisPiece = p.toPropMap();

@@ -49,7 +49,7 @@ public class RandomImageGameGenerator extends GameGenerator {
 	int nPieces = random.getInRange(nPiecesRange);
 
 	Game game = new Game(random, rules, nPieces,  imageGenerator);
-	next();
+	next(game);
 	return game;
     }
 

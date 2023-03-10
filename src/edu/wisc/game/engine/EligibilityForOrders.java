@@ -6,8 +6,10 @@ import java.util.*;
 import edu.wisc.game.util.*;
 
 /** At present, which pieces are eligible for picking under each of
-    the existing orders? This structure needs to be updated every time
-    a piece is removed from the board.
+    the existing orders? (For example, which pieces are presently in
+    the topmost occupied row? Which piece is the first in the English
+    reading order?) This structure needs to be updated every time a
+    piece is removed from the board.
 
     <p>
     This is an auxiliary class for edu.wisc.game.sql.Episode.

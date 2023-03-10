@@ -418,5 +418,16 @@ public class Board {
 	    p.setDropped(null);
 	}
     }
+
+    public Piece[] toPieceList() {
+	Piece[] pieces = new Piece[N*N + 1];
+	for(Piece p: getValue()) {
+	    Pos pos = p.pos();
+	    pieces[pos.num()] = p;
+	}
+	return pieces;
+    }
+
+
     
 }

@@ -37,9 +37,13 @@ abstract public class GameGenerator {
     abstract public Game nextGame();
 
     
-    /** Generates a game with a random initial board, in accordance with this 
-	generator's parameters */
-    void next() {
+    /** This must be called by every "concrete" game generator after it has created a Game object. It attaches any conditions to the Game object, and adjusts the "produced games" counter.
+
+	@param g The Game object that has just been created
+     */
+
+    void next(Game game) {
+	game.setConditions(testing, condRules);       
 	produceCnt++;
     }
 
@@ -96,6 +100,15 @@ abstract public class GameGenerator {
 
 	return gg;
     }
-	   
+
+    RuleSet condRules=null;
+    boolean testing = false;
+    
+    /** For the training/testing restrictions on boards, as introduced in GS 6.010. See email discusion with Paul on 2023-03-08, and captive.html#cond
+     */
+    public void setConditions(boolean _testing, RuleSet _condRules) {
+	testing = _testing;
+	condRules = _condRules;
+    }
     
 }

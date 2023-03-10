@@ -103,7 +103,7 @@ public class Episode {
 	[1..N*N] are used), with nulls for empty cells and non-nulls
 	for positions where pieces currently are. */
     @Transient
-    private Piece[] pieces = new Piece[Board.N*Board.N + 1];
+    private Piece[] pieces = null;
     /** Pieces are moved into this array once they are removed from the board.
 	This is only shown in web UI.
      */
@@ -563,12 +563,14 @@ public class Episode {
 	    } else { 
 		b = new Board(game.random,  game.randomObjCnt, game.nShapes, game.nColors, game.allShapes, game.allColors);
 	    }
+
+	    //boolean boardIsAcceptable(Board board, boolean testing) {
+
+	    
 	}
+
 	nPiecesStart = b.getValue().size();
-	for(Piece p: b.getValue()) {
-	    Pos pos = p.pos();
-	    pieces[pos.num()] = p;
-	}
+	pieces = b.toPieceList();
 	doPrep();
 	
     }
@@ -646,8 +648,12 @@ public class Episode {
     }
 
     /** Creates a bit set with bits set in the positions where there are
-	pieces */
+	pieces. The positions are, as usual, numbered 1 thru N^2.  */
     private BitSet onBoard() {
+	return onBoard(pieces);
+    }
+    
+    static public BitSet onBoard(Piece pieces[]) {
 	BitSet onBoard = new BitSet(Board.N*Board.N+1);
 	for(int i=0; i<pieces.length; i++) {
 	    if (pieces[i]!=null) onBoard.set(i);
