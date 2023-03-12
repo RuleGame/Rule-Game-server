@@ -123,7 +123,7 @@ public class Comparandum implements Comparable<Comparandum> {
 	int n = 0;
 	for(MwSeries ser: res) {
 	    String key  = ser.getKey( precMode);
-	    System.out.println("DEBUG: mkHumanComparanda: key=" + key);
+	    //System.out.println("DEBUG: mkHumanComparanda: key=" + key);
 	    if (key==null) continue;
 	    boolean isNew = (keysOrder.get(key)==null);
 	    
@@ -138,7 +138,7 @@ public class Comparandum implements Comparable<Comparandum> {
 	    }
 	}
 
-	System.out.println("DEBUG: mkHumanComparanda: from "+res.length+" rows, identified " + keys.size() + " keys: " + String.join("; ", keys));
+	//System.out.println("DEBUG: mkHumanComparanda: from "+res.length+" rows, identified " + keys.size() + " keys: " + String.join("; ", keys));
 
 	// All entries (human series) separated by key (rule set name)
 	MwSeries [][]w = new MwSeries[n][];

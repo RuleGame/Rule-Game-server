@@ -419,6 +419,8 @@ public class Board {
 	}
     }
 
+    /** Creates an array with N*N+1 elements, where the element in position
+	j represents the game piece, if any, in cell No. j. */
     public Piece[] toPieceList() {
 	Piece[] pieces = new Piece[N*N + 1];
 	for(Piece p: getValue()) {

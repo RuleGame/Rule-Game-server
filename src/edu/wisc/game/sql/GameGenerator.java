@@ -9,7 +9,7 @@ import edu.wisc.game.util.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.rest.ParaSet;
-
+import edu.wisc.game.sql.Episode.CODE;
 
 /** This class generates random games (with the same rule set and
     randomly created initial boards) based on the provided parameter
@@ -103,12 +103,15 @@ abstract public class GameGenerator {
 
     RuleSet condRules=null;
     boolean testing = false;
-    
+    public boolean getTesting() { return testing; }
+    public void setTesting(boolean _testing) { testing = _testing; }
+   
     /** For the training/testing restrictions on boards, as introduced in GS 6.010. See email discusion with Paul on 2023-03-08, and captive.html#cond
      */
     public void setConditions(boolean _testing, RuleSet _condRules) {
 	testing = _testing;
 	condRules = _condRules;
     }
+
     
 }

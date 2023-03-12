@@ -2,22 +2,14 @@ package edu.wisc.game.engine;
 
 import java.io.*;
 import java.util.*;
-import java.text.*;
-
-import jakarta.json.*;
-import javax.persistence.*;
 
 import edu.wisc.game.util.*;
-import edu.wisc.game.reflect.*;
-//import edu.wisc.game.engine.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.sql.Board.Pos;
 import edu.wisc.game.rest.ColorMap;
 import edu.wisc.game.engine.RuleSet.BucketSelector;
-//import edu.wisc.game.formatter.*;
 
-//import jakarta.xml.bind.annotation.XmlElement; 
 
 //import edu.wisc.game.sql.EpisodeMemory.BucketVarMap;
 import edu.wisc.game.sql.EpisodeMemory.BucketVarMap2;
@@ -36,7 +28,7 @@ public class BoardConditionsChecker {
 	@param rules The conditions, formatted as a rule set. Each row of the rule set represents one condition. 
     */
 	
-    static boolean boardIsAcceptable(Board board, RuleSet rules, boolean testing) {
+    public static boolean boardIsAcceptable(Board board, RuleSet rules, boolean testing) {
 
 	Piece[] pieces = board.toPieceList();
 	
@@ -44,6 +36,7 @@ public class BoardConditionsChecker {
 
 	int acceptedPiecesCnt=0;
 	for(int pos=0; pos<pieces.length; pos++) {
+	    if (pieces[pos]==null) continue;
 	    if (pieceIsAcceptedByHowManyRows(pieces[pos], rules, eligibleForEachOrder)>0) {
 		acceptedPiecesCnt ++;
 	    }
@@ -73,14 +66,24 @@ public class BoardConditionsChecker {
 	    final int NBU = Board.buckets.length; // 4
 	    for(int bucketNo=0; bucketNo<NBU && !rowAccepts; bucketNo++) {
 		BucketVarMap2  varMap = memory.new BucketVarMap2(p, bucketNo);
-			    
+
+		int acceptingAtomsCnt=0;
 		for(int j=0; j<row.size() && !rowAccepts; j++) {
 		    RuleSet.Atom atom = row.get(j);
+		    if (bucketNo==0) {
+			//	System.out.println("DEBUG: Trying p=" + p +" for atom=" + atom);
+		    }
 		    if (!atom.acceptsColorShapeAndProperties(p, varMap)) continue;
+		    if (bucketNo==0) {
+			//	System.out.println("DEBUG: Accepted");
+		    }
+
 		    if (!atom.plist.allowsPicking(pos.num(), eligibleForEachOrder)) continue;
-		    boolean can = atom.bucketList.destinationAllowed( varMap, bucketNo);
-		    if (can) rowAccepts = true;
+		    if (atom.bucketList.destinationAllowed( varMap, bucketNo)) {
+			acceptingAtomsCnt ++;
+		    }
 		}
+		if (acceptingAtomsCnt == row.size()) rowAccepts = true;
 	    }
 	    if (rowAccepts) acceptingRowCnt++;
 	 }

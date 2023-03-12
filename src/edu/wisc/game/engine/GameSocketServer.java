@@ -9,7 +9,7 @@ import edu.wisc.game.util.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.parser.*;
 
-/** The socket implementation of a captive game server */
+/** The socket implementation of a captive game server. It creates a GameSocketServerThread for each client session. */
 public class GameSocketServer {
 
     public static void main(String argv[]) {

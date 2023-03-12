@@ -135,7 +135,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 		for(String from: importFrom) {
 		    File g = new File(from);
 		    MwSeries.readFromFile(g, processor.savedMws);
-		    System.out.println("DEBUG: Has read " + processor.savedMws.size() + " data lines");
+		    //System.out.println("DEBUG: Has read " + processor.savedMws.size() + " data lines");
 		}
 
 	}
@@ -320,7 +320,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	MannWhitneyComparison mwc = new MannWhitneyComparison(mode);
 	
 	Comparandum[][] allComp = Comparandum.mkHumanComparanda(savedMws.toArray(new MwSeries[0]),  precMode, useMDagger);	
-	System.out.println("DEBUG: Human comparanda: "+allComp[0].length+" learned, "+allComp[1].length+" unlearned, ");
+	//System.out.println("DEBUG: Human comparanda: "+allComp[0].length+" learned, "+allComp[1].length+" unlearned, ");
 	
 	if (fromFile) {
 	    result.append( fm.para("Processing data from an imported CSV file"));

@@ -2,11 +2,11 @@ package edu.wisc.game.sql;
 
 import java.io.*;
 import java.util.*;
-import java.text.*;
+//import java.text.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.parser.*;
-import edu.wisc.game.engine.RuleSet;
+import edu.wisc.game.engine.*;
 
 /** A Game object defines how an Episode may be created. A Game object
     may either consists of a rule set + a predefined board, or of a
@@ -82,6 +82,38 @@ public class Game {
 	condRules = _condRules;
     }
 
+    /** Produces the board for this game. If additional train/test conditions
+	exist, tries to satisfy them by repeated tries.
+     */
+    Board giveBoard() {
+
+	final int M = 1000;
+
+	Board b;
+	for(int tryCnt = 0;  tryCnt<M; tryCnt++) {
+	    b = initialBoard;
+	    if (b==null) {
+		if (imageGenerator!=null) {
+		    b = new Board(random,  randomObjCnt,  imageGenerator);
+		} else { 
+		    b = new Board(random,  randomObjCnt, nShapes, nColors, allShapes, allColors);
+		}
+	    }
+
+	    if (condRules == null ||
+		BoardConditionsChecker.boardIsAcceptable(b,condRules,testing)) {
+		return b;
+	    }
+	    	    
+	}
+
+	String msg = "Cannot create a board satisfying conditions, even after "+M+" attempts. condRules from file " + condRules.getFile() +", testing=" + testing;
+	System.err.println(msg);
+	throw new IllegalArgumentException(msg);
+	    
+    }
+
+    
     /** Checks if the board satisfies any training/testing conditions that
 	may be in effect */
     boolean boardIsAcceptable(Board board) {

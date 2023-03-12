@@ -5,7 +5,7 @@
   <body>
     <h1>Captive Game Server</h1>
 
-    <div align="center"><em>Updated 2023-03-09 for GS ver 6.002</em></div>
+    <div align="center"><em>Updated 2023-03-10 for GS ver 6.002</em></div>
     
     <h2>Test the Rule Game</h2>
 
@@ -329,19 +329,19 @@ Note that you must put one condition per line; thus the above file, with each co
   </pre>
   then you are prohibiting (in the training mode) circles (but no objects of other shapes) in cells no. 31 and 36, and you are prohibiting red squares and red triangles. In the testing mode, all boards will have either at least one circle in cell no. 31 or 36, or at least one red square or red triangle.
 
-<p><strong>Specifying the training or test mode.</strong> To run the CGS starting in the training mode, you need to include <tt>condTrain=<em>conditionFileName.txt</em> on the command line, for example
+<p><strong>Specifying the training or test mode.</strong> To run the CGS starting in the <strong>training</strong> mode, you need to include <tt>condTrain=<em>conditionFileName.txt</em></tt> on the command line, for example
     <pre>
-      ./captive-full.sh condTrain=myConditions.txt game-data/rules/farthest.txt 5 1:3 3:4
+      ./captive-full.sh condTrain=game-data/cond/vm/cond-01.txt game-data/rules/farthest.txt 5 1:3 3:4
     </pre>
     All boards then will have no game pieces satisfying any of the listed conditions.
 
-    <p>To run the CGS starting in the training mode, you need to include <tt>condTest=<em>conditionFileName.txt</em> on the command line, for example
+    <p>To run the CGS starting in the <strong>testing</strong> mode, you need to include <tt>condTest=<em>conditionFileName.txt</em></tt> on the command line, for example
     <pre>
-      ./captive-full.sh condTest=myConditions.txt game-data/rules/farthest.txt 5 1:3 3:4
+      ./captive-full.sh condTest=game-data/cond/vm/cond-02.txt game-data/rules/farthest.txt 5 1:3 3:4
     </pre>
     All boards then will have at least one game piece satisfying at least one of the listed conditions.
 
-    <p>If the CGS has been started in the training mode, the ML program can issue the command <tt>MODE test</tt> to switch to the testing mode. It is most convenient to issue this command right before the <tt>NEW</tt> command of your first testing episode. Once the mode has been switched, the CGS will change its behavior accordingly, i.e. will generate boards with some game pieces satisfying some conditions, rather than boards in which no piece satisfies any condition.
+    <p>If the CGS has been started in the training mode, the ML program can issue the command <tt>COND test</tt> to switch to the testing mode. It is most convenient to issue this command right before the <tt>NEW</tt> command of your first testing episode. Once the mode has been switched, the CGS will change its behavior accordingly, i.e. will generate boards with some game pieces satisfying some conditions, rather than boards in which no piece satisfies any condition.
   
 <p><strong>Note:</strong> If you specify conditions that are impossible to fulfill (e.g. prohibiting red and black pieces while requiring that each board contains pieces of at least 3 colors), the CGS won't detect this problem automatically. Instead, it will sit in a tight loop for a while, and then will terminate, with an error message going to its <tt>stderr</tt>. Thus before letting your ML program to play with the CGS using a particularly involved conditions, you may do well by testing the board generation parameters and the condition file, by playing at least one training episode and at least one testing episode from the command ine. (You don't even need to play the episode to the end; just make sure that a board is produced!)
   
@@ -691,17 +691,17 @@ The second number, the <strong>finish code</strong> reports the current state: 0
 <p>In the standard mode, the status line is followed by a line with the description of the current display, in the same format as in the NEW command. In the brief mode, this line is omitted. You can use the brief mode if your program keeps track of the board itself, and you want to reduce the cost of communication with the CGS.
 
 <p>
-  <pre><strong>MODE train</strong></pre>
-  <pre><strong>MODE test</strong></pre>
+  <pre><strong>COND train</strong></pre>
+  <pre><strong>COND test</strong></pre>
 
   Starting with CGS ver. 6.010, these commands can be used to switch the server between the training mode and the testing mode. (Or back, although that's unlikely to be needed). For the explanation of the training and testing modes, see  <a href="#cond">Example 9. Train/test</a>. As that example indicates, it only makese sense to talk about the training and testing modes when a condition file has been provided to the CGS, so that it actually will behave differently in the two modes.
 
-  <p>Response: <tt>MODE=train</tt> or <tt>MODE=test</tt>, as appropriate, indicating the new mode.
+  <p>Response: <tt>#OK, COND=train</tt> or <tt>#OK, COND=test</tt>, as appropriate, indicating the new mode.
 
   <p>
-  <pre><strong>MODE</strong></pre>
+  <pre><strong>COND</strong></pre>
 
-The <tt>MODE</tt> command with no argument simply reports the current mode, viz. prints  <tt>MODE=train</tt> or <tt>MODE=test</tt>.
+The <tt>COND</tt> command with no argument simply reports the current mode, in the same format as <tt>COND</tt> with an argument does.
   
 <p>
   <pre><strong>EXIT</strong></pre>

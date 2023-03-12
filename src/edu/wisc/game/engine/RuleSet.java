@@ -19,6 +19,7 @@ public class RuleSet {
 	been read from files. It is only used for reporting.
      */
     File file = null;
+    public File getFile() { return file; }
     
     /** An optional verbal description of the rule set, which may have
 	been found in the comment lines on top of the rule set file.

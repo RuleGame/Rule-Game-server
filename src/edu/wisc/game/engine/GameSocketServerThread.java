@@ -106,7 +106,7 @@ class GameSocketServerThread extends Thread {
 			gameCnt++;
 			Game game = gg.nextGame();
 			Episode epi = new Episode(game, outputMode, in, out);
-			if (!epi.playGame(gameCnt)) return;
+			if (!epi.playGame(gg,gameCnt)) return;
 		    }
 		} else {
 		    respond(out, Episode.CODE.INVALID_COMMAND, "Invalid command " + cmd);

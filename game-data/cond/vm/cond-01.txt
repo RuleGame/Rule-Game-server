@@ -1,0 +1,9 @@
+# During the training stage, we prohibit red and black pieces,
+# and the board should contain nothing in the top left quadrant.
+#-----------------------------------------
+# This can be tried e.g. with
+# ./captive-full.sh condTrain=game-data/cond/vm/cond-01.txt game-data/rules/farthest.txt 5 1:4 2:2
+# (make sure not to ask for more than 2 colors!)
+#-----------------------------------------
+(color:[red,black])
+(pos:[19,20,21,25,26,27,31,32,33])

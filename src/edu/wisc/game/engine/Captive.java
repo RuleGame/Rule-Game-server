@@ -60,7 +60,7 @@ public class Captive {
     static GameGenerator buildGameGenerator(ParseConfig ht, String[] argv//,
 					    // Vector<String> simpleRuleSetName
 					    ) throws IOException,  RuleParseException, ReflectiveOperationException, IllegalInputException{
-	GameGenerator gg = buildGameGenerator(ht, argv);
+	GameGenerator gg = buildGameGenerator2(ht, argv);
 
 	String condTrain = ht.getOption("condTrain",null);
 	String condTest = ht.getOption("condTest",null);
@@ -216,7 +216,7 @@ public class Captive {
 				      new InputStreamReader(System.in),
 				      new PrintWriter(System.out, true));
   
-	    boolean z = epi.playGame(gameCnt+1);
+	    boolean z = epi.playGame(gg,gameCnt+1);
 	    if (log!=null) log.logEpisode(epi, gameCnt);
 	    if (!z) break;
 	    gameCnt++;

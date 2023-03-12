@@ -556,18 +556,7 @@ public class Episode {
 	episodeId = (_episodeId==null)?  buildId():    _episodeId;
     
 	rules = game.rules;
-	Board b =  game.initialBoard;
-	if (b==null) {
-	    if (game.imageGenerator!=null) {
-		b = new Board(game.random,  game.randomObjCnt,  game.imageGenerator);
-	    } else { 
-		b = new Board(game.random,  game.randomObjCnt, game.nShapes, game.nColors, game.allShapes, game.allColors);
-	    }
-
-	    //boolean boardIsAcceptable(Board board, boolean testing) {
-
-	    
-	}
+	Board b =  game.giveBoard();
 
 	nPiecesStart = b.getValue().size();
 	pieces = b.toPieceList();
@@ -923,7 +912,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
        
 
-    private void respond(int code, String msg) {
+    void respond(int code, String msg) {
 	String s = "" + code + " " + getFinishCode() +" "+attemptCnt;
 	if (msg!=null) s += "\n" + msg;
 	out.println(s);
@@ -957,7 +946,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	return json.toString();
     }
    
-    public static final String version = "6.009";
+    public static final String version = "6.010";
 
     public static String getVersion() { return version; }
 
@@ -1101,12 +1090,13 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	cleared, or a stalemate is reached, or the player gives up
 	(sends an EXIT or NEW command). The episode takes commands from
 	the reader.
-	@param log If not null, save the result of each episode there
+	
+	@param gameCnt The sequential number of the current episode. This is only used in a message.
 	@return true if another episode is requested, i.e. the player
 	has entered a NEW command. false is returned if the player
 	enters an EXIT command, or simply closes the input stream.
     */
-    public boolean playGame(int gameCnt) throws IOException {
+    public boolean playGame(GameGenerator gg, int gameCnt) throws IOException {
 	try {
 	String msg = "# Hello. This is Captive Game Server ver. "+version+". Starting a new episode (no. "+gameCnt+")";
 	if (stalemate) {
@@ -1148,6 +1138,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 		out.println("# DISPLAY");
 		out.println("# DISPLAYFULL");
 		out.println("# MODE <BRIEF|STANDARD|FULL>");
+		out.println("# COND <train|test>");
 		out.println("# EXIT");
 	    } else if (cmd.equals("DISPLAY")) {
 		out.println(displayJson());
@@ -1169,6 +1160,24 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 		    continue;
 		}
 		out.println("# OK, mode=" + outputMode);
+	    } else if (cmd.equals("COND")) {
+		tokens.remove(0);		
+		if (tokens.size()==0) {
+		    //-- just show the current state
+		} else if (tokens.size()!=1 || tokens.get(0).type!=Token.Type.ID) {
+		    respond(CODE.INVALID_ARGUMENTS, "# COND command must be followed by 'train' or 'test'");
+		    continue;
+		} else {
+		    String s = tokens.get(0).sVal.toLowerCase();
+		    if (s.equals("train")) {
+			gg.setTesting(false);
+		    } else if (s.equals("test")) {
+			gg.setTesting(true);
+		    } else {
+			respond(CODE.INVALID_ARGUMENTS, "# COND command  must be followed by 'train' or 'test'; invalid value=" + s);
+		    }
+		}
+		out.println("# OK, cond=" + (gg.getTesting()? "test" : "train"));
 	    } else if (cmd.equals("MOVE")) {
 		
 		tokens.remove(0);

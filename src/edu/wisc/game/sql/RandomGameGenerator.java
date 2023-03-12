@@ -20,8 +20,7 @@ public class RandomGameGenerator extends GameGenerator {
     final Piece.Shape[] allShapes;// = 	Piece.Shape.legacyShapes;
     final Piece.Color[] allColors;// = 	Piece.Color.legacyColors;
   
-    //final RuleSet rules;
-    
+      
     RandomGameGenerator(RandomRG _random, String ruleSetName, int[] _nPiecesRange, int[] _nShapesRange,
 			int[] _nColorsRange,  Piece.Shape[] _allShapes, Piece.Color[] _allColors) throws IOException, RuleParseException {
 	this(_random, AllRuleSets.obtain(ruleSetName), _nPiecesRange,  _nShapesRange,

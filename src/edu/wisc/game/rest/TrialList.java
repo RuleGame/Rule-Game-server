@@ -97,7 +97,7 @@ public class TrialList extends Vector<ParaSet> {
 	    for(CsvData.LineEntry _e: csv.entries) {
 		CsvData.BasicLineEntry e= (CsvData.BasicLineEntry)_e;
 		String key = e.getKey();
-		Integer val = new Integer(e.getCol(1));
+		Integer val = Integer.parseInt(e.getCol(1));
 		if (val!=null) h.put(key, val);
 	    }		
 	} catch(Exception ex) {
