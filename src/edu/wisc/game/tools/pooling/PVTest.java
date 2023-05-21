@@ -61,7 +61,9 @@ public class PVTest {
 
 	KolmogorovSmirnovTest ks = new 	KolmogorovSmirnovTest();
 	double ksp = ks.kolmogorovSmirnovTest(x[0],x[1]);
-	System.out.println("kolmogorovSmirnovTest(" + fmtArg(x)+")=" + ksp);
+	System.out.println("kolmogorovSmirnovTest(" + fmtArg(x)+",true)=" + ksp);
+	double kspf = ks.kolmogorovSmirnovTest(x[0],x[1], false);
+	System.out.println("kolmogorovSmirnovTest(" + fmtArg(x)+",false)=" + kspf);
 	
     }
     
