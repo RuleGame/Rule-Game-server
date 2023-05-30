@@ -146,7 +146,7 @@ public class Order extends Vector<Vector<Integer>> {
 	    }
 	} else if (mode==PositionSelector.NearestObject) {
 	    Vector<Integer> w=new Vector<>();
-	    for(int k=1; k<=Board.N*Board.N; k++) w.add( new Integer(k));
+	    for(int k=1; k<=Board.N*Board.N; k++) w.add( k);
 	    w.sort(new DistanceComparator());
 	    Vector<Integer> v=null;
 	    for(Integer q: w) {

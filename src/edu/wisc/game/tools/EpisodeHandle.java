@@ -10,11 +10,11 @@ import edu.wisc.game.sql.*;
 /** An auxiliary structure containing an episode's metadata. (Most of
     them come from the episode's EpisodeInfo structure, completed with
     the context info from the relevant TrialList and PlayerInfo). It
-    is used to keep track who and when played which episodes.
+    is used to keep track of who and when played which episodes.
 */
 class EpisodeHandle {
     final String ruleSetName;
-    /** Which other rules preceded this rule in the trial list? */
+    /** Which other rules preceded this rule in the trial list? (This is just copied from the trial list) */
     final Vector<String> precedingRules;
     final String exp;
     final String trialListId;
@@ -28,22 +28,22 @@ class EpisodeHandle {
 
 
     EpisodeHandle(String _exp, String _trialListId, TrialList t, String _playerId, EpisodeInfo e, int _orderInSeries) {
-	    episodeId = e.getEpisodeId();
-
-	    playerId = _playerId;
-	    exp = _exp;
-	    trialListId = _trialListId;
-	    seriesNo= e.getSeriesNo();
-	    orderInSeries =  _orderInSeries;
-	    para = t.get(seriesNo);
-	    ruleSetName = para.getRuleSetName();
-	    useImages = (para.imageGenerator!=null);
-
-	    int seriesNo = e.getSeriesNo();
-	    precedingRules = new Vector<>();	
-	    for(int j=0; j<seriesNo; j++) {
-		precedingRules.add( t.get(j).getRuleSetName());
-	    }
+	episodeId = e.getEpisodeId();
+	
+	playerId = _playerId;
+	exp = _exp;
+	trialListId = _trialListId;
+	seriesNo= e.getSeriesNo();
+	orderInSeries =  _orderInSeries;
+	para = t.get(seriesNo);
+	ruleSetName = para.getRuleSetName();
+	useImages = (para.imageGenerator!=null);
+	    
+	int seriesNo = e.getSeriesNo();
+	precedingRules = new Vector<>();	
+	for(int j=0; j<seriesNo; j++) {
+	    precedingRules.add( t.get(j).getRuleSetName());
+	}
     } 
 }
 

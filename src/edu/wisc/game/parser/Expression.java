@@ -202,7 +202,7 @@ public interface Expression {
 	    Integer */
 	public Object putString(String key, String s) {
 	    try {
-		return super.put(key, new Integer(s));
+		return super.put(key, Integer.parseInt(s));
 	    } catch(Exception ex) { 
 		return super.put(key, s);
 	    }
@@ -227,7 +227,7 @@ public interface Expression {
 	    if (val==null) throw new IllegalArgumentException("An attempt to include a null value for key="+key);
 	    else if (val instanceof Integer) {}
 	    else if (val instanceof String) {
-		try { val = new Integer((String)val); }
+		try { val = Integer.parseInt((String)val); }
 		catch(Exception ex) {}
 	    } else if (val instanceof PropMap) {}
 	    else {

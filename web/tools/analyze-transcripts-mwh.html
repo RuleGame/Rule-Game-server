@@ -37,7 +37,7 @@ These modes are discussed below.
   
   <h3>(1) Extracting data from transcripts, and using them for M-W test.</h3>
 
-  You just need to specify the names of the experiment plans. All transcripts of players assigned to those plans will be used in the analysis; the M-W compaison will include or rule sets (or, more, precisely, "experiences") experinced by these players.
+  You just need to specify the names of the experiment plans. All transcripts of players assigned to those plans will be used in the analysis; the M-W comparison will include or rule sets (or, more, precisely, "experiences") experienced by these players.
 
   <p>(The script is actually in <tt>/home/vmenkov/w2020/game/scripts</tt> on sapir; so you can add that directory to your PATH, or just type the full path).
 
@@ -113,7 +113,7 @@ select * from User;  </pre>
 
 <p>Other options:
   <ul>
-    <li><tt>-file</tt> : if this option is used, then instead of listing plan names (or player IDs, etc) on the command line, you can put them into a file (one name perl line), and put that file name's on the command line. This may be handy if you want to look at data from a large number of plans.
+    <li><tt>-file</tt> : if this option is used, then instead of listing plan names (or player IDs, etc) on the command line, you can put them into a file (one name per line), and put that file name's on the command line. This may be handy if you want to look at data from a large number of plans.
   </ul>
 
   <h4>M-W options</h4>
@@ -127,11 +127,11 @@ select * from User;  </pre>
     <li><tt>-precMode [Naive | Every | Ignore]</tt> : This controls how different series are assigned to different "experiences" to be compared. This is how the 3 modes work:
       <ul>
 	<li><tt>Naive</tt> (the default mode): For each rule sets, only include "naive" players (those who played this rule set as their first rule set). In other word, if a player played 3 rules sets, R1, R2, and R3, in this order, then only his experience of playing R1 is analyzed.
-<li><tt>Every</tt> Consider each (rule set + preceding set) combination as a separate experience to be ranked. (That is,
+<li><tt>Every</tt> : Consider each (rule set + preceding set) combination as a separate experience to be ranked. (That is,
 the R1 data from <strong>R1</strong>:R2:R3,  
 R2:<strong>R1</strong>:R3, and
 R2:R3:<strong>R1</strong> are viewed as belonging to three distinct experiences, "R1", "R2:R1", and "R2:R3:R1")
-<li><tt>Ignore</tt>Ignore: When viewing a rule set's series, ignore preceding rule sets. (In other words, the R1 data from
+<li><tt>Ignore</tt> : When viewing a rule set's series, ignore preceding rule sets. (In other words, the R1 data from
 <strong>R1</strong>:R2:R3,  
 R2:<strong>R1</strong>:R3, and
 R2:R3:<strong>R1</strong> are merged, viewed as the same "R1 experience").

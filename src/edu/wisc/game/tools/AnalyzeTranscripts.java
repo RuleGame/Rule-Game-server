@@ -113,6 +113,15 @@ public class AnalyzeTranscripts {
 		
 	    }
 	}
+
+	public String toString() {
+	    Vector<String> v = new Vector<>();
+	    for(String key: keySet()) {
+		Vector<EpisodeHandle> w = get(key);
+		v.add(key + ":" + Util.joinNonBlank(", ", w));
+	    }
+	    return  Util.joinNonBlank("; ", v);
+	}
     }
 
     static boolean weWantPredecessorEnvironment  = false;
@@ -375,6 +384,10 @@ public class AnalyzeTranscripts {
 	    }
 
 	}
+
+	public String toString() {
+	    return "{" + Util.joinNonBlank("; ", this) + "}";
+	}
 	
     }
 
@@ -413,7 +426,7 @@ public class AnalyzeTranscripts {
     final private PrintWriter wsum;
 
     /** Saves the data for a single (player, ruleSet) pair. This method
-	can only be called is base!=null.
+	can only be called if base!=null. 
 	@param section A vector of arrays, each array representing the recorded
 	moves for one episode.
 	@param includedEpisodes All non-empty episodes played by this player in this rule set
@@ -926,7 +939,6 @@ public class AnalyzeTranscripts {
 		". AIC/n="+     df.format(AICn);
 	}
 
-
 	String toCsvString() {
 	    Vector<Number> v=new Vector<>();
 	    v.add(B);
@@ -947,9 +959,7 @@ public class AnalyzeTranscripts {
 	    System.out.println("grad L=["+  Util.joinNonBlank(", ", df, grad)+"]");
 	
 	}
-    
-	
+    	
     }
-
   
 }

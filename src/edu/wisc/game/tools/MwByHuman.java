@@ -24,17 +24,22 @@ import edu.wisc.game.sql.Episode.CODE;
  */
 public class MwByHuman extends AnalyzeTranscripts {
 
+    private final MwByHuman.PrecMode precMode;
 
-    public MwByHuman( int _targetStreak, double _defaultMStar,Fmter _fm    ) {
+    
+    /** @param  _targetStreak this is how many consecutive error-free moves the player must make (e.g. 10) in order to demonstrate successful learning.
+     */
+    public MwByHuman(MwByHuman.PrecMode _precMode, int _targetStreak, double _defaultMStar,Fmter _fm    ) {
 	super( null, null);	
 	quiet = true;
+	precMode = _precMode;
 	targetStreak = _targetStreak;
 	defaultMStar = _defaultMStar;
 	fm = _fm; 
     }
 
 
-  static private void usage() {
+    static private void usage() {
 	usage(null);
     }
     static private void usage(String msg) {
@@ -118,32 +123,30 @@ public class MwByHuman extends AnalyzeTranscripts {
 	}
 
 	Fmter plainFm = new Fmter();
-	MwByHuman processor = new MwByHuman( targetStreak, defaultMStar, plainFm);
+	MwByHuman processor = new MwByHuman(precMode, targetStreak, defaultMStar, plainFm);
 
 	try {
 	    if (importFrom.size()==0) {
 	    // Extract the data from the transcript, and put them into savedMws
-	    processor.processStage1(plans, pids, nicknames, uids);
-
-	    if (exportTo!=null) {
-		File gsum=new File(exportTo);
-		processor.exportSavedMws(gsum);
-	    }
-	} else {
+		processor.processStage1(plans, pids, nicknames, uids);
+		
+		if (exportTo!=null) {
+		    File gsum=new File(exportTo);
+		    processor.exportSavedMws(gsum);
+		}
+	    } else {
 		processor.savedMws.clear();
-
+		
 		for(String from: importFrom) {
 		    File g = new File(from);
 		    MwSeries.readFromFile(g, processor.savedMws);
 		    //System.out.println("DEBUG: Has read " + processor.savedMws.size() + " data lines");
-		}
-
-	}
+		}		
+	    }
 	
-	
-	// M-W test on the data from savedMws
-	processor.processStage2(precMode, importFrom!=null, useMDagger, csvOutDir);
-
+	    // M-W test on the data from savedMws
+	    processor.processStage2( importFrom.size()>0, useMDagger, csvOutDir);
+	    
 	} finally {
 	    String text = processor.getReport();
 	    System.out.println(text);
@@ -213,10 +216,10 @@ public class MwByHuman extends AnalyzeTranscripts {
 	all (player,ruleSet) pairs involved.
      */
     public void processStage1(Vector<String> plans,
-				 Vector<String> pids,
-				 Vector<String> nicknames,
-				 Vector<Long> uids ) throws Exception {
-
+			      Vector<String> pids,
+			      Vector<String> nicknames,
+			      Vector<Long> uids ) throws Exception {
+	
       	EntityManager em = Main.getNewEM();
 
 	try {
@@ -224,17 +227,20 @@ public class MwByHuman extends AnalyzeTranscripts {
 
 
 	PlayerList plist = new 	PlayerList(em,  pids,  nicknames,   uids);
+	//System.out.println("DEBUG:: pids=" + Util.joinNonBlank(", " ,pids));
+	//System.out.println("DEBUG:: plist=" + plist);
 	EpisodesByPlayer ph =new EpisodesByPlayer();
-
+	//	System.out.println("DEBUG:: the episodes for " + ph.size() + " players: " + ph);
+	
 	// for each experiment plan...
 	for(String exp: plans) {		
-	    //System.out.println("Experiment plan=" +exp);
+	    System.out.println("Experiment plan=" +exp);
 
 	    try {
 	    
 	    // ... List all trial lists 
 	    TrialListMap trialListMap=new TrialListMap(exp);
-	    //System.out.println("Experiment plan=" +exp+" has " + trialListMap.size() +" trial lists: "+ Util.joinNonBlank(", ", trialListMap.keySet()));
+	    // System.out.println("Experiment plan=" +exp+" has " + trialListMap.size() +" trial lists: "+ Util.joinNonBlank(", ", trialListMap.keySet()));
 	    
 	    Vector<EpisodeHandle> handles= new Vector<>();
 
@@ -257,6 +263,26 @@ public class MwByHuman extends AnalyzeTranscripts {
 
 	}	
 
+
+	// Or, for each specified player...
+	HashMap<String,TrialListMap> trialListMaps = new HashMap<>();	
+	for(PlayerInfo p: plist) {
+	    try {
+		String exp=p.getExperimentPlan();
+		TrialListMap trialListMap=trialListMaps.get(exp);
+		if (trialListMap==null) trialListMaps.put(exp, trialListMap=new TrialListMap(p.getExperimentPlan()));
+		Vector<EpisodeHandle> handles= new Vector<>();
+		ph.doOnePlayer(p,  trialListMap, handles);
+		System.out.println("For player=" +p.getPlayerId()+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
+	    } catch(Exception ex) {
+		System.err.println("ERROR: Skipping player=" +p.getPlayerId()+" due to missing data. The problem is as follows:");
+		System.err.println(ex);
+		ex.printStackTrace(System.err);
+	    }
+	}
+
+	//----- end ---
+	
 	PrintWriter wsum =null;
 
 
@@ -311,7 +337,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	@param fromFile Indicates that the m* data have come from an extrernal
 	file, and are not internally computed.
      */
-    public void processStage2(MwByHuman.PrecMode precMode, boolean fromFile, boolean useMDagger, File csvOutDir )    {
+    public void processStage2(boolean fromFile, boolean useMDagger, File csvOutDir )    {
 	if (error) return;
 
 	File[] csvOut = MannWhitneyComparison.expandCsvOutDir(csvOutDir);
@@ -340,6 +366,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 	Naive,
 	//Consider each (rule set + preceding set) combination as a separate experience to be ranked
 	Every,
+	// Like Every, but treats successful and failed series differently
+	EveryCond,
 	//When analyzing a set, ignore preceding rule sets
 	Ignore
     }
@@ -358,21 +386,18 @@ m*
 
 	public final String ruleSetName;	
 	/** Which other rules preceded this rule in the trial list? */
-	final Vector<String> precedingRules;
+	private final Vector<String> precedingRules;
 	final String exp;
 	final String trialListId;
 	final int seriesNo;
-	//final int orderInSeries;
-	//final String episodeId;
 	final String playerId;
-	//final boolean useImages;
-	//final ParaSet para;
 
 	/** The 'key' (what comparandum, if any, this series belongs to) depends on the mode */
 	public String getKey(PrecMode mode) {
 	    switch (mode) {
 	    case Ignore: return ruleSetName;	    
 	    case Every:
+	    case EveryCond:
 		String s = String.join(":", precedingRules);
 		if (s.length()>0) s += ":";
 		return s + ruleSetName;
@@ -381,6 +406,12 @@ m*
 	    }
 	}
 
+	/** Used for EveryCond; only lists the preceding,
+	    and does not include the target */
+	public String getLightKey() {
+	    String s = String.join(":", precedingRules);
+	    return s;
+	}
 	
 	boolean learned=false;
 	public boolean getLearned() { return learned; }
@@ -414,7 +445,8 @@ m*
 	
 	MwSeries(EpisodeHandle o) {
 	    ruleSetName = o.ruleSetName;
-	    precedingRules = o.precedingRules;
+	    precedingRules = new Vector<String>();
+	    precedingRules.addAll( o.precedingRules);
 	    exp = o.exp;
 	    trialListId = o.trialListId;
 	    seriesNo = o.seriesNo;
@@ -442,7 +474,7 @@ m*
 	/** Reads a CSV file with MwSeries entries.
 	    @param into Adds the data into this vector.
 	 */
-	static void readFromFile(File f, Vector<MwSeries> into) throws IOException, IllegalInputException {
+	public static void readFromFile(File f, Vector<MwSeries> into) throws IOException, IllegalInputException {
 	    if (!f.exists()) throw new IOException("File does not exist: " + f);
 	    if (!f.canRead()) throw new IOException("Cannot read file: " + f);
 	    CsvData csv = new CsvData(f, false, false, null);
@@ -512,13 +544,29 @@ m*
 		ser.mDagger = ser.mStar - z[0]/z[1];
 	    }
 	}
-	
+
+	/** Modifies the precedingRules array, prepending "true." or
+	    "false." to each element depending on whether successful
+	    learning took place in the corresponding series. This is
+	    used in PrecMode.EveryCond mode.
+	*/
+	void adjustPreceding(Vector<MwSeries> savedMws) {
+	    for(int j=0; j< precedingRules.size(); j++) {
+		String r = precedingRules.get(j);
+		if (r.startsWith("true.") ||r.startsWith("false.")) continue;
+		MwSeries old = savedMws.get(j);
+		r = "" + old.learned + "." + r;
+		precedingRules.set(j, r);
+	    }   
+	}
+    
 	
     }
 
     /** Info about each episode gets added here */
     private Vector<MwSeries> savedMws = new Vector<>();
-    
+
+
     private final int targetStreak;
     /** It is double rather than int so that Infinity could be represented */
     private final double  defaultMStar;
@@ -526,7 +574,7 @@ m*
     /** Saves the data for a single (player, ruleSet) pair
 	@param section A vector of arrays, each array representing the recorded
 	moves for one episode.
-	@param includedEpisodes All non-empty episodes played by this player in this rule set. This array is aligned with section[]
+	@param includedEpisodes All non-empty episodes played by this player in this rule set. This array must be aligned with section[]
     */
   
     protected void saveAnyData(Vector<TranscriptManager.ReadTranscriptData.Entry[]> section,
@@ -547,7 +595,9 @@ m*
 		streak=0;
 		ser.errcnt = 0;
 		ser.mStar = defaultMStar;
-
+		if (precMode == PrecMode.EveryCond) {
+		    ser.adjustPreceding(savedMws);
+		}
 	    }
 
 	    // skip the rest of transcript for the rule set (i.e. this
@@ -569,11 +619,10 @@ m*
 		if (streak>=targetStreak) {
 		    ser.learned=true;
 		    ser.mStar = Math.min( ser.errcnt, ser.mStar);
-		}
-		
+		}		
 	    }
 
-	    // Any post-learning-success errors
+	    // Also count any errors that were made after the learning success
 	    for(; j<subsection.length; j++) {
 		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
 		if (!eh.episodeId.equals(e.eid)) throw new IllegalArgumentException("Array mismatch");

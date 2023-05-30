@@ -108,7 +108,11 @@ public class Comparandum implements Comparable<Comparandum> {
 	Comparandum for a rule set (or, more generally, "an
 	experience") is based on the on human performance data for
 	this rule set.
-       @return {learnedOnes[], nonLearnedOnes[]}
+	
+	@param precMode This controls how "experiences" are grouped into
+	"same" or "different" ones (depending on the preceding rule sets)
+	
+	@return {learnedOnes[], nonLearnedOnes[]}
      */
     public static Comparandum[][] mkHumanComparanda(MwSeries[] res, 	MwByHuman.PrecMode precMode, boolean useMDagger) {
 	
