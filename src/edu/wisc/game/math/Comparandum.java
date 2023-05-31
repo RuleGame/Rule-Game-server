@@ -108,6 +108,8 @@ public class Comparandum implements Comparable<Comparandum> {
 	Comparandum for a rule set (or, more generally, "an
 	experience") is based on the on human performance data for
 	this rule set.
+
+	@param res A table of "series" entries, each of which describes the summary of a series, i.e. the performance of a human player on a rule set. 
 	
 	@param precMode This controls how "experiences" are grouped into
 	"same" or "different" ones (depending on the preceding rule sets)

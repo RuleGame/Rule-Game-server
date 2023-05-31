@@ -9,6 +9,8 @@ import java.text.*;
 
 import javax.persistence.*;
 
+import org.apache.commons.math3.stat.inference.*;
+
 import edu.wisc.game.util.*;
 import edu.wisc.game.tools.*;
 import edu.wisc.game.tools.MwByHuman.MwSeries;
@@ -103,6 +105,12 @@ public class Ecd {
 	Arrays.sort(orderedSample);
 	successRate = (double)learnedCnt / (double)orderedSample.length;
     }
+
+    /** In "science" coordinates */    
+    Point getCenter() {
+	return new Point( getMedianMStar(),  0.5*learnedCnt);
+    }
+
     
     static private void usage() {
 	usage(null);
@@ -115,11 +123,13 @@ public class Ecd {
 
 
     static NumberFormat fmt3d = new DecimalFormat("000");
+
+    static double alpha = 0.05;
+    static String target = null;
     
     public static void main(String[] argv) throws Exception {
 
 	 /** The target rule set name. Must be specified. */
-	 String target = null;
 	 Vector<String> importFrom = new Vector<>();
 
 
@@ -130,6 +140,8 @@ public class Ecd {
 		target = argv[++j];
 	    } else if (j+1< argv.length && a.equals("-import")) {
 		importFrom.add(argv[++j]);
+	    } else if (j+1< argv.length && a.equals("-alpha")) {
+		alpha =  Double.parseDouble(argv[++j]);
 	    }
 	 }
 
@@ -177,56 +189,49 @@ public class Ecd {
 	    }
 
 	    double xRange = 1, yRange=1;
-	    for(Ecd ecd: h.values()) {
+	    HashSet<String> keysToDiscard=new HashSet<>();
+	    for(String key: h.keySet()) {
+		Ecd ecd =h.get(key);
 		ecd.freeze();
+
+		if (ecd.size()<=1) {
+		    keysToDiscard.add(key);
+		}
+		
 		xRange = Math.max(xRange, ecd.getMaxMStar());
 		//yRange = Math.max(yRange, ecd.size());
 	    }
-	    xRange += 1;
 
-	    int n = 0;
-	    Vector<String> v = new Vector<>();
-	    v.add( SvgEcd.drawFrame(xRange));
-
-	    String[] colors = {"red", "green", "orange", "cyan", "eblue", "purple", "pink"};
-	    
-	    for(Ecd ecd: h.values()) {
-		//System.out.println("Making SVG for " + ecd.orderedSample.length + " points");
-		System.out.println( ecd);
-		yRange = ecd.size();
-		String color = colors[ n % colors.length];
-		String z = SvgEcd.makeSvgEcd(color, ecd.orderedSample,
-					     xRange, yRange);
-
-		//System.out.println(z);
-		v.add(z);
-
-		Point.setScale( xRange, yRange);
-		Point center = new Point( ecd.getMedianMStar(),
-					  0.5*ecd.learnedCnt);
-		z = SvgEcd.circle( center, 3, color);
-		v.add(z);
-
-		
-		//String fname = "ecd-" + fmt3d.format(n);
-		n++;
-
-
-		
-		//if (n>0) break;
+	    for(String key:keysToDiscard) {
+		System.out.println("Removing the small-sample ECD (because KS won't like it): " + h.get(key));
+		h.remove(key);
 	    }
 
-	    String s = SvgEcd.outerWrap( String.join("\n", v));
-	    String fname = "ecd";
-	    File f = new File(fname + ".svg");
-	    PrintWriter w = new PrintWriter(new      FileWriter(f));
-	    w.println(s);
-	    w.close();
+	    
+	    xRange += 1;
 
-	    
-	    
+	    System.out.println("=== Legend for target "+target+" ===");
+	    for(Ecd ecd: h.values()) {
+		System.out.println( ecd);
+	    }
+	   
 
+	    String[] colors = {"red", "green", "orange", "cyan", "blue", "purple", "pink"};
 	    
+	    Vector<String> v = drawAllCurves(h, xRange, yRange, colors, lam, null);
+	    	    
+	    String base = target.replaceAll("/", "-");
+	    String fname = base + "-ecd-basic";
+	    writeSvg(fname, v);
+
+	    Vector<String> hbLabels = new Vector<>();
+	    HashMap<String,Double> ph = analyzeSimilarities(h, lam, hbLabels);
+	    colors = new String[] {"red"};
+	    v = drawAllCurves(h, xRange, yRange, colors, lam, hbLabels);
+	    fname = base + "-ecd-hb";
+	    writeSvg(fname, v);
+
+
 	} finally {
 	    //String text = processor.getReport();
 	    //System.out.println(text);
@@ -234,5 +239,138 @@ public class Ecd {
 	 
      }
 
+    
+    static private void writeSvg(String fnameBase, Vector<String> v) throws IOException {
+	String s = SvgEcd.outerWrap( String.join("\n", v));
+	File f = new File(fnameBase + ".svg");
+	PrintWriter w = new PrintWriter(new      FileWriter(f));
+	w.println(s);
+	w.close();
+    }
+
+    static private HashMap<String,Double>  analyzeSimilarities(Map<String, Ecd> h, LabelMap lam, Vector<String> hbLabels) {
+	MannWhitneyUTest mw = new MannWhitneyUTest();
+	KolmogorovSmirnovTest ks = new 	KolmogorovSmirnovTest();
+
+	HashMap<String,Double> ph = new HashMap<>();
+
+	System.out.println("=== p-Values ===");
+	for( String key1: h.keySet()) {
+	    Ecd ecd1 = h.get(key1);
+	    String label1 = lam.mapCond(key1);
+	    for( String key2: h.keySet()) {
+		Ecd ecd2 = h.get(key2);
+		String label2 = lam.mapCond(key2);
+		
+		double	mwp = mw.mannWhitneyUTest(ecd1.orderedSample,ecd2.orderedSample);
+		//System.out.println("mannWhitneyUTest(" + fmtArg(x)+")=" + mwp);
+
+
+		double ksp = ks.kolmogorovSmirnovTest(ecd1.orderedSample,ecd2.orderedSample);
+		//double kspf = ks.kolmogorovSmirnovTest(x[0],x[1], false);
+
+
+		double p = Math.max(mwp, ksp);
+
+		System.out.print("\tp("+label1+","+label2+")="+p);
+		if (label1.compareTo(label2)<0) {
+		    ph.put(label1+","+label2, p);
+		}
+	    }
+	    System.out.println();
+	}
+
+	Vector<String> order = new Vector<>();
+	order.addAll(ph.keySet());
+	order.sort((o1,o2)-> (int)Math.signum( ph.get(o1)-ph.get(o2)));
+
+	int nPairs = order.size();
+
+
+	//-- Holm-Bonferroni process 
+	int nHBPairs = 0;
+	for( ; nHBPairs < nPairs; nHBPairs++) {
+	    String o = order.get( nHBPairs );
+	    double p = ph.get(o);
+	    double m = nPairs - nHBPairs;
+	    if (p >= alpha/m) break;
+	    hbLabels.add(o);
+	}
+
+	System.out.println("=== Ordered similarities between ECDs ("+nPairs+" pairs): ===");
+	int k=0;
+	for(String o: order) {
+	    String s="";
+	    double m = nPairs - k;
+
+	    if (k<nHBPairs) s += "[HB] ";	    
+	    s += "p(" + o + ")="  + ph.get(o);
+	    if (k<nHBPairs) s += " < " + (alpha/m);
+	    System.out.println(s);
+	    k++;
+	}
+
+	if (nHBPairs==0) {
+	    System.out.println("The Holm-Bonferroni process with alpha="+alpha+" has selected none of the above pairs");
+  	} else {
+	    System.out.println("The Holm-Bonferroni process with alpha="+alpha+" has selected the first "+nHBPairs+" of the above pairs. They are marked with [HB]");
+	}
+
+	return ph;
+	
+    }
+    
+    static Vector<String> drawAllCurves(Map<String, Ecd> h, double xRange, double yRange, String colors[], LabelMap lam,
+					Vector<String> hbLabels
+					) {
+	if (hbLabels==null) hbLabels = new Vector<>();
+	int n = 0;
+	Vector<String> v = new Vector<>();
+	v.add( SvgEcd.drawFrame(xRange));
+	    
+	
+	for(Ecd ecd: h.values()) {
+	    //System.out.println("Making SVG for " + ecd.orderedSample.length + " points");
+	    //	    System.out.println( ecd);
+	    yRange = ecd.size();
+	    String color = colors[ n % colors.length];
+	    String z = SvgEcd.makeSvgEcd(color, ecd.orderedSample,
+					 xRange, yRange);
+	    
+	    //System.out.println(z);
+	    v.add(z);
+	    
+	    Point.setScale( xRange, yRange);
+	    Point center = ecd.getCenter();
+	    z = SvgEcd.circle( center, 3, color);
+	    v.add(z);
+	    Point rawCenter = center.rawPoint();
+	    z = SvgEcd.rawText( rawCenter.x, rawCenter.y+20, ecd.label, color);
+	    v.add(z);
+	    
+	    //String fname = "ecd-" + fmt3d.format(n);
+	    n++;
+	}
+
+	// Links between the HB pairs
+	//System.out.println("Will show "+hbLabels.size() + " HB pairs");
+	for(String pair: hbLabels) {
+	    String[] q = pair.split(",");
+	    Ecd[] e = new Ecd[2];
+	    Point[] rawCenters = new Point[2];
+	    for(int j=0; j<2; j++) {
+		String key = lam.labelToCond(q[j]);
+		e[j] = h.get(key);
+		Point.setScale( xRange, e[j].size());
+		rawCenters[j] = e[j].getCenter().rawPoint();
+		//v.add(  SvgEcd.rawCircle( rawCenters[j], 5, "black"));
+	    }
+	    //System.out.println("Linking " + pair);
+	    v.add( SvgEcd.rawLine(rawCenters[0], rawCenters[1], "green"));
+	}
+
+	
+	return v;
+    }
     
 }

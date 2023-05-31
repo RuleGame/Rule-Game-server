@@ -27,7 +27,7 @@ public class SvgEcd {
 	
 	/** Coordinates with respect to the center of the image, with 
 	    the Y axis going up */
-	double x,y;
+	public double x,y;
 	public Point(double _x, double _y) {
 	    x=_x;
 	    y=_y;
@@ -53,14 +53,18 @@ public class SvgEcd {
 	/** In SVG coordinates (with respect to the top left corner, 
 	    Y going down)
 	*/
-	double[] svgCoord() {
+	public double[] svgCoord() {
+	    Point p = rawPoint();
+	    double[] xy = {p.x, p.y};
+	    return xy;
+	}
+	/** Converts this Point with "science" coordinates to one with raw (svg) ones */
+	public Point rawPoint() {
 	    if (xRange <=0) throw new IllegalArgumentException("xRange not set");
 	    if (yRange <=0) throw new IllegalArgumentException("yRange not set");
 
-	    
-	    double[] xy = {(xmargin+(x*F)/xRange),
-			   (ymargin+F-(y*F)/yRange)};
-	    return xy;
+	    return new Point((xmargin+(x*F)/xRange),
+			     (ymargin+F-(y*F)/yRange));
 	}
 
 	String[] svgCoordString() {
@@ -108,6 +112,23 @@ public class SvgEcd {
 	}
     }
 
+    public static String rawText(double x, double y, String s) {
+	return rawText(x,y,s,null);
+    }
+
+    public static String rawText(double x, double y, String s, String color) {
+	
+	String para = mkSvgParams("x", ""+x,
+				  "y", ""+y,
+				  "font-family", "Arial, Helvetica, sans-serif");
+				  
+	if (color!=null) para = addSvgParams(para, "stroke", color);
+	
+	return fm.wrap("text", para, s);
+    }
+	       
+
+    
     /**
        <rect x="120" width="100" height="100" rx="15" />
     */
@@ -128,9 +149,7 @@ public class SvgEcd {
 	    double x = xmargin;
 	    double y = ymargin + F - (F*j)/n;
 	    v.add( rawLine( new Point(x,y), new Point(x+10, y)));
-	    para = mkSvgParams("x", ""+(x-xmargin+1),
-			       "y", ""+y);
-	    v.add( fm.wrap("text", para, "" + j/(double)n));
+	    v.add( rawText(x-xmargin+1, y,  "" + j/(double)n));
 	}
 
 
@@ -142,10 +161,7 @@ public class SvgEcd {
 	    Point raw = new Point( a[0], a[1]);
 	    Point raw1 = new Point(raw.x, raw.y - 10);
 	    v.add( rawLine( raw, raw1));
-	    para = mkSvgParams("x", ""+raw.x,
-			       "y", ""+(raw.y+ ymargin -1));
-	    v.add( fm.wrap("text", para, "" + (j*xStep)));
-			
+	    v.add( rawText(raw.x, raw.y+ ymargin -1, "" + (j*xStep)));
 	}
 	
 	String s = String.join("\n", v);
@@ -158,21 +174,23 @@ public class SvgEcd {
     }
 
     static String rawLine(Point a, Point b) {
+	return rawLine(a,b,null);
+    }
+    public static String rawLine(Point a, Point b, String color) {
 	String para = mkSvgParams( "x1", ""+a.x,
 				   "y1", ""+a.y,
 				   "x2", ""+b.x,
 				   "y2", ""+b.y);
+	if (color!=null) para = addSvgParams(para,"stroke", color);
 	return fm.wrap("line", para, "");
     }
 
     /** <line x1="7" y1="17" x2="17" y2="7"></line> */   
     static String line(Point _a, Point _b) {
-	String[] a = _a.svgCoordString(), b = _b.svgCoordString();
-	String para = mkSvgParams( "x1", a[0],
-				   "y1", a[1],
-				   "x2", b[0],
-				   "y2", b[1]);
-	return fm.wrap("line", para, "");
+	return line(_a,_b,null);
+    }
+    public static String line(Point _a, Point _b, String color) {
+	return rawLine(_a.rawPoint(), _b.rawPoint(), color);
     }
 
     /** <polyline points="0,100 50,25 50,75 100,0" />
@@ -196,9 +214,11 @@ public class SvgEcd {
 
     /*  <circle cx="50" cy="50" r="50" /> */
     public static String circle(Point center, double radius, String color) {
-	String[] a = center.svgCoordString();
-	String para = mkSvgParams( "cx", a[0],
-				   "cy", a[1],
+	return rawCircle(center.rawPoint(), radius, color);
+    }
+    public static String rawCircle(Point center, double radius, String color) {
+	String para = mkSvgParams( "cx", ""+center.x,
+				   "cy", ""+center.y,
 				   "r", ""+radius);
 
 	if (color!=null) para = addSvgParams(para,"stroke", color);

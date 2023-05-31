@@ -43,16 +43,41 @@ public class LabelMap extends HashMap<String, Character> {
 	}
     }
 
-    /** @param cond E.g. "true.some_abe;false;other_bar", or empty string.
+    final static String SEP = ":";
+    
+    /**  Generates the label for a condition
+	 @param cond E.g. "true.some_abe;false;other_bar", or empty string.
 	@return e.g. "Ab". On an empty-string argument, "0" is returned.
     */
     String mapCond(String cond) {
 	String s="";
 	if (cond.length()==0) return "0";
-	for(String a: cond.split(":")) {
+	for(String a: cond.split(SEP)) {
 	    s += map1(a);
 	}
 	return s;
+    }
+
+    /** Maps 'a' to "false.foo-a" or whatever it is.  */
+    String letterToKey(char c) {
+	char uc = Character.toUpperCase(c);
+	for(String x: keySet()) {
+	    char a = get(x);
+	    if (a==uc) {
+		return (c==uc ? "true." : "false.") + x;
+	    }
+	}
+	throw new IllegalArgumentException("No key maps to label '" + c + "'");
+    }
+    
+    /** The inverse of  mapCond() */
+    String labelToCond(String label) {
+	if (label.equals("0")) return "";
+	Vector<String> v = new Vector<>();
+	for(int j=0; j<label.length(); j++) {
+	    v.add( letterToKey( label.charAt(j)));
+	}
+	return String.join(SEP, v);
     }
 
     /** @param conditions Each array element is of the form "true.ruleA:false.ruleB:..." etc.
@@ -60,7 +85,7 @@ public class LabelMap extends HashMap<String, Character> {
     LabelMap(String[] keys) {
 	HashSet<String> h = new HashSet<>();
 	for(String key: keys) {
-	    for(String a: key.split(":")) {
+	    for(String a: key.split(SEP)) {
 		String b = a.replaceAll("^true.", "");
 		b = b.replaceAll("^false.", "");
 		h.add(b);
@@ -79,8 +104,13 @@ public class LabelMap extends HashMap<String, Character> {
     /** Creates a more or less intelligent mapping from strings in z[]
 	to uppercase alphabet letters
     */
-    static private char[] assignLetters(String [] z) {   
+    static private char[] assignLetters(String [] z) {
+	
 	String[] w = new String[z.length];
+	char[] letters = new char[z.length];
+	if (z.length==0) return letters;
+	
+
 	int drop = z.length==1? 0: longestPrefix(z).length();
 	for(int j=0; j<z.length; j++) {
 	    String u = z[j].substring(drop).toUpperCase();
@@ -88,7 +118,7 @@ public class LabelMap extends HashMap<String, Character> {
 	    if (w[j].length()==0) w[j]=null;
 	}
 	HashSet<Character> usedLetters = new HashSet<>();
-	char[] letters = new char[z.length];
+
 	
 	// see if some of the first letters are unique
 	while(true) {
@@ -156,6 +186,7 @@ public class LabelMap extends HashMap<String, Character> {
 
 
     static private String longestPrefix(String [] z) {
+	if (z.length==0) throw new IllegalArgumentException("Empty array");
 	String p = z[0];
 	for(String q: z) {
 	    if (q.startsWith(p)) continue;

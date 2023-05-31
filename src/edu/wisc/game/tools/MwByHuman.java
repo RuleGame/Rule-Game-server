@@ -47,6 +47,10 @@ public class MwByHuman extends AnalyzeTranscripts {
 	if (msg!=null) 	System.err.println(msg + "\n");
 	System.exit(1);
     }
+
+    /** If non-null, restrict to experiences that have this rule set
+	as the "main" one (with various preceding sets) */
+    private static String target=null;
     
   public static void main(String[] argv) throws Exception {
 
@@ -97,6 +101,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 		precMode = Enum.valueOf(MwByHuman.PrecMode.class, argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-csvOut")) {
 		csvOutDir = new File(argv[++j]);
+	    } else if (j+1< argv.length && a.equals("-target")) {
+		target = argv[++j];
 	    } else if (a.startsWith("-")) {
 		usage("Unknown option: " + a);
 	    } else {
@@ -372,7 +378,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	Ignore
     }
     
-    /**  The data for a series (group of episodes played by a player under the same rule set) needed to contribute a number to an M-W Comparandum. For each episode, we need these data:
+    /**  The data for a series (group of episodes played by one player under the same rule set) needed to contribute a number to an M-W Comparandum. For each episode, we need these data:
 	 <pre>
 playerId
 episodeId
@@ -481,7 +487,7 @@ m*
 
 	    if (csv.entries.length<2) throw new IOException("No data found in file: " + f);
 	    CsvData.BasicLineEntry header =  (CsvData.BasicLineEntry)csv.header;
-	    System.out.println("Header=" + header);
+	    //System.out.println("Header=" + header);
 	    //int nCol = header.nCol();
 	    
 	    for(int j=0; j<csv.entries.length; j++) {
@@ -554,7 +560,16 @@ m*
 	    for(int j=0; j< precedingRules.size(); j++) {
 		String r = precedingRules.get(j);
 		if (r.startsWith("true.") ||r.startsWith("false.")) continue;
-		MwSeries old = savedMws.get(j);
+		MwSeries old = null;
+		// FIXME quadratic...
+		for(MwSeries x: savedMws) {
+		    if (x.playerId.equals(playerId) &&
+			x.ruleSetName.equals(r)) {
+			old = x;
+			break;
+		    }
+		}
+		if (old==null) throw new AssertionError("Cannot find preceding series for p="+playerId+", r="  + r);
 		r = "" + old.learned + "." + r;
 		precedingRules.set(j, r);
 	    }   
@@ -571,6 +586,8 @@ m*
     /** It is double rather than int so that Infinity could be represented */
     private final double  defaultMStar;
 
+    //    private HashMap<String, MWSeries[]
+    
     /** Saves the data for a single (player, ruleSet) pair
 	@param section A vector of arrays, each array representing the recorded
 	moves for one episode.
@@ -591,7 +608,9 @@ m*
 	    EpisodeHandle eh = includedEpisodes.get(je ++);
 
 	    if (ser==null || !ser.ruleSetName.equals(eh.ruleSetName)) {
-		savedMws.add(ser = new MwSeries(eh));
+		ser = new MwSeries(eh);
+		boolean shouldRecord = (target==null) || eh.ruleSetName.equals(target);
+		if (shouldRecord) 		savedMws.add(ser);
 		streak=0;
 		ser.errcnt = 0;
 		ser.mStar = defaultMStar;
