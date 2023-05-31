@@ -32,6 +32,9 @@ public class Ecd {
 
     /** Refers to the preceding conditions */
     final String key;
+    /** AbC */
+    final String label;
+    
     double[] orderedSample;
     Vector<MwSeries> series = new Vector<>();
     double successRate;
@@ -59,7 +62,7 @@ public class Ecd {
     }
 
     public String toString() {
-	String s = "(ECD("+key+")={";
+	String s = "(ECD(label="+label+", cond='" +key+"')={";
 	//s += Util.joinNonBlank(", ", orderedSample);
 	for(int j=0; j<orderedSample.length; j++) {
 	    double a = orderedSample[j];
@@ -74,12 +77,15 @@ public class Ecd {
 	
 	s += "}, "+
 	    " median mStar=" + getMedianMStar() + ", success rate=" +
-	    learnedCnt + "/"  + size() + "=" + successRate + "}";
+	    learnedCnt + "/"  + size() + "=" + successRate + ")";
 	return s;
 	
     }
     
-    Ecd(String _key) { key = _key; }
+    Ecd(String _key, String _label) {
+	key = _key;
+	label = _label;
+    }
 
     void add(MwSeries ser) { series.add(ser); }
 
@@ -153,11 +159,20 @@ public class Ecd {
 	    }
 	    //System.out.println("DEBUG: out of " + imported.size() + " data lines, found " + data.size() + " lines for the target rule set " + target);
 	    TreeMap<String, Ecd> h = new TreeMap<>();
+
+	    for(MwSeries ser: data) {
+		String key = ser.getLightKey();
+		h.put(key,null);
+	    }
+
+	    LabelMap lam = new LabelMap( h.keySet().toArray(new String[0]));
 	    
 	    for(MwSeries ser: data) {
 		String key = ser.getLightKey();
+		//System.out.println("key='" + key+ "'");
+		String label = lam.mapCond(key);
 		Ecd ecd = h.get(key);
-		if (ecd==null) h.put(key, ecd = new Ecd(key));
+		if (ecd==null) h.put(key, ecd = new Ecd(key, label));
 		ecd.add(ser);
 	    }
 
@@ -177,7 +192,7 @@ public class Ecd {
 	    
 	    for(Ecd ecd: h.values()) {
 		//System.out.println("Making SVG for " + ecd.orderedSample.length + " points");
-		System.out.println("ECD="  + ecd);
+		System.out.println( ecd);
 		yRange = ecd.size();
 		String color = colors[ n % colors.length];
 		String z = SvgEcd.makeSvgEcd(color, ecd.orderedSample,
@@ -191,10 +206,13 @@ public class Ecd {
 					  0.5*ecd.learnedCnt);
 		z = SvgEcd.circle( center, 3, color);
 		v.add(z);
+
 		
 		//String fname = "ecd-" + fmt3d.format(n);
 		n++;
 
+
+		
 		//if (n>0) break;
 	    }
 

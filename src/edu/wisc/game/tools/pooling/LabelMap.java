@@ -16,7 +16,7 @@ import java.util.*;
 
     The underlying HashMap may map "some_foo" to "F"; the method map1()
     will map "true.some_foo" to "F", and "false.some_foo" to "F". The method
-    mapCond() may map "true.some_foo;false;other_bar" to "Fb".
+    mapCond() may map "true.some_foo:false.other_bar" to "Fb".
   
 */
 public class LabelMap extends HashMap<String, Character> {
@@ -26,7 +26,11 @@ public class LabelMap extends HashMap<String, Character> {
      */
     char map1(String s) {
 	String pt = "true.", pf = "false.";
-	if (s.startsWith(pt)) {
+	//	if (s.equals("")) {
+	//  return "0";
+	//	} else
+
+	    if (s.startsWith(pt)) {
 	    String key = s.substring(pt.length());
 	    if (get(key)==null) throw new IllegalArgumentException("No label registered for key="  + key);
 	    return get(key);
@@ -35,7 +39,7 @@ public class LabelMap extends HashMap<String, Character> {
 	    if (get(key)==null) throw new IllegalArgumentException("No label registered for key="  + key);
 	    return Character.toLowerCase(get(key));
 	} else  {
-	    throw new IllegalArgumentException("Argument should beging with 'true.' or 'false.'");
+	    throw new IllegalArgumentException("Argument should beging with 'true.' or 'false.'. Instead, have '"  + s + "'");
 	}
     }
 
@@ -44,18 +48,19 @@ public class LabelMap extends HashMap<String, Character> {
     */
     String mapCond(String cond) {
 	String s="";
-	for(String a: cond.split(";")) {
+	if (cond.length()==0) return "0";
+	for(String a: cond.split(":")) {
 	    s += map1(a);
 	}
-	return s.length()==0? "0" : s;
+	return s;
     }
 
-    /** @param conditions Each array element is of the form "true.ruleA;false.ruleB;..." etc.
+    /** @param conditions Each array element is of the form "true.ruleA:false.ruleB:..." etc.
      */
     LabelMap(String[] keys) {
 	HashSet<String> h = new HashSet<>();
 	for(String key: keys) {
-	    for(String a: key.split(";")) {
+	    for(String a: key.split(":")) {
 		String b = a.replaceAll("^true.", "");
 		b = b.replaceAll("^false.", "");
 		h.add(b);
@@ -88,7 +93,7 @@ public class LabelMap extends HashMap<String, Character> {
 	// see if some of the first letters are unique
 	while(true) {
 	    HashMap<Character, Integer> fcnt = countFirstLetters(w);
-	    System.out.println("FL map=" + fcnt);
+	    //System.out.println("FL map=" + fcnt);
 	    int newDone = 0, stripDone = 0;
 	    for(int j=0; j<w.length; j++) {
 		if (letters[j]!=0) continue;
@@ -99,7 +104,7 @@ public class LabelMap extends HashMap<String, Character> {
 		if (cnt==1) {
 		    letters[j] = x;
 		    usedLetters.add(x);
-		    System.out.println("Assigned unique letter[" + j +"]=" + letters[j] + " to key=" + w[j]);
+		    //System.out.println("Assigned unique letter[" + j +"]=" + letters[j] + " to key=" + w[j]);
 		    w[j]=null;
 		    newDone ++;
 		} else {
@@ -117,7 +122,7 @@ public class LabelMap extends HashMap<String, Character> {
 		if (!usedLetters.contains(c)) {
 		    letters[j] = c;
 		    usedLetters.add(c);
-		    System.out.println("Assigned letter[" + j +"]=" + letters[j] + " to key=" + w[j]);
+		    //System.out.println("Assigned letter[" + j +"]=" + letters[j] + " to key=" + w[j]);
 		    w[j]=null;
 		    break;
 		}

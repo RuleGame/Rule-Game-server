@@ -114,7 +114,7 @@ public class CsvData {
 		
 		final int nc = (legalLengths==null? -1 : colCnt);
 		header = (BasicLineEntry)mkEntry(csv, nc);
-		System.out.println("DEBUG: saved header=" + header);
+		//System.out.println("DEBUG: saved header=" + header);
 		continue;
 	    }
 

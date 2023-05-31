@@ -458,7 +458,7 @@ m*
 
 	String toCsv() {
 	    String[] v = { ruleSetName,
-			   String.join(";", precedingRules),
+			   String.join(":", precedingRules),
 			   exp,
 			   trialListId,
 			   ""+seriesNo,
