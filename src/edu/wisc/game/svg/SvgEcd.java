@@ -9,8 +9,8 @@ import  edu.wisc.game.formatter.*;
 
 public class SvgEcd {
 
-    static final int F=500, margin=20;
-    static final int H=F+ 2*margin;
+    static final int F=500, xmargin=30, ymargin=20;
+    static final int H=F+ 2*ymargin;
 
     static final HTMLFmter fm =    HTMLFmter.htmlFmter;
  
@@ -58,8 +58,8 @@ public class SvgEcd {
 	    if (yRange <=0) throw new IllegalArgumentException("yRange not set");
 
 	    
-	    double[] xy = {(margin+(x*F)/xRange),
-			(margin+F-(y*F)/yRange)};
+	    double[] xy = {(xmargin+(x*F)/xRange),
+			   (ymargin+F-(y*F)/yRange)};
 	    return xy;
 	}
 
@@ -113,8 +113,8 @@ public class SvgEcd {
     */
     public static String drawFrame(double xRange) {
 	String color="black";
-	String para = mkSvgParams("x", ""+margin,
-				  "y", ""+margin,
+	String para = mkSvgParams("x", ""+xmargin,
+				  "y", ""+ymargin,
 				  "width", ""+F,
 				  "height", ""+F
 				  //"stroke",color,
@@ -125,9 +125,12 @@ public class SvgEcd {
 
 	int n = 10;
 	for(int j=0; j<=n; j++) {
-	    double x = margin;
-	    double y = margin + F - (F*j)/n;
+	    double x = xmargin;
+	    double y = ymargin + F - (F*j)/n;
 	    v.add( rawLine( new Point(x,y), new Point(x+10, y)));
+	    para = mkSvgParams("x", ""+(x-xmargin+1),
+			       "y", ""+y);
+	    v.add( fm.wrap("text", para, "" + j/(double)n));
 	}
 
 
@@ -140,7 +143,7 @@ public class SvgEcd {
 	    Point raw1 = new Point(raw.x, raw.y - 10);
 	    v.add( rawLine( raw, raw1));
 	    para = mkSvgParams("x", ""+raw.x,
-			       "y", ""+(raw.y+margin -1));
+			       "y", ""+(raw.y+ ymargin -1));
 	    v.add( fm.wrap("text", para, "" + (j*xStep)));
 			
 	}

@@ -173,7 +173,7 @@ public class Ecd {
 	    Vector<String> v = new Vector<>();
 	    v.add( SvgEcd.drawFrame(xRange));
 
-	    String[] colors = {"red", "green", "orange", "yellow", "blue", "purple"};
+	    String[] colors = {"red", "green", "orange", "cyan", "eblue", "purple", "pink"};
 	    
 	    for(Ecd ecd: h.values()) {
 		//System.out.println("Making SVG for " + ecd.orderedSample.length + " points");
@@ -215,32 +215,6 @@ public class Ecd {
 	}
 	 
      }
-
-    /** Maps false.someThingXandY to X, etc. This is used in compact labeling
-	of conditions
-     */
-    static class LabelMap extends HashMap<String, String> {
-	LabelMap(String[] keys) {
-	    HashSet<String> h = new HashSet<>();
-	    for(String key: keys) {
-		for(String a: key.split(";")) {
-		    String b = a.replaceAll("^true.", "");
-		    b = b.replaceAll("^false.", "");
-		    h.add(b);
-		}
-	    }
-
-	    
-	    
-	}
-    }
-
-    
-    static String[] keysToLabels(String[] keys) {
-    }
-
-    static String[] keysToLabels(String[] keys) {
-    }
 
     
 }
