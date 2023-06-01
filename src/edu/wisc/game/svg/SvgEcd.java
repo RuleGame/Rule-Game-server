@@ -279,10 +279,13 @@ public class SvgEcd {
     }
 
     static public String outerWrap(String s) {
+	return outerWrap(s,H,H);
+    }
+    static public String outerWrap(String s, double W, double H) {
 	String svgExtra = mkSvgParams("xmlns", "http://www.w3.org/2000/svg",
-				      "width", ""+H,
+				      "width", ""+W,
 				      "height", ""+H,
-				      "viewBox", ""+H+" "+H,
+				      "viewBox", ""+W+" "+H,
 				      "fill", "none",
 				      "stroke", "currentColor",
 				      "stroke-width", "" +1,

@@ -270,10 +270,14 @@ public class Ecd {
 
 	    for(Clustering.Linkage linkage: links) {
 		Clustering.Node root = Clustering.doClustering(h, ph, lam, linkage);
-
-
 		System.out.println("Dendrogram for linkage=" + linkage + ":");
 		System.out.println(root);
+
+		int[] box = root.boxSize();
+		String s = root.toSvg();
+		s  =  SvgEcd.outerWrap(s, box[0], box[1]);
+		writeSvg(base + "-tree-" + linkage, s);
+		
 	    }
 
 
@@ -284,9 +288,13 @@ public class Ecd {
 	 
      }
 
-    
     static private void writeSvg(String fnameBase, Vector<String> v) throws IOException {
 	String s = SvgEcd.outerWrap( String.join("\n", v));
+	writeSvg(fnameBase, s);
+    }
+    
+    static private void writeSvg(String fnameBase, String s) throws IOException {
+
 	File f = new File(fnameBase + ".svg");
 	PrintWriter w = new PrintWriter(new      FileWriter(f));
 	w.println(s);

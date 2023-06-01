@@ -63,6 +63,55 @@ public class Clustering {
 	    String s = "" + dist + "( "+ Util.joinNonBlank(", ", children)+")";
 	    return s;
 	}
+
+	final static int DX = 100, DY = 50,  xmargin=20, ymargin=20;
+
+	/** @return [xsize, ysize] */
+	int[] boxSize() {
+	    return new int[] { 2*xmargin + DX*(level+1), 2*ymargin + DY*width };
+	}
+	    
+
+	String toSvg() {
+	    return toSvg(xmargin, ymargin);
+	}
+	
+	/** The root is on the left. (So that width is vertical and height horizontal)
+	    @param x0 top left corner
+	    @param y0 top left corner
+	*/
+	String toSvg(final double x0, final double y0) {
+	    
+	    Vector<String> v = new Vector<>();
+	    
+	    //-- center of this node
+	    final double y = y0 + DY * 0.5 * width;
+	    
+	    String labelColor = "red", distColor = "green", lineColor = "black";
+	    NumberFormat fmt = new DecimalFormat("0.000");
+    
+	    v.add( SvgEcd.rawText( x0, y-1, label, labelColor));
+	    if (children!=null) v.add( SvgEcd.rawText( x0, y+20, fmt.format(dist), distColor));
+
+	
+	    if (children!=null) {
+		double y1 = y0;
+		for(int j=0; j<2; j++) {
+		    double x1 = x0 + DX * (level - children[j].level);
+		    v.add( children[j].toSvg( x1, y1));
+
+		    double py = y - 18 + 40*j;
+		    double w = DY*children[j].width;
+		    v.add( SvgEcd.rawLine( new Point(x0+20, py),
+					   new Point(x1, y1 + 0.5*w),
+					   lineColor));
+
+		    y1 += w;
+		}	    
+	    }
+	    return String.join("\n", v);
+	    
+	}
 	
     }
 
@@ -148,7 +197,6 @@ public class Clustering {
     }
 	
 
-    //    String toSvg
     
     
 }
