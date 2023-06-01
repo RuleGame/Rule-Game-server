@@ -149,7 +149,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 		    //System.out.println("DEBUG: Has read " + processor.savedMws.size() + " data lines");
 		}		
 	    }
-	
+
 	    // M-W test on the data from savedMws
 	    processor.processStage2( importFrom.size()>0, useMDagger, csvOutDir);
 	    
@@ -579,7 +579,7 @@ m*
     }
 
     /** Info about each episode gets added here */
-    private Vector<MwSeries> savedMws = new Vector<>();
+    public Vector<MwSeries> savedMws = new Vector<>();
 
 
     private final int targetStreak;

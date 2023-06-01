@@ -24,10 +24,9 @@ import edu.wisc.game.engine.*;
 import edu.wisc.game.saved.*;
 import edu.wisc.game.parser.RuleParseException;
 import edu.wisc.game.math.*;
+*/
 import edu.wisc.game.formatter.*;
 
-import edu.wisc.game.sql.Episode.CODE;
-*/
 
 /*  Empirical cumulated distribution */
 public class Ecd {
@@ -111,6 +110,14 @@ public class Ecd {
 	return new Point( getMedianMStar(),  0.5*learnedCnt);
     }
 
+    /** Produces a new ECD that combines this sample with another sample */
+    Ecd merge(Ecd o) {
+	Ecd merged = new Ecd(key + "+" + o.key, label+ "+" + o.label);
+	merged.series.addAll(series);
+	merged.series.addAll(o.series);
+	merged.freeze();
+	return merged;
+    }
     
     static private void usage() {
 	usage(null);
@@ -129,21 +136,25 @@ public class Ecd {
     
     public static void main(String[] argv) throws Exception {
 
-	 /** The target rule set name. Must be specified. */
-	 Vector<String> importFrom = new Vector<>();
+	File csvOutDir=null;
+	
+	/** The target rule set name. Must be specified. */
+	Vector<String> importFrom = new Vector<>();
+	
 
-
-	 for(int j=0; j<argv.length; j++) {
+	for(int j=0; j<argv.length; j++) {
 	    String a = argv[j];
-
+	    
 	    if  (j+1< argv.length && a.equals("-target")) {
 		target = argv[++j];
 	    } else if (j+1< argv.length && a.equals("-import")) {
 		importFrom.add(argv[++j]);
+	    } else if (j+1< argv.length && a.equals("-csvOut")) {
+		csvOutDir = new File(argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-alpha")) {
 		alpha =  Double.parseDouble(argv[++j]);
 	    }
-	 }
+	}
 
 	 
 	if ( importFrom.size()==0) {
@@ -153,7 +164,7 @@ public class Ecd {
 	if (target==null) {
 	    usage("Please provide -target ruleSetName");
 	}
-	
+	String base = target.replaceAll("/", "-");
 	
 	Vector<MwSeries> imported = new Vector<>();
 	try {
@@ -170,41 +181,62 @@ public class Ecd {
 		if (ser.ruleSetName.equals(target)) data.add(ser);
 	    }
 	    //System.out.println("DEBUG: out of " + imported.size() + " data lines, found " + data.size() + " lines for the target rule set " + target);
+
+	    Set<String> keys = new HashSet<>();
+	    for(MwSeries ser: data) {
+		String key = ser.getLightKey();
+		keys.add(key);
+	    }
+
+	    LabelMap lam = new LabelMap( keys.toArray(new String[0]));
+
+	    //-- Maps labels to ECD objects
 	    TreeMap<String, Ecd> h = new TreeMap<>();
 
 	    for(MwSeries ser: data) {
 		String key = ser.getLightKey();
-		h.put(key,null);
-	    }
-
-	    LabelMap lam = new LabelMap( h.keySet().toArray(new String[0]));
-	    
-	    for(MwSeries ser: data) {
-		String key = ser.getLightKey();
 		//System.out.println("key='" + key+ "'");
 		String label = lam.mapCond(key);
-		Ecd ecd = h.get(key);
-		if (ecd==null) h.put(key, ecd = new Ecd(key, label));
+		Ecd ecd = h.get(label);
+		if (ecd==null) h.put(label, ecd = new Ecd(key, label));
 		ecd.add(ser);
 	    }
 
+	    // Eigenvalue analysis
+	    Fmter plainFm = new Fmter();
+	    MwByHuman processor = new MwByHuman(PrecMode.EveryCond,
+						10, 300, plainFm);
+	    processor.savedMws.addAll(data);
+
+	    System.out.println("=== Target "+target+" ===");
+	    
+	    // M-W test on the data from savedMws
+	    if (csvOutDir==null) {
+		csvOutDir = new File(base + "-ev");
+	    }	
+	    System.out.println("MW eigenvalue data are in " + csvOutDir);
+	    
+	    processor.processStage2(true, false, csvOutDir);
+
+
+
 	    double xRange = 1, yRange=1;
-	    HashSet<String> keysToDiscard=new HashSet<>();
-	    for(String key: h.keySet()) {
-		Ecd ecd =h.get(key);
+	    HashSet<String> toDiscard=new HashSet<>();
+	    for(String label: h.keySet()) {
+		Ecd ecd =h.get(label);
 		ecd.freeze();
 
 		if (ecd.size()<=1) {
-		    keysToDiscard.add(key);
+		    toDiscard.add(label);
 		}
 		
 		xRange = Math.max(xRange, ecd.getMaxMStar());
 		//yRange = Math.max(yRange, ecd.size());
 	    }
 
-	    for(String key:keysToDiscard) {
-		System.out.println("Removing the small-sample ECD (because KS won't like it): " + h.get(key));
-		h.remove(key);
+	    for(String label: toDiscard) {
+		System.out.println("Removing the small-sample ECD (because KS won't like it): " + h.get(label));
+		h.remove(label);
 	    }
 
 	    
@@ -220,16 +252,29 @@ public class Ecd {
 	    
 	    Vector<String> v = drawAllCurves(h, xRange, yRange, colors, lam, null);
 	    	    
-	    String base = target.replaceAll("/", "-");
+
 	    String fname = base + "-ecd-basic";
 	    writeSvg(fname, v);
 
 	    Vector<String> hbLabels = new Vector<>();
-	    HashMap<String,Double> ph = analyzeSimilarities(h, lam, hbLabels);
+	    DistMap ph = analyzeSimilarities(h, lam, hbLabels);
 	    colors = new String[] {"red"};
 	    v = drawAllCurves(h, xRange, yRange, colors, lam, hbLabels);
 	    fname = base + "-ecd-hb";
 	    writeSvg(fname, v);
+
+	    System.out.println("=== Clustering ===");
+
+	    Clustering.Linkage links[] ={ Clustering.Linkage.MAX,
+					  Clustering.Linkage.MERGE};
+
+	    for(Clustering.Linkage linkage: links) {
+		Clustering.Node root = Clustering.doClustering(h, ph, lam, linkage);
+
+
+		System.out.println("Dendrogram for linkage=" + linkage + ":");
+		System.out.println(root);
+	    }
 
 
 	} finally {
@@ -248,33 +293,35 @@ public class Ecd {
 	w.close();
     }
 
-    static private HashMap<String,Double>  analyzeSimilarities(Map<String, Ecd> h, LabelMap lam, Vector<String> hbLabels) {
-	MannWhitneyUTest mw = new MannWhitneyUTest();
-	KolmogorovSmirnovTest ks = new 	KolmogorovSmirnovTest();
 
-	HashMap<String,Double> ph = new HashMap<>();
+    static final MannWhitneyUTest mw = new MannWhitneyUTest();
+    static final KolmogorovSmirnovTest ks = new KolmogorovSmirnovTest();
+    double computeSimilarity(Ecd o) {
+	double	mwp = mw.mannWhitneyUTest(orderedSample,o.orderedSample);
+	//System.out.println("mannWhitneyUTest(" + fmtArg(x)+")=" + mwp);
+	double ksp = ks.kolmogorovSmirnovTest(orderedSample,o.orderedSample);
+	//double kspf = ks.kolmogorovSmirnovTest(x[0],x[1], false);
+	double p = Math.max(mwp, ksp);
+	return p;
+    }
+    
+    /** @return The upper triangular matrix (label1 &lt; label2) of similarities between different ECDs.
+	
+     */
+    static private DistMap  analyzeSimilarities(Map<String, Ecd> h, LabelMap lam, Vector<String> hbLabels) {
+
+	DistMap ph = new DistMap();
 
 	System.out.println("=== p-Values ===");
-	for( String key1: h.keySet()) {
-	    Ecd ecd1 = h.get(key1);
-	    String label1 = lam.mapCond(key1);
-	    for( String key2: h.keySet()) {
-		Ecd ecd2 = h.get(key2);
-		String label2 = lam.mapCond(key2);
+	for( String label1: h.keySet()) {
+	    Ecd ecd1 = h.get(label1);
+	    for( String label2: h.keySet()) {
+		Ecd ecd2 = h.get(label2);
 		
-		double	mwp = mw.mannWhitneyUTest(ecd1.orderedSample,ecd2.orderedSample);
-		//System.out.println("mannWhitneyUTest(" + fmtArg(x)+")=" + mwp);
-
-
-		double ksp = ks.kolmogorovSmirnovTest(ecd1.orderedSample,ecd2.orderedSample);
-		//double kspf = ks.kolmogorovSmirnovTest(x[0],x[1], false);
-
-
-		double p = Math.max(mwp, ksp);
-
+		double p = ecd1.computeSimilarity( ecd2 );
 		System.out.print("\tp("+label1+","+label2+")="+p);
 		if (label1.compareTo(label2)<0) {
-		    ph.put(label1+","+label2, p);
+		    ph.put2(label1,label2, p);
 		}
 	    }
 	    System.out.println();
@@ -359,8 +406,7 @@ public class Ecd {
 	    Ecd[] e = new Ecd[2];
 	    Point[] rawCenters = new Point[2];
 	    for(int j=0; j<2; j++) {
-		String key = lam.labelToCond(q[j]);
-		e[j] = h.get(key);
+		e[j] = h.get(q[j]);
 		Point.setScale( xRange, e[j].size());
 		rawCenters[j] = e[j].getCenter().rawPoint();
 		//v.add(  SvgEcd.rawCircle( rawCenters[j], 5, "black"));
