@@ -153,6 +153,8 @@ public class Ecd {
 		csvOutDir = new File(argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-alpha")) {
 		alpha =  Double.parseDouble(argv[++j]);
+	    } else if (j+1< argv.length && a.equals("-beta")) {
+		Clustering.beta =  Double.parseDouble(argv[++j]);
 	    }
 	}
 
@@ -242,7 +244,9 @@ public class Ecd {
 	    
 	    xRange += 1;
 
+	    System.out.println("Human learning analysis in Game Server ver. " + Episode.version);
 	    System.out.println("=== Legend for target "+target+" ===");
+	    
 	    for(Ecd ecd: h.values()) {
 		System.out.println( ecd);
 	    }
@@ -269,8 +273,9 @@ public class Ecd {
 					  Clustering.Linkage.MERGE};
 
 	    for(Clustering.Linkage linkage: links) {
-		Clustering.Node root = Clustering.doClustering(h, ph, lam, linkage);
-		System.out.println("Dendrogram for linkage=" + linkage + ":");
+		Clustering.Node root = Clustering.doClustering(h, lam, linkage);
+		System.out.println("Dendrogram for linkage=" + linkage +
+				   ", beta="+Clustering.beta+":");
 		System.out.println(root);
 
 		int[] box = root.boxSize();
@@ -304,19 +309,21 @@ public class Ecd {
 
     static final MannWhitneyUTest mw = new MannWhitneyUTest();
     static final KolmogorovSmirnovTest ks = new KolmogorovSmirnovTest();
-    double computeSimilarity(Ecd o) {
+    /** @param useMin Use min(MW,KS), rather than max(MW,KS)
+     */
+    double computeSimilarity(Ecd o, boolean useMin) {
 	double	mwp = mw.mannWhitneyUTest(orderedSample,o.orderedSample);
 	//System.out.println("mannWhitneyUTest(" + fmtArg(x)+")=" + mwp);
 	double ksp = ks.kolmogorovSmirnovTest(orderedSample,o.orderedSample);
 	//double kspf = ks.kolmogorovSmirnovTest(x[0],x[1], false);
-	double p = Math.max(mwp, ksp);
+	double p = useMin? Math.min(mwp, ksp) : Math.max(mwp, ksp);
 	return p;
     }
-    
-    /** @return The upper triangular matrix (label1 &lt; label2) of similarities between different ECDs.
-	
-     */
-    static private DistMap  analyzeSimilarities(Map<String, Ecd> h, LabelMap lam, Vector<String> hbLabels) {
+
+
+    /** Computes the similarity matrix. (Only the upper triangular section
+	is filled). */
+    static DistMap computeSimilarities(Map<String, Ecd> h, boolean useMin) {
 
 	DistMap ph = new DistMap();
 
@@ -326,7 +333,31 @@ public class Ecd {
 	    for( String label2: h.keySet()) {
 		Ecd ecd2 = h.get(label2);
 		
-		double p = ecd1.computeSimilarity( ecd2 );
+		double p = ecd1.computeSimilarity( ecd2, useMin);
+		System.out.print("\tp("+label1+","+label2+")="+p);
+		if (label1.compareTo(label2)<0) {
+		    ph.put2(label1,label2, p);
+		}
+	    }
+	    System.out.println();
+	}
+	return ph;
+    }
+    
+    /** @return The upper triangular matrix (label1 &lt; label2) of similarities between different ECDs.
+	
+     */
+    static private DistMap  analyzeSimilarities(Map<String, Ecd> h, LabelMap lam, Vector<String> hbLabels) {
+
+	DistMap ph = computeSimilarities(h, false);
+
+	System.out.println("=== p-Values ===");
+	for( String label1: h.keySet()) {
+	    Ecd ecd1 = h.get(label1);
+	    for( String label2: h.keySet()) {
+		Ecd ecd2 = h.get(label2);
+		
+		double p = ecd1.computeSimilarity( ecd2, false );
 		System.out.print("\tp("+label1+","+label2+")="+p);
 		if (label1.compareTo(label2)<0) {
 		    ph.put2(label1,label2, p);

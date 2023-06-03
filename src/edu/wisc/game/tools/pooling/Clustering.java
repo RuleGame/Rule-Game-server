@@ -31,6 +31,8 @@ import edu.wisc.game.formatter.*;
 /*  Hierarchical agglomerative clustering of ECD objects */
 public class Clustering {
 
+    static double beta = 0.5;
+    
     /** Level-0 nodes are leaves (contains one ECD object).
 	Higher-level nodes have 2 children each.
      */
@@ -64,28 +66,51 @@ public class Clustering {
 	    return s;
 	}
 
-	final static int DX = 100, DY = 50,  xmargin=20, ymargin=20;
+	final static boolean useDistance = true;
+	final static int DX = 100, DY = (useDistance? 100:50),  xmargin=20, ymargin=20;
 
 	/** @return [xsize, ysize] */
 	int[] boxSize() {
-	    return new int[] { 2*xmargin + DX*(level+1), 2*ymargin + DY*width };
+	    int[] bb = {2*xmargin +
+			(int)Math.round(useDistance? DX*(maxDistance()+1):DY*(level+1)),
+			2*ymargin +		 DY*width };
+	    return bb;
+	}
+
+	/** The "height" (sum of distances) of the longest "path to a leaf"
+	    from this node. Used to properly size the display window. */
+	private double maxDistance()	{
+	    double d = dist;
+	    if (children!=null) d += Math.max(children[0].maxDistance(),
+					      children[1].maxDistance());
+	    return d;
 	}
 	    
 
 	String toSvg() {
-	    return toSvg(xmargin, ymargin);
+	    return toSvg(xmargin, ymargin, width*DY);
 	}
+
+	/** The y-offset of the center of this node */
+	private double dyc(double ysize) {
+	    return (useDistance && children!=null) ?
+		(ysize * children[0].width)/width :
+		0.5 * ysize;
+	}
+
 	
 	/** The root is on the left. (So that width is vertical and height horizontal)
 	    @param x0 top left corner
 	    @param y0 top left corner
+	    @param ysize How much vertical space is that tree allowed to take
 	*/
-	String toSvg(final double x0, final double y0) {
+	String toSvg(final double x0, final double y0, final double ysize) {
+
 	    
 	    Vector<String> v = new Vector<>();
 	    
 	    //-- center of this node
-	    final double y = y0 + DY * 0.5 * width;
+	    final double y = y0 + dyc(ysize);
 	    
 	    String labelColor = "red", distColor = "green", lineColor = "black";
 	    NumberFormat fmt = new DecimalFormat("0.000");
@@ -97,16 +122,41 @@ public class Clustering {
 	    if (children!=null) {
 		double y1 = y0;
 		for(int j=0; j<2; j++) {
-		    double x1 = x0 + DX * (level - children[j].level);
-		    v.add( children[j].toSvg( x1, y1));
+		    double h;
+		    if (useDistance) {
+			h = dist * DX;
+		    } else {
+			h = DX * (level - children[j].level);
+		    }
+		    double x1 = x0 + h;
+		    //-- width of the child
+		    double cw = (ysize * children[j].width)/width;
+		    v.add( children[j].toSvg( x1, y1, cw));
+		    //-- center of the child
+		    double y2  = y1 + children[j].dyc(cw);
+		    
+		    //double w = DY*children[j].width;
 
-		    double py = y - 18 + 40*j;
-		    double w = DY*children[j].width;
-		    v.add( SvgEcd.rawLine( new Point(x0+20, py),
-					   new Point(x1, y1 + 0.5*w),
-					   lineColor));
+		    if (useDistance) {
+			Point root =  new Point(x0, y),
+			    p1 = new Point(x0, y2),
+			    p2 = new Point(x1, y2);
+			String s = SvgEcd.rawLine( root, p1, lineColor) + "\n"+
+			    SvgEcd.rawLine( p1, p2, lineColor);
 
-		    y1 += w;
+			final int sw= 3;
+			if (dist<beta) s = SvgEcd.fm.wrap( "g", "stroke-width=\"" + sw+"\"", s);
+			v.add(s);
+		    } else {
+			double px = 20;
+			double py = y - 18 + 40*j;
+		    
+			v.add( SvgEcd.rawLine( new Point(x0+px, py),
+					       new Point(x1, y2),
+					       lineColor));
+		    }
+
+		    y1 += cw;
 		}	    
 	    }
 	    return String.join("\n", v);
@@ -123,7 +173,11 @@ public class Clustering {
 	  The distance d(C,(A,B )) is the larger of d(C,A) and d(C,B).
 	  ("Maximum or complete-linkage clustering", as per Wikipedia)
      */
-    static Node doClustering(Map<String, Ecd> h, DistMap ph, LabelMap lam, Linkage linkage) {
+    static Node doClustering(Map<String, Ecd> h, LabelMap lam, Linkage linkage) {
+
+	final boolean useMin = true;
+	DistMap ph = Ecd.computeSimilarities(h, useMin);
+	
 	Vector<Node> roots = new Vector<>();
 	for(Ecd ecd: h.values()) {
 	    roots.add(new Node(ecd));
@@ -146,7 +200,7 @@ public class Clustering {
 	//-- Keep merging, until just 1 root remains
 	while( roots.size()>1) {
 	    int jmin=0, kmin=0;
-	    double minDist = 1;
+	    double minDist = 2;
 	    //-- find the lowest-distance pair
 	    //System.out.println("Roots.size="+ roots.size());
 	    for(int j=0; j<roots.size(); j++) {
@@ -182,7 +236,7 @@ public class Clustering {
 		    d = Math.max( dist.get2(n, nearest[0]),
 				  dist.get2(n, nearest[1]));
 		} else if (linkage == Linkage.MERGE)  {
-		    double sim = nearest[0].ecd.computeSimilarity( nearest[1].ecd );
+		    double sim = merged.ecd.computeSimilarity( n.ecd, useMin);
 		    d = 1 - sim;
 		} else throw new IllegalArgumentException();
 		dist.put2(merged, n, d);

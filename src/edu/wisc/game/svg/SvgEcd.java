@@ -12,7 +12,7 @@ public class SvgEcd {
     static final int F=500, xmargin=30, ymargin=20;
     static final int H=F+ 2*ymargin;
 
-    static final HTMLFmter fm =    HTMLFmter.htmlFmter;
+    static final public HTMLFmter fm =    HTMLFmter.htmlFmter;
  
     
     public static class Point implements Cloneable {
