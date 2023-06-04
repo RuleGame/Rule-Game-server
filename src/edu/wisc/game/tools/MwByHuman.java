@@ -398,8 +398,17 @@ m*
 	final int seriesNo;
 	final String playerId;
 
+	/** When a value is put here, it it used instead of the
+	    normally-compuyted key. This is used in the Pooling app,
+	    when working with pooled samples.
+	 */
+	private String forcedKey = null;
+	void setForcedKey(String key) { forcedKey = key; }
+	
 	/** The 'key' (what comparandum, if any, this series belongs to) depends on the mode */
 	public String getKey(PrecMode mode) {
+	    if (forcedKey!=null) return forcedKey;
+	    
 	    switch (mode) {
 	    case Ignore: return ruleSetName;	    
 	    case Every:
@@ -415,6 +424,7 @@ m*
 	/** Used for EveryCond; only lists the preceding,
 	    and does not include the target */
 	public String getLightKey() {
+	    if (forcedKey!=null) return forcedKey;
 	    String s = String.join(":", precedingRules);
 	    return s;
 	}

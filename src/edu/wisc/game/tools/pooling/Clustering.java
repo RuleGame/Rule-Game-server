@@ -67,18 +67,35 @@ public class Clustering {
 	}
 
 	final static boolean useDistance = true;
-	final static int DX = 100, DY = (useDistance? 100:50),  xmargin=20, ymargin=20;
+	final static int DX = 500, // 100,
+	    DY = (useDistance? 60:50),  leftmargin=10, rightmargin=30, ymargin=20;
 
 	/** @return [xsize, ysize] */
 	int[] boxSize() {
-	    int[] bb = {2*xmargin +
-			(int)Math.round(useDistance? DX*(maxDistance()+1):DY*(level+1)),
+	    int[] bb = {leftmargin + rightmargin +
+			(int)Math.round(useDistance?
+					DX:
+					//DX*(maxDistance()+1):
+					DY*(level+1)),
 			2*ymargin +		 DY*width };
 	    return bb;
 	}
 
+
+	/** Lists the "biggest small clusters"
+	    @param results Put them all here
+	 */
+	void listPools(Vector<Ecd> results) {
+	    if (level==0 || dist<beta) results.add(ecd);
+	    else {
+		for(Node child: children) child.listPools(results);
+	    }
+	}
+	
 	/** The "height" (sum of distances) of the longest "path to a leaf"
-	    from this node. Used to properly size the display window. */
+	    from this node. This was used to properly size the display window.
+	    Deprecated later.
+	*/
 	private double maxDistance()	{
 	    double d = dist;
 	    if (children!=null) d += Math.max(children[0].maxDistance(),
@@ -88,7 +105,7 @@ public class Clustering {
 	    
 
 	String toSvg() {
-	    return toSvg(xmargin, ymargin, width*DY);
+	    return toSvg(leftmargin, ymargin, width*DY);
 	}
 
 	/** The y-offset of the center of this node */
@@ -114,21 +131,33 @@ public class Clustering {
 	    
 	    String labelColor = "red", distColor = "green", lineColor = "black";
 	    NumberFormat fmt = new DecimalFormat("0.000");
-    
-	    v.add( SvgEcd.rawText( x0, y-1, label, labelColor));
-	    if (children!=null) v.add( SvgEcd.rawText( x0, y+20, fmt.format(dist), distColor));
 
+	    final double yt = y-3; // (level==0)? y+4: y-1;
+	    v.add( SvgEcd.rawText( x0+3, yt, label, labelColor));
+	    if (children==null) v.add( SvgEcd.rawText( x0, y+18, ""+ecd.size(), "black"));
+	    else v.add( SvgEcd.rawText( x0+3, y+18, fmt.format(dist), distColor));
+	    
+	    final int sw= 3;
 	
-	    if (children!=null) {
+	    if (children==null) {
+		Point p1 =  new Point(x0, y-14),p2 =  new Point(x0, y+14);
+		String s = SvgEcd.rawLine( p1, p2, lineColor);
+		s = SvgEcd.fm.wrap( "g", "stroke-width=\"" + sw+"\"", s);
+		v.add(s);
+	
+	    } else {
 		double y1 = y0;
 		for(int j=0; j<2; j++) {
-		    double h;
+		    double h, x1;
 		    if (useDistance) {
-			h = dist * DX;
+			//h = dist * DX;
+			//x1 = x0 + h;
+			x1 = leftmargin + DX * (1 - children[j].dist);
 		    } else {
 			h = DX * (level - children[j].level);
+			x1 = x0 + h;
 		    }
-		    double x1 = x0 + h;
+
 		    //-- width of the child
 		    double cw = (ysize * children[j].width)/width;
 		    v.add( children[j].toSvg( x1, y1, cw));
@@ -144,7 +173,6 @@ public class Clustering {
 			String s = SvgEcd.rawLine( root, p1, lineColor) + "\n"+
 			    SvgEcd.rawLine( p1, p2, lineColor);
 
-			final int sw= 3;
 			if (dist<beta) s = SvgEcd.fm.wrap( "g", "stroke-width=\"" + sw+"\"", s);
 			v.add(s);
 		    } else {
@@ -173,7 +201,7 @@ public class Clustering {
 	  The distance d(C,(A,B )) is the larger of d(C,A) and d(C,B).
 	  ("Maximum or complete-linkage clustering", as per Wikipedia)
      */
-    static Node doClustering(Map<String, Ecd> h, LabelMap lam, Linkage linkage) {
+    static Node doClustering(Map<String, Ecd> h, Linkage linkage) {
 
 	final boolean useMin = true;
 	DistMap ph = Ecd.computeSimilarities(h, useMin);

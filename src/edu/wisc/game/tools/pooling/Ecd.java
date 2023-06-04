@@ -203,6 +203,7 @@ public class Ecd {
 		if (ecd==null) h.put(label, ecd = new Ecd(key, label));
 		ecd.add(ser);
 	    }
+	    freezeTable(h);
 
 	    // Eigenvalue analysis
 	    Fmter plainFm = new Fmter();
@@ -220,60 +221,17 @@ public class Ecd {
 	    
 	    processor.processStage2(true, false, csvOutDir);
 
-
-
-	    double xRange = 1, yRange=1;
-	    HashSet<String> toDiscard=new HashSet<>();
-	    for(String label: h.keySet()) {
-		Ecd ecd =h.get(label);
-		ecd.freeze();
-
-		if (ecd.size()<=1) {
-		    toDiscard.add(label);
-		}
-		
-		xRange = Math.max(xRange, ecd.getMaxMStar());
-		//yRange = Math.max(yRange, ecd.size());
-	    }
-
-	    for(String label: toDiscard) {
-		System.out.println("Removing the small-sample ECD (because KS won't like it): " + h.get(label));
-		h.remove(label);
-	    }
-
 	    
-	    xRange += 1;
-
-	    System.out.println("Human learning analysis in Game Server ver. " + Episode.version);
-	    System.out.println("=== Legend for target "+target+" ===");
-	    
-	    for(Ecd ecd: h.values()) {
-		System.out.println( ecd);
-	    }
-	   
-
-	    String[] colors = {"red", "green", "orange", "cyan", "blue", "purple", "pink"};
-	    
-	    Vector<String> v = drawAllCurves(h, xRange, yRange, colors, lam, null);
-	    	    
-
-	    String fname = base + "-ecd-basic";
-	    writeSvg(fname, v);
-
-	    Vector<String> hbLabels = new Vector<>();
-	    DistMap ph = analyzeSimilarities(h, lam, hbLabels);
-	    colors = new String[] {"red"};
-	    v = drawAllCurves(h, xRange, yRange, colors, lam, hbLabels);
-	    fname = base + "-ecd-hb";
-	    writeSvg(fname, v);
+	    ecdAnalysis(base, h, lam, false);
 
 	    System.out.println("=== Clustering ===");
 
 	    Clustering.Linkage links[] ={ Clustering.Linkage.MAX,
-					  Clustering.Linkage.MERGE};
+		//Clustering.Linkage.MERGE
+	    };
 
 	    for(Clustering.Linkage linkage: links) {
-		Clustering.Node root = Clustering.doClustering(h, lam, linkage);
+		Clustering.Node root = Clustering.doClustering(h, linkage);
 		System.out.println("Dendrogram for linkage=" + linkage +
 				   ", beta="+Clustering.beta+":");
 		System.out.println(root);
@@ -282,9 +240,41 @@ public class Ecd {
 		String s = root.toSvg();
 		s  =  SvgEcd.outerWrap(s, box[0], box[1]);
 		writeSvg(base + "-tree-" + linkage, s);
+
+		//--- use pooled ECDs
+		Vector<Ecd> pools = new Vector<>();
+		root.listPools(pools);
+
+		h.clear();
+		for(Ecd ecd: pools) {
+		    //String label = lam.mapCond(key);
+		    h.put(ecd.label, ecd);
+		}
+		
+		ecdAnalysis(base, h, lam, true);
+
+		//-- EV on pooled ECDs
+		/**
+		Vector<MwSeries> pooledData = new Vector<>();
+		processor.savedMws.clear();
+		for(MwSeries ser: data) {
+		    ser.setForcedKey(fk);
+		    processor.savedMws.add(ser);
+		}
+
+		System.out.println("=== Target "+target+" ===");
+	    
+		// M-W test on the data from savedMws
+		csvOutDir = new File(base + "-pooled-ev");
+		System.out.println("MW eigenvalue tables for pooled data are in " + csvOutDir);
+	    
+		processor.processStage2(true, false, csvOutDir);
+		*/
+
 		
 	    }
 
+	    
 
 	} finally {
 	    //String text = processor.getReport();
@@ -293,6 +283,60 @@ public class Ecd {
 	 
      }
 
+    /** Freezes (completes computations) in each ECD, and discards
+	very small ECDs (which cannot be handled by KS) */
+    private static void freezeTable(Map<String, Ecd> h) {
+	    
+	HashSet<String> toDiscard=new HashSet<>();
+	for(String label: h.keySet()) {
+	    Ecd ecd =h.get(label);
+	    ecd.freeze();
+	    if (ecd.size()<=1) toDiscard.add(label);
+	}
+	
+	for(String label: toDiscard) {
+	    System.out.println("Removing the small-sample ECD (because KS won't like it): " + h.get(label));
+	    h.remove(label);
+	}
+    }
+
+    /** Given a set of ECDs, draw each one, carry out HB analysis, and
+	then draw the connections between the "really different"  ones.
+    */
+    static void ecdAnalysis(String base, Map<String, Ecd> h, LabelMap lam, boolean pooled) throws IOException {
+
+	    double xRange = 1, yRange=1;
+	    for(Ecd ecd: h.values()) {
+		xRange = Math.max(xRange, ecd.getMaxMStar());
+	    }
+
+	    xRange += 1;
+
+	    String sp = pooled? "(pooled)":"";
+	    
+	    System.out.println("Human learning analysis in Game Server ver. " + Episode.version);
+	    System.out.println("=== Legend for target "+target+" "+sp+"===");
+	    
+	    for(Ecd ecd: h.values()) {
+		System.out.println( ecd);
+	    }
+	   
+
+	    String[] colors = {"red", "green", "orange", "cyan", "blue", "purple", "pink"};	    
+	    Vector<String> v = drawAllCurves(h, xRange, yRange,colors,null);
+	    String base2 = base + "-ecd";
+	    if (pooled) base2 += "-pooled";
+	    String fname = base2 + "-basic";
+	    writeSvg(fname, v);
+
+	    Vector<String> hbLabels = new Vector<>();
+	    DistMap ph = analyzeSimilarities(h, hbLabels, pooled);
+	    colors = new String[] {"red"};
+	    v = drawAllCurves(h, xRange, yRange, colors, hbLabels);
+	    fname = base2 + "-hb";
+	    writeSvg(fname, v);
+    }
+    
     static private void writeSvg(String fnameBase, Vector<String> v) throws IOException {
 	String s = SvgEcd.outerWrap( String.join("\n", v));
 	writeSvg(fnameBase, s);
@@ -347,27 +391,36 @@ public class Ecd {
     /** @return The upper triangular matrix (label1 &lt; label2) of similarities between different ECDs.
 	
      */
-    static private DistMap  analyzeSimilarities(Map<String, Ecd> h, LabelMap lam, Vector<String> hbLabels) {
-
+    static private DistMap  analyzeSimilarities(Map<String, Ecd> h,
+						Vector<String> hbLabels, boolean pooled) {
+	
 	DistMap ph = computeSimilarities(h, false);
 
-	System.out.println("=== p-Values ===");
-	for( String label1: h.keySet()) {
-	    Ecd ecd1 = h.get(label1);
-	    for( String label2: h.keySet()) {
-		Ecd ecd2 = h.get(label2);
-		
-		double p = ecd1.computeSimilarity( ecd2, false );
-		System.out.print("\tp("+label1+","+label2+")="+p);
-		if (label1.compareTo(label2)<0) {
-		    ph.put2(label1,label2, p);
-		}
-	    }
-	    System.out.println();
-	}
-
+	//-- HB for all pairs
 	Vector<String> order = new Vector<>();
 	order.addAll(ph.keySet());
+	String msg = "Comparing all pairs";
+	if (pooled) msg += " (pooled)";
+	holmBonferroni(ph, order, hbLabels, msg);
+
+	//-- HB for only (0,*) pairs. We still use the triangular
+	//-- matrix stored in ph, benefitting from the fact that "0"
+	//-- is alphabetically before all letters; thus, ph("0",
+	//-- "someOtherLabel") is always stored.
+	order.clear();
+	for(String pairLabel: ph.keySet()) {
+	    if (pairLabel.startsWith("0,")) order.add(pairLabel);	    
+	}
+	holmBonferroni(ph, order, hbLabels, "Comparing to naive series only");
+	
+	return ph;
+	
+    }
+
+    static private void holmBonferroni(DistMap ph, Vector<String> order, Vector<String> hbLabels, String msg) {
+	hbLabels.clear();
+
+	
 	order.sort((o1,o2)-> (int)Math.signum( ph.get(o1)-ph.get(o2)));
 
 	int nPairs = order.size();
@@ -383,7 +436,8 @@ public class Ecd {
 	    hbLabels.add(o);
 	}
 
-	System.out.println("=== Ordered similarities between ECDs ("+nPairs+" pairs): ===");
+	System.out.println("=== Ordered similarities between ECDs ("+msg +"; "+
+			   nPairs+" pairs): ===");
 	int k=0;
 	for(String o: order) {
 	    String s="";
@@ -402,11 +456,9 @@ public class Ecd {
 	    System.out.println("The Holm-Bonferroni process with alpha="+alpha+" has selected the first "+nHBPairs+" of the above pairs. They are marked with [HB]");
 	}
 
-	return ph;
-	
     }
     
-    static Vector<String> drawAllCurves(Map<String, Ecd> h, double xRange, double yRange, String colors[], LabelMap lam,
+    static Vector<String> drawAllCurves(Map<String, Ecd> h, double xRange, double yRange, String colors[], //LabelMap lam,
 					Vector<String> hbLabels
 					) {
 	if (hbLabels==null) hbLabels = new Vector<>();
