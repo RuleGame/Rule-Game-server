@@ -2,18 +2,17 @@
 
 set sc=~vmenkov/w2020/game/scripts
 
-$sc/analyze-transcripts-mwh.sh -export tmp.csv 'pk/explore_1' -precMode EveryCond
+#--- Extract all data from the transcripts for a particular experiment plan (or plans)
+$sc/analyze-transcripts-mwh.sh -export tmp.csv 'pk/explore_1' -precMode EveryCond  > prepare.txt
 
-# $sc/analyze-transcripts-mwh.sh -export tmp.csv 'pk/explore_1' -precMode EveryCond -target pk/position_A 
+#---  ECD analysis for a particular target
+$sc/ecd.sh -import tmp.csv -target pk/position_A -alpha 0.05 -beta 0.5 > pk-position_A-legend.txt
 
-#-- the default alpha=0.05 results in no pairs selected by HB; so let's try
-#-- a much larger alpha just for illustration
-$sc/ecd.sh -import tmp.csv -target pk/position_A -alpha 0.5
+#---  ECD analysis for another target
+$sc/ecd.sh -import tmp.csv -target vb/clockwiseTwoFree  -alpha 0.05 -beta 0.5 >  vb-clockwiseTwoFree-legend.txt
 
-$sc/ecd.sh -import tmp.csv -target vb/clockwiseTwoFree  -alpha 0.5
-
-#-- A good example of 2 well-separated curves
-$sc/ecd.sh -import tmp.csv -target pk/position_Anearby  -alpha 0.5
+#----
+$sc/ecd.sh -import tmp.csv -target pk/position_Anearby  -alpha 0.05 -beta 0.5  >  pk-position_Anearby-legend.txt
 
 
 #  1 pk/colOrd_nrnr,true

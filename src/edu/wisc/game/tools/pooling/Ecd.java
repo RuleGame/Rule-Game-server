@@ -27,6 +27,7 @@ import edu.wisc.game.math.*;
 */
 import edu.wisc.game.formatter.*;
 
+import edu.wisc.game.tools.pooling.Clustering.Node;
 
 /*  Empirical cumulated distribution */
 public class Ecd {
@@ -110,7 +111,9 @@ public class Ecd {
 	return new Point( getMedianMStar(),  0.5*learnedCnt);
     }
 
-    /** Produces a new ECD that combines this sample with another sample */
+    /** Produces a new ECD that combines this sample with another
+	sample. The key and the label for the new sample is formed
+	using the '+' character. */
     Ecd merge(Ecd o) {
 	Ecd merged = new Ecd(key + "+" + o.key, label+ "+" + o.label);
 	merged.series.addAll(series);
@@ -231,7 +234,7 @@ public class Ecd {
 	    };
 
 	    for(Clustering.Linkage linkage: links) {
-		Clustering.Node root = Clustering.doClustering(h, linkage);
+		Node root = Clustering.doClustering(h, linkage);
 		System.out.println("Dendrogram for linkage=" + linkage +
 				   ", beta="+Clustering.beta+":");
 		System.out.println(root);
@@ -242,34 +245,51 @@ public class Ecd {
 		writeSvg(base + "-tree-" + linkage, s);
 
 		//--- use pooled ECDs
-		Vector<Ecd> pools = new Vector<>();
+		Vector<Node> pools = new Vector<>();
 		root.listPools(pools);
 
 		h.clear();
-		for(Ecd ecd: pools) {
+		for(Node node: pools) {
 		    //String label = lam.mapCond(key);
-		    h.put(ecd.label, ecd);
+		    h.put(node.ecd.label, node.ecd);
 		}
 		
 		ecdAnalysis(base, h, lam, true);
 
 		//-- EV on pooled ECDs
-		/**
+		
 		Vector<MwSeries> pooledData = new Vector<>();
+		HashMap<String,String> leafToPooled = new HashMap<>();
+		for(Node pool: pools) {
+		    String[] q = pool.label.split("\\+");
+		    if (pool.level > 0 && q.length<2) throw new AssertionError("Wrong parsing? " + pool.label + " --> ("+String.join(",", q)+")");
+		    for(String z: q) leafToPooled.put( z, pool.label);
+		}
+		//System.out.println("leafToPooled=" + leafToPooled);
+		
 		processor.savedMws.clear();
+		int excludedCnt = 0;
 		for(MwSeries ser: data) {
-		    ser.setForcedKey(fk);
+		    String key = ser.getLightKey();
+		    String label = lam.mapCond(key);
+		    String pooledLabel = leafToPooled.get(label);
+		    if ( pooledLabel == null) {
+			//throw new AssertionError("Cannot find the pooled label for " + label);
+			excludedCnt++;
+		    }
+		    ser.setForcedKey(pooledLabel);
 		    processor.savedMws.add(ser);
 		}
-
-		System.out.println("=== Target "+target+" ===");
+		if (excludedCnt>0) System.out.println("Excluded " + excludedCnt + " players from pooling, likely because they belonged to a 'singleton' condition, and thus the KS p-value was not computable for their condition");
+		
+		//System.out.println("=== Target "+target+" ===");
 	    
 		// M-W test on the data from savedMws
 		csvOutDir = new File(base + "-pooled-ev");
 		System.out.println("MW eigenvalue tables for pooled data are in " + csvOutDir);
 	    
 		processor.processStage2(true, false, csvOutDir);
-		*/
+		
 
 		
 	    }

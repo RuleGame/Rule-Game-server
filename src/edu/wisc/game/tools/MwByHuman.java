@@ -399,11 +399,11 @@ m*
 	final String playerId;
 
 	/** When a value is put here, it it used instead of the
-	    normally-compuyted key. This is used in the Pooling app,
+	    normally-computed key. This is used in the Pooling app,
 	    when working with pooled samples.
 	 */
 	private String forcedKey = null;
-	void setForcedKey(String key) { forcedKey = key; }
+	public void setForcedKey(String key) { forcedKey = key; }
 	
 	/** The 'key' (what comparandum, if any, this series belongs to) depends on the mode */
 	public String getKey(PrecMode mode) {

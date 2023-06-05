@@ -56,7 +56,7 @@ public class Clustering {
 	    children = new Node[] { a, b};
 	    level = Math.max( a.level, b.level) + 1;
 	    width = a.width + b.width;
-	    label = a.label + "+" + b.label;
+	    label = ecd.label;
 	    dist=_dist;
 	}
 
@@ -68,7 +68,7 @@ public class Clustering {
 
 	final static boolean useDistance = true;
 	final static int DX = 500, // 100,
-	    DY = (useDistance? 60:50),  leftmargin=10, rightmargin=30, ymargin=20;
+	    DY = (useDistance? 60:50),  leftmargin=10, rightmargin=60, ymargin=20;
 
 	/** @return [xsize, ysize] */
 	int[] boxSize() {
@@ -85,10 +85,18 @@ public class Clustering {
 	/** Lists the "biggest small clusters"
 	    @param results Put them all here
 	 */
-	void listPools(Vector<Ecd> results) {
-	    if (level==0 || dist<beta) results.add(ecd);
+	void listPools(Vector<Node> results) {
+	    if (level==0 || dist<beta) results.add(this);
 	    else {
 		for(Node child: children) child.listPools(results);
+	    }
+	}
+
+	/** Lists all leaves under this node */
+	void listLeaves(Vector<Ecd> results) {
+	    if (level==0) results.add(ecd);
+	    else {
+		for(Node child: children) child.listLeaves(results);
 	    }
 	}
 	
@@ -134,7 +142,7 @@ public class Clustering {
 
 	    final double yt = y-3; // (level==0)? y+4: y-1;
 	    v.add( SvgEcd.rawText( x0+3, yt, label, labelColor));
-	    if (children==null) v.add( SvgEcd.rawText( x0, y+18, ""+ecd.size(), "black"));
+	    if (children==null) v.add( SvgEcd.rawText( x0+3, y+18, ""+ecd.size(), "black"));
 	    else v.add( SvgEcd.rawText( x0+3, y+18, fmt.format(dist), distColor));
 	    
 	    final int sw= 3;
