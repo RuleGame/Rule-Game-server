@@ -26,6 +26,11 @@ public class MwByHuman extends AnalyzeTranscripts {
 
     private final MwByHuman.PrecMode precMode;
 
+    /** The set of rule names which, if they appear in the preceding-rules
+	list, are ignored. (Introduced in ver. 6.014, after PK's request (2023-06-01): "One issue that I may not have mentioned is whether to "ignore a particular predecessor." I decided to do that for the pk/noRule rule (after checking that it did not seem to affect performance by the F* measure).  In other words, when it was a predecessor I represented it by no character at all."
+    */
+    private static Set<String> ignorePrec = new HashSet<>();
+    private static int ignorePrecCnt=0;
     
     /** @param  _targetStreak this is how many consecutive error-free moves the player must make (e.g. 10) in order to demonstrate successful learning.
      */
@@ -103,6 +108,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 		csvOutDir = new File(argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-target")) {
 		target = argv[++j];
+	    } else if (j+1< argv.length && a.equals("-ignorePrec")) {
+		ignorePrec.addAll( Util.array2set(argv[++j].split(":")));
 	    } else if (a.startsWith("-")) {
 		usage("Unknown option: " + a);
 	    } else {
@@ -310,7 +317,11 @@ public class MwByHuman extends AnalyzeTranscripts {
 	// Add mDagger to all entries in savedMws
 	MwSeries.computeMDagger(savedMws);
 	       
-	
+	if (ignorePrecCnt>0) {
+	    result.append(fm.para("Ignored a preceding rule in " + ignorePrecCnt + " entries"));
+	}
+	    
+
 	} catch(Exception _ex) {
 	    giveError(_ex.getMessage());
 	    ex = _ex;
@@ -462,7 +473,13 @@ m*
 	MwSeries(EpisodeHandle o) {
 	    ruleSetName = o.ruleSetName;
 	    precedingRules = new Vector<String>();
-	    precedingRules.addAll( o.precedingRules);
+	    for(String r: o.precedingRules) {
+		if (ignorePrec.contains(r)) {
+		    ignorePrecCnt++;
+		    continue;
+		}
+		precedingRules.add(r);
+	    }
 	    exp = o.exp;
 	    trialListId = o.trialListId;
 	    seriesNo = o.seriesNo;
@@ -581,6 +598,8 @@ m*
 		}
 		if (old==null) throw new AssertionError("Cannot find preceding series for p="+playerId+", r="  + r);
 		r = "" + old.learned + "." + r;
+
+		//if (ignorePrec.contains(r)) continue;
 		precedingRules.set(j, r);
 	    }   
 	}

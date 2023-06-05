@@ -117,10 +117,12 @@ public class SvgEcd {
     }
 
     public static String rawText(double x, double y, String s, String color) {
-	
+	// sans-serif vs. monospace
 	String para = mkSvgParams("x", ""+x,
 				  "y", ""+y,
-				  "font-family", "Arial, Helvetica, sans-serif");
+				  "font-family", "monospace"
+				  //"font-family", "Arial, Helvetica, monospace"
+				  );
 				  
 	if (color!=null) para = addSvgParams(para, "stroke", color);
 	

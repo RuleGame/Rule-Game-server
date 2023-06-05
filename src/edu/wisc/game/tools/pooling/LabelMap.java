@@ -131,7 +131,7 @@ public class LabelMap extends HashMap<String, Character> {
 		if (q==null) continue;
 		char x = q.charAt(0);
 		int cnt = fcnt.get(x);
-		if (cnt==1) {
+		if (cnt==1 && !usedLetters.contains(x)) {
 		    letters[j] = x;
 		    usedLetters.add(x);
 		    //System.out.println("Assigned unique letter[" + j +"]=" + letters[j] + " to key=" + w[j]);

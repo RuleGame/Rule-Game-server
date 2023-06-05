@@ -142,8 +142,8 @@ public class Clustering {
 
 	    final double yt = y-3; // (level==0)? y+4: y-1;
 	    v.add( SvgEcd.rawText( x0+3, yt, label, labelColor));
-	    if (children==null) v.add( SvgEcd.rawText( x0+3, y+18, ""+ecd.size(), "black"));
-	    else v.add( SvgEcd.rawText( x0+3, y+18, fmt.format(dist), distColor));
+	    if (children==null) v.add( SvgEcd.rawText( x0+3, y+14, ""+ecd.size(), "black"));
+	    else v.add( SvgEcd.rawText( x0+3, y+14, fmt.format(dist), distColor));
 	    
 	    final int sw= 3;
 	
