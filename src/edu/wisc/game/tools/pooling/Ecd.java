@@ -130,8 +130,17 @@ public class Ecd {
 	if (msg!=null) 	System.err.println(msg + "\n");
 	System.exit(1);
     }
-
-
+    
+    /** Different arrangements depending on whether we compare across
+	targets or only within one target. In the latter case, the
+	target does not need to be part of the key.
+     */
+    private static String getKey(MwSeries ser) {
+	return target==null?
+	    ser.getKey(PrecMode.EveryCond) : 	    ser.getLightKey();
+    }
+	
+    
     static NumberFormat fmt3d = new DecimalFormat("000");
 
     static double alpha = 0.05;
@@ -167,9 +176,11 @@ public class Ecd {
 	}
 
 	if (target==null) {
-	    usage("Please provide -target ruleSetName");
+	    System.out.println("Comparing all targets");
+	    //usage("Please provide -target ruleSetName");
 	}
-	String base = target.replaceAll("/", "-");
+	//-- the base for output file names
+	String base = (target==null)? "everything" : target.replaceAll("/", "-");
 	
 	Vector<MwSeries> imported = new Vector<>();
 	try {
@@ -183,23 +194,23 @@ public class Ecd {
 
 	    Vector<MwSeries> data = new Vector<>();
 	    for(MwSeries ser: imported) {
-		if (ser.ruleSetName.equals(target)) data.add(ser);
+		if (target==null || ser.ruleSetName.equals(target)) data.add(ser);
 	    }
 	    //System.out.println("DEBUG: out of " + imported.size() + " data lines, found " + data.size() + " lines for the target rule set " + target);
 
 	    Set<String> keys = new HashSet<>();
 	    for(MwSeries ser: data) {
-		String key = ser.getLightKey();
+		String key = getKey(ser);
 		keys.add(key);
 	    }
 
-	    LabelMap lam = new LabelMap( keys.toArray(new String[0]));
+	    LabelMap lam = new LabelMap( keys.toArray(new String[0]), target==null);
 
 	    //-- Maps labels to ECD objects
 	    TreeMap<String, Ecd> h = new TreeMap<>();
 
 	    for(MwSeries ser: data) {
-		String key = ser.getLightKey();
+		String key = getKey(ser);
 		//System.out.println("key='" + key+ "'");
 		String label = lam.mapCond(key);
 		Ecd ecd = h.get(label);
@@ -214,7 +225,10 @@ public class Ecd {
 						10, 300, plainFm);
 	    processor.savedMws.addAll(data);
 
-	    System.out.println("=== Target "+target+" ===");
+	    String ta = (target==null ?  "cross-target comparison" : target);
+
+	    
+	    System.out.println("=== Target "+ta+" ===");
 	    
 	    // M-W test on the data from savedMws
 	    if (csvOutDir==null) {
@@ -270,7 +284,7 @@ public class Ecd {
 		processor.savedMws.clear();
 		int excludedCnt = 0;
 		for(MwSeries ser: data) {
-		    String key = ser.getLightKey();
+		    String key = getKey(ser);
 		    String label = lam.mapCond(key);
 		    String pooledLabel = leafToPooled.get(label);
 		    if ( pooledLabel == null) {
@@ -333,9 +347,10 @@ public class Ecd {
 	    xRange += 1;
 
 	    String sp = pooled? "(pooled)":"";
-	    
+	    String tasp = (target==null ?  "cross-target comparison" : target) +
+		" " + sp;
 	    System.out.println("Human learning analysis in Game Server ver. " + Episode.version);
-	    System.out.println("=== Legend for target "+target+" "+sp+"===");
+	    System.out.println("=== Legend for target "+tasp+"===");
 	    
 	    for(Ecd ecd: h.values()) {
 		System.out.println( ecd);

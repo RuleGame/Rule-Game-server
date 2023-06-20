@@ -6,7 +6,7 @@
 
 <h1>Processing human players' transcripts for Mann-Whitney comparison</h1>
 
-<div align="center"><em>Updated 2023-01-21, for Game Server 6.006</em></div>
+<div align="center"><em>Updated 2023-06-20, for Game Server 6.014</em></div>
 
 <p>This document desribes the functionality of the script <tt>scripts/analyze-transcripts-mwh.sh</tt>, which is designed to analyze human players' transcripts in order to compare rule sets with respect to their ease/difficulty for the human players' population.
 
@@ -130,7 +130,10 @@ select * from User;  </pre>
 <li><tt>Every</tt> : Consider each (rule set + preceding set) combination as a separate experience to be ranked. (That is,
 the R1 data from <strong>R1</strong>:R2:R3,  
 R2:<strong>R1</strong>:R3, and
-R2:R3:<strong>R1</strong> are viewed as belonging to three distinct experiences, "R1", "R2:R1", and "R2:R3:R1")
+  R2:R3:<strong>R1</strong> are viewed as belonging to three distinct experiences, "R1", "R2:R1", and "R2:R3:R1")
+
+<li><tt>EveryCond</tt> : this is similar to the <tt>Every</tt> mode, but for each preceding rule set the "outcome" (success or failure of the learning in the series) is considered part of the "condition".  Thus, in the above example, one would consider distinct experinces "R1", "true.R2:R1", "false.R2:R1", "true.R2:false.R3:R1", etc, where the prefixes "true." and "false." indicate whether the player attained successful learning when playing the preceding rule set such as R2.
+  
 <li><tt>Ignore</tt> : When viewing a rule set's series, ignore preceding rule sets. (In other words, the R1 data from
 <strong>R1</strong>:R2:R3,  
 R2:<strong>R1</strong>:R3, and

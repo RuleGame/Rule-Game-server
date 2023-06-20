@@ -617,7 +617,12 @@ m*
 
     //    private HashMap<String, MWSeries[]
     
-    /** Saves the data for a single (player, ruleSet) pair
+    /** Saves the data (the summary of a series) for a single (player, ruleSet) pair.
+
+	In some cases, a series can be skipped (not saved). This is the case
+	if only the data for a specific target is requested (target!=null),
+	or if we only want the data for "Naive" players.
+	
 	@param section A vector of arrays, each array representing the recorded
 	moves for one episode.
 	@param includedEpisodes All non-empty episodes played by this player in this rule set. This array must be aligned with section[]
@@ -639,6 +644,9 @@ m*
 	    if (ser==null || !ser.ruleSetName.equals(eh.ruleSetName)) {
 		ser = new MwSeries(eh);
 		boolean shouldRecord = (target==null) || eh.ruleSetName.equals(target);
+
+		shouldRecord = shouldRecord && !(precMode == PrecMode.Naive && ser.precedingRules.size()>0);
+		
 		if (shouldRecord) 		savedMws.add(ser);
 		streak=0;
 		ser.errcnt = 0;

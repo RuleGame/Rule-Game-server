@@ -22,15 +22,20 @@ import java.util.*;
 public class LabelMap extends HashMap<String, Character> {
 
     /** @param s "outcome.ruleSetName", e.g. true.some_abe
-	@return e.g. 'A'
+	@param noPrefix If true, there is no "outcome.prefix". This is the case
+	with the last element of the key (the target name) in the cross-target mode.
+	@return e.g. 'A' or 'a', depending on the prefix. (Always uppercase if no prefix)
      */
-    char map1(String s) {
+    char map1(String s, boolean noPrefix) {
 	String pt = "true.", pf = "false.";
 	//	if (s.equals("")) {
 	//  return "0";
 	//	} else
 
-	    if (s.startsWith(pt)) {
+	if (noPrefix) {
+	    String key = s;
+	    return get(key);
+	} else	if (s.startsWith(pt)) {
 	    String key = s.substring(pt.length());
 	    if (get(key)==null) throw new IllegalArgumentException("No label registered for key="  + key);
 	    return get(key);
@@ -46,25 +51,31 @@ public class LabelMap extends HashMap<String, Character> {
     final static String SEP = ":";
     
     /**  Generates the label for a condition
-	 @param cond E.g. "true.some_abe;false;other_bar", or empty string.
+	 @param cond E.g. "true.some_abe;false.other_bar", or empty string.
 	@return e.g. "Ab". On an empty-string argument, "0" is returned.
     */
     String mapCond(String cond) {
 	String s="";
 	if (cond.length()==0) return "0";
-	for(String a: cond.split(SEP)) {
-	    s += map1(a);
+	String[] v=cond.split(SEP);
+	for(int j=0; j<v.length; j++) {
+	    boolean noPrefix = (crossTarget && j==v.length-1);
+
+	    //if (!v[j].startsWith("true.") && !v[j].startsWith("false.")) System.out.println("ct="+crossTarget+", cond=" + cond);
+	    
+	    s += map1(v[j], noPrefix);
 	}
 	return s;
     }
 
     /** Maps 'a' to "false.foo-a" or whatever it is.  */
-    String letterToKey(char c) {
+    String letterToKey(char c, boolean noPrefix) {
 	char uc = Character.toUpperCase(c);
 	for(String x: keySet()) {
 	    char a = get(x);
 	    if (a==uc) {
-		return (c==uc ? "true." : "false.") + x;
+		return (noPrefix) ? x:
+		 (c==uc ? "true." : "false.") + x;
 	    }
 	}
 	throw new IllegalArgumentException("No key maps to label '" + c + "'");
@@ -75,14 +86,25 @@ public class LabelMap extends HashMap<String, Character> {
 	if (label.equals("0")) return "";
 	Vector<String> v = new Vector<>();
 	for(int j=0; j<label.length(); j++) {
-	    v.add( letterToKey( label.charAt(j)));
+	    boolean noPrefix = crossTarget && j==label.length()-1;
+	    v.add( letterToKey( label.charAt(j), noPrefix));
 	}
 	return String.join(SEP, v);
     }
 
-    /** @param conditions Each array element is of the form "true.ruleA:false.ruleB:..." etc.
+    final boolean crossTarget;
+
+    /** Creates a map that uniquely assigns a one-uppercase-letter key
+	to each string from keys[]
+
+       @param conditions Each array element is of the form "true.ruleA:false.ruleB:..." etc.
+
+
+       @param _crossTarget If true, the last element of each key string is the target name, and contains no "true."/"false." prefix
+
      */
-    LabelMap(String[] keys) {
+    LabelMap(String[] keys, boolean _crossTarget) {
+	crossTarget = _crossTarget;
 	HashSet<String> h = new HashSet<>();
 	for(String key: keys) {
 	    for(String a: key.split(SEP)) {
@@ -201,7 +223,7 @@ public class LabelMap extends HashMap<String, Character> {
     }
 
     public static void main(String[] argv) throws Exception {
-	LabelMap lam = new LabelMap(argv);
+	LabelMap lam = new LabelMap(argv, false);
 	for(String key: lam.keySet()) {
 	    System.out.println( "Label(" + key+")='" + lam.get(key)  + "'");
 	}
