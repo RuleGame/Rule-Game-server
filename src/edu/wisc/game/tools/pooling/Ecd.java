@@ -225,10 +225,10 @@ public class Ecd {
 						10, 300, plainFm);
 	    processor.savedMws.addAll(data);
 
-	    String ta = (target==null ?  "cross-target comparison" : target);
+	    String ta = (target==null ?  "cross-target comparison" : "Target " + target);
 
 	    
-	    System.out.println("=== Target "+ta+" ===");
+	    System.out.println("=== "+ta+" ===");
 	    
 	    // M-W test on the data from savedMws
 	    if (csvOutDir==null) {
@@ -347,10 +347,10 @@ public class Ecd {
 	    xRange += 1;
 
 	    String sp = pooled? "(pooled)":"";
-	    String tasp = (target==null ?  "cross-target comparison" : target) +
+	    String tasp = (target==null ?  "cross-target comparison" : "target " + target) +
 		" " + sp;
 	    System.out.println("Human learning analysis in Game Server ver. " + Episode.version);
-	    System.out.println("=== Legend for target "+tasp+"===");
+	    System.out.println("=== Legend for "+tasp+" ===");
 	    
 	    for(Ecd ecd: h.values()) {
 		System.out.println( ecd);
