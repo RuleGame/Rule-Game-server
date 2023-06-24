@@ -1,13 +1,12 @@
 package edu.wisc.game.tools.pooling;
 
-
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 import java.util.stream.*;
 import java.text.*;
 
-import javax.persistence.*;
+//import javax.persistence.*;
 
 import org.apache.commons.math3.stat.inference.*;
 
@@ -18,19 +17,13 @@ import edu.wisc.game.tools.MwByHuman.PrecMode;
 import edu.wisc.game.svg.*;
 import edu.wisc.game.svg.SvgEcd.Point;
 import edu.wisc.game.sql.Episode;
-/*
-import edu.wisc.game.rest.*;
-import edu.wisc.game.engine.*;
-import edu.wisc.game.saved.*;
-import edu.wisc.game.parser.RuleParseException;
-import edu.wisc.game.math.*;
-*/
 import edu.wisc.game.formatter.*;
 
 import edu.wisc.game.tools.pooling.Clustering.Node;
 
-/*  Empirical cumulated distribution */
+/*  Empirical cumulated distribution (ECD) */
 public class Ecd {
+
 
     /** Refers to the preceding conditions */
     final String key;
@@ -145,7 +138,15 @@ public class Ecd {
 
     static double alpha = 0.05;
     static String target = null;
+   
+    /* How  the similarity is computed from the MW and KS p-values:
+       using one of them, or the min or max of the two. The default
+       was Max for HB and Min for clustering.
+    */
+    enum SimMethod { MW, KS, Min, Max };
+    static SimMethod simMethod = SimMethod.Max;
     
+
     public static void main(String[] argv) throws Exception {
 
 	File csvOutDir=null;
@@ -167,6 +168,8 @@ public class Ecd {
 		alpha =  Double.parseDouble(argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-beta")) {
 		Clustering.beta =  Double.parseDouble(argv[++j]);
+	    } else if (j+1< argv.length && a.equals("-sim")) {
+		simMethod =  Enum.valueOf(SimMethod.class, argv[++j]);
 	    }
 	}
 
@@ -238,7 +241,7 @@ public class Ecd {
 	    
 	    processor.processStage2(true, false, csvOutDir);
 
-	    
+	    base += "-" + simMethod;
 	    ecdAnalysis(base, h, lam, false);
 
 	    System.out.println("=== Clustering ===");
@@ -248,7 +251,7 @@ public class Ecd {
 	    };
 
 	    for(Clustering.Linkage linkage: links) {
-		Node root = Clustering.doClustering(h, linkage);
+		Node root = Clustering.doClustering(h, linkage, simMethod);
 		System.out.println("Dendrogram for linkage=" + linkage +
 				   ", beta="+Clustering.beta+":");
 		System.out.println(root);
@@ -256,7 +259,8 @@ public class Ecd {
 		int[] box = root.boxSize();
 		String s = root.toSvg();
 		s  =  SvgEcd.outerWrap(s, box[0], box[1]);
-		writeSvg(base + "-tree-" + linkage, s);
+		//writeSvg(base + "-tree-" + linkage, s);
+		writeSvg(base + "-tree", s);
 
 		//--- use pooled ECDs
 		Vector<Node> pools = new Vector<>();
@@ -388,21 +392,35 @@ public class Ecd {
 
     static final MannWhitneyUTest mw = new MannWhitneyUTest();
     static final KolmogorovSmirnovTest ks = new KolmogorovSmirnovTest();
-    /** @param useMin Use min(MW,KS), rather than max(MW,KS)
+    /** Computes the similarity between this ECD and another ECD.
+        @param simMethod How to compute the similarity based on MW
+	and/or KS p-values. The default is Max.
      */
-    double computeSimilarity(Ecd o, boolean useMin) {
+    double computeSimilarity(Ecd o, SimMethod simMethod) {
 	double	mwp = mw.mannWhitneyUTest(orderedSample,o.orderedSample);
 	//System.out.println("mannWhitneyUTest(" + fmtArg(x)+")=" + mwp);
 	double ksp = ks.kolmogorovSmirnovTest(orderedSample,o.orderedSample);
 	//double kspf = ks.kolmogorovSmirnovTest(x[0],x[1], false);
-	double p = useMin? Math.min(mwp, ksp) : Math.max(mwp, ksp);
-	return p;
+	switch (simMethod) {
+	case KS:
+	    return ksp;
+	case MW:
+	    return mwp;
+	case Min:
+	    return Math.min(mwp, ksp);
+	case Max:
+	    return Math.max(mwp, ksp);
+	}
+	throw new IllegalArgumentException("simMethod=" + simMethod);
     }
 
 
     /** Computes the similarity matrix. (Only the upper triangular section
-	is filled). */
-    static DistMap computeSimilarities(Map<String, Ecd> h, boolean useMin) {
+	is filled).
+	
+	The default is useMin=false, i.e. using the max of the two p-values
+    */
+    static DistMap computeSimilarities(Map<String, Ecd> h,     SimMethod simMethod) {
 
 	DistMap ph = new DistMap();
 
@@ -412,7 +430,7 @@ public class Ecd {
 	    for( String label2: h.keySet()) {
 		Ecd ecd2 = h.get(label2);
 		
-		double p = ecd1.computeSimilarity( ecd2, useMin);
+		double p = ecd1.computeSimilarity( ecd2, simMethod);
 		System.out.print("\tp("+label1+","+label2+")="+p);
 		if (label1.compareTo(label2)<0) {
 		    ph.put2(label1,label2, p);
@@ -429,7 +447,7 @@ public class Ecd {
     static private DistMap  analyzeSimilarities(Map<String, Ecd> h,
 						Vector<String> hbLabels, boolean pooled) {
 	
-	DistMap ph = computeSimilarities(h, false);
+	DistMap ph = computeSimilarities(h, simMethod);
 
 	//-- HB for all pairs
 	Vector<String> order = new Vector<>();

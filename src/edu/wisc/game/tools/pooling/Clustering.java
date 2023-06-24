@@ -17,14 +17,6 @@ import edu.wisc.game.tools.MwByHuman.MwSeries;
 import edu.wisc.game.tools.MwByHuman.PrecMode;
 import edu.wisc.game.svg.*;
 import edu.wisc.game.svg.SvgEcd.Point;
-/*
-import edu.wisc.game.rest.*;
-import edu.wisc.game.sql.*;
-import edu.wisc.game.engine.*;
-import edu.wisc.game.saved.*;
-import edu.wisc.game.parser.RuleParseException;
-import edu.wisc.game.math.*;
-*/
 import edu.wisc.game.formatter.*;
 
 
@@ -209,10 +201,9 @@ public class Clustering {
 	  The distance d(C,(A,B )) is the larger of d(C,A) and d(C,B).
 	  ("Maximum or complete-linkage clustering", as per Wikipedia)
      */
-    static Node doClustering(Map<String, Ecd> h, Linkage linkage) {
+    static Node doClustering(Map<String, Ecd> h, Linkage linkage, Ecd.SimMethod simMethod) {
 
-	final boolean useMin = true;
-	DistMap ph = Ecd.computeSimilarities(h, useMin);
+	DistMap ph = Ecd.computeSimilarities(h, simMethod);
 	
 	Vector<Node> roots = new Vector<>();
 	for(Ecd ecd: h.values()) {
@@ -272,7 +263,7 @@ public class Clustering {
 		    d = Math.max( dist.get2(n, nearest[0]),
 				  dist.get2(n, nearest[1]));
 		} else if (linkage == Linkage.MERGE)  {
-		    double sim = merged.ecd.computeSimilarity( n.ecd, useMin);
+		    double sim = merged.ecd.computeSimilarity( n.ecd, simMethod);
 		    d = 1 - sim;
 		} else throw new IllegalArgumentException();
 		dist.put2(merged, n, d);
