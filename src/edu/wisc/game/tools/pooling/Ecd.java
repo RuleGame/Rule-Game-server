@@ -144,7 +144,8 @@ public class Ecd {
        was Max for HB and Min for clustering.
     */
     enum SimMethod { MW, KS, Min, Max };
-    static SimMethod simMethod = SimMethod.Max;
+    static SimMethod simHB = SimMethod.Max;
+    static SimMethod simClustering = SimMethod.Min;
     
 
     public static void main(String[] argv) throws Exception {
@@ -169,7 +170,11 @@ public class Ecd {
 	    } else if (j+1< argv.length && a.equals("-beta")) {
 		Clustering.beta =  Double.parseDouble(argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-sim")) {
-		simMethod =  Enum.valueOf(SimMethod.class, argv[++j]);
+		simHB = simClustering = Enum.valueOf(SimMethod.class, argv[++j]);
+	    } else if (j+1< argv.length && a.equals("-simHB")) {
+		simHB =  Enum.valueOf(SimMethod.class, argv[++j]);
+	    } else if (j+1< argv.length && a.equals("-simClustering")) {
+		simClustering =  Enum.valueOf(SimMethod.class, argv[++j]);
 	    }
 	}
 
@@ -182,6 +187,10 @@ public class Ecd {
 	    System.out.println("Comparing all targets");
 	    //usage("Please provide -target ruleSetName");
 	}
+
+	System.out.println("Similarity for HB (before and after clustering): "+simHB);
+	System.out.println("Similarity for clustering: "+simClustering);
+	
 	//-- the base for output file names
 	String base = (target==null)? "everything" : target.replaceAll("/", "-");
 	
@@ -241,7 +250,7 @@ public class Ecd {
 	    
 	    processor.processStage2(true, false, csvOutDir);
 
-	    base += "-" + simMethod;
+	    //	    base += "-" + simMethod;
 	    ecdAnalysis(base, h, lam, false);
 
 	    System.out.println("=== Clustering ===");
@@ -251,7 +260,7 @@ public class Ecd {
 	    };
 
 	    for(Clustering.Linkage linkage: links) {
-		Node root = Clustering.doClustering(h, linkage, simMethod);
+		Node root = Clustering.doClustering(h, linkage, simClustering);
 		System.out.println("Dendrogram for linkage=" + linkage +
 				   ", beta="+Clustering.beta+":");
 		System.out.println(root);
@@ -340,6 +349,11 @@ public class Ecd {
 
     /** Given a set of ECDs, draw each one, carry out HB analysis, and
 	then draw the connections between the "really different"  ones.
+
+	@param pooled True if the analysis is carried out on pooled ECDs, rather
+	than original ones. This parameter does not affect computations; it
+	is only used for generating file names,  printing correct messages, etc.
+	
     */
     static void ecdAnalysis(String base, Map<String, Ecd> h, LabelMap lam, boolean pooled) throws IOException {
 
@@ -364,15 +378,15 @@ public class Ecd {
 	    String[] colors = {"red", "green", "orange", "cyan", "blue", "purple", "pink"};	    
 	    Vector<String> v = drawAllCurves(h, xRange, yRange,colors,null);
 	    String base2 = base + "-ecd";
-	    if (pooled) base2 += "-pooled";
+	    if (pooled) base2 += "-pooled" + simClustering;
 	    String fname = base2 + "-basic";
 	    writeSvg(fname, v);
 
-	    Vector<String> hbLabels = new Vector<>();
-	    DistMap ph = analyzeSimilarities(h, hbLabels, pooled);
+	    Vector<String> hbLabels = analyzeSimilarities(h, pooled);
+	    //DistMap ph = 
 	    colors = new String[] {"red"};
 	    v = drawAllCurves(h, xRange, yRange, colors, hbLabels);
-	    fname = base2 + "-hb";
+	    fname = base2 + "-hb" + simHB;
 	    writeSvg(fname, v);
     }
     
@@ -419,8 +433,10 @@ public class Ecd {
 	is filled).
 	
 	The default is useMin=false, i.e. using the max of the two p-values
+
+	@return The upper triangular matrix (label1 &lt; label2) of similarities between different ECDs.
     */
-    static DistMap computeSimilarities(Map<String, Ecd> h,     SimMethod simMethod) {
+    static DistMap computeSimilarities(Map<String, Ecd> h, SimMethod simMethod) {
 
 	DistMap ph = new DistMap();
 
@@ -441,20 +457,24 @@ public class Ecd {
 	return ph;
     }
     
-    /** @return The upper triangular matrix (label1 &lt; label2) of similarities between different ECDs.
+    /**
+       @param pooled True if we are working with pooled ECDs, rather
+       than original ones. This parameter does not affect
+       computations, but is used to generate correct messages
+
+       @return The HB results: ECDs that are really different from the "naive" ECD
 	
      */
-    static private DistMap  analyzeSimilarities(Map<String, Ecd> h,
-						Vector<String> hbLabels, boolean pooled) {
+    static private Vector<String> analyzeSimilarities(Map<String, Ecd> h, boolean pooled) {
 	
-	DistMap ph = computeSimilarities(h, simMethod);
+	DistMap ph = computeSimilarities(h, simHB);
 
 	//-- HB for all pairs
 	Vector<String> order = new Vector<>();
 	order.addAll(ph.keySet());
 	String msg = "Comparing all pairs";
 	if (pooled) msg += " (pooled)";
-	holmBonferroni(ph, order, hbLabels, msg);
+	holmBonferroni(ph, order, msg);
 
 	//-- HB for only (0,*) pairs. We still use the triangular
 	//-- matrix stored in ph, benefitting from the fact that "0"
@@ -464,20 +484,17 @@ public class Ecd {
 	for(String pairLabel: ph.keySet()) {
 	    if (pairLabel.startsWith("0,")) order.add(pairLabel);	    
 	}
-	holmBonferroni(ph, order, hbLabels, "Comparing to naive series only");
-	
-	return ph;
-	
+	return holmBonferroni(ph, order, "Comparing to naive series only");	
     }
 
-    static private void holmBonferroni(DistMap ph, Vector<String> order, Vector<String> hbLabels, String msg) {
-	hbLabels.clear();
-
+    /** @return The list of "really different" pairs of curves into it
+     */
+    static private Vector<String> holmBonferroni(DistMap ph, Vector<String> order,  String msg) {
+	Vector<String> hbLabels = new Vector<>();
 	
 	order.sort((o1,o2)-> (int)Math.signum( ph.get(o1)-ph.get(o2)));
 
 	int nPairs = order.size();
-
 
 	//-- Holm-Bonferroni process 
 	int nHBPairs = 0;
@@ -508,10 +525,16 @@ public class Ecd {
   	} else {
 	    System.out.println("The Holm-Bonferroni process with alpha="+alpha+" has selected the first "+nHBPairs+" of the above pairs. They are marked with [HB]");
 	}
-
+	return hbLabels;
     }
-    
-    static Vector<String> drawAllCurves(Map<String, Ecd> h, double xRange, double yRange, String colors[], //LabelMap lam,
+
+    /** Draws several ECD curves, in monochrome or in multiple colors.
+	@param h The curves to draw
+	@param colors The colors to use for the curves. If the array has only one color, all curves will be in this color.
+	@param hbLabels If not null, this is used to identify HB links between "really different" curves
+     */
+    static Vector<String> drawAllCurves(Map<String, Ecd> h,
+					double xRange, double yRange, String colors[], 
 					Vector<String> hbLabels
 					) {
 	if (hbLabels==null) hbLabels = new Vector<>();
@@ -545,6 +568,7 @@ public class Ecd {
 
 	// Links between the HB pairs
 	//System.out.println("Will show "+hbLabels.size() + " HB pairs");
+	if (hbLabels!=null) {
 	for(String pair: hbLabels) {
 	    String[] q = pair.split(",");
 	    Ecd[] e = new Ecd[2];
@@ -558,7 +582,7 @@ public class Ecd {
 	    //System.out.println("Linking " + pair);
 	    v.add( SvgEcd.rawLine(rawCenters[0], rawCenters[1], "green"));
 	}
-
+	}
 	
 	return v;
     }

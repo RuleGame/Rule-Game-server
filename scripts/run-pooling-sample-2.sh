@@ -6,6 +6,8 @@ set sc=~vmenkov/w2020/game/scripts
 $sc/analyze-transcripts-mwh.sh -export tmp.csv 'pk/explore_1' -precMode EveryCond  > prepare.txt
 
 #---  ECD analysis for a particular target
+$sc/ecd.sh -import tmp.csv -target pk/position_A -alpha 0.05 -beta 0.5 > pk-position_A-legend-default.txt
+
 $sc/ecd.sh -import tmp.csv -target pk/position_A -alpha 0.05 -beta 0.5 -sim KS  > pk-position_A-legend-KS.txt
 
 $sc/ecd.sh -import tmp.csv -target pk/position_A -alpha 0.05 -beta 0.5 -sim MW  > pk-position_A-legend-MW.txt
