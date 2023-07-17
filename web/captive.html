@@ -5,7 +5,7 @@
   <body>
     <h1>Captive Game Server</h1>
 
-    <div align="center"><em>Updated 2023-03-11 for GS ver 6.002</em></div>
+    <div align="center"><em>Updated 2023-07-14 for GS ver 6.010</em></div>
     
     <h2>Test the Rule Game</h2>
 
@@ -304,9 +304,7 @@ as the main argument on your command line. Both  <em>ruleSet</em> and <em>modifi
 
 <h4><a name="cond">9. Train/test: prohibiting or enforcing certain board properties when using the 6-parameter distribution</a></h4>
 		 
-<p><strong>This is a tentative description of a feature to appear in one of the future releases of the CGS. It is subject to changes.</strong>
-		   
-<p>Based on a discussion with Paul on March 8, 2023, a new feature is to has been introduced in the CGS starting from version 6.010. It is now possible to run the CGS, with the usual 6-parameter random board generator whose behavior is modified in the following way:
+<p>Based on a discussion with Paul on March 8, 2023, a new feature has been introduced in the CGS starting from version 6.010. It is now possible to run the CGS, with the usual 6-parameter random board generator whose behavior is modified in the following way:
   <ul>
     <li>The CGS is aware of whether a given episode is played in the "training mode" or "testing mode".
     <li>An additional "condition file" is provided, which contains a number of predicated ("conditions") that may apply to game pieces. (E.g. Condition 1 is "the game piece is located in positions 31 or 36"; Condition 2 is "the game piece is red"; Condition 3 is "the game piece is a square").
@@ -329,7 +327,7 @@ Note that you must put one condition per line, but a condition may consist of mu
   </pre>
   then you are prohibiting (in the training mode) circles (but no objects of other shapes) in cells no. 31 and 36, and you are prohibiting red squares and red triangles. In the testing mode, all boards will have either at least one circle in cell no. 31 or 36, or at least one red square or red triangle.
 
-<p><strong>Sample condition files:</strong>       game-data/cond/vm/cond-01.txt,       game-data/cond/vm/cond-02.txt. (They are in the main code-and-date repository, deployed under  ~vmenkov/w2020/game on sapir, not in the main game data repository).
+<p><strong>Sample condition files:</strong>       game-data/cond/vm/cond-01.txt,       game-data/cond/vm/cond-02.txt. (They are in the main code-and-sample-data repository, deployed under  ~vmenkov/w2020/game on sapir, not in the main game data repository).
       
 
 <p><strong>Specifying the training or test mode.</strong> To run the CGS starting in the <strong>training</strong> mode, you need to include <tt>condTrain=<em>conditionFileName.txt</em></tt> on the command line, for example
@@ -344,9 +342,9 @@ Note that you must put one condition per line, but a condition may consist of mu
     </pre>
     All boards then will have at least one game piece satisfying at least one of the listed conditions.
 
-    <p>If the CGS has been started in the training mode, the ML program can issue the command <tt>COND test</tt> to switch to the testing mode. It is most convenient to issue this command right before the <tt>NEW</tt> command of your first testing episode. Once the mode has been switched, the CGS will change its behavior accordingly, i.e. will generate boards with some game pieces satisfying some conditions, rather than boards in which no piece satisfies any condition.
+    <p>If the CGS has been started in the training mode, the ML program can issue the command <tt>COND test</tt> to switch to the testing mode. It is most convenient to issue this command right before the <tt>NEW</tt> command of your first testing episode. Once the mode has been switched, the CGS will change its behavior accordingly, i.e. on all subseqent <tt>NEW</tt> commands it will generate boards with some game pieces satisfying some of the listed conditions, rather than boards in which no piece satisfies any condition.
 
-<p><strong>Note:</strong> If you specify conditions that are impossible to fulfill (e.g. prohibiting red and black pieces while requiring that each board contains pieces of at least 3 colors), the CGS won't detect this problem automatically. Instead, it will sit in a tight loop for a while, and then will terminate, with an error message going to its <tt>stderr</tt>. Thus before letting your ML program to play with the CGS using a particularly involved conditions, you may do well by testing the board generation parameters and the condition file, by playing at least one training episode and at least one testing episode from the command ine. (You don't even need to play the episode to the end; just make sure that a board is produced!)
+<p><strong>Note:</strong> If you specify conditions that are impossible to fulfill (e.g. prohibiting red and black pieces while requiring that each board contains pieces of at least 3 colors), the CGS won't detect this problem automatically. Instead, it will sit in a tight loop for a while, and then will terminate, with an error message going to its <tt>stderr</tt>. Thus before letting your ML program to play with the CGS using a particularly involved set of conditions, you may do well by testing the board generation parameters and the condition file, by playing at least one training episode and at least one testing episode from the command ine. (You don't even need to play the episode to the end; just make sure that a board is produced for you!)
   
     <h3>Specifying the random generator seed</h3>
 
