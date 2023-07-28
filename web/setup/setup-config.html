@@ -39,5 +39,15 @@ GUI_DEV = "http://sapir.psych.wisc.edu/rule-game/dev/";
 
 <p>The parameters <tt>GUI_PROD</tt> and <tt>GUI_DEV</tt> specify the URLs for the GUI client, i.e. the URLs to which your server will link from its launch pages, such as <a href="../front-end-form.jsp">main launch page</a></strong>, or the <a href="../launch/">MLC launch  page</a>. If you follow the <a href="index.html#A">Setup Option A</a> or  <a href="index.html#B">Setup Option B</a>, keep the values of these parameters as shown above, because your players will still load the GUI client from our server (<tt>sapir</tt>) at UWM.  If you follow  <a href="index.html#C">Setup Option C</a>, you will find instructions how to modify those parameters' values.
 
+<h3>Config file ownership</h3>
+
+<p>For a bit of security, consider changing the ownership of this file to whatever user runs (or will run) tomcat on your machine (typically, that's user <tt>tomcat</tt>), and making it only readable by that user.
+
+<p>You can later edit this file with e.g.
+  <pre>
+    sudo -u tomcat emacs w2020.conf
+  </pre>
+  
+
   </body>
   </html>

@@ -63,7 +63,7 @@ and then typing that user's password when prompted. That shoudl log you in to th
 <p>For your personal convenience -- e.g., to explore the data in the SQL database in the future -- you can also create your own personal account on the MySQL server. It would be convenient to pick the MySQL user name the same as your Linux user name, and enable "passwordless" access (i.e. MySQL server authetication based on your Linux user name). Additionally, in order to carry out data-exporting operations later on, you may want to grant yourself the <tt>FILE</tt> privilege.  So, for example, if your Linux user name is <ttt>johndoe</tt>, you can create an eponymous MySQL server account as follows:
 
 <pre>
-CREATE USER 'johndoe@'localhost' IDENTIFIED WITH 'auth_socket';
+CREATE USER 'johndoe'@'localhost' IDENTIFIED WITH 'auth_socket';
 GRANT ALL ON game.* TO 'johndoe'@'localhost';
 GRANT FILE ON *.* TO 'johndoe'@'localhost' ;
 FLUSH PRIVILEGES;
