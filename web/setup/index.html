@@ -6,7 +6,7 @@
 
     <h1>Setting up the Rule Game Server and Client</h1>
 
-<p align="center"><em>Draft 2022-05-30</em></p>
+<p align="center"><em>Updated 2023-07-28</em></p>
 
 <p>
   This document descibes the process for setting up the Rule Game (a.k.a. Game of Hidden Rules - GOHR) software on youer own web site, so that your team could design experiments and process experimental results independently of the University of Wisconsin - Madison team.
@@ -46,7 +46,10 @@
 <h3>Server side</h3>
 
   
-<p>We are running the Rule Game web application server on a Linux machine (the OS version is Ubuntu 18.04), but if you like challenge, you probably can set it up on a MacOS or MS Windows machine as well. The necessary third-party software includes the following.
+<p>We are running the Rule Game web application server on a Linux machine (the OS version is Ubuntu 18.04), but if you like challenge, you probably can set it up on a MacOS or MS Windows machine as well. (We have tested a MacOS installation successfully, but not a MS Windows one so far).
+
+<p>
+  The necessary third-party software includes the following.
 
 <p>Mandatory (sufficient if you want to install the pre-built WAR file):
   <ul>
@@ -92,7 +95,7 @@
   <ul>
     <li>... you want to continuously update  your Game Server instance as we check in source code updates to the GitHub repository, without having to download a huge WAR file every time.
     <li>... you want to customize the Game Server source code (e.g. because you want to create your own extension of the rule syntax).
-    <li>... you want to use off-line data analysis tools (scripts for processing transcript files etc), the sorce code for which comes as part of the Game Sersver code base.
+    <li>... you want to use off-line data analysis tools (scripts for processing transcript files etc), the source code for which comes as part of the Game Sersver code base.
   </ul>
 
 <p>In this case, the setup process is as follows:

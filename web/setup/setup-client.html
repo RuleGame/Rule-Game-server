@@ -7,16 +7,25 @@
     <p>If you want to install your own instance of the GUI client (for Option C):
 
       <ol>
+	<li>Make sure you have the Typescript compiler (npm) on your machine. If you don't, you can install it with <tt>sudo apt-get install npm</tt> (if using Ubuntu), or a similar command for your OS.
 	<li>
-	  Download the client source from GitHub https://github.com/lupyanlab/Rule-Game
+	  Download the client source from GitHub <tt>https://github.com/lupyanlab/Rule-Game</tt> . This can be done e.g. as follows:
+	  <pre>
+	    cd ~/w2020
+	    mkdir client
+	    cd client/
+	    git init
+	    git remote add origin https://github.com/lupyanlab/Rule-Game.git
+	    git pull origin master
+	    </pre>
 	<li>
 	  Install the Node.js programming language https://nodejs.org/en/ (version 14 LTS version)
 	<li>In the terminal window where you are going to carry out the compilation, set up 2 environment variables:
 	  <table border="1">
 	    <tr><th>Variable name</th>	    <th>Variable value</th>
-	      	    <tr><th>Comments</th>
+	      <th>Comments</th>
 <tr><td>
-    <tt>setenv REACT_APP_DEBUG_MODE_ENABLED</tt>
+    <tt> REACT_APP_DEBUG_MODE_ENABLED</tt>
   <td><tt>true</tt>  or <tt>false</tt>  
   <td>Use <tt>true</tt> if compiling the production version of the client,
     or <tt>false</tt>  for the development version (which will show more debugging information)
@@ -26,18 +35,32 @@
       <td>E.g.
 	<tt>http://myhost.come/w2020</tt> (if your server runs on that host on port 80), or 	<tt>http://localhost:8080/w2020</tt> (if, for testing purposes, you have installed the server on your laptop, and only plan to access it from the web browser running on the same laptop)
 	</tr>
-</table>
+	  </table>
+	  
+	  The way you set environment variables depends on what shell you use; it's usually something like <tt>setenv</tt> in shells such as csh or tcsh, and  <tt>export</tt> in some other shells. For example, when we compile the client on our own server, we may do this:
+	  <pre>
+	    setenv REACT_APP_DEBUG_MODE_ENABLED false
+	    setenv REACT_APP_APP_API_HOST_ORIGIN http://rulegame.wisc.edu/w2020
+   	  </pre>
 	<li>
 	  Run <tt>npm install</tt> from the top directory
 <li>Run <tt>npm run build</tt> from the top directory
 <li>Copy all of the files inside the generated folder called “build/” to where you are hosting static files using a web server. For example,
   <pre>
-    mkdir /opt/tomcat/webapps/game-data
-    cp -pa build /opt/tomcat/webapps/game-data/prod
-</pre>
-  </ol>
+    sudo -u tomcat mkdir /opt/tomcat/webapps/rule-game
+    sudo -u tomcat cp -pa build /opt/tomcat/webapps/rule-game/prod
+  </pre>
+  The directory location within the Tomcat webapps dir should, of course, correspond to the URLs you have specified for <tt>GUI_PROD</tt> and <tt>GUI_DEV</tt> in your <a href="setup-config.html">Master config file</a>.
+      </ol>
+      
 
-<p>If you know TypeScript, you can modify the client's source code as needed before compiling.
+    <p>If you know TypeScript, you can modify the client's source code as needed before compiling.
+
+      <h3>Examples</h3>
+
+    <p>When our team updates the client code in its GitHub repository, you can rebuild and reinstall the updated client (prod version) using a script like this:
+<pre>
+      
       
   <hr>
 
