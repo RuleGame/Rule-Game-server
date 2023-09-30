@@ -21,7 +21,9 @@
     <p>You can download the files from the public repository, and install the data in your desired data directory, as follows. (We assume that you use subdirectory <tt>w2020</tt> under your home directory as a temporary staging area, and that the location of the experiemnt file directory is set in your  <a href="setup-config.html">master config file</a> with <pre>
 	FILES_GAME_DATA = "/opt/tomcat/game-data";
 </pre>).	
- 
+ (Or perhaps you had <pre>
+	FILES_GAME_DATA = "/opt/w2020/game-data";
+</pre>).	
 
 <pre class="yellow">
   cd
@@ -32,7 +34,10 @@
   git init
   git remote add origin https://github.com/lupyanlab/Rule-Game-game-data.git
   git pull origin master
-  sudo cp -pa game-data /opt/w2020
+  sudo cp -pa game-data /opt/tomcat
+  # (or, as the case may be,
+  #  sudo cp -pa game-data /opt/w2020
+  # )
 </pre>
 
 <p>
@@ -43,8 +48,15 @@ Later on, as we add more control files to the repository, you can update your lo
 <pre class="yellow">
   cd ~/w2020/game
   git pull origin master
-  sudo cp -pa game-data /opt/w2020
+  sudo cp -pa game-data /opt/tomcat
+  #  (or, as the case may be:
+  #  sudo cp -pa game-data /opt/w2020
+  # )
 </pre>
+
+<p>
+  After you have done that, you will have the experiment control files under
+  /opt/tomcat/game-data  or /opt/w2020/game-data, as the case may be.
 
 <h2>Skipping the staging directory</h2>
 
