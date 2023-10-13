@@ -38,7 +38,7 @@ drwxr-xr-x  3 vmenkov domain users 4096 Mar 17  2016 commons-math3-3.6.1
   <ul>
     <li>
       You can download a 
-      file such as jaxrs-ri-2.31.zip, or a more recent version. (To do that, you can start from e.g. <a href="https://mvnrepository.com/artifact/org.glassfish.jersey.bundles/jaxrs-ri">https://mvnrepository.com/artifact/org.glassfish.jersey.bundles/jaxrs-ri -Jersey Bundles JAXRS RI </a>, clicking on a version number such as <tt>3.1.0-M2</tt>, and then, in a page such as https://mvnrepository.com/artifact/org.glassfish.jersey.bundles/jaxrs-ri/3.1.0-M2 , clicking on <tt>View all</tt>, you get to a directory listing such as <a href="https://repo1.maven.org/maven2/org/glassfish/jersey/bundles/jaxrs-ri/3.1.0-M2/">org/glassfish/jersey/bundles/jaxrs-ri/3.1.0-M2</a>. In that page, you choose a ZIP file, such as <tt>jaxrs-ri-3.1.0-M2.zip</tt>).
+      file such as jaxrs-ri-2.31.zip, or (preferred!) a more recent version (such as 3.1.3). (To do that, you can start from e.g. <a href="https://mvnrepository.com/artifact/org.glassfish.jersey.bundles/jaxrs-ri">https://mvnrepository.com/artifact/org.glassfish.jersey.bundles/jaxrs-ri -Jersey Bundles JAXRS RI </a>, clicking on a version number such as <tt>3.1.0-M2</tt>, and then, in a page such as https://mvnrepository.com/artifact/org.glassfish.jersey.bundles/jaxrs-ri/3.1.0-M2 , clicking on <tt>View all</tt>, you get to a directory listing such as <a href="https://repo1.maven.org/maven2/org/glassfish/jersey/bundles/jaxrs-ri/3.1.0-M2/">org/glassfish/jersey/bundles/jaxrs-ri/3.1.0-M2</a>. In that page, you choose a ZIP file, such as <tt>jaxrs-ri-3.1.0-M2.zip</tt>).
     <li>Unpack it on your machine under   <tt>~/w2020</tt>:
       <pre>
 	$  cd ~/w2020
@@ -47,8 +47,10 @@ drwxr-xr-x  3 vmenkov domain users 4096 Mar 17  2016 commons-math3-3.6.1
       This will create the directory  <tt>~/w2020/jaxrs-ri</tt>, with the JAX-RS stuff in it.
   </ul>				 
 
-  <br>NOTE: <strong>if you are using Tomcat 10.1 or above, it is strongly recommended that you download and use jaxrs-ri-3.2.0 or above.</strong> This is due to a compatibility issue with the servlet API library: an older version of jaxrs-ri may use a method (e.g. HttpServletRequest.setStatus(String,int)) which has been not just deprecated, but fully removed from the version of servlet-api.jar shipped with Tomcat starting with Tomcat 10.1.
+  <br>NOTE: <strong>if you are using Tomcat 10.1 or above, it is strongly recommended that you download and use jaxrs-ri-3.1.3 or above.</strong> This is due to a compatibility issue with the servlet API library: an older version of jaxrs-ri may use a method (e.g. HttpServletRequest.setStatus(int,String)) which has been not just deprecated, but fully removed from the version of servlet-api.jar shipped with Tomcat starting with Tomcat 10.1.
 
+<!-- See e.g. https://stackoverflow.com/questions/71375427/jersey-servlet-version-issues-java-lang-nosuchmethoderror-jakarta-httpservlet -->
+  
 <li><strong>JAXB-RI,</strong> the XML binding library. To download it, one can start with
   <a href="https://mvnrepository.com/artifact/com.sun.xml.bind/jaxb-ri">
     https://mvnrepository.com/artifact/com.sun.xml.bind/jaxb-ri</a>, choose a recent version (e.g. 3.0.2), then "View all", and finally download a file such as <tt>jaxb-ri-3.0.2.zip</tt>. Unpack the downloaded ZIP file on your machine under   <tt>~/w2020</tt>:

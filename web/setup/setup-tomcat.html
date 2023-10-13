@@ -64,7 +64,11 @@ sudo chown tomcat.tomcat  /opt/tomcat/game-data /opt/tomcat/saved
 
     <h2>Extra libraries</h2>
 
-  <p>You will need an extra JAR file installed to provide for connectivity between the Java applications (such as the Game Server) and your relational database. If your database server is the MySQL server, then the     necessary JAR file can be downloaded from the  <a href="https://dev.mysql.com/downloads/connector/j/">Connector/J</a> site. At that site, choose the appropriate version for your OS.
+  <p>You will need an extra JAR file installed to provide for connectivity between the Java applications (such as the Game Server) and your relational database.
+(If you don't, you will have a runtime error mentioning <tt>com.mysql.cj.jdbc.Driver</tt> when you try to use the Game Server).
+
+  <p>
+    If your database server is the MySQL server, then the     necessary JAR file can be downloaded from the  <a href="https://dev.mysql.com/downloads/connector/j/">Connector/J</a> site. At that site, choose the appropriate version for your OS.
 
   <p>On our system, we have put that JAR file into
     <tt>/opt/w2020/lib</tt> (earlier, in     <tt>/usr/share/java</tt>),
