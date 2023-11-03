@@ -28,10 +28,43 @@ public class MainConfig //extends ParseConfig
 	path = _path;
 	initConf();
     }
-    
+
+    /** Tries to figure if we're running on a DoIT shared hosting host,
+	and the path such as /opt/w2020/something has to be understood
+	with respect to the root of the chrooted directory (such
+	as "/var/www/vhosts/wwwtest.rulegame.wisc.edu"), rather than
+	with respect to the root of the file system. 
+       
+     */
+    static private String adjustPath(String path) {
+	if (path==null) return path;
+	File f = new File(path);
+	if (f.exists()) return path; // can't complain about success
+	if (f.getParentFile().exists()) return path;
+	// The desired directory does not exist. See if we're
+	// on a DoIT shared hosting machine, where
+	// user.dir=/var/www/vhosts/wwwtest.rulegame.wisc.edu/tomcat/work
+	// and the conf file is in e.g.
+	// "/var/www/vhosts/wwwtest.rulegame.wisc.edu/opt/w2020"
+	// rather than "/opt/w2020"
+	String tomcatWorkDir = System.getProperty("user.dir");
+	System.err.println("user.dir=" +tomcatWorkDir);
+	if (tomcatWorkDir == null) return path;
+	File d = new File(tomcatWorkDir);
+	if (d.getName().equals("work")) d = d.getParentFile();
+	if (d.getName().equals("tomcat")) d = d.getParentFile();
+	d = new File(d, path.replaceAll("^/", ""));
+	path = d.toString();
+	System.err.println("new path=" +path);
+	return path;
+    }
+
     static private void initConf() {
 	try {
 	    if (path==null) return;
+	    path = adjustPath(path);
+
+	    
 	    ht = new ParseConfig(path);
 	} catch(Exception ex) {
 	    System.err.println("Warning: Problem reading master configuration file '"+path +"'. Will use built-in default values instead, which can cause problems accessing the database server and data files. If you are running the Captive Server, you can ignore this message. " + ex);
