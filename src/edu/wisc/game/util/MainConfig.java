@@ -34,9 +34,12 @@ public class MainConfig //extends ParseConfig
 	with respect to the root of the chrooted directory (such
 	as "/var/www/vhosts/wwwtest.rulegame.wisc.edu"), rather than
 	with respect to the root of the file system. 
-       
+
+	@param path Something like "/opt/foo"
+	@return Either the original path, or something like "/var/www/vhosts/wwwtest.rulegame.wisc.edu/opt/foo"
      */
-    static private String adjustPath(String path) {
+    static public String adjustPath(String path) {
+	final String path0 = path;
 	if (path==null) return path;
 	File f = new File(path);
 	if (f.exists()) return path; // can't complain about success
@@ -55,7 +58,7 @@ public class MainConfig //extends ParseConfig
 	if (d.getName().equals("tomcat")) d = d.getParentFile();
 	d = new File(d, path.replaceAll("^/", ""));
 	path = d.toString();
-	System.err.println("new path=" +path);
+	System.err.println("Converted path0=" +path0 + " to path=" + path);
 	return path;
     }
 
@@ -77,6 +80,15 @@ public class MainConfig //extends ParseConfig
 	return (ht==null)? defVal: ht.getString(name, defVal);
     }
 
+    /** Looks up the path, adjusts it if necessary (when on a DoIT
+	shared hosting host), and converts it to a File object */
+    static public File getFile(String name, String defVal) {
+	String path = getString(name, defVal);
+	path = adjustPath(path);
+	return new File(path);
+    }
+	   
+    
     /** The URL string for the Rule Game GUI Client.
 	@param dev True for the dev version, false for prod
 	@return The URL string, or the default (a URL on same server and port)

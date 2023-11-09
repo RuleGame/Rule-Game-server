@@ -13,12 +13,14 @@ public class Files {
     /** The place where the Game Server saves transcripts etc.
 	Normally, this is always the same location; but, for example,
 	an analysis script may use an archive copy of these data from
-	a different location
-     */
-    static File savedDir = new File( MainConfig.getString("FILES_SAVED", "/opt/tomcat/saved"));
-    static File inputDir = new File( MainConfig.getString("FILES_GAME_DATA", "/opt/tomcat/game-data"));
+	a different location.
 
-    
+	We may also adjust the paths if we're on a DoIT shared hosting host (with a chrooted shell).
+
+     */
+    static File savedDir =  MainConfig.getFile("FILES_SAVED", "/opt/tomcat/saved");
+    static File inputDir = MainConfig.getFile("FILES_GAME_DATA", "/opt/tomcat/game-data");
+
 
     /** Sets the path to the input directory, which is the root
 	of the tree that contains the experiment control files.
