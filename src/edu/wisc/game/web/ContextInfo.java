@@ -30,18 +30,22 @@ public class ContextInfo    extends ResultsBase  {
      */
     public String clientUrl;
 
-    
+    /** Note that request.getProtocol() is not helpful to distinguish HTTP from
+	HTTPS, as it seems to always return "HTTP". OTOH, using port 443 is
+	a good indicator of HTTPS being used.
+     */
     public ContextInfo(HttpServletRequest request, HttpServletResponse response){
 	super(request,response,false);	
 	if (error) return;
 
-	String proto = request.getProtocol(); // could give "HTTP/1.0"
-	proto = proto.replaceAll("/.*", "");
+	//String proto = request.getProtocol(); // could give "HTTP/1.0"
+	//proto = proto.replaceAll("/.*", "");
 	
 	host = request.getLocalName();
 	port= request.getLocalPort();
 	cp= request.getContextPath();
 	dev = cp.endsWith("-dev");
+	String proto = (port==443)? "https" : "http";
 	serverUrl= proto + "://" + host + ":" + port + cp;
 	clientUrl = MainConfig.getGuiClientUrl(dev);	
     }
