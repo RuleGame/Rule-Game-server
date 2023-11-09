@@ -35,11 +35,14 @@ public class ContextInfo    extends ResultsBase  {
 	super(request,response,false);	
 	if (error) return;
 
+	String proto = request.getProtocol(); // could give "HTTP/1.0"
+	proto = proto.replaceAll("/.*", "");
+	
 	host = request.getLocalName();
 	port= request.getLocalPort();
 	cp= request.getContextPath();
 	dev = cp.endsWith("-dev");
-	serverUrl="http://" + host + ":" + port + cp;
+	serverUrl= proto + "://" + host + ":" + port + cp;
 	clientUrl = MainConfig.getGuiClientUrl(dev);	
     }
 
