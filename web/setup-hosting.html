@@ -1,0 +1,171 @@
+<html>
+  <head>
+    <title>Setting up the Rule Game Server on a DoIT Shared Hosting host</title>
+  </head>
+
+  <body>
+
+    <h1>Setting up the Rule Game Server on a DoIT Shared Hosting host</h1>
+
+    <p>This document contains notes for setting up and updating the Rule Game Server web site on the University Wisconsin-Madison DoIT Shared Hosting platform. This is in addition to the generic instructions provided by the DoIT staff.
+    
+      <h2>Databases</h2>
+
+      <h3>The initial setup of databases for wwwtest.rulegame.wisc.edu</h3>
+      
+    <p>Added database named "game", with "none" as the "related site". (Could have picked wwwtest.rulegame.wisc.edu as the related site) (eventually, assigned the database to the site)
+
+    <p>Created user "game" on that database, with the password as specified in persistence.xml
+
+      <h4>Importing data from the existing database (on sapir) to the DoIT host</h4>
+
+    <p>Export on sapir:
+	  <pre>
+mysqldump --databases game > sapir-dump.sql
+
+vmenkov@SAPIR:~$ ls -l sapir-dump.sql 
+-rw-rw-r-- 1 vmenkov vmenkov 11236564 Nov  1 19:38 sapir-dump.sql
+</pre>
+
+    <p>Then copied the dump file directly into the database on the  DoIT hist via the web UI. 
+
+    <p>The web UI shows:
+	    <pre>
+Connection Information for game
+You can use these database connection details, for example, when you are asked to specify ones during installation of a web app.
+
+Host
+localhost:3306
+Database name
+game
+User name
+game
+Password
+******
+	    </pre>
+    </p>
+    
+    <h2>Installing the MySQL connector</h2>
+
+    <p>For the Tomcat web server to work with the MySQL database, it needs an aixiliary JAR file with the drivers. We have copied it from one of our existing installations using sftp.
+      <pre>
+		sftp test-rulegame@wwwtest.rulegame.wisc.edu
+		cd tomcat/lib
+		put mysql-connector-j-8.0.31.jar 
+	      </pre>
+
+	<h2>The web app code (server side)</h2>
+
+	<pre>
+=======
+
+sftp> pwd
+Remote working directory: /var/www/vhosts/wwwtest.rulegame.wisc.edu
+
+=== The WAR file ===
+
+* Use sftp from sapir to copy w2020.war to tmp/w2020.war
+
+* Use the manager app ( https://wwwtest.rulegame.wisc.edu/manager/ ) to
+deploy a local file:
+
+/var/www/vhosts/wwwtest.rulegame.wisc.edu/tmp/w2020.war
+
+Now, our app is visible at https://wwwtest.rulegame.wisc.edu/w2020/  !
+
+
+(On the "chrooted" shell, what I see in "/" is actually 
+/var/www/vhosts/wwwtest.rulegame.wisc.edu/  as far as the file system
+seen by tomcat is concerned. Under this, the "tomcat" tree exists, with
+"tomcat/webapps" etc)
+
+user.dir=/var/www/vhosts/wwwtest.rulegame.wisc.edu/tomcat/work
+
+
+===
+
+The GUI client
+
+On sapir, build the WAR file (based on what's deployed under rule-game/prod
+in Apache HTTPd server's directory)
+
+2005  cd /var/www/rule-game
+ 2006  jar cvf ~/tmp/rule-game.war prod/*
+ 2007  cd
+ 2008  cd tmp
+ 2009  jar tf rule-game.war 
+ 
+sftp the war file to the shared hosting host
+
+Deploy the client
+
+In the mananger ( https://wwwtest.rulegame.wisc.edu/manager )
+deploy from the WAR path:
+/var/www/vhosts/wwwtest.rulegame.wisc.edu/tmp/rule-game.war
+
+
+---
+
+served from
+https://wwwtest.rulegame.wisc.edu/rule-game/prod/?server=http%3A%2F%2Fwwwtest.rulegame.wisc.edu%3A443%2Fw2020&exp=ep%2Frule_ambiguity%2Fambiguity1&workerId=vm-2023-11-08-b&intro=true
+
+
+----
+https://github.com/RuleGame/Rule-Game-server.git
+
+=========
+
+game-data auto-deployment, via the Git menu
+
+repo URL = https://github.com/RuleGame/Rule-Game-game-data.git
+Deployment: master branch automatically to /opt/w2020/game-data
+
+</pre>
+
+      <h2><a name="landing">Updating the landing page</a></h2>
+
+    <p>This section explains how to update the web pages visible at the top-level of the web site, i.e. at https://wwwtest.rulegame.wisc.edu/ and elsewhere in the top-level directory.
+
+      <ol>
+	<li>When you first start working with the top-level pages, check out
+	  the current version of these pages from the GitHub repository at
+	  <a href="https://github.com/RuleGame/Rule-Game-top-pages">https://github.com/RuleGame/Rule-Game-top-pages</a>	  to your computer. Let's suppose that you have decided to work with these files in the directory named <tt>landing</tt> under your home directory on your personal computer:
+	  <pre>
+	    mkdir landing
+	    cd landing
+	    git init
+	    git remote add origin https://github.com/RuleGame/Rule-Game-server.git
+	    git pull origin master	   </pre>	   
+	  
+	  <p>Subsequently, whenever you resume working with these files and have a reason to thing that some of the files have changed in the repository (e.g. because one of your co-PIs has checked in an update to one of the files), you just need to do the "pull" from the repository to your PC:
+	    <pre>
+	      cd landing
+	      git pull origin master	   </pre>	   
+	</li>
+	
+	<li>Edit the desired HTML files. (You can, of course, edit the files in some other directory using your favorite WYSIWYG HTML editing software, such as BlueGrifon, and then simply copy the saved files to the <tt>landing</tt> directory).
+	  <br>The main file (the one which the web server will display at https://wwwtest.rulegame.wisc.edu/ or the analogous "landing page" place at another server you're deploying it to) is <tt>index.html</tt>. As with any web site, you can create other files (e.g. <tt>papers.html</tt> with a list of ArXiv papers) and put links to them into index.html.
+	</li>
+	
+	<li>Once you are ready to deploy the updated pages, check them in and commit; that will send them to the GitHub repository:
+	  <pre>
+	    git commit -a -m 'This is my new update'
+	    git push origin master
+	  </pre>
+	</li>
+	
+	<li>You may want to verify that your updated files have been received by the GitHub server by taking a look at <a href="https://github.com/RuleGame/Rule-Game-top-pages">your repository</a> there.
+
+	<li>Unless you are working on a personal computer on the UW internal network, you must start the Global Protect VPN, connecting to the main UW VON server (uwmadison.vpn.wisc.edu) (and not to the Engineering (CAE) VPN), before you can deploy the pages to the DoIT Shared Hosting server. This will likely involve a step that requires using the Duo application for "two-factor authentication".
+
+	<li>Once you are ready to deploy the pages to the DoIT Shared Hosting server (and are either working on a personal computer on the UW internal network, or using the UW VPN), please  log in to the shared hosting Site Administrarion control panel, <a href="https://webhosting.doit.wisc.edu/panel">https://webhosting.doit.wisc.edu/panel</a>. Depening on where you are, and what you have been doing this day, the logging process may involve several stages. You may be initially sent to the general UW authentication page (where you log in using your UW netid and password), before you are shown the DoIT-specific "ADMIN CONTROL PANEL LOGIN" screen. At that screen, you enter the host name (such as  wwwtest.rulegame.wisc.edu or rulegame.wisc.edu) as the "login", and the DoIT-shared-hosting-specific password (that was provided to you via email).
+	      
+	<li>Once the login is successful, you'll see the "Websites and Domains" screen. On that screen, click on the "Git" link. That will take you to the screen with the list of the GitHub repositories associated with the web site. Find the section corresponding to the relevant repository (Rule-Game-top-pages.git). In that section, there are two buttons, "Pull now" and "Deploy now". Click on the first on them, <strong>Pull now</strong>. If everything goes well (that is, the Plesk service managing the DoIT sharing hosting machines successfully connects to GitHub and gets the data from there), you will see a pop-up window with the title "Deployment task is running", which then becomes "Deployment task has completed". After that, if you look at the "Latest commit" table in your repository's section of the DoIT control panel screen, you will see that the commit on the top of the table is the one with the date and commit message corresponding to your most recent <tt>git commit</tt>.
+
+	<li>You don't need to click on the <tt>"Deploy now"</tt> button, because that step is automated. Once you go in your web browser to the main page of your web site (https://wwwtest.rulegame.wisc.edu/ or https://rulegame.wisc.edu/ , as the case may be), you should see your recent updates "live" on the site.		
+
+      </ol>
+	      
+	      
+  </body>
+</html>
