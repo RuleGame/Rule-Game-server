@@ -16,7 +16,7 @@
       
     <p>A complete set of control files for an experiment can be created from scratch, as per the SOP instructions. However, as you can see from the documentation above, the system of control files needed for a non-trivial experiment may be fairly complex. Therefore, in order  to get accustomed to different types of experiment plans, and to  different ways in which experiment plans can be designed, it may be convenient for you to start with taking wholesale the entire set of our experiment plans, and then work off that base.
 
-    <p>Our team at UWM has experiment control files at two different GitHub repositories. Members of the <a href="https://github.com/lupyanlab">Lupyan Lab</a> can use the repository <a href="https://github.com/lupyanlab/Rule-Game-game-data">Rule-Game-game-data</a>; however, this repository is not visible to outside customers. Researchers from outside the Lupyan Lab can download the content of the public repository  <strong><a href="https://github.com/vmenkov/Rule-Game-server">Rule-Game-server</a></strong> instead. This repository contains a sampling of experiment control files as well, in the directory <tt>game-data</tt>.
+    <p>Our team at UWM has experiment control files at two different GitHub repositories. All the data used by the team are  the repository <a href="https://github.com/RuleGame/Rule-Game-game-data">RuleGame/Rule-Game-game-data</a>. Additionally, researchers from outside the Lupyan Lab can download the content of the public repository  <strong><a href="https://github.com/RuleGame/Rule-Game-server">Rule-Game-server</a></strong> instead. This repository contains a sampling of experiment control files as well, in the directory <tt>game-data</tt>.
 
     <p>You can download the files from the public repository, and install the data in your desired data directory, as follows. (We assume that you use subdirectory <tt>w2020</tt> under your home directory as a temporary staging area, and that the location of the experiemnt file directory is set in your  <a href="setup-config.html">master config file</a> with <pre>
 	FILES_GAME_DATA = "/opt/tomcat/game-data";
@@ -32,7 +32,7 @@
   mkdir game-data
   cd game-data
   git init
-  git remote add origin https://github.com/lupyanlab/Rule-Game-game-data.git
+  git remote add origin https://github.com/RuleGame/Rule-Game-game-data.git
   git pull origin master
   sudo cp -pa game-data /opt/tomcat
   # (or, as the case may be,
@@ -67,7 +67,7 @@ Later on, as we add more control files to the repository, you can update your lo
   sudo -u tomcat mkdir /opt/w2020/game-data/
   cd /opt/w2020/game-data/
   sudo -u tomcat git init
-  sudo -u tomcat git remote add origin https://github.com/lupyanlab/Rule-Game-game-data.git
+  sudo -u tomcat git remote add origin https://github.com/RuleGame/Rule-Game-game-data.git
   sudo -u tomcat git pull origin master
   </pre>
 
@@ -81,7 +81,7 @@ Later on, as we add more control files to the repository, you can update your lo
 
   <h3>Manual deployment with GitHub</h3>
 <p>
-  If the entirety of your development work will take place on the same computer that runs your Game Server, then, in principle, you can simply treat your  <em>FILES_GAME_DATA</em> directory as the local directory associate with the GitHub repository, and edit the files right there. If your project has a more complicated organization (various people editing files on their personal computers; some others prefer doing editing via the GitHub web interface), then you may consider creating a framework similar to what we do at Lupyan Lab. You can arrange for either  manual or automatic updates. For manual updates, you can establish a standard operating procedure whereby a team member who checks some updates to your data repository will need to login (<tt>ssh</tt>) to your server, check out the data to his local directory, and then copy them over to the   <em>FILES_GAME_DATA</em> directory. (Or, of course, as it's been already mentioned above, he can save a step and check the data out directly to the   <em>FILES_GAME_DATA</em> directory.) As an example, see our <a href="../sop-experiment.html">Standard Operating Procedures: Preparing and running an experiment with the Rule Game Server</a>.
+  If the entirety of your development work will take place on the same computer that runs your Game Server, then, in principle, you can simply treat your  <em>FILES_GAME_DATA</em> directory as the local directory associate with the GitHub repository, and edit the files right there. If your project has a more complicated organization (various people editing files on their personal computers; some others prefer doing editing via the GitHub web interface), then you may consider creating a framework similar to what we do at UW. You can arrange for either  manual or automatic updates. For manual updates, you can establish a standard operating procedure whereby a team member who checks some updates to your data repository will need to login (<tt>ssh</tt>) to your server, check out the data to his local directory, and then copy them over to the   <em>FILES_GAME_DATA</em> directory. (Or, of course, as it's been already mentioned above, he can save a step and check the data out directly to the   <em>FILES_GAME_DATA</em> directory.) As an example, see our <a href="../sop-experiment.html">Standard Operating Procedures: Preparing and running an experiment with the Rule Game Server</a>.
 
   <h3>Automatic deployment with GitHub Actions</h3>
   
