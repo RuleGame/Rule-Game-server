@@ -8,7 +8,32 @@
     <h1>Setting up the Rule Game Server on a DoIT Shared Hosting host</h1>
 
     <p>This document contains notes for setting up and updating the Rule Game Server web site on the University Wisconsin-Madison DoIT Shared Hosting platform. This is in addition to the generic instructions provided by the DoIT staff.
+
+
+      <h2>Introduction</h2>
+
+
+    <p>The DoIT Shared Hosting provides us with two virtual hosts, <tt>wwwtest.rulegame.wisc.edu</tt> and <tt>rulegame.wisc.edu</tt>. (Before we have given a full get-go for a global DNS change, the latter host can be accessed as preview.rulegame.wisc.edu; alternatively, you can modify the <tt>/etc/hosts</tt> file to associate the host name <tt>rulegame.wisc.edu</tt> with the IP address provided by the DoIT people for this shared-hosting host). Physically, each of the two virtual hosts is hosted on a server with several dozens other virtual hosts (production ones or test ones, respectively). The software platform for managing them is called Plesk.
+
+<p>Plesk offers several ways for you to control what goes on at each host. For this discussion, we'll be talking about  <tt>wwwtest.rulegame.wisc.edu</tt>, but the same applied to the production host as well. To carry out any of the operations discussed below, you need to have the Global Protect VPN running, connecting to the main UWM VPN gateway (not the CAE VPN gateway), unless you are working on a PC on the UWM internal network.
+
+  <ul>
+    <li><strong>Secure FTP.</strong> You can connect to the host in question with <tt>sftp</tt> to transfer files to or from that host. You connect to <tt>test-rulegame@wwwtest.rulegame.wisc.edu</tt> or <tt>rulegame@rulegame.wisc.edu</tt>, as the case may be, using the password that was provided to you by email. Once you have logged in, you will see that your home directory on the remote host is <tt>/var/www/vhosts/wwwtest.rulegame.wisc.edu</tt> (or <tt>/var/www/vhosts/rulegame.wisc.edu</tt>, on the production host), and you can work with files in that directory or its subdirectories. (And if you type "<tt>ls ..</tt>", you can see what other virtual hosts are hosted on this physical host).
+
+    <li><strong>"Chrooted" shell.</strong> 
+      You can log in to the DoIT shared hosting's "Site Administrarion control panel, <a href="https://webhosting.doit.wisc.edu/panel">https://webhosting.doit.wisc.edu/panel</a>. Depening on where you are, and what you have been doing this day, the logging process may involve several stages. You may be initially sent to the general UW authentication page (where you log in using your UW netid and password), before you are shown the DoIT-specific "ADMIN CONTROL PANEL LOGIN" screen. At that screen, you enter the host name (such as  wwwtest.rulegame.wisc.edu or rulegame.wisc.edu) as the "login", and the DoIT-shared-hosting-specific password for our hosts (that was provided to you via email). This gets you to the      "Websites and Domains" screen. On that screen, click on the "SSH" link. That gives you a web browser window in which you can type shell commands, much like you were using a normal <tt>ssh</tt> connection to the remote host.
+
+      <p>However, what you're interacting with is not a "normal" shell but a "<a href="https://www.redhat.com/sysadmin/set-linux-chroot-jails">chrooted</a>" one. (The name comes from the name of the UNIX command, <tt>chroot</tt>, i.e. "change root".) This means that when you use that shell, what appears as the root of the file system visible to you (and can be said to be your home directory) is actually  <tt>/var/www/vhosts/wwwtest.rulegame.wisc.edu</tt> (or <tt>/var/www/vhosts/rulegame.wisc.edu</tt>, as the case may be). You don't see the rest of the file system. You also can use only a very small number of shell commands, and some of them, such as <tt>scp</tt>, do not work.
+
+      <p>You obviously can't do all that much in this shell, but at least you can move file around, check time stamps, etc.
+    </li>
     
+    <li>From the "Websites and Domains" screen you can access a number of other tools. This includes the "Files" tool for managing files stored in your space; th tool for controlling the MySQL databases running on your server.
+    <li>The Tomcat server has a manager screen at https://wwwtest.rulegame.wisc.edu/manager  (or https://rulegame.wisc.edu/manager , as the case may be). You can use it to start and stop your applications.
+	  
+  </ul>
+  
+      
       <h2>Databases</h2>
 
       <h3>The initial setup of databases for wwwtest.rulegame.wisc.edu</h3>
@@ -44,8 +69,8 @@ Password
 ******
 	    </pre>
     </p>
-    
-    <h2>Installing the MySQL connector</h2>
+
+    <h2>(Initial) Installing the MySQL connector</h2>
 
     <p>For the Tomcat web server to work with the MySQL database, it needs an aixiliary JAR file with the drivers. We have copied it from one of our existing installations using sftp.
       <pre>
@@ -54,38 +79,37 @@ Password
 		put mysql-connector-j-8.0.31.jar 
 	      </pre>
 
-	<h2>The web app code (server side)</h2>
+	<h2>(Initial and ongoing) The web app code (server side)</h2>
 
-	<pre>
-=======
+    <p>It would be interesting to find out a way to compile the Game Server code on the shared-hosting site. At this point, I don't know how to set this up (the chrooted shell obviously is not equipped with the toold we'd need for that). Instead, the current approach is to build a WAR far (w2020.war) on some other host (could be your own PC, could be <tt>sapir</tt>) and then copying it over to the shared-hosting host.
 
-sftp> pwd
-Remote working directory: /var/www/vhosts/wwwtest.rulegame.wisc.edu
+    <p>Step by step:
 
-=== The WAR file ===
+      <ol>
 
-* Use sftp from sapir to copy w2020.war to tmp/w2020.war
+	<li>Build a WAR file of the Game Server application (w2020.war) on your PC or on some other host (such as sapir). For detailed instructions see e.g. e <a href="setup-compile.html">Rule Game Server build Guide.</a>
+	<li>Use sftp to move the file to the shared-hosting host. Let's suppose you put it there to the directiory <tt>tmp</tt> under your home directory.
 
-* Use the manager app ( https://wwwtest.rulegame.wisc.edu/manager/ ) to
-deploy a local file:
-
+	<li> Use the manager app ( https://wwwtest.rulegame.wisc.edu/manager/ ) to deploy a local file: <tt>
 /var/www/vhosts/wwwtest.rulegame.wisc.edu/tmp/w2020.war
-
+</tt>
 Now, our app is visible at https://wwwtest.rulegame.wisc.edu/w2020/  !
-
-
+      </ol>
+	
+<!--
 (On the "chrooted" shell, what I see in "/" is actually 
 /var/www/vhosts/wwwtest.rulegame.wisc.edu/  as far as the file system
 seen by tomcat is concerned. Under this, the "tomcat" tree exists, with
 "tomcat/webapps" etc)
 
 user.dir=/var/www/vhosts/wwwtest.rulegame.wisc.edu/tomcat/work
+-->
 
-
-===
-
+<h2>
 The GUI client
+</h2>
 
+<pre>
 On sapir, build the WAR file (based on what's deployed under rule-game/prod
 in Apache HTTPd server's directory)
 
@@ -156,14 +180,14 @@ Deployment: master branch automatically to /opt/w2020/game-data
 	
 	<li>You may want to verify that your updated files have been received by the GitHub server by taking a look at <a href="https://github.com/RuleGame/Rule-Game-top-pages">your repository</a> there.
 
-	<li>Unless you are working on a personal computer on the UW internal network, you must start the Global Protect VPN, connecting to the main UW VON server (uwmadison.vpn.wisc.edu) (and not to the Engineering (CAE) VPN), before you can deploy the pages to the DoIT Shared Hosting server. This will likely involve a step that requires using the Duo application for "two-factor authentication".
+	<li>Unless you are working on a personal computer on the UW internal network, you must start the Global Protect VPN, connecting to the main UW VPN server (uwmadison.vpn.wisc.edu) (and not to the Engineering (CAE) VPN), before you can deploy the pages to the DoIT Shared Hosting server. This will likely involve a step that requires using the smartphone Duo application for the "two-factor authentication".
 
-	<li>Once you are ready to deploy the pages to the DoIT Shared Hosting server (and are either working on a personal computer on the UW internal network, or using the UW VPN), please  log in to the shared hosting Site Administrarion control panel, <a href="https://webhosting.doit.wisc.edu/panel">https://webhosting.doit.wisc.edu/panel</a>. Depening on where you are, and what you have been doing this day, the logging process may involve several stages. You may be initially sent to the general UW authentication page (where you log in using your UW netid and password), before you are shown the DoIT-specific "ADMIN CONTROL PANEL LOGIN" screen. At that screen, you enter the host name (such as  wwwtest.rulegame.wisc.edu or rulegame.wisc.edu) as the "login", and the DoIT-shared-hosting-specific password (that was provided to you via email).
+	<li>Once you are ready to deploy the pages to the DoIT Shared Hosting server (and are either working on a personal computer on the UW internal network, or using the UW VPN), please  log in to the shared hosting Site Administrarion control panel, <a href="https://webhosting.doit.wisc.edu/panel">https://webhosting.doit.wisc.edu/panel</a>. Depening on where you are, and what you have been doing this day, the logging process may involve several stages. You may be initially sent to the general UW authentication page (where you log in using your UW netid and password), before you are shown the DoIT-specific "ADMIN CONTROL PANEL LOGIN" screen. At that screen, you enter the host name (such as  wwwtest.rulegame.wisc.edu or rulegame.wisc.edu) as the "login", and the DoIT-shared-hosting-specific password for our hosts (that was provided to you via email).
 	      
-	<li>Once the login is successful, you'll see the "Websites and Domains" screen. On that screen, click on the "Git" link. That will take you to the screen with the list of the GitHub repositories associated with the web site. Find the section corresponding to the relevant repository (Rule-Game-top-pages.git). In that section, there are two buttons, "Pull now" and "Deploy now". Click on the first on them, <strong>Pull now</strong>. If everything goes well (that is, the Plesk service managing the DoIT sharing hosting machines successfully connects to GitHub and gets the data from there), you will see a pop-up window with the title "Deployment task is running", which then becomes "Deployment task has completed". After that, if you look at the "Latest commit" table in your repository's section of the DoIT control panel screen, you will see that the commit on the top of the table is the one with the date and commit message corresponding to your most recent <tt>git commit</tt>.
+	<li>Once the login is successful, you'll see the "Websites and Domains" screen. On that screen, click on the "Git" link. That will take you to the screen with the list of the GitHub repositories associated with the web site. Find the section corresponding to the relevant repository (Rule-Game-top-pages.git). In that section, there are two buttons, "Pull now" and "Deploy now". Click on the first on them, <strong>Pull now</strong>. If everything goes well (that is, the Plesk service managing the DoIT sharing hosting machines successfully connects to GitHub and gets the data from there), you will see a pop-up window with the title "Deployment task is running", which then becomes "Deployment task has completed". After that, if you look at the "Latest commit" table in your repository's section of the DoIT control panel screen, you should see that the commit on the top of the table is the one with the date and commit message corresponding to your most recent <tt>git commit</tt>.
 
-	<li>You don't need to click on the <tt>"Deploy now"</tt> button, because that step is automated. Once you go in your web browser to the main page of your web site (https://wwwtest.rulegame.wisc.edu/ or https://rulegame.wisc.edu/ , as the case may be), you should see your recent updates "live" on the site.		
-
+	<li>You don't need to click on the <tt>"Deploy now"</tt> button, because that step is automated. Once you go in your web browser to the main page of your web site (https://wwwtest.rulegame.wisc.edu/ or https://rulegame.wisc.edu/ , as the case may be), you should see your recent updates "live" on the site.
+	  
       </ol>
 	      
 	      
