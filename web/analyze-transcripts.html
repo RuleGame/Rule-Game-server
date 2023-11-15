@@ -10,6 +10,17 @@
 
 <p>When processing trasnscripts, the analyzer removes duplicate entries (which are sometimes written by the server) and entries with code 3 "empty cell", because our researchers become sad when they see players grabbing at empty cells (i.e. already-removed pieces).
 
+  <h2>The script location</h2>
+
+<p>The Analyze Transcripts tool, along with various other auxiliary tools, is installed on your machine when you build the Game Server from source, as described in the <a href="setup-compile.html">Rule Game Server build Guide</a>. 
+  If you, for example, have used <tt>~/w2020/game</tt> as the build directory on your machine (as suggested in the guide), then the top-level shell scripts will be in the directory
+  <tt>~/w2020/game/scripts</tt>.
+
+  <p>On <tt>sapir</tt> and on our CAE host,   the  build directory for the Game Server was     <tt> /home/vmenkov/w2020/game</tt>, so the top-level scripts are  in
+    <tt>/home/vmenkov/w2020/game/scripts</tt>; this path will be used in some of  the illustrative examples below.
+
+<p>For convenience, you may want to add the script directory (such as /home/vmenkov/w2020/game/scripts, or whatever it is on your machine) to your PATH.
+  
   
 <h2>Usage - overview</h2>
   
@@ -18,7 +29,9 @@
       /home/vmenkov/w2020/game/scripts/analyze-transcripts.sh <em>[options]</em> <em>data_selector</em>
 </pre>
     where <em>data_selector</em> specifies the set of transcripts to extract, and  <em>options</em> specify the mode of processing.
-</p>
+  </p>
+
+
 
     <h2>Data selection</h2>
 <p>There are several data selection modes, illustrated below. To save space, the script name in the examples below is given without the full path, which in reality you will need to indicate. The output goes to directory named <tt>tmp</tt> (or another chosen directory -- see <tt>-out</tt>, below). If that directory does not exist, the tool will create it.

@@ -7,11 +7,12 @@
 
     <h1>Setting up the Rule Game Server on a DoIT Shared Hosting host</h1>
 
-    <p>This document contains notes for setting up and updating the Rule Game Server web site on the University Wisconsin-Madison DoIT Shared Hosting platform. This is in addition to the generic instructions provided by the DoIT staff.
+    <p>This document contains notes for setting up and updating the Rule Game Server web site on the University Wisconsin-Madison DoIT Shared Hosting platform. This is in addition to the generic instructions for using the Plesk platform provided by the DoIT staff.
 
 
       <h2>Introduction</h2>
 
+    <p>While the  DoIT Shared Hosting hosts the most essential software components  (the Apache Tomcat server and the MySQL server)  that we have on our own in-house servers, the manner in which you deploy and control your applications on those hosts is somewhat different from how you'd do it "in house". This document explains the additional steps one would need to take, as compared to the standard operating procedures outlined in our SOP documentation for "in-house" deployment ( <a href="sop-experiment.html">Preparing and running an experiment</a>;  <a href="deploy.html">Maintaining and deploying server code and server data files</a>; <a href="setup/">Set up your own Rule Game Server</a>).
 
     <p>The DoIT Shared Hosting provides us with two virtual hosts, <tt>wwwtest.rulegame.wisc.edu</tt> and <tt>rulegame.wisc.edu</tt>. (Before we have given a full get-go for a global DNS change, the latter host can be accessed as preview.rulegame.wisc.edu; alternatively, you can modify the <tt>/etc/hosts</tt> file to associate the host name <tt>rulegame.wisc.edu</tt> with the IP address provided by the DoIT people for this shared-hosting host). Physically, each of the two virtual hosts is hosted on a server with several dozens other virtual hosts (production ones or test ones, respectively). The software platform for managing them is called Plesk.
 
@@ -25,13 +26,15 @@
 
       <p>However, what you're interacting with is not a "normal" shell but a "<a href="https://www.redhat.com/sysadmin/set-linux-chroot-jails">chrooted</a>" one. (The name comes from the name of the UNIX command, <tt>chroot</tt>, i.e. "change root".) This means that when you use that shell, what appears as the root of the file system visible to you (and can be said to be your home directory) is actually  <tt>/var/www/vhosts/wwwtest.rulegame.wisc.edu</tt> (or <tt>/var/www/vhosts/rulegame.wisc.edu</tt>, as the case may be). You don't see the rest of the file system. You also can use only a very small number of shell commands, and some of them, such as <tt>scp</tt>, do not work.
 
-      <p>You obviously can't do all that much in this shell, but at least you can move file around, check time stamps, etc.
+      <p>You obviously can't do all that much in this shell, but at least you can move files around, check time stamps, create and unpack ZIP files, etc.
     </li>
     
     <li>From the "Websites and Domains" screen you can access a number of other tools. This includes the "Files" tool for managing files stored in your space; th tool for controlling the MySQL databases running on your server.
     <li>The Tomcat server has a manager screen at https://wwwtest.rulegame.wisc.edu/manager  (or https://rulegame.wisc.edu/manager , as the case may be). You can use it to start and stop your applications.
 	  
   </ul>
+
+  <p>The sections of this document more or less parallel the setup steps described in the  <a href="setup/">Set up your own Rule Game Server</a> guide, Option C (full setup).
   
       
       <h2>Databases</h2>
@@ -70,31 +73,63 @@ Password
 	    </pre>
     </p>
 
+<h2>(Initial) The master config file</h2>
+
+<p>The
+<a href="setup/setup-config.html">master configuration file</a> for
+the use on the shared hosting hosts was created as follows.
+
+<pre>
+#--- This is the master configuration file for the Rule Game Server.
+#--- It is located in /opt/w2020/w2020.conf
+
+#--- The Rule Game server input data directory. The Game Server will read
+#--- experiment control files from it
+FILES_GAME_DATA = "/opt/w2020/game-data";
+
+#----The Rule Game server saved data directory.
+#--- The Game Server will write transcript files etc to it.
+FILES_SAVED =  "/opt/w2020/saved";
+
+#---- The user name for the MySQL server
+JDBC_USER = "game"
+#---- The password that we have set for this MySQL server user
+JDBC_PASSWORD = "<em>....the password goes here....</em>";
+
+#---- The URL for the Rule Game GUI Client (prod and dev versions)
+GUI_PROD = "/rule-game/prod/";
+GUI_DEV = "/rule-game/prod/";
+</pre>  
+
+<p>In the code above, the <tt>GUI_PROD</tt> URL has no host name or port name, since the client will be deployed to the same web server.
+
     <h2>(Initial) Installing the MySQL connector</h2>
 
-    <p>For the Tomcat web server to work with the MySQL database, it needs an aixiliary JAR file with the drivers. We have copied it from one of our existing installations using sftp.
-      <pre>
-		sftp test-rulegame@wwwtest.rulegame.wisc.edu
-		cd tomcat/lib
-		put mysql-connector-j-8.0.31.jar 
-	      </pre>
+<p>When we're using the DoIT Shared Hosting, Tomcat is already set up for us.
+    
+<p>For the Tomcat web server to work with the MySQL database, it needs an aixiliary JAR file with the drivers. We have copied it from one of our existing installations using sftp.
+  <pre>
+    sftp test-rulegame@wwwtest.rulegame.wisc.edu
+    cd tomcat/lib
+    put mysql-connector-j-8.0.31.jar 
+  </pre>
 
-	<h2>(Initial and ongoing) The web app code (server side)</h2>
+  <h2>(Initial and ongoing) The web app code (server side)</h2>
 
-    <p>It would be interesting to find out a way to compile the Game Server code on the shared-hosting site. At this point, I don't know how to set this up (the chrooted shell obviously is not equipped with the toold we'd need for that). Instead, the current approach is to build a WAR far (w2020.war) on some other host (could be your own PC, could be <tt>sapir</tt>) and then copying it over to the shared-hosting host.
+<p>It would be interesting to find out a way to compile the Game Server code on the shared-hosting site. At this point, I don't know how to set this up (the chrooted shell obviously is not equipped with the toold we'd need for that). Instead, the current approach is to build a WAR far (w2020.war) on some other host (could be your own PC, could be <tt>sapir</tt>) and then copying it over to the shared-hosting host.
 
-    <p>Step by step:
+<p>Step by step:
 
-      <ol>
+  <ol>
 
-	<li>Build a WAR file of the Game Server application (w2020.war) on your PC or on some other host (such as sapir). For detailed instructions see e.g. e <a href="setup-compile.html">Rule Game Server build Guide.</a>
-	<li>Use sftp to move the file to the shared-hosting host. Let's suppose you put it there to the directiory <tt>tmp</tt> under your home directory.
+    <li>Build a WAR file of the Game Server application (w2020.war) on your PC or on some other host (such as sapir), from our source code and the necessary third-party libraries. For detailed instructions see e.g. e <a href="setup-compile.html">Rule Game Server build Guide.</a>
+    <li>Use <tt>sftp</tt> to move the WAR file to the shared-hosting host. Let's suppose you put it there to the directiory <tt>tmp</tt> under your home directory.
 
-	<li> Use the manager app ( https://wwwtest.rulegame.wisc.edu/manager/ ) to deploy a local file: <tt>
+    <li> Use the manager app ( https://wwwtest.rulegame.wisc.edu/manager/ ) to deploy a local file: <tt>
 /var/www/vhosts/wwwtest.rulegame.wisc.edu/tmp/w2020.war
 </tt>
 Now, our app is visible at https://wwwtest.rulegame.wisc.edu/w2020/  !
-      </ol>
+  </ol>
 	
 <!--
 (On the "chrooted" shell, what I see in "/" is actually 
@@ -105,46 +140,55 @@ seen by tomcat is concerned. Under this, the "tomcat" tree exists, with
 user.dir=/var/www/vhosts/wwwtest.rulegame.wisc.edu/tomcat/work
 -->
 
-<h2>
-The GUI client
-</h2>
+  <h2>(Initial and ongoing) The GUI client </h2>
 
-<pre>
-On sapir, build the WAR file (based on what's deployed under rule-game/prod
+<p>We do the same with the GUI client: build it on "our own" host (this could be your own PC or sapir), pack it into a WAR file, and then deploy the WAR file to the shared hosting host.
+
+  <ol>
+    <li>On a host that you have full control of (such as your PC or sapir), download the source code of the GUI Client; <a href="setup/setup-client.html">build and install</a>.  
+
+    <li>
+On sapir, build the WAR file (based on what's deployed under <tt>rule-game/prod</tt>
 in Apache HTTPd server's directory)
+<pre>
+ /var/www/rule-game
+ jar cvf ~/tmp/rule-game.war prod/*
+ cd
+ cd tmp
+ jar tf rule-game.war 
+</pre>
 
-2005  cd /var/www/rule-game
- 2006  jar cvf ~/tmp/rule-game.war prod/*
- 2007  cd
- 2008  cd tmp
- 2009  jar tf rule-game.war 
- 
-sftp the war file to the shared hosting host
+<li>
+sftp the war file to the shared hosting host, placing it e.g. in your <tt>tmp</tt> directory
 
-Deploy the client
-
-In the mananger ( https://wwwtest.rulegame.wisc.edu/manager )
-deploy from the WAR path:
-/var/www/vhosts/wwwtest.rulegame.wisc.edu/tmp/rule-game.war
-
-
----
-
+<li>
+  Deploy the client WAR file using the manager tool. In the mananger ( https://wwwtest.rulegame.wisc.edu/manager ) deploy from the WAR path: <tt>/var/www/vhosts/wwwtest.rulegame.wisc.edu/tmp/rule-game.war</tt>. This will make the client show under https://wwwtest.rulegame.wisc.edu/rule-game/prod
+  </ol>
+  
+<!--
 served from
 https://wwwtest.rulegame.wisc.edu/rule-game/prod/?server=http%3A%2F%2Fwwwtest.rulegame.wisc.edu%3A443%2Fw2020&exp=ep%2Frule_ambiguity%2Fambiguity1&workerId=vm-2023-11-08-b&intro=true
 
-
-----
 https://github.com/RuleGame/Rule-Game-server.git
 
-=========
+    -->
 
-game-data auto-deployment, via the Git menu
+  <h2><a name="game-data">Experiment control files</a></h2>
 
+<h3>(Initial) set up auto-deployment from the GitHub repository</h3>
+
+<p>
+Set up auto-deployment from <a href="https://github.com/RuleGame/Rule-Game-game-data">https://github.com/RuleGame/Rule-Game-game-data</a> via the Git menu.
+
+<p>
 repo URL = https://github.com/RuleGame/Rule-Game-game-data.git
+<p>
 Deployment: master branch automatically to /opt/w2020/game-data
 
-</pre>
+<h3>(Ongoing) Updating experiment control files</h3>
+  
+<p>After you have created experiment control files for a new experiment and checked them into the GitHub repository, you have to effect a "pull" on the DoIT site. The process is very similar to that for the landing pages (see the write-up below), with the repository name RuleGame/Rule-Game-game-data instead of RuleGame/Rule-Game-top-pages.
+
 
       <h2><a name="landing">Updating the landing page</a></h2>
 
