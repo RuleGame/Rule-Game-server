@@ -17,12 +17,18 @@ public class ContextInfo    extends ResultsBase  {
     public String host;
     public int port;
     public String cp;
-    /** True if it is believed that this web app runs in dev, rather than prod */
+    /** True if we're to use the dev version of the GUI client rather than
+	the prod one. (This flag comes from the URL query string, dev=true,
+	and controls the choice of the clientUrl).
+    */
     public boolean dev;
     /** The Game Server URL for REST calls (based on the HTTP request
 	we have just received). This can be passed to the GUI client so 
 	that it would be using our Game Server (and not a Game Server
-	somewhere else).
+	somewhere else). The value is, for example,
+	http://localhost:8080/w2020-dev
+	or
+	https://rulegame.wisc.edu/w2020
     */
     public String serverUrl;
     /** The main GUI Client URL to use (dev or prod). It normally comes
@@ -44,14 +50,25 @@ public class ContextInfo    extends ResultsBase  {
 	host = request.getLocalName();
 	port= request.getLocalPort();
 	cp= request.getContextPath();
-	dev = cp.endsWith("-dev");
+	//dev = cp.endsWith("-dev");
 	String proto = (port==443)? "https" : "http";
 	serverUrl= proto + "://" + host + ":" + port + cp;
-	clientUrl = MainConfig.getGuiClientUrl(dev);	
+
+	dev = "true".equals( request.getParameter("dev"));
+	clientUrl = MainConfig.getGuiClientUrl(dev);
+
+
     }
 
+    /** Do we use the "dev" or "prod" client? */
     public String devProd() {
 	return dev? "dev": "prod";
     }
 
+    public String getVersion() {
+	return Episode.getVersion();
+    }
+
+	
+    
 }

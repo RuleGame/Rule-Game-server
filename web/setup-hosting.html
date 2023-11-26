@@ -7,14 +7,14 @@
 
     <h1>Setting up the Rule Game Server on a DoIT Shared Hosting host</h1>
 
-    <p>This document contains notes for setting up and updating the Rule Game Server web site on the University Wisconsin-Madison DoIT Shared Hosting platform. This is in addition to the generic instructions for using the Plesk platform provided by the DoIT staff.
+    <p>This document contains notes for setting up and updating the Rule Game Server web site on the University Wisconsin-Madison DoIT Shared Hosting platform (powered by Plesk software). This is in addition to the generic instructions for using the Plesk platform provided by the DoIT staff.
 
 
       <h2>Introduction</h2>
 
-    <p>While the  DoIT Shared Hosting hosts the most essential software components  (the Apache Tomcat server and the MySQL server)  that we have on our own in-house servers, the manner in which you deploy and control your applications on those hosts is somewhat different from how you'd do it "in house". This document explains the additional steps one would need to take, as compared to the standard operating procedures outlined in our SOP documentation for "in-house" deployment ( <a href="sop-experiment.html">Preparing and running an experiment</a>;  <a href="deploy.html">Maintaining and deploying server code and server data files</a>; <a href="setup/">Set up your own Rule Game Server</a>).
+    <p>While the hosts provided by DoIT Shared Hosting (to which we will refer to as <strong>Plesk hosts</strong>) have the most essential software components  (such as the Apache Tomcat server and the MySQL server) that we have on our own in-house servers, the manner in which you deploy and control your applications on Plesk hosts is somewhat different from how you'd do it "in house". This document explains the additional steps one would need to take, as compared to the standard operating procedures outlined in our SOP documentation for "in-house" deployment ( <a href="sop-experiment.html">Preparing and running an experiment</a>;  <a href="deploy.html">Maintaining and deploying server code and server data files</a>; <a href="setup/">Set up your own Rule Game Server</a>).
 
-    <p>The DoIT Shared Hosting provides us with two virtual hosts, <tt>wwwtest.rulegame.wisc.edu</tt> and <tt>rulegame.wisc.edu</tt>. (Before we have given a full get-go for a global DNS change, the latter host can be accessed as preview.rulegame.wisc.edu; alternatively, you can modify the <tt>/etc/hosts</tt> file to associate the host name <tt>rulegame.wisc.edu</tt> with the IP address provided by the DoIT people for this shared-hosting host). Physically, each of the two virtual hosts is hosted on a server with several dozens other virtual hosts (production ones or test ones, respectively). The software platform for managing them is called Plesk.
+    <p>The DoIT Shared Hosting provides us with two virtual hosts, <tt>wwwtest.rulegame.wisc.edu</tt> and <tt>rulegame.wisc.edu</tt>. (Before we have given a full get-go for a global DNS change, the latter host can be accessed as preview.rulegame.wisc.edu; alternatively, you can modify the <tt>/etc/hosts</tt> file to associate the host name <tt>rulegame.wisc.edu</tt> with the IP address provided by the DoIT people for this Plesk host). Physically, each of the two virtual hosts is hosted on a server with several dozens other virtual hosts (production ones or test ones, respectively). The software platform for managing them is called Plesk.
 
 <p>Plesk offers several ways for you to control what goes on at each host. For this discussion, we'll be talking about  <tt>wwwtest.rulegame.wisc.edu</tt>, but the same applied to the production host as well. To carry out any of the operations discussed below, you need to have the Global Protect VPN running, connecting to the main UWM VPN gateway (not the CAE VPN gateway), unless you are working on a PC on the UWM internal network.
 
@@ -77,7 +77,7 @@ Password
 
 <p>The
 <a href="setup/setup-config.html">master configuration file</a> for
-the use on the shared hosting hosts was created as follows.
+the use on the Plesk hosts was created as follows.
 
 <pre>
 #--- This is the master configuration file for the Rule Game Server.
@@ -116,14 +116,14 @@ GUI_DEV = "/rule-game/prod/";
 
   <h2>(Initial and ongoing) The web app code (server side)</h2>
 
-<p>It would be interesting to find out a way to compile the Game Server code on the shared-hosting site. At this point, I don't know how to set this up (the chrooted shell obviously is not equipped with the toold we'd need for that). Instead, the current approach is to build a WAR far (w2020.war) on some other host (could be your own PC, could be <tt>sapir</tt>) and then copying it over to the shared-hosting host.
+<p>It would be interesting to find out a way to compile the Game Server code directly on a Plesk host. At this point, I don't know how to set this up (the chrooted shell obviously is not equipped with the toold we'd need for that). Instead, the current approach is to build a WAR far (w2020.war) on some other host (could be your own PC, could be <tt>sapir</tt>) and then copying it over to the Plesk host.
 
 <p>Step by step:
 
   <ol>
 
     <li>Build a WAR file of the Game Server application (w2020.war) on your PC or on some other host (such as sapir), from our source code and the necessary third-party libraries. For detailed instructions see e.g. e <a href="setup-compile.html">Rule Game Server build Guide.</a>
-    <li>Use <tt>sftp</tt> to move the WAR file to the shared-hosting host. Let's suppose you put it there to the directiory <tt>tmp</tt> under your home directory.
+    <li>Use <tt>sftp</tt> to move the WAR file to the Plesk host. Let's suppose you put it there to the directiory <tt>tmp</tt> under your home directory.
 
     <li> Use the manager app ( https://wwwtest.rulegame.wisc.edu/manager/ ) to deploy a local file: <tt>
 /var/www/vhosts/wwwtest.rulegame.wisc.edu/tmp/w2020.war
@@ -142,7 +142,7 @@ user.dir=/var/www/vhosts/wwwtest.rulegame.wisc.edu/tomcat/work
 
   <h2>(Initial and ongoing) The GUI client </h2>
 
-<p>We do the same with the GUI client: build it on "our own" host (this could be your own PC or sapir), pack it into a WAR file, and then deploy the WAR file to the shared hosting host.
+<p>We do the same with the GUI client: build it on "our own" host (this could be your own PC or sapir), pack it into a WAR file, and then deploy the WAR file to the Plesk host.
 
   <ol>
     <li>On a host that you have full control of (such as your PC or sapir), download the source code of the GUI Client; <a href="setup/setup-client.html">build and install</a>.  
@@ -159,7 +159,7 @@ in Apache HTTPd server's directory)
 </pre>
 
 <li>
-sftp the war file to the shared hosting host, placing it e.g. in your <tt>tmp</tt> directory
+sftp the war file to the Plesk host, placing it e.g. in your <tt>tmp</tt> directory
 
 <li>
   Deploy the client WAR file using the manager tool. In the mananger ( https://wwwtest.rulegame.wisc.edu/manager ) deploy from the WAR path: <tt>/var/www/vhosts/wwwtest.rulegame.wisc.edu/tmp/rule-game.war</tt>. This will make the client show under https://wwwtest.rulegame.wisc.edu/rule-game/prod
@@ -224,16 +224,22 @@ Deployment: master branch automatically to /opt/w2020/game-data
 	
 	<li>You may want to verify that your updated files have been received by the GitHub server by taking a look at <a href="https://github.com/RuleGame/Rule-Game-top-pages">your repository</a> there.
 
-	<li>Unless you are working on a personal computer on the UW internal network, you must start the Global Protect VPN, connecting to the main UW VPN server (uwmadison.vpn.wisc.edu) (and not to the Engineering (CAE) VPN), before you can deploy the pages to the DoIT Shared Hosting server. This will likely involve a step that requires using the smartphone Duo application for the "two-factor authentication".
+	<li>Unless you are working on a personal computer on the UW internal network, you must start the Global Protect VPN, connecting to the main UW VPN server (uwmadison.vpn.wisc.edu) (and not to the Engineering (CAE) VPN), before you can deploy the pages to the Plesk server provided to us by DoIT Shared Hosting. This will likely involve a step that requires using the smartphone Duo application for the "two-factor authentication".
 
-	<li>Once you are ready to deploy the pages to the DoIT Shared Hosting server (and are either working on a personal computer on the UW internal network, or using the UW VPN), please  log in to the shared hosting Site Administrarion control panel, <a href="https://webhosting.doit.wisc.edu/panel">https://webhosting.doit.wisc.edu/panel</a>. Depening on where you are, and what you have been doing this day, the logging process may involve several stages. You may be initially sent to the general UW authentication page (where you log in using your UW netid and password), before you are shown the DoIT-specific "ADMIN CONTROL PANEL LOGIN" screen. At that screen, you enter the host name (such as  wwwtest.rulegame.wisc.edu or rulegame.wisc.edu) as the "login", and the DoIT-shared-hosting-specific password for our hosts (that was provided to you via email).
+	<li>Once you are ready to deploy the pages to the Plesk server (and are either working on a personal computer on the UW internal network, or using the UW VPN), please  log in to the shared hosting Site Administrarion control panel, <a href="https://webhosting.doit.wisc.edu/panel">https://webhosting.doit.wisc.edu/panel</a>. Depening on where you are, and what you have been doing this day, the logging process may involve several stages. You may be initially sent to the general UW authentication page (where you log in using your UW netid and password), before you are shown the DoIT-specific "ADMIN CONTROL PANEL LOGIN" screen. At that screen, you enter the host name (such as  wwwtest.rulegame.wisc.edu or rulegame.wisc.edu) as the "login", and the DoIT-shared-hosting-specific password for our hosts (that was provided to you via email).
 	      
 	<li>Once the login is successful, you'll see the "Websites and Domains" screen. On that screen, click on the "Git" link. That will take you to the screen with the list of the GitHub repositories associated with the web site. Find the section corresponding to the relevant repository (Rule-Game-top-pages.git). In that section, there are two buttons, "Pull now" and "Deploy now". Click on the first on them, <strong>Pull now</strong>. If everything goes well (that is, the Plesk service managing the DoIT sharing hosting machines successfully connects to GitHub and gets the data from there), you will see a pop-up window with the title "Deployment task is running", which then becomes "Deployment task has completed". After that, if you look at the "Latest commit" table in your repository's section of the DoIT control panel screen, you should see that the commit on the top of the table is the one with the date and commit message corresponding to your most recent <tt>git commit</tt>.
 
 	<li>You don't need to click on the <tt>"Deploy now"</tt> button, because that step is automated. Once you go in your web browser to the main page of your web site (https://wwwtest.rulegame.wisc.edu/ or https://rulegame.wisc.edu/ , as the case may be), you should see your recent updates "live" on the site.
 	  
       </ol>
-	      
+
+      <h2><a name="research">Making use of experimental data</a></h2>
+
+
+<p>Back when we were running our Game Server on the same computer on which research work was carried out (<tt>sapir</tt>), things were simple: 
+      
+     <p>
 	      
   </body>
 </html>

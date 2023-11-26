@@ -14,14 +14,16 @@ String cla=main.dev?"pink":"yellow";
 <h2>Choose experiment plan from a list</h2>
 <div class="<%=cla%>">
 <h2>GUI play
-<%= main.dev? "(development version)": "(production)"  %>
+<%= main.dev? "(with development client)": "(with production client)"  %> 
 </h2>
 
+<p>This is the launch page for GUI-client play using the Rule Game server ver. <%= main.getVersion() %> deployed at <%= main.serverUrl %>, and the 
 <% if (main.dev) { %> 
-<p>The development version of the client, which uses the development version of the Game Server, offers all the newest and coolest features currently under development. It also gives you more debugging information on what goes on inside the system.
+development version of the client, which  gives you more debugging information on what goes on inside the system.
 <% }else { %>
-<p>The production version of the client, which uses the production version of the Game Server, is the most stable version. It offers the same experience the M-Turkers have.
+the production version of the client, which offers the same experience the M-Turkers have.
 <% } %>
+
 
 <p>Client URL: <tt><%=main.clientUrl%></tt>
 
