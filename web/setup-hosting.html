@@ -98,10 +98,10 @@ JDBC_PASSWORD = "<em>....the password goes here....</em>";
 
 #---- The URL for the Rule Game GUI Client (prod and dev versions)
 GUI_PROD = "/rule-game/prod/";
-GUI_DEV = "/rule-game/prod/";
+GUI_DEV = "/rule-game/dev/";
 </pre>  
 
-<p>In the code above, the <tt>GUI_PROD</tt> URL has no host name or port name, since the client will be deployed to the same web server.
+<p>In the code above, the <tt>GUI_PROD</tt> and  <tt>GUI_DEV</tt> URLs have no host name or port name, since the client will be deployed to the same web server (the Plesk host) with the Rule Game Server that uses it.
 
     <h2>(Initial) Installing the MySQL connector</h2>
 
@@ -151,8 +151,8 @@ user.dir=/var/www/vhosts/wwwtest.rulegame.wisc.edu/tomcat/work
 On sapir, build the WAR file (based on what's deployed under <tt>rule-game/prod</tt>
 in Apache HTTPd server's directory)
 <pre>
- /var/www/rule-game
- jar cvf ~/tmp/rule-game.war prod/*
+ cd /var/www/rule-game
+ jar cvf ~/tmp/rule-game.war prod/* dev/*
  cd
  cd tmp
  jar tf rule-game.war 

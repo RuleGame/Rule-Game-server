@@ -6,7 +6,6 @@ import java.util.regex.*;
 import java.util.stream.*;
 import java.text.*;
 
-//import javax.persistence.*;
 
 import org.apache.commons.math3.stat.inference.*;
 
@@ -24,7 +23,7 @@ import edu.wisc.game.tools.pooling.Clustering.Node;
 /*  Empirical cumulated distribution (ECD) */
 public class Ecd {
 
-
+    
     /** Refers to the preceding conditions */
     final String key;
     /** AbC */
@@ -34,6 +33,10 @@ public class Ecd {
     Vector<MwSeries> series = new Vector<>();
     double successRate;
 
+    String printSample() {
+	return "{" + Util.joinNonBlank(", ", orderedSample) + "}";
+    }
+    
     double getMaxMStar() {
 	double m = 0;
 	for(MwSeries ser: series) {
@@ -146,6 +149,13 @@ public class Ecd {
     enum SimMethod { MW, KS, Min, Max };
     static SimMethod simHB = SimMethod.Max;
     static SimMethod simClustering = SimMethod.Min;
+
+    /** If this flag is turned on, we'll check whether KS gives
+	symmetric resuts, and if not, will report the details on the
+	asymmetric pairs. This option was used to troubleshoot Paul's
+	"asymmetric results" report (2023-11-16).
+     */
+    static boolean checkSym = false;
     
 
     public static void main(String[] argv) throws Exception {
@@ -175,6 +185,8 @@ public class Ecd {
 		simHB =  Enum.valueOf(SimMethod.class, argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-simClustering")) {
 		simClustering =  Enum.valueOf(SimMethod.class, argv[++j]);
+	    } else if ( a.equals("-checkSym")) {
+		checkSym = true;
 	    }
 	}
 
@@ -414,6 +426,26 @@ public class Ecd {
 	double	mwp = mw.mannWhitneyUTest(orderedSample,o.orderedSample);
 	//System.out.println("mannWhitneyUTest(" + fmtArg(x)+")=" + mwp);
 	double ksp = ks.kolmogorovSmirnovTest(orderedSample,o.orderedSample);
+
+	if (checkSym) { // KS symmetry checking
+	    double ksp2 = ks.kolmogorovSmirnovTest(o.orderedSample,orderedSample);
+	    if (Math.abs(ksp2-ksp) > 1e-4 * (ksp2+ksp)) {
+		System.out.println("\nKS asymmetry noticed for "+label+"=" + printSample() + ", "+o.label+"=" + o.printSample());
+		System.out.println("KS("+label+","+o.label+")=" + ksp + "; KS("+o.label+","+label+")=" + ksp2);
+	    }
+
+
+	    double	mwp2 = mw.mannWhitneyUTest(o.orderedSample,orderedSample);
+
+	    if (Math.abs(mwp2-mwp) > 1e-4 * (mwp2+mwp)) {
+		System.out.println("\nMW asymmetry noticed for "+label+"=" + printSample() + ", "+o.label+"=" + o.printSample());
+		System.out.println("MW("+label+","+o.label+")=" + mwp + "; MW("+o.label+","+label+")=" + mwp2);
+	    }
+
+	}
+
+
+	
 	//double kspf = ks.kolmogorovSmirnovTest(x[0],x[1], false);
 	switch (simMethod) {
 	case KS:
@@ -443,16 +475,17 @@ public class Ecd {
 	System.out.println("=== p-Values ===");
 	for( String label1: h.keySet()) {
 	    Ecd ecd1 = h.get(label1);
+	    Vector<String> v = new Vector<>();
 	    for( String label2: h.keySet()) {
 		Ecd ecd2 = h.get(label2);
 		
 		double p = ecd1.computeSimilarity( ecd2, simMethod);
-		System.out.print("\tp("+label1+","+label2+")="+p);
+		v.add("p("+label1+","+label2+")="+p);
 		if (label1.compareTo(label2)<0) {
 		    ph.put2(label1,label2, p);
 		}
 	    }
-	    System.out.println();
+	    System.out.println(Util.joinNonBlank("\t", v));
 	}
 	return ph;
     }
