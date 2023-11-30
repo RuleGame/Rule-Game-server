@@ -80,7 +80,7 @@ public class CheckPlanService extends GameService2 {
     @Path("/checkPlan") 
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.TEXT_HTML)
-    /** The "Check my experiment plan" service. It can be used by the expeiment manager to ensure that the experiment plan (the trial list files, as well as the rules set files and the initial board files referred from them) do not contain obvious errors.
+    /** The "Check my experiment plan" service. It can be used by the experiment manager to ensure that the experiment plan (the trial list files, as well as the rules set files and the initial board files referred from them) do not contain obvious errors.
 	@param exp The experiment plan. 
      */
     public String checkPlanHtml( @FormParam("exp") String exp){

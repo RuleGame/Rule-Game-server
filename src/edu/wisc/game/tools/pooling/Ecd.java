@@ -34,7 +34,11 @@ public class Ecd {
     double successRate;
 
     String printSample() {
-	return "{" + Util.joinNonBlank(", ", orderedSample) + "}";
+	return printSample(false);
+    }
+    String printSample(boolean doJitter) {
+	double [] a = doJitter? jitter(orderedSample): orderedSample;
+	return "{" + Util.joinNonBlank(", ", a) + "}";
     }
     
     double getMaxMStar() {
@@ -150,6 +154,10 @@ public class Ecd {
     static SimMethod simHB = SimMethod.Max;
     static SimMethod simClustering = SimMethod.Min;
 
+    /** If non-zero, this is used as "determenistic jitter" to remove ties
+	for KS */
+    static double untie = 0;
+    
     /** If this flag is turned on, we'll check whether KS gives
 	symmetric resuts, and if not, will report the details on the
 	asymmetric pairs. This option was used to troubleshoot Paul's
@@ -185,6 +193,8 @@ public class Ecd {
 		simHB =  Enum.valueOf(SimMethod.class, argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-simClustering")) {
 		simClustering =  Enum.valueOf(SimMethod.class, argv[++j]);
+	    } else if (j+1< argv.length && a.equals("-untie")) {
+		untie =  Double.parseDouble(argv[++j]);
 	    } else if ( a.equals("-checkSym")) {
 		checkSym = true;
 	    }
@@ -418,6 +428,32 @@ public class Ecd {
 
     static final MannWhitneyUTest mw = new MannWhitneyUTest();
     static final KolmogorovSmirnovTest ks = new KolmogorovSmirnovTest();
+
+    /** Modifies array a[] a bit if it has ties. Controlled by this.untie
+	@param a A non-descending sequence
+	@return A strictly ascending sequence (either a[], or a jittered version of it)
+     */
+    private double[] jitter(double[] a) {
+	if (untie==0) return a;
+	double b[] = new double[a.length];
+	double adj = 0;
+	for(int j=a.length-1; j>=0; j--) {
+	    b[j] = a[j];
+	    if (j<a.length-1) {
+		if (b[j]>=b[j+1]) b[j] = b[j+1]-untie;
+	    }
+	}
+	return b;
+					     
+    }
+
+    
+    private double myKS(double[] a, double[] b) {
+	return ks.kolmogorovSmirnovTest(jitter(a),jitter(b));
+    }
+
+
+    
     /** Computes the similarity between this ECD and another ECD.
         @param simMethod How to compute the similarity based on MW
 	and/or KS p-values. The default is Max.
@@ -425,12 +461,12 @@ public class Ecd {
     double computeSimilarity(Ecd o, SimMethod simMethod) {
 	double	mwp = mw.mannWhitneyUTest(orderedSample,o.orderedSample);
 	//System.out.println("mannWhitneyUTest(" + fmtArg(x)+")=" + mwp);
-	double ksp = ks.kolmogorovSmirnovTest(orderedSample,o.orderedSample);
+	double ksp = myKS(orderedSample,o.orderedSample);
 
 	if (checkSym) { // KS symmetry checking
-	    double ksp2 = ks.kolmogorovSmirnovTest(o.orderedSample,orderedSample);
+	    double ksp2 = myKS(o.orderedSample,orderedSample);
 	    if (Math.abs(ksp2-ksp) > 1e-4 * (ksp2+ksp)) {
-		System.out.println("\nKS asymmetry noticed for "+label+"=" + printSample() + ", "+o.label+"=" + o.printSample());
+		System.out.println("KS asymmetry noticed for "+label+"=" + printSample(true) + ", "+o.label+"=" + o.printSample(true));
 		System.out.println("KS("+label+","+o.label+")=" + ksp + "; KS("+o.label+","+label+")=" + ksp2);
 	    }
 
@@ -438,7 +474,7 @@ public class Ecd {
 	    double	mwp2 = mw.mannWhitneyUTest(o.orderedSample,orderedSample);
 
 	    if (Math.abs(mwp2-mwp) > 1e-4 * (mwp2+mwp)) {
-		System.out.println("\nMW asymmetry noticed for "+label+"=" + printSample() + ", "+o.label+"=" + o.printSample());
+		System.out.println("MW asymmetry noticed for "+label+"=" + printSample() + ", "+o.label+"=" + o.printSample());
 		System.out.println("MW("+label+","+o.label+")=" + mwp + "; MW("+o.label+","+label+")=" + mwp2);
 	    }
 
