@@ -92,7 +92,12 @@ public class Ecd {
     void add(MwSeries ser) { series.add(ser); }
 
     int learnedCnt=0;
-    
+
+    // Just for testing
+    //private static void truncate(double a[]) {
+    //	for(int j=0; j<a.length; j++) if (a[j]>90) a[j]=90;
+    //}
+
     /** Call this after all series have been added */
     void freeze() {
 	orderedSample = new double[series.size()];
@@ -102,6 +107,9 @@ public class Ecd {
 	    orderedSample[j++] = ser.getMStar();
 	    if (ser.getLearned()) learnedCnt++;
 	}
+
+	//truncate(orderedSample);
+
 	Arrays.sort(orderedSample);
 	successRate = (double)learnedCnt / (double)orderedSample.length;
     }
@@ -434,6 +442,7 @@ public class Ecd {
 	@return A strictly ascending sequence (either a[], or a jittered version of it)
      */
     private double[] jitter(double[] a) {
+
 	if (untie==0) return a;
 	double b[] = new double[a.length];
 	double adj = 0;
@@ -443,13 +452,16 @@ public class Ecd {
 		if (b[j]>=b[j+1]) b[j] = b[j+1]-untie;
 	    }
 	}
-	return b;
-					     
+	return b;					     
     }
 
     
     private double myKS(double[] a, double[] b) {
 	return ks.kolmogorovSmirnovTest(jitter(a),jitter(b));
+    }
+
+    private double myKSS(double[] a, double[] b) {
+	return ks.kolmogorovSmirnovStatistic(jitter(a),jitter(b));
     }
 
 
@@ -464,10 +476,14 @@ public class Ecd {
 	double ksp = myKS(orderedSample,o.orderedSample);
 
 	if (checkSym) { // KS symmetry checking
-	    double ksp2 = myKS(o.orderedSample,orderedSample);
-	    if (Math.abs(ksp2-ksp) > 1e-4 * (ksp2+ksp)) {
+	    double oksp = myKS(o.orderedSample,orderedSample);
+	    if (Math.abs(oksp-ksp) > 1e-4 * (oksp+ksp)) {
 		System.out.println("KS asymmetry noticed for "+label+"=" + printSample(true) + ", "+o.label+"=" + o.printSample(true));
-		System.out.println("KS("+label+","+o.label+")=" + ksp + "; KS("+o.label+","+label+")=" + ksp2);
+		System.out.println("KS("+label+","+o.label+")=" + ksp +
+				   " (kss=" + myKSS(orderedSample,o.orderedSample)+
+				   "); KS("+o.label+","+label+")=" + oksp +
+				   " (kss=" + myKSS(o.orderedSample,orderedSample) +")"
+				   );
 	    }
 
 
