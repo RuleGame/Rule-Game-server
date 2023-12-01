@@ -264,10 +264,16 @@ public class Files {
     }
 
     /** List all existing experiment plans (based on the directory
-	names in the appropriate tree) */
-    // ZZZZZ
+	names in the appropriate tree). Excludes obviously "bad"
+	plans (those without the rule set files, for example).
+    */
     public static String[] listSAllExperimentPlans()  throws IOException{
-	return  listSAllExperimentPlansInTree(null);
+	String [] a = listSAllExperimentPlansInTree(null);
+	Vector<String> v = new Vector<>();
+	for(String exp: a) {
+	    if (CheckPlanService.basicCheck(exp)) v.add(exp);
+	}
+	return v.toArray(new String[0]);
     }
 
     public static String[] listSAllExperimentPlansInTree(String subdir) throws IOException{

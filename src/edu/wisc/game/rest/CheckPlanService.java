@@ -81,7 +81,7 @@ public class CheckPlanService extends GameService2 {
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.TEXT_HTML)
     /** The "Check my experiment plan" service. It can be used by the experiment manager to ensure that the experiment plan (the trial list files, as well as the rules set files and the initial board files referred from them) do not contain obvious errors.
-	@param exp The experiment plan. 
+	@param exp The experiment plan to be validated. 
      */
     public String checkPlanHtml( @FormParam("exp") String exp){
 	
@@ -414,6 +414,49 @@ public class CheckPlanService extends GameService2 {
 	return fm.html(title, body);	
    }
 
+
+    /** A simpler testing used when we generate the list of names of all
+	available plans and want to exclude those that have no rule set
+	files.
+	@return true if none of the most obvious problems have occurred
+    */
+    static public boolean basicCheck(String exp) {
+	int errcnt = 0;
+	try {
+	    RandomRG random = new RandomRG();
+	    Vector<String> lists = TrialList.listTrialLists(exp);	    
+	    //v.add(fm.para("Found " + lists.size() + " trial lists for experiment plan " + fm.tt(exp)));
+	    for(String key: lists) { // for each trial list
+		//v.add(fm.h3("Checking trial list " + fm.tt(key)));
+		TrialList trialList  = new TrialList(exp, key);
+		if (trialList.error) {
+		    //v.add(fm.para("Error: failed to create trial list " +
+		    //fm.tt(key) + ". Error=" + trialList.errmsg));
+		    errcnt ++;
+		    continue;
+		}
+
+		int npara= trialList.size();
+		//v.add(fm.para("... the trial list has " + npara + " parameter set(s)"));
+		int j=0;
+		for( ParaSet para: trialList) { 
+		    j++;
+		    //v.add(fm.para(fm.h4("Checking para set no. " + j + " out of "+npara+"...")));
+
+		    //para.checkIncentive();
+		    //para.checkImages();
+		    GameGenerator gg = GameGenerator.mkGameGenerator(Episode.random, para);
+
+		    if (gg==null) errcnt++;
+		}
+	    }
+	} catch(Exception ex) {
+	    return false;
+	}
+	return (errcnt==0);
+    }
+
+    
     /** Command-line interface to the validator. The command-line
 	arguments can be names of experiment plans or names of rule
 	set files.
