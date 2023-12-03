@@ -15,7 +15,7 @@
 	    mkdir client
 	    cd client/
 	    git init
-	    git remote add origin https://github.com/RuleGame/Rule-Game.git
+	    git remote add origin https://github.com/RuleGame/RuleGame.git
 	    git pull origin master
 	    </pre>
 	<li>
@@ -52,8 +52,35 @@
   </pre>
   The directory location within the Tomcat webapps dir should, of course, correspond to the URLs you have specified for <tt>GUI_PROD</tt> and <tt>GUI_DEV</tt> in your <a href="setup-config.html">Master config file</a>.
       </ol>
-      
 
+      <h3>Updating the client</h3>
+If at a later point the GUI client source code has been updated in the GitHub repository, you can update your instance of the client by pulling the updated source code from GitHub and rebuilding. If you do this in the previously created directory (<tt>client</tt>, in our example), you don't need to repeat the commands <tt>git init</tt> and <tt>git remote add</tt>; just do the pull and recompile. This can be done, for example, with the following commands:
+      
+      <pre>
+	#!/bin/bash
+	pull origin master
+	mkdir rule-game
+	export REACT_APP_APP_API_HOST_ORIGIN=/w2020
+	export  REACT_APP_DEBUG_MODE_ENABLED=false
+	npm install
+	npm run build
+	mv build prod
+	mv prod rule-game
+	export  REACT_APP_DEBUG_MODE_ENABLED=true
+	npm install
+	npm run build
+	mv build dev
+	mv dev rule-game
+        (cd rule-game;  jar cvf rule-game.war prod/* dev/*)
+	sudo -u tomcat cp rule-game/rule-game.war /opt/tomcat/webapps
+</pre>
+
+    <p>Here we build both the production and development versions of the client, and package them into a single WAR file for deploying to your Tomcat server (where it will show at <tt>http://your-host-name/rule-game</tt>).
+
+<p>
+      The setting of <tt>REACT_APP_APP_API_HOST_ORIGIN</tt> used in the script above is suitable if you are going to use your instance of client with one instance of the Rule Game server, the one that you deploy to /w2020 on your host.
+
+  <h3>Customizing the code</h3>
     <p>If you know TypeScript, you can modify the client's source code as needed before compiling.
 
       <h3>Examples</h3>

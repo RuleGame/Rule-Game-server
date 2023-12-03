@@ -62,6 +62,17 @@
    <fileset dir="${main}/../commons-math3">
      <include name="*.jar"/>
    </fileset>
+   <!--
+   <fileset dir="${main}/../commons-math-4.0-beta1">
+     <include name="*.jar"/>
+   </fileset>
+   <fileset dir="${main}/../commons-statistics-1.0">
+     <include name="*.jar"/>
+   </fileset>
+   <fileset dir="${main}/../commons-rng-1.5">
+     <include name="*.jar"/>
+   </fileset>
+   -->
    <!--includes  jersey-media-multipart-3.0.2.jar from https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-multipart/3.0.2 ; jakarta.ws.rs-api-3.0.0.jar   from 
 https://mvnrepository.com/artifact/jakarta.ws.rs/jakarta.ws.rs-api/3.0.0
 

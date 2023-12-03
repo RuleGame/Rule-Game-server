@@ -71,6 +71,7 @@ or <tt>R:bottomLeft_then_topRight:simple</tt>
 <br>Experiment plan: (e.g. <tt>pilot06</tt>): <input type="text" name="exp" size="80" value="">
 
 <br>Player Id (e.g. <tt>pk-2022-05-31-a</tt>): <input type="text" name="workerId" size="30" value="">
+<br>(Pick a unique name, e.g. <tt>john-doe-2023-12-01-a</tt>)
 
 <br><input type="radio" name="intro" value="true" checked>Show intro
 <br><input type="radio" name="intro" value="false">Skip intro

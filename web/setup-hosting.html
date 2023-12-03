@@ -116,7 +116,7 @@ GUI_DEV = "/rule-game/dev/";
 
   <h2>(Initial and ongoing) The web app code (server side)</h2>
 
-<p>It would be interesting to find out a way to compile the Game Server code directly on a Plesk host. At this point, I don't know how to set this up (the chrooted shell obviously is not equipped with the toold we'd need for that). Instead, the current approach is to build a WAR far (w2020.war) on some other host (could be your own PC, could be <tt>sapir</tt>) and then copying it over to the Plesk host.
+<p>It would be interesting to find out a way to compile the Game Server code directly on a Plesk host. At this point, I don't know how to set this up (the chrooted shell obviously is not equipped with the toold we'd need for that). Instead, the current approach is to build a WAR file (w2020.war) on some other host (could be your own PC, could be <tt>sapir</tt>) and then copying it over to the Plesk host.
 
 <p>Step by step:
 
@@ -145,7 +145,7 @@ user.dir=/var/www/vhosts/wwwtest.rulegame.wisc.edu/tomcat/work
 <p>We do the same with the GUI client: build it on "our own" host (this could be your own PC or sapir), pack it into a WAR file, and then deploy the WAR file to the Plesk host.
 
   <ol>
-    <li>On a host that you have full control of (such as your PC or sapir), download the source code of the GUI Client; <a href="setup/setup-client.html">build and install</a>.  
+    <li>On a host that you have full control of (such as your PC or sapir), download the source code of the GUI Client; <a href="setup/setup-client.html">build,  install and deploy</a>.  
 
     <li>
 On sapir, build the WAR file (based on what's deployed under <tt>rule-game/prod</tt>
@@ -157,6 +157,8 @@ in Apache HTTPd server's directory)
  cd tmp
  jar tf rule-game.war 
 </pre>
+
+<br>(Of course, you don't actually have to deploy the client on sapir before deploying it on the Plesk host; you can build the WAR file right in the build directory. The  <a href="setup/setup-client.html">client build instructions</a> have a sample shell script for that.
 
 <li>
 sftp the war file to the Plesk host, placing it e.g. in your <tt>tmp</tt> directory

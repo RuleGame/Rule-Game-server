@@ -8,6 +8,7 @@ import java.text.*;
 
 
 import org.apache.commons.math3.stat.inference.*;
+//import org.apache.commons.math4.legacy.astat.inference.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.tools.*;
@@ -34,10 +35,9 @@ public class Ecd {
     double successRate;
 
     String printSample() {
-	return printSample(false);
-    }
-    String printSample(boolean doJitter) {
-	double [] a = doJitter? jitter(orderedSample): orderedSample;
+	//String printSample(boolean doJitter) {
+	double [] a = //doJitter? jitter(orderedSample):
+	    orderedSample;
 	return "{" + Util.joinNonBlank(", ", a) + "}";
     }
     
@@ -174,13 +174,15 @@ public class Ecd {
     static boolean checkSym = false;
     
 
+    static private RandomRG random = null;
+    
     public static void main(String[] argv) throws Exception {
 
 	File csvOutDir=null;
 	
 	/** The target rule set name. Must be specified. */
 	Vector<String> importFrom = new Vector<>();
-	
+	Long seed = null;
 
 	for(int j=0; j<argv.length; j++) {
 	    String a = argv[j];
@@ -203,6 +205,8 @@ public class Ecd {
 		simClustering =  Enum.valueOf(SimMethod.class, argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-untie")) {
 		untie =  Double.parseDouble(argv[++j]);
+	    } else if (j+1< argv.length && a.equals("-seed")) {
+		seed =  Long.parseLong(argv[++j]);
 	    } else if ( a.equals("-checkSym")) {
 		checkSym = true;
 	    }
@@ -218,6 +222,9 @@ public class Ecd {
 	    //usage("Please provide -target ruleSetName");
 	}
 
+	random = (seed==null)? new RandomRG() :new RandomRG(seed);
+	if (seed!=null) 	System.out.println("Seed=" + seed);
+	
 	System.out.println("Similarity for HB (before and after clustering): "+simHB);
 	System.out.println("Similarity for clustering: "+simClustering);
 	
@@ -280,6 +287,13 @@ public class Ecd {
 	    
 	    processor.processStage2(true, false, csvOutDir);
 
+
+	    if (untie>0) {
+		jitterAll(h);
+	    }
+	
+
+	    
 	    //	    base += "-" + simMethod;
 	    ecdAnalysis(base, h, lam, false);
 
@@ -387,37 +401,39 @@ public class Ecd {
     */
     static void ecdAnalysis(String base, Map<String, Ecd> h, LabelMap lam, boolean pooled) throws IOException {
 
-	    double xRange = 1, yRange=1;
-	    for(Ecd ecd: h.values()) {
-		xRange = Math.max(xRange, ecd.getMaxMStar());
-	    }
-
-	    xRange += 1;
-
-	    String sp = pooled? "(pooled)":"";
-	    String tasp = (target==null ?  "cross-target comparison" : "target " + target) +
-		" " + sp;
-	    System.out.println("Human learning analysis in Game Server ver. " + Episode.version);
-	    System.out.println("=== Legend for "+tasp+" ===");
+	double xRange = 1, yRange=1;
+	for(Ecd ecd: h.values()) {
+	    xRange = Math.max(xRange, ecd.getMaxMStar());
+	}
+	
+	xRange += 1;
+	
+	String sp = pooled? "(pooled)":"";
+	String tasp = (target==null ?  "cross-target comparison" : "target " + target) +
+	    " " + sp;
+	System.out.println("Human learning analysis in Game Server ver. " + Episode.version);
+	System.out.println("=== Legend for "+tasp+" ===");
 	    
-	    for(Ecd ecd: h.values()) {
-		System.out.println( ecd);
-	    }
+	for(Ecd ecd: h.values()) {
+	    System.out.println( ecd);
+	}
 	   
 
-	    String[] colors = {"red", "green", "orange", "cyan", "blue", "purple", "pink"};	    
-	    Vector<String> v = drawAllCurves(h, xRange, yRange,colors,null);
-	    String base2 = base + "-ecd";
-	    if (pooled) base2 += "-pooled" + simClustering;
-	    String fname = base2 + "-basic";
-	    writeSvg(fname, v);
+	String[] colors = {"red", "green", "orange", "cyan", "blue", "purple", "pink"};	    
+	Vector<String> v = drawAllCurves(h, xRange, yRange,colors,null);
+	String base2 = base + "-ecd";
+	if (pooled) base2 += "-pooled" + simClustering;
+	String fname = base2 + "-basic";
+	writeSvg(fname, v);
 
-	    Vector<String> hbLabels = analyzeSimilarities(h, pooled);
-	    //DistMap ph = 
-	    colors = new String[] {"red"};
-	    v = drawAllCurves(h, xRange, yRange, colors, hbLabels);
-	    fname = base2 + "-hb" + simHB;
-	    writeSvg(fname, v);
+
+	
+	Vector<String> hbLabels = analyzeSimilarities(h, pooled);
+	//DistMap ph = 
+	colors = new String[] {"red"};
+	v = drawAllCurves(h, xRange, yRange, colors, hbLabels);
+	fname = base2 + "-hb" + simHB;
+	writeSvg(fname, v);
     }
     
     static private void writeSvg(String fnameBase, Vector<String> v) throws IOException {
@@ -437,10 +453,26 @@ public class Ecd {
     static final MannWhitneyUTest mw = new MannWhitneyUTest();
     static final KolmogorovSmirnovTest ks = new KolmogorovSmirnovTest();
 
+    /** Slightly modifies all Ecd.orderedSample arrays, to keep ties unlikely */
+    private static void jitterAll(Map<String, Ecd> h) {
+	for(Ecd ecd: h.values()) jitterOne(ecd.orderedSample);
+    }
+
+    /** Adds a random value, in the range [-untie, untie] to each element of
+	the array; then re-orders the array to keep it in ascending order.
+    */
+    private static void jitterOne(double[] a) {
+	for(int j=0; j<a.length; j++) {
+	    a[j] += untie * ( 2*random.nextDouble()-1);
+	}
+	Arrays.sort(a);
+    }
+    
     /** Modifies array a[] a bit if it has ties. Controlled by this.untie
 	@param a A non-descending sequence
 	@return A strictly ascending sequence (either a[], or a jittered version of it)
      */
+    /*
     private double[] jitter(double[] a) {
 
 	if (untie==0) return a;
@@ -454,16 +486,18 @@ public class Ecd {
 	}
 	return b;					     
     }
-
+    */
     
     private double myKS(double[] a, double[] b) {
-	return ks.kolmogorovSmirnovTest(jitter(a),jitter(b));
+	//return ks.kolmogorovSmirnovTest(jitter(a),jitter(b));
+	return ks.kolmogorovSmirnovTest(a,b);
     }
-
+    
     private double myKSS(double[] a, double[] b) {
-	return ks.kolmogorovSmirnovStatistic(jitter(a),jitter(b));
+	//return ks.kolmogorovSmirnovStatistic(jitter(a),jitter(b));
+	return ks.kolmogorovSmirnovStatistic(a,b);
     }
-
+    
 
     
     /** Computes the similarity between this ECD and another ECD.
@@ -478,7 +512,7 @@ public class Ecd {
 	if (checkSym) { // KS symmetry checking
 	    double oksp = myKS(o.orderedSample,orderedSample);
 	    if (Math.abs(oksp-ksp) > 1e-4 * (oksp+ksp)) {
-		System.out.println("KS asymmetry noticed for "+label+"=" + printSample(true) + ", "+o.label+"=" + o.printSample(true));
+		System.out.println("KS asymmetry noticed for "+label+"=" + printSample() + ", "+o.label+"=" + o.printSample());
 		System.out.println("KS("+label+","+o.label+")=" + ksp +
 				   " (kss=" + myKSS(orderedSample,o.orderedSample)+
 				   "); KS("+o.label+","+label+")=" + oksp +
