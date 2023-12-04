@@ -492,6 +492,14 @@ public class Ecd {
 	//return ks.kolmogorovSmirnovTest(jitter(a),jitter(b));
 	return ks.kolmogorovSmirnovTest(a,b);
     }
+
+    /** Symmetrize the KS p0-value, to deal with jittering */
+    private double myKS_sim(double[] a, double[] b) {
+	//return ks.kolmogorovSmirnovTest(jitter(a),jitter(b));
+	return (ks.kolmogorovSmirnovTest(a,b) +
+		ks.kolmogorovSmirnovTest(b,a))/2; 
+    }
+
     
     private double myKSS(double[] a, double[] b) {
 	//return ks.kolmogorovSmirnovStatistic(jitter(a),jitter(b));
@@ -507,10 +515,10 @@ public class Ecd {
     double computeSimilarity(Ecd o, SimMethod simMethod) {
 	double	mwp = mw.mannWhitneyUTest(orderedSample,o.orderedSample);
 	//System.out.println("mannWhitneyUTest(" + fmtArg(x)+")=" + mwp);
-	double ksp = myKS(orderedSample,o.orderedSample);
+	double ksp = myKS_sim(orderedSample,o.orderedSample);
 
 	if (checkSym) { // KS symmetry checking
-	    double oksp = myKS(o.orderedSample,orderedSample);
+	    double oksp = myKS_sim(o.orderedSample,orderedSample);
 	    if (Math.abs(oksp-ksp) > 1e-4 * (oksp+ksp)) {
 		System.out.println("KS asymmetry noticed for "+label+"=" + printSample() + ", "+o.label+"=" + o.printSample());
 		System.out.println("KS("+label+","+o.label+")=" + ksp +
