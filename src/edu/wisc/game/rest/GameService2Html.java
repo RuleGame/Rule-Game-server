@@ -245,7 +245,8 @@ public class GameService2Html extends GameService2 {
 	s = "Episode " + (d.getDisplayEpisodeNo()+1) + " of "+ d.getTotalBoardsPredicted();
 	body += fm.para(s);
 
-	
+
+	/*
 	int[][] rxv = d.getRewardsAndFactorsPerSeries();
 	if (rxv!=null) {
 	    Vector<String> v = new Vector<>();
@@ -257,7 +258,9 @@ public class GameService2Html extends GameService2 {
 	    body += fm.para("Reward: " + d.getTotalRewardEarned() + " = " +
 			    String.join(" + ", v));
 	}
-
+	*/
+	body += fm.para(d.xgetRewardsAndFactorsPerSeriesString());
+	
 	body += fm.para("Incentive scheme=" + d.getIncentive());
 	if (d.getIncentive()==ParaSet.Incentive.DOUBLING) {
 	    body += fm.para("Stretch="+d.getLastStretch()+". Factor achieved="+ d.getFactorAchieved()+"; promised in this episode " +  d.getFactorPromised()) +

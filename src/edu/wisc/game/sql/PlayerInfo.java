@@ -644,6 +644,7 @@ public class PlayerInfo {
 
     /** Recomputes this player's totalRewardEarned, based on all episodes in his record*/
     private void updateTotalReward() {
+	/*
 	int sum=0;
 	int cnt=0;
 	for(Series ser: allSeries) {
@@ -655,32 +656,75 @@ public class PlayerInfo {
 	    }
 	    sum += s;
 	}
-	totalRewardEarned=sum;
-	System.err.println("Total reward("+playerId+"):=" + totalRewardEarned +", based on " + cnt + " episodes");
+	totalRewardEarned=sum; */
+	RewardsAndFactorsPerSeries rx = getRewardsAndFactorsPerSeries();
+	totalRewardEarned= rx.getSum();
+	Logging.info("updateTotalReward(): Total reward("+playerId+"):=" + rx);
     }
 
+    class RewardsAndFactorsPerSeries {
+	final int[][] raw;
+	int epiCnt = 0;
 
-    /** @return { {s0,f0}, {s1,f1}, {s2,f2}....}, which are the
-	per-series components that sum to reward=s0*f0+ s1*f1+ s2*f2 +....
-     */
-    int[][] getRewardsAndFactorsPerSeries() {
-	int n = Math.min( currentSeriesNo+1, allSeries.size());
-	int[][] rx = new int[n][];
+	/** @return { {s0,f0}, {s1,f1}, {s2,f2}....}, which are the
+	    per-series components that sum to reward=s0*f0+ s1*f1+ s2*f2 +....
+	*/
+	RewardsAndFactorsPerSeries() {
+	    int n = Math.min( currentSeriesNo+1, allSeries.size());
+	    raw = new int[n][];
 
-	for(int j=0; j< n; j++) {
-	    Series ser = allSeries.get(j);
-	    int s=0, f=1;
-	    for(EpisodeInfo epi: ser.episodes) {
-		s +=  epi.getTotalRewardEarned();
-		f = Math.max(f, epi.getXFactor());
+	    for(int j=0; j< n; j++) {
+		Series ser = allSeries.get(j);
+		int s=0, f=1;
+		for(EpisodeInfo epi: ser.episodes) {
+		    epiCnt ++;
+		    s += epi.getTotalRewardEarned();
+		    f = Math.max(f, epi.getXFactor());
+		}
+		raw[j] = new int[]{s, f};
 	    }
-	    rx[j++] = new int[]{s, f};
+	    Logging.info("Created RewardsAndFactorsPerSeries=" + this);
 	}
-	return rx;
+
+	public String toString() {
+	    Vector<String> v = new Vector<>();
+	    for(int[] rx: raw) {
+		if (rx!=null) {
+		    v.add("" + rx[0] +"*"+rx[1]);
+		}
+	    }
+	    return "Reward: " + getSum() + " = " +
+		String.join(" + ", v) + ", based on " + epiCnt+ " episodes";
+	}
+
+
+	/** An add-on summing the numbers given by getRewardsAndFactorsPerSeries() */
+	int getSum() {
+	    int sum  = 0;
+	    for(int[] ax: raw) {
+		if (ax==null) {
+		    IllegalArgumentException ex =  new IllegalArgumentException("ax==null in RAF.getSum");
+		    StringWriter sw = new StringWriter();
+		    ex.printStackTrace(new PrintWriter(sw));
+		    String s = sw.toString();
+		    Logging.warning(""+ex);
+		    Logging.warning(s);
+		    //ex.printStackTrace(System.err);
+		    throw ex;
+		}
+		sum += ax[0];
+	    }
+	    return sum;
+	}
+
+	int getFactorAchieved() {
+	    return raw[ raw.length-1][1];
+	}
     }
 
-    
-
+    RewardsAndFactorsPerSeries  getRewardsAndFactorsPerSeries() {
+	return new RewardsAndFactorsPerSeries();
+    }
     
     /** This method is called after an episode completes. It computes
 	the applicable rewards (if the board has been cleared or

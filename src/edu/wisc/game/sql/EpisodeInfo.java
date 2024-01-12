@@ -536,7 +536,7 @@ public class EpisodeInfo extends Episode {
 	/** The components of the total reward: an array of
 	    (reward,factor) pairs for all series so far.
 	 */
-	int[][] rewardsAndFactorsPerSeries;
+	PlayerInfo.RewardsAndFactorsPerSeries rewardsAndFactorsPerSeries;
 	/** Have we just reached this threshold on the most recent move? */
 	boolean justReachedX2=false, justReachedX4=false;
 	/** This factor (1,2,4) will be given out for certain, because
@@ -549,24 +549,38 @@ public class EpisodeInfo extends Episode {
 	    factorAchieved between the point when a new threshold has
 	    been achieved in this episode and the completion of the episode */
 	int factorPromised;
-	public int[][] getRewardsAndFactorsPerSeries() { return rewardsAndFactorsPerSeries; }
+	public int[][] getRewardsAndFactorsPerSeries() {
+	    if (rewardsAndFactorsPerSeries==null) {
+		// Why does this happen anyway?
+		Logging.warning("rewardsAndFactorsPerSeries==null");
+		return new int[0][];
+	    }
+	    return rewardsAndFactorsPerSeries.raw; }
+
+	public String xgetRewardsAndFactorsPerSeriesString() {
+	    return rewardsAndFactorsPerSeries==null? "":
+		rewardsAndFactorsPerSeries.toString(); }
    	
 	public boolean getJustReachedX2() { return justReachedX2; }
 	public boolean getJustReachedX4() { return justReachedX4; }
         public int getFactorAchieved() { return factorAchieved; }
         public int getFactorPromised() { return factorPromised; }
 
+	/** Sets a few fields related to the DOUBLING incentive scheme */
 	private void incentive2() {	    
 	    incentive = xgetIncentive();
 	    lastStretch = EpisodeInfo.this.lastStretch;
 	    rewardsAndFactorsPerSeries = getPlayer().getRewardsAndFactorsPerSeries();
- 	    justReachedX2 = EpisodeInfo.this.justReachedX2;
+	    Logging.info("EpisodeInfo.ED.incentive2(): obtained rewardsAndFactorsPerSeries = " + rewardsAndFactorsPerSeries);
+	    justReachedX2 = EpisodeInfo.this.justReachedX2;
  	    justReachedX4 = EpisodeInfo.this.justReachedX4;
 
-factorAchieved=1;
-try {
-	    factorAchieved = rewardsAndFactorsPerSeries[ rewardsAndFactorsPerSeries.length-1][1];
-} catch(Exception ex) {} // fixme - silly fix for Kevin's report ,2022-01-28
+	    factorAchieved=1;
+	    try {
+		factorAchieved = rewardsAndFactorsPerSeries.getFactorAchieved();
+	    } catch(Exception ex) {
+		Logging.warning("EpisodeInfo.ED.incentive2(): exception: " + ex);
+	    } // fixme - silly fix for Kevin's report ,2022-01-28
 	    factorPromised =  EpisodeInfo.this.factorPromised;
 	}
 	
