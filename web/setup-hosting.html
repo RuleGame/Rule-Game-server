@@ -125,9 +125,10 @@ GUI_DEV = "/rule-game/dev/";
     <li>Build a WAR file of the Game Server application (w2020.war) on your PC or on some other host (such as sapir), from our source code and the necessary third-party libraries. For detailed instructions see e.g. e <a href="setup-compile.html">Rule Game Server build Guide.</a>
     <li>Use <tt>sftp</tt> to move the WAR file to the Plesk host. Let's suppose you put it there to the directiory <tt>tmp</tt> under your home directory.
 
-    <li> Use the manager app ( https://wwwtest.rulegame.wisc.edu/manager/ ) to deploy a local file: <tt>
+    <li> Use the manager app ( <tt>https://wwwtest.rulegame.wisc.edu/manager/</tt> ) to deploy a local file ("WAR or Directory path"): <tt>
 /var/www/vhosts/wwwtest.rulegame.wisc.edu/tmp/w2020.war
-</tt>
+      </tt> 
+      (in the "Context path" box, you should enter <tt>/w2020</tt>.)
 Now, our app is visible at https://wwwtest.rulegame.wisc.edu/w2020/  !
   </ol>
 	
@@ -204,7 +205,7 @@ Deployment: master branch automatically to /opt/w2020/game-data
 	    mkdir landing
 	    cd landing
 	    git init
-	    git remote add origin https://github.com/RuleGame/Rule-Game-server.git
+	    git remote add origin https://github.com/RuleGame/Rule-top-pages.git
 	    git pull origin master	   </pre>	   
 	  
 	  <p>Subsequently, whenever you resume working with these files and have a reason to thing that some of the files have changed in the repository (e.g. because one of your co-PIs has checked in an update to one of the files), you just need to do the "pull" from the repository to your PC:

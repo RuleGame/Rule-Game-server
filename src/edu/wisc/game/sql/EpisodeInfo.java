@@ -67,9 +67,10 @@ public class EpisodeInfo extends Episode {
     episode. This typically is the last episode of a successful
     bonus subseries. */     
     boolean earnedBonus;
-    /** The standard reward that has been given for this episode. It is assigned for every episode that has been completed (board cleared) */
+    /** The standard reward that has been given for this episode. It is assigned for every episode that has been completed (board cleared), and perhaps
+(depending on the stalematesAsClears flag) also for stalemated episodes. */
     int rewardMain;
-    /** The bonus reward that has been given for this episode. At most one episode in a series (namely, the last episode of a successful bonus subseries) may have this reward; this episode is marked with earnedBonus=true */
+    /** The bonus reward that has been given for this episode. This is only applicable to the BONUS reward scheme. At most one episode in a series (namely, the last episode of a successful bonus subseries) may have this reward; this episode is marked with earnedBonus=true */
     int rewardBonus;
 
     /** The total reward earned in this episode */
