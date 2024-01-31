@@ -28,9 +28,6 @@ public class EpisodeInfo extends Episode {
 	clearings" */
     static final boolean stalematesAsClears = true;
 
-    
-
-
     /** Back link to the player, for JPA's use */
     @ManyToOne(fetch = FetchType.EAGER)
     private PlayerInfo player;

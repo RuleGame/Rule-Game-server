@@ -137,7 +137,7 @@ public class RandomGameGenerator extends GameGenerator {
 	if (argv.length<3) usage(null);
 	String dirName = argv[ja++];
 	File dir=new File(dirName);
-	if (!dir.isDirectory()) usage("Not a directory: " +dir);
+	if (!dir.isDirectory()) usage("The output directory '" +dir + "' does not exist. Please create it before running this tool, or specify another directory");
 	int nb = Integer.parseInt(argv[ja++]);
 	System.out.println("Will generate " +nb + " boards in directory "+dir);
 	RandomGameGenerator gg=buildFromArgv(new RandomRG(), null, ht, argv, ja);
@@ -151,7 +151,11 @@ public class RandomGameGenerator extends GameGenerator {
 	    Game g =gg.nextGame();
 	    Board b = new Board(random, g.randomObjCnt, g.nShapes, g.nColors, g.allShapes, g.allColors);
 	    PrintWriter w=new PrintWriter(new FileWriter(f));
-	    w.println(JsonReflect.reflectToJSONObject(b, true));	
+	    String s = JsonReflect.reflectToJSONObject(b, true).toString();
+	    // Insert a line break before each game piece
+	    // "value":[{"id":0,"color":"BLUE",....}
+	    s = s.replaceAll( "(.\"id\":)", "\n$1");
+	    w.println(s);
 	    w.close();
 
 	}

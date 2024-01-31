@@ -333,7 +333,7 @@ public class RuleSet {
 	}
 
 	
-	/** Format as the source code of the rules set */
+	/** Formats the Atom as the source code of the rules set */
 	public String toSrc() {
 	    if (hasNonSCCond()) {
 		Vector<String> v = new Vector<>();

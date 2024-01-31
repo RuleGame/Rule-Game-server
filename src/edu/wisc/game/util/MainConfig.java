@@ -6,10 +6,15 @@ import java.io.*;
 //import java.text.*;
 //import java.net.*;
 
-/** Accessing the main configuration file, which can be used by the
-    site administrator to override some defaults. It is located
-    outside of the WAR file, so that adjustments can be made without
-    rebuilding the WAR file.
+/** Accessing the main configuration file of the Game Server, which
+    can be used by the site administrator to override some
+    defaults. It is located outside of the WAR file, so that
+    adjustments can be made without rebuilding the WAR file.
+
+    <p>
+    In particular, the main config file (usually located in /opt/w2020/w2020.conf) may override the user name and password for accessing the MySQL database password specified in META-INF/persistence.xml (packaged into the WAR file). Thus changing the database password, or asking the server to work with a different database, can be accommodated without having to rebuild the WAR file.
+
+    <p>The MainConfig object is used in sql.Main
 */
 
 public class MainConfig //extends ParseConfig

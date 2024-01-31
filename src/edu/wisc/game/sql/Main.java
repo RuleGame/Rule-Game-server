@@ -43,9 +43,11 @@ public class Main {
     /** The location of a site-specific config file */
 
     
-   /** Initializes the EntityManagerFactory using the System properties.
-        The "w2020" name will be used to configure based on the
-        corresponding name in the META-INF/persistence.xml file
+   /** Initializes the EntityManagerFactory using the "persistence unit" 
+       (a section in META-INF/persistence.xml, with the name "w2020")
+       and the properties in MainConfig, which have been loaded from
+       the master config file (on top of any system properties,
+       which we usually don't have). The latter override the former.
 
 
 // org.apache.openjpa.lib.util.ParseException: 
@@ -58,9 +60,24 @@ public class Main {
 	    Properties prop = System.getProperties();
 	    Hashtable<Object,Object>  h = (Hashtable<Object,Object>) prop.clone();
 
+	    //<property name="openjpa.ConnectionURL" 
+	    //value="jdbc:mysql://localhost/game?serverTimezone=UTC"/>
+	    //String url = MainConfig.getString("JDBC_URL", null);
+	    String database = MainConfig.getString("JDBC_DATABASE", null);
+	    if (database != null) {
+		String url = "jdbc:mysql://localhost/"+database+"?serverTimezone=UTC";
+	    
+		h.put("openjpa.ConnectionURL" ,url);
+	    }
+	    
+
+            //<property name="openjpa.ConnectionUserName" 
 	    String s = MainConfig.getString("JDBC_USER", null);
 	    if (s!=null) h.put("openjpa.ConnectionUserName" , s);
 
+
+
+	    
 	    s = MainConfig.getString("JDBC_PASSWORD", null);
 	    if (s!=null) h.put("openjpa.ConnectionPassword" , s);
 

@@ -55,9 +55,15 @@
 
         <properties>
             <!--
-                We can configure the default OpenJPA properties here. Or they
-                can be commented out if we 
-                specify the values via System properties.
+                We can configure the default OpenJPA properties
+                here. Or they can be commented out if we specify the
+                values via System properties.
+
+Note that in the Rule Game Server the values
+of some parameters (including the database password) can be overridden
+via the master config file (/opt/w2020/w2020.conf). This allows easily
+change those parameters without editing this file and rebuilding the
+WAR file. See util/MainConfig.java for discussion. 
             -->
 	    <!-- see https://docs.oracle.com/javaee/7/tutorial/persistence-intro005.htm -->
 	       <property name="jakarta.persistence.schema-generation.database.action"

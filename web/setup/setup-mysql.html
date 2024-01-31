@@ -69,6 +69,18 @@ GRANT FILE ON *.* TO 'johndoe'@'localhost' ;
 FLUSH PRIVILEGES;
 </pre>
 
+<p>
+If you are setting up this instance of Game Server to also store data from other servers (so that your players play elsewhere, on a public-facing server, and then you pull the data from there to this server), add one more account:
+<pre>
+CREATE USER 'replicator'@'localhost' IDENTIFIED BY 'MySQL-W2020';
+GRANT ALL ON *.* TO 'replicator'@'localhost';
+GRANT GRANT OPTION ON *.* TO 'replicator'@'localhost';
+</pre>
+
+
+<h2>Caching passwords</h2>
+
+<p>You can use <tt>scripts/run-mysql-config-editor.sh</tt> to create the file <tt> ~/.mylogin.cnf</tt> in your home directory, in which the passwords for several accounts will be stored, in an "encrypted" (sort of) form. Edit as needed before use.
 
 <h2>For later: enabling data export</h2>
 

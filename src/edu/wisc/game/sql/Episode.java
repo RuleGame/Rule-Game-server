@@ -946,7 +946,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	return json.toString();
     }
    
-    public static final String version = "6.022";
+    public static final String version = "6.023";
 
     public static String getVersion() { return version; }
 

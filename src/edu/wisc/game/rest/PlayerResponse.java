@@ -15,7 +15,9 @@ import edu.wisc.game.reflect.JsonReflect;
 import edu.wisc.game.parser.RuleParseException;
 
 
-/** The object returned by the /player call.
+/** The object returned by the /player call. This is the call that's
+    used at the beginning (or resumption) of a series, to create
+    a new player entry in the database or find an existing one.
  */
 public class PlayerResponse extends ResponseBase {
   
@@ -101,6 +103,8 @@ public class PlayerResponse extends ResponseBase {
 	    // support the uid parameter
 	    uid = Integer.parseInt(m.group(1));
 	}
+
+	if (badPid(pid)) hasError("Invalid player Id = '"+pid+"'. Player IDs may only contain alphanumeric characters, underlines, and hyphens.");
 
 	
 	EntityManager em = Main.getNewEM();
@@ -190,6 +194,7 @@ public class PlayerResponse extends ResponseBase {
 	
 	@return The PlayerInfo object with the matching name, or null if none is found */
     static PlayerInfo findPlayerInfo(EntityManager em, String pid) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
+	if (badPid(pid)) throw new  IllegalInputException("Player ID contains illegal characters: '"+pid+"'");
 	PlayerInfo x = allPlayers.get(pid);
 	if (x!=null) return x;
 
@@ -289,6 +294,22 @@ public class PlayerResponse extends ResponseBase {
     }
 
 
+    /** The player ID must be a non-empty string consisting of allowed
+	characters (letters, digits, _ - )
+    */
+    private static boolean badPid(String s) {
+	if (s.length()==0) return true;
+	s = s.toLowerCase();
+	for(int j=0; j<s.length(); j++) {
+	    char c = s.charAt(j);
+	    if (!(c>='a' && c<='z' || c>='0' && c<='9' || c=='_' || c=='-')) return true;
+	}
+	return false;
+			       
+    }
+					     
+	
+    
     /** Handy testing */
     public static void main(String[] argv) throws Exception {
 	double hrs = Double.parseDouble(argv[0]);

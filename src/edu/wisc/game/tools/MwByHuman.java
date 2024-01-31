@@ -77,7 +77,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	String exportTo = null;
 	Vector<String> importFrom = new Vector<>();
 
-	
+	String config = null;
 	
 	for(int j=0; j<argv.length; j++) {
 	    String a = argv[j];
@@ -94,6 +94,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 		fromFile=true;
 	    } else if (a.equals("-mDagger")) {
 		useMDagger = true;
+	    } else if (j+1< argv.length && a.equals("-config")) {
+		config = argv[++j];
 	    } else if (j+1< argv.length && a.equals("-export")) {
 		exportTo = argv[++j];
 	    } else if (j+1< argv.length && a.equals("-import")) {
@@ -127,6 +129,11 @@ public class MwByHuman extends AnalyzeTranscripts {
 
 	}
 
+	if (config!=null) {
+	    // Instead of the master conf file in /opt/w2020, use the customized one
+	    MainConfig.setPath(config);
+	}
+	
 	if (exportTo!=null && importFrom.size()>0) {
 	    usage("You cannot combine the options -export and -import. At most one of them can be used in any single run");
 	}

@@ -135,7 +135,11 @@ public class AnalyzeTranscripts {
 	    int y[]={1, 1, 0, 0, 0, 0, 1, 1};
 	    test(y);
 	    return;
-	} else if (argv.length==2 && argv[0].equals("-y")) {
+	}
+
+
+	
+	if (argv.length==2 && argv[0].equals("-y")) {
 	    String[] ys = argv[1].split("\\s+");
 	    int[] y = new int[ys.length];
 	    for(int j=0; j<y.length; j++) y[j] = Integer.parseInt(ys[j]);
@@ -144,9 +148,9 @@ public class AnalyzeTranscripts {
 	} else {
 	    //System.out.println("argv.length=" + argv.length +", argv[0]='" +argv[0] +"'");
 	}
-	
-	EntityManager em = Main.getNewEM();
 
+
+	String config = null;
 	ArgType argType = ArgType.PLAN;
 	boolean fromFile = false;
 	
@@ -156,7 +160,9 @@ public class AnalyzeTranscripts {
 	Vector<Long> uids = new Vector<>();
 	for(int j=0; j<argv.length; j++) {
 	    String a = argv[j];
-	    if (a.startsWith("-p0")) {
+	    if (j+1< argv.length && a.equals("-config")) {
+		config = argv[++j];
+	    } else if (a.startsWith("-p0")) {
 		String mode = a.substring(3);
 		if (mode.equals("")) {
 		    if (++j >= argv.length) usage("The -p0 option must be followed by a model name");
@@ -207,6 +213,14 @@ public class AnalyzeTranscripts {
 		}
 	    }
 	}
+
+	if (config!=null) {
+	    // Instead of the master conf file in /opt/w2020, use the customized one
+	    MainConfig.setPath(config);
+	}
+	
+	EntityManager em = Main.getNewEM();
+
 
 	if (needBoards && !needP0) throw new IllegalArgumentException("Cannot use option -boards without -p0");
 	
