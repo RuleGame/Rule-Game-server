@@ -61,7 +61,7 @@ public class PredefinedBoardGameGenerator extends GameGenerator {
 	Vector<Board> vb= new Vector<Board>();
 
 	Vector<File> fv = new Vector<>();
-	System.out.println("PredefinedBoardGameGenerator, dir=" + boardDir+", mode=" + mode);
+	//System.out.println("PredefinedBoardGameGenerator, dir=" + boardDir+", mode=" + mode);
 	if (mode==Mode.RANDOM || mode==Mode.ALPHA) {
 	    File[] ff =  boardDir.listFiles();
 	    if (ff==null) throw new IOException("Could not read board file directory " + boardDir);

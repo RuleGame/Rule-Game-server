@@ -3,11 +3,29 @@
 
 #----------------------------------------------------------------
 # This script is used to pull accumulated data from a remote Game Server
-# such as one of our Plesk hosts.
+# such as one of our Plesk hosts. The remote server needs to be properly
+# set up, i.e. provided with the script mybin/zip-saved.sh
+# Usage:
+#   pull-remote-data wwwtest.rulegame
+#   pull-remote-data rulegame
 #----------------------------------------------------------------
 
-set h=wwwtest.rulegame.wisc.edu
-set uh=test-rulegame@${h}
+#-- This variable refers to the name of one of the "login path"
+#-- (host/database/user/password) combinations defined via
+#-- scripts/run-mysql-config-editor.sh
+set origin=$1
+
+if ( "$origin" == "wwwtest.rulegame" ) then
+   set u=test-rulegame
+else if ( "$origin" == "rulegame" ) then
+   set u=rulegame
+else
+    echo "Illegal origin=$origin. It should be either rulegame or wwwtest.rulegame"
+    exit
+endif
+
+set h=${origin}.wisc.edu
+set uh=${u}@${h}
 set date=`date +'%Y_%m_%d'`
 
 #-- The script named here needs to have been manually installed on the
@@ -61,11 +79,6 @@ du $out
 
 # Or, using ~/.mylogin.cnf
 
-#-- This variable refers to one of the "login path"
-#-- (host/database/user/password) combinations defined via
-#-- scripts/run-mysql-config-editor.sh
-set origin=wwwtest.rulegame
-#set origin=local
 set tmp=`echo $origin | sed 's/\./_/g'`
 set newdb=game_${tmp}_${date}
 

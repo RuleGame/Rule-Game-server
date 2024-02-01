@@ -1,4 +1,3 @@
-
 #!/bin/sh
 
 #-----------------------------------------------------
@@ -14,17 +13,25 @@
 # https://dev.mysql.com/doc/refman/8.0/en/mysql-config-editor.html
 #-----------------------------------------------------
 
+echo "You will be asked for the password for game@rulegame.wisc.edu"
+mysql_config_editor set --login-path=rulegame \
+--user=game \
+--password \
+--host=rulegame.wisc.edu 
 
+echo "You will be asked for the password for game@wwwtest.rulegame.wisc.edu"
 mysql_config_editor set --login-path=wwwtest.rulegame \
 --user=game \
 --password \
 --host=wwwtest.rulegame.wisc.edu 
 
+echo "You will be asked for the password for game@localhost"
 mysql_config_editor set --login-path=local \
 --user=game \
 --password \
 --host=localhost
 
+echo "You will be asked for the password for replicator@localhost"
 mysql_config_editor set --login-path=replicator \
 --user=replicator \
 --password \

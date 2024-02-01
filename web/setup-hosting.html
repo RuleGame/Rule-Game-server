@@ -116,7 +116,7 @@ GUI_DEV = "/rule-game/dev/";
 
   <h2>(Initial and ongoing) The web app code (server side)</h2>
 
-<p>It would be interesting to find out a way to compile the Game Server code directly on a Plesk host. At this point, I don't know how to set this up (the chrooted shell obviously is not equipped with the toold we'd need for that). Instead, the current approach is to build a WAR file (w2020.war) on some other host (could be your own PC, could be <tt>sapir</tt>) and then copying it over to the Plesk host.
+<p>It would be interesting to find out a way to compile the Game Server code directly on a Plesk host. At this point, I don't know how to set this up (the chrooted shell obviously is not equipped with the toold we'd need for that). Instead, the current approach is to build a WAR file (w2020.war) on some other host (could be your own PC, could be <tt>sapir</tt> or the CAE host) and then copy it over to the Plesk host.  (It's a large file -- 36 MB -- so copying it from a host within the UW network is probably preferable to copying it from your home machine).
 
 <p>Step by step:
 
@@ -193,7 +193,13 @@ Deployment: master branch automatically to /opt/w2020/game-data
 <p>After you have created experiment control files for a new experiment and checked them into the GitHub repository, you have to effect a "pull" on the DoIT site. The process is very similar to that for the landing pages (see the write-up below), with the repository name RuleGame/Rule-Game-game-data instead of RuleGame/Rule-Game-top-pages.
 
 
-      <h2><a name="landing">Updating the landing page</a></h2>
+      <h2><a name="landing">The landing page</a></h2>
+
+<h3>(Initial) Set-up</h3>
+
+<p>Via the GIT menu, I set up the deployment of the GIT repository https://github.com/RuleGame/Rule-Game-top-pages.git to /tomcat/webapps/ROOT
+
+      <h3><a name="landing.update">(Ongoing) Updating the landing page</a></h3>
 
     <p>This section explains how to update the web pages visible at the top-level of the web site, i.e. at https://wwwtest.rulegame.wisc.edu/ and elsewhere in the top-level directory.
 
