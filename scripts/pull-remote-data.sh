@@ -8,17 +8,22 @@
 # Usage:
 #   pull-remote-data wwwtest.rulegame
 #   pull-remote-data rulegame
+#   scp sapir.psych.wisc.edu:dump-game.sql . ; pull-remote-data sapir.psych
 #----------------------------------------------------------------
+
 
 #-- This variable refers to the name of one of the "login path"
 #-- (host/database/user/password) combinations defined via
 #-- scripts/run-mysql-config-editor.sh
 set origin=$1
 
+#-- The UNIX user name for ssh/sftp access to various hosts
 if ( "$origin" == "wwwtest.rulegame" ) then
    set u=test-rulegame
 else if ( "$origin" == "rulegame" ) then
    set u=rulegame
+else if ( "$origin" == "sapir.psych" ) then
+   set u=vmenkov
 else
     echo "Illegal origin=$origin. It should be either rulegame or wwwtest.rulegame"
     exit
@@ -86,13 +91,20 @@ echo "Part B: Copying the data from the remote database at $origin to new local 
 
 set dump=dump-game.sql
 
+
+if ( "$origin" == "sapir.psyche" ) then
+echo "Skipping step 4. Assuming that you have already transmitted the MySQL dump file, $dump, from $h. This is the file we're going to use"
+else 
+
+echo "Step 4: Exporting data from $origin to the temporary file $dump. This may take a few minutes"
 if (-e $dump) then
    rm $dump
 endif
-   
-echo "Step 4: Exporting data from $origin to the temporary file $dump. This may take a few minutes"
 mysqldump --login-path=$origin --no-tablespaces game > $dump
 echo "Dumped remote server's data:"
+
+endif
+
 dir dump-game.sql
 
 echo "Step 5: Removing and recreating database $newdb if it already exists"
