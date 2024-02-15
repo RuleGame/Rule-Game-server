@@ -134,7 +134,7 @@
 	<li>
 	  <a href="https://github.com/RuleGame/Rule-Game-server">Rule-Game-server</a> - server code 
 	<li>
-	  <a href="https://github.com/RuleGame/Rule-Game">Rule-Game</a> - client code.
+	  <a href="https://github.com/RuleGame/Rule-Game">RuleGame</a> - client code.
 
 	<li> <a href="https://github.com/RuleGame/Rule-Game-game-data">Rule-Game-game-data</a> - experiment control files (trial lists, shapes, etc).
 
@@ -150,7 +150,18 @@
 
 	<li><strong><a href="front-end-form.jsp">GUI play (production client)</a></strong> -- go here to start playing any game! This is what M-Turkers see.
 
+	  
 	<li><strong><a href="front-end-form.jsp?dev=true">GUI play (development client)</a></strong> -- go here to start playing any game! This comes with more debugging info.
+
+
+	<li>Launch form for Tanvi:
+	  <form action="front-end-form-2.jsp" method="post">	    
+(Experiment plan=<input type="text" name="exp" size="30" value="">)
+<br><input type="radio" name="dev" value="true">Dev client
+<br><input type="radio" name="dev" value="false" checked>Prod client
+<br>
+		  <button type="submit">GUI play</button>
+</form>
 
 	<li><a href="http://sapir.psych.wisc.edu/rule-game-board-builder/dev/">Board builder</a> (dev)
 

@@ -36,6 +36,9 @@ public class ContextInfo    extends ResultsBase  {
      */
     public String clientUrl;
 
+    /** Optional; used in some pages. More usually, null. */
+    public String exp=null;
+    
     /** Note that request.getProtocol() is not helpful to distinguish HTTP from
 	HTTPS, as it seems to always return "HTTP". OTOH, using port 443 is
 	a good indicator of HTTPS being used.
@@ -57,6 +60,7 @@ public class ContextInfo    extends ResultsBase  {
 	dev = "true".equals( request.getParameter("dev"));
 	clientUrl = MainConfig.getGuiClientUrl(dev);
 
+	exp=  request.getParameter("exp");
 
     }
 

@@ -268,10 +268,17 @@ public class Files {
 	plans (those without the rule set files, for example).
     */
     public static String[] listSAllExperimentPlans()  throws IOException{
+	return listSAllExperimentPlans(true);
+    }
+
+    /** @param validOnly If true, excludes obviously "bad"
+	plans (those without the rule set files, for example).
+     */
+    public static String[] listSAllExperimentPlans(boolean validOnly)  throws IOException{
 	String [] a = listSAllExperimentPlansInTree(null);
 	Vector<String> v = new Vector<>();
 	for(String exp: a) {
-	    if (CheckPlanService.basicCheck(exp)) v.add(exp);
+	    if (!validOnly || CheckPlanService.basicCheck(exp)) v.add(exp);
 	}
 	return v.toArray(new String[0]);
     }
@@ -355,12 +362,16 @@ public class Files {
     }
 
     
-    /** Creates an HTML snippet (to be used inside a FORM) listing
-	all currently existing experiment plans.
+    /** Creates an HTML snippet (to be used inside a FORM, e.g. at
+	front-end-form.jsp) listing all currently existing experiment
+	plans.
      */
     public static String listSAllExperimentPlansHtml()  throws IOException{
+	return listSAllExperimentPlansHtml(true);
+    }
+    public static String listSAllExperimentPlansHtml(boolean validOnly)  throws IOException{
 	Vector<String> v=new Vector<>();
-	for(String exp: listSAllExperimentPlans()) {
+	for(String exp: listSAllExperimentPlans(validOnly)) {
 	    v.add( Tools.radio("exp", exp, exp, false));
 	}
 	return String.join("<br>\n", v);

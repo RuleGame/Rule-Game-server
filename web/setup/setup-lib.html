@@ -2,13 +2,13 @@
   <head><title>Setup: Third-party libraries</title></head>
   <body>
 
+<div align="center"><em>Updated for ver 6.023, 2024-02-12</em></div>
+    
     <h1>Setup: Third-party libraries</h1>
 
-<p>If you follow <a href="index.html#B">Setup Option B</a>, you will need to download a few third-party libraries before you can compile the Rule Game Server from source.
+<p>If you follow <a href="index.html#B">Setup Option B</a>, you will need to download a few third-party libraries before you can compile the Rule Game Server from source. During the build, these libraries will be packed into the WAR file.
     
   <ul>
-
-    <li>
 
 
     <li><strong>Apache OpenJPA</strong>: from <a href="https://openjpa.apache.org/downloads.html">OpenJPA Downloads</a>. This is a library used by the Game Server to store data in the SQL server in an "object-oriented way".  On our development host we have OpenJPA 3.1, and have it installed in <tt>/opt/apache-openjpa-3.1.0</tt>, with a sym link from
@@ -17,6 +17,8 @@ You may choose to download a more recent version, or to install OpenJPA to a dif
 <pre>    
   &lt;property name="openjpa"  location="/opt/apache-openjpa"/&gt;
 </pre>
+
+    <li>
 
 
     <strong>Apache Commons Math</strong>:
@@ -66,9 +68,47 @@ https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-multi
 
 <li><strong>MIME Streaming Extension</strong>, e.g. <tt>mimepull-1.9.14.jar</tt>, from <a href="https://mvnrepository.com/artifact/org.jvnet.mimepull/mimepull/1.9.14">https://mvnrepository.com/artifact/org.jvnet.mimepull/mimepull/1.9.14</a>. Put it into the directory <tt>~/w2020/other-lib</tt> as well.
 
-  </ul>
+      <li><strong>MySQL connector</strong>
 
+    
+  There is one more JAR file, needed to provide for connectivity between the Java applications (such as the Game Server) and your relational database.
+(If you don't, you will have a runtime error mentioning <tt>com.mysql.cj.jdbc.Driver</tt> when you try to use the Game Server).
 
+  <p>Prior to ver. 6.023, we would put that file into the Tomcat's lib directory; but on Plesk systems, this is not recommended, therefore now we place it into  <tt>~/w2020/other-lib</tt> as well, so that it gets packed into the application WAR file along with all other JAR files.
+
+    <p>(The historic reason while it was handled in that special way was that we wanted Tomcat's own authentication system to access the MySQL server, where passwords etc would be stored. But that was given up early on).
+    
+  <p>
+    If your database server is the MySQL server, then the     necessary JAR file can be downloaded from the  <a href="https://dev.mysql.com/downloads/connector/j/">Connector/J</a> site. At that site, choose the appropriate version for your OS.
+
+  <p>On our system, we have put that JAR file into
+    <tt>/opt/w2020/lib</tt> (earlier, in     <tt>/usr/share/java</tt>),
+    and sym-linked it to w2020/other-lib.
+    <pre>
+    cd
+    cd w2020/other-lib
+    sudo ln -s /opt/w2020/lib/mysql-connector-java-8.0.20.jar
+    </pre>
+
+  <p>As of 2023, the above web site offers you downloading in the form a *.deb file, e.g. mysql-connector-j_8.1.0-1ubuntu22.04_all.deb . Once downloaded, you can install it with
+    <pre>
+      dpkg -i mysql-connector-j_8.1.0-1ubuntu22.04_all.deb
+    </pre>
+    To find out what files you have actually downloaded by doing this, try
+    <pre>
+$ dpkg-deb -c mysql-connector-j_8.1.0-1ubuntu22.04_all.deb 
+drwxr-xr-x root/root         0 2023-06-26 12:10 ./
+drwxr-xr-x root/root         0 2023-06-26 12:10 ./usr/
+drwxr-xr-x root/root         0 2023-06-26 12:10 ./usr/share/
+drwxr-xr-x root/root         0 2023-06-26 12:10 ./usr/share/doc/
+...
+drwxr-xr-x root/root         0 2023-06-26 12:10 ./usr/share/java/
+-rw-r--r-- root/root   2485886 2023-06-26 12:10 ./usr/share/java/mysql-connector-j-8.1.0.jar
+lrwxrwxrwx root/root         0 2023-06-26 12:10 ./usr/share/java/mysql-connector-java-8.1.0.jar -> mysql-connector-j-8.1.0.jar
+    </pre>
+    So this tells you where the JAR file gets installed, and you can simply sym-link it into <tt>w2020/other-lib</tt>  directory, instead of copying it.
+
+      </ul>
 
 
   </body>

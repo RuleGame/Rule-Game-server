@@ -23,6 +23,10 @@ public class GuessWriteReport extends FileWriteReport {
 	super(f,  _byteCnt);
     }
 
+    /** Records a guess.
+	@param text The text of the guess, entered by the player, to record
+	@param  guessConfidence The integer "confidence level" entered by the player
+     */
     static FileWriteReport writeGuess( String episodeId,  String text, int guessConfidence) {
 	
 	try {

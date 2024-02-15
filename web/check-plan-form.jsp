@@ -1,4 +1,7 @@
 <%@include file="include/imports.jsp" %>
+<%
+ContextInfo main = new ContextInfo(request,response);
+%>
 <html>
 <head>
 <title>Validate your experiment plan</title>
@@ -13,7 +16,12 @@
    <form method="post" action="game-data/CheckPlanService/checkPlan"
 	 enctype="application/x-www-form-urlencoded">
 	 <tt>
-	 <%= Files.listSAllExperimentPlansHtml() %><br>
+	 <%= (main.exp==null) ?
+	  Files.listSAllExperimentPlansHtml(false) :
+	  Tools.radio("exp", main.exp, main.exp, false)
+	  %>
+
+<br>
 	     </tt>    
      <button type="submit">Check</button>
    </form>
@@ -21,6 +29,7 @@
 <hr>
 <br>
 
+<% if (main.exp==null) { %>
 
 <h2>Dynamic experiment plans</h2>
 
@@ -74,6 +83,8 @@ or (for another stalemate example):
 <p>(Note: when testing individual rule sets, stalemate testing will only work correctly if your rule set uses the legacy shapes and legacy colors. To test a rule set with custom shapes or custom colors, and for rule sets with image-and-property-based objects, you need to create an experiment plan, so that the tester will know what the set of possible objects is!)
 
 <hr>
+<%}%>
+
 
 <p>See also:
 

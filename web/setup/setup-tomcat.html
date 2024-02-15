@@ -64,6 +64,7 @@ sudo chown tomcat.tomcat  /opt/tomcat/game-data /opt/tomcat/saved
 
     <h2>Extra libraries</h2>
 
+    <s>
   <p>You will need an extra JAR file installed to provide for connectivity between the Java applications (such as the Game Server) and your relational database.
 (If you don't, you will have a runtime error mentioning <tt>com.mysql.cj.jdbc.Driver</tt> when you try to use the Game Server).
 
@@ -95,7 +96,10 @@ drwxr-xr-x root/root         0 2023-06-26 12:10 ./usr/share/java/
 lrwxrwxrwx root/root         0 2023-06-26 12:10 ./usr/share/java/mysql-connector-java-8.1.0.jar -> mysql-connector-j-8.1.0.jar
     </pre>
     So this tells you where the JAR file gets installed, and you can simply sym-link it into Tomcat's lib directory, instead of copying it.
+    </s>
 
+    <P>(As of ver. 6.023, the above is not recommended anymore; instead, we pack the JAR file in question into the main WAR file).
+    
     <h2>Running on port 80</h2>
 
     <p>By default, Tomcat is configured to run on port 8080. If you desire to run it on port 80 instead, you need to modify Tomcat's config file (server.xml), and to allow user <tt>tomcat</tt> to use port 80. (By default, only user  <tt>root</tt>  can use this port, and other ports with numbers before 2024). For instructions, see e.g. <a href="https://www.baeldung.com/tomcat-change-port">https://www.baeldung.com/tomcat-change-port</a>

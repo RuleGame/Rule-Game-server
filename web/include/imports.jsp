@@ -6,5 +6,5 @@
 <%@ page import="edu.wisc.game.web.*" %>
 <%@ page import="edu.wisc.game.rest.*" %>
 <%@ page import="edu.wisc.game.tools.*" %>
-<%@ page import="edu.wisc.game.util.MainConfig" %>
+<%@ page import="edu.wisc.game.util.*" %>
 <!-- %@ taglib uri="http://sapir.psych.wisc.edu/taglibs/icdtags" prefix="w2020" % -->

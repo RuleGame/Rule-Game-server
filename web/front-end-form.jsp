@@ -36,7 +36,11 @@ Game Server: <input type=text name="server" size=80 value="<%=main.serverUrl%>">
 <tr><td valign="top">
 Choose one of the experiment plans listed below:<br>
 	 <tt>
-	 <%= Files.listSAllExperimentPlansHtml() %>
+	 	 <%= (main.exp==null) ?
+	  Files.listSAllExperimentPlansHtml(true) :
+	  Tools.radio("exp", main.exp, main.exp, false)
+	  %>
+
 	 </tt>    
 <td valign="top">   
 Pick a unique workerId for your session (e.g. <tt>john-doe-2021-06-18</tt>): <input type="text" name="workerId" size="30" value="">
@@ -51,6 +55,9 @@ Pick a unique workerId for your session (e.g. <tt>john-doe-2021-06-18</tt>): <in
 </div>
 <br>
 <hr>
+
+
+<%if (main.exp==null) { %>
 
 <h2>Form 2: ...or you can enter the plan name by hand:</h2>
 
@@ -81,6 +88,8 @@ or <tt>R:bottomLeft_then_topRight:simple</tt>
     <strong><button type="submit">Play (<%=main.devProd()%>)</button></strong>
     </form>
 </div>
+
+<% } %>
 
 
 </body>

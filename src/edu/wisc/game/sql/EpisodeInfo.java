@@ -682,7 +682,7 @@ public class EpisodeInfo extends Episode {
        }
    }
 	
-
+    /** Records the player-provided "guess" to a CSV file */
     public void saveGuessToFile(File f, String guessText, int confidence) {
 	     final String[] keys = 
 	   { "playerId",

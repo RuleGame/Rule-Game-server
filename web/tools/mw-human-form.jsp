@@ -5,7 +5,7 @@ ContextInfo main = new ContextInfo(request,response);
 <html>
 <head>
 <title>Compare rule sets difficulty for human players</title>
-   <link rel="stylesheet" type="text/css" href="css/rule-game.css"/>
+   <link rel="stylesheet" type="text/css" href="../css/rule-game.css"/>
 </head>
 <body>
 <h1>Compare rule sets difficulty for human players</h1>
