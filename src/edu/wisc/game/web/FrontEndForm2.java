@@ -18,7 +18,7 @@ import edu.wisc.game.rest.*;
 public class FrontEndForm2 extends ContextInfo   {
 
     /** Used in the ID */
-    public String stamp = null;
+    public String stamp = null, prefix="";
 
     public static final DateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
     
@@ -35,7 +35,9 @@ public class FrontEndForm2 extends ContextInfo   {
 	}
 
 	stamp =  sdf.format( new Date()) + "-" +Episode.randomWord(6);
-		    
+	prefix=  request.getParameter("prefix");
+	if (prefix==null || prefix.equals("null")) prefix = "";
+
     }
 
 }

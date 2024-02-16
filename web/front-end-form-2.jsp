@@ -41,7 +41,7 @@ the production version of the client, which offers the same experience the M-Tur
 
 <input type="hidden" name="exp" size="80" value="<%=main.exp%>">
 
-<br>Player Id: <input type="text" name="workerId" size="30" value="XX-<%=main.stamp%>">
+<br>Player Id: <input type="text" name="workerId" size="60" value="XX-<%=main.prefix%><%=main.stamp%>">
 <br>(Replace XX above with your initials)
 
 <br><input type="radio" name="intro" value="true" checked>Show intro
