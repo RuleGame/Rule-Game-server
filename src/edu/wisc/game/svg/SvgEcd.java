@@ -7,26 +7,40 @@ import java.text.*;
 
 import  edu.wisc.game.formatter.*;
 
+/** Utilities for generating SVG plots for ECD data */
 public class SvgEcd {
 
-    static final int F=500, xmargin=30, ymargin=20;
-    static final int H=F+ 2*ymargin;
+    static final boolean needToLabelAxis = true;
+
+    /** The size of the data field (in SVG coordinates) */
+    static final int F=500;
+    static final int lineHeight=20, ticLabelWidth=30;
+    static final int xmarginL=ticLabelWidth + (needToLabelAxis? lineHeight:0), xmarginR=30,
+	ymarginT=20,
+	ymarginB= (needToLabelAxis? 2: 1) * lineHeight;
+    /** The height of the image */
+    static final int H=F+ ymarginT + ymarginB;
+    static final int W=F+ xmarginL + xmarginR;
 
     static final public HTMLFmter fm =    HTMLFmter.htmlFmter;
  
-    
+
+
+
     public static class Point implements Cloneable {
 
 	public static void setScale(double _xRange, double _yRange) {
 	    xRange =  _xRange;
 	    yRange =  _yRange;
 	}
-	    
+
+	/** The range of the "science coordinates" that maps to the F x F
+	    square in the SVG coordinates */
 	private static double xRange=0, yRange=0;
 
 	
-	/** Coordinates with respect to the center of the image, with 
-	    the Y axis going up */
+	/** The "science coordinates", i.e. coordinates with respect
+	    to the center of the image, with the Y axis going up */
 	public double x,y;
 	public Point(double _x, double _y) {
 	    x=_x;
@@ -50,8 +64,8 @@ public class SvgEcd {
 	    double qy =y*Math.cos(alpha) + x*Math.sin(alpha);
 	    return new Point(qx,qy);
 	}
-	/** In SVG coordinates (with respect to the top left corner, 
-	    Y going down)
+	/** In SVG coordinates of the point (with respect to the top
+	    left corner, Y going down)
 	*/
 	public double[] svgCoord() {
 	    Point p = rawPoint();
@@ -63,8 +77,8 @@ public class SvgEcd {
 	    if (xRange <=0) throw new IllegalArgumentException("xRange not set");
 	    if (yRange <=0) throw new IllegalArgumentException("yRange not set");
 
-	    return new Point((xmargin+(x*F)/xRange),
-			     (ymargin+F-(y*F)/yRange));
+	    return new Point((xmarginL+(x*F)/xRange),
+			     (ymarginT+F-(y*F)/yRange));
 	}
 
 	String[] svgCoordString() {
@@ -88,20 +102,37 @@ public class SvgEcd {
 
    
     /** name="val" .... */
-    static String mkSvgParams(String... nameVal) {
-	String s = "";
-	if ((nameVal.length % 2)!=0) throw new IllegalArgumentException("odd number of params");
-	Vector<String> v = new 	Vector<>();
-	for(int j=0; j<nameVal.length; j+=2) {
-	    v.add( nameVal[j] + "=\""+ nameVal[j+1]  +"\"");	    
+    static class SvgElement {
+	final String tag;
+	String body = "";
+	/** Parameters */
+	private Vector<String> v = new 	Vector<>();
+	SvgElement(String _tag) {
+	    this(_tag, "");
 	}
-	return String.join(" ", v);
+	SvgElement(String _tag, String _body) {
+	    tag = _tag;
+	    body = _body;
+	}
+		
+	
+	void addParams(String... nameVal) {
+	    if ((nameVal.length % 2)!=0) throw new IllegalArgumentException("odd number of params");
+	    for(int j=0; j<nameVal.length; j+=2) {
+		v.add( nameVal[j] + "=\""+ nameVal[j+1]  +"\"");	    
+	    }
+	}
+
+	public String toString() {
+	    String para = String.join(" ", v);
+	    return fm.wrap(tag, para, body);
+	}
+
     }
 
-    static String addSvgParams(String s, String... nameVal) {
-	return s + " " + mkSvgParams(nameVal);
-    }
+    
 
+    /** Chooses a suitable spacing between x tic labels */
     private static int chooseXStep(double xRange) {
 	int step = 1;
 	while(true) {
@@ -116,42 +147,54 @@ public class SvgEcd {
 	return rawText(x,y,s,null);
     }
 
+    /** Puts some text into the specified position on the SVG canvas
+	@param x The x position, in SVG coordinates
+	@param y The y position, in SVG coordinates
+     */
     public static String rawText(double x, double y, String s, String color) {
+	return  rawTextE(x,y,s,color).toString();
+    }
+    
+    public static SvgElement rawTextE(double x, double y, String s, String color) {
+	SvgElement e = new SvgElement("text", s);
 	// sans-serif vs. monospace
-	String para = mkSvgParams("x", ""+x,
-				  "y", ""+y,
-				  "font-family", "monospace"
-				  //"font-family", "Arial, Helvetica, monospace"
-				  );
+	e.addParams("x", ""+x,
+		    "y", ""+y,
+		    "font-family", "monospace"
+		    //"font-family", "Arial, Helvetica, monospace"
+		    );
 				  
-	if (color!=null) para = addSvgParams(para, "stroke", color);
-	
-	return fm.wrap("text", para, s);
+	if (color!=null) e.addParams("stroke", color);
+	return e;
+
     }
 	       
 
     
     /**
+        Draws the frame around the data field, and prints the
+	tic labels.
        <rect x="120" width="100" height="100" rx="15" />
     */
     public static String drawFrame(double xRange) {
 	String color="black";
-	String para = mkSvgParams("x", ""+xmargin,
-				  "y", ""+ymargin,
-				  "width", ""+F,
-				  "height", ""+F
-				  //"stroke",color,
-				  );
+	SvgElement e = new SvgElement("rect");
+	e.addParams("x", ""+xmarginL,
+		    "y", ""+ymarginT,
+		    "width", ""+F,
+		    "height", ""+F
+		    //"stroke",color,
+		    );
 
 	Vector<String> v = new Vector<>();
-	v.add( fm.wrap("rect", para, ""));
+	v.add( e.toString());
 
 	int n = 10;
 	for(int j=0; j<=n; j++) {
-	    double x = xmargin;
-	    double y = ymargin + F - (F*j)/n;
+	    double x = xmarginL;
+	    double y = ymarginT + F - (F*j)/n;
 	    v.add( rawLine( new Point(x,y), new Point(x+10, y)));
-	    v.add( rawText(x-xmargin+1, y,  "" + j/(double)n));
+	    v.add( rawText(x-ticLabelWidth+1, y,  "" + j/(double)n));
 	}
 
 
@@ -163,11 +206,23 @@ public class SvgEcd {
 	    Point raw = new Point( a[0], a[1]);
 	    Point raw1 = new Point(raw.x, raw.y - 10);
 	    v.add( rawLine( raw, raw1));
-	    v.add( rawText(raw.x, raw.y+ ymargin -1, "" + (j*xStep)));
+	    v.add( rawText(raw.x, raw.y+ lineHeight -4, "" + (j*xStep)));
+	}
+
+	if (needToLabelAxis) {
+
+	    String ylabel = "Cumulative fraction of all participants";
+	    int x0 = lineHeight - 4, y0 = ymarginT + F - 100;
+	    SvgElement el = rawTextE(x0, y0, ylabel, null);
+	    el.addParams( "transform", "rotate(-90 "+x0+" " +y0+")");
+	    v.add( el.toString());
+
+	    // ZZZ
+	    String xlabel = "m* values of participants";
+	    v.add( rawText(xmarginL + 100, F+ymarginT+2*lineHeight-4, xlabel));
 	}
 	
-	String s = String.join("\n", v);
-	
+	String s = String.join("\n", v);       
 	s = fm.wrap( "g", "color=\"" + color+"\"", s);
 	return s;
 
@@ -179,12 +234,14 @@ public class SvgEcd {
 	return rawLine(a,b,null);
     }
     public static String rawLine(Point a, Point b, String color) {
-	String para = mkSvgParams( "x1", ""+a.x,
-				   "y1", ""+a.y,
-				   "x2", ""+b.x,
-				   "y2", ""+b.y);
-	if (color!=null) para = addSvgParams(para,"stroke", color);
-	return fm.wrap("line", para, "");
+	SvgElement e = new SvgElement("line");
+		    
+	e.addParams( "x1", ""+a.x,
+		     "y1", ""+a.y,
+		     "x2", ""+b.x,
+		     "y2", ""+b.y);
+	if (color!=null) e.addParams("stroke", color);
+	return e.toString();
     }
 
     /** <line x1="7" y1="17" x2="17" y2="7"></line> */   
@@ -208,10 +265,10 @@ public class SvgEcd {
 
     //	(Vector<Point>) {
 	//	v.stream().map( a-> String.join(",", a.svgCoordString()))
-	
-	String para = mkSvgParams( "points", String.join(" ", q));
-	if (color!=null) para = addSvgParams(para,"stroke", color);
-	return fm.wrap("polyline", para, "");
+	SvgElement e = new SvgElement("polyline");
+	e.addParams( "points", String.join(" ", q));
+	if (color!=null) e.addParams("stroke", color);
+	return e.toString();
     }
 
     /*  <circle cx="50" cy="50" r="50" /> */
@@ -219,12 +276,13 @@ public class SvgEcd {
 	return rawCircle(center.rawPoint(), radius, color);
     }
     public static String rawCircle(Point center, double radius, String color) {
-	String para = mkSvgParams( "cx", ""+center.x,
-				   "cy", ""+center.y,
-				   "r", ""+radius);
+	SvgElement e = new SvgElement("circle");
+	e.addParams( "cx", ""+center.x,
+		     "cy", ""+center.y,
+		     "r", ""+radius);
 
-	if (color!=null) para = addSvgParams(para,"stroke", color);
-	return fm.wrap("circle", para, "");
+	if (color!=null) e.addParams("stroke", color);
+	return e.toString();
     }
 
     
@@ -266,12 +324,10 @@ public class SvgEcd {
 	    vp.add(a.copy());
 	}
 
-
 	if (a.x < xRange) {
 	    a.x =xRange;
 	    vp.add(a.copy());
 	}
-
 
 	z.append(polyline( vp.toArray(new Point[0]), color));
 
@@ -281,22 +337,22 @@ public class SvgEcd {
     }
 
     static public String outerWrap(String s) {
-	return outerWrap(s,H,H);
+	return outerWrap(s,W,H);
     }
     static public String outerWrap(String s, double W, double H) {
-	String svgExtra = mkSvgParams("xmlns", "http://www.w3.org/2000/svg",
-				      "width", ""+W,
-				      "height", ""+H,
-				      "viewBox", ""+W+" "+H,
-				      "fill", "none",
-				      "stroke", "currentColor",
-				      "stroke-width", "" +1,
-				      "stroke-linecap", "round",
-				      "stroke-linejoin", "round",
-				      "class", "feather feather-arrow");
-
-	s = fm.wrap("svg", svgExtra, s);
-	return s;
+	
+	SvgElement e= new SvgElement("svg", s);
+	e.addParams("xmlns", "http://www.w3.org/2000/svg",
+		    "width", ""+W,
+		    "height", ""+H,
+		    "viewBox", ""+W+" "+H,
+		    "fill", "none",
+		    "stroke", "currentColor",
+		    "stroke-width", "" +1,
+		    "stroke-linecap", "round",
+		    "stroke-linejoin", "round",
+		    "class", "feather feather-arrow");
+	return e.toString();
     }
     
     static NumberFormat fmt3d = new DecimalFormat("000");

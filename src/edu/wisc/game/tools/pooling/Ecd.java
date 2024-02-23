@@ -162,7 +162,7 @@ public class Ecd {
     static SimMethod simHB = SimMethod.Max;
     static SimMethod simClustering = SimMethod.Min;
 
-    /** If non-zero, this is used as "determenistic jitter" to remove ties
+    /** If non-zero, this is used as "deterministic jitter" to remove ties
 	for KS */
     static double untie = 0;
     
