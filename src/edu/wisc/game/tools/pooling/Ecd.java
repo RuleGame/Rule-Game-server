@@ -152,6 +152,8 @@ public class Ecd {
     static NumberFormat fmt3d = new DecimalFormat("000");
 
     static double alpha = 0.05;
+    /** The target rule set name. If it is not specified on the command line,
+     we compare all experiences (with all targets) */
     static String target = null;
    
     /* How  the similarity is computed from the MW and KS p-values:
@@ -180,7 +182,6 @@ public class Ecd {
 
 	File csvOutDir=null;
 	
-	/** The target rule set name. Must be specified. */
 	Vector<String> importFrom = new Vector<>();
 	Long seed = null;
 
