@@ -46,61 +46,11 @@ These modes are discussed below.
     where <em>data_selector</em> specifies the set of transcripts to extract, and  <em>options</em> specify the mode of processing.
 </p>
 
-
-   <h4>Data selection</h4>
-<p>There are several data selection modes, illustrated below. They are  <a href="../analyze-transcripts.html#select">exactly the same as for the original Analyze Transcript</a> tool.
-
-  <p>
   To save space, the script name in the examples below is given without the full path, which in reality you will need to indicate (unless you simply add the scripts directory to your PATH, of course). 
 
-  <h5>(A) Select by experiment plan name</h5>
-  <pre>analyze-transcripts-mwh.sh <em>[options] plan1 [plan2...]</em>  </pre>
-   e.g.
-  <pre>analyze-transcripts-mwh.sh pilot06  </pre>
-  or
-  <pre>analyze-transcripts-mwh.sh '%OCT26%'  </pre>
 
-<p>
-(You can also write <code>analyze-transcripts.sh -plan '%OCT26%'</code>, but the <tt>-plan</tt> option is unnecessary, since selection by plan name is the default selection method). 
-
-<p>
-As the above example shows, the percent character can be used for wildcard-based selection, to select all matching plans. The percent sign can also be used in all other selectors discussed below.  (We use <tt>%</tt> rather than <tt>*</tt> because that's what used in the SQL server. It also avoids certain problems with  command line processing).
-
-<p>Specifying an experiment plan is equivalent to specifying a list of player IDs (see 2 below) that includes all player IDs assigned to that experiment plan.
-
-    <h5>(B) Select by player IDs</h5>
-
-<p>In the Rule Game Server, a player ID corresponds to a round of one or several series of episodes played according to a particular trial list. An M-Turker has a single player id, while a repeat user may have multiple ones.
-  <pre>analyze-transcripts-mwh.sh -pid <em>playerId1 [playerId2 ...]</em>  </pre>
-  E.g.
-  <pre>analyze-transcripts-mwh.sh -pid 'pk%'  </pre>
-or
-  <pre>analyze-transcripts-mwh.sh -pid 'RepeatUser-%'  </pre>
-(The second examples picks all player IDs created by GS4's repeat users, since that's what their player IDs look like).      
-
-  <h5>(C) Select by repeat user ID</h5>
-
-<P>Internally, repeat users are identified by unique user IDs. (You can see IDs for various player e.g. by logging in to the SQL server with <tt>mysql</tt> and issuing commands such as
-  <Pre>use game;
-select * from User;  </pre>
-
-<p>
-  One can pass a list of user IDs to the Analyze Transcript tool as well, as follows:
-  <pre>analyze-transcripts-mwh.sh -uid <em>uid1 [uid2 ...]</em>  </pre>
-  E.g.
-  <pre>analyze-transcripts-mwh.sh -uid 2 3 6  </pre>
-</p>
-
-<p>Selecting data by specifying a repeat user ID is equivalent to selecting by player ID and listing all player IDs associated with that repeat user.
-    	 
-<h5>(D) Select by repeat user nickname</h5>
-
-<p>A repeat created via the login screen may have a nickname. You can see the nicknames of repeat users with the same SQL command. The Analyze Transcript tool can take a list of user nicknames instead of a list of user IDs, e.g.  
-  <pre>analyze-transcripts-mwh.sh -nickname 'John%Doe' '%Walrus%'  </pre>
-
-
-<p>Note that one should not use spaces inside command-line arguments. If your nickname has a space inside it, you may use a percent sign (%) on the command line above instead.  
-</p>
+   <h4>Data selection</h4>
+<p>There are several data selection modes, with the options -plan, -pid, -uid, and -nickname. They work  <a href="../analyze-transcripts.html#select">exactly the same as for the original Analyze Transcript</a> tool.
 
 <h4>Extraction options</h4>
 
