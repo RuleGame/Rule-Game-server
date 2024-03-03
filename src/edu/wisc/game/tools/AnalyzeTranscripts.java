@@ -31,7 +31,7 @@ public class AnalyzeTranscripts {
     }
     static private void usage(String msg) {
 	System.err.println("For usage info, please see:\n");
-	System.err.println("http://sapir.psych.wisc.edu:7150/w2020/analyze-transcripts.html");
+	System.err.println("http://rulegame.wisc.edu/w2020/analyze-transcripts.html");
 	if (msg!=null) 	System.err.println(msg + "\n");
 	System.exit(1);
     }
@@ -221,69 +221,15 @@ public class AnalyzeTranscripts {
 	
 	EntityManager em = Main.getNewEM();
 
-
 	if (needBoards && !needP0) throw new IllegalArgumentException("Cannot use option -boards without -p0");
-	
-	plans = expandPlans(em, plans);
 
-	PlayerList plist = new 	PlayerList(em,  pids,  nicknames,   uids);
-	EpisodesByPlayer ph =new EpisodesByPlayer();
-
-	// for each experiment plan...
-	for(String exp: plans) {		
-	    System.out.println("Experiment plan=" +exp);
-	    try {
-	    
-	    // ... List all trial lists 
-	    TrialListMap trialListMap=new TrialListMap(exp);
-	    System.out.println("Experiment plan=" +exp+" has " + trialListMap.size() +" trial lists: "+ Util.joinNonBlank(", ", trialListMap.keySet()));
-	    
-	    Vector<EpisodeHandle> handles= new Vector<>();
-
-	    // ... and all players enrolled in the plan
-	    Query q = em.createQuery("select m from PlayerInfo m where m.experimentPlan=:e");
-	    q.setParameter("e", exp);
-	    List<PlayerInfo> res = (List<PlayerInfo>)q.getResultList();
-	    for(PlayerInfo p:res) {
-		ph.doOnePlayer(p,  trialListMap, handles);
-	    }
-	    
-	    System.out.println("For experiment plan=" +exp+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
-	    } catch(Exception ex) {
-		String msg = "ERROR: Skipping plan=" +exp+" due to an exception:";
-		System.out.println(msg);
-		System.err.println(msg);
-		System.err.println(ex);
-		ex.printStackTrace(System.err);
-	    }
-
-	}
-
-	// Or, for each specified player...
-	HashMap<String,TrialListMap> trialListMaps = new HashMap<>();	
-	for(PlayerInfo p: plist) {
-	    try {
-		String exp=p.getExperimentPlan();
-		TrialListMap trialListMap=trialListMaps.get(exp);
-		if (trialListMap==null) trialListMaps.put(exp, trialListMap=new TrialListMap(p.getExperimentPlan()));
-		Vector<EpisodeHandle> handles= new Vector<>();
-		ph.doOnePlayer(p,  trialListMap, handles);
-		System.out.println("For player=" +p.getPlayerId()+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
-	    } catch(Exception ex) {
-		System.err.println("ERROR: Skipping player=" +p.getPlayerId()+" due to missing data. The problem is as follows:");
-		System.err.println(ex);
-		ex.printStackTrace(System.err);
-	    }
-	}
-
-	
+	EpisodesByPlayer ph = listEpisodesByPlayer( em, plans, pids, nicknames, uids);
 
 	File base = new File(outDir);
 	if (!base.exists()) {
 	    if (!base.mkdirs()) usage("Cannot create output directory: " + base);
 	}
 	if (!base.isDirectory() || !base.canWrite()) usage("Not a writeable directory: " + base);
-
 
 	PrintWriter wsum =null;
 	if (weWantFitting) {
@@ -322,6 +268,123 @@ public class AnalyzeTranscripts {
 	if (wsum!=null) wsum.close();
     }
 
+    /** Given the command-line arguments, finds all players whose data
+	we want, and all episodes by these players.
+
+	<ul>
+
+	<li>
+	If only the list of plans is non-empty, the returned list of
+	players will include all players who played those plans.
+
+	<li>
+	If the list of plans is empty, and the lists of pids and/or
+	nicknames and/or uids are non-empty, the returned list of
+	players will include all players associated with any of these
+	IDs. (In practice, it is likely that the user will typically
+	supply only one of these participant-based lists).
+
+	<li> If both the list of plans and at least one of the 3
+	participant-based lists (pids, nicknames, uids) are non-empty,
+	this will be understood as a conjunction, i.e. that the user
+	wants the data only for certain plans, but only for games in
+	these plans played by certain players (e.g. only by M-Turkers
+	and not by our staff).  Thus this will be interpreted as a
+	conjunction, and only players that are simultaneously in the
+	requested plans and in the requested participant-based lists
+	will be returned. (E.g., "the M-Turkers who played games in
+	plan X").  </ul>
+    */
+    static EpisodesByPlayer listEpisodesByPlayer(EntityManager em,
+						 Vector<String> plans,
+						 Vector<String> pids,
+						 Vector<String> nicknames,
+						 Vector<Long> uids) throws Exception {
+
+	boolean needConjunction = (plans.size()>0 && pids.size()+nicknames.size()+uids.size() > 0);
+
+	plans = expandPlans(em, plans);
+
+	PlayerList plist = new 	PlayerList(em,  pids,  nicknames,   uids);
+	//System.out.println("DEBUG:: pids=" + Util.joinNonBlank(", " ,pids));
+	//System.out.println("DEBUG:: plist=" + plist);
+
+	HashSet<String> eligiblePlayerIDs = new HashSet<>();
+	if (needConjunction) {
+	    for(PlayerInfo p: plist) {
+		eligiblePlayerIDs.add(p.getPlayerId());
+	    }
+
+	    System.out.println("Conjunction mode: plan in {" + Util.joinNonBlank(", " ,plans) + "} AND (" +
+			       "pid in + {" + Util.joinNonBlank(", " ,pids) + "} OR " +
+			       "nickname in {" + Util.joinNonBlank(", " ,nicknames) + "} OR " +
+			       "uid in {" + Util.joinNonBlank(", " ,uids) + "})");
+	    System.out.println("The right side of this conjunction includes " + plist.size() + " eligible player IDs");
+	} else if (plans.size()>0) {
+	    System.out.println("Selection by plan: plan in {" + Util.joinNonBlank(", " ,plans) + "}");
+	} else {
+	    System.out.println("Selection by participant: " +
+			       "pid in + {" + Util.joinNonBlank(", " ,pids) + "} OR " +
+			       "nickname in {" + Util.joinNonBlank(", " ,nicknames) + "} OR " +
+			       "uid in {" + Util.joinNonBlank(", " ,uids) + "}");
+	}
+	
+
+	EpisodesByPlayer ph =new EpisodesByPlayer();
+
+	// for each experiment plan...
+	for(String exp: plans) {		
+	    System.out.println("Experiment plan=" +exp);
+	    try {
+	    
+	    // ... List all trial lists 
+	    TrialListMap trialListMap=new TrialListMap(exp);
+	    System.out.println("Experiment plan=" +exp+" has " + trialListMap.size() +" trial lists: "+ Util.joinNonBlank(", ", trialListMap.keySet()));
+	    
+	    Vector<EpisodeHandle> handles= new Vector<>();
+
+	    // ... and all players enrolled in the plan
+	    Query q = em.createQuery("select m from PlayerInfo m where m.experimentPlan=:e");
+	    q.setParameter("e", exp);
+	    List<PlayerInfo> res = (List<PlayerInfo>)q.getResultList();
+	    for(PlayerInfo p:res) {
+		boolean include = !needConjunction || eligiblePlayerIDs.contains(p.getPlayerId());
+		if (include) ph.doOnePlayer(p,  trialListMap, handles);
+	    }
+	    
+	    System.out.println("For experiment plan=" +exp+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
+	    } catch(Exception ex) {
+		String msg = "ERROR: Skipping plan=" +exp+" due to an exception:";
+		System.out.println(msg);
+		System.err.println(msg);
+		System.err.println(ex);
+		ex.printStackTrace(System.err);
+	    }
+	}
+
+	// Or, for each specified player...
+	if (!needConjunction) {
+	    HashMap<String,TrialListMap> trialListMaps = new HashMap<>();	
+	    for(PlayerInfo p: plist) {
+		try {
+		    String exp=p.getExperimentPlan();
+		    TrialListMap trialListMap=trialListMaps.get(exp);
+		    if (trialListMap==null) trialListMaps.put(exp, trialListMap=new TrialListMap(p.getExperimentPlan()));
+		    Vector<EpisodeHandle> handles= new Vector<>();
+		    ph.doOnePlayer(p,  trialListMap, handles);
+		    System.out.println("For player=" +p.getPlayerId()+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
+		} catch(Exception ex) {
+		    System.err.println("ERROR: Skipping player=" +p.getPlayerId()+" due to missing data. The problem is as follows:");
+		    System.err.println(ex);
+		    ex.printStackTrace(System.err);
+		}
+	    }
+	}
+	
+	return ph;	
+    }
+
+    
     /** Lists all trial lists for an experiment plan. The keys are
 	trial list IDs */
     static class TrialListMap extends HashMap<String,TrialList> {

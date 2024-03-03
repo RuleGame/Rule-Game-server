@@ -6,9 +6,9 @@
 
 <h1>Processing human players' transcripts for Mann-Whitney comparison</h1>
 
-<div align="center"><em>Updated 2023-06-20, for Game Server 6.014</em></div>
+<div align="center"><em>Updated 2024-03-03, for Game Server 6.026</em></div>
 
-<p>This document desribes the functionality of the script <tt>scripts/analyze-transcripts-mwh.sh</tt>, which is designed to analyze human players' transcripts in order to compare rule sets with respect to their ease/difficulty for the human players' population.
+<p>This document describes the functionality of the script <tt>scripts/analyze-transcripts-mwh.sh</tt>, which is designed to analyze human players' transcripts in order to compare rule sets with respect to their ease/difficulty for the human players' population. The underlying Java class is <tt>edu.wisc.game.tools.MwByHuman</tt>
 
 <p>This command-line script accesses the same functionality as the <a href="mw-human-form.jsp">web interface</a>, but also has some additional functionality which allows you to separate the stages of transcript analysis and M-W comparison.
 
@@ -48,7 +48,7 @@ These modes are discussed below.
 
 
    <h4>Data selection</h4>
-<p>There are several data selection modes, illustrated below. They are exactly the same as for the original <a href="../analyze-transcripts.html">Analyze Transcript</a> tool.
+<p>There are several data selection modes, illustrated below. They are  <a href="../analyze-transcripts.html#select">exactly the same as for the original Analyze Transcript</a> tool.
 
   <p>
   To save space, the script name in the examples below is given without the full path, which in reality you will need to indicate (unless you simply add the scripts directory to your PATH, of course). 

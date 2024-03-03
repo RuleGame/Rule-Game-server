@@ -4,9 +4,9 @@
 <body>
   <h1>The Analyze Transcripts tool</h1>
 
-<div align="center"><em>Updated 2024-02-01, for Game Server 6.023</em></div>
+<div align="center"><em>Updated 2024-03-03, for Game Server 6.026</em></div>
 
-  <p>The Analyze Transcripts tool can be used to extract transcripts for specified experiment plans, specified players, or specified repeat users, and to carry out certain types of data analysis.
+  <p>The Analyze Transcripts tool (<tt>scripts/analyze-transcripts.sh</tt>; the underlying Java class is <tt>edu.wisc.game.tools.AnalyzeTranscripts</tt>) can be used to extract transcripts for specified experiment plans, specified players, or specified repeat users, and to carry out certain types of data analysis.
 
 <p>When processing trasnscripts, the analyzer removes duplicate entries (which are sometimes written by the server) and entries with code 3 "empty cell", because our researchers become sad when they see players grabbing at empty cells (i.e. already-removed pieces).
 
@@ -38,7 +38,7 @@
 
       
 
-    <h2>Data selection</h2>
+    <h2><a name="select">Data selection</a></h2>
 <p>There are several data selection modes, illustrated below. To save space, the script name in the examples below is given without the full path, which in reality you will need to indicate (unless you add the directory where the script resides to your <tt>PATH</tt>). The output goes to the <em>output directory</em>, which by default is named <tt>tmp</tt>; you can also specify its location using the   <tt>-out</tt> option (see below). If the output directory does not exist, the tool will create it.
 
   <h3>1. Select by experiment plan name</h3>
@@ -85,7 +85,8 @@ analyze-transcripts.sh -pid 'RepeatUser-%'
 use game;
 select * from User;
   </pre>
-
+  )
+  
 <p>
   One can pass a list of user IDs to the Analyze Transcript tool as well, as follows:
   <pre>      
@@ -110,6 +111,43 @@ analyze-transcripts.sh -nickname 'John%Doe' '%Walrus%'
 <p>Note that one should not use spaces inside command-line arguments. If your nickname has a space inside it, you may use a percent sign (%) on the command line above instead.  
 </p>
 
+<h3>Combining different selectors</h3>
+
+  <p>What happens if your command has several different selction options, e.g. by plan and by player ID, or by player ID and by use ID? As of ver. 6.026 this works as follows.
+
+    
+	<ul>
+
+	<li>
+	If only the list of plans is given (with the <tt>-plan</tt> option), the list of
+	players to analyze will include all players who played those plans.
+
+	<li>
+	If the list of plans is empty, and the lists of pids and/or
+	nicknames and/or uids are non-empty (some values have been
+	provided in one or more of the "participant-based"
+	options <tt>-pid</tt>, <tt>-uid</tt>, or <tt>-nickname</tt>),
+	the list of players to analyze will include all players
+	associated with any of these IDs. (In practice, it is likely
+	that the user will typically supply only one of these
+	participant-based lists).
+
+	<li> If both the list of plans and at least one of the 3
+	participant-based lists (pids, nicknames, uids) are non-empty, this will be
+	understood as a conjunction, i.e. that the user wants the data
+	only for certain plans, but only for games in these plans
+	played by certain players (e.g. only by M-Turkers and not by
+	our staff).  Thus this will be interpreted as a conjunction,
+	and only players that are simultaneously in the requested
+	plans and in the requested participant-based lists will be
+	returned. (E.g., "the M-Turkers who played games in plan X").
+	</ul>
+
+  <p>Example: the selector <pre> -plan 'ep/rule_ambiguity/ambiguity%'  -pid 'A%'</pre>
+    will select the players whose player IDs started with an <tt>A</tt> (i.e. mostly M-Turkers)
+    who played one of the plans with names started with <tt>ep/rule_ambiguity/ambiguity</tt>
+    
+	
 <h2>Options controlling input and output</h2>
 
 

@@ -243,65 +243,8 @@ public class MwByHuman extends AnalyzeTranscripts {
       	EntityManager em = Main.getNewEM();
 
 	try {
-	plans = expandPlans(em, plans);
 
-
-	PlayerList plist = new 	PlayerList(em,  pids,  nicknames,   uids);
-	//System.out.println("DEBUG:: pids=" + Util.joinNonBlank(", " ,pids));
-	//System.out.println("DEBUG:: plist=" + plist);
-	EpisodesByPlayer ph =new EpisodesByPlayer();
-	//	System.out.println("DEBUG:: the episodes for " + ph.size() + " players: " + ph);
-	
-	// for each experiment plan...
-	for(String exp: plans) {		
-	    System.out.println("Experiment plan=" +exp);
-
-	    try {
-	    
-	    // ... List all trial lists 
-	    TrialListMap trialListMap=new TrialListMap(exp);
-	    // System.out.println("Experiment plan=" +exp+" has " + trialListMap.size() +" trial lists: "+ Util.joinNonBlank(", ", trialListMap.keySet()));
-	    
-	    Vector<EpisodeHandle> handles= new Vector<>();
-
-	    // ... and all players enrolled in the plan
-	    Query q = em.createQuery("select m from PlayerInfo m where m.experimentPlan=:e");
-	    q.setParameter("e", exp);
-	    List<PlayerInfo> res = (List<PlayerInfo>)q.getResultList();
-	    for(PlayerInfo p:res) {
-		ph.doOnePlayer(p,  trialListMap, handles);
-	    }
-	    
-	    //System.out.println("For experiment plan=" +exp+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
-	    } catch(Exception ex) {
-		String msg = "ERROR: Skipping plan=" +exp+" due to an exception:" + ex;
-		result.append(fm.para(msg));
-		System.err.println(msg);
-		System.err.println(ex);
-		ex.printStackTrace(System.err);
-	    }
-
-	}	
-
-
-	// Or, for each specified player...
-	HashMap<String,TrialListMap> trialListMaps = new HashMap<>();	
-	for(PlayerInfo p: plist) {
-	    try {
-		String exp=p.getExperimentPlan();
-		TrialListMap trialListMap=trialListMaps.get(exp);
-		if (trialListMap==null) trialListMaps.put(exp, trialListMap=new TrialListMap(p.getExperimentPlan()));
-		Vector<EpisodeHandle> handles= new Vector<>();
-		ph.doOnePlayer(p,  trialListMap, handles);
-		System.out.println("For player=" +p.getPlayerId()+", found " + handles.size()+" good episodes");//: "+Util.joinNonBlank(" ", handles));
-	    } catch(Exception ex) {
-		System.err.println("ERROR: Skipping player=" +p.getPlayerId()+" due to missing data. The problem is as follows:");
-		System.err.println(ex);
-		ex.printStackTrace(System.err);
-	    }
-	}
-
-	//----- end ---
+	EpisodesByPlayer ph = listEpisodesByPlayer( em, plans, pids, nicknames, uids);
 	
 	PrintWriter wsum =null;
 
@@ -603,7 +546,7 @@ m*
 			break;
 		    }
 		}
-		if (old==null) throw new AssertionError("Cannot find preceding series for p="+playerId+", r="  + r);
+		if (old==null) throw new IllegalArgumentException("Cannot find preceding series for p="+playerId+", r="  + r +", perhaps because the trial list files have been erased");
 		r = "" + old.learned + "." + r;
 
 		//if (ignorePrec.contains(r)) continue;

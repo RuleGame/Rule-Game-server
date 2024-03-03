@@ -286,13 +286,15 @@ public class SvgEcd {
     }
 
     
-/*
+/*  Draws an ECD curve.
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-up-right">
 <g color="orange">
   <line x1="7" y1="17" x2="17" y2="7"></line>
   <polyline points="10 10 17 7 14 14"></polyline>
 </g>
 </svg>
+@param xRange The range [0:xRange] of scientific coordinates is mapped to the width of the frame
+@param yRange The range [0:yRange] of scientific coordinates is mapped to the height of the frame
      */
     public static String makeSvgEcd(String color, double[] sample,
 				     double xRange, double yRange) {

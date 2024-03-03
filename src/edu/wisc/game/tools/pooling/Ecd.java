@@ -21,13 +21,22 @@ import edu.wisc.game.formatter.*;
 
 import edu.wisc.game.tools.pooling.Clustering.Node;
 
-/*  Empirical cumulated distribution (ECD) */
+/*  Empirical cumulated distribution (ECD). It describes how the players
+    who played a particular "target rule set" after a particular
+    "preceding experience" are distributed with respect to their
+    learning success (which is described by the mStar (m*) value).
+ */
 public class Ecd {
 
-    
-    /** Refers to the preceding conditions */
+    /** Refers to the preceding conditions, i.e. the set of rule sets
+	that players played and learned (or did not learn) prior to playing
+	the target rule set.	
+     */
     final String key;
-    /** AbC */
+    /** The format is "AbC", with uppercase letters for succesfully
+	learned preceding games, and lowercase letters for preceding
+	games that the player has not learned.
+     */
     final String label;
     
     double[] orderedSample;
@@ -114,7 +123,7 @@ public class Ecd {
 	successRate = (double)learnedCnt / (double)orderedSample.length;
     }
 
-    /** In "science" coordinates */    
+    /** Returns the "median point" of the curve, in "science" coordinates */    
     Point getCenter() {
 	return new Point( getMedianMStar(),  0.5*learnedCnt);
     }
@@ -177,6 +186,11 @@ public class Ecd {
     
 
     static private RandomRG random = null;
+
+    /** If true, the user has choosen to produce a plot with just the
+	median points of the curves, without curves themselves.
+    */
+    static private boolean noCurve = false;
     
     public static void main(String[] argv) throws Exception {
 
@@ -208,6 +222,8 @@ public class Ecd {
 		untie =  Double.parseDouble(argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-seed")) {
 		seed =  Long.parseLong(argv[++j]);
+	    } else if (j+1< argv.length && a.equals("-curve")) {
+		noCurve = !Boolean.parseBoolean(argv[++j]);
 	    } else if ( a.equals("-checkSym")) {
 		checkSym = true;
 	    }
@@ -676,11 +692,16 @@ public class Ecd {
 	    //	    System.out.println( ecd);
 	    yRange = ecd.size();
 	    String color = colors[ n % colors.length];
-	    String z = SvgEcd.makeSvgEcd(color, ecd.orderedSample,
-					 xRange, yRange);
+	    String z;
+	    if (!noCurve) {
+		// The user can choose to produce a plot with just the
+		// median points of the curves, without curves themselves.
+		z = SvgEcd.makeSvgEcd(color, ecd.orderedSample,
+				      xRange, yRange);
 	    
-	    //System.out.println(z);
-	    v.add(z);
+		//System.out.println(z);
+		v.add(z);
+	    }
 	    
 	    Point.setScale( xRange, yRange);
 	    Point center = ecd.getCenter();
