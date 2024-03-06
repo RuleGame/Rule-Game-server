@@ -33,7 +33,8 @@
 # -untie aSmallRealValue : artificial jitter 
 # -seed randomNumberGeneratorSeed : for use in the untie process
 # -checkSym : for debugging
-# -curve false : If this option is provided, the ECD curve itself is not shown on the plot; only its median point is. 
+# -curve false : If this option is provided, the ECD curve itself is not shown on the plot; only its median point is.
+# -hbAll true: If this option is provided, we use the HB process to compare all pairs of ECD curves, rather than only comparing ECD curves against the naive curve.
 #--------------------------------------------------------------------
 
 #-- The directory where this script is

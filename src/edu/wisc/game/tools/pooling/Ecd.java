@@ -191,6 +191,15 @@ public class Ecd {
 	median points of the curves, without curves themselves.
     */
     static private boolean noCurve = false;
+
+    /** If true, the user wants green connector lines between
+	"really different" experiences to be drawn based
+	on comparing ALL experiences to each other, rather than
+	only on comparing experiences to the naive experience only.
+	This makes sense to do when the input data were prepared
+	with "-precMode Naive", and this tool is run without "-target".
+    */
+    static private boolean hbAll = false;
     
     public static void main(String[] argv) throws Exception {
 
@@ -224,6 +233,8 @@ public class Ecd {
 		seed =  Long.parseLong(argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-curve")) {
 		noCurve = !Boolean.parseBoolean(argv[++j]);
+	    } else if (j+1< argv.length && a.equals("-hbAll")) {
+		hbAll = Boolean.parseBoolean(argv[++j]);
 	    } else if ( a.equals("-checkSym")) {
 		checkSym = true;
 	    }
@@ -442,11 +453,8 @@ public class Ecd {
 	if (pooled) base2 += "-pooled" + simClustering;
 	String fname = base2 + "-basic";
 	writeSvg(fname, v);
-
-
 	
 	Vector<String> hbLabels = analyzeSimilarities(h, pooled);
-	//DistMap ph = 
 	colors = new String[] {"red"};
 	v = drawAllCurves(h, xRange, yRange, colors, hbLabels);
 	fname = base2 + "-hb" + simHB;
@@ -606,7 +614,7 @@ public class Ecd {
        than original ones. This parameter does not affect
        computations, but is used to generate correct messages
 
-       @return The HB results: ECDs that are really different from the "naive" ECD
+       @return The HB results: ECDs that are really different from the "naive" ECD (unless -hbAll in effect, in which case we get all ECDs pairs that are really different from each other)
 	
      */
     static private Vector<String> analyzeSimilarities(Map<String, Ecd> h, boolean pooled) {
@@ -618,20 +626,25 @@ public class Ecd {
 	order.addAll(ph.keySet());
 	String msg = "Comparing all pairs";
 	if (pooled) msg += " (pooled)";
-	holmBonferroni(ph, order, msg);
+	Vector<String> hbDiff = holmBonferroni(ph, order, msg);
 
-	//-- HB for only (0,*) pairs. We still use the triangular
-	//-- matrix stored in ph, benefitting from the fact that "0"
-	//-- is alphabetically before all letters; thus, ph("0",
-	//-- "someOtherLabel") is always stored.
-	order.clear();
-	for(String pairLabel: ph.keySet()) {
-	    if (pairLabel.startsWith("0,")) order.add(pairLabel);	    
+	if (!hbAll) {
+	    //-- HB for only (0,*) pairs. We still use the triangular
+	    //-- matrix stored in ph, benefitting from the fact that "0"
+	    //-- is alphabetically before all letters; thus, ph("0",
+	    //-- "someOtherLabel") is always stored.
+	    order.clear();
+	    for(String pairLabel: ph.keySet()) {
+		if (pairLabel.startsWith("0,")) order.add(pairLabel);	    
+	    }
+	    hbDiff = holmBonferroni(ph, order, "Comparing to naive series only");
 	}
-	return holmBonferroni(ph, order, "Comparing to naive series only");	
+	return hbDiff;
     }
 
-    /** @return The list of "really different" pairs of curves into it
+    /** @param ph Table that contains similarities between various ECD curves. Each key in this table is a pair of labels, e.g. "NR,rN"
+	@param order List of label pairs whose similarities we want to compare, selecting the largest ones. This list is a subset of the list of keys of ph.
+       @return The list of "really different" pairs of curves into it
      */
     static private Vector<String> holmBonferroni(DistMap ph, Vector<String> order,  String msg) {
 	Vector<String> hbLabels = new Vector<>();
@@ -672,7 +685,8 @@ public class Ecd {
 	return hbLabels;
     }
 
-    /** Draws several ECD curves, in monochrome or in multiple colors.
+    /** Draws several ECD curves, in monochrome or in multiple colors, as well as some extras, such as
+	green lines between the "median points" of some "really different" curves 
 	@param h The curves to draw
 	@param colors The colors to use for the curves. If the array has only one color, all curves will be in this color.
 	@param hbLabels If not null, this is used to identify HB links between "really different" curves

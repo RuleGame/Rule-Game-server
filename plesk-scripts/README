@@ -1,0 +1,1 @@
+This directory contains shell scripts that we manually install om the Plesk hosts, under "mybin". They are then used for various auxiliary purposes, such as pulling data files from the Plesk host to an analysis host.
