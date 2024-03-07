@@ -235,6 +235,10 @@ public class Ecd {
 		noCurve = !Boolean.parseBoolean(argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-hbAll")) {
 		hbAll = Boolean.parseBoolean(argv[++j]);
+	    } else if (j+1< argv.length && a.equals("-colors")) {
+		colors = argv[++j].split(",");
+	    } else if (j+1< argv.length && a.equals("-linkColor")) {
+		linkColor = argv[++j];
 	    } else if ( a.equals("-checkSym")) {
 		checkSym = true;
 	    }
@@ -419,6 +423,9 @@ public class Ecd {
 	}
     }
 
+private static String[] colors = {"red", "green", "orange", "cyan", "blue", "purple", "pink"};	    
+private static String linkColor = "green";
+
     /** Given a set of ECDs, draw each one, carry out HB analysis, and
 	then draw the connections between the "really different"  ones.
 
@@ -447,7 +454,6 @@ public class Ecd {
 	}
 	   
 
-	String[] colors = {"red", "green", "orange", "cyan", "blue", "purple", "pink"};	    
 	Vector<String> v = drawAllCurves(h, xRange, yRange,colors,null);
 	String base2 = base + "-ecd";
 	if (pooled) base2 += "-pooled" + simClustering;
@@ -455,7 +461,7 @@ public class Ecd {
 	writeSvg(fname, v);
 	
 	Vector<String> hbLabels = analyzeSimilarities(h, pooled);
-	colors = new String[] {"red"};
+	//colors = new String[] {"red"};
 	v = drawAllCurves(h, xRange, yRange, colors, hbLabels);
 	fname = base2 + "-hb" + simHB;
 	writeSvg(fname, v);
@@ -740,10 +746,10 @@ public class Ecd {
 		e[j] = h.get(q[j]);
 		Point.setScale( xRange, e[j].size());
 		rawCenters[j] = e[j].getCenter().rawPoint();
-		//v.add(  SvgEcd.rawCircle( rawCenters[j], 5, "black"));
+		//v.add(  SvgEcd.rawCircle( rawCenters[j], 5, linkColor));
 	    }
 	    //System.out.println("Linking " + pair);
-	    v.add( SvgEcd.rawLine(rawCenters[0], rawCenters[1], "green"));
+	    v.add( SvgEcd.rawLine(rawCenters[0], rawCenters[1], linkColor));
 	}
 	}
 	
