@@ -53,23 +53,7 @@ sudo service tomcat start
 
 <p>If the tomcat is running properly, you can see the tomcat's main page by going to an appropriate URL in your browser, such as http://localhost:8080/ . (The port number, of course, is based on how you have configured the Tomcat; you may have chosen to change 8080 to 80, which can be omitted in URLs).
 
-  <h2>Create data directories for Game Server</h2>
-
-<p>You need to create the the Game Server <a href="../data.html">data directories</a>. At our site, we have the Rule Game server input data directory at
-  <tt>/opt/tomcat/game-data</tt>, and the saved data directory, at <tt>/opt/tomcat/saved</tt>. If you prefer, you can choose to put these two directories elsewhere, e.g. under <tt>/opt/w2020</tt>.
-
-  <p>Once you have created these two directories, set the values for the two relevant variables in your  <a href="setup-config.html">config file</a> accordingly, e.g.
-<pre>
-FILES_GAME_DATA = "/opt/tomcat/game-data";
-FILES_SAVED =  "/opt/tomcat/saved";
-</pre>
-
-  <p>When creating those two directories, make sure that the Linux user <tt>tomcat</tt> (which runs the Tomcat server) can write to those directories, e.g. by transferring their ownership to that user:
-    <pre>
-sudo mkdir /opt/tomcat/game-data /opt/tomcat/saved
-sudo chown tomcat.tomcat  /opt/tomcat/game-data /opt/tomcat/saved
-    </pre>
-
+    <s>
     <h2>Extra libraries</h2>
 
     <s>
@@ -107,6 +91,7 @@ lrwxrwxrwx root/root         0 2023-06-26 12:10 ./usr/share/java/mysql-connector
     </s>
 
     <P>(Note: As of ver. 6.023, the above is not recommended anymore; instead, we pack the JAR file in question into the main WAR file).
+    </s>
     
     <h2>Running on port 80</h2>
 

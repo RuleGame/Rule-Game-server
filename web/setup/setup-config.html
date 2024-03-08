@@ -3,10 +3,13 @@
  <link rel="stylesheet" type="text/css" href="../css/rule-game.css"/>
   </head>
   <body>
+   
 
     <h1>Setup: master config file</h1>
 
-    <p>The master configuration file can be created to override the default values of some parameters.
+    <p align="center"><em>Updated 2024-03-06</em></p>
+
+    <p>The master configuration file, which the Rule Gane server reads upon startup, can be created to override the default values of some parameters.  Normally, you <strong>should</strong> create it, because the password you use for the MySQL server is likely not the "default" one!
 
     <p>If you want to have a master configuration file, you need to place it to the location <tt>/opt/w2020/w2020.conf</tt>.  You will need to use the <tt>sudo</tt> command  to create the directory for that file.
 
@@ -18,36 +21,77 @@
 
 #--- The Rule Game server input data directory. The Game Server will read
 #--- experiment control files from it
-FILES_GAME_DATA = "/opt/tomcat/game-data";
+FILES_GAME_DATA = "/opt/w2020/game-data";
 
 #----The Rule Game server saved data directory.
 #--- The Game Server will write transcript files etc to it.
-FILES_SAVED =  "/opt/tomcat/saved";
+FILES_SAVED =  "/opt/w2020/saved";
 
+#---- The name of the database on you MySQL server that your Rule Game Server uses
+JDBC_DATABASE = "game";
 #---- The user name for the MySQL server
-JDBC_USER = "game"
-#---- The password for the MySQL server
-JDBC_PASSWORD = "meerkat";	
+JDBC_USER = "game";
+<strong>#---- The password for the MySQL server. Change this is needed. Typically, this is the only field you need to change
+JDBC_PASSWORD = "meerkat";</strong>	
 
 #---- The URL for the Rule Game GUI Client (prod and dev versions)
-GUI_PROD = "http://sapir.psych.wisc.edu/rule-game/prod/";
-GUI_DEV = "http://sapir.psych.wisc.edu/rule-game/dev/";
+GUI_PROD = "/rule-game/prod/";
+GUI_DEV = "/rule-game/dev/";
 </pre>	
 
-<p>
-  As you can see, you can use this file to modify the locations of the Game Server <a href="../data.html">data directories</a>. For example, you may choose to put them under <tt>/opt/w2020</tt>. You also use this config file to specify the user name and password for the MySQL server account used by the Game Server.
 
-<p>The parameters <tt>GUI_PROD</tt> and <tt>GUI_DEV</tt> specify the URLs for the GUI client, i.e. the URLs to which your server will link from its launch pages, such as <a href="../front-end-form.jsp">main launch page</a></strong>, or the <a href="../launch/">MLC launch  page</a>. If you follow the <a href="index.html#A">Setup Option A</a> or  <a href="index.html#B">Setup Option B</a>, keep the values of these parameters as shown above, because your players will still load the GUI client from our server (<tt>sapir</tt>) at UWM.  If you follow  <a href="index.html#C">Setup Option C</a>, you will find instructions how to modify those parameters' values.
+<h4>Data file locations</h4>
+<p>
+  As you can see, you can use this file to modify the locations of the Game Server <a href="../data.html">data directories</a>. In the above example, we use the recommended locations, under <tt>/opt/w2020</tt>. In the past, on some servers we put those directories under <tt>/opt/tomcat</tt> instead, but that's probably not a very good choice.
+
+<p>Whatever location you have chosen for the data directories, you need to create them:
+  <pre>
+    cd /opt/w2020
+    mkdir saved
+    mkdir game-data
+    </pre>
+
+  <p>When creating those two directories, make sure that the Linux user <tt>tomcat</tt> (which runs the Tomcat server) can read fromboth of these directories, and to write to the <tt>saved</tt> directory. You can do this  e.g. by transferring their ownership to that user:
+    <pre>
+sudo mkdir /opt/w2020/game-data /opt/w2020/saved
+sudo chown tomcat.tomcat  /opt/w2020/game-data /opt/w2020/saved
+    </pre>
+
+
+  
+  <h4>MySQL server info</h4>
+<p>
+You also use this config file to specify the user name and password for the MySQL server account used by the Game Server. Normally, you'll keep the account name (<tt>game</tt>), but will modify the password value, based on whatever you have set for that user name.
+
+
+<h4>Relative locations of the server app and the client app</h4>
+
+    <p>The parameters <tt>GUI_PROD</tt> and <tt>GUI_DEV</tt> specify the URLs for the GUI client, i.e. the URLs to which your server will link from its launch pages, such as <a href="../front-end-form.jsp">main launch page</a></strong>, or the <a href="../launch/">MLC launch  page</a>. If you follow the standard setup process we describe (either 
+<a href="index.html#A">Setup Option A</a> or  <a href="index.html#B">Setup Option B</a>), keep the values of these parameters as shown above; these are relative URLs, because your players will load the GUI client from the same host where your game server runs.
+
+<p>
+However, it is also possible to run a non-standard setup, with the client app sitting at a different location from the server. In this case, an absolute URL is needed:
+<pre>GUI_PROD = "http://myHostName/rule-game/prod/";
+GUI_DEV = "http://myHostName/rule-game/dev/";</pre>
+
 
 <h3>Config file ownership</h3>
 
-<p>For a bit of security, consider changing the ownership of this file to whatever user runs (or will run) tomcat on your machine (typically, that's user <tt>tomcat</tt>), and making it only readable by that user.
+<p>For a bit of security, consider changing the ownership of this file to the user that runs (or will run) Tomcat on your machine (on Linux, typically, that's user <tt>tomcat</tt>), and making it only readable by that user.
 
 <p>You can later edit this file with e.g.
   <pre>
     sudo -u tomcat emacs w2020.conf
   </pre>
-  
 
+  <hr>
+
+  <p>
+  [<a href=".">Back to the main setup page</a>]
+    
+      
+
+  
   </body>
   </html>
+
