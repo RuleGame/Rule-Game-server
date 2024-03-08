@@ -424,7 +424,7 @@ public class Ecd {
     }
 
 private static String[] colors = {"red", "green", "orange", "cyan", "blue", "purple", "pink"};	    
-private static String linkColor = "green";
+private static String linkColor = "black";
 
     /** Given a set of ECDs, draw each one, carry out HB analysis, and
 	then draw the connections between the "really different"  ones.
