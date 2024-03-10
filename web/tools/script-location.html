@@ -1,0 +1,44 @@
+<html>
+  <head><title>Where to find the analysis scripts</title>
+  </head>
+<body>
+  <h1>Where to find the analysis scripts</h1>
+
+<div align="center"><em>Updated 2024-03-03, for Game Server 6.026</em></div>
+
+
+<p>Depending on what computer you use, the way to obtain and access this script (and other data analysis scripts) may be a bit different.
+
+  <p>To better understand this section, it is useful to keep in mind that for the script to work, two components must be present: the shell script itself and the JAR files that contained compiled code (byte code) of the Java classes invoked by the script.
+
+  <h3>If you're working on a host that runs Game Server built from source</h3>
+  
+<p>The Analyze Transcripts tool, along with various other auxiliary tools, is automatically installed on every machine where the Game Server has been built from source code (Option B or C in the  <a href="../setup/index.html">Setup Guide</a>), as described in the <a href="../setup/setup-compile.html">Rule Game Server build Guide</a>.  
+
+  <p>
+  If you, for example, have used <tt>~/w2020/game</tt> as the build directory on your machine (as suggested in the guide), then the top-level shell scripts will be in the directory
+  <tt>~/w2020/game/scripts</tt>.
+
+  <p>On several UW machines, including <tt>sapir</tt> and on our CAE host (<tt>ie-r108304.ie.wisc.edu</tt>),   the  build directory for the Game Server was     <tt> /home/vmenkov/w2020/game</tt>, so the top-level scripts are in
+    <tt>/home/vmenkov/w2020/game/scripts</tt>; this path will be used in some of  the illustrative examples below.
+
+  <p>For convenience, you may want to add the script directory (such as /home/vmenkov/w2020/game/scripts, or whatever it is on your machine) to your PATH.
+
+    <h3>If you're working on a host that runs Game Server installed using WAR files</h3>
+
+  <p>You may be working on a computer on which you have installed the Game Server by downloading its WAR file. (This is Option A in the  <a href="../setup/index.html">Setup Guide</a>). In this case, you have all the necessary JAR files already (they came packed in the WAR file, and Tomcat unpacked them into <tt>/opt/tomcat/webapps/w2020/WEB-INF/lib</tt> or a similar location), but you don't have the shell scripts yet. In this case, to be able to use analysis scripts, you can do the following:
+
+    <ul>
+      <li>Get the Rule Game Server source code from GitHub, as if you are preparing to compile it (as described in the <a href="../setup/setup-compile.html">Rule Game Server build Guide</a>), but without actually compiling. Assuming that the main directory you have chosen to check out the Rule Game Server source code is   <tt>~/w2020/game</tt>, then the top-level shell scripts will be in the directory
+	<tt>~/w2020/game/scripts</tt>. You can add this directory to your PATH.
+      <li>If your Tomcat is not under <tt>/opt/tomcat</tt> (i.e. there is no directory  <tt>/opt/tomcat/webapps/w2020/WEB-INF/lib</tt>  on your computer), figure where Tomcat lives, and set up a sym link so that <tt>/opt/tomcat/webapps</tt> resolves to your Tomcat's webapps directory. For example, if your Tomcat is in <tt>/usr/local/opt/tomcat</tt> (as is often the case in MacOS installations), then you can set up a link like this:
+	<pre>cd /opt/
+ln -s /usr/local/opt/tomcat .</pre>	 
+    </ul>
+
+    <p>When you invoke the analysis script, it will attempt to look for the Java classes first in the locations where they would have been if 
+  
+  
+
+</body>
+</html>

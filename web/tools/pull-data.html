@@ -1,0 +1,99 @@
+<html>
+  <head><title>Pulling data from a remote host</title>
+  </head>
+<body>
+  <h1>Pulling data from a remote host
+  </h1>
+
+<div align="center"><em>Updated 2024-01-31, for Game Server 6.023</em></div>
+
+<h2>Introduction</h2>
+
+<p>Originally, the Rule Game Server 
+  <a href="analyze-transcripts.html">analysis tools</a> were designed to be used on the same host (<tt>sapir</tt>) on which the production Game Server was run. This meant that they were working directly with the data (the MySQL server database, and file store) accumulated by the production server.
+
+<p>In 2024, we have migrated the production server to one of the so-called <a href="../setup-hosting.html">Plesk hosts</a> -- virual hosts running on the DoIT Shared Hosting hardware. Plesk hosts only give you a "chrooted shell", meaning that you can only run a limited number of shell commands on them. This would make it impractical to run the analysis software on those hosts.
+
+<p>Therefore, we now have to distinguish between the "web server host" (the Plesk host that runs the production Game Server instance and accumulates real data from experiments with a player population) and the "analysis host" (the host under your full control, on which you run the analysis software). This document describes the process whereby you can pull the snapshot of the remote host's (web server host's) data to your local host (the analysis host), so that you can work on it using your analysis tools.
+
+  <h2>Step 1: Your analysis host</h2>
+
+<p>You can use as your analysis host any host that has a full suite of Game Server software deployed on it. This includes the MySQL database server in which the user account named "game" has been created, and the Game Server master configuration file (/opt/w2020/w2020.conf). This host also should have an up-to-date set of experiment control files in /opt/w2020/game-data. (You should be able to update it with "git pull origin master", when needed. If this does not go smoothly, you may perhaps need to change the ownership of this directory, to something like pkantor.tomcat, or what have you).
+
+<p>The analysis host can be your own desktop, or the host we have at CAE. If it's the CAE host, you need to run the CAE VPN to access it.
+
+<p>In the rest of this discussion, we will refer to the analysis host (to which you will copy the data) as the "local host", and to the web server host (from which you will copy the data).
+
+  <h2>Step 2 (one-time): set up database accounts.</h2>
+
+<p>(This has already been done on the CAE host. If you're setting up some other host as the analysis host, you need to do that yourself.)
+
+<p>The host should have the MySQL database server set up, and the account named "game" created, as per the <a href="../setup/setup-mysql.html">MySQL setup</a> instructions. Additionally, you need to create a MySQL server user account named <tt>replicator</tt> with certain special rights (which will allow it to create new databases, and to enable user <tt>game</tt> to work with those databases).
+
+<pre>
+CREATE USER 'replicator'@'localhost' IDENTIFIED BY 'MySQL-W2020';
+GRANT ALL ON *.* TO 'replicator'@'localhost';
+GRANT GRANT OPTION ON *.* TO 'replicator'@'localhost';
+</pre>
+
+<h2>Step 3 (one-time): arrange for password-free login to MySQL server for the <tt>game</tt> and <tt>replicator</tt> accounts.</h2>
+
+
+<p>During the data pull process, several database server logins, of various kinds, will take place, as the replicator tool will need to connect both to the remote and local database servers. The pull script is written in such a way that you won't need to enter any of the relevant database passwords in real time. Instead, you need to create, just once, the file <tt>~/.mylogin.cnf</tt> in your home directory.  This file will contain, in (sort of) encrypted form, the passwords for certain database accounts. <strong>If you are on the CAE host, you can simply copy this file from my home directory:</strong>
+    <pre>
+      cd
+      cp ~vmenkov/.mylogin.cnf .
+    </pre>
+
+    <p>If you are setting up the analysis host on another machine, you'll need to create that file from scratch, using the script       <tt>scripts/run-mysql-config-editor.sh</tt> that comes with the Game Server, which runs, with appropriate parameters, the tool called <a href="https://www.prisma.io/dataguide/mysql/tools/mysql-config-editor">mysql-config-editor</a>
+
+    <p>Whether you have copied the existing cnf file, or created it from scratch, you can test that it works by trying commands like this:
+      <pre>
+mysql --login-path=local
+mysql --login-path=replicator
+mysql --login-path=wwwtest.rulegame
+      </pre>
+      and observing a successful login, without a password, each time.
+
+      <h3>Step 4 (optional, one time): Password-free login to the remote host</h3>
+
+    <p>
+      During the data pull process, the script will log in, more than once, to the remote server. Each time it (well, the <tt>ssh</tt> it uses() will ask you for the password. This is not a big deal; but if you are tired of this, you can obviate the need to provide the password by using ssh-keygen, ssh-copy-id, and ssh-agent. You can find the instructions e.g. at these two pages:
+      https://www.thegeekstuff.com/2008/11/3-steps-to-perform-ssh-login-without-password-using-ssh-keygen-ssh-copy-id/
+;
+      https://superuser.com/questions/988185/how-to-avoid-being-asked-enter-passphrase-for-key-when-im-doing-ssh-operatio
+
+      <h4>Step 5: Pulling the data!</h4>
+
+    <p>The pull script will do main big things:
+      <ul>
+	<li>
+	  It will copy the entire content of the /opt/w2020/saved directory tree from the remote host, and will install them somewhere on your local host
+	<li>
+	  It will export the entire content of the <tt>game</tt> database from the remote host, and will replicate it by creating a new database, with a new name, in the MySQL server on the local host.
+      </ul>
+      It will then create a configuration file which you will in the future be giving to the analysis tools, so that they will use these imported data instead of the data that the Game Server on the local host may have in its own database.
+
+    <p>Before running the script, choose the location where it will store the downloaded data file. Let's suppose you want them to go under <tt>~/pulls</tt>. In this case, run the pull script in that directory, and it will create a subdirectory in it for the data in the particular snapshot.
+
+      <pre>
+	cd
+	cd pulls
+	~vmenkov/game/scripts/pull-remote-data.sh wwwtest.rulegame
+      </pre>
+
+      During this process you will most likely be asked to enter, more than once, the UNIX password for the remote host in question.
+
+      <p>THe script will tell you that it has created a config file, e.g. <tt>w2020_game_wwwtest_rulegame_2024_01_30.conf</tt>, which describes the location of the downloaded data (the file directory location, and the database name). When running analysis scripts on these data later, make sure to pass the name of the config file to the analysis script, with the <tt>-config</tt> option.
+
+      
+  <h2>See also</h2>
+
+  <ul>
+    <li><a href="analyze-transcripts.html">Processing human players' transcripts</a>
+      <li><a href="analyze-transcripts-mwh.html">Processing human players' transcripts for Mann-Whitney comparison</a>
+    </ul>
+  
+
+</body>
+</html>
