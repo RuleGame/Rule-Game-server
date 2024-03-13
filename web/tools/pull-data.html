@@ -5,7 +5,7 @@
   <h1>Pulling data from a remote host
   </h1>
 
-<div align="center"><em>Updated 2024-01-31, for Game Server 6.023</em></div>
+<div align="center"><em>Updated 2024-03-10, for Game Server 6.023</em></div>
 
 <h2>Introduction</h2>
 
@@ -20,9 +20,9 @@
 
 <p>You can use as your analysis host any host that has a full suite of Game Server software deployed on it. This includes the MySQL database server in which the user account named "game" has been created, and the Game Server master configuration file (/opt/w2020/w2020.conf). This host also should have an up-to-date set of experiment control files in /opt/w2020/game-data. (You should be able to update it with "git pull origin master", when needed. If this does not go smoothly, you may perhaps need to change the ownership of this directory, to something like pkantor.tomcat, or what have you).
 
-<p>The analysis host can be your own desktop, or the host we have at CAE. If it's the CAE host, you need to run the CAE VPN to access it.
+<p>The analysis host can be your own desktop or laptop computer (preferably, running Linux or MacOS), or the host we have at CAE (ie-r108304.ie.wisc.edu). If it's the CAE host, you need to run the CAE VPN to access it.
 
-<p>In the rest of this discussion, we will refer to the analysis host (to which you will copy the data) as the "local host", and to the web server host (from which you will copy the data).
+<p>In the rest of this discussion, we will refer to the analysis host (to which you will copy the data) as the "local host", and to the web server host (from which you will copy the data) as the "remote host".
 
   <h2>Step 2 (one-time): set up database accounts.</h2>
 
@@ -45,7 +45,9 @@ GRANT GRANT OPTION ON *.* TO 'replicator'@'localhost';
       cp ~vmenkov/.mylogin.cnf .
     </pre>
 
-    <p>If you are setting up the analysis host on another machine, you'll need to create that file from scratch, using the script       <tt>scripts/run-mysql-config-editor.sh</tt> that comes with the Game Server, which runs, with appropriate parameters, the tool called <a href="https://www.prisma.io/dataguide/mysql/tools/mysql-config-editor">mysql-config-editor</a>
+<p>If you are setting up the analysis host on another machine, you'll need to create that file from scratch, using the script       <tt>scripts/run-mysql-config-editor.sh</tt> that comes with the Game Server, which runs, with appropriate parameters, the tool called <a href="https://www.prisma.io/dataguide/mysql/tools/mysql-config-editor">mysql-config-editor</a>
+
+  <p>During the execution of the script <tt>scripts/run-mysql-config-editor.sh</tt> you will be asked for several database passwords. That will include the passwords for the accounts <tt>game</tt> and <tt>replicator</tt> on your own MySQL server (you should know them, because you likely have created them yourself), as well as the passowrds for the accounts named <tt>game</tt>  on the the MySQL servers on the two Plesk hosts at UW (you can get them from the project staff who works with these hosts).
 
     <p>Whether you have copied the existing cnf file, or created it from scratch, you can test that it works by trying commands like this:
       <pre>

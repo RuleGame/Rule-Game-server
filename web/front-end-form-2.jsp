@@ -7,6 +7,17 @@ String cla=main.dev?"pink":"yellow";
 <head>
 <title>Play using the GUI front end</title>
    <link rel="stylesheet" type="text/css" href="css/rule-game.css"/>
+
+<script type="text/javascript">
+function validateForm() {
+  let x = document.forms["clientForm"]["workerId"].value;
+  if (x.indexOf("XX") == 0) {
+    alert("Invalid Player ID '" + x + "'. You must replace 'XX' with your initials.");
+    return false;
+  }
+}
+</script>
+
 </head>
 <body>
 <h1>Play using the GUI front end</h1>
@@ -35,17 +46,21 @@ the production version of the client, which offers the same experience the M-Tur
 
 
 <div class="<%=cla%>">
-	<form method="get" action="<%=main.clientUrl%>">
+	<form name="clientForm" method="get" action="<%=main.clientUrl%>" onsubmit="return validateForm()">
 
-<input type=hidden name="server" size=80 value="<%=main.serverUrl%>">
+<input type=hidden name="server" value="<%=main.serverUrl%>">
 
-<input type="hidden" name="exp" size="80" value="<%=main.exp%>">
+<input type="hidden" name="exp"  value="<%=main.exp%>">
 
 <br>Player Id: <input type="text" name="workerId" size="60" value="XX-<%=main.prefix%><%=main.stamp%>">
 <br>(Replace XX above with your initials)
 
+<!--
 <br><input type="radio" name="intro" value="true" checked>Show intro
 <br><input type="radio" name="intro" value="false">Skip intro
+-->
+<input type="hidden" name="intro" value="<%=main.intro%>">
+
 <br>
  
     <strong><button type="submit">Play (<%=main.devProd()%>)</button></strong>

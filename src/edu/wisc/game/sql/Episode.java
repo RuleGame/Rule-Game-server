@@ -945,9 +945,11 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	JsonObject json = JsonReflect.reflectToJSONObject(b, true, excludableNames);
 	return json.toString();
     }
-   
-    public static final String version = "6.027";
 
+    /** The current version of the application */
+    public static final String version = "6.028";
+
+    /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }
 
     private String readLine( LineNumberReader​ r) throws IOException {

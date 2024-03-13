@@ -19,6 +19,7 @@ public class FrontEndForm2 extends ContextInfo   {
 
     /** Used in the ID */
     public String stamp = null, prefix="";
+    public boolean intro = true;
 
     public static final DateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
     
@@ -38,6 +39,8 @@ public class FrontEndForm2 extends ContextInfo   {
 	prefix=  request.getParameter("prefix");
 	if (prefix==null || prefix.equals("null")) prefix = "";
 
+	String s= request.getParameter("intro");
+	intro  = (s==null) || (!s.equals("false"));
     }
 
 }

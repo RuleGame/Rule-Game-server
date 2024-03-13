@@ -11,9 +11,9 @@ import edu.wisc.game.util.Logging;
 public class JsonReflect {
 
     /* @param g String, Integer, or an arbitrary object */
-    private JsonValue toJsonValue(Object g) {
+    private JsonValue toJsonValue(Object g, int level) {
 	//	System.out.println("toJsonValue(" + g.getClass()+")");
-	JsonArrayBuilder arrayBuilder= toJsonArrayBuider(g);
+	JsonArrayBuilder arrayBuilder= toJsonArrayBuider(g, level+1);
 	JsonArray ar =arrayBuilder.build();
 	List<JsonValue>	list = ar.getValuesAs(JsonValue.class);
 	return list.size()>0?  list.get(0) :  null;
@@ -21,10 +21,10 @@ public class JsonReflect {
 
     /** Creates a JsonArrayBuider with one element. This will make it 
 	possible to later extract that element as a JsonValue! 
-	@param An arbitrary Java object (could be Integer, Map, Vector
+	@param g An arbitrary Java object (could be Integer, Map, Vector
 	or anything else)
     */
-    private JsonArrayBuilder  toJsonArrayBuider(Object g) {
+    private JsonArrayBuilder  toJsonArrayBuider(Object g, int level) {
 	JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
 	//	System.out.println("toJsonArrayBuider(" + g.getClass()+")");
 	if (g instanceof String) {
@@ -43,45 +43,49 @@ public class JsonReflect {
 	    arrayBuilder.add( g.toString());
 	} else if (g instanceof Date) {
 	    arrayBuilder.add( dateToJsonString((Date)g));
+	} else if (level>3) {
+	    String s= "TOO_DEEP";
+	    arrayBuilder.add( s);
 	} else if (g.getClass().isArray()) { // an array
-	    JsonArrayBuilder x = doCollection(arrayX2vector(g));
+	    JsonArrayBuilder x = doCollection(arrayX2vector(g), level);
 	    arrayBuilder.add(x);		
 	    //	} else if (g instanceof Array) { // an array
 	    //	    JsonArrayBuilder x = doCollection(array2vector((Array)g));
 	    //	    arrayBuilder.add(x);		
 	} else if (g instanceof Collection) {
-	    JsonArrayBuilder ab = doCollection((Collection)g);
+	    JsonArrayBuilder ab = doCollection((Collection)g, level);
 	    arrayBuilder.add(ab);
 	} else if (g instanceof Map) {
 	    Map h = (Map)g;
-	    JsonObjectBuilder ob = doMap(h);
+	    JsonObjectBuilder ob = doMap(h, level);
 	    arrayBuilder.add(ob);
 	} else { // some object
-	    JsonObjectBuilder ob = reflectToJSON(g);
+	    JsonObjectBuilder ob = reflectToJSON(g ,level);
 	    //	    System.out.println("Treating val=("+g+") as 'some object'");
 	    arrayBuilder.add(ob);
 	}
 	return arrayBuilder;
     }
     
-    private JsonArrayBuilder doCollection(Collection col) {
+    private JsonArrayBuilder doCollection(Collection col, int level) {
 	JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
 
-	//	System.out.println("doCollection, "+col.getClass()+", size=" + col.size());
+	//		System.out.println("DEBUG: doCollection, "+col.getClass()+", size=" + col.size());
 	
 	for(Object g: col) {
+	    //System.out.println("DEBUG: doCollection, handling element=" + g);
 	    if (g==null) {
 		if (skipNulls) continue;
 		else arrayBuilder.addNull();
 	    } else {
-		JsonArrayBuilder q =  toJsonArrayBuider(g);
+		JsonArrayBuilder q =  toJsonArrayBuider(g, level+1);
 		arrayBuilder.addAll(q);
 	    }	    
 	}
 	return  arrayBuilder;
     }
     
-    private JsonObjectBuilder doMap(Map h) {
+    private JsonObjectBuilder doMap(Map h, int level) {
 	//System.out.println("Exporting map: " + h);
 	JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
 	for(Object _key: h.keySet()) {
@@ -92,7 +96,7 @@ public class JsonReflect {
 		if (skipNulls) continue;
 		else objectBuilder.addNull(key);
 	    } else {
-		JsonValue q = toJsonValue(val);
+		JsonValue q = toJsonValue(val, level+1);
 		objectBuilder.add(key, q);
 	    }
 	}
@@ -109,14 +113,38 @@ public class JsonReflect {
     
     /** Converts a Java object to a JSON object, to the extent possible */
     public JsonObjectBuilder reflectToJSON(Object o) {
+	return reflectToJSON(o, 0);
+    }
+    
+    
+    public JsonObjectBuilder reflectToJSON(Object o, int level) {
 	
 	JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
-       
+
+
+	//---- ZZZZ
+	/*
+    private JsonArrayBuilder  toJsonArrayBuider(Object g) {
+	JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+	//	System.out.println("toJsonArrayBuider(" + g.getClass()+")");
+
+	if (g.getClass().isArray()) { // an array
+
+
+	    JsonArrayBuilder x = doCollection(arrayX2vector(g));
+	    arrayBuilder.add(x);		
+	}
+
+	*/
+	//---
+
+	// ZZZ
 	Reflect r = Reflect.getReflect(  o.getClass());
-	//	System.out.println("Reflecting on object "+o	+", class="+ o.getClass() +"; reflect=" + r + ", has " + r.entries.length + " entries");
+	//System.out.println("DEBUG: Reflecting on object "+o	+", class="+ o.getClass() +"; reflect=" + r + ", has " + r.entries.length + " entries");
 	for(Reflect.Entry e: r.entries) {
 	    if (excludableNames!=null && excludableNames.contains(e.name)) continue;
 	    Object val = null;
+
 	    try {
 		val = e.g.invoke(o);
 	    } catch (IllegalAccessException ex) {
@@ -130,24 +158,27 @@ public class JsonReflect {
 	    if (skipNulls && (val==null || val.toString().equals(""))) continue;
 	    if (skipNulls && e.name.equals("version")) continue;
 	    
-	    Class c = val.getClass();
-	    //System.out.println("name=" + e.name +", val("+c      +"; "+c.getName()+"; isArray"+c.isArray()+")=" + val);
-
 	    if (val==null) {
 		if (skipNulls) continue;
 		else objectBuilder.addNull(e.name);
-	    } else  if (c.isArray() && c.isInstance(new int[0])) { // an array int[]
-		JsonArrayBuilder ab = doCollection(arrayInt2vector((int[])val));
+		continue;
+	    }
+	    
+	    Class c = val.getClass();
+	    //System.out.println("name=" + e.name +", val("+c      +"; "+c.getName()+"; isArray"+c.isArray()+")=" + val);
+
+	    if (c.isArray() && c.isInstance(new int[0])) { // an array int[]
+		JsonArrayBuilder ab = doCollection(arrayInt2vector((int[])val), level);
 		objectBuilder.add(e.name,ab);		
 	    } else  if (c.isArray() && c.isInstance(new double[0])) { // an array double[]
-		JsonArrayBuilder ab = doCollection(arrayDouble2vector((double[])val));
+		JsonArrayBuilder ab = doCollection(arrayDouble2vector((double[])val), level);
 		objectBuilder.add(e.name,ab);		
 	    } else  if (c.isArray()) {
 		//throw new IllegalArgumentException("Sorry, don't know what to do with arbitrary arrays, eh?");
-		JsonArrayBuilder ab = doCollection(arrayX2vector(val));
+		JsonArrayBuilder ab = doCollection(arrayX2vector(val), level);
 		objectBuilder.add(e.name,ab);		
 	    } else {
-		JsonValue q = toJsonValue(val);
+		JsonValue q = toJsonValue(val, level+1);
 		objectBuilder.add(e.name, q);
 	    }
 	}
@@ -162,7 +193,7 @@ public class JsonReflect {
 	return v;
     }
 
-    /** It is known that a.getClass() is an Array */
+    /** @param a An object for which it is known that a.getClass() is an Array */
     static private Vector arrayX2vector(Object a) {
 	Vector v = new Vector();
 	for(int i=0; i<Array.getLength(a); i++) {
@@ -216,10 +247,12 @@ public class JsonReflect {
     }
 
     
-    /** Converts a Java object to a JSON object, to the extent possible */
+    /** Converts a Java object to a JSON object, to the extent possible.
+	@param o Must not be an array
+     */
     public static JsonObject reflectToJSONObject(Object o, boolean skipNulls) {
 	JsonReflect r = new JsonReflect(skipNulls, null);
-	return r.reflectToJSON(o).build();
+	return r.reflectToJSON(o, 0).build();
     }
     
     /** Converts a Java object to a JSON object, to the extent possible.
@@ -229,9 +262,14 @@ public class JsonReflect {
      */
     public static JsonObject reflectToJSONObject(Object o, boolean skipNulls, HashSet<String> excludableNames) {
 	JsonReflect r = new JsonReflect(skipNulls, excludableNames);
-	return r.reflectToJSON(o).build();
+	return r.reflectToJSON(o, 0).build();
     }
 
+    public static JsonArray reflectToJSONArray(Object o, boolean skipNulls) {       
+	JsonReflect r = new JsonReflect(skipNulls, null);
+	JsonArrayBuilder builder = r.toJsonArrayBuider(o, 0);
+	return builder.build();
+    }
 
     
 }

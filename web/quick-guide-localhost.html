@@ -1,0 +1,101 @@
+<html>
+  <head><title>Quick guide: getting started on your laptop</title>
+ <link rel="stylesheet" type="text/css" href="css/rule-game.css"/>
+  </head>
+<body>
+  <h1>Quick guide: getting started on your laptop</h1>
+
+  <p align="center"><em>Updated 2024-03-10, for Tanvi and any future research team members</em></p>
+
+  <h2>1. The use case</h2>
+
+  <P>This is your situation:
+
+    <ul>
+      <li>You intend to develop new experiments for the Rule Game (aka Game of Hidden Rules, GOHR) platform, offer them to some community of players, and analyze the accumulated results.
+      <li>The hardware you have consists of a personal computer (desktop or laptop) running Linux or MacOS, and (promised) access to the Plesk hosts at UW.
+      <li>You intend to use your laptop for the development work (creating and testing new experiment control files). However, you cannot expose it to the outside world (to have other people play the games on your Game Server), so the only person who will play on that server will be yourself, at a <tt>localhost</tt> URL.
+      <li>You will have to regularly deploy your experiment control files to the dev Plesk host (wwwtest.rulegame.wisc.edu) (primarily so that other team members could access them); eventually, when you are ready to invite a cohort of outside players, you will deploy them to the prod Plesk host as well (rulegame.wisc.edu)
+      <li>You intend to use your laptop for the data analysis, both on the data accumulated by yourself playing at localhost (just to test your analysis pipeline easily) and on the data accumulated on the dev and prod Plesk hosts (so that you can produce some publishable results)
+      <li>You do not plan to modify the code of the Rule Game Server or of the GUI client in any way. All your customizations will be at the level of experiment control files. That includes creating new game rules and initial boards, as well as supplying a desired pregame experience (such as the intro pages) and postgame experience (such as a demographic survey).
+      <li>You intend the experiment plans you create to be added to the main experiment control file repository maintained by the Wisconsin/Rutgers team on GitHub. (As opposed to putting them into a new repository, or keeping them private).
+    </ul>
+
+    <p>The rest of this document will list the suggested steps for you to undertake to make the above plan a success, with links to more detailed documentation.
+
+      <h2>2. Local server setup: get the Rule Game server to run on your machine</h2>
+
+    <p>You'll want to have a local instance of the Rule Game Server, both for the quick-cycle development work (so that you won't need to push updates to GitHub and deploy them to Plesk hosts every time you edit a rule set file or a trial list file). This also will come handy at the analysis stage, since the analysis scripts use the same Java JAR files that the Game Server does.
+
+      <p>To do this, follow the instructions in the <a href="setup/index.html">Setup Guide</a>, Option A (installing from WAR files). This will involve installing the MySQL database server, installing the Apache Tomcat server, creating a master config file, and downloading two WAR files for use with Tomcat.
+
+      <p>The instructions mention geting experiment control files from GitHub, and links to more detailed instructions: <a href="setup-game-data.html">experiment control file setup guide.</a> Since you're planning to add your new experiment control files to the main GitHub repository for them, it may be the easiest for you to directly link the Game Server's experiment control file directory (/opt/w2020/game-data) to the GitHub repo (instead of using a space under your home directory as a staging area, and copying files from there to /opt/w2020/game-data):
+<pre class="yellow">
+  cd /opt/w2020
+  mkdir game-data
+  cd game-data
+  git init
+  git remote add origin https://github.com/RuleGame/Rule-Game-game-data.git
+  git pull origin master
+</pre>
+
+<h2>3. Developing experiment control files on your laptop</h2>
+
+      <p>Once everything has been installed, you should be able to access Tomcat with the <tt>localhost</tt> URL. (Presumably, at port 8080, if you have not changed any default settings). Thus, <a href="http://localhost:8080/">http://localhost:8080/</a> will be just Tomcat's own info page;  <a href="http://localhost:8080/w2020">http://localhost:8080/w2020</a> will be the main Rule Game documentation page. At that page, you will be able to find the launch pages (under the heading "The front-end (GUI) tools"), such as the main prod launch page at <a href="http://localhost:8080/w2020/front-end-form.jsp">http://localhost:8080/w2020/front-end-form.jsp</a>, as well as the <a href="http://localhost:8080/w2020/index.html#ru-jf-tht">specialized launch page for your (Tanvi's) project</a>.
+
+<p>Most of your development work will consist of editing files in your experiment control directory, then trying them out by going to the  <a href="http://localhost:8080/w2020/index.html#ru-jf-tht">specialized launch page for your (Tanvi's) project</a> or directly to the underlying URL, 
+  <a href="front-end-form-2.jsp?exp=RU/JF/tht/exp1&prefix=RU-JF-THT-&dev=false">http://wwwtest.rulegame.wisc.edu/w2020/front-end-form-2.jsp?exp=U/JF/tht/exp1&amp;prefix=RU-JF-THT-&amp;dev=false</a>. (Change the host name and the experiment plan name as appropriate). For quicker testing, since you probably don't want to go through the intro pages every time, you can check the "No intro" button on the form.
+
+<p>After you have created or modified some rule set files etc, there are two preliminary steps before you start testing. First, you may want to validate the updated rule set in the <a href="http://localhost:8080/w2020/check-plan-form.jsp">Validation form</a>. It is not fool-proof, but it catches some common syntax errors. Second, you may want to force the server  	<li>The	<a href="http://localhost/w2020/game-api-2.html#clear">to clear its cached tables</a>, to ensure the server uses your updated files and not a cached precompiled copy of an older version.
+
+    <p>Once you have decided that the current  version of your experiment control files works well enough to be checked into the GitHub repo, to be later deployed to a Plesk host, you can check it in:
+      <pre>git add <em>myNewFile-1.txt</em> <em>myNewFile-2.csv</em> ...
+git commit -a -m '<em>My commit message</em>'
+git push origin master</pre>	
+    
+    <h2>4. Deploying to a Plesk host</h2>
+
+    <p>Testing your rule sets and trial list files on your localhost is convenient, but the trouble is, only you can see them and nobody else. To enable other members of your team, and, eventually, a wider player population you invite, to see your games, you need to deploy them to one of the public-facing Plesk hosts at UW. (We call them "Plesk hosts" because, unlike most other computers you deal with on daily basis, one uses the Plesk interface to control one's web site deployed to them).
+
+<p>In brief, once you have your UW netid and have been granted access to the Plesk console, you use the Plesk control panel to deploy your experiment control files to a Plesk host of your choices, whenever you so desire. For details, see:
+  <a href="setup-hosting.html#game-data">Setting up the Rule Game Server on a DoIT Shared Hosting host#Experiment control files</a></h2>
+
+<p>Which of the two Plesk hosts to use? I would suggest you use the dev host (wwwtest.rulegame.wisc.edu) when you just want to show your game to other team members, and maybe collect some playing data from them. This can be done as frequently as you desire. You use the prod host (rulegame.wisc.edu) when you feel that the experiment is fully ready to start inviting outside players, so that you can start accumulating "real data" for subsequent analysis. The URL you'll give to the outside players will be prod-host-based, e.g. 
+  <a href="http://rulegame.wisc.edu/w2020/front-end-form-2.jsp?exp=RU/JF/tht/exp1&prefix=RU-JF-THT-">
+    <tt>http://rulegame.wisc.edu/w2020/front-end-form-2.jsp?exp=RU/JF/tht/exp1&amp;prefix=RU-JF-THT-</tt></a>
+
+    <h2>5. Extracting and analyzing data</h2>
+
+<p>When people play games on a Rule Game Server, the server accumulates data describing all the particulars of each episode played: what the initial board was, what moves the player attempted, what the outcome of each move was. Various auxiliary information, such as the player's guesses (which the GUI client solicits at the end of each episode), and the demographic info (from the final questionnaire) are recorded as well. As our <a href="data.html">Data Guide</a> explains, different kinds of data are saved in different ways: some are recorded in MySQL database table (the "read-and-write data") while others go to CSV files ("write-only data"). For most of your analyses, you'll need both.
+
+  <h3>Locally generated data vs. imported data</h3>
+
+ 
+<p><strong>Local.</strong>
+  As you play games on <tt>localhost</tt>, the Game Server you run on your laptop keeps saving data on your server. To see the location of your saved data, take a look at your <a href="setup/setup-config.html">master configuration file</a> (in <tt>/opt/w2020/w2020.conf</tt>). The important lines are the following:
+<pre class="yellow">
+#----The Rule Game server saved data directory.
+#--- The Game Server will write transcript files etc to it.
+FILES_SAVED =  "/opt/w2020/saved";
+
+#---- The name of the database on you MySQL server that your Rule Game Server uses
+JDBC_DATABASE = "game";
+</pre>	
+The first variable tells you where the CSV data files are; the second, the name of the database where the SQL tables are.
+
+<p><strong>Imported.</strong> Once you have the UW netid and granted access to the Plesk hosts, you can start importing saved data from these two hosts, in order to analyze them locally. The process is described in the <a href="tools/pull-data.html">Pull guide</a>. As the Pull guide explains, when you pull data from a remote server, the pull script puts them in their own separate places: a new database, and a new data directory. These two variables are saved in new configuration file in your current directory. Keep that configuration file; you'll be passing it as an argument to various analysis scripts (such as <a href="tools/analyze-transcripts.html">the Analyze Transcript tool</a>), so that those scripts will know what data to look at.
+
+  <h3>Looking at the data</h3>
+
+<p>There are several ways in which you can look at the saved data (either local or imported ones).
+
+<p><strong>Raw data.</strong> The saved CSV files are directly available for your inspection at the saved data directory, and can be processed by any Perl or Python script you care to write.
+
+  <p>
+    To view the data in the MySQL database, you can just run a mysql client, and type the queries on its prompt. This is good for a quick check. But how will you feed these data to your analysis scripts or other tools? MySQL, in principle, supports exporting data from database tables into CSV files; this is discussed here: <a href="https://dev.mysql.com/doc/refman/8.0/en/select-into.html">SELECT ... INTO statement</a>. We do have a sample script that does it; see export.sh in the Data Guide. Unfortunately, MySQL is rather finicky with file-writing permissions; while we know that exporting works on our Linux hosts (export.sh works there), this may not necessarily the case on your current MySQL installation on your MacOS computer.   ....
+
+
+    <p>--- TO BE CONTINUED ---
+  
+</body>
+</html>

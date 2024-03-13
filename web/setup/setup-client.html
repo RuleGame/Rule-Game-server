@@ -3,6 +3,7 @@
   <body>
 
     <h1>Setup: GUI client</h1>
+<p align="center"><em>Updated 2024-03-13</em></p>
 
     <p>If you want to install your own instance of the GUI client (for Option C):
 
@@ -80,6 +81,29 @@ If at a later point the GUI client source code has been updated in the GitHub re
 <p>
       The setting of <tt>REACT_APP_APP_API_HOST_ORIGIN</tt> used in the script above is suitable if you are going to use your instance of client with one instance of the Rule Game server, the one that you deploy to /w2020 on your host.
 
+      <h3>Sample compilation script</h3>
+
+<pre>#!/bin/csh
+
+mkdir rule-game
+setenv REACT_APP_APP_API_HOST_ORIGIN /w2020
+
+setenv REACT_APP_DEBUG_MODE_ENABLED false
+npm install
+npm run build
+mv build prod
+mv prod rule-game
+
+setenv REACT_APP_DEBUG_MODE_ENABLED true
+npm install
+npm run build
+mv build dev
+mv dev rule-game
+
+cd rule-game
+war cf rule-game.war prod dev
+</pre>
+      
   <h3>Customizing the code</h3>
     <p>If you know TypeScript, you can modify the client's source code as needed before compiling.
 

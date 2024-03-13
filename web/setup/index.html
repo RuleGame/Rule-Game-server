@@ -79,7 +79,7 @@
 
     <li><strong>Tomcat.</strong> Assuming that you have chosen the Apache Tomcat as your web server, install it (if you don't have it yet) and configure it for running the Game Server web app on it. For the instructions (which also ask you to install an additional library), see <a href="setup-tomcat.html">Tomcat setup guide</a>.  Once Tomcat is running, you should be able to verify that it's running by going to the appropriate URL, such as <tt>http://MY_HOST:MY_PORT/ </tt>. (Put your host name and port number instead of <tt>MY_HOST</tt> and <tt>MY_PORT</tt> in the URL; if you are sitting at your server's console, and are using the default port number 8080, that would be  <tt>http://localhost:8080/</tt> )
 
-    <li><strong>Rule Game Server WAR file.</strong> In this option, you will simply download a recent version of our server application WAR file our server's <a href="/download">Download Area</a> (look for a recent file with a name such as
+    <li><strong>Rule Game Server WAR file.</strong> Download a recent version of our server application WAR file from our server's <a href="/download">Download Area</a>. Look for a recent file with a name such as
       <tt>w2020.war</tt> or
       <tt>w2020-5.002-2022-06-01.war</tt>,
       rename it to <tt>w2020.war</tt> if needed,  and put that file into the web apps directory of your Tomcat (<tt>/opt/tomcat/webapps</tt>, if you followed our defaults). You can do it by simply copying the downloaded WAR file to that directory, or you can use Tomcat's management web interace  for loading applications ( <tt>http://localhost:8080/manager/html</tt> , if you are sitting in front of your server). 

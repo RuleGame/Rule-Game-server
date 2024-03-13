@@ -24,21 +24,58 @@
 
   <p>For convenience, you may want to add the script directory (such as /home/vmenkov/w2020/game/scripts, or whatever it is on your machine) to your PATH.
 
-    <h3>If you're working on a host that runs Game Server installed using WAR files</h3>
+    <h3><a name="war">If you're working on a host that runs Game Server installed using WAR files</a></h3>
 
   <p>You may be working on a computer on which you have installed the Game Server by downloading its WAR file. (This is Option A in the  <a href="../setup/index.html">Setup Guide</a>). In this case, you have all the necessary JAR files already (they came packed in the WAR file, and Tomcat unpacked them into <tt>/opt/tomcat/webapps/w2020/WEB-INF/lib</tt> or a similar location), but you don't have the shell scripts yet. In this case, to be able to use analysis scripts, you can do the following:
 
     <ul>
       <li>Get the Rule Game Server source code from GitHub, as if you are preparing to compile it (as described in the <a href="../setup/setup-compile.html">Rule Game Server build Guide</a>), but without actually compiling. Assuming that the main directory you have chosen to check out the Rule Game Server source code is   <tt>~/w2020/game</tt>, then the top-level shell scripts will be in the directory
 	<tt>~/w2020/game/scripts</tt>. You can add this directory to your PATH.
-      <li>If your Tomcat is not under <tt>/opt/tomcat</tt> (i.e. there is no directory  <tt>/opt/tomcat/webapps/w2020/WEB-INF/lib</tt>  on your computer), figure where Tomcat lives, and set up a sym link so that <tt>/opt/tomcat/webapps</tt> resolves to your Tomcat's webapps directory. For example, if your Tomcat is in <tt>/usr/local/opt/tomcat</tt> (as is often the case in MacOS installations), then you can set up a link like this:
+      <li><a name="symlink">If your Tomcat is not under <tt>/opt/tomcat</tt></a> (i.e. there is no directory  <tt>/opt/tomcat/webapps/w2020/WEB-INF/lib</tt>  on your computer), figure where Tomcat lives, and set up a sym link so that <tt>/opt/tomcat/webapps</tt> resolves to your Tomcat's webapps directory. For example, if your Tomcat is in <tt>/usr/local/opt/tomcat</tt> (as is often the case in MacOS installations), then you can set up a link like this:
 	<pre>cd /opt/
 ln -s /usr/local/opt/tomcat .</pre>	 
     </ul>
 
-    <p>When you invoke the analysis script, it will attempt to look for the Java classes first in the locations where they would have been if 
+    <p>When you invoke the analysis script, it will attempt to look for the JAR files with Java classes first in the locations where they would have been if the Game Server on this host had been compiled from source (e.g. under ~/w2020/lib etc); if those don't exist, it will fall back to the JAR files that Tomcat had unpacked in its own <tt>webapps</tt> directory from the WAR files that you have downloaded. 
   
-  
+      <h3><a name="none">If you're working on a host that has no Game Server at all</a></h3>
 
+    <p>If your host has no Game Server installed, and you have no plan to install one, but you want to run analysis scripts here, it means that you intend to use this host as an <em>analysis host</em> for data accumulated on Game Servers elsewhere (e.g. on the Plesk hosts), meaning that you'll need to learn how to learn how to <a href="pull-data.html">pull from remote servers</a>.
+
+    <p>To be able to use the analysis script on your host, you still will need to install some (but not all) of the same components that would be required if you were installing the Game Server (as described in the <a href="../setup/index.html">Setup Guide</a>). Specifically:
+
+      <ul>
+	<li>Install the <strong>MySQL server</strong> (see the <a href="../setup/setup-mysql.html">SQL database setup guide</a>).
+	<li>Create <strong>the master configuration file.</strong> This file will, among other things, tell your Rule Game Server how to connect to the database server. See <a href="../setup/setup-config.html">config file setup</a> for details.
+	<li>You don't need to actually run Tomcat, or even to have it installed; but you need the directory <tt>/opt/tomcat/webapps</tt> to exist, regarding of whether you have Tomcat. Thus:
+	  <ul>
+	    <li>If you have Tomcat already installed in /opt/tomcat, you are all set.
+	    <li>If you have Tomcat already installed elsewhere, just create a sym link (see the sample command <a href="#symlink">above</a>), so that /opt/tomcat/webapps resolves to an existing directory.
+	  </ul>
+	 <li>Download the <strong>Rule Game Server WAR file</strong> from our server's <a href="/download">Download Area</a>. Look for a recent file with a name such as
+      <tt>w2020.war</tt> or
+      <tt>w2020-5.002-2022-06-01.war</tt>,
+      rename it to <tt>w2020.war</tt> if needed,  and put that file into <tt>/opt/tomcat/webapps</tt>. If you have Tomcat running, you don't need to do anything else with this file, as Tomcat will automatically unpack its contents into <tt>/opt/tomcat/webapps/w2020</tt>. If you don't actually have Tomcat installed, or if it's installed but not running, then unpack the WAR file:
+      <pre>cd /opt/tomcat/webapps
+	jar xf w2020.war</pre>
+      You can now verify that the directory  <tt>/opt/tomcat/webapps/w2020/WEB-INF/lib</tt> contains a large number of JAR files.
+	 <li>Obtain the source code of the Rule Game Server from the GitHub repository (it includes the shell scripts you need), just as if you were preparing to  <a href="../setup/setup-compile.html">build the Game Server from source:</a>
+	   <pre>cd
+mkdir w2020	     
+cd w2020	     
+mkdir game
+cd game
+git init
+git remote add origin https://github.com/RuleGame/Rule-Game-server.git
+git pull origin master	   </pre>	   
+      </ul>
+
+    <p>This is all you need to do; now your scripts should be in  <tt>~/w2020/game/scripts</tt>, and should be usable.
+
+      <hr>
+        <p>
+  [<a href=".">Main tools page</a>] &nbsp;   [<a href="..">Main documentation page</a>]
+
+      
 </body>
 </html>

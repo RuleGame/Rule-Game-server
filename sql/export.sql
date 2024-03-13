@@ -1,4 +1,10 @@
+#-- The files must be saved to a directory (/var/lib/mysql-files/, on our Linux hosts) which is set in the server's
+#-- config file (or just in the server defaults). It can be seen in the SQL variable  @@secure_file_priv
+
 use game;
+
+SELECT @@secure_file_priv;
+
 select * into outfile '/var/lib/mysql-files/tmp-PlayerInfo.csv'   FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'   LINES TERMINATED BY '\n'   FROM game.PlayerInfo;
 select * into outfile '/var/lib/mysql-files/tmp-Episode.csv'   FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'   LINES TERMINATED BY '\n'   FROM game.Episode;
 

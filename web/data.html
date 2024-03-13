@@ -327,6 +327,9 @@ Then run the script:
 </pre>
 This will create 2 CSV files, PlayerInfo.csv and Export.csv, in your current directory. There are no header lines in them, but the columns are ordered the same way as described above.
 
+<p>Note: for its successful operation, this script relies on the fact that your MySQL server allows saving data files into the directory <tt>/var/lib/mysql-files</tt>. If the script does not worl on your server, check the server variable @@secure_file_priv (using the SQL command <tt>SELECT @@secure_file_priv;</tt>). If this variable's value on your server is <tt>null</tt> (which is often the case on MacOS installations), the script won't work, unless you figure how to change the server's configuration.
+
+
 <h2><a name="saved">Write-only data</a></h2>
 
 <p>At the end of each episode, the Game server saves the essential information about the episode into CSV file. That includes the initial board description, all the attempted moves (successful and unsuccessful), and any guess submitted by the player.
@@ -439,23 +442,10 @@ qt-02,trial_1,2,TD-03,0,20200923-211954-8M8E8V,"here, is also a guess, for the n
 
      </ol>
 
-  
+  <h2>Analysis tools</h2>
 
-   
+<P>We have several tools that can be used to extract the data and analyze them. See the <a href="tools/">Tools Guide</a>
 
-   
-
-   
-   <hr>
-
-
-<p><em>I will write one more section here, explaining how to put the data together, on a few simple examples.</em></p>
-
-<h2>See also</h2>
-
-<ul>
-  <li><A href="tools/analyze-transcripts.html">analyze-transcripts.sh</a>
-</ul>
 
 </body>
 </html>
