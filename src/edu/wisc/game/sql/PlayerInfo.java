@@ -379,7 +379,9 @@ public class PlayerInfo {
     /** The main table for all episodes of this player, arranged in
 	series.  This table normally contains entries for all series,
 	both those already played and the future ones, one series per
-	para set. The tables is initialized by initSeries().
+	para set. The tables is initialized by initSeries(), and is filled
+	with a number of "empty" series, each one having a ParaSet but
+	no episodes yet.
      */
     @Transient
     private Vector<Series> allSeries = new Vector<>();
@@ -419,7 +421,7 @@ public class PlayerInfo {
     /** This is usesd when a player is first registered and a PlayerInfo object is first created.  */
     public void initSeries(TrialList trialList) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
 
-	if (allSeries.size()>0) throw new IllegalArgumentException("Attempt to initialize PlayerInfor.allSeries again");
+	if (allSeries.size()>0) throw new IllegalArgumentException("Attempt to initialize PlayerInfo.allSeries again");
 	allSeries.clear();
 	for( ParaSet para: trialList) {
 	    allSeries.add(new Series(para));
@@ -588,8 +590,11 @@ public class PlayerInfo {
 
     /** Gives a link to the first ParaSet. This is used for things
 	that are determined by the first ParaSet, e.g. the pregame 
-	experience. */
+	experience.
+	@return the ParaSet for the first series, or null if none exists.
+    */
     public ParaSet getFirstPara() {
+	if (allSeries.size()==0) return null;
 	Series s = getSeries(0);
 	if (s==null) return null;
 	return s.para;
@@ -757,6 +762,7 @@ public class PlayerInfo {
 	    double d = epi.attemptSpent - epi.doneMoveCnt;
 	    
 	    epi.rewardMain =  ser.para.kantorLupyanReward(d);
+	    
 	    //(int)Math.round( smin + (smax-smin)/(1.0 + Math.exp(b*(d-2))));
 	    if (epi.bonus) {
 		ser.assignBonus();
@@ -897,5 +903,35 @@ public class PlayerInfo {
 	return v;
     }
 
+    /** Compute the "goodness score" of this player, intended to measure
+	how good this player has been, to be used during
+	the postgame experience to decide if the demographics page
+	should contain an invitation to participate in additional
+	research (only offered to good players). At present (ver
+	6.029), this score is only computed in a non-trivial way in
+	games with the incentive plan Incentive.DOUBLING.
+	
+	@return For players in games with the incentive plan
+	Incentive.DOUBLING, the value of the score, in the range
+	[0..1], is simply the fraction of all rule sets so far that
+	the player has mastered (received X4).  For players in other
+	incentive plans, 0 is returned.
+    */
+    public double goodnessScore() {
+	
+	ParaSet para = getFirstPara();
+	if (para==null) return 0;
+	//hasError("Don't know the players parameter set");
+
+	if ( para.getIncentive()==ParaSet.Incentive.DOUBLING) {
+	    int nMastered = 0;
+	    for(Series ser: allSeries) {
+		if (ser!=null && ser.seriesEndedByX4()) nMastered ++;
+	    }
+	    return (double)nMastered / (double) allSeries.size();
+	} else return 0;
+    } 
+
+    
 }
  

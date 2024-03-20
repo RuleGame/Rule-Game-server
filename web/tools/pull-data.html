@@ -5,7 +5,7 @@
   <h1>Pulling data from a remote host
   </h1>
 
-<div align="center"><em>Updated 2024-03-10, for Game Server 6.023</em></div>
+<div align="center"><em>Updated 2024-03-13, for Game Server 6.028</em></div>
 
 <h2>Introduction</h2>
 
@@ -88,6 +88,7 @@ mysql --login-path=wwwtest.rulegame
 
       <p>THe script will tell you that it has created a config file, e.g. <tt>w2020_game_wwwtest_rulegame_2024_01_30.conf</tt>, which describes the location of the downloaded data (the file directory location, and the database name). When running analysis scripts on these data later, make sure to pass the name of the config file to the analysis script, with the <tt>-config</tt> option.
 
+	<p>This script exports 2 tables, PlayerInfo or Episode. You can modify it as needed if you need other tables.
       
   <h2>See also</h2>
 

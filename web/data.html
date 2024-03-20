@@ -307,7 +307,7 @@ where e.PLAYER_ID=p.id and p.playerId= 'vm012' order by startTime;
 
     e.startTime> '2020-10-10' order by startTime;
     
-    <h3><a name="export">Exporting data from the MySQL database to CSV files</a></h3>
+    <h3><a name="export">Exporting data from the MySQL database to CSV files: Option 1</a></h3>
 
  <p>There are many ways to export the content of SQL tables to CSV files. As an example, I have supplied a script that resides on sapir in <code>~vmenkov/w2020/game/sql/export.sh</code>. In order to be able to use this particular script, you must have possess several qualifications:
 <ul>
@@ -330,6 +330,29 @@ This will create 2 CSV files, PlayerInfo.csv and Export.csv, in your current dir
 <p>Note: for its successful operation, this script relies on the fact that your MySQL server allows saving data files into the directory <tt>/var/lib/mysql-files</tt>. If the script does not worl on your server, check the server variable @@secure_file_priv (using the SQL command <tt>SELECT @@secure_file_priv;</tt>). If this variable's value on your server is <tt>null</tt> (which is often the case on MacOS installations), the script won't work, unless you figure how to change the server's configuration.
 
 
+    <h3><a name="export-2">Exporting data from the MySQL database to CSV files: Option 2</a></h3>
+
+<p>While <tt>export.sh</tt> has many restrictions on which hosts it can be used on, we also have a JDBC-based tool, <tt>scripts/export-2.sh</tt> which can be used on any host. It writes files into the current directory, so run it in the directory to which you want the outpiut files to go. The usage, for exporting locally accumulated data (database <tt>game</tt>), is as follows:
+
+  <pre>
+    mkdir export-directory
+    cd export-directory
+    export-2.sh
+  </pre>
+
+<P>(For brevity, we assume that you have added the directory in which the scripts are, such as <tt>~/w2020/game/scripts</tt>, to you PATH).
+  
+<p>If you have  <a href="tools/pull-data.html">Pulled data from a remote server</a>, they are in a separate database on your server. The name of the database is in the config file produced during the pull process.
+
+  <pre>
+    mkdir pulls
+    cd pulls
+    pull-remote-data.sh wwwtest.rulegame
+    export-2.sh -config w2020_game_wwwtest_rulegame_2024_01_30.conf
+  </pre>
+
+(The file name you provide in the <tt>-config</tt> option is the name of the config file that <tt>pull-remote-data.sh</tt> has produced).
+  
 <h2><a name="saved">Write-only data</a></h2>
 
 <p>At the end of each episode, the Game server saves the essential information about the episode into CSV file. That includes the initial board description, all the attempted moves (successful and unsuccessful), and any guess submitted by the player.

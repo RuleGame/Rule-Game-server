@@ -13,6 +13,8 @@ set jpa=/opt/apache-openjpa
 
 set weblib=/opt/tomcat/webapps/w2020/WEB-INF/lib
 
+# ls -l  $h/lib/game.jar
+			
 if (-e $h/lib/game.jar) then
    # echo "Using local jar files"
    setenv CLASSPATH $h/lib/game.jar:$g/jaxb-ri/mod/'*':$g/jaxrs-ri/api/'*':$g/jaxrs-ri/ext/'*':$g/jaxrs-ri/lib/'*':$g/jaxrs-ri/api/'*':$g/commons-math3-3.6.1/'*':$jpa/'*':$jpa/lib/'*':/opt/w2020/lib/mysql-connector-java.jar

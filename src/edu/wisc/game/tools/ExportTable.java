@@ -77,9 +77,35 @@ public class ExportTable {
 
     
     public static void main(String[] argv) throws Exception {
-	if (argv.length!=2) usage();
-	String table = argv[0];
-	String outFile = argv[1];
+
+	String table = null;
+	String outFile = null;
+	String config = null;
+	
+	Vector<String> plans = new Vector<>();
+	Vector<String> pids = new Vector<>();
+	Vector<String> nicknames = new Vector<>();
+	Vector<Long> uids = new Vector<>();
+
+	int used = 0;
+	for(int j=0; j<argv.length; j++) {
+	    String a = argv[j];
+	    if (j+1< argv.length && a.equals("-config")) {
+		config = argv[++j];
+	    } else {
+		if (used == 0) table = argv[j];
+		else if (used == 1)  outFile = argv[j];
+		else usage("Too many arguments");
+		used ++;
+	    }
+	}
+	
+	if (outFile==null) usage("Some arguments have not been provided");
+
+	if (config!=null) {
+	    // Instead of the master conf file in /opt/w2020, use the customized one
+	    MainConfig.setPath(config);
+	}
 
 	File f = new File(outFile);
 	PrintWriter w = new PrintWriter(new FileWriter(f));

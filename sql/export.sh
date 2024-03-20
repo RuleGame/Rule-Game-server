@@ -25,6 +25,9 @@ set h=`(cd $sc; pwd)`
 #-- The location should match the value given by 'SELECT @@secure_file_priv;'
 #-- This is the location for our Linux machines. On MacOS, unfortunately, @@secure_file_priv is null,
 #-- so this script won't work.
+#
+#-- If this script does not work on your machine, try scripts/export-table.sh
+
 set dump=/var/lib/mysql-files
 
 if (! -d $dump) then

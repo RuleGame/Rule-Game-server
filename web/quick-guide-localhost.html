@@ -5,7 +5,7 @@
 <body>
   <h1>Quick guide: getting started on your laptop</h1>
 
-  <p align="center"><em>Updated 2024-03-10, for Tanvi and any future research team members</em></p>
+  <p align="center"><em>Updated 2024-03-13, Game Server ver. 6.028, for Tanvi and any future research team members</em></p>
 
   <h2>1. The use case</h2>
 
@@ -85,17 +85,27 @@ The first variable tells you where the CSV data files are; the second, the name 
 
 <p><strong>Imported.</strong> Once you have the UW netid and granted access to the Plesk hosts, you can start importing saved data from these two hosts, in order to analyze them locally. The process is described in the <a href="tools/pull-data.html">Pull guide</a>. As the Pull guide explains, when you pull data from a remote server, the pull script puts them in their own separate places: a new database, and a new data directory. These two variables are saved in new configuration file in your current directory. Keep that configuration file; you'll be passing it as an argument to various analysis scripts (such as <a href="tools/analyze-transcripts.html">the Analyze Transcript tool</a>), so that those scripts will know what data to look at.
 
-  <h3>Looking at the data</h3>
+  <h3>Just looking at the data</h3>
 
 <p>There are several ways in which you can look at the saved data (either local or imported ones).
 
-<p><strong>Raw data.</strong> The saved CSV files are directly available for your inspection at the saved data directory, and can be processed by any Perl or Python script you care to write.
+<p><strong>Raw data.</strong> The saved CSV files are directly available for your inspection at the saved data directory (either in /opt/w2020/saved for the local data, or in whatever directory you pulled imported data into), and can be processed by any Perl or Python script you care to write.
 
   <p>
-    To view the data in the MySQL database, you can just run a mysql client, and type the queries on its prompt. This is good for a quick check. But how will you feed these data to your analysis scripts or other tools? MySQL, in principle, supports exporting data from database tables into CSV files; this is discussed here: <a href="https://dev.mysql.com/doc/refman/8.0/en/select-into.html">SELECT ... INTO statement</a>. We do have a sample script that does it; see export.sh in the Data Guide. Unfortunately, MySQL is rather finicky with file-writing permissions; while we know that exporting works on our Linux hosts (export.sh works there), this may not necessarily the case on your current MySQL installation on your MacOS computer.   ....
+    To view the data in the MySQL database, you can just run a mysql client, and type the queries on its prompt. This is good for a quick check. But how will you feed these data to your analysis scripts or other tools? There are two export options, described below.
+    
+  <p><strong>Exporting MySQL tables - option 1. (This probably won't work on your MacOS laptop)</strong>     MySQL, in principle, supports exporting data from database tables into CSV files; this is discussed here: <a href="https://dev.mysql.com/doc/refman/8.0/en/select-into.html">SELECT ... INTO statement</a>. We do have a sample script that does it; see export.sh in the Data Guide. Unfortunately, MySQL is rather finicky with file-writing permissions; while we know that exporting works on our Linux hosts (export.sh works there), this may not necessarily the case on your current MySQL installation on your MacOS computer.
 
+  <p><strong>Exporting MySQL tables - option 2. (Recommended for use on your MacOS laptop)</strong> We also have a JDBC-based export tool, which should work regardless of the quirks of the local MySQL server installation.   See the <a href="data.html#export-2">docs for export-2.sh</a> for details.
 
-    <p>--- TO BE CONTINUED ---
+<h3>Analysis tools</h3>
+
+<P>We have several tools that can be used to extract the data and analyze them. See the <a href="tools/">Tools Guide</a>. For example, <tt>analyze-transcripts.sh</tt> allows you to specify the set of players you are interested in (e.g. "everybody who played experiment plan X"), extracts information from these players' playing from the MySQL server and from the transcript files, cleans it up, and produces a bunch of processed transcript files, one per player.
+
+  <hr>
+
+  <p>[<A href=".">Back to the main documentation page</a>]
+
   
 </body>
 </html>

@@ -20,6 +20,8 @@ import edu.wisc.game.engine.*;
 
 /** Retrieving various pages needed by the client to customize the player's pregame and postgame experience. Discussed with Kevin, Paul and Gary (2022-11-10).
 
+    <p>For documentation, see game-api-pregame.html
+
 <p>Maintaining compatibility with several instruction booklets that used to be hard-coded in the client, and controlled by the config parameter "init":
 <pre>
         ...(init === 3
@@ -55,7 +57,9 @@ public class PregameService {
 	File imgDir;
 	int bookletSize;
 	File[] bookletPages;
-
+	/** How well has this player mastered the rule sets? */
+	double goodnessScore;
+	
         public int getBookletSize() { return bookletSize; }
         @XmlElement
         public void setBookletSize(int _bookletSize) { bookletSize = _bookletSize; }
@@ -63,7 +67,11 @@ public class PregameService {
         public String getPath() { return d==null? null: d.getPath(); }
 
 	public File[] _getBookletPages() { return bookletPages;}
-     
+
+	public double getGoodnessScore() { return goodnessScore; }
+	@XmlElement
+	public void setGoodnessScore(double _goodnessScore) { goodnessScore = _goodnessScore; }
+
 	/** Identifies and tests the pregame experience directory for the
 	    player's experiment plan. The main parameter for that is
 	    "pregame", but for legacy (pre ver. 6.*) plans we also look
@@ -119,6 +127,8 @@ public class PregameService {
 		    hasError("No suitably named images found in booklet directory '" + imgDir + "'");
 		    return;		    
 		}
+
+		goodnessScore = x.goodnessScore();
 		
 	    } catch(Exception ex) {
 		setError(true);

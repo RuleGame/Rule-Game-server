@@ -1,12 +1,19 @@
 <html>
-  <head><title>Web API for the use by the Rule Game client: pregame experience</title>
+  <head><title>Web API for the use by the Rule Game client: pregame and postgame experience</title>
+    <link rel="stylesheet" type="text/css" href="css/rule-game.css"/>
   </head>
 <body>
-  <h1>Web API for the use by the Rule Game client: pregame experiencet</h1>
+  <h1>Web API for the use by the Rule Game client: pregame and postgame experience</h1>
 
-  <p align="center"><em>Version 6.000,  2022-11-12</em></p>
+  <p align="center"><em>Version 6.029,  2024-03-18</em></p>
 
   <p>This document describes an addition to the <a href="game-api-2.html">Rule Game Web API</a>, designed to provide the client with the bundle of files controlling the player's pregame and postgame experience (PGE). This was discussed in email by Vladimir and Kevin with Paul and Gary around 2022-11-10.
+
+    <h2>Introduction</h2>
+
+  <p>The <em>pregame experience</em> includes everything that the player will encounter before he actually starts moving game pieces on the board. This includes the IRB-approved consent pages, and the "instruction booklet", i.e. the sequence of information pages that the player is shown after he has accepted the consent page and before he starts playing.
+
+    <p>The <em>postgame experience</em> includes everything that the player will encounter after he has finished playing.
 
     <h2>API calls</h2>
     
@@ -14,7 +21,7 @@
     
   <p>API calls returning JSON structures
     <ul>
-      <li><a href="game-data/PregameService/getPage?name=consent.html&playerId=vm-2022-10-23-a">Get page consent.html</a>  (This can be done with the query parameter <tt>name</tt> being any of (<tt>consent.html  debriefing.html  debriefing.uid.html  demographics_instructions.html  demographics.json</tt>))
+      <li><a href="game-data/PregameService/getPage?name=consent.html&playerId=vm-2022-10-23-a">Get page consent.html</a>  (This can be done for several other pages as well. The query parameter <tt>name</tt> can be any of (<tt>consent.html  debriefing.html  debriefing.uid.html  demographics_instructions.html  demographics.json</tt>))
 	
       <li><a href="game-data/PregameService/getBookletSize?playerId=vm-2022-10-23-a">Get booklet size</a>; the result is in the field <tt>bookletSize</tt>
     </ul>
@@ -35,9 +42,9 @@ In the above call, if an error has occurred, it will be detected through the HTT
   <ul>
     <li><code>game-data/PregameService/getPage?playerId=foo&name=consent.html</code> -- As with all calls returning a JSON structure, check the error field in the returned JSON structure. If error==true, report the error (print the errmsg field). If false, get the HTML snippet from the <tt>value</tt> field, for use instead of   Page.CONSENT. (The HTML snippet does not include the checkbox and CONTINUE button; they need to be appended).
       
-    <li><code>game-data/PregameService/getBookletSize?playerId=foo</code> -- the <tt>bookletSize</tt> field will contain the number of images (pages) in the instruction booklet.
+    <li><code>game-data/PregameService/getBookletSize?playerId=foo</code> -- the <tt>bookletSize</tt> field of the returned structure will contain the number of images (pages) in the instruction booklet.
 
-    <li>For each <em>j</em> in the range [0 .. bookletSize-1], make the call <code>GetBookletPageServlet?playerId=foo&pageNo=<em>j</em></code>. This will give the image data (PNG, JPEG, etc) for the j-th page, similarly to how GetImageServlet returns a custom image of a game piece. (Note: you don't have to number your image files on the server starting from 0. You can start numbering from 1, have gaps, etc; the server will sort them by file name taking into account the numberic part of the name, and will offer them to the client in this order).
+    <li>For each <em>j</em> in the range [0 .. bookletSize-1], make the call <code>GetBookletPageServlet?playerId=foo&pageNo=<em>j</em></code>. This will give the image data (PNG, JPEG, etc) for the j-th page, similarly to how GetImageServlet returns a custom image of a game piece. (Note: you don't have to number your image files on the server starting from 0. You can start numbering from 1, have gaps, etc; the server will sort them by file name taking into account the numeric part of the name, and will offer them to the client in this order).
 
     <li>We don't customize the string for LOADING_TRIALS, since nobody asked for that.
       
@@ -45,14 +52,20 @@ In the above call, if an error has occurred, it will be detected through the HTT
 
     <li><code>game-data/PregameService/getPage?playerId=foo&name=demographics_instructions.html</code>, for       Page.DEMOGRAPHICS_INSTRUCTIONS
 
-    <li><code>game-data/PregameService/getPage?playerId=foo&name=demographics.json</code> -- here, the <tt>value</tt> field contains the <strong>text</strong> text of the JSON file corresponding to what's found in client's <tt>demographics.ts</tt>. The client will have to interpret it as JSON (I assume there's a JSON parser in TypeScript?), and if a parsing error occurs, report an error. The JSON data  can then be used to build DEMOGRAPHICS just like the code from <tt>demographics.ts</tt> is used now.
+    <li>
+<a href="game-data/PregameService/getPage?playerId=vm-2022-10-23-a&name=demographics.json">
+      <code>game-data/PregameService/getPage?playerId=foo&name=demographics.json</code></a> -- here, the <tt>value</tt> field contains the <strong>text</strong> of the JSON file corresponding to what's found in client's <tt>demographics.ts</tt>. (Rather than a JSON structure). The client will have to interpret it as JSON (I assume there's a JSON parser in TypeScript?), and if a parsing error occurs, report an error. The JSON data  can then be used to build DEMOGRAPHICS just like the code from <tt>demographics.ts</tt> is used now.
 
     <li>Either <code>game-data/PregameService/getPage?playerId=foo&name=debriefing.html</code>  (if <tt>!HAS_UID</tt>) or  <code>game-data/PregameService/getPage?playerId=foo&name=debriefing.uid.html</code>  (if <tt>HAS_UID</tt>). This is HTML code, but it has   <code>{completionCode}</code> inside, to be filled in by the client.
   </ul>
   
-  <h2>Where the server gets the files</h2>
+  <div class="yellow">
+  <h2><a name="files">Where the server gets the files</a></h2>
 
-<p>From <tt>game-data/pregame/<em>pregameExperienceName</em></tt>. The default experience is called <tt>default</tt>. At present, there are 3 others:
+<p>From <tt>game-data/pregame/<em>pregameExperienceName</em></tt>. This is where the experiment designer should put them, using the usual SOP for editing experiment control files.
+
+<p>
+  The default experience is called <tt>default</tt>. As of mid-2023, there are 3 others:
   <pre>
 :/opt/tomcat/game-data/pregame> pwd
 /opt/w2020/game-data/pregame
@@ -60,8 +73,54 @@ In the above call, if an error has occurred, it will be detected through the HTT
 default/  doubling/  relational/  stalemate/
   </pre>
 
+  <h2><a name="conditional">Conditional entries on the demographics page</a></h2>
+
+<P>Since ver. 6.029, it is possible for some of the entries on the demographics questionnaire to be presented only to some participants: either only to the good players (those whose "goodness score", as defined below, was equal to or greater than a certain threshold), or only to the not-so-good ones (those whose "goodness score",  was below a certain threshold).
+
+  
+<P><strong>Defining the goodness score.</strong> The Rule Game Server computes the so-called <em>goodness score</em> for each player participating in experiments with the DOUBLING incentive scheme. The value is a real valued number, on the scale 0.0 to 1.0. It measures the player's prowess at guessing the rules; the value is computed as the ratio of the number of "mastered" rule sets to the total number of the rule sets in the experiment plan. (A "mastered" rule set, in this incentive scheme, is one where the player was able to make 10 error-free move attempts in a row). Thus a player who mastered no rules will have score=0.0, while one who has mastered all rules will have the score of 1.0.
+
+<P><strong>GUI Client obtaining the goodness score.</strong>  Whenever the GUI client makes a call to  <code>game-data/PregameService/getPage</code> (for example, to retrieve <tt>demographics.json</tt>), the response contains, among other fields, the field
+  named  <tt>goodnessScore</tt>.  E.g. (
+<a href="http://wwwtest.rulegame.wisc.edu/w2020/game-data/PregameService/getPage?name=demographics.json&playerId=pbk2024JAN12a">
+  <code>http://wwwtest.rulegame.wisc.edu/w2020/game-data/PregameService/getPage?name=demographics.json&playerId=pbk2024JAN12a </code></a>):
+  <pre>{"error":false,
+    "bookletSize":11,
+    <strong>"goodnessScore":0.6666666666666666,</strong>
+    "path":"/opt/w2020/game-data/pregame/doubling",
+    "value":"[\n  {\n    \"type\": \"radiogroup\",\n    \"name\": \"gender\",\n ...here\"\n  }\n]\n"
+    }
+</pre>
+
+  
+<P><strong>Use in questionnaire entries.</strong> Here's an example of an entry that the client should only show to players with <em>goodnessScore &ge; 1.0</em>:
+  <pre>
+    {
+    <strong>"goodnessGE": 1.0</strong>
+    "type": "radiogroup",
+    "name": "subsequent",
+    "isRequired": true,
+    "title": "You performed very well in our game! Would you like to be contacted in order to participate in additional experiments?"
+    "choices": ["1|Yes", "0|No"],
+    "colCount": 0
+  },
+  </pre>
+
+<p>Entries also can be created to be shown only to players with the score below a specified threshold (in this case, 0.25)</p>
+  <pre>
+{
+<strong>"goodnessLT": 0.25</strong>
+"type": "text",
+"name": "whySoPoor",
+"title": "Why do you think you performed so poorly?"
+},
+  </pre>
+  
+  <div class="yellow">
   <h2>How the server determines which pregame experience to offer to a given player</h2>
 
+<P>This is how the experiment designer controls the choice of the pregame and postgame experience.
+  
   <ul>
     <li>If the player's trial list file contains the column named <tt>pregame</tt>, its value (from the first line of the file) is understood to be the name of the PGE offered to the player.
       
@@ -111,7 +170,7 @@ default/  doubling/  relational/  stalemate/
       to start a session with your test plan. Go through all the steps, from the consent page to the debriefing page, to see if the GUI client reports any errors (e.g. missing or unparseable files), or something looks wrong.
       
   </ul>
-
+</div>
   
 <hr>
 
