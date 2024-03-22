@@ -5,7 +5,7 @@
   <h1>Pulling data from a remote host
   </h1>
 
-<div align="center"><em>Updated 2024-03-13, for Game Server 6.028</em></div>
+<div align="center"><em>Updated 2024-03-20, for Game Server 6.028</em></div>
 
 <h2>Introduction</h2>
 
@@ -16,9 +16,16 @@
 
 <p>Therefore, we now have to distinguish between the "web server host" (the Plesk host that runs the production Game Server instance and accumulates real data from experiments with a player population) and the "analysis host" (the host under your full control, on which you run the analysis software). This document describes the process whereby you can pull the snapshot of the remote host's (web server host's) data to your local host (the analysis host), so that you can work on it using your analysis tools.
 
+  <h2>How does this all work?</h2>
+
+<p>The data accumulated by a Rule Game Server instances consist of two parts: a MySQL database and a set of CSV files saved directly in the server host's file system. The Rule Game Server's <a href="../setup/setup-config.html">master configuration file</a> (normally sittin in <tt>/opt/w2020/w2020.conf</tt>)  specifies the location of these two parts, i.e.the name of the MySQL database (usually <tt>game</tt>) and the directory for the CSV files (usually <tt>/opt/w2020/saved</tt>). The <a href="analyse-transcripts.html">analysis tools</a>, when you run them without the <tt>-config</tt> option, look up the location of the data in the master configuration file on the host where you run them.
+
+<p>The data pull script pulls both pieces of data from the specified remote server and puts them to their new location on your analysis hosts. The MySQL data go into a new database on your MySQL server; the CSV files go into a new directory created for them under your current directory. The pull script then creates a new config file, in which the location of the newly imported data (the database name and the CSV file directory location) are recorded. You save that file somewhere, and then use it with the  <tt>-config</tt> option of <tt>analyze-transcript.sh</tt> (and other similar tools) when you want those tools to look at the data in this data set. Naturally, you can also read this config file to find the location of the CSV files, if you'd like to look at them directly.
+
+  
   <h2>Step 1: Your analysis host</h2>
 
-<p>You can use as your analysis host any host that has a full suite of Game Server software deployed on it. This includes the MySQL database server in which the user account named "game" has been created, and the Game Server master configuration file (/opt/w2020/w2020.conf). This host also should have an up-to-date set of experiment control files in /opt/w2020/game-data. (You should be able to update it with "git pull origin master", when needed. If this does not go smoothly, you may perhaps need to change the ownership of this directory, to something like pkantor.tomcat, or what have you).
+<p>You can use as your analysis host any host that has a full suite of Game Server software deployed on it. This includes the MySQL database server in which the user account named <tt>game</tt> has been created, and the Game Server master configuration file (/opt/w2020/w2020.conf). This host also should have an up-to-date set of experiment control files in /opt/w2020/game-data. (You should be able to update it with "git pull origin master", when needed. If this does not go smoothly, you may perhaps need to change the ownership of this directory, to something like pkantor.tomcat, or what have you).
 
 <p>The analysis host can be your own desktop or laptop computer (preferably, running Linux or MacOS), or the host we have at CAE (ie-r108304.ie.wisc.edu). If it's the CAE host, you need to run the CAE VPN to access it.
 
@@ -57,7 +64,7 @@ mysql --login-path=wwwtest.rulegame
       </pre>
       and observing a successful login, without a password, each time.
 
-      <h3>Step 4 (optional, one time): Password-free login to the remote host</h3>
+      <h2>Step 4 (optional, one time): Password-free login to the remote host</h2>
 
     <p>
       During the data pull process, the script will log in, more than once, to the remote server. Each time it (well, the <tt>ssh</tt> it uses() will ask you for the password. This is not a big deal; but if you are tired of this, you can obviate the need to provide the password by using ssh-keygen, ssh-copy-id, and ssh-agent. You can find the instructions e.g. at these two pages:
@@ -65,7 +72,7 @@ mysql --login-path=wwwtest.rulegame
 ;
       https://superuser.com/questions/988185/how-to-avoid-being-asked-enter-passphrase-for-key-when-im-doing-ssh-operatio
 
-      <h4>Step 5: Pulling the data!</h4>
+      <h2>Step 5: Pulling the data!</h2>
 
     <p>The pull script will do main big things:
       <ul>

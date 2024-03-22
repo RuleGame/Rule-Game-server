@@ -43,11 +43,13 @@ public class Main {
     /** The location of a site-specific config file */
 
     
-   /** Initializes the EntityManagerFactory using the "persistence unit" 
-       (a section in META-INF/persistence.xml, with the name "w2020")
-       and the properties in MainConfig, which have been loaded from
-       the master config file (on top of any system properties,
-       which we usually don't have). The latter override the former.
+   /** Initializes the EntityManagerFactory using the "persistence
+       unit" (a section in META-INF/persistence.xml, with the name
+       "w2020") and the properties in MainConfig, which have been
+       loaded from the master config file (in the Game Server) or from
+       a command-line provided config file (in analysis tools) (on top
+       of any system properties, which we usually don't have). The
+       latter override the former.
 
 
 // org.apache.openjpa.lib.util.ParseException: 

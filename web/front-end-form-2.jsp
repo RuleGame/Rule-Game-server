@@ -52,7 +52,7 @@ the production version of the client, which offers the same experience the M-Tur
 
 <input type="hidden" name="exp"  value="<%=main.exp%>">
 
-<br>Player Id: <input type="text" name="workerId" size="60" value="XX-<%=main.prefix%><%=main.stamp%>">
+<br>Player Id: <input type="text" name="workerId" size="60" value="<%=main.prefix%><%=main.stamp%>XX-">
 <br>(Replace XX above with your initials)
 
 <!--
