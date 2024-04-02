@@ -1,10 +1,7 @@
 package edu.wisc.game.util;
 
-
 import java.io.*;
-//import java.util.*;
-//import java.text.*;
-//import java.net.*;
+import java.util.*;
 
 /** Accessing the main configuration file of the Game Server, which
     can be used by the site administrator to override some
@@ -20,19 +17,39 @@ import java.io.*;
 public class MainConfig //extends ParseConfig
 {
 
-    /** The file location */
-    static private String path = "/opt/w2020/w2020.conf";
+    /** The default instance, to be used in static calls */
+    private static MainConfig mainConfig = null;
 
-    static private ParseConfig ht = null;
+    /** Gets the default instance. */
+    public static MainConfig getMainConfig() { return  mainConfig;}
+    
+    /** The default file location. Could be overridden with setPath() */
+    static private String defaultPath = "/opt/w2020/w2020.conf";
+    /** The path in this instance */
+    private final String path;
+    
+    private ParseConfig ht = null;
 
-    /** Used by the Captive Server, with null argument, to disable the
-	attempts to look for the master config file (which CGS users
-	likely won't have).
+    /** This method is used by analysis tools who work with different
+	databases than the default one. It is also used by the Captive
+	Server, with null argument, to disable the attempts to look
+	for the master config file (which CGS users likely won't
+	have).
      */
     public static void setPath(String _path) {
-	path = _path;
-	initConf();
+	defaultPath = _path;
+
+	if (mainConfig!=null) {
+	    Logging.warning("MainConfig.setPath("+_path+") invoked when mainConfig already exists, with path=" + mainConfig.path);
+	}
+	
+	if (mainConfig==null || !mainConfig.path.equals(_path)) {
+	    mainConfig = (_path==null)? null: new MainConfig(_path);
+	}
+	//	path = _path;
+	//initConf();
     }
+
 
     /** Tries to figure if we're running on a DoIT shared hosting host,
 	and the path such as /opt/w2020/something has to be understood
@@ -67,11 +84,12 @@ public class MainConfig //extends ParseConfig
 	return path;
     }
 
-    static private void initConf() {
+    /** @param _path The location of the master config file (or an alternative
+	config file) from which this structure will be initialized */
+    public MainConfig(String _path) {
+	path = adjustPath(_path);
 	try {
-	    if (path==null) return;
-	    path = adjustPath(path);
-
+	    if (_path==null) throw new IllegalArgumentException("Master config path not specified");
 	    
 	    ht = new ParseConfig(path);
 	} catch(Exception ex) {
@@ -81,13 +99,21 @@ public class MainConfig //extends ParseConfig
     }
 
     static public String getString(String name, String defVal) {
-	if (ht==null) initConf();
+	if (mainConfig==null) mainConfig = new MainConfig(defaultPath);
+	return mainConfig.doGetString(name, defVal);
+    }
+    
+    public String doGetString(String name, String defVal) {
 	return (ht==null)? defVal: ht.getString(name, defVal);
     }
 
     /** Looks up the path, adjusts it if necessary (when on a DoIT
 	shared hosting host), and converts it to a File object */
     static public File getFile(String name, String defVal) {
+	return mainConfig.doGetFile(name, defVal);
+    }
+    
+    public File doGetFile(String name, String defVal) {
 	String path = getString(name, defVal);
 	path = adjustPath(path);
 	return new File(path);
@@ -98,11 +124,30 @@ public class MainConfig //extends ParseConfig
 	@param dev True for the dev version, false for prod
 	@return The URL string, or the default (a URL on same server and port)
      */
-    static public String getGuiClientUrl(boolean dev) {
+    static public String getGuiClientUrl(boolean dev) {	
+	return mainConfig.getGuiClientUrl(dev);
+    }
+    
+    public String doGetGuiClientUrl(boolean dev) {
 	String name = dev? "GUI_DEV" : "GUI_PROD";
 	String def = "/rule-game/" + (dev? "dev/" : "prod/");
 	return  getString(name, def);
     }
 	
+    public String toString() {
+
+
+	Vector<String> v = new Vector<>();
+
+	Collection<String> keys = ht.keySet();
+	//String keys[] = {"openjpa.ConnectionURL"};
+	for(String key: keys) {
+	    v.add(key + " ==> " + ht.get(key));
+	}
+	
+	String s = Util.joinNonBlank("; ", v);
+   
+	return "("+s+")";
+    }
     
 }

@@ -550,7 +550,7 @@ public class PlayerInfo {
 	    }
 
 	    if (epi!=null) {
-		// The error-free sstretch continues across episode border
+		// The error-free stretch continues across episode border
 		if (ser.size()>0) {
 		    epi.setLastStretch(ser.episodes.lastElement().getLastStretch());
 		}

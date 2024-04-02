@@ -12,6 +12,13 @@ import org.apache.openjpa.persistence.JPAProperties;
 
 import edu.wisc.game.util.*;
 
+/** An object that is responsible for getting EntityManager object(s)
+    for the application. Normally, an app would have just 1 instance
+    of Main (Main.oneMain), because we work with just 1 database. Only
+    applications that work with 2 (or more) databases, e.g. copying
+    data between databases, would need additional instances of Main.
+*/
+  
 public class Main {
    /** Finds the process id of the UNIX process for this application.
 
@@ -32,13 +39,16 @@ public class Main {
         }
     }
 
+
+    private static Main defaultMain=null;
+    
     /** This name will be used to configure the EntityManagerFactory
         based on the corresponding name in the
         META-INF/persistence.xml file
      */
     final public static String persistenceUnitName = "w2020";
 
-    private static EntityManagerFactory factory = null;
+    private EntityManagerFactory factory = null;
 
     /** The location of a site-specific config file */
 
@@ -57,15 +67,18 @@ public class Main {
 
 
     */
-    public static synchronized  EntityManagerFactory getFactory() {
+    private synchronized  EntityManagerFactory getFactory() {
         if (factory == null) {	    
 	    Properties prop = System.getProperties();
 	    Hashtable<Object,Object>  h = (Hashtable<Object,Object>) prop.clone();
 
 	    //<property name="openjpa.ConnectionURL" 
 	    //value="jdbc:mysql://localhost/game?serverTimezone=UTC"/>
-	    //String url = MainConfig.getString("JDBC_URL", null);
-	    String database = MainConfig.getString("JDBC_DATABASE", null);
+	    //String url = config.doGetString("JDBC_URL", null);
+	    String database = config.doGetString("JDBC_DATABASE", null);
+
+	    //System.out.println("Creating factory for Main=" + this +". database="  + database);
+	    
 	    if (database != null) {
 		String url = "jdbc:mysql://localhost/"+database+"?serverTimezone=UTC";
 	    
@@ -74,13 +87,10 @@ public class Main {
 	    
 
             //<property name="openjpa.ConnectionUserName" 
-	    String s = MainConfig.getString("JDBC_USER", null);
+	    String s = config.doGetString("JDBC_USER", null);
 	    if (s!=null) h.put("openjpa.ConnectionUserName" , s);
-
-
-
 	    
-	    s = MainConfig.getString("JDBC_PASSWORD", null);
+	    s = config.doGetString("JDBC_PASSWORD", null);
 	    if (s!=null) h.put("openjpa.ConnectionPassword" , s);
 
             factory = Persistence.
@@ -88,12 +98,29 @@ public class Main {
         }
         return factory;
     }
+    
+    private EntityManager oneEm = null;
+    /** This should be initialized in a "lazy" manner, i.e. only when
+	actually needed. This will ensure that MainConfig.mainConfig
+	has been properly initialized by the time Main.oneMain is created. */
+    private static Main oneMain = null;
 
-    private static EntityManager oneEm = null;
+
+    private final MainConfig config;
+
+    public Main(MainConfig _config) {
+	config = _config;
+    }
+	
     
     /** Creates a new EntityManager from the EntityManagerFactory. 
      */
     public static synchronized EntityManager getEM() {
+	if (oneMain==null) oneMain=new Main(MainConfig.getMainConfig());
+	return oneMain.doGetEM();
+	
+    }
+    public synchronized EntityManager doGetEM() {
 	if (oneEm!=null) return oneEm;
         // Create a new EntityManagerFactory if not created yet
         getFactory();
@@ -107,6 +134,11 @@ public class Main {
     }
 
     public static synchronized EntityManager getNewEM() {
+	if (oneMain==null) oneMain=new Main(MainConfig.getMainConfig());
+	return oneMain.doGetNewEM();
+	
+    }
+    public synchronized EntityManager doGetNewEM() {
         // Create a new EntityManagerFactory if not created yet
         getFactory();
         // Create a new EntityManager from the EntityManagerFactory. The
@@ -158,7 +190,12 @@ public class Main {
 </ul>
     */
     static public void persistObjects(Object... v) {
-	EntityManager em = Main.getEM();
+	if (oneMain==null) oneMain=new Main(MainConfig.getMainConfig());
+	oneMain.doPersistObjects(v);
+    }
+
+    public void doPersistObjects(Object... v) {
+	EntityManager em = doGetEM();
 	synchronized(em) {
 	    
 	    try {
@@ -188,7 +225,12 @@ public class Main {
 
     /** @param o a detached object */
     static public <T> void saveObject(T o) {
-	EntityManager em = Main.getNewEM();
+	if (oneMain==null) oneMain=new Main(MainConfig.getMainConfig());
+	oneMain.doSaveObject(o);
+    }
+    
+    public <T> void doSaveObject(T o) {
+	EntityManager em = doGetNewEM();
 	try {	    
 	    Logging.info("Merging object " + o);
 	    em.getTransaction().begin();
@@ -199,6 +241,9 @@ public class Main {
 	    try {	    em.close();} catch(Exception ex) {}
 	}
     }
-    
+
+    public String toString() {
+	return "(config="+config+")";
+    }
 
 }

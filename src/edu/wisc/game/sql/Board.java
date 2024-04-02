@@ -21,7 +21,11 @@ import edu.wisc.game.rest.Files;
 
 @XmlRootElement(name = "board") 
 
-/** Represents an initial board. 
+/**
+   It seems like this class is not used anymore, and probably was never used.
+
+   <p>
+   Represents an initial board. 
 
 <pre>
  "boardObjectsArrays":{

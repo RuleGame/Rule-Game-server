@@ -3,6 +3,10 @@
 #--------------------------------------------------------------
 # This script is used to prepare the content in the directory
 # webapps/download of the Tomcat server.
+#
+# You can remotely execute it, as follows:
+# ssh test-rulegame@wwwtest.rulegame.wisc.edu mybin/mk-download.sh
+#
 #--------------------------------------------------------------
 
 if [ -d tomcat ]; then

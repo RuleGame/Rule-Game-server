@@ -6,8 +6,6 @@ import java.util.regex.*;
 import java.text.*;
 import java.sql.*;
 
-//import javax.persistence.*;
-
 import edu.wisc.game.util.*;
 import edu.wisc.game.rest.*;
 import edu.wisc.game.sql.*;
@@ -25,6 +23,7 @@ select * into outfile '/var/lib/mysql-files/tmp-PlayerInfo.csv'   FIELDS TERMINA
 </pre>
 It is to be used on machines where the MySQL server is not set up with permissions to write to any directory (i.e. @@secure_file_priv is NULL).
 
+<P>Unlike most of other database-connecting tools, this class uses the plain JDBC Connection, rather than JPA. This is done so that we can sent over plain SQL commands, such as "SELECT * FROM ...", and to access the ResultSet's metadata, finding out the names of the columns in the result. The point of this exercise is to be able to print the table header (column names) into the output CSV file.
 */
 public class ExportTable {
 
@@ -39,30 +38,26 @@ public class ExportTable {
 	System.exit(1);
     }
 
-    public static Connection getConnection() throws SQLException {
+    /** Gets information about the database name, password, etc from
+	the MainConfig structure, and creates a traditional JDBC
+	connection to the database, without using JPA at all. */	
+    private static Connection getConnection() throws SQLException {
 
 	Properties prop = System.getProperties();
 	Hashtable<Object,Object>  h = (Hashtable<Object,Object>) prop.clone();
 
-	//<property name="openjpa.ConnectionURL" 
-	//value="jdbc:mysql://localhost/game?serverTimezone=UTC"/>
-	//String url = MainConfig.getString("JDBC_URL", null);
+	Connection conn = null;
+
 	String database = MainConfig.getString("JDBC_DATABASE", null);
 	if (database==null) throw new IllegalArgumentException("JDBC_DATABASE not specified in the config file");
 	String url = "jdbc:mysql://localhost/"+database;
 	    
-	//h.put("openjpa.ConnectionURL" ,url);	    
-
-	//<property name="openjpa.ConnectionUserName" 
 	String user  = MainConfig.getString("JDBC_USER", null);
 	if (user==null) throw new IllegalArgumentException("JDBC_USER not specified in the config file");
-	//if (s!=null) h.put("openjpa.ConnectionUserName" , s);
        
 	String pwd = MainConfig.getString("JDBC_PASSWORD", null);
 	if (pwd==null) throw new IllegalArgumentException("JDBC_PASSWORD not specified in the config file");
-	//if (s!=null) h.put("openjpa.ConnectionPassword" , s);
 
-	Connection conn = null;
 	Properties connectionProps = new Properties();
 	connectionProps.put("user", user);
 	connectionProps.put("password", pwd);
