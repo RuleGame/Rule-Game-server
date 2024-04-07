@@ -175,7 +175,7 @@ echo "Step 8: Packing everything into a single ZIP file, in case you want to bac
 cp $dump $out/
 cp $m1 $out/${m1}.orig
 set oz=${out}.zip 
-zip -r $oz
+zip -r $oz $out
 
 #========================================================================
 echo "================== IMPORTANT MESSAGE ==========================="
