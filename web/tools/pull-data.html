@@ -93,10 +93,26 @@ mysql --login-path=wwwtest.rulegame
 
       During this process you will most likely be asked to enter, more than once, the UNIX password for the remote host in question.
 
-      <p>THe script will tell you that it has created a config file, e.g. <tt>w2020_game_wwwtest_rulegame_2024_01_30.conf</tt>, which describes the location of the downloaded data (the file directory location, and the database name). When running analysis scripts on these data later, make sure to pass the name of the config file to the analysis script, with the <tt>-config</tt> option.
+      <p>The script will tell you that it has created a config file, e.g. <tt>w2020_game_wwwtest_rulegame_2024_01_30.conf</tt>, which describes the location of the downloaded data (the file directory location, and the database name). When running analysis scripts on these data later, make sure to pass the name of the config file to the analysis script, with the <tt>-config</tt> option.
 
-	<p>This script exports 2 tables, PlayerInfo or Episode. You can modify it as needed if you need other tables.
+      <p>Additionally, the script also creates a single ZIP file which contains all parts of the data set (the CSV files plus a SQL file with the content of the database), along with the configuration file. You may choose to store that file on your backup disk (as the complete snapshot of the data set on the particular server as of the current date); it can also be copied to another host if you want to create yet another copy of that snapshot there.
       
+	<h2><a name="third">Juggling three hosts: what if you need data from a Plesk host, but only have a CAE id, and not a UW netid?</a></h2>
+
+      <P>What if you want to pull a snapshot of data from a Plesk host, but you don't have a UW netid, which means that you cannot run the UW VPN? If you at least have a CAE id, you can use a more cumbersome two-step process, to move the data via our CAE host (ie-r108304.ie.wisc.edu). The process is as follows:
+
+	<ul>
+	  <li>Using your CAE id, run CAE VPN.
+	  <li>Use <tt>ssh</tt> to connect to the CAE host.
+	  <li>Use the script<tt>pull-remote-data.sh</tt>, as described in this document, to pull a snapshot of data from the Plesk host of your choice to the CAE host. Pay attention to the message printed by the script at the end of its run; it will indicate that it has produced a ZIP file with a name such as <tt>pull-remote-data.sh</tt>. You may want to verify (with <tt>unzip -l</tt>, or some GUI ZIP tool on your laptop) that the ZIP contains everything you need -- an <tt>opt/saved</tt> subdirectory with all CSV files, a SQL file such as <tt>dump-game.sql</tt> with all the data from the MySQL database, and a config file, e.g. <tt>w2020_game_rulegame_2024_02_01.conf.orig</tt> which includes the name of the database.
+	  <li>Download the above-mentioned ZIP file to your local host (which you plan to use as the analysis host), and place it in the directory where you want the downloaded data to be housed.
+	  <li>Run the script <tt>import-from-zip.sh</tt> (which should be in your ~/w2020/game/scripts , if you have pulled the recently updated the Rule Game source code on your machine from GitHub; available since ver 6.030) on your local host, in the directory where the ZIP file has been downloaded, e.g.
+	    <pre>
+	      import-from-zip.sh  download-2024_02_01_193059.zip
+	    </pre>
+That should create a new MySQL database and a config file used to access it. Read the message printed by the script to see the name of the config file.	    
+	</ul>
+	
   <h2>See also</h2>
 
   <ul>

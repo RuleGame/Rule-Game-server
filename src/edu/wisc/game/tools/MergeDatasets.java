@@ -2,8 +2,6 @@ package edu.wisc.game.tools;
 
 import java.io.*;
 import java.util.*;
-//import java.util.regex.*;
-//import java.text.*;
 import java.lang.reflect.*;
 
 import javax.persistence.*;
@@ -25,6 +23,7 @@ public class MergeDatasets {
     static private void usage(String msg) {
 	//	System.err.println("For usage info, please see:\n");
 	//System.err.println("http://rulegame.wisc.edu/w2020/analyze-transcripts.html");
+	System.err.println("Usage: MergeDatasets -config /opt/w2020/merge.conf -addConfig someImportedDataset.conf");
 	if (msg!=null) 	System.err.println(msg + "\n");
 	System.exit(1);
     }
@@ -61,21 +60,6 @@ public class MergeDatasets {
 	String s1 = addConf.doGetString("JDBC_DATABASE", null);
 	System.out.println("Merging data from database " + s1 + " into database " + s0);
 
-	/*
-	  mysql> select * from User where id < 20;
-+----+---------------------+-------------------+-----------------------------+----------+----------------------------------+
-| id | date                | email             | idCode                      | nickname | digest                           |
-+----+---------------------+-------------------+-----------------------------+----------+----------------------------------+
-|  1 | 2021-10-20 19:03:59 | vmenkov@gmail.com | user-20211020-140359-986RS5 | vmenkov  | 670B14728AD9902AECBA32E22FA4F6BD |
-|  2 | 2021-10-21 00:40:01 | NULL              | anon-20211020-194001-51BXDI | NULL     | NULL                             |
-|  3 | 2021-10-21 00:40:27 | NULL              | anon-20211020-194027-BVZRIY | NULL     | NULL                             |
-|  4 | 2021-10-21 21:23:34 | NULL              | anon-20211021-162333-SZCXAT | NULL     | NULL                             |
-|  5 | 2021-10-21 21:41:32 | NULL              | user-20211021-164132-MUKY0Z | pbk      | NULL                             |
-|  6 | 2021-10-22 02:34:15 | pbk2              | user-20211021-213415-ICAOND | NULL     | NULL                             |
-|  7 | 2021-10-22 04:55:48 | test@example.com  | user-20211021-235547-JS5RSJ | testing  | NULL                             |
-|  8 | 2021-10-22 21:30:26 | NULL              | user-20211022-163025-1VHKQW | pbkOCT22 | NULL                             |
-	*/
-
 	/** Maps the numeric uid of a User object in the new database to
 	    one in the merged database. */
 	//HashMap<Integer,Integer> uidMap = new HashMap<>();
@@ -101,6 +85,23 @@ public class MergeDatasets {
 	System.out.println(reportTableSizes(aem));
 
     }
+
+	/* Merges the user data from aem to the database in em.
+	  <pre>
+	  mysql> select * from User where id < 20;
++----+---------------------+-------------------+-----------------------------+----------+----------------------------------+
+| id | date                | email             | idCode                      | nickname | digest                           |
++----+---------------------+-------------------+-----------------------------+----------+----------------------------------+
+|  1 | 2021-10-20 19:03:59 | vmenkov@gmail.com | user-20211020-140359-986RS5 | vmenkov  | 670B14728AD9902AECBA32E22FA4F6BD |
+|  2 | 2021-10-21 00:40:01 | NULL              | anon-20211020-194001-51BXDI | NULL     | NULL                             |
+|  3 | 2021-10-21 00:40:27 | NULL              | anon-20211020-194027-BVZRIY | NULL     | NULL                             |
+|  4 | 2021-10-21 21:23:34 | NULL              | anon-20211021-162333-SZCXAT | NULL     | NULL                             |
+|  5 | 2021-10-21 21:41:32 | NULL              | user-20211021-164132-MUKY0Z | pbk      | NULL                             |
+|  6 | 2021-10-22 02:34:15 | pbk2              | user-20211021-213415-ICAOND | NULL     | NULL                             |
+|  7 | 2021-10-22 04:55:48 | test@example.com  | user-20211021-235547-JS5RSJ | testing  | NULL                             |
+|  8 | 2021-10-22 21:30:26 | NULL              | user-20211022-163025-1VHKQW | pbkOCT22 | NULL                             |
+</pre>
+	*/
 
     static HashMap<Long,User> mergeUser(EntityManager em, EntityManager aem) {
 	HashMap<Long,User> uidMap = new HashMap<>();
