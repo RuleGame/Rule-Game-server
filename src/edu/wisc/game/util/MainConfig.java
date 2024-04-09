@@ -110,6 +110,7 @@ public class MainConfig //extends ParseConfig
     /** Looks up the path, adjusts it if necessary (when on a DoIT
 	shared hosting host), and converts it to a File object */
     static public File getFile(String name, String defVal) {
+	if (mainConfig==null) mainConfig = new MainConfig(defaultPath);
 	return mainConfig.doGetFile(name, defVal);
     }
     
@@ -125,7 +126,8 @@ public class MainConfig //extends ParseConfig
 	@return The URL string, or the default (a URL on same server and port)
      */
     static public String getGuiClientUrl(boolean dev) {	
-	return mainConfig.getGuiClientUrl(dev);
+	if (mainConfig==null) mainConfig = new MainConfig(defaultPath);
+	return mainConfig.doGetGuiClientUrl(dev);
     }
     
     public String doGetGuiClientUrl(boolean dev) {
