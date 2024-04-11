@@ -2,6 +2,7 @@ package edu.wisc.game.tools;
 
 import java.io.*;
 import java.util.*;
+import java.text.*;
 import java.lang.reflect.*;
 
 import javax.persistence.*;
@@ -162,6 +163,20 @@ public class MergeDatasets {
 	return uidMap;
     }
 
+    //private static final DateFormat sdf1 = new SimpleDateFormat("yyyyMMdd.HHmmss.SSS");
+    private static final DateFormat sdf1 = new SimpleDateFormat("yyyyMMdd.HHmmss");
+
+    /** @return "originalPid.date.time" */
+    private static String mkMergePid(PlayerInfo p) {
+	return 	p.getPlayerId() + "." + sdf1.format(p.getDate());
+    }
+	
+
+    /** Merges player records. Since PlayerInfo entries don't really have
+	a cross-server-unique IDs in them, we use "playerId.date" combination
+	as a pseudo-unique key, and store it in the PlauerId column of the
+	merged database.
+     */
     static void //HashMap<Long,User>
 	mergePlayerInfo(EntityManager em, EntityManager aem,
 			HashMap<Long,User> uidMap ) {
@@ -178,12 +193,13 @@ public class MergeDatasets {
 	int nap0 = aPlayers.size();
 
 	int  pCntExisting=0, pCntNew=0, pCntSkip=0, pCntChanged=0;
+	int meCnt=0, neCnt = 0;
 	System.out.println("Found " + nap0 + " User entries in added database, " + nmp0 + " entries in the merge db");
 	for(PlayerInfo ap: aPlayers) {
-	    String pid = ap.getPlayerId();
+	    String mpid = mkMergePid( ap );
 	    Query q = em.createQuery("select p from PlayerInfo p where p.playerId=:p");
 
-	    q.setParameter("p", pid);
+	    q.setParameter("p", mpid);
 	    PlayerInfo m = null;
 	    try {
 		m = (PlayerInfo)q.getSingleResult();
@@ -192,24 +208,30 @@ public class MergeDatasets {
 		m = null;
 	    }  catch(NonUniqueResultException ex) {
 		// this should not happen, as we have an (informal) uniqueness constraint
-		System.out.println("Non-unique playerInfo entry in the merge database for playerId='"+pid+"'! Skipping addition");
+		System.out.println("Non-unique playerInfo entry in the merge database for playerId='"+mpid+"'! Skipping addition");
 		pCntSkip ++;
 		continue;
 	    }
 
-
+	    //	    final boolean testing=true;
+	    
 	    if (m==null) {
-		// copy the entry to the merge database
-		Logging.info("Copying player to the merge db: " + ap);       
+		// copy the entry to the merge database (with the merge PID)
+		//Logging.info("Copying player to the merge db: " + ap);       
 		PlayerInfo p = new PlayerInfo();		
 		copyFields(playerReflect, ap, p);
+		p.setPlayerId( mpid);
 		User u = ap.getUser();
 		if (u!=null) p.setUser( uidMap.get( u.getId()));
 
+		int cnt=0;
 		for(EpisodeInfo ae: ap.getAllEpisodes()) {
 		    EpisodeInfo e = new EpisodeInfo();
 		    copyFields(episodeReflect, ae, e);
 		    p.addEpisode(e);
+		    cnt++;
+		    meCnt++;
+		    //if (testing && cnt>=3) break;
 		}
  
 		
@@ -220,12 +242,34 @@ public class MergeDatasets {
 		pCntNew ++;
 	    } else {
 		//Logging.info("Found an existing copy: " + au + " --> " + m);
+		// See if some more episodes need to be added
+		HashSet<String> storedEpisodes = new HashSet<>();
+		for(EpisodeInfo e: m.getAllEpisodes()) {
+		    storedEpisodes.add( e.getEpisodeId());
+		}
+
+		int thisNeCnt = 0;
+		for(EpisodeInfo ae: ap.getAllEpisodes()) {
+		    if (storedEpisodes.contains(ae.getEpisodeId())) continue;
+		    thisNeCnt++;
+		    
+		    EpisodeInfo e = new EpisodeInfo();
+		    copyFields(episodeReflect, ae, e);
+		    m.addEpisode(e);
+		}
+		if (thisNeCnt>0) {
+		    // hoping that this saves the new episodes
+		    em.getTransaction().begin();	    
+		    em.getTransaction().commit();	        
+		}
+
+		neCnt += thisNeCnt;
 		pCntExisting ++;
 	    }
 
 	    
 	}
-	System.out.println("Merging in " + nap0 + " User entries: " + pCntExisting + " entries already were in the merge database, " + pCntNew + " entries created, " + pCntSkip + " skipped due to problems");
+	System.out.println("Merging in " + nap0 + " player entries: " + pCntExisting + " entries already were in the merge database, " + pCntNew + " entries created, " + pCntSkip + " skipped due to problems. " + meCnt + " episodes in newly added players; " + neCnt + " episodes added to already existing players");
 
     }
 

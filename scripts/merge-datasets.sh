@@ -22,7 +22,7 @@ source "$sc/set-var.sh"
 
 # echo "cp=$CLASSPATH"
 
-java edu.wisc.game.tools.MergeDatasets  $argv[1-]
+java edu.wisc.game.tools.MergeDatasets  -config /opt/w2020/merge.conf $argv[1-]
 
 
 
