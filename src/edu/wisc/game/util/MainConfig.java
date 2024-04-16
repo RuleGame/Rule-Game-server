@@ -39,7 +39,13 @@ public class MainConfig //extends ParseConfig
     private static MainConfig mainConfig = null;
 
     /** Gets the default instance. */
-    public static MainConfig getMainConfig() { return  mainConfig;}
+    public static MainConfig getMainConfig() {
+	if (mainConfig==null ) {
+	    mainConfig =  new MainConfig(defaultPath);
+	}
+	return  mainConfig;
+
+    }
     
     /** The default location of the main config file for this application.
 	Could be overridden with setPath() */
