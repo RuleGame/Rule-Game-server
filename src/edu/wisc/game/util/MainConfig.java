@@ -3,19 +3,37 @@ package edu.wisc.game.util;
 import java.io.*;
 import java.util.*;
 
-/** Accessing the main configuration file of the Game Server, which
-    can be used by the site administrator to override some
-    defaults. It is located outside of the WAR file, so that
+/** A MainConfig is a structure storing the content of a configuration file.
+    Typically, an application uses only one such file -- the master
+    config file of the Game Server running on this host.
+    It can be used by the site administrator to override some
+    defaults. The master config file is located outside of the WAR file, so that
     adjustments can be made without rebuilding the WAR file.
 
     <p>
     In particular, the main config file (usually located in /opt/w2020/w2020.conf) may override the user name and password for accessing the MySQL database password specified in META-INF/persistence.xml (packaged into the WAR file). Thus changing the database password, or asking the server to work with a different database, can be accommodated without having to rebuild the WAR file.
 
     <p>The MainConfig object is used in sql.Main
+
+    <p>In some applications  there are multiple instances of MainConfig. E.g.
+    MergeDatasets uses the config file for the merge data set as the main config
+    file, and additionally has an instance of MainConfig describing the
+    data set being merged into the merge data set.
 */
 
 public class MainConfig //extends ParseConfig
 {
+
+    /*
+    public static interface Updater {
+	// Updates some other object based on the specified MainConfig object 
+	void update(MainConfig mc);
+    }
+
+    private static Set<Updater> updaters = new HashSet<Updater>();
+
+    public static void addUpdater(Updater up) { updaters.add(up); }
+    */
 
     /** The default instance, to be used in static calls */
     private static MainConfig mainConfig = null;
@@ -23,7 +41,8 @@ public class MainConfig //extends ParseConfig
     /** Gets the default instance. */
     public static MainConfig getMainConfig() { return  mainConfig;}
     
-    /** The default file location. Could be overridden with setPath() */
+    /** The default location of the main config file for this application.
+	Could be overridden with setPath() */
     static private String defaultPath = "/opt/w2020/w2020.conf";
     /** The path in this instance */
     private final String path;
@@ -35,6 +54,10 @@ public class MainConfig //extends ParseConfig
 	Server, with null argument, to disable the attempts to look
 	for the master config file (which CGS users likely won't
 	have).
+
+	@param _path The location of the main config file to be used in this
+	application, or null to indicate that we don't use a config file in
+	this app.
      */
     public static void setPath(String _path) {
 	defaultPath = _path;
@@ -45,9 +68,9 @@ public class MainConfig //extends ParseConfig
 	
 	if (mainConfig==null || !mainConfig.path.equals(_path)) {
 	    mainConfig = (_path==null)? null: new MainConfig(_path);
+	    //for(Updater up: updaters) up.update(mainConfig);
 	}
-	//	path = _path;
-	//initConf();
+
     }
 
 

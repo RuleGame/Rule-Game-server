@@ -22,7 +22,10 @@ etc
 */
     
 public class ColorMap extends HashMap<String, Object> {
-    /** Reads in the color map file */
+    /** Reads in the color map file.
+	// FIXME: Maybe it's not such a great idea that the server has just one
+	// color map file, shared by all experiments. 
+     */
     public ColorMap() {
 	put("error", false);
 	put("errmsg", "No error");

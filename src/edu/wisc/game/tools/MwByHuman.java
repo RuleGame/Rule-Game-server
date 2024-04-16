@@ -132,8 +132,15 @@ public class MwByHuman extends AnalyzeTranscripts {
 	if (config!=null) {
 	    // Instead of the master conf file in /opt/w2020, use the customized one
 	    MainConfig.setPath(config);
+
+	    // Set the input directory as per the config file
+	    String inputDir = MainConfig.getString("FILES_SAVED", null);
+	    if (inputDir != null) {
+		if (!(new File(inputDir)).isDirectory()) usage("Not a directory: " + inputDir);
+		Files.setSavedDir(inputDir);
+	    }
 	}
-	
+
 	if (exportTo!=null && importFrom.size()>0) {
 	    usage("You cannot combine the options -export and -import. At most one of them can be used in any single run");
 	}

@@ -153,11 +153,13 @@ public class AnalyzeTranscripts {
 	String config = null;
 	ArgType argType = ArgType.PLAN;
 	boolean fromFile = false;
+	String inputDir = null;
 	
 	Vector<String> plans = new Vector<>();
 	Vector<String> pids = new Vector<>();
 	Vector<String> nicknames = new Vector<>();
 	Vector<Long> uids = new Vector<>();
+	
 	for(int j=0; j<argv.length; j++) {
 	    String a = argv[j];
 	    if (j+1< argv.length && a.equals("-config")) {
@@ -186,11 +188,7 @@ public class AnalyzeTranscripts {
 	    } else if (j+1< argv.length && a.equals("-out")) {
 		outDir = argv[++j];
 	    } else if (j+1< argv.length && a.equals("-in")) {
-		String inputDir = argv[++j];
-		if (!(new File(inputDir)).isDirectory()) usage("Not a directory: " + inputDir);
-		Files.setSavedDir(inputDir);
-
-		
+		inputDir = argv[++j];
 	    } else if  (a.equals("-nickname")) {
 		argType = ArgType.UNICK;
 	    } else if  (a.equals("-plan")) {
@@ -217,7 +215,19 @@ public class AnalyzeTranscripts {
 	if (config!=null) {
 	    // Instead of the master conf file in /opt/w2020, use the customized one
 	    MainConfig.setPath(config);
+
+	    // Set the input directory as per the config file, unless
+	    // explicitly overridden by the "-in" option.
+	    if (inputDir == null) inputDir = MainConfig.getString("FILES_SAVED", null);
 	}
+
+	if (inputDir != null) {
+	    if (!(new File(inputDir)).isDirectory()) usage("Not a directory: " + inputDir);
+	    Files.setSavedDir(inputDir);
+	}
+		
+
+
 	
 	EntityManager em = Main.getNewEM();
 

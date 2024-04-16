@@ -7,20 +7,34 @@ import edu.wisc.game.util.*;
 import edu.wisc.game.sql.Piece;
 import edu.wisc.game.web.LaunchRulesBase;
 
-/** Information about the data files the Rule Game web server reads and writes */
+/** Information about the data files the Rule Game web server reads and writes.
+    The former are the experiment control files; the latter contain the record
+    of the system's interactions with the players (transcripts, initial boards,
+    players' responses to questionnaires, etc).
+ */
 public class Files {
 
     /** The place where the Game Server saves transcripts etc.
 	Normally, this is always the same location; but, for example,
 	an analysis script may use an archive copy of these data from
-	a different location.
+	a different location, in which case they set this path accordingly,
+	using setInputDir().
 
 	We may also adjust the paths if we're on a DoIT shared hosting host (with a chrooted shell).
 
      */
-    static File savedDir =  MainConfig.getFile("FILES_SAVED", "/opt/tomcat/saved");
+    private static File savedDir =  MainConfig.getFile("FILES_SAVED", "/opt/tomcat/saved");
+    static File getSavedDir() { return savedDir; }
+    /** The experiment control files directory */
     static File inputDir = MainConfig.getFile("FILES_GAME_DATA", "/opt/tomcat/game-data");
 
+    /*
+    MainConfig.Updater FilesPathUpdater {
+	void update(MainConfig config) {
+	    setSavedDir( config.doGetString("FILES_SAVED", null));
+	}
+    }
+    */
 
     /** Sets the path to the input directory, which is the root
 	of the tree that contains the experiment control files.

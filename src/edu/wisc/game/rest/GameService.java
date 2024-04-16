@@ -120,6 +120,10 @@ public class GameService {
 	return b;
     }
 
+    /** Writes an arbitrary file to somewhere within the saved files directory.
+	One probably should not use this method, since there are other,
+	specialized, methods for writing files of standards types.
+     */
     @POST 
     @Path("/writeFile")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -138,7 +142,7 @@ public class GameService {
 	    if (data==null) throw new IOException("No data supplied");
 	    
 	    String [] pp = (dir==null)? new String[0]: dir.trim().split("/");
-	    File d = Files.savedDir;
+	    File d = Files.getSavedDir();
 	    if (pp.length>0) {
 		for(String p:pp) {
 		    if (p.length()==0) continue;
@@ -165,6 +169,7 @@ public class GameService {
     }
 
     /** Gets the entire parameter set, identified by name */
+    /*
     @GET 
     @Path("/getParaSet") 
     @Produces(MediaType.APPLICATION_JSON)
@@ -176,6 +181,7 @@ public class GameService {
 	    return null;
 	}
     }
+    */
     
     @POST
     @Path("/newEpisode") 
@@ -257,6 +263,7 @@ public class GameService {
     
     /**------------------- Just testing ------------------------*/
     /** Gets the entire parameter set, identified by name */
+    /*
     @GET 
     @Path("/getParaSetHtml") 
     @Produces(MediaType.TEXT_HTML)
@@ -267,6 +274,6 @@ public class GameService {
 	s = "<html><body>"  + s + "</body></html>";
 	return s;
     }
-  
+    */
   
 }

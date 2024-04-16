@@ -98,7 +98,8 @@ public class ExportTable {
 	if (outFile==null) usage("Some arguments have not been provided");
 
 	if (config!=null) {
-	    // Instead of the master conf file in /opt/w2020, use the customized one
+	    // Instead of the master conf file in /opt/w2020, use the
+	    // customized one, so that a different database can be used
 	    MainConfig.setPath(config);
 	}
 

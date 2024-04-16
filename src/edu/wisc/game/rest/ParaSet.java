@@ -247,24 +247,25 @@ public class ParaSet extends HashMap<String, Object> {
 	    put(key, val);
     }
 
-    private static File findFile(String name) throws IOException {
+    
+    /* private static File findFile(String name) throws IOException {
 	if (name==null) throw new IOException("File name not specified");
 	File base = new File(Files.inputDir, "param");
 	String ext = ".csv";
 	if (!name.endsWith(ext)) name += ext;
 	return  new File(base, name);
-    }
+	} */
 
     /** Reads a ParaSet from a CSV file with key-val columns.
 	This method is mostly obsolete now, since we read parameters from
 	trial list files instead. It can, however, be "revived" for
 	other applications, e.g. providing parameters for an automatic rule
 	generator.
-     */
-    public ParaSet(String name) throws IOException,  IllegalInputException {
+     */    
+    /* public ParaSet(String name) throws IOException,  IllegalInputException {
 	this(findFile(name));
 	put("name", name);
-    }
+	} */
 
 
     private static CsvData fileToCsv(File f)  throws IOException,  IllegalInputException {
