@@ -134,11 +134,11 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    MainConfig.setPath(config);
 
 	    // Set the input directory as per the config file
-	    String inputDir = MainConfig.getString("FILES_SAVED", null);
-	    if (inputDir != null) {
-		if (!(new File(inputDir)).isDirectory()) usage("Not a directory: " + inputDir);
-		Files.setSavedDir(inputDir);
-	    }
+	    //	    String inputDir = MainConfig.getString("FILES_SAVED", null);
+	    //if (inputDir != null) {
+	    //	if (!(new File(inputDir)).isDirectory()) usage("Not a directory: " + inputDir);
+	    //Files.setSavedDir(inputDir);
+	    //}
 	}
 
 	if (exportTo!=null && importFrom.size()>0) {

@@ -218,12 +218,14 @@ public class AnalyzeTranscripts {
 
 	    // Set the input directory as per the config file, unless
 	    // explicitly overridden by the "-in" option.
-	    if (inputDir == null) inputDir = MainConfig.getString("FILES_SAVED", null);
+	    //	    if (inputDir == null) inputDir = MainConfig.getString("FILES_SAVED", null);
 	}
 
+	// The -input option may override -config
 	if (inputDir != null) {
 	    if (!(new File(inputDir)).isDirectory()) usage("Not a directory: " + inputDir);
-	    Files.setSavedDir(inputDir);
+	    //Files.setSavedDir(inputDir);
+	    MainConfig.put("FILES_SAVED", inputDir);
 	}
 		
 

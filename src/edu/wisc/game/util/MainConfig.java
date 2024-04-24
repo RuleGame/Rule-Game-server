@@ -21,8 +21,7 @@ import java.util.*;
     data set being merged into the merge data set.
 */
 
-public class MainConfig //extends ParseConfig
-{
+public class MainConfig {
 
     /*
     public static interface Updater {
@@ -35,7 +34,8 @@ public class MainConfig //extends ParseConfig
     public static void addUpdater(Updater up) { updaters.add(up); }
     */
 
-    /** The default instance, to be used in static calls */
+    /** The default instance (the main config file of this
+     * application), to be used in static calls */
     private static MainConfig mainConfig = null;
 
     /** Gets the default instance. */
@@ -44,7 +44,6 @@ public class MainConfig //extends ParseConfig
 	    mainConfig =  new MainConfig(defaultPath);
 	}
 	return  mainConfig;
-
     }
     
     /** The default location of the main config file for this application.
@@ -52,10 +51,14 @@ public class MainConfig //extends ParseConfig
     static private String defaultPath = "/opt/w2020/w2020.conf";
     /** The path in this instance */
     private final String path;
-    
+
+    /** This is where the data are stored */
     private ParseConfig ht = null;
 
-    /** This method is used by analysis tools who work with different
+    /** Sets the location of this app's main config file, and causes the app
+	to read it in, if it has not been read yet.
+       
+       This method is used by analysis tools who work with different
 	databases than the default one. It is also used by the Captive
 	Server, with null argument, to disable the attempts to look
 	for the master config file (which CGS users likely won't
@@ -80,16 +83,21 @@ public class MainConfig //extends ParseConfig
     }
 
 
-    /** Tries to figure if we're running on a DoIT shared hosting host,
-	and the path such as /opt/w2020/something has to be understood
-	with respect to the root of the chrooted directory (such
-	as "/var/www/vhosts/wwwtest.rulegame.wisc.edu"), rather than
-	with respect to the root of the file system. 
+    /** Checks if the config file indicated by "path" exists, and if not,
+	tries to "correct" the path. To make that correction,
+	rries to figure if we're a web up running inside Tomcat on a
+	DoIT shared hosting host, and the path such as
+	/opt/w2020/someplace needs to be understood with respect to the
+	root of the chrooted directory (such as
+	"/var/www/vhosts/wwwtest.rulegame.wisc.edu"), rather than with
+	respect to the root of the file system. This decision is made
+	with the help of the system property "user.dir", which can help
+	us figure where this code is run.
 
 	@param path Something like "/opt/foo"
 	@return Either the original path, or something like "/var/www/vhosts/wwwtest.rulegame.wisc.edu/opt/foo"
      */
-    static public String adjustPath(String path) {
+    static private String adjustPath(String path) {
 	final String path0 = path;
 	if (path==null) return path;
 	File f = new File(path);
@@ -102,7 +110,7 @@ public class MainConfig //extends ParseConfig
 	// "/var/www/vhosts/wwwtest.rulegame.wisc.edu/opt/w2020"
 	// rather than "/opt/w2020"
 	String tomcatWorkDir = System.getProperty("user.dir");
-	System.err.println("user.dir=" +tomcatWorkDir);
+	Logging.info("user.dir=" +tomcatWorkDir);
 	if (tomcatWorkDir == null) return path;
 	File d = new File(tomcatWorkDir);
 	if (d.getName().equals("work")) d = d.getParentFile();
@@ -115,7 +123,7 @@ public class MainConfig //extends ParseConfig
 
     /** @param _path The location of the master config file (or an alternative
 	config file) from which this structure will be initialized */
-    public MainConfig(String _path) {
+    public MainConfig(String _path) {	
 	path = adjustPath(_path);
 	try {
 	    if (_path==null) throw new IllegalArgumentException("Master config path not specified");
@@ -136,13 +144,17 @@ public class MainConfig //extends ParseConfig
 	return (ht==null)? defVal: ht.getString(name, defVal);
     }
 
-    /** Looks up the path, adjusts it if necessary (when on a DoIT
-	shared hosting host), and converts it to a File object */
+    /** Looks up the path in the main config file of the app, adjusts
+	it if necessary (when on a DoIT shared hosting host), and
+	converts it to a File object */
     static public File getFile(String name, String defVal) {
 	if (mainConfig==null) mainConfig = new MainConfig(defaultPath);
 	return mainConfig.doGetFile(name, defVal);
     }
     
+    /** Looks up the path in this config file, adjusts it if necessary
+	(when on a DoIT shared hosting host), and converts it to a
+	File object */
     public File doGetFile(String name, String defVal) {
 	String path = getString(name, defVal);
 	path = adjustPath(path);
@@ -179,6 +191,17 @@ public class MainConfig //extends ParseConfig
 	String s = Util.joinNonBlank("; ", v);
    
 	return "("+s+")";
+    }
+
+    /** Modifies a table, overriding the value read from the config file */
+    public void doPut(String name, String value) {
+	ht.put(name, value);
+    }
+
+    /** If any setPath() is used, put() can only be done after setPath() */ 
+    static public void put(String name, String value) {
+	if (mainConfig==null) mainConfig = new MainConfig(defaultPath);
+	mainConfig.doPut(name, value);
     }
     
 }

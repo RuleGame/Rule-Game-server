@@ -23,8 +23,11 @@ public class Files {
 	We may also adjust the paths if we're on a DoIT shared hosting host (with a chrooted shell).
 
      */
-    private static File savedDir =  MainConfig.getFile("FILES_SAVED", "/opt/tomcat/saved");
-    static File getSavedDir() { return savedDir; }
+    //private static File savedDir =  MainConfig.getFile("FILES_SAVED", "/opt/tomcat/saved");
+    static File getSavedDir() {
+	//return savedDir;
+	return MainConfig.getFile("FILES_SAVED", "/opt/tomcat/saved");
+    }
     /** The experiment control files directory */
     static File inputDir = MainConfig.getFile("FILES_GAME_DATA", "/opt/tomcat/game-data");
 
@@ -58,10 +61,9 @@ public class Files {
 	read the transcript etc. data to be analyzed from a different
 	location.
      */
-    static public void setSavedDir(String path) {
-	savedDir = new File(path);
-	//System.out.println("DEBUG: inputDir := " + inputDir);
-    }
+    //static public void setSavedDir(String path) {
+    //	savedDir = new File(path);
+    //}
 
     
     /** Checks the existence of a directory, and, if necessary, tries
@@ -74,10 +76,15 @@ public class Files {
 	}
     }
 
+    /** A specific subdirectory of the saved-files directory */
+    private static File savedSubDir(String subdir) {
+	return new File(getSavedDir(), subdir);
+    }
+    
     /** The file into which guesses by a given player are written */
     public static File guessesFile(String playerId) throws IOException {
 
-	File d = new File(savedDir, "guesses");
+	File d = savedSubDir( "guesses");
 	testWriteDir(d);
 	File f= new File(d, playerId + ".guesses.csv");
 	return f;
@@ -90,7 +97,7 @@ public class Files {
     
     public static File boardsFile(String playerId, boolean readOnly) throws IOException {
 
-	File d = new File(savedDir, "boards");
+	File d = savedSubDir( "boards");
 	if (!readOnly) testWriteDir(d);
 	File f= new File(d, playerId + ".boards.csv");
 	return f;
@@ -102,13 +109,13 @@ public class Files {
     }
 
     public static File transcriptsFile(String playerId, boolean readOnly) throws IOException {
-	File d = new File(savedDir, "transcripts");
+	File d = savedSubDir( "transcripts");
 	if (!readOnly) testWriteDir(d);
 	return new File(d, playerId + ".transcripts.csv");
     }
 
     public static File detailedTranscriptsFile(String playerId) throws IOException {
-	File d = new File(savedDir, "detailed-transcripts");
+	File d = savedSubDir( "detailed-transcripts");
 	testWriteDir(d);
 	return new File(d, playerId + ".detailed-transcripts.csv");
     }
@@ -126,7 +133,7 @@ public class Files {
     /** The upload directory for a particular MLC participant. It is created if it does not exist yet */
     public static File mlcUploadDir(String nickname, boolean readOnly) throws IOException {
 
-	File d = new File(savedDir, "mlc");
+	File d = savedSubDir("mlc");
 	if (!readOnly) testWriteDir(d);
 	File m = new File(d, nickname);
 	if (!readOnly) testWriteDir(m);
