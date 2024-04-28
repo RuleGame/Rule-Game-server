@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.text.*;
 import java.lang.reflect.*;
+import java.nio.file.FileSystems;
 
 import javax.persistence.*;
 
@@ -79,12 +80,16 @@ public class MergeDatasets {
 	System.out.println(reportTableSizes(aem));
 
 	HashMap<Long,User> uidMap = mergeUser(em, aem);
-	mergePlayerInfo( em, aem, uidMap );
+	HashMap<String,String> pid2mpid = mergePlayerInfo( em, aem, uidMap );
 
-	System.out.println("--- Data stats after the merge: ----");
+	System.out.println("--- Database stats after the merge: ----");
 	System.out.println(reportTableSizes(em));
 	System.out.println(reportTableSizes(aem));
 
+
+	System.out.println("Merging from addConf=" + addConf);
+	mergeFiles(addConf, pid2mpid);
+	
     }
 
 	/* Merges the user data from aem to the database in em.
@@ -177,7 +182,8 @@ public class MergeDatasets {
 	as a pseudo-unique key, and store it in the PlauerId column of the
 	merged database.
      */
-    static void //HashMap<Long,User>
+    static HashMap<String,String>
+    //void //HashMap<Long,User>
 	mergePlayerInfo(EntityManager em, EntityManager aem,
 			HashMap<Long,User> uidMap ) {
 	System.out.println("Working on table PlayerInfo");
@@ -195,8 +201,12 @@ public class MergeDatasets {
 	int  pCntExisting=0, pCntNew=0, pCntSkip=0, pCntChanged=0;
 	int meCnt=0, neCnt = 0;
 	System.out.println("Found " + nap0 + " User entries in added database, " + nmp0 + " entries in the merge db");
+
+
+	HashMap<String,String> pid2mpid = new HashMap<>();
 	for(PlayerInfo ap: aPlayers) {
 	    String mpid = mkMergePid( ap );
+	    pid2mpid.put( ap.getPlayerId(), mpid);
 	    Query q = em.createQuery("select p from PlayerInfo p where p.playerId=:p");
 
 	    q.setParameter("p", mpid);
@@ -271,6 +281,8 @@ public class MergeDatasets {
 	}
 	System.out.println("Merging in " + nap0 + " player entries: " + pCntExisting + " entries already were in the merge database, " + pCntNew + " entries created, " + pCntSkip + " skipped due to problems. " + meCnt + " episodes in newly added players; " + neCnt + " episodes added to already existing players");
 
+	return pid2mpid;
+	
     }
 
 
@@ -323,8 +335,64 @@ public class MergeDatasets {
 		throw new IllegalArgumentException( "INVOCATION_TARGET_ERROR");
 	    }
 	}
-						 
-  
+						   
     }
-    
+
+    /** Copies CSV files from the dataset-to-add's file store to the merge
+	dataset's file store */
+    private static void mergeFiles(MainConfig addConf, HashMap<String,String> pid2mpid) throws IOException {
+
+	
+	File fromRoot = addConf.doGetFile("FILES_SAVED", null);
+	if (fromRoot==null) throw new IllegalArgumentException("The add-set config file does not specify the file store directory");
+	System.out.println("Merging from fromRoot="+fromRoot);
+	
+	for(String sub: Files.Saved.mergeable) {
+	    // GUESSES = "guesses",    BOARDS = "boards",	    TRANSCRIPTS = "transcripts",	    DETAILED_TRANSCRIPTS = "detailed-transcripts",
+	    File toDir = Files.savedSubDir(sub);
+	    File fromDir = new File(fromRoot, sub);
+	    System.out.println("Merging from "+fromDir+" to " + toDir);
+	    if (toDir.equals(fromDir)) throw new IllegalArgumentException("Cannot merge: source and destination are the same!");
+	    if (!toDir.isDirectory())  throw new IllegalArgumentException("Cannot merge: destination directory does not exits: " + toDir);
+	    if (!fromDir.isDirectory())  throw new IllegalArgumentException("Cannot merge: source directory does not exits: " + fromDir);
+	    
+	    File[] files = fromDir.listFiles();
+	    Vector<String> v = new Vector<String>();
+
+	    int newFileCnt=0, replacedFileCnt=0, keptFileCnt=0, allFilesCnt=0;
+	    
+	    for(File cf: files) {
+		if (!cf.isFile()) continue;
+		allFilesCnt++;
+		String fname = cf.getName();
+
+		String[] fcomp = fname.split("\\.");
+		if (fcomp.length<2)  throw new IllegalArgumentException("Cannot parse file name=" + cf);
+		String s = pid2mpid.get(fcomp[0]);
+		if (s==null)  throw new IllegalArgumentException("Player id not known ("+fcomp[0]+"), in file name=" + cf);
+		fcomp[0] = s;
+		String mfname = String.join(".", fcomp);		
+		File mfile = new File(toDir, mfname);
+		
+		java.nio.file.Path path = FileSystems.getDefault().getPath(cf.getPath()),
+		    mpath = FileSystems.getDefault().getPath(mfile.getPath());
+
+		if (!mfile.exists()) {		    // copy
+		    java.nio.file.Files.copy(path, mpath);
+		    newFileCnt++;
+		} else { 		    // check sizes
+		    if (mfile.length() < cf.length()) {
+			java.nio.file.Files.copy(path, mpath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+			replacedFileCnt++;
+		    } else {
+			keptFileCnt++;
+		    }
+		}
+	    }
+	    System.out.println("Out of " + allFilesCnt + " " + sub +" files in the added data set, added " + newFileCnt + " new files to the merge file store, updated " +replacedFileCnt+" files, already were there " + keptFileCnt + " files");
+	    return;
+	    
+	}
+
+    }
 }

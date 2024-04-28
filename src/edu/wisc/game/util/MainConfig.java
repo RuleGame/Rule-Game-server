@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 
 /** A MainConfig is a structure storing the content of a configuration file.
+    (It can also be modified with the doPut() method, though).
     Typically, an application uses only one such file -- the master
     config file of the Game Server running on this host.
     It can be used by the site administrator to override some
@@ -156,7 +157,8 @@ public class MainConfig {
 	(when on a DoIT shared hosting host), and converts it to a
 	File object */
     public File doGetFile(String name, String defVal) {
-	String path = getString(name, defVal);
+	String path = doGetString(name, defVal);
+	if (path==null) return null;
 	path = adjustPath(path);
 	return new File(path);
     }
@@ -174,7 +176,7 @@ public class MainConfig {
     public String doGetGuiClientUrl(boolean dev) {
 	String name = dev? "GUI_DEV" : "GUI_PROD";
 	String def = "/rule-game/" + (dev? "dev/" : "prod/");
-	return  getString(name, def);
+	return  doGetString(name, def);
     }
 	
     public String toString() {

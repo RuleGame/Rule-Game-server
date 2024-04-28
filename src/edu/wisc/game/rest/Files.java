@@ -76,15 +76,32 @@ public class Files {
 	}
     }
 
+    /** Names of subdirectories under "saved" */
+    static public class Saved {
+	static public final String 
+	    GUESSES = "guesses",
+	    BOARDS = "boards",
+	    TRANSCRIPTS = "transcripts",
+	    DETAILED_TRANSCRIPTS = "detailed-transcripts",
+	    MLC = "mlc";
+	/** The list of subdirs to be processed by MergeDatasets */
+	static public String mergeable[] = {
+	    GUESSES,
+	    BOARDS,
+	    TRANSCRIPTS,
+	    DETAILED_TRANSCRIPTS};
+	    
+    }
+
     /** A specific subdirectory of the saved-files directory */
-    private static File savedSubDir(String subdir) {
+    public static File savedSubDir(String subdir) {
 	return new File(getSavedDir(), subdir);
     }
     
     /** The file into which guesses by a given player are written */
     public static File guessesFile(String playerId) throws IOException {
 
-	File d = savedSubDir( "guesses");
+	File d = savedSubDir( Saved.GUESSES);
 	testWriteDir(d);
 	File f= new File(d, playerId + ".guesses.csv");
 	return f;
@@ -97,7 +114,7 @@ public class Files {
     
     public static File boardsFile(String playerId, boolean readOnly) throws IOException {
 
-	File d = savedSubDir( "boards");
+	File d = savedSubDir(Saved.BOARDS);
 	if (!readOnly) testWriteDir(d);
 	File f= new File(d, playerId + ".boards.csv");
 	return f;
@@ -109,13 +126,13 @@ public class Files {
     }
 
     public static File transcriptsFile(String playerId, boolean readOnly) throws IOException {
-	File d = savedSubDir( "transcripts");
+	File d = savedSubDir( Saved.TRANSCRIPTS);
 	if (!readOnly) testWriteDir(d);
 	return new File(d, playerId + ".transcripts.csv");
     }
 
     public static File detailedTranscriptsFile(String playerId) throws IOException {
-	File d = savedSubDir( "detailed-transcripts");
+	File d = savedSubDir( Saved.DETAILED_TRANSCRIPTS);
 	testWriteDir(d);
 	return new File(d, playerId + ".detailed-transcripts.csv");
     }
@@ -130,10 +147,11 @@ public class Files {
 	return new File(inputDir, "shapes");
     }
 
+    
     /** The upload directory for a particular MLC participant. It is created if it does not exist yet */
     public static File mlcUploadDir(String nickname, boolean readOnly) throws IOException {
 
-	File d = savedSubDir("mlc");
+	File d = savedSubDir(Saved.MLC);
 	if (!readOnly) testWriteDir(d);
 	File m = new File(d, nickname);
 	if (!readOnly) testWriteDir(m);

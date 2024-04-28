@@ -120,14 +120,14 @@ public class FileUploadResource {
 	}
 
 	private void saveFile(InputStream file, String name) {
-		try {
-			/* Change directory path */
-			java.nio.file.Path path = FileSystems.getDefault().getPath("/Volumes/Drive2/temp/file/" + name);
-			/* Save InputStream as file */
-			Files.copy(file, path);
-		} catch (IOException ie) {
-			ie.printStackTrace();
-		}
+	    try {
+		/* Change directory path */
+		java.nio.file.Path path = FileSystems.getDefault().getPath("/Volumes/Drive2/temp/file/" + name);
+		/* Save InputStream as file */
+		Files.copy(file, path);
+	    } catch (IOException ie) {
+		ie.printStackTrace();
+	    }
 	}
 
 }
