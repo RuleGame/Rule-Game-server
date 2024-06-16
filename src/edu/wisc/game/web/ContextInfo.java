@@ -15,7 +15,10 @@ import edu.wisc.game.rest.*;
 public class ContextInfo    extends ResultsBase  {
 
     public String host;
-    public int port;
+    public int port=0;
+    public int serverPort=0, localPort=0;
+    
+    
     public String cp;
     /** True if we're to use the dev version of the GUI client rather than
 	the prod one. (This flag comes from the URL query string, dev=true,
@@ -38,10 +41,16 @@ public class ContextInfo    extends ResultsBase  {
 
     /** Optional; used in some pages. More usually, null. */
     public String exp=null;
-    
+
     /** Note that request.getProtocol() is not helpful to distinguish HTTP from
 	HTTPS, as it seems to always return "HTTP". OTOH, using port 443 is
 	a good indicator of HTTPS being used.
+
+	<p>We use getServerPort() rather than getLocalPort() because it's
+	more helpful in the situation when a firewall with port forwarding
+	is used. E.g. when the (external) port 80 is forwarded by the firewall
+	to port 1234 (as it is the case on the DIMACS host), getServerPort()
+	will still give us 80. 
      */
     public ContextInfo(HttpServletRequest request, HttpServletResponse response){
 	super(request,response,false);	
@@ -51,7 +60,9 @@ public class ContextInfo    extends ResultsBase  {
 	//proto = proto.replaceAll("/.*", "");
 	
 	host = request.getLocalName();
-	port= request.getLocalPort();
+	localPort= request.getLocalPort();
+	serverPort= request.getServerPort();
+	port = serverPort;
 	cp= request.getContextPath();
 	//dev = cp.endsWith("-dev");
 	String proto = (port==443)? "https" : "http";

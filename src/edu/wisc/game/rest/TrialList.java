@@ -241,6 +241,9 @@ public class TrialList extends Vector<ParaSet> {
 	    setPath(mainFile.getPath());	    
 	    readTrialListFile(this, mainFile);
  	} catch(Exception ex) {
+	    System.err.println(ex);
+	    ex.printStackTrace(System.err);
+
 	    setError(true);
 	    setErrmsg( ex.getMessage());
 	}

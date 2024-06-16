@@ -173,6 +173,7 @@ public class PlayerResponse extends ResponseBase {
 	    setErrmsg("Debug:\n" + x.report());
 
 	} catch(Exception e) {
+	    Logging.info("PlayerResponse.catch: " + e);
 	    System.err.println(e);
 	    e.printStackTrace(System.err);
 	    setError(true);

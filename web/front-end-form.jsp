@@ -17,6 +17,8 @@ String cla=main.dev?"pink":"yellow";
 <%= main.dev? "(with development client)": "(with production client)"  %> 
 </h2>
 
+<!-- <p>ServerPort=<%= main.serverPort %> -->
+
 <p>This is the launch page for GUI-client play using the Rule Game server ver. <%= main.getVersion() %> deployed at <%= main.serverUrl %>, and the 
 <% if (main.dev) { %> 
 development version of the client, which  gives you more debugging information on what goes on inside the system.

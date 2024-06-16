@@ -305,6 +305,8 @@ public class ParaSet extends HashMap<String, Object> {
 		typedPut(key, val);		    
 	    }
 	} catch(Exception ex) {
+	    System.err.println(ex);
+	    ex.printStackTrace(System.err);
 	    put("error", true);
 	    put("errmsg", ex.getMessage());
 	}

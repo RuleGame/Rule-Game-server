@@ -162,10 +162,12 @@ public class Episode {
     }
     
     
-    /** Our interface to the current rule line. It includes the underlying 
-	rule line and the current counters which indicate how many times
-	the atoms in that line have been used. 	When pieces are removed, this
-	structure updates itself, until it cannot pick any pieces anymore. */
+    /** Our interface to the current rule line (a row of the rule
+	set). It includes the underlying rule line (RuleSet.Row) and
+	the current counters which indicate how many times the atoms
+	in that line have been used.  When pieces are removed, this
+	structure updates itself, until it cannot pick any pieces
+	anymore. */
     class RuleLine {
 	final RuleSet.Row row;
 	/** Negative values mean "no restriction" */
@@ -238,7 +240,7 @@ public class Episode {
 	}
 
 	 
-	/** Computes the probability that a random move would be successful */
+	/**  Computes the probability that a random move would be successful */
   	double computeP0ForMoves(int knownFailedMoves) {
 	    int countMoves=0, countAllowedMoves=0;
 	    for(int pos=0; pos<pieces.length; pos++) {		
@@ -947,7 +949,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
 
     /** The current version of the application */
-    public static final String version = "6.032";
+    public static final String version = "6.033";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }

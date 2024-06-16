@@ -38,8 +38,8 @@ public class ReplayedEpisode extends Episode {
     /** The random player model used to compute p0 */
     final RandomPlayer randomPlayerModel;
     
-   /** Creates an Episode in order to replay an old recorded Game (with a known rule set and a known initial board)
-	properties of the initial board). 
+   /** Creates an Episode in order to replay an old recorded Game
+       (with a known rule set and a known initial board).
     */
 public ReplayedEpisode(String _episodeId, ParaSet _para, Game game,
 		       RandomPlayer _randomPlayerModel
@@ -72,7 +72,7 @@ public ReplayedEpisode(String _episodeId, ParaSet _para, Game game,
 	evidence that the player wanted to do a pick). For failed
 	picks, we use the "P0 for a move", since it's believed that the
 	player most likely intended to attempt a move, but the GUI 
-	converts an move attempt on an immovable piece to a failed pick.
+	converts a move attempt on an immovable piece to a failed pick.
 
 	@param nextMove The pick/move attempt the value of p0 before which
 	(for which) we want to compute. This pick or move has been
@@ -102,7 +102,10 @@ public ReplayedEpisode(String _episodeId, ParaSet _para, Game game,
 
     }
 
-	    
+    /** In addition to the normal "accept" stuff, either erases or
+	augments the player's knowledge of the current board's
+	properties. (Depending on whether the board has changed or not).
+     */
     public int accept(Pick pick) {
 	int code = super.accept(pick);
 

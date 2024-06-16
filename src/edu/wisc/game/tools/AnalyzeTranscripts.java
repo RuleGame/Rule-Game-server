@@ -658,11 +658,10 @@ public class AnalyzeTranscripts {
     /** Reconstructs and replays the historical episode, computing p0 for
 	every pick or move attempt.
 	
-	@param subsections A (preprocessed) transcript by a player, which covers an entire series of  episodes
-	@param para The parameter set that was in effect for this series
-	@param boardHistory If not null, we will save the board before each move to that vector. The number of 
-	entries put into this vector will be equal to the number of values put into the return value (p0)
-	@return p0 The p0 values for each move.
+	@param subsections A (preprocessed) transcript by a player, which covers an entire series of  episodes.
+	@param para The parameter set that was in effect for this series.
+	@param boardHistory An output parameter. If not null, we will save the board before each move to that vector. The number of entries put into this vector will be equal to the number of values put into the return value (p0)
+	@return An array containing p0 values for each move.
 
      */
     private double[] computeP0(Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections, ParaSet para, String ruleSetName,
