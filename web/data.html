@@ -427,6 +427,8 @@ qt-02,trial_1,2,TD-03,0,20200923-211954-8M8E8V,1,20200923-212025.978,11.523,RED_
 
 <p>The <tt>objectType</tt> column contains, for the traditional shape-and-color-tuple objects, a value such as <tt>BLACK_SQUARE</tt>. For the image-and-properties-based objects in GS 3, this column contains the same value as the <tt>image</tt> column of the initial boards CSV files, e.g. <tt>vm/image_test_01/cat-01.png</tt>.
 
+  <p>The  <tt>objectCnt</tt> column is meant to contain the number of game pieces on the board after the move. However, prior to ver. 6.034, the value in this column may have been incorrect; if you need this value, you need to recompute it based on the nature of the row. (Only a successful move decrements the count; a failed move or a successful pick don't).
+
 <h3>The guess</h3>
 
 

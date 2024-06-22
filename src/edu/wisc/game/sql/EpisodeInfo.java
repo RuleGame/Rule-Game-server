@@ -659,7 +659,7 @@ public class EpisodeInfo extends Episode {
 
 	   
 	   h.put("code",move.code);
-	   if (move.code==CODE.ACCEPT) 	   objectCnt--;
+	   if (move instanceof Move && move.code==CODE.ACCEPT) 	   objectCnt--;
 	   h.put("objectCnt",objectCnt);
 	   Vector<String> v = new Vector<>();
 	   for(String key: keys) v.add("" + h.get(key));
