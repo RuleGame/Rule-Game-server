@@ -325,14 +325,14 @@ Then run the script:
 <pre>
 ~vmenkov/w2020/game/sql/export.sh
 </pre>
-This will create 2 CSV files, PlayerInfo.csv and Export.csv, in your current directory. There are no header lines in them, but the columns are ordered the same way as described above.
+This will create 2 CSV files, PlayerInfo.csv and Episode.csv, in your current directory. There are no header lines in them, but the columns are ordered the same way as described above.
 
 <p>Note: for its successful operation, this script relies on the fact that your MySQL server allows saving data files into the directory <tt>/var/lib/mysql-files</tt>. If the script does not worl on your server, check the server variable @@secure_file_priv (using the SQL command <tt>SELECT @@secure_file_priv;</tt>). If this variable's value on your server is <tt>null</tt> (which is often the case on MacOS installations), the script won't work, unless you figure how to change the server's configuration.
 
 
     <h3><a name="export-2">Exporting data from the MySQL database to CSV files: Option 2</a></h3>
 
-<p>While <tt>export.sh</tt> has many restrictions on which hosts it can be used on, we also have a JDBC-based tool, <tt>scripts/export-2.sh</tt> which can be used on any host. It writes files into the current directory, so run it in the directory to which you want the outpiut files to go. The usage, for exporting locally accumulated data (database <tt>game</tt>), is as follows:
+<p>While <tt>export.sh</tt> has many restrictions on which hosts it can be used on, we also have a JDBC-based tool, <tt>scripts/export-2.sh</tt> which can be used on any host. It writes files into the current directory, so run it in the directory to which you want the output files to go. The usage, for exporting locally accumulated data (database <tt>game</tt>), is as follows:
 
   <pre>
     mkdir export-directory

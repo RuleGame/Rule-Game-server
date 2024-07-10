@@ -61,7 +61,7 @@ public class LabelMap extends HashMap<String, Character> {
 	for(int j=0; j<v.length; j++) {
 	    boolean noPrefix = (crossTarget && j==v.length-1);
 
-	    //if (!v[j].startsWith("true.") && !v[j].startsWith("false.")) System.out.println("ct="+crossTarget+", cond=" + cond);
+	    //if (!v[j].startsWith("true.") && !v[j].startsWith("false.")) System.out.println("ct="+crossTarget+", cond="+cond+", cond["+j+"/"+v.length+"]=" + v[j]);
 	    
 	    s += map1(v[j], noPrefix);
 	}

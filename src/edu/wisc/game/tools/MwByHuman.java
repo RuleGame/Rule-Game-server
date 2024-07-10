@@ -346,7 +346,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	Ignore
     }
     
-    /**  The data for a series (group of episodes played by one player under the same rule set) needed to contribute a number to an M-W Comparandum. For each episode, we need these data:
+    /**  An MWSeries object contains the data for one series (group of episodes played by one player under the same rule set) needed to contribute a number to an M-W Comparandum. For each episode, we need these data:
 	 <pre>
 playerId
 episodeId
@@ -604,13 +604,14 @@ m*
 
 		shouldRecord = shouldRecord && !(precMode == PrecMode.Naive && ser.precedingRules.size()>0);
 		
-		if (shouldRecord) 		savedMws.add(ser);
 		streak=0;
 		ser.errcnt = 0;
 		ser.mStar = defaultMStar;
 		if (precMode == PrecMode.EveryCond) {
 		    ser.adjustPreceding(savedMws);
 		}
+		// Do recording only after a successful adjustPreceding (if applicable)
+		if (shouldRecord) 		savedMws.add(ser);
 	    }
 
 	    // skip the rest of transcript for the rule set (i.e. this
