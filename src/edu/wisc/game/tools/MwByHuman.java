@@ -553,7 +553,7 @@ m*
 			break;
 		    }
 		}
-		if (old==null) throw new IllegalArgumentException("Cannot find preceding series for p="+playerId+", r="  + r +", perhaps because the trial list files have been erased");
+		if (old==null) throw new IllegalArgumentException("Cannot find preceding series for p="+playerId+", perhaps because the trial list files have been erased, or the player skipped the series for rule="+r);
 		r = "" + old.learned + "." + r;
 
 		//if (ignorePrec.contains(r)) continue;
