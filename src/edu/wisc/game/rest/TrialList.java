@@ -266,7 +266,7 @@ public class TrialList extends Vector<ParaSet> {
 		    throw new  IllegalInputException("ParaSet["+j+"] specifies incentive scheme " + ince +". This is prohibied, because no incentives are allowed in super-series (other than in the last line of the super-series)");
 		}
 	    } else if (lastCont) {
-		if (ince==Incentive.DOUBLING) {
+		if (ince==Incentive.DOUBLING || ince==Incentive.LIKELIHOOD) {
 		    throw new  IllegalInputException("ParaSet["+j+"], which is tthe last line of a super-series specifies incentive scheme " + ince +". This is not allowed (feature not supported).");
 		}		
 	    }

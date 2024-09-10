@@ -268,6 +268,12 @@ public class GameService2Html extends GameService2 {
 		(d.getJustReachedX4()? fm.para("Just reached x4") : "") +
 		fm.hr();
 	}
+	if (d.getIncentive()==ParaSet.Incentive.LIKELIHOOD) {
+	    body += fm.para("R="+d.getLastR()+". Factor achieved="+ d.getFactorAchieved()+"; promised in this episode " +  d.getFactorPromised()) +
+		(d.getJustReachedX2()? fm.para("Just reached x2") : "") +
+		(d.getJustReachedX4()? fm.para("Just reached x4") : "") +
+		fm.hr();
+	}
 	    
 
 

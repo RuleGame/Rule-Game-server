@@ -70,6 +70,13 @@ public class Episode {
 	public String toString() {
 	    return "PICK " + pos + " " +new Pos(pos) +", code=" + code;
 	}
+
+	/** The measure of "unlikelihood" of this move being made
+	    at random. Used for Bayesian-based intervention. Computed
+	    during the acceptance process. */
+	double rValue = 0;
+	void setRValue(double r)  { rValue = r; }
+	double getRValue()  { return rValue; }
     }
 
     /** A Move instance describes an [attempted] act of picking a piece
@@ -206,9 +213,9 @@ public class Episode {
 	    this flag after every use, and advance ruleLine */
 	boolean doneWith =false;
 
-	/** acceptanceMap[pos][atomNo][dest] if the rule atom[atomNo] 
-	    in the current rule line allows moving the piece currently
-	    at pos to bucket[dest]. */
+	/** The bit acceptanceMap[pos][atomNo][dest] is set if the
+	    rule atom[atomNo] in the current rule line allows moving
+	    the piece currently at pos to bucket[dest]. */
 	private BitSet[][] acceptanceMap = new BitSet[Board.N*Board.N+1][];
 	protected boolean[] isMoveable = new boolean[Board.N*Board.N+1];
 
@@ -240,12 +247,13 @@ public class Episode {
 	}
 
 	 
-	/**  Computes the probability that a random move would be successful */
+	/**  Computes the probability that a random move by a MCP1
+	     player would be successful */
   	double computeP0ForMoves(int knownFailedMoves) {
 	    int countMoves=0, countAllowedMoves=0;
 	    for(int pos=0; pos<pieces.length; pos++) {		
 		if (pieces[pos]!=null) {
-		    // In the show-movables mode, only movable pieces are taken into account
+		    // In the show-movables ("fixed") mode, only movable pieces are taken into account
 		    if (weShowAllMovables() && !isMoveable[pos]) continue;
 
 		    
@@ -264,23 +272,56 @@ public class Episode {
 	    if (countAllowedMoves>countMoves)  throw new IllegalArgumentException("What, there are more allowed moves (" + countAllowedMoves+") than not-tested-yet moves ("+countMoves+")?");
 	    return (countMoves==0)? 0.0: countAllowedMoves/(double)countMoves;
 	}
-	
 
-	/** For each piece, where can it go? (OR of all rules). 
-	    The acceptanceMap needs to be computed before this
-	    method can be called.
+	/** For the "Bayesian-based intervention": computes the ratio
+	     Pr(move|knowsTheRule) / (Pr(move|playsRandomly)
+	     for the current move.
+	     @param move the successful move that has just been completed
+	 */
+	double computeR(Move move) {
+
+	    //int countMoves=0, countAllowedMoves=0;
+	    int countMovables = 0, countTryMovables = 0;
+	    for(int pos=0; pos<pieces.length; pos++) {		
+		if (pieces[pos]!=null) {
+		    // In the show-movables ("fixed") mode, only movable pieces are taken into account
+		    if (weShowAllMovables() && !isMoveable[pos]) continue;
+
+
+		    if (isMoveable[pos]) countMovables ++;
+		    countTryMovables ++;
+		}		
+	    }
+
+	    int countDest = pieceMovableTo(move.getPos()).cardinality();
+	    
+	    double inverseProbRandom = countTryMovables * 4;
+	    double inverseProbFullKnowledge = countMovables * countDest;
+	    double r = inverseProbRandom/inverseProbFullKnowledge;
+
+	    return r;
+	    
+	}
+
+	/** At this moment, which buckets accept the game piece from cell pos? */
+	private BitSet pieceMovableTo(int pos) {
+	    BitSet r = new BitSet(); // to what buckets this piece can go
+	    if (pieces[pos]!=null) {
+		for(BitSet b: acceptanceMap[pos]) {
+		    r.or(b);
+		}
+	    }
+	    return r;
+	}
+
+	/** For each piece, where can it go? (OR of all currently
+	    active rules).  The acceptanceMap needs to be computed
+	    before this method can be called.
 	 */
 	BitSet[] moveableTo() {
 	    BitSet[] q =  new BitSet[Board.N*Board.N+1];
 	    for(int pos=0; pos<pieces.length; pos++) {
-		q[pos] = new BitSet();
-		if (pieces[pos]!=null) {
-		    BitSet r = new BitSet(); // to what buckets this piece can go
-		    for(BitSet b: acceptanceMap[pos]) {
-			q[pos].or(b);
-		    }	
-
-		}
+		q[pos] = pieceMovableTo(pos);
 	    }
 	    return q;	    
 	}
@@ -302,10 +343,8 @@ public class Episode {
 		    isMoveable[pos]=false;
 		} else {
 		    acceptanceMap[pos] = pieceAcceptance(pieces[pos], eligibleForEachOrder);
-		    BitSet r = new BitSet(); // to what buckets this piece can go
-		    for(BitSet b: acceptanceMap[pos]) {
-			r.or(b);
-		    }
+		    // to what buckets this piece can go
+		    BitSet r = pieceMovableTo(pos);
 		    isMoveable[pos]= !r.isEmpty();
 		}
 	    }
@@ -397,8 +436,13 @@ public class Episode {
     
 	/** Requests acceptance for this move or pick. In case of
 	    acceptance of an actual move (not just a pick), decrements
-	    appropriate counters, and removes the piece from the
-	    board.
+	    appropriate counters, removes the piece from the board;
+	    then, as appropriate, either marks the current RuleLine as
+	    exhausted, or updates its acceptance map.
+
+	    <p> If the "pick" object is a Move, this method also
+	    computes and sets the R-value (see "Bayesian-based
+	    intervention") in the "pick" object.
 
 	    @return result  (accept/deny)
 	*/
@@ -416,16 +460,21 @@ public class Episode {
 	    pick.pieceId = (int)pick.piece.getId();
 
 	    if (!isMoveable[pick.pos]) {  // immovable piece
+		pick.setRValue(0);
 		return pick.code =  CODE.IMMOVABLE;
 	    } else if (!(pick instanceof Move)) {  // accepted pick
 		successfulPickCnt++;
+		// accepted picks don't affect the cumulative R, so just use 1
+		pick.setRValue(1);
 		return pick.code = CODE.ACCEPT;
 	    }
 
 	    // Move attempted on a moveable piece
 	    Move move  = (Move) pick;
-
-	    BitSet[] r = acceptanceMap[pick.pos];
+	    double rValue = ruleLine.computeR(move);
+	    move.setRValue(rValue);
+		
+	    BitSet[] r = acceptanceMap[move.pos];
 	    
 	    Vector<Integer> acceptingAtoms = new  Vector<>();
 	    Vector<String> v = new Vector<>();
@@ -633,7 +682,7 @@ public class Episode {
 	    it terminated the episode early, giving the player full
 	    points that he'd get if he completed the episode 
 	    without any additional errors. This is sometimes done
-	    when the DOUBLING incentive scheme is in effect. */
+	    when the DOUBLING (or LIKELIHOOD) incentive scheme is in effect. */
 	    EARLY_WIN = 5
 	    ;
     }
@@ -949,7 +998,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
 
     /** The current version of the application */
-    public static final String version = "6.035";
+    public static final String version = "6.036";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }
@@ -973,7 +1022,12 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 
 	/** Is this episode still continues (code 0), has stalemated (2), or has the board been cleared (4)? */
 	public int getFinishCode() { return finishCode; }
-    
+
+	/** If this Display was created in response to a pick/move
+	    attempt, this is the attempted pick/move in question.
+	    It may be successful or unsuccessful. */
+	Pick pick = null;
+	
 	int code;
 	String errmsg;
 
@@ -1025,9 +1079,13 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	public int getRuleLineNo() { return ruleLineNo; }
 
 
-	public Display(int _code, 	String _errmsg) {
+	public Display(int _code, Pick _pick,	String _errmsg) {
 	    code = _code;
+	    pick = _pick;
 	    errmsg = _errmsg;
+	}
+	public Display(int _code, 	String _errmsg) {
+	    this(_code, null, _errmsg);
 	}
     }
 
@@ -1051,32 +1109,55 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	if (y<1 || y>Board.N) return new Display(CODE.INVALID_ARGUMENTS, "Invalid input: row="+y+" out of range");
 	return null;
     }
+
+    private Pick formMove( int y, int x) {
+	Pos pos = new Pos(x,y);
+	Pick move = new Pick( pos.num());
+	return move;
+    }
     
     /** Evaluate a pick attempt */
     public Display doPick(int y, int x, int _attemptCnt) throws IOException {
 	Display errorDisplay =inputErrorCheck1(y, x, _attemptCnt);
 	if (errorDisplay!=null) return errorDisplay;
-	Pos pos = new Pos(x,y);
-	Pick move = new Pick( pos.num());
+	Pick move = formMove(y,x);
 	int code = accept(move);
-	return new Display(code, mkDisplayMsg());
+	return new Display(code, move, mkDisplayMsg());
     }
-    
-    /** Evaluate a move attempt */
-    public Display doMove(int y, int x, int by, int bx, int _attemptCnt) throws IOException {
-	Display errorDisplay =inputErrorCheck1(y, x, _attemptCnt);
-	if (errorDisplay!=null) return errorDisplay;
-	if (bx!=0 && bx!=Board.N+1) return new Display(CODE.INVALID_ARGUMENTS, "Invalid input: bucket column="+bx+" is not 0 or "+(Board.N+1));
-	if (by!=0 && by!=Board.N+1) return new Display(CODE.INVALID_ARGUMENTS, "Invalid input: bucket row="+by+" is not 0 or "+(Board.N+1));
+
+    /** Packs coordinates into a Move or Pick object */
+    private Pick formMove( int y, int x, int by, int bx) {
+	if (bx!=0 && bx!=Board.N+1) throw new IllegalArgumentException("Invalid input: bucket column="+bx+" is not 0 or "+(Board.N+1));
+	if (by!=0 && by!=Board.N+1) throw new IllegalArgumentException("Invalid input: bucket row="+by+" is not 0 or "+(Board.N+1));
 
 	Pos pos = new Pos(x,y), bu =  new Pos(bx, by);
 	int buNo=bu.bucketNo();
 	if (buNo<0 || buNo>=Board.buckets.length) {
-	    return new Display(CODE.INVALID_ARGUMENTS, "Invalid bucket coordinates");
+	    throw new IllegalArgumentException("Invalid bucket coordinates");
 	}
 	Move move = new Move(pos.num(), buNo);
+	return move;
+    }
+
+    
+    /** Evaluate a move attempt
+	@param x the x-coordinate (1 thru 6) of the game piece the player tries to move
+	@param y the y-coordinate of the game piece the player tries to move
+	@param bx the x-coordinate of the destination bucket (0 or 7)
+	@param by the y-coordinate of the destination bucket (0 or 7)
+
+     */
+    public Display doMove(int y, int x, int by, int bx, int _attemptCnt) throws IOException {
+	Display errorDisplay =inputErrorCheck1(y, x, _attemptCnt);
+	if (errorDisplay!=null) return errorDisplay;
+	Move move;
+	try {
+	    move = (Move)formMove(y,x,by,bx);
+	} catch(IllegalArgumentException ex) {
+	    return new Display(CODE.INVALID_ARGUMENTS, ex.getMessage());
+	}
 	int code = accept(move);
-	return new Display(code, mkDisplayMsg());
+	return new Display(code, move, mkDisplayMsg());
     }
 
     /** A message to put along with the accept/deny code into the Display object */

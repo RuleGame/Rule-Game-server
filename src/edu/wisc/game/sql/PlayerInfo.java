@@ -178,7 +178,7 @@ public class PlayerInfo {
 
 	/** Scans the episodes of the series to see if the xFactor has
 	    been set for this series. Only appliable to series with 
-	    DOUBLING incentive scheme.
+	    DOUBLING (or LIKELIHOOD) incentive scheme.
 	    @return 1,2, or 4.
 	 */
 	int findXFactor() {
@@ -189,10 +189,11 @@ public class PlayerInfo {
 	    return f;
 	}
 
-	/** True if we have the DOUBLING incentive scheme, and this 
+	/** True if we have the DOUBLING (or LIKELIHOOD) incentive scheme, and this 
 	    series has been ended by the x4 achievement */
 	boolean seriesEndedByX4() {
-	    return para.getIncentive()==ParaSet.Incentive.DOUBLING &&
+	    return (para.getIncentive()==ParaSet.Incentive.DOUBLING ||
+		    para.getIncentive()==ParaSet.Incentive.LIKELIHOOD)  &&
 		findXFactor()==4;
 	}
 
@@ -667,7 +668,11 @@ public class PlayerInfo {
 	Logging.info("updateTotalReward(): Total reward("+playerId+"):=" + rx);
     }
 
+    /** This structure contains all information needed to calculate the player's
+	total reward, and to show how it is computed based on the reward for
+	each series. */
     class RewardsAndFactorsPerSeries {
+	/** For series No. j, raw[j] = {raw_reward_for_the_series, x_factor_by_which_the_raw_reward_is_to_be_multiplied} */
 	final int[][] raw;
 	int epiCnt = 0;
 
@@ -877,14 +882,21 @@ public class PlayerInfo {
 
     /** Computes the "faces" vector for the series to which the 
 	specified episode belongs. This is used by Kevin's GUI tool
-	in the DOUBLING incentive scheme display (ver 4.006)
-	
-	Ignoring successful picks to keep players from gaming the system.
+	in the DOUBLING  incentive scheme display (ver 4.006)
 
-	@param epi We pass it in so that everything will work
-	correctly even if this is part of a /move call that ended
-	the last episode of the series, and currentSeriesNo may already be
-	referring to the next series.
+
+	@param epi The current (possibly, just finished) episode. We
+	pass it in so that everything will work correctly even if this
+	is part of a /move call that ended the last episode of the
+	series, and currentSeriesNo may already be referring to the
+	next series.
+
+	@return An array of booleans, with a T value for each
+	successful move in the episode's transcript, and a F value for
+	each unsuccessful move/pick attempt, respectively. (We're
+	ignoring successful picks to keep players from gaming the
+	system.)
+
     */
     Vector<Boolean> computeFaces(EpisodeInfo epi)// throws IOException
     {
@@ -912,7 +924,7 @@ public class PlayerInfo {
 	games with the incentive plan Incentive.DOUBLING.
 	
 	@return For players in games with the incentive plan
-	Incentive.DOUBLING, the value of the score, in the range
+	Incentive.DOUBLING (or LIKELIHOOD), the value of the score, in the range
 	[0..1], is simply the fraction of all rule sets so far that
 	the player has mastered (received X4).  For players in other
 	incentive plans, 0 is returned.
@@ -923,7 +935,8 @@ public class PlayerInfo {
 	if (para==null) return 0;
 	//hasError("Don't know the players parameter set");
 
-	if ( para.getIncentive()==ParaSet.Incentive.DOUBLING) {
+	if ( para.getIncentive()==ParaSet.Incentive.DOUBLING ||
+	     para.getIncentive()==ParaSet.Incentive.LIKELIHOOD) {
 	    int nMastered = 0;
 	    for(Series ser: allSeries) {
 		if (ser!=null && ser.seriesEndedByX4()) nMastered ++;

@@ -34,7 +34,7 @@
 
     <li><strong>The experiment control files.</strong> To define the set of experiments (games) that the players can play, you need to place an appropriate set of experiment control files to a specified directory on your server host. (From the Rule Game Server's point of view, Those files are "read-only file", because it is you, the experiment manager, who create and modify them, while the game server only reads them. This is how they are referred to in the <a href="../data.html">Data Guide</a>).
 
-    <li><strong>Server output files.</strong> You need to designate some directory on your server hosts for the files that the Game Server will write, recording the players' game transcripts etc. Those are the game server's "write-only files" (as per the  <a href="../data.html">Data Guide</a> terminology). You may later analyze those files with the tools supplied with the server, or with your own tools.      
+    <li><strong>Server output files.</strong> You need to designate some directory on your server hosts for the files that the Game Server will write, recording the players' game transcripts etc. Those are the game server's "write-only files" (as per the  <a href="../data.html">Data Guide</a> terminology). You may later analyze those files with the tools supplied with the server, or with your own tools.
   </ul>
 
   <h2>Necessary third-party software</h2>
@@ -90,6 +90,16 @@
       
     <li><strong>Experiment control files.</strong> To be able to run experiments, you need to populate the experiment control file directory (<tt>/opt/w2020/game-data</tt>, if you followed our defaults) with control files for some experments. See the  <a href="setup-game-data.html">experiment control file setup guide.</a>
 
+      <li><strong>Saved files directory.</strong> You need to create a place where the Game Server will server game transcripts and other files. To do that:
+      <ul>
+	<li>create the directory <tt>/opt/w2020/saved</tt>. (You can choose a different location, but if you do so, you'll need to modify the value of the variable <tt>FILES_SAVED</tt> in the master configuration file).
+	<li>Ensure that your Tomcat can write into that directory. To do that, you need to know under what user name Tomcat runs on your machine. Typically, on Linux machines Tomcat runs as user <tt>tomcat</tt>, group  <tt>tomcat</tt>; on MacOS machines, you are more likely to run Tomact under your own user name. You can find out the user name by doing something like <tt>ps auxw | grep tomcat</tt>, or by checking the ownership of Tomcat's recently written log files. Once you know who runs Tomcat, you can use commands <tt>chown</tt> and/or <tt>chmod</tt> to transfer ownership and enable access as needed. E.g., on Ubuntu Linux, you transfer the directory ownership to user  <tt>tomcat</tt>, group  <tt>tomcat</tt>, and ensure that not only that user can read and write tere, but also other users of the same group can read the files there:
+	  <pre>
+	    sudo chown -R tomcat.tomcat /opt/w2020/saved
+	    sudo chmod -R u+rwX,g+rX  /opt/w2020/saved
+	  </pre>
+      </ul>
+      
     <li><strong>Testing!</strong> Now that everything is in place, you can test some components of the software system you have just set up, to see if it actually works. See the   <a href="setup-testing.html">testing guide</a> to get started.
 
       </ol>

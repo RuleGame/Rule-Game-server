@@ -463,7 +463,7 @@ public class ParaSet extends HashMap<String, Object> {
     }
 
     /** Various incentive schemes available to experiment designers. */
-    public enum Incentive { BONUS, DOUBLING };
+    public enum Incentive { BONUS, DOUBLING, LIKELIHOOD };
 
     /** Returns the name of the incentive scheme in use in this para set,
 	or null if none is apparenly is in effect. This is determined
@@ -478,15 +478,20 @@ public class ParaSet extends HashMap<String, Object> {
 	    int n  = getInt("x2_after");
 	    if (n>=0) return  Incentive.DOUBLING;
 	} catch(Exception ex) {}
+	try {
+	    int n  = getInt("x2_likelihood");
+	    if (n>=0) return  Incentive.LIKELIHOOD;
+	} catch(Exception ex) {}
 	return null;	
     }
 
     /** Checks whether the parameters related to incentive schemes are
 	consistent (that is, you don't have a parameter from one
-	scheme and and another parameter from a different scheme).
+	scheme and another parameter from a different scheme).
      */
     public void checkIncentive() throws IllegalInputException {
 	Incentive inc = getIncentive();
+	// The names of parameters that this para set should *not* have
 	Vector<String> names = new Vector<>();
 	if (inc!=Incentive.BONUS) {
 	    names.addAll( Util.array2vector("activate_bonus_at", "clear_how_many", "bonus_extra_pts"));
@@ -496,6 +501,12 @@ public class ParaSet extends HashMap<String, Object> {
 	    names.addAll( Util.array2vector("x2_after", "x4_after"));
 	} else {
 	    if (getInt("x2_after") >= getInt("x4_after")) throw new IllegalInputException("Check the paramters x2_after and x4_after. Both must be present, and the former must be smaller than the latter");
+	}
+
+	if (inc!=Incentive.LIKELIHOOD) {
+	    names.addAll( Util.array2vector("x2_likelihood", "x4_likelihood"));
+	} else {
+	    if (getInt("x2_likelihood") >= getInt("x4_likelihood")) throw new IllegalInputException("Check the parameters x2_likelihood and x4_likelihood. Both must be present, and the former must be smaller than the latter");
 	}
 
 	for(String key: names) {

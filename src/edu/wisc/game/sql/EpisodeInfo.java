@@ -50,7 +50,7 @@ public class EpisodeInfo extends Episode {
 	finishCode = getFinishCode();
     }
 
-    /** Is this episode part of the bonus series? */
+    /** Is this episode part of the bonus series? (For Incentive.BONUS scheme) */
     boolean bonus;
     public boolean isBonus() { return bonus; }
     public void setBonus(boolean _bonus) { bonus = _bonus; }
@@ -121,7 +121,14 @@ public class EpisodeInfo extends Episode {
     @XmlElement
     public void setLastStretch(int _lastStretch) { lastStretch = _lastStretch; }
 
-    /** In a series with the "doubling" incentive scheme, the episode
+    /** Bayesian-based intervention */
+    double lastR;
+    public double getLastR() { return lastR; }
+    @XmlElement
+    public void setLastR(double _lastR) { lastR = _lastR; }
+
+    
+    /** In a series with the DOUBLING (or LIKELIHOOD) incentive scheme, the episode
 	that triggered x2 for the series has the value of 2 stored
 	here, and the episode that triggered x4 has 4 stored here. 
 	The default value for this field (stored in all other episodes)
@@ -194,7 +201,7 @@ public class EpisodeInfo extends Episode {
     //	return bonusSuccessful;
     //    }
 
-    /** We tell the player where all movable pieces are, unless the 
+    /** Our GUI tells the player where all movable pieces are, unless the 
 	para set mandates "free" mode.
      */
     boolean weShowAllMovables() {
@@ -233,12 +240,16 @@ public class EpisodeInfo extends Episode {
      */
     public ExtendedDisplay doMove(int y, int x, int by, int bx, int _attemptCnt) throws IOException {
 	Display _q = super.doMove(y, x, by, bx, _attemptCnt);
-	return processMove(_q, true);
+
+	Pick move = _q.pick;
+	
+	return processMove(_q, move);
     }
 
     public ExtendedDisplay doPick(int y, int x, int _attemptCnt) throws IOException {
 	Display _q = super.doPick(y, x, _attemptCnt);
-	return processMove(_q, false);
+	Pick pick = _q.pick;
+	return processMove(_q, pick);
     }
 
     /** This is set when the player first reach a new threshold. The info
@@ -250,29 +261,43 @@ public class EpisodeInfo extends Episode {
 	been completed, see how it affects the current state of the
 	episode.  
 
+	<p>
 	This method takes care of the issues related to the incentive scheme.
 
+	<p>
 	The player fails a bonus episode if there are still
 	pieces on the board, but less than 1 move left in the budget.
 
-        If the "DOUBLING" incentive scheme is in effect, the xFactor
-	(2 or 4) is "promised" when the successful stretch reaches the
-	required length, but is "crystallized" (actually become applicable)
+	<p>
+        If the "DOUBLING" (or "LIKELIHOOD") incentive scheme is in
+	effect, the xFactor (2 or 4) is "promised" when the successful
+	stretch reaches the required length (or R passes the required
+	threshold), but is "crystallized" (actually become applicable)
 	only when the episode is successfully completed (cleared or
 	stalemated).
-
-	Doubling: successful picks are ignored in stretch calculations, 
-	to prevent the player from gaming the system.
+	
+	<p>
+	Doubling (and LIKELIHOOD): successful picks are ignored in
+	stretch (and R) calculations, to prevent the player from gaming the
+	system.
 
  */
-    private ExtendedDisplay processMove(Display _q, boolean isMove) throws IOException  {
+    private ExtendedDisplay processMove(Display _q, Pick move) throws IOException  {
+	boolean isMove = (move instanceof Move);
 	justReachedX2=justReachedX4=false;
 
+	double prevR = lastR;
+	
 	if (_q.code==CODE.ACCEPT) {
 	    // count succcessful moves only, but ignore successful picks
-	    if (isMove)  lastStretch++;
+	    if (isMove) {
+		lastStretch++;
+		if (lastR==0) lastR=1;
+		lastR *= move.getRValue();
+	    }
 	} else { // failed move or pick
 	    lastStretch=0;
+	    lastR = 0;
 	}
 
 	
@@ -288,6 +313,29 @@ public class EpisodeInfo extends Episode {
 		justReachedX4=true;
 		if (!cleared) earlyWin = true;
 	    } else if (f<2 && factorPromised < 2 && lastStretch>=x2) {
+		factorPromised = 2;
+		//setXFactor(2);
+		justReachedX2=true;
+	    }
+	   
+	    if (cleared || earlyWin ||
+		stalematesAsClears && stalemate) {
+		if (getXFactor()<factorPromised) setXFactor(factorPromised);
+	    }
+
+	}
+
+	if (xgetIncentive()==Incentive.LIKELIHOOD) {
+	    final double x2=para.getInt("x2_likelihood"), x4=para.getInt("x4_likelihood");
+
+	    PlayerInfo.Series ser =  mySeries();
+
+	    if (prevR < x4 && factorPromised < 4 && lastR >=x4) {
+		factorPromised = 4;
+		//setXFactor(4);
+		justReachedX4=true;
+		if (!cleared) earlyWin = true;
+	    } else if (prevR<2 && factorPromised < 2 && lastR>=x2) {
 		factorPromised = 2;
 		//setXFactor(2);
 		justReachedX2=true;
@@ -516,12 +564,16 @@ public class EpisodeInfo extends Episode {
 	public String getTrialListId() { return trialListId; }
         public String getRuleSetName() { return ruleSetName; }
 
-	/** Indicators for the DOUBLING incentive scheme */
+	/** Indicators for the incentive scheme (BONUS, DOUBLING, LIKELIHOOD)*/
 	Incentive incentive;
         public Incentive getIncentive() { return incentive; }
 
 	int lastStretch;
 	public int getLastStretch() { return lastStretch; }
+
+	/** The R-value for the current continuous sequence of successful moves (for the Bayesian-based intervention) */
+	double lastR;
+	public double getLastR() { return lastR; }
 
 
 	/** For GS 4.006, this represents all moves (and picks) 
@@ -564,10 +616,11 @@ public class EpisodeInfo extends Episode {
         public int getFactorAchieved() { return factorAchieved; }
         public int getFactorPromised() { return factorPromised; }
 
-	/** Sets a few fields related to the DOUBLING incentive scheme */
+	/** Sets a few fields related to the DOUBLING or LIKELIHOOD incentive scheme */
 	private void incentive2() {	    
 	    incentive = xgetIncentive();
 	    lastStretch = EpisodeInfo.this.lastStretch;
+	    lastR = EpisodeInfo.this.lastR;
 	    rewardsAndFactorsPerSeries = getPlayer().getRewardsAndFactorsPerSeries();
 	    Logging.info("EpisodeInfo.ED.incentive2(): obtained rewardsAndFactorsPerSeries = " + rewardsAndFactorsPerSeries);
 	    justReachedX2 = EpisodeInfo.this.justReachedX2;
