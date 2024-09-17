@@ -178,6 +178,25 @@
 	  The above form uses the POST method, but the underlying service can be used with the GET method as well, using URLs such as
 	  <a href="front-end-form-2.jsp?exp=RU/JF/tht/exp1&prefix=RU-JF-THT-&dev=false">http://wwwtest.rulegame.wisc.edu/w2020/front-end-form-2.jsp?exp=U/JF/tht/exp1&amp;prefix=RU-JF-THT-&amp;dev=false</a>. (Change the host name and the experiment plan name as appropriate).
 	  
+
+	<li><a name="ru-jf">Launch form for Jacob (with redirect):</a>
+
+	  <form action="front-end-form-3.jsp" method="post">	    
+(Experiment plan=<input type="text" name="exp" size="30" value="RU/JF/tht/exp2">)
+(Player ID prefix=<input type="text" name="prefix" size="30" value="RU-JF-">)
+<br><table><tr><td>
+<input type="radio" name="dev" value="true">Dev client
+<br><input type="radio" name="dev" value="false" checked>Prod client
+    <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <td><input type="radio" name="intro" value="true" checked>Show intro
+    <br><input type="radio" name="intro" value="false">Skip intro
+    </table>
+<br>
+		  <button type="submit">GUI play</button>
+</form>
+
+	  The above form uses the POST method, but the underlying service can be used with the GET method as well, using URLs such as
+	  <a href="front-end-form-3.jsp?exp=RU/JF/tht/exp2&prefix=RU-JF-&dev=false">http://wwwtest.rulegame.wisc.edu/w2020/front-end-form-3.jsp?exp=U/JF/tht/exp2&amp;prefix=RU-JF-&amp;dev=false</a>. (Change the host name and the experiment plan name as appropriate).
 	  
 	<li><a href="http://sapir.psych.wisc.edu/rule-game-board-builder/dev/">Board builder</a> (dev)
 

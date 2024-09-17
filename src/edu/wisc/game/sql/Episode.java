@@ -990,7 +990,9 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 
     /** No need to show this field */
     private static final HashSet<String> excludableNames =  Util.array2set("dropped");
-    
+
+    /** @return The description of the current board in the form of a JSON string.
+     */
     private String displayJson() {
 	Board b = getCurrentBoard();
 	JsonObject json = JsonReflect.reflectToJSONObject(b, true, excludableNames);
@@ -998,7 +1000,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
 
     /** The current version of the application */
-    public static final String version = "6.036";
+    public static final String version = "6.037";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }
@@ -1174,7 +1176,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     /** Lets this episode play out until either all pieces are
 	cleared, or a stalemate is reached, or the player gives up
 	(sends an EXIT or NEW command). The episode takes commands from
-	the reader.
+	the reader, as in the Captive Game Server.
 	
 	@param gameCnt The sequential number of the current episode. This is only used in a message.
 	@return true if another episode is requested, i.e. the player

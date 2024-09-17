@@ -554,6 +554,7 @@ public class PlayerInfo {
 		// The error-free stretch continues across episode border
 		if (ser.size()>0) {
 		    epi.setLastStretch(ser.episodes.lastElement().getLastStretch());
+		    epi.setLastR(ser.episodes.lastElement().getLastR());
 		}
 		
 		ser.episodes.add(epi);

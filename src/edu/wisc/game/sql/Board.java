@@ -22,10 +22,10 @@ import edu.wisc.game.rest.Files;
 @XmlRootElement(name = "board") 
 
 /**
-   It seems like this class is not used anymore, and probably was never used.
-
    <p>
-   Represents an initial board. 
+   Represents the initial or current state of the board, i.e. the position of all game pieces.
+
+   <p>Despite the JPA markup, it seems that objects of this class are not actually stored in the SQL server.
 
 <pre>
  "boardObjectsArrays":{

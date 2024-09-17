@@ -29,6 +29,7 @@ public class Captive {
 	usage(null);
     }
     static private void usage(String msg) {
+	System.err.println("Captive Game Server (https://rulegame.wisc.edu/w2020/captive.html)\n");
 	System.err.println("Usage:\n");
 	System.err.println("  java [options]  edu.wisc.game.engine.Captive game-rule-file.txt board-file.json");
 	System.err.println("  java [options]  edu.wisc.game.engine.Captive game-rule-file.txt npieces [nshapes ncolors]");
