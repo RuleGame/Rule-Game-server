@@ -5,7 +5,7 @@
   <body>
     <h1>Captive Game Server</h1>
 
-    <div align="center"><em>Updated 2024-09-09 for GS ver 6.010</em></div>
+    <div align="center"><em>Updated 2024-09-24 for Game Server ver 6.038</em></div>
     
     <h2>Test the Rule Game</h2>
 
@@ -13,7 +13,7 @@ To play a game without installing the CGS, <a href="launch/launch-rules-cgs.jsp"
     
     <h2>What is the Captive Game Server?</h2>
 
-    <p>The Captive Game Server (CGS) is a small Java application that contains the same game engine as the Web Game Server, but does not have a SQL database, does not write transcript files, and does not communicate with clients using HTTP. It can be used by a Machine Learning researcher (in particular, a participant in the <a href="mlc/mlc-guide.html">The Machine Learning Challenge (MLC)</a>) who wants a ML program to learn how to play the Game of Hidden Rules (GOHR, a.k.a. the Rule Game) as a counterparty for his ML program to play with.
+    <p>The Captive Game Server (CGS) is a small Java application that contains the same game engine as the Web-based Rule Game Server, but does not have a SQL database, does not write transcript files, and does not communicate with clients using HTTP. It can be used by a Machine Learning or AI researcher (in particular, a participant in the <a href="mlc/mlc-guide.html">The Machine Learning Challenge (MLC)</a>) who wants his or her ML program to learn how to play the Game of Hidden Rules (GOHR, a.k.a. the Rule Game) as a counterparty for his ML program to play with.
 
     <p>The Captive Game Server can be run in two ways: <strong>pipe-based</strong> and  <strong>socket-based</strong>.
 
@@ -191,7 +191,7 @@ In this example, you will start a session using the rule description from the sp
 	<li>The rule set to be used in all episodes of the session.
 	<li>The initial boards used in each episode.
       </ul>
-      There are several ways to provide this information, as illustraed below. In examples 1 thru 6, the first argument is the rule set file, specified as either a relative path (relative to the current directory), or an absolute path; it is followed by arguments specifying the initial board(s) for the session's episodes, in one of several ways. In example 7, the first argument is a trial list file, which contains information that both specifies the rule set and the initial board generation process.
+      There are several ways to provide this information, as illustrated below. In examples 1 thru 6, the first argument is the rule set file, specified as either a relative path (relative to the current directory), or an absolute path; it is followed by arguments specifying the initial board(s) for the session's episodes, in one of several ways. In example 7, the first argument is a trial list file, which contains information that both specifies the rule set and the initial board generation process.
       </p>
 
     <p>In Game Server 2.*, the designers of human-subject experiments have a wide choice of  experiment plan structures. Each parameter set in their trial lists may define a 6-paramter random board generator (specifying ranges of the number of pieces, the number of shapes, and the number of colors), with legacy or custom colors and shapes. Alternatively, a parameter set may define a sequence of predefined boards. Whichever structure the the parameter set has, using one of the methods described above will ensure that the captive server uses exactly the same random board generation process as is used by web-based Game Server in the human-subject experiments.</p>
@@ -262,7 +262,7 @@ To specify the sets from which colors and/or shapes will be drawn by the initial
 
 	</p>
 	
-	<h4>7. Use a trial list file</h4>
+	<h4><a name="cmd7">7. Use a trial list file</a></h4>
 
 	<p>
 	  This is the easiest way to emulate the behavior of the web-based Game Server (with which humans play). 	  To do this, you can specify a <a href="data.html#trialList">trial list file</a> and the (1-based) row number, e.g.
@@ -281,6 +281,9 @@ The CGS figures the file type based on the extension: the ".csv" extension means
 Since the trial list file implicitly refers to files in various directories under the server data directory (by default, <tt>/opt/w2020/game-data</tt>), you must either have that directory, with all relevant files, on your computer, or use the <tt>-inputDir</tt> parameter on the command line, just as in Example 6 above.
 	</p>
 
+    <p>This technique for starting the CGS is the most appropriate one for games that involve
+      <a href="object-properties.html">Image-and-property-based objects</a> or
+    <a href="composite-objects.html">Composite image objects</a>, because to play these games the server, besides having the rule set file, needs to know what kind of objects can be used as game pieces on the board.
 
 	<h4>8. Combine a rule set file and a modifer file</h4>
 
@@ -614,6 +617,27 @@ This, bucket 0 is (7, 0), bucket 1 is (7,7) etc.
 <br>
 Here, at the top level the only field that matters is "value". Its value is an array, each elements represents a piece. For example, the piece described as <TT>
 {"id":0,"color":"RED","shape":"CIRCLE","x":4,"y":3,"buckets":[0]}</tt> has color RED, shape CIRCLE, is located in row 3, column 4. The field "buckets" is an array containing the list of buckets (see above for numbering!) into which this piece can be moved. If the array size is zero, it means that the piece is not moveable. It is up to your program and its "honor system" to which extent it wants to look into this array!
+
+<p>
+  <pre><strong>FEATURES</strong></pre>
+
+<p>Response: one line, containing a JSON structure listing all properties (features) that game pieces may have, with the set of all possible values for each one. In a game with "legacy" objects (described by the 4 legacy shapes and 4 legacy colors), the response will be as follows:
+<pre>
+  {"shape":["SQUARE","STAR","CIRCLE","TRIANGLE"],"color":["RED","BLACK","BLUE","YELLOW"]}
+</pre>
+In a game with  <a href="object-properties.html">Image-and-property-based objects</a>, the response will be based on all the properties and their values occurring in the property list file(s) mentioned in the game's parameter set, e.g. for the experiment plan <tt>/opt/w2020/game-data/trial-lists/RU/JF/tht/exp2/simpleVcomp.csv</tt> (para set line 1), we have
+<pre>
+  {"names":["shape_1_1_1","shape_1_1_2","shape_1_1_3", ...,"shape_4_4_4"],
+  "size_indices":[1,2,3,4],"shape_indices":[1,2,3,4],"color_indices":[1,2,3,4]}
+</pre>
+(The "names" property has a lot of possible values, because each object has its own unique value of that property in that experiment plan). In games with <a href="composite-objects.html">Composite image objects</a>, the properties are computed dynamically, as per <a href="composite-objects.html#prop">Composite image objects | properties</a>.
+
+<p>In more typical experiment plans every object has the same set of features; however it is possible to create experiment plans with IPB objects in which some features are only present in some but not all objects. (That can be achieved by having empty cells in the properties file, or by including into your parameter set objects from more than one directory, the properties files in different directories having different feature sets). In this case the JSON structure returned by  <tt>FEATURE</tt> will include all properties that may occur in at least one object in some episode, even if some of these properties don't occur in all objects.</p>
+
+<p>The set of values that appears in the returned JSON structure for a particular property (feature) includes all values that may ever appear for that feature in some objects in some episode played under the current parameter set. Any particular episode may not necessarily have objects with all of these values.</p>
+
+    <P>It is advised that you use the <tt>FEATURES</tt> command just once for any given parameter set. You can do it as you start playing your first episode. Start the CGS (as per
+	<a href="#cmd7">item No. 7</a> in the discussion of command lines above), issue the  <tt>FEATURES</tt> command so that you can allocate your data structures, and then play the first episode using the <tt>DISPLAY</tt> and <tt>MOVE</tt> commands. After that, you can use the <tt>NEW</tt> command to start the second and subsequent episodes, without ever repeating the  <tt>FEATURES</tt> command.
 
 
 <p>

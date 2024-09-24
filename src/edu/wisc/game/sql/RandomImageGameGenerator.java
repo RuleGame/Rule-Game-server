@@ -53,5 +53,9 @@ public class RandomImageGameGenerator extends GameGenerator {
 	return game;
     }
 
+    /** For Captive server, to be printed via JSON Reflect */
+    //    public Map<String, Vector<Object>> getExtraFields() {
+    //	return imageGenerator.getAllFeatures();
+    //}
  
 }

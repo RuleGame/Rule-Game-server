@@ -28,12 +28,35 @@ public class Game {
     /** If starting with a random board, the number of pieces to use. Only used if initialBoard==null */
     public int randomObjCnt, nShapes=0, nColors=0;
 
+    /** For games with a random board generator and S+C game pieces, the set of shapes from
+	which shapes of game pieces are pulled. Null otherwise (i.e. for IPB games, or
+	games with predefined boards). */
     final Piece.Shape[] allShapes;
     final Piece.Color[] allColors;
-    /** A game with IPB pieces have allImages!=non-null, while allShapes and allColors are both nulls; a color-and-shape game will have allImages==null. Array elements  */
-    //final String[] allImages;
+
+    /** This is null in games with the traditional shape+color game
+      pieces (which rely on allShapes and allColors). In games with
+      IPB game pieces or with composite game pieces (where allShapes
+      and allColors are null) it will be an object from which random
+      object names can be pulled. This is based on the "images" column
+      of the ParaSet */ 
     final ImageObject.Generator imageGenerator;
-  
+
+    /** For Captive server, to be printed via JSON Reflect */
+    /*    public Map<String, Vector<Object>> getExtraFields() {
+	if (imageGenerator!=null) return imageGenerator.getAllFeatures();
+	HashMap<String, Vector<Object>> m=new HashMap();
+	m.put("shape", listNames(allShapes));
+	m.put("color", listNames(allColors));
+	return m;
+	}*/
+
+    private static <T> Vector<Object> listNames(T[] a) {
+	Vector<Object> v=new Vector();
+	for(T x: a) v.add(x.toString());
+	return v;
+    }
+    
     public Game(RuleSet _rules, Board _initialBoard) {
 	random = null;
 	rules = _rules;

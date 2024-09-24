@@ -90,7 +90,7 @@ public class RandomGameGenerator extends GameGenerator {
     }
     
 
-    /** Builds a RandomGameGenerator from command-line arguments */
+    /** Builds a RandomGameGenerator from command-line arguments. Used in Captive Game Server */
     public static RandomGameGenerator buildFromArgv(RandomRG _random, File f, ParseConfig ht, String[] argv, int ja) throws IOException, RuleParseException {
 	String b = argv[ja++];
 

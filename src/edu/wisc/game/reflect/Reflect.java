@@ -15,6 +15,9 @@ public class Reflect {
 
     public static final DateFormat sqlDf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
+
+
+    
     static public String makeGetMethodName(String name) {
 	String capName = name.substring(0,1).toUpperCase() + name.substring(1);
 	return "get" + capName; 
@@ -107,11 +110,28 @@ public class Reflect {
 
     }
 
+    public String toString() {
+	String s = "Reflect: extraFieldsMethod = " + extraFieldsMethod;
+	for(Entry e: entries) {
+	    s += "\n" + e;
+	}
+	return s;
+    }
 
     public Entry[] entries = null;
     private  HashMap<String,Entry> entryTable = new HashMap<String,Entry>();
     public Entry getEntry(String name) { return entryTable.get(name);}
 
+    /** If this method exists in the class, it can be executed to get a
+	Map<String,Object> for extra fields to be put into the JSON
+	structure. We use this to transmit arbitrary object properties
+	in the Captive Game Server.
+    */
+    public Method extraFieldsMethod = null;
+
+    static final public String extraFieldsMethodName = "getExtraFields";
+
+	
     /** Finds the entry that describes the field whose type is the the
      * enumerated class for which e is one of the values. This method only 
      * makes sense to use if the class has only field with that enum type;
@@ -131,6 +151,7 @@ public class Reflect {
     }
 
     private static HashMap<Class, Reflect> table = new HashMap<Class,Reflect>();
+
     /** Looks up or creates a Reflect instance for a specified class.
 
 	@param c Class to analyze. We reduce it to an existing basic
@@ -153,6 +174,7 @@ public class Reflect {
 	if (r==null) {
 	    r = new Reflect(c);
 	    table.put(c,r);
+	    //System.out.println("For class " + c.getName() +", "   + r);
 	}
 	return r;
     }
@@ -163,8 +185,13 @@ public class Reflect {
 	//	Logging.info("Reflect(" + c +"), has " + c.getFields().length + " fields, " + c.getDeclaredFields().length + " declared fields");
 	Vector<Entry> v = new Vector<Entry>();
 
+	try {
+	    extraFieldsMethod = c.getMethod( extraFieldsMethodName);
+	} catch (Exception ex) { 	    }
+	    
+
 	for(;c!=null && c!=Object.class; c=c.getSuperclass()) {
-	
+
 	for(Field f: c.getDeclaredFields()) {
 	    Entry e = new Entry();
 	    e.f = f;

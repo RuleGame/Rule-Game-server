@@ -1000,7 +1000,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
 
     /** The current version of the application */
-    public static final String version = "6.037";
+    public static final String version = "6.038";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }
@@ -1177,13 +1177,15 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	cleared, or a stalemate is reached, or the player gives up
 	(sends an EXIT or NEW command). The episode takes commands from
 	the reader, as in the Captive Game Server.
-	
+
+	@param game This is passed just so that we can access the feature list for the FEATURES command
 	@param gameCnt The sequential number of the current episode. This is only used in a message.
 	@return true if another episode is requested, i.e. the player
 	has entered a NEW command. false is returned if the player
 	enters an EXIT command, or simply closes the input stream.
     */
-    public boolean playGame(GameGenerator gg, int gameCnt) throws IOException {
+    public boolean playGame(GameGenerator gg, //Game game,
+			    int gameCnt) throws IOException {
 	try {
 	String msg = "# Hello. This is Captive Game Server ver. "+version+". Starting a new episode (no. "+gameCnt+")";
 	if (stalemate) {
@@ -1220,6 +1222,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 		return true;
 	    } else if (cmd.equals("HELP")) {		
 		out.println("# Commands available:");
+		out.println("# FEATURES");
 		out.println("# MOVE row col bucket_row bucket_col");
 		out.println("# NEW");
 		out.println("# DISPLAY");
@@ -1230,6 +1233,10 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	    } else if (cmd.equals("DISPLAY")) {
 		out.println(displayJson());
 		if (outputMode==OutputMode.FULL) out.println(graphicDisplay());
+	    } else if (cmd.equals("FEATURES")) {
+		//Map<String, Vector<Object>> features = game.getAllFeatures();
+		JsonObject json = JsonReflect.reflectToJSONObject(gg.getAllFeatures(), true);
+		out.println(json);
 	    } else if (cmd.equals("DISPLAYFULL")) {
 		out.println(displayJson());
 		out.println(graphicDisplay());

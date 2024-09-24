@@ -12,10 +12,19 @@ import edu.wisc.game.util.*;
     directory.
  */
 public class PropertiesTable extends HashMap<String,ImageObject> {
+
+    /** All properties table known to the system. The keys are directories in which
+	properties tables files live, rather than files themselves.  */
+    private static HashMap<File, PropertiesTable> allPropertiesTables = new HashMap<>();
+
     
     boolean error;
     String errmsg;
     String path;
+
+    /** maps a property name to the sets of possible values of that property */
+    final private HashMap<String, Set<Object>> valueSets= new HashMap<>();
+
     
     public boolean getError() { return error; }
     public void setError(boolean _error) { error = _error; }
@@ -26,16 +35,29 @@ public class PropertiesTable extends HashMap<String,ImageObject> {
     public String getPath() { return path; }
     public void setPath(String _path) { path = _path; }
 
+    /** All features (properties) found in this table, with their values */
+    HashMap<String, Set<Object>> allFeatures = new HashMap<>();
+
+    
     /** The error object  */
     private PropertiesTable(boolean _error, String _errmsg) {
 	setError(_error);
 	setErrmsg(_errmsg);
     }
 
-
+    /** Retrieves the properties table for a particular directory */
+    static public PropertiesTable getPropertiesTable(File dir) {
+	PropertiesTable t= allPropertiesTables.get(dir);
+	if (t==null) {
+	    t= new   PropertiesTable(dir);
+	    if (!t.error) allPropertiesTables.put(dir, t);
+	}
+	return t;
+    }
+    
     /** Reads a properties file, creating and loading an ImageObject
 	for every table entry. */
-    public PropertiesTable(File dir) {
+    private PropertiesTable(File dir) {
 	this(false, "No error");
 	File f = new File(dir, "properties.csv");
 	setPath(f.getPath());
@@ -53,11 +75,37 @@ public class PropertiesTable extends HashMap<String,ImageObject> {
 
 	    //System.out.println("DEBUG: creating properties table from CSV file f=" + f+", with " + csv.entries.length + " lines of date");
 
+	    Vector<Set<Object>> v= new Vector<>();
+	    for(int k=1; k<nCol; k++) {
+		v.add(new HashSet<>());
+	    }
+	    
 	    
 	    for(int j=1; j<csv.entries.length; j++) {
 		CsvData.BasicLineEntry line = (CsvData.BasicLineEntry)csv.entries[j];
 		ImageObject z = mkImageObject(dir,  header, line);
 		put(z.key, mkImageObject(dir,  header, line));
+
+		for(int k=1; k<nCol; k++) {
+		    String s = line.getCol(k);
+
+		    Object value = s;
+		    
+		    // FIXME: maybe sometimes we don't want strings of digits converted
+		    // to Integer... e.g "010" in Composite objects...
+		    try {
+			value = Integer.parseInt(s);
+		    } catch(Exception ex) { }
+
+		    v.get(k-1).add(value);
+		}
+		
+	    }
+
+	    for(int k=1; k<nCol; k++) {
+		String name =header.getCol(k);
+		Set<Object> values = v.get(k-1);
+	    	allFeatures.put(name, values);
 	    }
 
 
@@ -95,5 +143,13 @@ public class PropertiesTable extends HashMap<String,ImageObject> {
 	}
 	return io;
     }
+
+
+    /** This method is discovered by Reflect, and is then used when
+	converting the table to a JSON structure (via Reflect), so
+	that the Captive server can print the list of properties. */
+    //    public HashMap<String,Object> getExtraFields() {
+    //	return valueLists;
+    //}
     
 }

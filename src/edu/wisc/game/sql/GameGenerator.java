@@ -11,11 +11,13 @@ import edu.wisc.game.engine.*;
 import edu.wisc.game.rest.ParaSet;
 import edu.wisc.game.sql.Episode.CODE;
 
-/** This class generates random games (with the same rule set and
+/** A GameGenerator generates random games (with the same rule set and
     randomly created initial boards) based on the provided parameter
     range specifications */
 abstract public class GameGenerator {
 
+    /** Link back to the ParaSet on which this gg is based */
+    private ParaSet para;
     final RandomRG random;// = new RandomRG();
     
     //    final int[] nPiecesRange, nShapesRange, nColorsRange;
@@ -96,7 +98,7 @@ abstract public class GameGenerator {
 	    gg =new RandomGameGenerator(_random, ruleSetName, nPiecesRange, nShapesRange,
 					nColorsRange, para.shapes, para.colors);
 	}
-
+	gg.para = para;
 
 	return gg;
     }
@@ -113,5 +115,32 @@ abstract public class GameGenerator {
 	condRules = _condRules;
     }
 
+    /** For Captive server, to be priented via JSON Reflect. */
+    public Features  getAllFeatures() {
+	if (para!=null && para.imageGenerator!=null) return para.imageGenerator.getAllFeatures();
+	Features m=new Features();
+	Piece.Shape[] shapes = (para==null)? Piece.Shape.legacyShapes : para.shapes;
+	Piece.Color[] colors = (para==null)? Piece.Color.legacyColors : para.colors;
+ 
+	m.put("shape", listNames(shapes));
+	m.put("color", listNames(colors));
+	return m;
+    }
+
+    private static <T> Vector<Object> listNames(T[] a) {
+	Vector<Object> v=new Vector();
+	for(T x: a) v.add(x.toString());
+	return v;
+    }
+
+    public static class Features extends HashMap<String, Vector<Object>> {
+	//Features(Map<String, Vector<Object>> _data) { data = _data; }
+	/** For Captive server, to be printed via JSON Reflect */
+	public Map<String, Vector<Object>> getExtraFields() {
+	    return this;
+	}
+
+    }
+    
     
 }

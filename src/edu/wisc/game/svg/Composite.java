@@ -188,6 +188,10 @@ public class Composite extends ImageObject {
 		(this == GRID) ? "g":
 		"?";
 	}
+
+
+	final static String[] allConcreteLetters = {"v", "h", "g"};
+	
 	/** If this is a wildcard, randomly picks a "concrete" orientation */
 	//Orientation sample(Random random) {
 	//return (this==ANY) ?
@@ -195,6 +199,10 @@ public class Composite extends ImageObject {
 	//}		       
     };
 
+    /** Describes the "geometry" of a Composite object, i.e. the number of columns and rows in the grid
+	on which the Composite object is assembled out of its elements. A Geometry with any==true
+	represents a "family" of 2 geometries, which includes a horizontal one and a vertical one
+     */
     static class Geometry {
 	/** If true, this is a wildcard object, representing a family ({h,v}) */
 	final boolean any;
@@ -258,7 +266,13 @@ public class Composite extends ImageObject {
 	    } else return this;
 	}		       
 
-	
+	Geometry [] range() {
+	    if (any) {
+		return new Geometry[] {
+		    new Geometry( NR, NC, false),
+		    new Geometry( NC, NR, false)};
+	    } else return new Geometry[] {this};
+	}
     }
 
     
@@ -273,6 +287,7 @@ public class Composite extends ImageObject {
     final static int ANY=0;
     /** Size and brightness levels range from 1 thru M. M is the default */
     final static int M=3;
+    /** Something like "333", which means "all elements have default (large/high) size/brightness" */
     final String MMM; //= initMMM();
 
     /** Arrays of N=3 elements which contain values 1 2 3, or ANY */
@@ -294,7 +309,8 @@ public class Composite extends ImageObject {
     private String svg;
     public String getSvg() { return svg; }
 
-    
+    /** If an image name in a trial list file starts with this prefix, it's a composite object,
+	rather than a usual IPB object. */
     final static String prefix = "/composite/";
 
     
@@ -311,6 +327,25 @@ public class Composite extends ImageObject {
 	String s = joinInt(x);
 	return s.equals(MMM)?  "": "/" + key + "=" +s;	    
     }
+
+    /** @param key The name of the field
+	@param x The values of the field for individual elements
+        @return The set of values that the specified field may contain in concrete Composite
+	objects derived from this [possibly] wildcard Composite. ZZZZ  */
+    private HashSet<String> fieldRange(String key, int [] x) {
+	HashSet<String> w =  expandWildcards(x, range(1,1+M));
+	HashSet<String> w1 =  new HashSet<>();
+	for(String s: w) {
+	    w1.add( s.equals(MMM)?  "": "/" + key + "=" +s);
+	}
+
+	//	System.err.println("fieldRange("+key+", {"+Util.joinNonBlank(",",x)+"} = {"+
+	//	   Util.joinNonBlank(",",w1)+"}"); 
+	
+	return w1;
+    }
+
+    
     
     /** Computes a name based on stored parameters. This is useful during 
 	random sample generation. This is also useful to get rid of carets,
@@ -326,7 +361,26 @@ public class Composite extends ImageObject {
 	return s;	       
     }
 
-
+    /** @return All possible names (produced by mkName()) that may
+	occur in concrete Composite objects derived from this
+	(wildcard) object. Of course, if this object is already
+	concrete, the set will have just 1 element */
+    private Set<String> nameRange() {
+	HashSet<String> w = new HashSet<>();
+	for(Geometry g1: g.range()) {
+	    String s = prefix + g1.toPrefix();
+	    w.add(s);
+	}
+	w = cartesianProduct(w, fieldRange("d", sizeRank));
+	w = cartesianProduct(w, fieldRange("b", bright));
+	for(int j=0; j<N(); j++) {
+	    w = cartesianProduct(w, "/");
+	    w = cartesianProduct(w, expandWildcards(new String[]{colors[j]}, allColors));
+	    w = cartesianProduct(w, expandWildcards(new String[]{shapes[j]}, allShapes));
+	}	    
+	return w;
+    }
+	    
     /** The total number of elements in the grid */
     private int N() { return g.N(); }
     
@@ -400,7 +454,9 @@ public class Composite extends ImageObject {
     }
     
     /** Creates a new "concrete" Composite object patterned on a particular object that has
-	wildcards */
+	wildcards
+	@param p The model (which can be either a concrete Composite, which is just copies, or a "family" with wildcards)
+    */
     private Composite(Composite p, Random random) {
 	this(p.g.sample(random));
 	for(int j=0; j<N(); j++) {
@@ -416,7 +472,79 @@ public class Composite extends ImageObject {
 	computeProperties();
     }
 
+    /** Computes the sets of possible values of some features of the concrete Composite objects
+	that may be derived from this object. */
+    private HashMap<String, Set<String>> ranges() {
+	HashMap<String, Set<String>> m =  new HashMap<>();
+	m.put("sizeRank", expandWildcards(sizeRank, range(1,1+M)));
+	m.put("bright", expandWildcards(bright, range(1,1+M)));
+	m.put("shapes", expandWildcards(shapes, allShapes));
+	m.put("colors", expandWildcards(colors, allColors));
+	return m;
+    }
+
+    /** @return [x0, x0+1, ..., x1-1] */
+    private static int[] range(int x0, int x1) {
+	if (x1<=x0) throw new IllegalArgumentException("Impossible range: " +x0 + " thru (" + x1 + "-1)");
+	int[] y = new int[x1-x0];
+	for(int j=0; j<y.length; j++) y[j] = x0+j;
+	return y;
+    }
+	       
+	       
+    private static HashSet<String> expandWildcards(int x[], int elementRange[]) {
+	String y[] = new String[x.length];
+	String er[] = new String[elementRange.length];
+	for(int k=0; k<x.length; k++) {
+	    y[k] = (x[k] == ANY)? "?" : ""+x[k];
+	}
+	for(int k=0; k<er.length; k++) {
+	    er[k] = "" + elementRange[k];
+	}
+	return expandWildcards(y, er);
+    }
     
+    /** Expands a wildcard represented by x[], where each "?" can be replaced by any string
+	from elementRange[].
+     */
+    private static HashSet<String> expandWildcards(String x[], String elementRange[]) {
+	HashSet<String> w = new HashSet<>();
+	w.add("");
+	for(int j=0; j<x.length; j++) {
+	    HashSet<String> w1 = new HashSet<>();
+	    for(String s: w) {
+		if (x[j].equals("?")) {
+		    for(String b: elementRange) {
+			w1.add(s + b);
+		    }
+		} else {
+		    w1.add( s + x[j]);
+		}
+	    }
+	    w = w1;
+	}
+	return w;
+    }
+
+    /** @return set of all strings {x+y | x in a, y in b) */
+    private static HashSet<String> cartesianProduct(HashSet<String>  a, HashSet<String> b) {
+	HashSet<String> c = new HashSet<>();
+	for(String x: a) {
+	    for(String y: b) {
+		c.add(x+y);
+	    }
+	}
+	return c;
+    }
+
+    private static HashSet<String> cartesianProduct(HashSet<String>  a, String y) {
+	HashSet<String> c = new HashSet<>();
+	for(String x: a) {
+	    c.add(x+y);
+	}
+	return c;
+    }
+
 
     /** How many distinct concrete Composite ImageObjects does this Composite
 	object describe? The result is based on the number of wildcards in 
@@ -577,6 +705,7 @@ public class Composite extends ImageObject {
      */
     static class Order {
 	static final int SAME=0, SOME_INCREASE=1, SOME_DECREASE=-1, NONE=2;
+	static final int[] allValues = { SAME, SOME_INCREASE, SOME_DECREASE, NONE};
 	static int compute(int x[]) {
 	    boolean nonDecrease=true, nonIncrease=true;
 	    for(int j=1; j<x.length; j++) {
@@ -588,6 +717,8 @@ public class Composite extends ImageObject {
 		nonIncrease? SOME_DECREASE: NONE;	    
 	}
 
+       
+	
     }
 	
 
@@ -650,6 +781,70 @@ public class Composite extends ImageObject {
 	}
     }
 
+
+    private static <T> HashSet<T> array2set(T[] v) {
+	return new HashSet( Util.array2vector(v));
+    }
+
+    private static Set<Object> array2set(int... v) {
+	Set<Integer> h = Util.array2set(v);
+	return Util.loseType(h);
+    }
+
+    private static Set<Object> toNumberSet(Set<String> a) {
+	Set<Object> w = new HashSet<>();
+	for(String s: a) {
+	    Object value=s;
+	    // to Integer... e.g "010" in Composite objects...
+	    try {
+		value = Integer.parseInt(s);
+	    } catch(Exception ex) { }
+	    w.add(value);
+	}
+	return w;
+
+    }
+
+    /** For the CGS' FEATURE command */
+    public Map<String, Set<Object>> getAllFeatures() {
+	
+	Map<String, Set<Object>> m = new HashMap<>();
+
+	m.put("name", Util.loseType(nameRange()));
+
+
+	m.put("orientation", array2set(Orientation.allConcreteLetters));
+
+	// numbers 
+	m.put("d", toNumberSet(expandWildcards(sizeRank, range(1,1+M))));
+	m.put("b", toNumberSet(expandWildcards(bright, range(1,1+M))));
+
+	// strings
+	m.put("c", Util.loseType(expandWildcards(colors, allColors)));
+	m.put("s", Util.loseType(expandWildcards(shapes, allShapes)));
+
+	m.put("d_order", array2set(Order.allValues));
+	m.put("b_order", array2set(Order.allValues));
+
+
+	int[] zo = {0,1};
+	m.put("sameshape", array2set(zo));
+	m.put("samecolor", array2set(zo));
+
+	m.put("occupied", array2set(range(0,N()+1)));
+	m.put("opacity",  array2set(range(0,101)));
+	
+	// translation invariance of the pattern				       
+	String labels[] = {"trans_h", "trans_v", "trans_asc", "trans_desc"};
+ 	for(int j=0; j<labels.length; j++) {
+	    m.put(labels[j], array2set(zo));
+	}
+	return m;
+
+    }
+
+
+    
 /** Is the pattern of elements in the grid invariant with respect to the specified translation?
      (Vertical, horizontal, ascending or descending diagonal?).
      For blank elements, colors and sizes don't matter; for non-blank ones,
@@ -829,6 +1024,8 @@ public class Composite extends ImageObject {
 	final private Composite[] compo;
 	/** Family sizes, and their sum */
 	final private BigInteger size[], sumSize;
+
+	
 	
 	public String[] getKeys() {
 	    String[] v = new String[compo.length];
@@ -861,6 +1058,13 @@ public class Composite extends ImageObject {
 	    }
 	    sumSize = sum;
 	    if (sumSize.compareTo( BigInteger.ONE)<0) throw new IllegalArgumentException("Apparently empty set of composite objects");
+
+	    // Assembles feature sets from all individual Composites
+	    for(Composite c: compo) {
+		addMoreFeatures(c.getAllFeatures());
+	    }
+
+
 	}
 
 	/** Randomly gets the name for one concrete image object */

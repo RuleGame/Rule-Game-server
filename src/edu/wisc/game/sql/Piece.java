@@ -200,22 +200,30 @@ public class Piece  implements Serializable {
     @XmlElement 
     public void setId(long _id) { id = _id; }
 
-    /** Exists on IPB objects; null on SC objects */
+    /** Exists on IPB and composite objects; null on S+C objects. */
     private String image;
     public String getImage() { return image; }
     @XmlElement
     public void setImage(String _image) { image = _image; }
 
-    /** @return null for a SC object; the value of the specified property for an IPB object */    
+    /** @return null for a S+C object; the value of the specified property for an IPB object */    
     public String getProperty(String name) {
 	ImageObject io=getImageObject();
     	return io==null? null: io.get(name);
     }
 
+    private boolean imageObjectCached = false;
+    private ImageObject cachedImageObject = null;
+
+    /** @return If this is an IPB or Composite object, return the corresponding ImageObject; otherwise null.
+     */
     public ImageObject getImageObject() {
-	ImageObject x= image==null? null: ImageObject.obtainImageObjectPlain(null, image, false);
+	if ( imageObjectCached) return cachedImageObject;
+	cachedImageObject =
+	    image==null? null: ImageObject.obtainImageObjectPlain(null, image, false);
 	//System.out.println("DEBUG:  getImageObject,image="+image+", return="+x);
-	return x;
+	imageObjectCached = true;
+	return 	cachedImageObject;
     }
   
     
@@ -265,7 +273,9 @@ public class Piece  implements Serializable {
     static private long maxId = 1;
     
     public Piece(){} 
-     
+
+    /** Creates a traditional (shape+color) game piece placed at a specified location.
+     */
     public Piece(//int _id,
 		 Shape _shape, Color _color, int _x, int _y) {
 	//	id = ""+_id;
@@ -277,6 +287,9 @@ public class Piece  implements Serializable {
 	id = (maxId++);
     }
 
+    /** Creates an IPB game piece placed at a specified location.
+	@param image the image identifier
+     */
     public Piece(String _image, int _x, int _y) {
 	//	id = ""+_id;
 	image = _image;
@@ -334,7 +347,16 @@ public class Piece  implements Serializable {
 	pm.put("pos", pos().num());
 	return pm;
     }
-    
 
+    /** This method is discovered by Reflect, and is then used when
+	converting IPB objects to JSON (via Reflect), to add
+	"name:value" pairs for all non-legacy properties.
+	Since toPropMap is used, 
+    */
+    public HashMap<String,Object> getExtraFields() {
+	ImageObject io = getImageObject();
+	if (io==null) return new  HashMap<>();
+	return io.toPropMap();	
+    }
     
 }

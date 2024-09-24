@@ -68,7 +68,7 @@
     
     <h3>Comparative sizes</h3>
 
-<p>Two elements are notionally considered to be of the same size if squares of the same size can be circumscribed around them. Thus, a circle of diameter <em>D</em> is considered of the same size as a square or equilateral triangle whose sides are of the length  <em>D</em>, or a star in which the distance between two most remote points (vertices) is <em>D</em>. Since a triangle or or star of a given size occupies smaller surface area than a circle or square of the same (by the above defnition) size, the former may visually appear smaller than the latter.
+<p>Two elements are notionally considered to be of the same size if squares of the same size can be circumscribed around them. Thus, a circle of diameter <em>D</em> is considered of the same size as a square or equilateral triangle whose sides are of the length  <em>D</em>, or a star in which the distance between two most remote points (vertices) is <em>D</em>. Since a triangle or a star of a given size occupies smaller surface area than a circle or square of the same (by the above defnition) size, the former may visually appear smaller than the latter.
     
 
 <p>This is illustrated by  following table; within each cell of the table, the 3 elements are considered to be of the same size.
@@ -107,7 +107,7 @@
     <h2>How to use composite image objects?</h2>
 
   <p>Like other objects (whether the legacy shape-and-color based ones, or the image-and-properties-based ones), composite image objects can be used to define a game in a trial list file. All the same rules described in 
-    <a href="object-properties.html#boards">supports Image-and-property-based objects |Controlling the initial board generation</a>  apply. That is, in any parameter set (= a line of a trial list file) you can either specify the set of composite image objects from which such objects will be randomly drawn, or you can specify a set initial board files (and then create those board files).
+    <a href="object-properties.html#boards">Image-and-property-based objects | Controlling the initial board generation</a>  apply. That is, in any parameter set (= a line of a trial list file) you can either specify the set of composite image objects from which such objects will be randomly drawn, or you can specify a set of initial board files (and then create those board files).
 
   <p>As with any image-and-property-based object, a composite image object has a set of properties, which can be accessed in   <a href="object-properties.html#boards">rules</a>
 
@@ -139,7 +139,7 @@
 		    <li><tt>/allShapes=qx</tt> : the shapes (when "wildcarded" or "defaulted") will be chosen from the set of "square" and "blank"
 	    </ul>
 	    
-    <li> <strong>Orderable features</strong>. Some features of elements, namely their size and opacity are considered "orderable", that is a player is supposed to figure that there is something special about a composite image consisting e.g. of elements ordered in the order of increasing sizes:
+    <li> <strong>Orderable features</strong>. Some features of elements, namely their size and opacity are considered "orderable". That is, a player is supposed to figure that there is something special about a composite image consisting e.g. of elements ordered in the order of increasing sizes:
     <ul>
       <li>
 	<tt>/composite/h/d=123/rc/bc/gc</tt>
@@ -217,7 +217,7 @@ We can add more orderable features in the future, e.g. texture pattern or tilt.
 	
   <h2>Using wildcards to describe a family of composite image objects</h2>
 
-<p>When you create a <a href="para-set.html">parameter set</a> for a game in which initial boards are genereated randomly, populated with game pieces drawn from a certain set of objects, you need to specify the set of objects in the column <tt>images</tt>. While it is possible to describe the set of objects by explicitly listing all of its elements, e.g. <pre>"/composite/h/d=123/rc/bc/gc;/composite/h/d=321/rc/bc/gc;/composite/h/d=222/rc/bc/gc"</pre>, it is often possible and convenient to describe entire family of composite objects by using wildcards.
+<p>When you create a <a href="para-set.html">parameter set</a> for a game in which initial boards are genereated randomly, populated with game pieces drawn from a certain set of objects, you need to specify the set of objects in the column <tt>images</tt>. While it is possible to describe the set of objects by explicitly listing all of its elements, e.g. <pre>"/composite/h/d=123/rc/bc/gc;/composite/h/d=321/rc/bc/gc;/composite/h/d=222/rc/bc/gc"</pre>, it is often possible and convenient to describe an entire family of composite objects by using a single wildcard expression.
 
 <p>The wildcard syntax used for desribing composite image objects is similar to the wildcard syntax for file names used e.g. in MS Windows or in UNIX shells. However, it is somewhat more primitive. Wildcards can be used in each component of the object name, wherever it makes sense.
   <ul>
@@ -227,13 +227,13 @@ We can add more orderable features in the future, e.g. texture pattern or tilt.
 
 <p>Examples of families of composite image objects described with wildcards:
   <ul>
-    <li><tt>/composite/?/d=1??/*/r?/*</tt> -- 3 (default number) of elements, arranged either way (horizontal or vertical); the first element is small (size rank 1), the other of any size; default opacity (high). The first and third element of arbitrary colors and shapes; the second is red, of an arbitreary shape.
+    <li><tt>/composite/?/d=1??/*/r?/*</tt> -- 3 (default number) of elements, arranged either way (horizontal or vertical); the first element is small (size rank 1), the other of any size; default opacity (high). The first and third element of arbitrary colors and shapes; the second is red, of an arbitrary shape.
     <li><tt>/composite/h2/b=13/?q/?q</tt> -- 2 elements, arranged horizontally. They are of the default size (large); the first is of low opacity (1), the second, of high brightness (3). Both are squares, of arbitrary colors.
   </ul>
 
-  <h2>Properties of  composite image objects</h2>
+  <h2><a name="prop">Properties of  composite image objects</a></h2>
 
-<p>To create  <a href="object-properties.html#boards">rules</a> for playing with  composite image objects, you need to access their properties. Presently the folliowing properties are accessible:
+<p>To create  <a href="object-properties.html#boards">rules</a> for playing with  composite image objects, you need to access their properties (or "features", as our ML/AI colleagues refer to them). Presently the following properties of composite objects are accessible:
 
   <ul>
 <li><tt>orientation: h</tt> or <tt>v</tt>  (horiszontal or vertical)

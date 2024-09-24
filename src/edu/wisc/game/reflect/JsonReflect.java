@@ -13,20 +13,20 @@ public class JsonReflect {
     /* @param g String, Integer, or an arbitrary object */
     private JsonValue toJsonValue(Object g, int level) {
 	//	System.out.println("toJsonValue(" + g.getClass()+")");
-	JsonArrayBuilder arrayBuilder= toJsonArrayBuider(g, level+1);
+	JsonArrayBuilder arrayBuilder= toJsonArrayBuilder(g, level+1);
 	JsonArray ar =arrayBuilder.build();
 	List<JsonValue>	list = ar.getValuesAs(JsonValue.class);
 	return list.size()>0?  list.get(0) :  null;
     }
 
-    /** Creates a JsonArrayBuider with one element. This will make it 
+    /** Creates a JsonArrayBuilder with one element. This will make it 
 	possible to later extract that element as a JsonValue! 
 	@param g An arbitrary Java object (could be Integer, Map, Vector
 	or anything else)
     */
-    private JsonArrayBuilder  toJsonArrayBuider(Object g, int level) {
+    private JsonArrayBuilder  toJsonArrayBuilder(Object g, int level) {
 	JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-	//	System.out.println("toJsonArrayBuider(" + g.getClass()+")");
+	//	System.out.println("toJsonArrayBuilder(" + g.getClass()+")");
 	if (g instanceof String) {
 	    arrayBuilder.add( (String)g);
 	} else if (g instanceof Integer) {
@@ -78,7 +78,7 @@ public class JsonReflect {
 		if (skipNulls) continue;
 		else arrayBuilder.addNull();
 	    } else {
-		JsonArrayBuilder q =  toJsonArrayBuider(g, level+1);
+		JsonArrayBuilder q =  toJsonArrayBuilder(g, level+1);
 		arrayBuilder.addAll(q);
 	    }	    
 	}
@@ -124,9 +124,9 @@ public class JsonReflect {
 
 	//---- ZZZZ
 	/*
-    private JsonArrayBuilder  toJsonArrayBuider(Object g) {
+    private JsonArrayBuilder  toJsonArrayBuilder(Object g) {
 	JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-	//	System.out.println("toJsonArrayBuider(" + g.getClass()+")");
+	//	System.out.println("toJsonArrayBuilder(" + g.getClass()+")");
 
 	if (g.getClass().isArray()) { // an array
 
@@ -154,37 +154,57 @@ public class JsonReflect {
 		Logging.error(ex.getMessage());
 		val = "INVOCATION_TARGET_ERROR";
 	    }
-
-	    if (skipNulls && (val==null || val.toString().equals(""))) continue;
-	    if (skipNulls && e.name.equals("version")) continue;
+	    addToObjectBuilder(e.name, val, level, objectBuilder);
+	}
+	//------  Any extra fields the object wants converted into JSON
+	if (r.extraFieldsMethod!=null) {
 	    
-	    if (val==null) {
-		if (skipNulls) continue;
-		else objectBuilder.addNull(e.name);
-		continue;
-	    }
-	    
-	    Class c = val.getClass();
-	    //System.out.println("name=" + e.name +", val("+c      +"; "+c.getName()+"; isArray"+c.isArray()+")=" + val);
+	    try {
+		Map<String,Object> extra = (Map<String,Object>)r.extraFieldsMethod.invoke(o);
 
-	    if (c.isArray() && c.isInstance(new int[0])) { // an array int[]
-		JsonArrayBuilder ab = doCollection(arrayInt2vector((int[])val), level);
-		objectBuilder.add(e.name,ab);		
-	    } else  if (c.isArray() && c.isInstance(new double[0])) { // an array double[]
-		JsonArrayBuilder ab = doCollection(arrayDouble2vector((double[])val), level);
-		objectBuilder.add(e.name,ab);		
-	    } else  if (c.isArray()) {
-		//throw new IllegalArgumentException("Sorry, don't know what to do with arbitrary arrays, eh?");
-		JsonArrayBuilder ab = doCollection(arrayX2vector(val), level);
-		objectBuilder.add(e.name,ab);		
-	    } else {
-		JsonValue q = toJsonValue(val, level+1);
-		objectBuilder.add(e.name, q);
+		for(String name: extra.keySet()) {
+		    if (excludableNames!=null && excludableNames.contains(name)) continue;
+		    Object val = extra.get(name);
+		    addToObjectBuilder(name, val, level, objectBuilder);
+		}
+	    } catch (Exception ex) {
+		Logging.error(ex.getMessage());		
 	    }
 	}
+	    
 	return objectBuilder;
     }
 
+    private void addToObjectBuilder(String name, Object val, int level,
+				    JsonObjectBuilder objectBuilder) {
+	if (skipNulls && (val==null || val.toString().equals(""))) return;
+	if (skipNulls && name.equals("version")) return;
+	    
+	if (val==null) {
+	    if (skipNulls) return;
+	    else objectBuilder.addNull(name);
+	    return;
+	}
+	    
+	Class c = val.getClass();
+	//System.out.println("name=" + name +", val("+c      +"; "+c.getName()+"; isArray"+c.isArray()+")=" + val);
+	
+	if (c.isArray() && c.isInstance(new int[0])) { // an array int[]
+	    JsonArrayBuilder ab = doCollection(arrayInt2vector((int[])val), level);
+	    objectBuilder.add(name,ab);		
+	} else  if (c.isArray() && c.isInstance(new double[0])) { // an array double[]
+	    JsonArrayBuilder ab = doCollection(arrayDouble2vector((double[])val), level);
+	    objectBuilder.add(name,ab);		
+	} else  if (c.isArray()) {
+	    //throw new IllegalArgumentException("Sorry, don't know what to do with arbitrary arrays, eh?");
+	    JsonArrayBuilder ab = doCollection(arrayX2vector(val), level);
+	    objectBuilder.add(name,ab);		
+	} else {
+	    JsonValue q = toJsonValue(val, level+1);
+	    objectBuilder.add(name, q);
+	}
+    }
+    
     static private Vector array2vector(Array a) {
 	Vector v = new Vector();
 	for(int i=0; i<Array.getLength(a); i++) {
@@ -267,7 +287,7 @@ public class JsonReflect {
 
     public static JsonArray reflectToJSONArray(Object o, boolean skipNulls) {       
 	JsonReflect r = new JsonReflect(skipNulls, null);
-	JsonArrayBuilder builder = r.toJsonArrayBuider(o, 0);
+	JsonArrayBuilder builder = r.toJsonArrayBuilder(o, 0);
 	return builder.build();
     }
 

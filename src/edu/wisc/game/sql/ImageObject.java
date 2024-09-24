@@ -19,6 +19,9 @@ public class ImageObject extends HashMap<String,String> {
 
     
 
+    /**	A relative path (under the main shapes dir) or absolute path
+	(for images elsewhere), case-sensitive and complete with the
+	extension. */
     public String key;
     public String getKey() { return key; }
     /** For static objects, this is the SVG file for the image. For
@@ -43,9 +46,13 @@ public class ImageObject extends HashMap<String,String> {
 	file = null;
     }
     
-    /** The key is a relative path (under the main shapes dir) or absolute 
+    /** The table that stores ImageObject objects for all IPB games
+	currently played on this server.
+
+	The key is a relative path (under the main shapes dir) or absolute 
 	path (for images elsewhere), case-sensitive and 
-	complete with the extension */
+	complete with the extension.
+    */
     private static HashMap<String,ImageObject> allImageObjects = new HashMap<>();
 
     static synchronized public void clearTable() {
@@ -59,13 +66,20 @@ public class ImageObject extends HashMap<String,String> {
     }
   
 
-    /** A file path (relative to the shapes dir), including extension */ 
+    /** A file path (relative to the shapes dir), including extension
+	FIXME: need to remove duplicate slashes if some idiot tries
+	"//" somewhete in the path
+     */ 
     private static String fileToKey(File f) {
 	String key = f.toString();
 	final String prefix = Files.shapesDir() + "/";
 	return key.startsWith(prefix)? key.substring(prefix.length()) : key;
     }
 
+    private static File keyToFile(String key) {
+	if (key.startsWith("/")) return new File(key);
+	else return new File( Files.shapesDir(), key);
+    }
 
     /** Creates an ImageObject for a specified image file, but without
 	its properties set. This method is to be used by the PropertiesTable
@@ -92,14 +106,14 @@ public class ImageObject extends HashMap<String,String> {
     //    }
 
 
-    /** Retrieves the ImageObject for a specified path from the master table.
+    /** Retrieves the ImageObject for a specified path (no wildcards!) from the master table.
 	If necessary, tries to add that object (and all other objects listed
 	in the properties file in that directory) to the master table.
 	@param dir If provided, plainPath is understood as being relative to it.
 	@param plainPath The image path (relative to dir, or absolute
-	if dir==null).  Must not contain wildcard. May contain an
+	if dir==null).  Must not contain wildcards. May contain an
 	extension (e.g. ".png" or ".svg"); if it does not, ".svg" will
-	be added.
+	be added. 
      */
     public static synchronized ImageObject obtainImageObjectPlain(File dir, String plainPath, boolean allowMissing) {
 	if (Composite.isCompositeName(plainPath)) {
@@ -142,7 +156,7 @@ public class ImageObject extends HashMap<String,String> {
 	// and put all ImageObjects into our master table
 	if (!f.canRead()) throw new IllegalArgumentException("No image file exists: " +f);
 	File dir = f.getParentFile();
-	PropertiesTable pt = new PropertiesTable(dir);
+	PropertiesTable pt = PropertiesTable.getPropertiesTable(dir);
 
 	//System.out.println("DEBUG: properties table in dir=" + dir+" has " + pt.size() + " entries");
 
@@ -160,9 +174,11 @@ public class ImageObject extends HashMap<String,String> {
     }
 
 
-    /** Loads an image object, or a group of them, if a wildcard is
-	given. The path may also refer to dynamically generated
-	Composite ImageObjects.
+    /** Loads an image object (or a group of them, if a wildcard is
+	given).
+
+	@param path One of the values from the "images" column of  ParaSet. It is either a path (maybe with wildcards) relative to game-data/shapes, or a /composite/... string refering to a dynamically generated
+	Composite ImageObject (or a group of them).
 
 	@return a Vector of "regular" ImageObjects (associated with the file(s) given
 	by the wildCardPath), or a Composite ImageObject (maybe a "family" one) is
@@ -321,7 +337,7 @@ public class ImageObject extends HashMap<String,String> {
 	return w[w.length-1].substring(0,1);
     }
 	
-
+    /** An image generator is an object that can be used to obtain a random IPB object. */
     static abstract public class Generator {
 	//public ImageObject getOne(Random random);
 	abstract public String getOneKey(Random random);
@@ -331,16 +347,73 @@ public class ImageObject extends HashMap<String,String> {
 	public String describeBrief() {
 	    return "Some set of image-and-property-based objects";
 	}
-   }
 
-    /** A Generator interface to a stored list of ImageObjects */
-    static public class PickFromList extends Generator {
+	protected  void addMoreFeatures(Map<String, Set<Object>> moreFeatures) {
+	    for(String name: moreFeatures.keySet()) {
+		Set<Object> w = allFeatures.get(name);
+		if (w==null) allFeatures.put(name, w = new HashSet<>());
+		w.addAll(  moreFeatures.get(name));
+	    }
+	}
 
+	protected  void sortAllFeatures() {
+	    for(String name: allFeatures.keySet()) {
+		Set<Object> w = allFeatures.get(name);
+
+	    }
+	}
+
+	//	private int ocmp(Object o1, Object o2) {
+	//	    if (o1 instanceof Integer && o2 instanceof Integer
+
+
+	/** All features (properties) found in the property table (or tables) associated with
+	    this Generator, with their values */
+	final private HashMap<String, Set<Object>> allFeatures = new HashMap<>();
+
+	/** @returns the names of all features (properties) that may be used by objects
+	    that can be pulled from this Generator, with the list of all possible values
+	    for each name.
+	 */
+	public GameGenerator.Features getAllFeatures() {
+	    GameGenerator.Features m = new GameGenerator.Features();
+	    for(String name: allFeatures.keySet()) {
+		//Vector<Object> v = new Vector<>(
+		Object[] a=allFeatures.get(name).toArray(new Object[0]);
+		Arrays.sort(a);		
+		m.put(name, Util.array2vector(a));
+	    }
+	    return m;
+	}
+    	         
+	
+    }
+
+    /** A Generator interface to a stored list of ImageObjects, from which they can be retrieved
+     at random. */
+    static public class PickFromList extends Generator {	
+	
 	/** Will be set as appropriate if specified in the CSV file "images" column. The array elements are keys used for the image lookup. */
 	final private String[] keys;
+
+	
 	public String[] getKeys() { return keys;}
 	
-	public PickFromList(String[] _keys) { keys = _keys; }
+	public PickFromList(String[] _keys) {
+	    keys = _keys;
+
+	    //-- compile the feature set, as a union of the feature sets from all PropertiesTables
+	    //-- associated with this ParaSet. (Usually, of course, there is just one such table).
+	    HashMap<File,PropertiesTable> tables= new HashMap<>();
+	    for(String key: keys) {
+		File dir = keyToFile(key).getParentFile();
+		if (tables.get(dir)!=null) continue;
+		PropertiesTable t = PropertiesTable.getPropertiesTable(dir);
+		tables.put(dir, t);
+		addMoreFeatures(t.allFeatures);
+	    }
+	    
+	}
 	public //ImageObject
 	    String getOneKey(Random random) {
 	    String imageKey = keys[random.nextInt(keys.length)];
