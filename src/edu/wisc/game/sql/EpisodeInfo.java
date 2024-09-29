@@ -329,16 +329,21 @@ public class EpisodeInfo extends Episode {
 	    final double x2=para.getInt("x2_likelihood"), x4=para.getInt("x4_likelihood");
 
 	    PlayerInfo.Series ser =  mySeries();
+	    int f = ser.findXFactor();
 
-	    if (prevR < x4 && factorPromised < 4 && lastR >=x4) {
+	    if (f < 4 && factorPromised < 4 && lastR >=x4) {
 		factorPromised = 4;
 		//setXFactor(4);
 		justReachedX4=true;
 		if (!cleared) earlyWin = true;
-	    } else if (prevR<2 && factorPromised < 2 && lastR>=x2) {
+		Logging.info("Setting factorPromised=" + factorPromised);
+	    } else if (f <2 && factorPromised < 2 && lastR>=x2) {
 		factorPromised = 2;
 		//setXFactor(2);
 		justReachedX2=true;
+		Logging.info("Setting factorPromised=" + factorPromised);
+	    } else {
+		Logging.info("Keeping factorPromised=" + factorPromised +", as lastR=" + lastR + " for x2="+x2+", x4="+x4);
 	    }
 	   
 	    if (cleared || earlyWin ||
