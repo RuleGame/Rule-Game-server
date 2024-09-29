@@ -526,7 +526,7 @@ public class Composite extends ImageObject {
 	return w;
     }
 
-    /** @return set of all strings {x+y | x in a, y in b) */
+    /** @return set of all strings {x+y | x in a, y in b} */
     private static HashSet<String> cartesianProduct(HashSet<String>  a, HashSet<String> b) {
 	HashSet<String> c = new HashSet<>();
 	for(String x: a) {
@@ -810,7 +810,9 @@ public class Composite extends ImageObject {
 	
 	Map<String, Set<Object>> m = new HashMap<>();
 
-	m.put("name", Util.loseType(nameRange()));
+	/*
+	//-- Computing all possible names may be too expensive
+	//	m.put("name", Util.loseType(nameRange()));
 
 
 	m.put("orientation", array2set(Orientation.allConcreteLetters));
@@ -839,6 +841,7 @@ public class Composite extends ImageObject {
  	for(int j=0; j<labels.length; j++) {
 	    m.put(labels[j], array2set(zo));
 	}
+	*/
 	return m;
 
     }
