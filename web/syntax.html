@@ -228,7 +228,7 @@ Each position specifier must be either an integer number in the range 1..<em>N</
 
       <p>The alternative, property-based, format for atoms was introduced in GS 3.*, primarily because it became necessary to describe predicates that made use of arbitrary designer-defined properties of objects, and not just on the two "legacy" properties (color and shape).
 
-      <p>If you just use the two legacy properties (color and shape), then propert-based atoms are completely equivalent to the position-based ones. The difference between the two formats is that in the position-based format it was the position of the component in the atom which determined its meaning, while in a property-based atom the meaning of each component is explicitly labled. For example, if an atome is written in the  position-based format as follows:
+      <p>If you just use the two legacy properties (color and shape), then property-based atoms are completely equivalent to the position-based ones. The difference between the two formats is that in the position-based format it was the position of the component in the atom which determined its meaning, while in a property-based atom the meaning of each component is explicitly labled. For example, if an atom is written in the  position-based format as follows:
 	<pre>
 	  (2,triangle,[red,black],L1,p+1)	</pre>
 	then it can be written in the property-based format as follows:
@@ -255,7 +255,13 @@ The rule
 	which means "pick any square and put it to the nearest bucket; you can do it  as many times as you want" can be written as
 	<pre>
 	  (shape:square,pos:Nearby)	  </pre>
-	
+
+
+      <p>Since ver 6.041, we also have <tt>postpos:</tt>, which is like <tt>pos:</tt>, but is applied to the set of game pieces that have been selected by the other clauses. Thus
+	<pre>
+	  (postpos:T, color:red)
+	</pre>
+	will select the topmost red pieces (regardless of whether there are pieces of other colors in higher rows).
 	
     <h3>Semantics of the rules</h3>
 

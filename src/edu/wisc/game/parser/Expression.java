@@ -569,7 +569,8 @@ public interface Expression {
     }
 
 
-    /** Has exactly two operands, and the operator is '==' */
+    /** Has exactly two operands, and the operator is one of '==',
+       '!=', '<=', '>', etc */
     public static class ComparisonExpression extends SerialExpression  {
 	//ArithmeticExpression[] aa = new ArithmeticExpression[2];
 	ComparisonExpression(Token token, ArithmeticExpression a, ArithmeticExpression b) {

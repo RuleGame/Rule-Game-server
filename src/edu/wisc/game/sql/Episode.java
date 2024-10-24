@@ -135,6 +135,8 @@ public class Episode {
     int doneMoveCnt=0;
     /** The count of successful picks (not moves) so far */
     int successfulPickCnt=0;
+    /** The list of all move/pick attempts (successful or not) done so far
+	in this episode */
     @Transient
     Vector<Pick> transcript = new Vector<>();
   
@@ -326,8 +328,10 @@ public class Episode {
 	    return q;	    
 	}
 	
-	/** For each piece currently on the board, find which rules in the 
-	    current rule line allow this piece to be moved, and to which buckets. This method fills acceptanceMap[] and isMoveable[].
+	/** For each piece currently on the board, this method finds
+	    which rules in the current rule line allow this piece to
+	    be moved, and to which buckets. This method fills
+	    acceptanceMap[] and isMoveable[].
 	
 	    @return true if at least one piece can be moved
 	*/
@@ -340,13 +344,19 @@ public class Episode {
 	    for(int pos=0; pos<pieces.length; pos++) {
 		if (pieces[pos]==null) {
 		    acceptanceMap[pos]=null;
-		    isMoveable[pos]=false;
 		} else {
+		    // ZZZZ
 		    acceptanceMap[pos] = pieceAcceptance(pieces[pos], eligibleForEachOrder);
-		    // to what buckets this piece can go
-		    BitSet r = pieceMovableTo(pos);
-		    isMoveable[pos]= !r.isEmpty();
 		}
+	    }
+
+	    // modify the acceptance map as per any post-orders
+	    PostOrder.applyPostPosToAcceptanceMap(rules, row,  acceptanceMap);
+
+
+	    
+	    for(int pos=0; pos<pieces.length; pos++) {
+		isMoveable[pos]= !pieceMovableTo(pos).isEmpty();		
 	    }
 	    return  isAnythingMoveable();
 	}
@@ -362,7 +372,8 @@ public class Episode {
 
 	
 	/** (OBSOLETE) Into which buckets, if any, can the specified piece be moved?
-	    (The original method, used in GS 1 thru 4)
+	    (The original method, used in GS 1 thru 4. It has become obsolete
+	    in GS 5, because more complex logic can be used now)
 	   @return result[j] is the set of buckets into which the j-th
 	   rule (atom) allows the specified piece to be moved.
 	*/
@@ -398,7 +409,10 @@ public class Episode {
 
 	/** For GS 5. Here, we try each bucket separately, as the
 	    destination bucket may affect some variables.
-	 */	
+
+	   @return result[j] is the set of buckets into which the j-th
+	   rule (atom) allows the specified piece to be moved.
+	*/	
 	private BitSet[] pieceAcceptance(Piece p,  EligibilityForOrders eligibleForEachOrder) {
 	    
 	    //	    System.err.println("DEBUG: pieceAcceptance(p=" +p+")");
@@ -1000,7 +1014,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
 
     /** The current version of the application */
-    public static final String version = "6.039";
+    public static final String version = "6.041";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }
@@ -1057,7 +1071,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
         public void setNumMovesMade(int _numMovesMade) { numMovesMade = _numMovesMade;}
 	
 	private Vector<Pick> transcript =  Episode.this.transcript;
-	/** The list of all move attempts (successful or not) done so far
+	/** The list of all move/picks attempts (successful or not) done so far
 	    in this episode */
 	public Vector<Pick> getTranscript() { return transcript; }
 

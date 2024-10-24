@@ -25,7 +25,17 @@ public class ResponseBase {
     
     public String getErrmsg() { return errmsg; }
     @XmlElement
-    public void setErrmsg(String _errmsg) { errmsg = _errmsg; }
+    public void setErrmsg(String _errmsg) { errmsg = _errmsg;
+	if (errmsg!=null) {
+	    //Exception ex = new IllegalArgumentException("ERRMSG=`" + errmsg+"'");
+
+	    
+	    //ex.printStackTrace(System.err);
+
+
+	}
+
+    }
 
     protected ResponseBase( ) {}
 

@@ -28,7 +28,7 @@ public class RuleSet {
     /** The display name, to show in the Android app, without
 	giving the user too much of a hint. (As per PK, 2023-01-24) */
     public String display="";
-    
+
     /** The list of "legacy" variables that can be used in the bucket
 	expression. (More variables were added later, such as "p.*"  */
     public enum BucketSelector {
@@ -36,104 +36,7 @@ public class RuleSet {
 	//Nearby= into the nearest bucket
 	Nearby,
 	//Remotest=into the farthest bucket
-	Remotest}
-
-
-    /** Represents the restrictions on the positions from which game pieces
-	can be picked */
-    public static class PositionList {
-	/** If true, there is no restriction */
-	private boolean any;
-	Vector<Integer> list1 = new Vector<>();
-	/** The keys can be  PositionSelector names or user-defined order
-	    names */
-	Vector<String> list2 = new Vector<>();
-
-	public String toString() {
-	    return "[" + Util.joinNonBlank(",", list1) + "; " +
-		Util.joinNonBlank(",",list2) + "]";	       
-	}
-
-	public String toSrc() {
-	    if (any) return "*";
-	    
-	    String q[]= new String[]{ Util.joinNonBlank(",", list1),	    
-				      Util.joinNonBlank(",", list2)};
-	    
-	    String s = Util.joinNonBlank(",", q);
-	    if (list1.size()+list2.size()>1) s = "[" + s + "]";	       
-	    return s;
-	}
-
-	
-	private void addAll(PositionList q) throws RuleParseException {
-	    if (any || q.any) throw new RuleParseException("When describing position lists, '*' cannot be used in combinations");
-	    list1.addAll(q.list1);
-	    list2.addAll(q.list2);
-	}
-	
-	/** @param ex A parsed expression, which may be "*", a or "L1", or contain some numerical positions or order name.
-	    @param The dictionary of all known orders
-	 */
-	PositionList(Expression ex, TreeMap<String, Order> orders)  throws RuleParseException {
-	    any = (ex==null || ex instanceof Expression.Star);
-	    if (any) return;
-			    
-	    if (ex instanceof Expression.BracketList) {
-		for(Expression z: (Expression.BracketList)ex) {
-		    addAll( new PositionList(z, orders));
-		}
-	    } else if (ex instanceof Expression.Num) {
-		list1.add( ((Expression.Num)ex).nVal);
-	    } else if (ex instanceof Expression.Id) {
-		String s = ex.toString();
-		// validate as the name of a predefined or custom order 
-		if (!orders.containsKey(s)) {
-		    if (Order.predefinedOrders.containsKey(s)) {
-			orders.put( s, (Order.predefinedOrders.get(s)));
-		    }
-	
-		}
-		list2.add(s);		       
-	    } else {
-		throw new RuleParseException("Invalid position specifier: " + ex);
-	    }
-	    if (list1.size()==0 && list2.size()==0) throw new RuleParseException("No position list specified! ex=" + ex);
-	}
-
-	/** Does this position list presently allow picking a piece from the
-	    specified position?
-	    @param  eligibleForEachOrder What positions are now "in front"
-	    of each order */
-	public boolean allowsPicking(int pos,
-			      HashMap<String, BitSet> eligibleForEachOrder) {
-	    if (any) return true;
-	    for(int k: list1) {
-		if (k==pos) return true;
-	    }
-	    for(String orderName: list2) {
-		BitSet eligible =  eligibleForEachOrder.get(orderName);
-
-		
-		if ( eligible == null) throw new IllegalArgumentException("Unknown order name ("+orderName+") - should have been caught before!");
-		if (eligible.get(pos)) return true;
-	    }
-	    return false;
-	}
-
-	/** Used when converting Kevin's JSON to our server format. Only 
-	    apply the new order to atoms that do not have a position list or
-	    an order already.
-	 */
-	void forceOrder(String orderName) {
-	    if (any) {
-		any = false;
-		if (list1.size()>0 || list2.size()>0) throw new IllegalArgumentException("Cannot force an order on this PositionList, because it is already non-empty");
-		list2.add(orderName);
-	    } 
-	}
-	
-    }
+	Remotest};
 
     /** A BucketList represents the information about the destination
 	buckets given in the "buckets" field of an atom. It is a list of
@@ -289,7 +192,10 @@ public class RuleSet {
 	public Piece.Color[] colors;
 	/** Alternative for GS5 */
 	//	ArithmeticExpression colorsExp;
+	/** The "pos:" components of the atom */
 	public PositionList plist;       	
+	/** The "postpos:" components of the atom GS (ver 6.041) */
+	public PositionList postPlist;       	
 	public BucketList bucketList;
 	/** Contains values sets, ranges, or expressions from all
 	    "propName:..." fields (including "shape:" and "color:"),
@@ -343,6 +249,9 @@ public class RuleSet {
 		}
 	
 		v.add("pos:" + plist.toSrc());
+		if (!postPlist.isTrivial()) {
+		    v.add("postpos:" + postPlist.toSrc());
+		}
 		v.add("bucket:"+ bucketList.toSrc());
 		return "(" + String.join(", ", v) + ")";
 	    } else {
@@ -423,8 +332,12 @@ public class RuleSet {
 	    
 	    g = arms.remove("pos"); // position
 	    if (g!=null && agen!=null) g = g.map(agen.mkMapper("pos"));
-	    
 	    plist = new PositionList(g, orders);
+
+	    g = arms.remove("postpos"); // post-processing orders (GS 6.041)
+	    if (g!=null && agen!=null) g = g.map(agen.mkMapper("postpos"));
+	    postPlist = new PositionList(g, orders);
+
 	    //System.out.println("plist=" + plist);
 	    g = arms.remove("bucket"); // bucket
 	    if (g!=null && agen!=null) g = g.map(agen.mkMapper("bucket"));
@@ -613,6 +526,7 @@ public class RuleSet {
 	}
 
     }
+
 
     
     /** A row object represents the content of one line of the rule set

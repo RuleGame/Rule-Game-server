@@ -382,7 +382,10 @@ public class PlayerInfo {
 	both those already played and the future ones, one series per
 	para set. The tables is initialized by initSeries(), and is filled
 	with a number of "empty" series, each one having a ParaSet but
-	no episodes yet.
+	no episodes yet. As an episode is started, its object is added
+	to the appropriate Series object in this vector, and thus
+	becomes stored in the server's memory for as long as this PlayerInfo
+	object lives in PlayerResponse.allPlayers.
      */
     @Transient
     private Vector<Series> allSeries = new Vector<>();

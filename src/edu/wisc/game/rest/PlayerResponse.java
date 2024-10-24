@@ -185,7 +185,9 @@ public class PlayerResponse extends ResponseBase {
 	}
     }
 
-    /** Server's local cache, used to reduce database calls */
+    /** Server's local cache, used to reduce database calls, and to store
+	"transient" info (such as the transripts of epsiodes)
+     */
     private static HashMap<String, PlayerInfo> allPlayers = new HashMap<String, PlayerInfo>();
         
 

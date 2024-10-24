@@ -9,7 +9,8 @@ import edu.wisc.game.sql.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.sql.Board.Pos;
 
-/** An Order object describe a built-in or custom ordering of     
+/** An Order object describe a built-in or custom ordering of board cells
+    (positions)
  */
 public class Order extends Vector<Vector<Integer>> {
 
@@ -26,8 +27,8 @@ public class Order extends Vector<Vector<Integer>> {
 
     }
 
-    /** The orders which don't need to be explicitly defined in the 
-	rule file */
+    /** The built-in orders, which don't need to be explicitly defined
+	in the rule file */
     static HashMap<String, Order> predefinedOrders = new  HashMap<>();
 
     private Order() {};
@@ -211,8 +212,8 @@ public class Order extends Vector<Vector<Integer>> {
 	}
 	// If none of the pieces of the board are listed in this Order, this
 	// means that the Order is incomplete, and should be ignored; all
-	// pieces are moveable
+	// pieces are moveable. (Hmmm... why? 2024-10-22)
 	return onBoard;
     }
-    
+
 }

@@ -120,6 +120,14 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	    setErrmsg(msg);
 	    System.err.print(ex);
 	    ex.printStackTrace(System.err);
+
+	    
+	    StringWriter sw = new StringWriter();
+	    ex.printStackTrace(new PrintWriter(sw));
+	    Logging.info(sw.toString());
+	    Logging.info("ERRMSG=`" + errmsg+"'");
+	    
+
 	} finally {
 	    Logging.info("NewEpisodeWrapper2(pid="+ pid+"): returning:\n" +
 			 JsonReflect.reflectToJSONObject(this, true));

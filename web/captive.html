@@ -5,7 +5,7 @@
   <body>
     <h1>Captive Game Server</h1>
 
-    <div align="center"><em>Updated 2024-09-24 for Game Server ver 6.038</em></div>
+    <div align="center"><em>Updated 2024-09-30 for Game Server ver 6.040</em></div>
     
     <h2>Test the Rule Game</h2>
 
@@ -841,6 +841,12 @@ Connection closed by foreign host.
       <p>You may want to modify the script <tt>captive-python-socket.sh</tt> as needed to use a different host, port, or rule file.</p>
 
 
+      <h2>Special note about games with Composite objects</h2>
+
+    <p>As of ver. 6.040, when the CGS loads a parameter set from a trial list file, it pre-computes the list of features and their possible values, so that it can be later returned in response to the <tt>FEATURES</tt> command. While for most parameter sets this procedure is easy, for some games with <a href="composite-objects.html">Composite image objects</a> the set of possible feature values may be very large ("combinatorially large"). (The parameter set no. 1 in trial list <tt>trial-lists/vm/composite-02/trial_1.csv</tt>, in which each object is composed out of 25 elements, is one example). Therefore, an attempt to start CGS on such a parameter set may cause a <tt>java.lang.OutOfMemoryError</tt>.
+
+      <p>This means that at present some of the games with Composite image objects cannot be played on the CGS. Should it become desirable to play such games, the situation can be partially rectified by modifying the server so that it, for example, returns the feature sets in a "wildcard" format, leaving it up to the ML player to figure what the specific values of a particular feature may be.
+      
 </body>
 					  
 </html>

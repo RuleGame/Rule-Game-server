@@ -181,6 +181,10 @@ public class Captive {
 	
 	// The captive server does not need the master conf file in /opt/w2020
 	MainConfig.setPath(null);
+	// Enable the computing of feature-lists for Composite objects
+	// (which is normally turned off)
+	edu.wisc.game.svg.Composite.setNeedFeatures(true);
+	
 	ParseConfig ht = new ParseConfig();
 
 	// allows seed=... , colors=.... etc among argv

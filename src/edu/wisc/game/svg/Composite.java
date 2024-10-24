@@ -802,17 +802,32 @@ public class Composite extends ImageObject {
 	    w.add(value);
 	}
 	return w;
-
     }
 
+    /** Normally (in a human-facing GS) we don't compute feature lists
+	for para sets with Composite objects, because it's expensive,
+	and is not needed anyway. OTOH the CGS sets this flag to true,
+	becuase it needs feature lists.
+    */
+    private static boolean needFeatures=false;
+
+    //private static boolean needFeaturesName=false;
+
+    
+    
+    public static void setNeedFeatures(boolean x) {
+	needFeatures=x;
+    }
+    
     /** For the CGS' FEATURE command */
     public Map<String, Set<Object>> getAllFeatures() {
 	
 	Map<String, Set<Object>> m = new HashMap<>();
-
-	/*
+	if (!needFeatures) return m;
+	
 	//-- Computing all possible names may be too expensive
-	//	m.put("name", Util.loseType(nameRange()));
+	//if (needFeaturesName)
+	m.put("name", Util.loseType(nameRange()));
 
 
 	m.put("orientation", array2set(Orientation.allConcreteLetters));
@@ -841,7 +856,6 @@ public class Composite extends ImageObject {
  	for(int j=0; j<labels.length; j++) {
 	    m.put(labels[j], array2set(zo));
 	}
-	*/
 	return m;
 
     }
