@@ -191,7 +191,7 @@ public class PlayerInfo {
 
 	/** True if we have the DOUBLING (or LIKELIHOOD) incentive scheme, and this 
 	    series has been ended by the x4 achievement */
-	boolean seriesEndedByX4() {
+	boolean seriesHasX4() {
 	    return (para.getIncentive()==ParaSet.Incentive.DOUBLING ||
 		    para.getIncentive()==ParaSet.Incentive.LIKELIHOOD)  &&
 		findXFactor()==4;
@@ -348,7 +348,7 @@ public class PlayerInfo {
     private boolean canHaveAnotherRegularEpisode() {
 	Series ser=getCurrentSeries();
 	if (ser==null) return false;
-	if (ser.seriesEndedByX4()) return false;
+	if (ser.seriesHasX4()) return false;
 	if (inBonus) return false;
 	return  ser.size()<ser.para.getMaxBoards();
     } 
@@ -930,7 +930,8 @@ public class PlayerInfo {
 	@return For players in games with the incentive plan
 	Incentive.DOUBLING (or LIKELIHOOD), the value of the score, in the range
 	[0..1], is simply the fraction of all rule sets so far that
-	the player has mastered (received X4).  For players in other
+	the player has fully mastered (received X4), plus 1/2 of those that were
+	partially mastered (received X2). For players in other
 	incentive plans, 0 is returned.
     */
     public double goodnessScore() {
@@ -941,11 +942,16 @@ public class PlayerInfo {
 
 	if ( para.getIncentive()==ParaSet.Incentive.DOUBLING ||
 	     para.getIncentive()==ParaSet.Incentive.LIKELIHOOD) {
-	    int nMastered = 0;
+	    int sumFactor = 0;
 	    for(Series ser: allSeries) {
-		if (ser!=null && ser.seriesEndedByX4()) nMastered ++;
+		if (ser!=null) {
+		    int f = ser.findXFactor();
+		    if (f>1) sumFactor+=f;
+		}
 	    }
-	    return (double)nMastered / (double) allSeries.size();
+	    double g=(double)sumFactor / (4 * (double) allSeries.size());
+	    Logging.info("Goodness(pid="+playerId+")="+g);
+	    return g;
 	} else return 0;
     } 
 

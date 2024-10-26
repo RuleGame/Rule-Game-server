@@ -301,6 +301,8 @@ public class Episode {
 	    double inverseProbFullKnowledge = countMovables * countDest;
 	    double r = inverseProbRandom/inverseProbFullKnowledge;
 
+	    Logging.info("r=("+countTryMovables+"/"+countMovables+")*(4/"+countDest+")=" + r);
+	    
 	    return r;
 	    
 	}
@@ -1014,7 +1016,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
 
     /** The current version of the application */
-    public static final String version = "6.041";
+    public static final String version = "6.042";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }

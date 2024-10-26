@@ -138,7 +138,7 @@ public class PregameService {
 		System.err.print(ex);
 		ex.printStackTrace(System.err);
 	    } finally {
-		//Logging.info("Pregame.Page(pid="+ pid+", name="+name+"): returning:\n" +			 JsonReflect.reflectToJSONObject(this, true));
+		//Logging.info("Pregame.Page(pid="+ pid+"): returning:\n" +			 JsonReflect.reflectToJSONObject(this, true));
 	    }	    
 	}
     }
