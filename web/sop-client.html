@@ -49,8 +49,10 @@
 	  </pre>
 
 There likely will be lots of warnings, but as long as there are no error, you are good to go. (Of course, as one of your tasks in the future, you can consider improving the  <tt>package.json</tt> package so that the package-installation process produces fewer warning messages, while still building a good enough set of packages for the GUI client app to compile and run well!)
+
+<h2>Compilation</h2>
 	  
-	<li>In the terminal window where you are going to carry out the compilation, set up two environment variables:
+	<p>In the terminal window where you are going to carry out the compilation, set up two environment variables:
 	  <table border="1">
 	    <tr><th>Variable name</th>	    <th>Variable value</th>
 	      <th>Comments</th>
@@ -66,13 +68,13 @@ There likely will be lots of warnings, but as long as there are no error, you ar
 	<tt>http://action.rutgers.edu/w2020</tt> (in the assumption that you will use your client with the Rule Game server on our Rutgers host). This variable is optional, but if you don't set it, you must use the parameter <tt>server=http://action.rutgers.edu/w2020</tt> 
 	</tr>
 	  </table>
-	  
+
+	  <p>
 	  The way you set environment variables depends on what shell you use; it's usually something like <tt>setenv</tt> in shells such as csh or tcsh, and  <tt>export</tt> in some other shells. For example, when we compile the client on our own server (see <tt>compile.sh</tt>), we may do this:
 	  <pre>
 	    setenv REACT_APP_DEBUG_MODE_ENABLED false
 	    setenv REACT_APP_APP_API_HOST_ORIGIN http://action.rutgers.edu/w2020
    	  </pre>
-	<li>
 
 	  
 	  <p>Compile the TypeScript code by running
