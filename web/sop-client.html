@@ -1,0 +1,241 @@
+<html>
+  <head><title>SOP: Development work on the GUI client</title></head>
+  <body>
+
+    <h1>SOP: Development work on the GUI client</h1>
+<p align="center"><em>Updated 2024-10-28</em></p>
+
+    <P>The Rule Game (a.k.a. GOHR) software is deployed in the form of two separate, but closely interacting, web applications: the Rule Game server and the Rule Game GUI client. Typically, the two are developed to the same web server; for example, the former may be installed in /opt/tomcat/webapps/w2020, and the latter in /opt/tomcat/webapps/rule-game. This, for example, is the arrangement for the production software on action.rutgers.edu.
+
+
+    <p>However, it is also possible to install the client on one server and the server on the other. This is convenient during development: when you're working on modifying the client, you can keep it on your personal computer (either deployed to a locally run web server, e.g. localhost:3000 or localhost:8080, or simply accessing it via a <tt>file:</tt> URL), and have it work with the server deployed on some remote machine (such as action.rutgers.edu).
+
+    <p>This document descirbes the process for doing GUI client development in this way. The file paths and command in the illustrative examples are given as if you are using a Linux or MacOS computer; minor changes may be needed on an MS Windows machine.
+
+      <h2>Preliminaries</h2>
+
+    <p>Make sure you have the Typescript compiler (npm) on your machine. If you don't, you can install it with <tt>sudo apt-get install npm</tt> (if using Ubuntu), or a similar command for your OS.
+
+    <p>It is also desirable, although not strictly necessary, to have a web server (an HTTP server) of some kind on your computer. I usually use Tomcat, although any other server, e.g. one built into IDEs such as Visual Studio or Eclipse would do as well.
+
+      <p>The <tt>jar</tt> tool, which comes with the Java Development Kit (along with a Java compiler etc) would be handy when you're preparing the web app for  deployment, although not strictly necessary either.
+
+      <h2>Getting the client source code</h2>
+
+
+<p>For the rest of the discussion, we'll assume that you'll be doing the development in the directory named <tt>w2020/client</tt> under your home directory; we'll refer to that location as your <em>main work directory</em>. Obviously, it can be anywhere else; just change the paths accordingly.
+      
+	<p>
+	  Download the GUI client source from GitHub <tt>https://github.com/RuleGame/Rule-Game</tt> . This can be done e.g. as follows:
+	  <pre>
+	    cd
+	    mkdir w2020
+	    cd w2020
+	    mkdir client
+	    cd client/
+	    git init
+	    git remote add origin https://github.com/RuleGame/RuleGame.git
+	    git pull origin master
+	  </pre>
+
+	  
+	<p>
+	  Install the Node.js programming language https://nodejs.org/en/ (version 14 LTS version)
+
+	<p>
+	  Install all the necessary TypeScript/React packages. They are listed in the file <tt>package.json</tt> that has come with the GUI client's code. To install all these packages, run
+	  <pre>
+	    npm install
+	  </pre>
+
+There likely will be lots of warnings, but as long as there are no error, you are good to go. (Of course, as one of your tasks in the future, you can consider improving the  <tt>package.json</tt> package so that the package-installation process produces fewer warning messages, while still building a good enough set of packages for the GUI client app to compile and run well!)
+	  
+	<li>In the terminal window where you are going to carry out the compilation, set up two environment variables:
+	  <table border="1">
+	    <tr><th>Variable name</th>	    <th>Variable value</th>
+	      <th>Comments</th>
+<tr><td>
+    <tt> REACT_APP_DEBUG_MODE_ENABLED</tt>
+  <td><tt>true</tt>  or <tt>false</tt>  
+  <td>Use <tt>true</tt> if compiling the production version of the client (which looks the same way as what our Prolific subjects use)
+    or <tt>false</tt>  for the development version (which will show more debugging information)
+    </tr>
+    <tr><td><tt>REACT_APP_APP_API_HOST_ORIGIN</tt>
+      <td>The Game Server URL
+      <td>E.g.
+	<tt>http://action.rutgers.edu/w2020</tt> (in the assumption that you will use your client with the Rule Game server on our Rutgers host). This variable is optional, but if you don't set it, you must use the parameter <tt>server=http://action.rutgers.edu/w2020</tt> 
+	</tr>
+	  </table>
+	  
+	  The way you set environment variables depends on what shell you use; it's usually something like <tt>setenv</tt> in shells such as csh or tcsh, and  <tt>export</tt> in some other shells. For example, when we compile the client on our own server (see <tt>compile.sh</tt>), we may do this:
+	  <pre>
+	    setenv REACT_APP_DEBUG_MODE_ENABLED false
+	    setenv REACT_APP_APP_API_HOST_ORIGIN http://action.rutgers.edu/w2020
+   	  </pre>
+	<li>
+
+	  
+	  <p>Compile the TypeScript code by running
+	    <pre>npm run build</pre>
+
+See if there are any compilation errors...
+
+	  <p>If the compilation has been successful, the compiler will create subdirectory <tt>build</tt> under your main work directory; in that directory, a number of files will be located, including <tt>index.html</tt>, which contains the top-level part (entry point) of your compiled TypeScript program.
+
+	    
+	    <h2>Testing using a <tt>file:</tt> URL</h2>
+
+	  <p>Assuming your web browser support <tt>file:</tt> URLs, you can test your client (working with the main Rule Game server at Rutgers) without deploying it to any web server at all!
+
+	    <p>If you are not familiar with  <tt>file:</tt> URLs, see if your favorite web browser has the <tt>File &gt; Open File</tt> menu item, and then, using this menu item, try to open the file <tt>index.html</tt> in the <tt>build</tt> subdirectory under your main work directory. The browser will open the file successfully, although your TypeScript program will likely report an error of some kind. Remember what the URL in the Location bar of your web browser looks like!
+
+<p>
+	    You need to compose the <em>test URL</em>, which would look somewhat like this:	    
+	    <pre>
+file:///Users/vmenkov/w2020/gui/build/index.html?server=http://action.rutgers.edu/w2020&exp=vm/colorVshape&workerId=vm-2024-10-30-a	    
+</pre>
+	    In your test URL:
+	    <ul>
+	      <li>
+		replace the file location part (<tt>/Users/vmenkov/w2020/gui/build/index.html</tt>) with the location of <tt>build/index.html</tt> produced by the compilation (see above);
+	      <li> if desired, replace the experiment plan name, in the part <tt>exp=<strong>vm/colorVshape</strong></tt> with the name of any other experiment plan. (Any of the plan listed in the table in the <a href="front-end-form.jsp">launch page</a>)
+	      <li> replace the player ID, <tt>vm-2024-10-30-a</tt>, in the section <tt>workerId=vm-2024-10-30-a</tt> with some unique player ID which can, for example, include your name, the calendar date, and a sequential number (a different number for every test you undertake on this date)
+	      <li>if desired, add the section
+		<pre>
+  &intro=skip
+</pre>
+		That will cause the Rule Game server to skip the introduction pages (the IRB consent page and the instructon booklet) of the game.
+	    </ul>
+
+	    Once you have created a test URL, paste it into the Location bar of your web browser; this should start your GUI client (a JavaScript program in your browser) which will interact with the Rule Game server at the location specified in the <tt>server=...</tt> part of the URL.
+
+	    <h2>Testing using a local web server</h2>
+
+
+<P>You can also test the GUI client by deploying it to some location on your locally running web server. For example, if your run Tomcat on part 8080, and its webapps directory is in /opt/tomcat/webapps, you can do this (starting in your main work directory)
+
+  <pre>
+    mv build prod
+    mkdir /opt/tomcat/webapps/rule-game
+    cp -pa prod /opt/tomcat/webapps/rule-game
+  </pre>
+
+  (Depending on the file ownership situation, you may need some <tt>sudo</tt> and <tt>chown</tt> or <tt>chmod</tt> added to the above commands). After that, the <tt>index.html</tt> file produced by <tt>npm run build</tt> will be located at /opt/tomcat/webapps/rule-game/prod/index.html , and will be served to you by your web server if you go to the URL <tt>http://localhost:8080/rule-game/prod</tt> in your web browser. (Once the file is loaded, your TypeScript app will report an error though, since some parameters are missing in the URL).  A complete test URL may look something like this:
+	    <pre>
+http://localhost:8080/rule-game/prod/index.html?server=http://action.rutgers.edu/w2020&exp=vm/colorVshape&workerId=vm-2024-10-30-a	    
+</pre>
+	    where you replace <tt>vm-2024-10-30-a</tt> with some unique player ID, as discussed in the previous section.
+
+	    <p>
+	      If you run a different web server (e.g. one built into Visual Studio), copy the files to the appropriate location, and use an appropriate URL to get the server to serve index.html to you.
+
+	      <p>Once you know what the URL for your client's index.html on the local host is, you can go to the special page <strong><a href="front-end-form-client-test.jsp">Rule Game launch page for testing the local client</a></strong>, where you can specify the location of your client to have it run while working with the Rutgers server.
+
+<!--
+      <h3>Alternative: deploy as a war file</h3>
+
+    <p>It may be more convenient to pack the compiled code (for both the prod and dev versions) into a WAR file, and deploy that as a single web application. The commands below assume that you'll want to install the GUI client and the Game Server as two web apps on the same server, in /rule-game and /w2020 respectively.
+
+      <pre>
+#!/bin/csh
+
+#-- this only needs to be done once
+npm install
+
+#-- Assuming that the GUI client and the Game Server will run as two
+#-- web apps on the same server
+setenv REACT_APP_APP_API_HOST_ORIGIN /w2020
+
+rm -rf rule-game 
+mkdir rule-game
+
+setenv REACT_APP_DEBUG_MODE_ENABLED true
+echo "Compiling with REACT_APP_DEBUG_MODE_ENABLED=$REACT_APP_DEBUG_MODE_ENABLED"
+rm -rf build 
+npm run build
+mv build rule-game/dev
+
+echo "Compiling with REACT_APP_DEBUG_MODE_ENABLED=$REACT_APP_DEBUG_MODE_ENABLED"
+setenv REACT_APP_DEBUG_MODE_ENABLED false
+# setenv REACT_APP_APP_API_HOST_ORIGIN http://localhost:8080/w2020
+rm -rf build
+npm run build
+mv build rule-game/prod
+
+rm -f rule-game.war
+(cd rule-game; jar -cvf ../rule-game.war .)
+
+#-- Install to the Tomcat's webapps dir. (Change this as needed depending
+#-- on where your Tomcat lives.)
+cp rule-game.war /opt/tomcat/webapps
+      </pre>
+
+					
+      
+      <h3>Updating the client</h3>
+If at a later point the GUI client source code has been updated in the GitHub repository, you can update your instance of the client by pulling the updated source code from GitHub and rebuilding. If you do this in the previously created directory (<tt>client</tt>, in our example), you don't need to repeat the commands <tt>git init</tt> and <tt>git remote add</tt>; just do the pull and recompile. This can be done, for example, with the following commands:
+      
+      <pre>
+	#!/bin/bash
+	pull origin master
+	mkdir rule-game
+	export REACT_APP_APP_API_HOST_ORIGIN=/w2020
+	export  REACT_APP_DEBUG_MODE_ENABLED=false
+	npm install
+	npm run build
+	mv build prod
+	mv prod rule-game
+	export  REACT_APP_DEBUG_MODE_ENABLED=true
+	npm install
+	npm run build
+	mv build dev
+	mv dev rule-game
+        (cd rule-game;  jar cvf rule-game.war prod/* dev/*)
+	sudo -u tomcat cp rule-game/rule-game.war /opt/tomcat/webapps
+</pre>
+
+    <p>Here we build both the production and development versions of the client, and package them into a single WAR file for deploying to your Tomcat server (where it will show at <tt>http://your-host-name/rule-game</tt>).
+
+<p>
+      The setting of <tt>REACT_APP_APP_API_HOST_ORIGIN</tt> used in the script above is suitable if you are going to use your instance of client with one instance of the Rule Game server, the one that you deploy to /w2020 on your host.
+
+      <h3>Sample compilation script</h3>
+
+<pre>#!/bin/csh
+
+mkdir rule-game
+setenv REACT_APP_APP_API_HOST_ORIGIN /w2020
+
+setenv REACT_APP_DEBUG_MODE_ENABLED false
+npm install
+npm run build
+mv build prod
+mv prod rule-game
+
+setenv REACT_APP_DEBUG_MODE_ENABLED true
+npm install
+npm run build
+mv build dev
+mv dev rule-game
+
+cd rule-game
+jar cf rule-game.war prod dev
+</pre>
+      
+  <h3>Customizing the code</h3>
+    <p>If you know TypeScript, you can modify the client's source code as needed before compiling.
+
+      <h3>Examples</h3>
+
+    <p>When our team updates the client code in its GitHub repository, you can rebuild and reinstall the updated client (prod version) using a script like this:
+<pre>
+      
+      
+  <hr>
+
+  [<a href="../..">MAIN</a>]  &nbsp;  [<a href="../">SETUP</a>]  &nbsp;
+-->      
+
+
+  </body>
+  </html>

@@ -409,7 +409,7 @@ public class AnalyzeTranscripts {
 	}
     }
 
-    /** Reads a list of something (e.g. player IDs) from teh first column
+    /** Reads a list of something (e.g. player IDs) from the first column
 	of a CSV file */
     static String[] readList(File f) throws IOException, IllegalInputException{
 	Vector<String> v=new Vector<>();
