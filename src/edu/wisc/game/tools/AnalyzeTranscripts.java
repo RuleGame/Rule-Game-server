@@ -428,7 +428,7 @@ public class AnalyzeTranscripts {
     static String[] readList(File f) throws IOException, IllegalInputException{
 
 	String studyId = getProlificStudyId(f);
-	
+	//System.out.println("f=" + f+", study=" + studyId);
 	Vector<String> v=new Vector<>();
 	CsvData csv = new CsvData(f, true, false, null);
 	for(CsvData.LineEntry _e: csv.entries) {
@@ -440,7 +440,7 @@ public class AnalyzeTranscripts {
 	return v.toArray(new String[0]);
     }
 
-    private static Pattern prolificFileNamePat =  Pattern.compile("prolific_export_([a-ZA-Z0-9]+)\\.csv");
+    private static Pattern prolificFileNamePat =  Pattern.compile("prolific_export_([a-zA-Z0-9]+)\\.csv");
     
     /** Looks at a file name, and if it looks like a Prolific study summary file (e.g.
 	prolific_export_671b8ae84509b9a624b95e13.csv), extracts study ID from it.
