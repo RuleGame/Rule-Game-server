@@ -4,7 +4,7 @@
 <body>
   <h1>The Analyze Transcripts tool</h1>
 
-<div align="center"><em>Updated 2024-03-03, for Game Server 6.026</em></div>
+<div align="center"><em>Updated 2024-11-05, for Game Server 6.043</em></div>
 
   <p>The Analyze Transcripts tool (<tt>scripts/analyze-transcripts.sh</tt>; the underlying Java class is <tt>edu.wisc.game.tools.AnalyzeTranscripts</tt>) can be used to extract transcripts for specified experiment plans, specified players, or specified repeat users, and to carry out certain types of data analysis.
 
@@ -143,6 +143,8 @@ analyze-transcripts.sh -nickname 'John%Doe' '%Walrus%'
 <h2>Options controlling input and output</h2>
 
 
+<h3>Reading a list of arguments from a file</h3>
+
 <p>If you have a large list of arguments (e.g. player IDs), you can put them in a CSV file (one items per line, to be read from the first column of the file; all other columns are ignored), and use the <code>-file</code> option on the command line. E.g.
   <pre>      
 analyze-transcripts.sh -pid -file my-pid-list.csv
@@ -150,6 +152,23 @@ analyze-transcripts.sh -pid -file my-pid-list.csv
 
 <p>This is handy if, for example, you have a list of "good" players prepared for you separately by another team.
 
+  <h3>Prolific summmary files (since ver. 6.043)</h3>
+  
+<p>
+  If you have carried out your experiment using the Prolific platform, you can download a summary file from each of the "studies" of your experiment. Those files look like that:
+  <pre>
+% more prolific_export_671b8ae84509b9a624b95e13.csv
+  Submission id,Participant id,Status,Custom study tncs accepted at,...
+671b8e95b17f88050648883e,5e9088a8a4b6ed018b450000,APPROVED,Not Applicable,....
+671b8e98fd64b1b65fa1a726,5c655e3c42faef0001280000,APPROVED,Not Applicable,....
+</pre>
+  The name of the file contains the Prolific study ID, while the second column of the file contains the participants' Prolific PID. When the Prolific participants play our games, their Prolific PIDs are converted to our Game Server player IDs, which combine the study ID and the Prolific PID, e.g. <tt>prolific-671b8ae84509b9a624b95e13-5e9088a8a4b6ed018b450000</tt>. For your convenience, you don't need to manually convert the Prolific PIDs to Game Server player IDs before feeding the file to the analysis script. You can directly feed the Prolific summary file(s) to the analysis script, e.g.
+  <pre>
+analyze-transcripts.sh -pid -file prolific_export_671b8ae84509b9a624b95e13.csv prolific_export_672abcde123456.csv
+  </pre>
+and our script will carry out the PID conversion on the fly.
+  
+  <h3>Input directory</h3>
 <p>Normally, the Transcript Analyzer reads saved data (transcripts etc) from <tt>/opt/tomcat/saved</tt>. However, this can be changed with the option <tt>-in <em>input_dir_name</em></tt>.  If you do that, make sure that you are still connecting to the right MySQL server, i.e. the data in the SQL server are consistent with the data in the input directory.
   
 <p>You can use the option <code>-out <em>directory_name</em></code> to have the output written to a directory other than the default <tt>tmp</tt>.

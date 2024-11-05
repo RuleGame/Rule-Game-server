@@ -410,17 +410,48 @@ public class AnalyzeTranscripts {
     }
 
     /** Reads a list of something (e.g. player IDs) from the first column
-	of a CSV file */
+	of a CSV file.
+
+	<p>
+	Special treatment is provided for Prolific summary files
+	(exportable with "Download summary" on a study's screen in Prolific.com).
+	These files are identified by their name (e.g. prolific_export_671b8ae84509b9a624b95e13.csv);
+	when such a file is provided, we construct playerId from the study ID (found in the file name)
+	and the participant ID (column 2, in one-based count), e.g.
+	prolific-671b8ae84509b9a624b95e13-5e9088a8a4b6ed018b45ba7b
+	<pre>
+	Submission id,Participant id,Status,Custom study tncs accepted at,Started at,Completed at,Reviewed at,Archived at,Time taken,Completion code,Total approvals,Fluent languages,Age,Sex,....
+671b8e95b17f88050648883e,5e9088a8a4b6ed018b45ba7b,APPROVED,Not Applicable,2024-10-25T12:27:09.179000Z,2024-10-25T12:46:18.540000Z,2024-10-25T23:35:53.040000Z,2024-10-25T12:46:19.217499Z,1150,prolific-671b8ae84509b9a624b95e13-5e9088a8a4b6ed018b45ba7b-20241025-084454-22D5,389,"Czech, English, Russian, Slovak",25,Female,...
+671b8e98fd64b1b65fa1a726,5c655e3c42faef0001283e77,APPROVED,Not Applicable,2024-10-25T12:27:10.328000Z,2024-10-25T12:52:05.286000Z,2024-10-25T23:35:53.354000Z,2024-10-25T12:54:01.498864Z,1495,prolific-671b8ae84509b9a624b95e13-5c655e3c42faef0001283e77-20241025-085043-C77D,365,"German, English",24,Male,....
+</pre>
+    */
     static String[] readList(File f) throws IOException, IllegalInputException{
+
+	String studyId = getProlificStudyId(f);
+	
 	Vector<String> v=new Vector<>();
 	CsvData csv = new CsvData(f, true, false, null);
 	for(CsvData.LineEntry _e: csv.entries) {
 	    CsvData.BasicLineEntry e = (CsvData.BasicLineEntry)_e;
-	    v.add( e.getKey());
+	    String x = (studyId==null) ? e.getKey():
+		"prolific-" + studyId + "-"  + e.getCol(1);
+	    v.add(x);
 	}
 	return v.toArray(new String[0]);
     }
+
+    private static Pattern prolificFileNamePat =  Pattern.compile("prolific_export_([a-ZA-Z0-9]+)\\.csv");
     
+    /** Looks at a file name, and if it looks like a Prolific study summary file (e.g.
+	prolific_export_671b8ae84509b9a624b95e13.csv), extracts study ID from it.
+	@return The study ID, or null if the file name does not look like a Prolific study
+	summary file.
+    */
+    private static String getProlificStudyId(File f) {
+	Matcher m = prolificFileNamePat.matcher(f.getName());
+	if (!m.matches()) return null;
+	return m.group(1);
+    }
     
     /** An ordered list of unique PlayerInfo objects. It can be
 	created based on a list of player IDs, repeat user nicknames,

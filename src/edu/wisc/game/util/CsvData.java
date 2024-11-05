@@ -161,6 +161,8 @@ public class CsvData {
 	    csv = _csv;
 	}
 	public int nCol() { return csv.length; }
+	/** Same as getCol(0)
+	    @return the leftmost column */
 	public String getKey() { return csv[0]; }
 	/** @param j zero-based column index */
 	public String getCol(int j) { return j<csv.length? csv[j]: null; }
