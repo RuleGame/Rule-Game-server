@@ -328,5 +328,40 @@ The Java programming language guarantees that the operands of operators appear t
 	return sw.toString();
     }
 
+    /** File copy statistics */
+    public static class CopyInfo {
+	public int linesIn=0, linesOut=0, n=0;
+	public void add(CopyInfo z) {
+	    linesIn += z.linesIn;
+	    linesOut += z.linesOut;
+	    n += z.n;
+	}
+    }
+    
+    /** Copies the content of file f to file g, skipping any duplicate lines
+	(even if the two identical lines are not next to each other).
+	This is used to remove duplicates in transcript files.
+	@return a statistics structure
+    */
+    static public CopyInfo copyFileUniqueLines(File f, File g) throws IOException {
+	HashSet<String> h = new HashSet<>();
+	FileReader in = new FileReader(f);	
+	LineNumberReader​ r = new LineNumberReader​(in);
+	PrintWriter w = new PrintWriter(new FileWriter(g));
+	String line = null;
+	CopyInfo ci=new CopyInfo();
+	ci.n = 1;
+	while((line= r.readLine())!=null) {
+	    ci.linesIn++;
+	    if (h.contains(line)) continue;
+	    ci.linesOut++;
+	    h.add(line);
+	    w.print(line);
+	}
+	in.close();
+	w.close();
+	return ci;
+    }
+
 
 }

@@ -23,7 +23,7 @@ select * into outfile '/var/lib/mysql-files/tmp-PlayerInfo.csv'   FIELDS TERMINA
 </pre>
 It is to be used on machines where the MySQL server is not set up with permissions to write to any directory (i.e. @@secure_file_priv is NULL).
 
-<P>Unlike most of other database-connecting tools, this class uses the plain JDBC Connection, rather than JPA. This is done so that we can sent over plain SQL commands, such as "SELECT * FROM ...", and to access the ResultSet's metadata, finding out the names of the columns in the result. The point of this exercise is to be able to print the table header (column names) into the output CSV file.
+<P>Unlike most of other database-connecting tools, this class uses the plain JDBC Connection, rather than JPA. This is done so that we can send over plain SQL commands, such as "SELECT * FROM ...", and to access the ResultSet's metadata, finding out the names of the columns in the result. The point of this exercise is to be able to print the table header (column names) into the output CSV file.
 */
 public class ExportTable {
 
@@ -63,10 +63,9 @@ public class ExportTable {
 	connectionProps.put("password", pwd);
 	connectionProps.put("serverTimezone", "UTC");
 	    
-	conn = DriverManager.getConnection(url,
-				       connectionProps);
+	conn = DriverManager.getConnection(url, connectionProps);
 	
-	System.out.println("Connected to database");
+	//System.out.println("Connected to database");
 	return conn;
     }
 
@@ -82,20 +81,49 @@ public class ExportTable {
 	Vector<String> nicknames = new Vector<>();
 	Vector<Long> uids = new Vector<>();
 
-	int used = 0;
-	for(int j=0; j<argv.length; j++) {
+	String qs=null;
+	//int used = 0;
+	int j=0;
+	for(; j<argv.length; j++) {
 	    String a = argv[j];
 	    if (j+1< argv.length && a.equals("-config")) {
 		config = argv[++j];
+	    } else if (j+1< argv.length && a.equals("-query")) {
+		qs = argv[++j];
 	    } else {
-		if (used == 0) table = argv[j];
-		else if (used == 1)  outFile = argv[j];
-		else usage("Too many arguments");
-		used ++;
+		break;
+		//if (used == 0) table = argv[j];
+		//else if (used == 1)  outFile = argv[j];
+		//else usage("Too many arguments");
+		//used ++;
 	    }
 	}
+
+	if (qs==null) {
+	    if (j<argv.length) table=argv[j++];
+	    else usage("Neither query nor table specified");
+	    if (table.startsWith("-")) usage("Invalid query or table name: " + table);
+
+	    if (table.indexOf(" ")>=0) {
+		// A string with spaces in it is understood as a query, rather than a table name
+		qs = table;
+		table=null;
+	    } else {
+		qs = "select * from "+table;
+	    }
+
+	}
+
+
+
 	
-	if (outFile==null) usage("Some arguments have not been provided");
+	if (j<argv.length) outFile=argv[j++];
+	else usage("Output file not specified");
+	if (outFile.startsWith("-")) usage("Invalid file name: " + table);
+
+	if (j<argv.length) usage("Too many arguments");
+	
+	//if (outFile==null) usage("Some arguments have not been provided");
 
 	if (config!=null) {
 	    // Instead of the master conf file in /opt/w2020, use the
@@ -104,14 +132,33 @@ public class ExportTable {
 	}
 
 	File f = new File(outFile);
-	PrintWriter w = new PrintWriter(new FileWriter(f));
-	
+	doQuery(qs, f);
+    }
+
+
+    static public void doQuery(String sql, File f) throws IOException, SQLException {
+	String[] queries = sql.split(";");
+	doQuery(queries, f);
+    }
+
+    /** Executes a query, or several statements the last of which is a query.
+	Prints out the result of the last query into a CSV file.
+     */
+    static public void doQuery(String[] queries, File f) throws IOException, SQLException {
+
 	Connection conn  = getConnection();
 	Statement stmt = conn.createStatement();
 
+	for(int j=0; j<queries.length-1; j++) {
+	    String qs = queries[j];
+	    System.out.println("Preliminary statement: " + qs);
+	    stmt.execute(qs);
+	}
 
+	String qs = queries[queries.length-1];
+	//System.out.println("Query: " + qs);
+	PrintWriter w = new PrintWriter(new FileWriter(f));
        
-	String qs = "select * from "+table;
 	ResultSet rs = stmt.executeQuery(qs);
 	ResultSetMetaData rsmd = rs.getMetaData();
 	Vector<String> names = new Vector<>();
@@ -128,7 +175,7 @@ public class ExportTable {
 		String s = rs.getString(j+1);
 		v.add(s);
 	    }
-	    w.println("#" + ImportCSV.escape( v.toArray(new String[0])));
+	    w.println( ImportCSV.escape( v.toArray(new String[0])));
 	}
 	w.close();
 	stmt.close();

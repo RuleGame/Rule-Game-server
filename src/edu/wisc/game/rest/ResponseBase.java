@@ -50,7 +50,7 @@ public class ResponseBase {
 	setErrmsg(msg);
     }
 
-    /** Regularize an input parameter, converting a blank string to null */
+    /** Regularizes an input parameter, converting a blank string to null */
     static String regularize(String x) {
 	if (x!=null && (x.trim().equals("") || x.equals("null"))) x=null;
 	return x;

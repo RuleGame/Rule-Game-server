@@ -7,6 +7,9 @@ import java.text.*;
 
 import javax.persistence.*;
 
+import java.sql.SQLException;
+
+
 import org.apache.commons.math3.optim.*;
 import org.apache.commons.math3.optim.nonlinear.scalar.*;
 import org.apache.commons.math3.optim.nonlinear.scalar.gradient.*;
@@ -126,7 +129,10 @@ public class AnalyzeTranscripts {
 
     static boolean weWantPredecessorEnvironment  = false;
 
-    
+
+    /** The main() method processes the command line arguments, allowing a large variety of ways to specify
+	the set of players whose data are to be analyzed.
+     */
     public static void main(String[] argv) throws Exception {
 
 	String outDir = "tmp";
@@ -149,6 +155,7 @@ public class AnalyzeTranscripts {
 	    //System.out.println("argv.length=" + argv.length +", argv[0]='" +argv[0] +"'");
 	}
 
+	boolean jf = false;
 
 	String config = null;
 	ArgType argType = ArgType.PLAN;
@@ -178,6 +185,8 @@ public class AnalyzeTranscripts {
 		} else {
 		    usage("Invalid model name: " + mode);
 		}
+	    } else if  (a.equals("-jf")) {
+		jf = true;
 	    } else if  (a.equals("-boards")) {
 		needBoards = true;
 	    } else if  (a.equals("-pre")) {
@@ -227,9 +236,8 @@ public class AnalyzeTranscripts {
 	    //Files.setSavedDir(inputDir);
 	    MainConfig.put("FILES_SAVED", inputDir);
 	}
-		
 
-
+	//-- ZZZZZ
 	
 	EntityManager em = Main.getNewEM();
 
@@ -237,6 +245,14 @@ public class AnalyzeTranscripts {
 
 	EpisodesByPlayer ph = listEpisodesByPlayer( em, plans, pids, nicknames, uids);
 
+	if (jf) { // The Jacob Feldman's preferred format
+	    doJF(ph, em, outDir);
+	    // EntityManager em, String outDir, 
+	    return;
+	}
+		
+		
+	
 	File base = new File(outDir);
 	if (!base.exists()) {
 	    if (!base.mkdirs()) usage("Cannot create output directory: " + base);
@@ -321,7 +337,9 @@ public class AnalyzeTranscripts {
 	//System.out.println("DEBUG:: pids=" + Util.joinNonBlank(", " ,pids));
 	//System.out.println("DEBUG:: plist=" + plist);
 
+	//-- To be used only if needConjunction
 	HashSet<String> eligiblePlayerIDs = new HashSet<>();
+
 	if (needConjunction) {
 	    for(PlayerInfo p: plist) {
 		eligiblePlayerIDs.add(p.getPlayerId());
@@ -344,7 +362,8 @@ public class AnalyzeTranscripts {
 
 	EpisodesByPlayer ph =new EpisodesByPlayer();
 
-	// for each experiment plan...
+	// If we're given a list of experiment plan, get the list of players for each one,
+	// applying conjunction if needed.
 	for(String exp: plans) {		
 	    System.out.println("Experiment plan=" +exp);
 	    try {
@@ -462,11 +481,16 @@ public class AnalyzeTranscripts {
 	public boolean addAll(Collection<? extends PlayerInfo > c) {
 	    int cnt=0;
 	    for(PlayerInfo p: c) {
-		if (!h.contains(p.getId())) {
-		    h.add(p.getId());
-		    add(p);
-		    cnt++;
-		}
+		if (h.contains(p.getId())) continue;
+		String pid = p.getPlayerId();
+		// These days, player IDs cannot contain a slash (because it would prevent
+		// the creation of a transcript file), but earliest version of GS allowed them.
+		// We must filter them out to avoid problems later on, when trying to access
+		// (non-existent) transcript files.
+		if (pid.indexOf("/")>=0) continue;
+		h.add(p.getId());
+		add(p);
+		cnt++;	       
 	    }
 	    return(cnt>0);
 	}
@@ -1077,8 +1101,70 @@ public class AnalyzeTranscripts {
 	    System.out.println(toReadableString());
 	    System.out.println("grad L=["+  Util.joinNonBlank(", ", df, grad)+"]");
 	
-	}
-    	
+	}       
     }
-  
+
+    /** Jacob Fledman's preferred format */
+    private static void doJF(EpisodesByPlayer ph, EntityManager em, String outDir) throws IOException, SQLException {
+	//-- select only players with at least 1 episodes
+	Vector<String> v = new Vector<>();
+	for(String pid:  ph.keySet()) {
+	    if (ph.get(pid).size()>0) v.add(pid);
+	}	
+	String[] plist = v.toArray(new String[0]);
+	Arrays.sort(plist);
+
+	File base = new File(outDir);
+	if (!base.exists()) {
+	    if (!base.mkdirs()) usage("Cannot create output directory: " + base);
+	}
+	if (!base.isDirectory() || !base.canWrite()) usage("Not a writeable directory: " + base);
+
+	File pidListFile = new File( base, "pid.csv");
+	Util.writeTextFile(pidListFile, Util.joinNonBlank("\n", plist)+"\n");
+
+	File tDir = new File( base, Files.Saved.TRANSCRIPTS);
+	if (!tDir.isDirectory() && !tDir.mkdirs()) throw new IOException("Cannot create output directory: " + tDir);
+	File dDir = new File( base, Files.Saved.DETAILED_TRANSCRIPTS);
+	if (!dDir.isDirectory() && !dDir.mkdirs()) throw new IOException("Cannot create output directory: " + dDir);
+
+	Util.CopyInfo statsT=new Util.CopyInfo();
+	Util.CopyInfo statsD=new Util.CopyInfo();
+	for(String playerId: plist) {
+	    File f = Files.transcriptsFile(playerId, true);
+	    File g = new File(tDir, f.getName());
+	    //System.out.println("Copying " + f+ " to " + g);
+	    
+	    statsT.add( Util.copyFileUniqueLines(f,g));
+	    f = Files.detailedTranscriptsFile(playerId, true);
+	    g = new File(dDir, f.getName());
+	    statsD.add( Util.copyFileUniqueLines(f,g));
+	}
+	System.out.println("Basic transcript files: copied " + statsT.n + " files, " + statsT.linesIn + " lines in, " + statsT.linesOut + " lines out");
+	System.out.println("Detailed transcript files: copied " + statsD.n + " files, " + statsD.linesIn + " lines in, " + statsD.linesOut + " lines out");
+
+	// SQL tables
+	File sqlDir = new File( base, "sql");
+	if (!sqlDir.isDirectory() && !sqlDir.mkdirs()) throw new IOException("Cannot create output directory: " + dDir);
+
+
+	String pj = joinPlist(plist);
+	String sql = "select * from PlayerInfo where playerId in ("+pj+")";
+	File g = new File(sqlDir, "PlayerInfo.csv");
+	ExportTable.doQuery(sql,g);
+	
+	sql = "select e.* from Episode e, PlayerInfo p where e.PLAYER_ID = p.ID and p.playerId in ("+pj+")";
+	g = new File(sqlDir, "Episode.csv");
+	ExportTable.doQuery(sql,g);
+    }
+
+    /**
+       @param { "foo", "bar", "etc" }
+       @return    "'foo','bar','etc'" */
+    private static String joinPlist(String[] plist) {
+	Vector<String> v = new Vector<>();
+	for(String x: plist) v.add("'" + x + "'");
+	return Util.joinNonBlank(",", v);
+    }
+	
 }

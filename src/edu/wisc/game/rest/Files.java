@@ -132,8 +132,12 @@ public class Files {
     }
 
     public static File detailedTranscriptsFile(String playerId) throws IOException {
+	 return detailedTranscriptsFile(playerId,false); 
+    }
+
+    public static File detailedTranscriptsFile(String playerId, boolean readOnly) throws IOException {
 	File d = savedSubDir( Saved.DETAILED_TRANSCRIPTS);
-	testWriteDir(d);
+	if (!readOnly) testWriteDir(d);
 	return new File(d, playerId + ".detailed-transcripts.csv");
     }
 
