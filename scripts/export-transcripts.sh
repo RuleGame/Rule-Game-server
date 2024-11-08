@@ -1,5 +1,10 @@
 #!/bin/csh
 
+#---------------------------------------------------------------------------------
+# Usage example:
+#  ../w2020/game/scripts/export-transcripts.sh -pid -file prolific_export_671*.csv
+#---------------------------------------------------------------------------------
+
 #-- The directory where this script is
 set sc=`dirname $0`
 set h=`(cd $sc/..; pwd)`

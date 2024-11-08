@@ -356,7 +356,7 @@ The Java programming language guarantees that the operands of operators appear t
 	    if (h.contains(line)) continue;
 	    ci.linesOut++;
 	    h.add(line);
-	    w.print(line);
+	    w.println(line);
 	}
 	in.close();
 	w.close();
