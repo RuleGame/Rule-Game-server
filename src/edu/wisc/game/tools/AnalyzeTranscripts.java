@@ -454,6 +454,12 @@ public class AnalyzeTranscripts {
 	    CsvData.BasicLineEntry e = (CsvData.BasicLineEntry)_e;
 	    String x = (studyId==null) ? e.getKey():
 		"prolific-" + studyId + "-"  + e.getCol(1);
+
+	    // strip any suffix from "foo.transcript.csv"
+	    int pos = x.indexOf(".");
+	    if (pos>0) x = x.substring(0, pos);
+
+	    
 	    v.add(x);
 	}
 	return v.toArray(new String[0]);

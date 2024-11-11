@@ -1,0 +1,119 @@
+<html>
+  <head><title>The Export Transcripts tool</title>
+  </head>
+<body>
+  <h1>The Export Transcripts tool</h1>
+
+<div align="center"><em>Updated 2024-11-08, for Game Server 6.043</em></div>
+
+<h2>Introduction</h2>
+
+  <p>The Rule Game server and the suite of tools that come with it offer a variety of <a href="index.html">tools</a> to access and process the accumulated <a href="../data.html">game data</a>. Depending on one's needs and inclinations, one can simply use the data as they are, by reading the transcript CSV files and sending queries to the SQL database; one can <a href="pull-data.html">copy</a> the entire data set (CSV files and SQL tables) to your own computer; one can <A href="analyze-transcripts.html">divide</a> transcript files into sections associated with different rules sets, and add to them informaiton about the statistical difficulty of correct moves.
+
+  <p>This document describes one of the simplest tools, the script <tt>export-transcripts.sh</tt>. Its primary purpose is to select the transcript files from the participants who satisfy your criteria (e.g. "everybody listed in study summary files on Prolific"; "everybody who participated in experiment plans <tt>FDCL/basic</tt>, and whose player ID started with <tt>prolific-</tt> or <tt>RU-</tt>", etc). Additionally, it will also extract the selected players' rows from the tables in the MySQL database, and will export them in CSV format. All files so selected or produced will be put into a new directory, so that you can ZIP it and then transfer the ZIP file to another computer for further analysis.
+
+    <h2>Use case examples</h2>
+
+<p>The script  <tt>export-transcripts.sh</tt> takes most of the same command line arguments as does  <A href="analyze-transcripts.html">analyze-transcripts.sh</a>, allowing selecting records based on experiment plan name, player IDs, user ID (for repeat players), etc. This section discusses a few examples that are likely to occur in your practice.
+
+  <h3>Example 1: Using Prolific summary files</h3>
+
+
+<p>If you run an "experiment" on Prolific, Prolific stores the list of participants for each "study" included in the experiment. You can download that list by going to the study's detail page, opening the "Actions" pop-up menu, choosing "Download summary", and saving the CSV file offered to you.
+
+<p>The download summary file is in CSV format with many columns; it looks like this:
+  <pre>
+% more prolific_export_671b8ae84509b9a624b95e13.csv
+  Submission id,Participant id,Status,Custom study tncs accepted at,...
+671b8e95b17f88050648883e,5e9088a8a4b6ed018b450000,APPROVED,Not Applicable,....
+671b8e98fd64b1b65fa1a726,5c655e3c42faef0001280000,APPROVED,Not Applicable,....
+....
+  </pre>
+  The name of the file contains the Prolific study ID, while the second column of the file contains the participants' Prolific PID. (Note that it only includes the real Prolific participants, to whom you pay via the Prolific platform; it does  <em>not</em> have an entry for yourself doing "preview as participant" of the study).
+
+  <p>
+    When the Prolific participants play our games, their Prolific PIDs are converted to our Game Server player IDs, which combine the study ID and the Prolific PID, e.g. <tt>prolific-671b8ae84509b9a624b95e13-5e9088a8a4b6ed018b450000</tt>.
+
+  <p>Once you have downloaded the study summary files for your experiment to your PC, you need to upload them to the Game Server host (<tt>action.rutgers.edu</tt>) using <tt>sftp</tt> or <tt>scp</tt>. Put them into the same directory under your home directory, e.g. <tt>fdcl-01</tt>.
+
+  <p>Log in to the Game Server host using <tt>ssh</tt>, go to the directory where you have put the summary files, and run the export transcripts script:
+<pre>
+      cd fdcl-01
+      /home/vmenkov/w2020/scripts/export-transcripts.sh -pid -file prolific_export_671*.csv 
+</pre>
+  
+  <p>If the script runs successfully, you will find that it has created a directory named <tt>tmp</tt>, with the following content:
+
+    <pre>
+    % ls -l tmp
+total 8
+drwxr-xr-x  75 vmenkov  staff  2400 Nov  6 19:54 detailed-transcripts/
+-rw-r--r--   1 vmenkov  staff   928 Nov  9 15:22 pid.csv
+drwxr-xr-x   4 vmenkov  staff   128 Nov  9 15:22 sql/
+drwxr-xr-x  75 vmenkov  staff  2400 Nov  6 19:54 transcripts/
+    </pre>
+
+  <p>Here, the subdirectories <tt>transcripts</tt> and <tt>detailed-transcripts</tt> contain copies of the relevant CSV files from Game Server's saved-files directories of the same names, with any duplicate episode records removed. The file <tt>pid.csv</tt> contains the list of the Game Server player IDs, and the subdirectory <tt>sql</tt> contains relevant extracts from the SQL server's tables.
+
+  <p>You can now make a ZIP file containing the entire content of the directory <tt>tmp</tt>:
+    <pre>
+      zip -r tmp.zip tmp
+      </pre>
+and then transfer <tt>tmp.zip</tt> to your personal computer, or any another host, for further analysis. After that, you can remove the directory <tt>tmp</tt> the Rutgers server, or rename it somehow, so that its content would not be confusing for any future run of the export transcript tool at the same location.
+
+    <h3>Example 2: Selecting by player ID pattern</h3>
+
+  <p>Suppose you ran an experiment without using Prolific, by directly sending an invitation URL to a group of students. You have ensured that all participants' player IDs match a certain pattern, e.g. they start with <tt>RU-FDCL-basic-</tt>. In this example we also assume that you want to include <strong>all</strong> players with a matching ID into your analysis, because you have never used that exact prefix for your preview. In this case, you can use the following command line:
+    <pre>
+ /home/vmenkov/w2020/scripts/export-transcripts.sh -pid 'RU-FDCL-basic-%'
+    </pre>
+(Note the single quotes and the percent sign, rather than asterisk, in the player ID pattern. This is the syntax needed to instruct the MySQL server to carry out "<a href="https://dev.mysql.com/doc/refman/8.4/en/pattern-matching.html">pattern matching</a>", which is similar to wildcard expansion for file names in a UNIX shell, but uses different special characters.)
+
+<p>The rest of the processing is the same as in Example 1.</p>
+    
+    <h3>Example 3: Selecting by player ID pattern, with some exceptions</h3>
+
+  <p>What if all player IDs that you're interested in all start with the same prefix... but not all player IDs that start with that prefix are relevant? In other words, you want to exclude some player IDs from your analysis, for example because they are associated with your own testing, rather than with recruited players?
+
+  <p>If that is the case, you may need to hand-edit the player list. First, prepare the list of all player IDs matching the pattern. In this example, you'll start by  putting that list into the file <tt>my-pids.csv</tt> in your home directory:
+
+    <pre>
+      cd /opt/w2020/saved/transcripts
+      /bin/ls RU-FDCL-basic-*.transcript.csv > ~/my-pids.csv
+    </pre>
+
+  <p>After that, go to your home directory and edit the player ID list file, removing the IDs you want to exclude. You can use your favorite text editor (emacs, vi, vim, nano... whatever!)
+
+    <pre>
+      cd
+      emacs my-pids.csv
+    </pre>
+
+    (All lines in this file end with the suffix "transcript.csv", but that's OK; the export script will ignore this suffix, and look only at the player ID itself).
+
+    <p>After that, you can feed the CSV file to the export transcript tool, much like in Example 1:
+    
+      <pre>
+ /home/vmenkov/w2020/scripts/export-transcripts.sh -pid -file my-pids.csv
+      </pre>
+
+    <p>The subsequent processing is the  same as in Example 1.
+
+      <h3>Example 4: Combining Prolific summary files and local player ID lists</h3>
+
+    <p>What if an experiment involved both players recruited from Prolific (listed in Prolific study summary files) as well as locally recruited players (identified by their player ID prefix)? In this case, to analyze all players' data together, you can combine the approaches of Examples 1 and 3.
+
+      <ol>
+	<li>As in Example 1,  download study summary files from Prolific, and upload them to your directory on the Rutgers server.
+	<li>As in Example 3, prepare a CSV file ( <tt>my-pids.csv</tt>) with a list of locally-recruited players with appropriate prefix in their player IDs, and put that file to the same directory. If necessary, edit this file to remove any "preview" players.
+	<li>
+	  In the directory where your Prolific summary files and your PID file are, feed both of them to the export script:
+<pre>
+      /home/vmenkov/w2020/scripts/export-transcripts.sh -pid -file prolific_export_671*.csv  my-pids.csv
+      </pre>
+	<li>The subsequent processing is the  same as in Example 1.
+      </ol>
+      
+    
+</body>
+</html>
