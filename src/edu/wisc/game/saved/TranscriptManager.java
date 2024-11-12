@@ -78,7 +78,7 @@ public class TranscriptManager {
 	    final public String timeString;
 	    /** Pick or move, as the case may be */
 	    final public Pick pick;
-	    /** The success code read from the transcript */
+	    /** The success coderead from the transcript */
 	    final public int code;
 
 	    Entry(CsvData.BasicLineEntry e) {
