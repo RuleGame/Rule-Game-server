@@ -45,7 +45,14 @@
      <!-- Obtained from https://mvnrepository.com/artifact/org.glassfish.jersey.bundles -->
    <fileset dir="/opt/tomcat/lib">
      <include name="jsp-api.jar"/>
+     <include name="websocket-api.jar"/>
+     <include name="websocket-client-api.jar"/>
    </fileset>
+   <!-- The JAR here is needed for the websocket code. Maybe need to change
+	path for other hosts -->
+   <!-- fileset dir="/usr/local/opt/tomcat/libexec/bin">
+     <include name="tomcat-juli.jar"/>
+   </fileset -->     
    <fileset dir="${main}/../jaxrs-ri/api">
      <include name="*.jar"/>
    </fileset>

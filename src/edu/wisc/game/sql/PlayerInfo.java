@@ -17,6 +17,8 @@ import edu.wisc.game.engine.RuleSet;
 import edu.wisc.game.engine.AllRuleSets;
 import edu.wisc.game.saved.*;
 
+import edu.wisc.game.websocket.WatchPlayer;
+
 /** A PlayerInfo object represent information about a player (what trial list he's in, what episodes he's done etc) stored in the SQL database. It is identiied by a playerId (a string). A humans playing the Rule Game may create just one PlayerInfo object (a single playerId), if he comes from the Mechanical Turk, or goes directly to the GUI Client URL; or he can create many such objects (each one with a particular experiment plan), if he starts many games from the Repeat User Launch page, or from the Android app. In the latter case, all such PlayerInfo objects are linked to a single User object.
  */
 
@@ -791,6 +793,9 @@ public class PlayerInfo {
 	TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.transcript);
 	f =  Files.detailedTranscriptsFile(playerId);
 	epi.saveDetailedTranscriptToFile(f);
+
+	WatchPlayer.showThem(playerId, "Ended episode " +epi.getEpisodeId()+
+			     " with finishCode =" + epi.finishCode);
 	
     }
 

@@ -13,6 +13,8 @@ import edu.wisc.game.parser.*;
 import edu.wisc.game.rest.ParaSet;
 import edu.wisc.game.rest.ParaSet.Incentive;
 
+import edu.wisc.game.websocket.WatchPlayer;
+
 import jakarta.xml.bind.annotation.XmlElement; 
 
 /** An EpisodeInfo instance extends an Episode, containing additional
@@ -283,6 +285,9 @@ public class EpisodeInfo extends Episode {
 
  */
     private ExtendedDisplay processMove(Display _q, Pick move) throws IOException  {
+	WatchPlayer.showThem( getPlayer().getPlayerId(),
+			     "Made a move: " + move);
+
 	boolean isMove = (move instanceof Move);
 	justReachedX2=justReachedX4=false;
 

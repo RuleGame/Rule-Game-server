@@ -14,6 +14,8 @@ import edu.wisc.game.engine.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.reflect.*;
 
+import edu.wisc.game.websocket.WatchPlayer;
+
 
 /** This is an object that's converted to a JSON structure and sent to the client as a response in /GameService2/newEpisode calls.
 <p>
@@ -131,6 +133,9 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	} finally {
 	    Logging.info("NewEpisodeWrapper2(pid="+ pid+"): returning:\n" +
 			 JsonReflect.reflectToJSONObject(this, true));
+	    WatchPlayer.showThem(pid, "Starting on episode "  + episodeId);
+
+
 	}
 		     
 	
