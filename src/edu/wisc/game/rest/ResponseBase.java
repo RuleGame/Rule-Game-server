@@ -50,9 +50,12 @@ public class ResponseBase {
 	setErrmsg(msg);
     }
 
-    /** Regularizes an input parameter, converting a blank string to null */
+    /** Regularizes an input parameter, trimming leading/trailing white space
+	and converting a blank string to null */
     static String regularize(String x) {
-	if (x!=null && (x.trim().equals("") || x.equals("null"))) x=null;
+	if (x==null) return null;
+	x = x.trim();
+	if (x.equals("") || x.equals("null")) return null;
 	return x;
     }
 
