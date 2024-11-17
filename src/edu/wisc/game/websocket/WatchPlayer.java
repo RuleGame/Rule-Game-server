@@ -37,7 +37,7 @@ import jakarta.websocket.server.ServerEndpoint;
 
 import edu.wisc.game.util.Logging;
 
-import util.HTMLFilter;
+//import util.HTMLFilter;
 
 @ServerEndpoint(value = "/websocket/watchPlayer")
 public class WatchPlayer {
