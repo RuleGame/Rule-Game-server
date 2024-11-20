@@ -22,6 +22,7 @@ import edu.wisc.game.tools.MwByHuman.MwSeries;
 public class Comparandum implements Comparable<Comparandum> {
     /** The name of this algo or this rule set, as the case may be */
     final String key;
+    /** This is true if e.g. the algo has learned all rule sets */
     final boolean learned;
     final double[] a;
     final MlcEntry[] mlc;

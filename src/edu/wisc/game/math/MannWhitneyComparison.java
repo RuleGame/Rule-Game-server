@@ -22,10 +22,19 @@ public class MannWhitneyComparison {
 
     private static Fmter plainFm = new Fmter();
 
+    /** @param _mode What are we going to compare? Rules (by the algos'
+	performance on them), rules (by the humans' performance on them)
+	or ML algos (by their performance on the 	
+     */
     public MannWhitneyComparison(Mode _mode) {
 	mode = _mode;
     }
-    
+
+    /** Creates a SQL query which, depending on the mode, will find
+	either the entries for all algos playing the specified rule
+	set ("rule"), or the entires for all rules that the specified algo
+	("nickname") has played.
+     */
     private Query mkQuery(EntityManager em, String nickname,  String rule) {
 	Query q;
 	if (mode==Mode.CMP_ALGOS) {
@@ -39,7 +48,9 @@ public class MannWhitneyComparison {
 	return q;
     }
 
-    /** From an MlcEntry, get the comparison key */
+    /** From an MlcEntry, get the comparison key
+	@return Depending on the mode, either the algo's nickname or the rule name
+     */
     private String getKey(MlcEntry e) {	
 	return (mode==Mode.CMP_ALGOS) ?
 	    e.getNickname():
