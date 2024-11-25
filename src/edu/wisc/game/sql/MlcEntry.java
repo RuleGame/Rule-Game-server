@@ -118,7 +118,8 @@ public class MlcEntry {
     @XmlElement
     public void setEndStreakEpisodes(int _endStreakEpisodes) { endStreakEpisodes = _endStreakEpisodes; }
 
-    
+
+    /** Creates an entry with zeros for all aggregated statistics. */
     public MlcEntry(String _nickname, String _ruleSetName, int _runNo, Date _uploadTime    
  ) {
 	nickname = _nickname;
@@ -143,7 +144,11 @@ public class MlcEntry {
     final int REQUIRED_STREAK_EPISODES = 10;
     
     
-    /** @param errmsg An empty StringBuffer, to which an error message can be appended if needed.
+    /** Updates the aggregate statistics stored in this MlcEntry based on one
+	more episode in the run. This includes determining if learning success
+	has been achieved.
+
+       @param errmsg An empty StringBuffer, to which an error message can be appended if needed.
 	@return true on success, false on error
      */
     public boolean addEpisode( int episodeNo,

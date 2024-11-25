@@ -3,7 +3,7 @@
   <body>
     <h1>Creating initial boards with a random board generator</h1>
 
-<div align="center"><em>Updated 2021-06-30 for ver 3.003</em></div>
+<div align="center"><em>Updated 2024-11-24 for ver 6.045</em></div>
     
     <p>When <a href="sop-experiment.html">creating an experiment plan</a>, you need to give a thought to where intial boards are coming from.
 
@@ -33,6 +33,13 @@ Here,
   <li>shapes-list = unless you want to use the 4 legacy shapes and 4 legacy colors, use this parameter to specify the list from which shapes are to be drawn. Wildcards are allowed. (A single-quoted semicolon-separated list, e.g. <tt>'camel;cat;duck'</tt>, or <tt>'arrows/*;rainbows/*'</tt>).
   <li>colors-list =  unless you want to use the 4 legacy colors, use this parameter to specify the list from which colors are to be drawn. (A single-quoted semicolon-separated list, e.g. <tt>'red;pink;orange;mauve'</tt>). As with any colors, the colors mentioned here must exist in the color map on your server.
 </ul>
+
+<p>
+Alternatively, you can run this script with a trial list file name as an argument:
+<pre>
+/home/vmenkov/w2020/game/scripts/random-boards.sh <em>out-dir number-of-boards trial-list-file.csv row-number</em>
+</pre>
+With the above format you tell the script to follow the settings in one of the parameter sets in the specified trial list file in CSV format. The last paramters refers to the row number (one-based) in the trial list file. This is particularly suitable when you want to create random boards with image-and-properties-based objects.
 
 Examples (which, for simplicity, assume that <tt>/home/vmenkov/w2020/game/scripts</tt> is in your path, and that you want 100  board files to be written to the subdirectory <tt>tmp</tt> of your current directory):
 
@@ -71,6 +78,16 @@ To specify the sets from which colors and/or shapes will be drawn by the initial
 	If you're using custom shapes and/or custom colors, it is necessary that a list of colors and a set of shapes SVG files are found at the appropriate locations under <tt>/opt/tomcat/game-data</tt>, as explained in the document <a href="colors-and-shapes.html">Using custom shapes and colors in Rule Game Server 2.*</a>. If you're running your board generator on <tt>sapir</tt> (the server used for the human subjects), and are playing a game that human subjects are already playing, then you're all set, because the human-player experiment team has already set up the necessary files in   <tt>/opt/tomcat/game-data</tt>.
       </p>
 
+      <h4>With a trial list file.</h4>
+
+    <p>In this example, we have the random board generator controlled by the first parameter set in a trial list file:
+
+      <pre>
+random-boards.sh tmp 3 /opt/w2020/game-data/trial-lists/RU/JF/tht/exp4/exp4.csv 1
+      </pre>
+
+Any trial list file can be used in this manner, including one that uses image-and-properties-based objects.
+      
   <h2>Post-processing: selecting boards matching your additional criteria</h2>
 
     <p>Now that you know how to create e.g. a bunch of random boards, each with 4 pieces of 4 different colors and 4 different shapes, how can you carry out additional selection  on these boards, to only select those with desired properties?

@@ -79,13 +79,28 @@ public class MlcUploadService {
     }
 
     
-    /**  Allows an MLC participant to upload a file with the results of his
-	 ML algorithm's performance.
+    /**  Allows an MLC participant to upload a file with the results
+	 of his ML algorithm's performance. For each section of the
+	 input file (a sequence of lines, each of which represents an
+	 episode), creates a single MlcEntry object containing the
+	 aggregate statistics for the runs represented by that section.
+	 
+
+	 <p>
+	 Long format:
 <pre>
 nickname,rule_name,trial_id,board_id,number_of_pieces,number_of_moves,move_acc,if_clear
 RandomTest,alternateShape2Bucket_color2Bucket,0,0,9,29,0.3103448275862069,1
 RandomTest,alternateShape2Bucket_color2Bucket,0,1,9,20,0.45,1
 ...
+</pre>
+Compact format: see captive.html#results
+<pre>
+#.nickname,rule_name,trial_id
+#number_of_moves,number_of_errors,if_clear
+.RandomTest,alternateShape2Bucket_color2Bucket,0
+47,38,1
+36,27,1
 </pre>
     */
     @Path("/uploadFile")

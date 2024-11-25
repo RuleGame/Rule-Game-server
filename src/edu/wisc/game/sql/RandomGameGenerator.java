@@ -9,6 +9,7 @@ import edu.wisc.game.reflect.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.rest.ParaSet;
+import edu.wisc.game.rest.TrialList;
 
 
 /** This class generates random games (with the same rule set and
@@ -90,10 +91,27 @@ public class RandomGameGenerator extends GameGenerator {
     }
     
 
-    /** Builds a RandomGameGenerator from command-line arguments. Used in Captive Game Server */
-    public static RandomGameGenerator buildFromArgv(RandomRG _random, File f, ParseConfig ht, String[] argv, int ja) throws IOException, RuleParseException {
+    /** Builds a RandomGameGenerator from command-line arguments. Used in Captive Game Server
+	@param f If specified, this is the rule set file to use. It can be null, if you just need the generator to create boards, and not to play a game.
+	@param ja Use argv[ja:...]
+     */
+    public static GameGenerator buildFromArgv(RandomRG _random, File f, ParseConfig ht, String[] argv, int ja) throws IOException, RuleParseException, IllegalInputException, ReflectiveOperationException {
 	String b = argv[ja++];
 
+	if (b.endsWith(".csv")) {
+	    File tf = new File(b);
+	    TrialList trialList = new TrialList(tf);
+
+	    if (ja >= argv.length) usage("Too few arguments: Missing row_number");
+	    else if (ja+1 != argv.length) usage("Too many arguments");
+	    b = argv[ja++];
+	    int rowNo = Integer.parseInt(b);
+	    if (rowNo<=0 || rowNo> trialList.size())   throw new IllegalInputException("Invalid row number (" + rowNo+ "). Row numbers should be positive, and should not exceed the size of the trial list ("+trialList.size()+")");
+	    ParaSet para = trialList.elementAt(rowNo-1);
+	    return mkGameGenerator(_random,  para);
+	}
+
+	
 	int[] nPiecesRange = range(b);
 	if (nPiecesRange[0] <= 0) throw new IllegalArgumentException("Invalid number of pieces ("+b+"); The number of pieces must be positive");
 
@@ -113,14 +131,16 @@ public class RandomGameGenerator extends GameGenerator {
 	
 	Piece.Color[] colors =  ParaSet.parseColors(colorsString);
 	if (colors==null) colors = Piece.Color.legacyColors;
-		    
+
 	return new RandomGameGenerator(_random, f, nPiecesRange, nShapesRange, nColorsRange, shapes, colors);    
     }
 
    static private void usage(String msg) {
-	System.err.println("Usage:\n");
+	System.err.println("Usage 1:\n");
 	System.err.println("  java [options]  edu.wisc.game.engine.RandomGameGenerator out-dir number-of-boards npieces [nshapes ncolors [shapes-list color-list]");
 	System.err.println("Each of 'npieces', 'nshapes', and 'ncolors' is either 'n' (for a single value) or 'n1:n2' (for a range). '0' means 'any'");
+	System.err.println("Usage 2:\n");
+	System.err.println("  java [options]  edu.wisc.game.engine.RandomGameGenerator out-dir number-of-boards trial-list-file.csv row-number");
 	if (msg!=null) 	System.err.println(msg + "\n");
 	System.exit(1);
     }
@@ -140,16 +160,19 @@ public class RandomGameGenerator extends GameGenerator {
 	if (!dir.isDirectory()) usage("The output directory '" +dir + "' does not exist. Please create it before running this tool, or specify another directory");
 	int nb = Integer.parseInt(argv[ja++]);
 	System.out.println("Will generate " +nb + " boards in directory "+dir);
-	RandomGameGenerator gg=buildFromArgv(new RandomRG(), null, ht, argv, ja);
+
 	String fs="000";
 	for(int m=nb/1000; m>0; m /= 10) fs += "0";
 	DecimalFormat fmt =new DecimalFormat(fs);
 
+	GameGenerator gg=buildFromArgv(new RandomRG(), null, ht, argv, ja);
+	
 	RandomRG random = new RandomRG();
 	for(int j=0; j<nb; j++) {
 	    File f = new File(dir, fmt.format(j) +".json");
 	    Game g =gg.nextGame();
-	    Board b = new Board(random, g.randomObjCnt, g.nShapes, g.nColors, g.allShapes, g.allColors);
+	    Board b = g.giveBoard();
+		//new Board(random, g.randomObjCnt, g.nShapes, g.nColors, g.allShapes, g.allColors);
 	    PrintWriter w=new PrintWriter(new FileWriter(f));
 	    String s = JsonReflect.reflectToJSONObject(b, true).toString();
 	    // Insert a line break before each game piece

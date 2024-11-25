@@ -99,7 +99,7 @@ public class WatchPlayer {
 	//        broadcast("[B] " + message);
 
 
-	String pid = message.replaceAll("^\\s+", "").replaceAll("\\s$", "");
+	String pid = message.trim();
 	//sendMessage("[M2] pid=" + pid);
 	if (pid.equals("")) return;
 	String  s = "At " + (new Date()) +", ";
