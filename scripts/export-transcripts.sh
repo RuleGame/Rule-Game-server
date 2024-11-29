@@ -3,6 +3,7 @@
 #---------------------------------------------------------------------------------
 # Usage example:
 #  ../w2020/game/scripts/export-transcripts.sh -pid -file prolific_export_671*.csv
+#  ../w2020/game/scripts/export-transcripts.sh -plan 'FDCL/basic'
 #---------------------------------------------------------------------------------
 
 #-- The directory where this script is

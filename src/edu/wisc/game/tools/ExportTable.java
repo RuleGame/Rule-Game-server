@@ -41,7 +41,7 @@ public class ExportTable {
     /** Gets information about the database name, password, etc from
 	the MainConfig structure, and creates a traditional JDBC
 	connection to the database, without using JPA at all. */	
-    private static Connection getConnection() throws SQLException {
+    static Connection getConnection() throws SQLException {
 
 	Properties prop = System.getProperties();
 	Hashtable<Object,Object>  h = (Hashtable<Object,Object>) prop.clone();
@@ -147,11 +147,19 @@ public class ExportTable {
     static public void doQuery(String[] queries, File f) throws IOException, SQLException {
 
 	Connection conn  = getConnection();
+	doQuery2(conn, queries, f);
+	conn.close();
+	
+    }
+
+    /** This one just sends commands to an existing connection, without closing it */
+    static public void doQuery2(Connection conn, String[] queries, File f) throws IOException, SQLException {
+	
 	Statement stmt = conn.createStatement();
 
 	for(int j=0; j<queries.length-1; j++) {
 	    String qs = queries[j];
-	    System.out.println("Preliminary statement: " + qs);
+	    //System.out.println("Preliminary statement: " + qs);
 	    stmt.execute(qs);
 	}
 
@@ -179,8 +187,6 @@ public class ExportTable {
 	}
 	w.close();
 	stmt.close();
-	conn.close();
-	
     }
 
     

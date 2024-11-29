@@ -29,10 +29,10 @@ public class AnalyzeTranscripts {
 
     protected boolean quiet = false;
     
-    static private void usage() {
+    static void usage() {
 	usage(null);
     }
-    static private void usage(String msg) {
+    static void usage(String msg) {
 	System.err.println("For usage info, please see:\n");
 	System.err.println("http://rulegame.wisc.edu/w2020/analyze-transcripts.html");
 	if (msg!=null) 	System.err.println(msg + "\n");
@@ -73,60 +73,6 @@ public class AnalyzeTranscripts {
 	names, player IDs, etc. */
     enum ArgType { PLAN, PID, UID, UNICK};
     
-    /** This is a map which, for each player, contains the list of episodes
-	played by that player.
-     */
-    static class EpisodesByPlayer extends TreeMap<String,Vector<EpisodeHandle>> {
-
-	/** for each rule set name, keep the list of all episodes */
-	TreeMap<String, Vector<EpisodeHandle>> allHandles= new TreeMap<>();
-
-	/** Adds to this map the data about all episodes played by a specified player.
-	    @param p The player in question
-	    @param  trialListMap Lists all trial lists of the relevant plan
-	 */
-	void doOnePlayer(PlayerInfo p,  TrialListMap trialListMap,
-			 Vector<EpisodeHandle> handles) {
-		
-	    String trialListId = p.getTrialListId();
-	    TrialList t = trialListMap.get( trialListId);
-	    if (t==null) {
-		System.out.println("ERROR: for player "+p.getPlayerId()+", no trial list is available for id=" +  trialListId +" any more");
-		return;
-	    }
-	    int orderInSeries = 0;
-	    int lastSeriesNo =0;
-	    // ... and all episodes of each player
-	    for(EpisodeInfo e: p.getAllEpisodes()) {
-		int seriesNo = e.getSeriesNo();
-		if (seriesNo != lastSeriesNo) orderInSeries = 0;
-		EpisodeHandle eh = new EpisodeHandle(p.getExperimentPlan(), trialListId, t, p.getPlayerId(), e, orderInSeries);
-		//		    handles.add(eh);
-		handles.add(eh);
-		Vector<EpisodeHandle> v = allHandles.get( eh.ruleSetName);
-		if (v==null) allHandles.put(eh.ruleSetName,v=new Vector<>());
-		v.add(eh);
-	    
-		Vector<EpisodeHandle> w = this.get(eh.playerId);
-		if (w==null) this.put(eh.playerId, w=new Vector<>());
-		w.add(eh);		     
-		
-		orderInSeries++;
-		lastSeriesNo=seriesNo;
-		
-	    }
-	}
-
-	public String toString() {
-	    Vector<String> v = new Vector<>();
-	    for(String key: keySet()) {
-		Vector<EpisodeHandle> w = get(key);
-		v.add(key + ":" + Util.joinNonBlank(", ", w));
-	    }
-	    return  Util.joinNonBlank("; ", v);
-	}
-    }
-
     static boolean weWantPredecessorEnvironment  = false;
 
 
@@ -237,8 +183,6 @@ public class AnalyzeTranscripts {
 	    MainConfig.put("FILES_SAVED", inputDir);
 	}
 
-	//-- ZZZZZ
-	
 	EntityManager em = Main.getNewEM();
 
 	if (needBoards && !needP0) throw new IllegalArgumentException("Cannot use option -boards without -p0");
@@ -246,7 +190,7 @@ public class AnalyzeTranscripts {
 	EpisodesByPlayer ph = listEpisodesByPlayer( em, plans, pids, nicknames, uids);
 
 	if (jf) { // The Jacob Feldman's preferred format
-	    doJF(ph, em, outDir);
+	    AdvancedScoring.doJF(ph, em, outDir);
 	    // EntityManager em, String outDir, 
 	    return;
 	}
@@ -1110,67 +1054,5 @@ public class AnalyzeTranscripts {
 	}       
     }
 
-    /** Jacob Fledman's preferred format */
-    private static void doJF(EpisodesByPlayer ph, EntityManager em, String outDir) throws IOException, SQLException {
-	//-- select only players with at least 1 episodes
-	Vector<String> v = new Vector<>();
-	for(String pid:  ph.keySet()) {
-	    if (ph.get(pid).size()>0) v.add(pid);
-	}	
-	String[] plist = v.toArray(new String[0]);
-	Arrays.sort(plist);
-
-	File base = new File(outDir);
-	if (!base.exists()) {
-	    if (!base.mkdirs()) usage("Cannot create output directory: " + base);
-	}
-	if (!base.isDirectory() || !base.canWrite()) usage("Not a writeable directory: " + base);
-
-	File pidListFile = new File( base, "pid.csv");
-	Util.writeTextFile(pidListFile, Util.joinNonBlank("\n", plist)+"\n");
-
-	File tDir = new File( base, Files.Saved.TRANSCRIPTS);
-	if (!tDir.isDirectory() && !tDir.mkdirs()) throw new IOException("Cannot create output directory: " + tDir);
-	File dDir = new File( base, Files.Saved.DETAILED_TRANSCRIPTS);
-	if (!dDir.isDirectory() && !dDir.mkdirs()) throw new IOException("Cannot create output directory: " + dDir);
-
-	Util.CopyInfo statsT=new Util.CopyInfo();
-	Util.CopyInfo statsD=new Util.CopyInfo();
-	for(String playerId: plist) {
-	    File f = Files.transcriptsFile(playerId, true);
-	    File g = new File(tDir, f.getName());
-	    //System.out.println("Copying " + f+ " to " + g);
-	    
-	    statsT.add( Util.copyFileUniqueLines(f,g));
-	    f = Files.detailedTranscriptsFile(playerId, true);
-	    g = new File(dDir, f.getName());
-	    statsD.add( Util.copyFileUniqueLines(f,g));
-	}
-	System.out.println("Basic transcript files: copied " + statsT.n + " files, " + statsT.linesIn + " lines in, " + statsT.linesOut + " lines out");
-	System.out.println("Detailed transcript files: copied " + statsD.n + " files, " + statsD.linesIn + " lines in, " + statsD.linesOut + " lines out");
-
-	// SQL tables
-	File sqlDir = new File( base, "sql");
-	if (!sqlDir.isDirectory() && !sqlDir.mkdirs()) throw new IOException("Cannot create output directory: " + dDir);
-
-
-	String pj = joinPlist(plist);
-	String sql = "select * from PlayerInfo where playerId in ("+pj+")";
-	File g = new File(sqlDir, "PlayerInfo.csv");
-	ExportTable.doQuery(sql,g);
-	
-	sql = "select e.* from Episode e, PlayerInfo p where e.PLAYER_ID = p.ID and p.playerId in ("+pj+")";
-	g = new File(sqlDir, "Episode.csv");
-	ExportTable.doQuery(sql,g);
-    }
-
-    /**
-       @param { "foo", "bar", "etc" }
-       @return    "'foo','bar','etc'" */
-    private static String joinPlist(String[] plist) {
-	Vector<String> v = new Vector<>();
-	for(String x: plist) v.add("'" + x + "'");
-	return Util.joinNonBlank(",", v);
-    }
 	
 }
