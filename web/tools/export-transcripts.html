@@ -4,7 +4,7 @@
 <body>
   <h1>The Export Transcripts tool</h1>
 
-<div align="center"><em>Updated 2024-11-08, for Game Server 6.043</em></div>
+<div align="center"><em>Updated 2024-11-30, for Game Server 6.045</em></div>
 
 <h2>Introduction</h2>
 
@@ -12,7 +12,7 @@
 
   <p>This document describes one of the simplest tools, the script <tt>export-transcripts.sh</tt>. Its primary purpose is to select the transcript files from the participants who satisfy your criteria (e.g. "everybody listed in study summary files on Prolific"; "everybody who participated in experiment plans <tt>FDCL/basic</tt>, and whose player ID started with <tt>prolific-</tt> or <tt>RU-</tt>", etc). Additionally, it will also extract the selected players' rows from the tables in the MySQL database, and will export them in CSV format. All files so selected or produced will be put into a new directory, so that you can ZIP it and then transfer the ZIP file to another computer for further analysis.
 
-    <h2>Use case examples</h2>
+  <h2>Use case examples</h2>
 
 <p>The script  <tt>export-transcripts.sh</tt> takes most of the same command line arguments as does  <A href="analyze-transcripts.html">analyze-transcripts.sh</a>, allowing selecting records based on experiment plan name, player IDs, user ID (for repeat players), etc. This section discusses a few examples that are likely to occur in your practice.
 
@@ -53,7 +53,7 @@ drwxr-xr-x   4 vmenkov  staff   128 Nov  9 15:22 sql/
 drwxr-xr-x  75 vmenkov  staff  2400 Nov  6 19:54 transcripts/
     </pre>
 
-  <p>Here, the subdirectories <tt>transcripts</tt> and <tt>detailed-transcripts</tt> contain copies of the relevant CSV files from Game Server's saved-files directories of the same names, with any duplicate episode records removed. The file <tt>pid.csv</tt> contains the list of the Game Server player IDs, and the subdirectory <tt>sql</tt> contains relevant extracts from the SQL server's tables.
+  <p>Here, the subdirectories <tt>transcripts</tt> and <tt>detailed-transcripts</tt> contain copies of the relevant CSV files from Game Server's saved-files directories of the same names, with any duplicate episode records removed. The file <tt>pid.csv</tt> contains the list of the Game Server player IDs, and the subdirectory <tt>sql</tt> contains relevant extracts from the SQL server's tables as well as the scoring date (<a href="#score">see the section "Score data" below</a>)
 
   <p>You can now make a ZIP file containing the entire content of the directory <tt>tmp</tt>:
     <pre>
@@ -114,6 +114,110 @@ and then transfer <tt>tmp.zip</tt> to your personal computer, or any another hos
 	<li>The subsequent processing is the  same as in Example 1.
       </ol>
       
-    
+
+<h2><a name="score">Score data</a></h2>
+    <p>The subdirectory <tt>sql</tt> contains relevant extracts from the SQL server's tables, as well as 2 files with computed numbers, playerStats.csv
+and scores.csv:
+
+    <pre>
+% ls -l
+total 436
+-rw-r--r-- 1 vmenkov users 374594 Nov 29 23:47 Episode.csv
+-rw-r--r-- 1 vmenkov users  40133 Nov 29 23:47 PlayerInfo.csv
+-rw-r--r-- 1 vmenkov users  21470 Nov 29 23:47 playerStats.csv
+-rw-r--r-- 1 vmenkov users    743 Nov 29 23:47 scores.csv
+    </pre>
+
+    <h3>playerStats.csv</h3>
+
+    <p>This file contains some processed information about each player's interaction with the first rule set of his trial list (i.e. the rule set for which he was a "naive player"). The content looks like this:
+      <pre>
+#playerId,trialListId,seriesNo,rule,maxToRemove,episodes,attempts,removed,couldAlsoAttempt,couldAlsoRemove,finishCode
+prolific-671b8-5e90,basic-02-A,0,quadNearby,27,2,12,11,16,16,5
+prolific-671b8-5e4d,basic-03-A,0,quadNearby,27,3,46,27,0,0,1
+prolific-671b8-5c65,basic-03-B,0,quadMixed1,27,3,93,27,0,0,1
+...
+      </pre>
+
+    <p>The columns' values are as follows:
+      <ul>
+	<li>playerId -- the player ID recorded in the Game Server,
+	<li>trialListId -- the trial list assigned to that player
+	<li>seriesNo -- the zero-based series number (always 0, since we only look at the first series played by each player)
+	<li>rule -- the rule set name
+	<li>maxToRemove -- the total number of objects that the player would need to remove if he clears all boards that the server would present to players for this rule set. For example, if the parameter set calls for 3 boards with 9 objects each, this number would be 27. Note that this number is based on the <tt>max_objects</tt> column of the trial list file, which means that if your trial list calls for a variable number of object (min_objects != max_objects), or if you used the BONUS incentive scheme, this value won't be correct.
+	<li>episodes -- the number of episodes this player has actually played. This may be smaller than max_boards if the player gave up or walked away in the middle of an episode, or if he was granted an "early win" due to good performance.
+	<li>attempts -- the number of attempted moves/picks this player has made
+	<li>removed -- the total number of objects removed by this player from the boards
+	<li>couldAlsoAttempt -- if the player ended with an "early win" (without actually clearing all his boards), he would have need to make at least this many moved to actually clear all boards. This is computed as maxToRemove-removed. For all other players, 0.
+	<li>couldAlsoRemove -- if the player ended with an "early win" (without actually clearing all his boards), this is how many objects he wasn't given an opportunity to remove. This is the same number as the one above. For all other players, 0.
+	  <li>finishCode -- the finish code for the last played episode. (1 for success, 3 for "give up", 5 for "early win")
+      </ul>
+      
+      <h3>scores.csv</h3>
+
+<p>Aggregate information about the naive player's performance on each rule set.
+      
+      <pre>
+	sql> more scores.csv 
+#rule,n,avgAttempts,score,scoreTimesObjectCnt
+allOfColOrd_BRKY,10,59.1000,2.2074,59.6000
+allOfShaOrd_qcts,11,51.1818,1.9327,52.1818
+ccw,10,47.8000,1.9333,52.2000
+cm_RBKY,9,36.1111,1.4897,40.2222
+col1OrdBuck_BRKY0213,12,117.6667,4.3580,117.6667
+col1Ord_BRKY,10,54.4000,2.0985,56.6591
+colOrdL1_BRKY,10,95.4000,3.6565,98.7252
+cw,11,56.1818,2.2803,61.5675
+ordL1,22,65.6364,2.6875,72.5625
+ordL1_Nearby,10,84.5000,3.2741,88.4000
+ordRevOfL1,10,70.8000,2.7000,72.9000
+ordRevOfL1_Remotest,11,113.0000,4.4607,120.4393
+quadMixed1,10,81.7000,3.1303,84.5172
+quadNearby,21,52.5238,2.0970,56.6190
+sha1OrdBuck_qcts0213,12,97.1667,3.9731,107.2727
+sha1Ord_qcts,11,54.0909,2.1246,57.3636
+shaOrdL1_qcts,10,80.5000,3.1074,83.9000
+sm_csqt,10,47.4000,1.8815,50.8000
+	</pre>
+<p>
+  The semantics of the columns is as follows:
+  <ul>
+    <li>rule - the rule set name. (With the directory name removed if all rule sets in the experiment come from the same directory)
+    <li>n - the number of naive players who played that rule set.
+    <li>avgAttempts - a simplistically computed
+      "difficulty score": the average number of move attempts made by a player on that rule set. If all players cleared all boards shown to them, this would be a very good metric; but since in real life some players give up or walk away, this can be improved a bit.
+    <li>score - a "corrected score", as described below.
+    <li>scoreTimesObjectCnt - the "corrected score" multiplied by the expected number of objects that a player would have to remove to clear all boards. If all players have cleared all boards, this number would be exactly the same as avgAttempts.
+      <li>scoreTimesObjectCnt =  score*maxToRemove for this rule set. If all players have cleared all boards, this would have been exactly equal to avgAttempts.
+  </ul>
+
+<p>The <strong>corrected score</strong> for a rule set is computed as
+  <pre>
+    score = sum( attempts(P) + couldAlsoAttempt(P) ) / sum( removed(P) + couldAlsoRemove(P)),
+  </pre>
+with the summation over all players P who played that rule set as the first rule set in their trial list.
+
+ <p>
+   The values being summed are defined as
+   <ul>
+     <li>
+  attempts(P) = the number of attempts (succesful or not) that the player P made when playing this rule set
+<li>
+  removed(P) = the number of game pieces that the player P made when playing this rule set
+  <li>
+    couldAlsoRemove(P) = 0 for all players other than "early winners"; for "early winners" (the players who showed mastery), it is maxToRemove-removed(P), where maxToRemove is the total number of objects on all boards shown to a player who playes all episodes to the end.
+    <li>
+      couldAlsoAttempt(P) = couldAlsoRemove(P)
+      </ul>
+
+   <p>
+In other words, for each "early winner" (somebody who played so well that we ended his game) we have notionally "extended" his transcript as if, instead of being stopped, he continued removing all game pieces in all episodes of the series without making any additional errors. (This may be a bit over-optimistic, of course, but  not as over-optimistic as simply counting that player's moves without regard to how early he was stopped).
+ For other players, we take their actual transcripts (which may include fewer than <tt>maxToRemove</tt> (=27 in FDCL/basic)) removed pieces, if they formally gave up or just walked away). Then we compute the weighted average of  attemptedMoves/piecesRemoved over all n players.  
+
+<p>
+The value of this "corrected score" would be 1.0 if nobody made any errors, and is proportionally higher as people make more errors. If every player had played all 3 episode to completion, thus removing exactly <tt>maxToRemove=27</tt> game pieces, then scoreTimesObjectCnt=score*maxToRemove would be exactly equal to avgAttempts (which, I think, is pretty much the score used by Jacob).
+
+
 </body>
 </html>
