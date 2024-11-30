@@ -75,9 +75,8 @@ class AdvancedScoring {
 	sql = "select e.* from Episode e, PlayerInfo p where e.PLAYER_ID = p.ID and p.playerId in ("+pj+")";
 	g = new File(sqlDir, "Episode.csv");
 	ExportTable.doQuery(sql,g);
-	g = new File(sqlDir, "scores.csv");
 	Connection conn  = ExportTable.getConnection();
-	scoring(conn, g, ph, plist);
+	scoring(conn, sqlDir, ph, plist);
 	conn.close();
     }
 
@@ -214,8 +213,9 @@ class AdvancedScoring {
     /** This methods computes scores similar to Jacob's usual "Avg(attempts),
 	but with corrections due to early wins, give-ups, and walk-aways.
 	Discussed in email ca. 2024-11-25...26
+	@param sqlDir The directory into which data files are to be written
      */
-    static void scoring(Connection conn, File f, EpisodesByPlayer ph, String[] plist)   throws IOException, SQLException {
+    private static void scoring(Connection conn, File sqlDir, EpisodesByPlayer ph, String[] plist)   throws IOException, SQLException {
 	createMasterTable(conn, ph);
 	
 	Vector<String> qq = new Vector<>();
@@ -226,7 +226,7 @@ class AdvancedScoring {
 	// it does not know that (experimentPlan, seriesNo) could
 	// be a unique primary key on master
 	String q = "CREATE TEMPORARY TABLE IF NOT EXISTS tmp as " +
-	    "(select p.playerId playerId, p.trialListId, e.seriesNo seriesNo, m.rule rule, sum(e.attemptCnt) attempts, sum(e.doneMoveCnt) removed, m.maxToRemove maxToRemove, 0 couldAlsoAttempt, 0 couldAlsoRemove, count(*) episodes, max(e.finishCode) finishCode " +
+	    "(select p.playerId playerId, p.trialListId, e.seriesNo seriesNo, m.rule rule, m.maxToRemove maxToRemove, count(*) episodes, sum(e.attemptCnt) attempts, sum(e.doneMoveCnt) removed, 0 couldAlsoAttempt, 0 couldAlsoRemove, max(e.finishCode) finishCode " +
 	    " from PlayerInfo p, Episode e, master m " +
 	    " where p.playerId in ("+pj+") " +
 	    " and e.PLAYER_ID=p.ID " +
@@ -246,9 +246,15 @@ class AdvancedScoring {
 
 	qq.add(q);
 	qq.add("select * from Scoring");
+	File g = new File(sqlDir, "scores.csv");
 
-	ExportTable.doQuery2(conn, qq.toArray(new String[0]), f);
+	//	ExportTable.doQuery2(conn, qq.toArray(new String[0]), f);
+	ExportTable.doQuery2(conn, qq.toArray(new String[0]), g);
 
+	g  = new File(sqlDir, "playerStats.csv");
+	qq.clear();
+	qq.add("select * from tmp");
+	ExportTable.doQuery2(conn, qq.toArray(new String[0]), g);
     }
 
 }
