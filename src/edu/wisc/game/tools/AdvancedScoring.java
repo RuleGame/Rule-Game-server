@@ -16,9 +16,21 @@ import edu.wisc.game.engine.*;
 import edu.wisc.game.saved.*;
 
 
-/** A well-advised alternative to "AvgAttempts"
+/** Dumping additional tables for export-tables.sh. This includes
+    computing a "corrected score", a well-advised alternative to "AvgAttempts".
  */
 class AdvancedScoring {
+
+    static void usage() {
+	usage(null);
+    }
+    static void usage(String msg) {
+	System.err.println("For usage info, please see:\n");
+	System.err.println("http://rulegame.wisc.edu/w2020/tools/export-transcripts.html");
+	if (msg!=null) 	System.err.println(msg + "\n");
+	System.exit(1);
+    }
+
 
     /** Jacob Fledman's preferred format */
     static void doJF(EpisodesByPlayer ph, EntityManager em, String outDir) throws IOException, SQLException {
@@ -35,9 +47,9 @@ class AdvancedScoring {
 
 	File base = new File(outDir);
 	if (!base.exists()) {
-	    if (!base.mkdirs()) AnalyzeTranscripts.usage("Cannot create output directory: " + base);
+	    if (!base.mkdirs()) usage("Cannot create output directory: " + base);
 	}
-	if (!base.isDirectory() || !base.canWrite()) AnalyzeTranscripts.usage("Not a writeable directory: " + base);
+	if (!base.isDirectory() || !base.canWrite()) usage("Not a writeable directory: " + base);
 
 	File pidListFile = new File( base, "pid.csv");
 	Util.writeTextFile(pidListFile, Util.joinNonBlank("\n", plist)+"\n");
@@ -226,7 +238,7 @@ class AdvancedScoring {
 	// it does not know that (experimentPlan, seriesNo) could
 	// be a unique primary key on master
 	String q = "CREATE TEMPORARY TABLE IF NOT EXISTS tmp as " +
-	    "(select p.playerId playerId, p.trialListId, e.seriesNo seriesNo, m.rule rule, m.maxToRemove maxToRemove, count(*) episodes, sum(e.attemptCnt) attempts, sum(e.doneMoveCnt) removed, 0 couldAlsoAttempt, 0 couldAlsoRemove, max(e.finishCode) finishCode " +
+	    "(select p.playerId playerId, p.trialListId, e.seriesNo seriesNo, m.rule rule, m.maxToRemove maxToRemove, count(*) episodes, sum(e.attemptCnt) attempts, sum(e.doneMoveCnt) removed, 0 couldAlsoAttempt, 0 couldAlsoRemove, max(e.finishCode) finishCode, max(e.xFactor) xFactor " +
 	    " from PlayerInfo p, Episode e, master m " +
 	    " where p.playerId in ("+pj+") " +
 	    " and e.PLAYER_ID=p.ID " +
@@ -242,7 +254,7 @@ class AdvancedScoring {
 	qq.add(q);
 
 	q = "CREATE TEMPORARY TABLE IF NOT EXISTS Scoring as " +
-	    "(select rule, count(*) n, avg(attempts) avgAttempts, sum(attempts+couldAlsoAttempt)/sum(removed+couldAlsoRemove) score, sum(attempts+couldAlsoAttempt)/sum(removed+couldAlsoRemove)*max(maxToRemove) scoreTimesObjectCnt from tmp group by rule)";
+	    "(select rule, count(*) n, avg(attempts) avgAttempts, sum(attempts+couldAlsoAttempt)/sum(removed+couldAlsoRemove) score, sum(attempts+couldAlsoAttempt)/sum(removed+couldAlsoRemove)*max(maxToRemove) scoreTimesObjectCnt, avg(xFactor)/4 x from tmp group by rule)";
 
 	qq.add(q);
 	qq.add("select * from Scoring");

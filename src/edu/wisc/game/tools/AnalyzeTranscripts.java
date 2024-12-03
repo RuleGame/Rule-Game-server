@@ -29,12 +29,12 @@ public class AnalyzeTranscripts {
 
     protected boolean quiet = false;
     
-    static void usage() {
+    private static void usage() {
 	usage(null);
     }
-    static void usage(String msg) {
+    private static void usage(String msg) {
 	System.err.println("For usage info, please see:\n");
-	System.err.println("http://rulegame.wisc.edu/w2020/analyze-transcripts.html");
+	System.err.println("http://rulegame.wisc.edu/w2020/tools/analyze-transcripts.html");
 	if (msg!=null) 	System.err.println(msg + "\n");
 	System.exit(1);
     }

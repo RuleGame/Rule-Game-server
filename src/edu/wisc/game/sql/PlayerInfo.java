@@ -76,6 +76,15 @@ public class PlayerInfo {
     public Date getDate() { return date; }
     public void setDate(Date _date) { date = _date; }
 
+    @Basic 
+    private String partnerPlayerId;
+    /** The playerId value of the partner, if this is a two-player game, and
+	this player has already been paired with a partner. Null otherwise.
+	 */
+    public String getPartnerPlayerId() { return partnerPlayerId; }
+    public void setPartnerPlayerId(String _partnerPlayerId) { partnerPlayerId = _partnerPlayerId; }
+
+
     /** FIXME: this may result in an Episode being persisted before its completed, 
 	which we, generally, don't like. Usually not a big deal though.
      */

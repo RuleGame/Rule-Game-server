@@ -287,7 +287,8 @@ public class EpisodeInfo extends Episode {
     private ExtendedDisplay processMove(Display _q, Pick move) throws IOException  {
 	WatchPlayer.showThem( getPlayer().getPlayerId(),
 			     "Made a move: " + move);
-
+	WatchPlayer.showThem( getPlayer().getPlayerId(), move);
+	
 	boolean isMove = (move instanceof Move);
 	justReachedX2=justReachedX4=false;
 

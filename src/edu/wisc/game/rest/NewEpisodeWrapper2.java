@@ -134,6 +134,7 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	    Logging.info("NewEpisodeWrapper2(pid="+ pid+"): returning:\n" +
 			 JsonReflect.reflectToJSONObject(this, true));
 	    WatchPlayer.showThem(pid, "Starting on episode "  + episodeId);
+	    //WatchPlayer.showThem(pid, this);
 
 
 	}

@@ -25,11 +25,17 @@ import java.util.Date;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import jakarta.websocket.*;
+/*
+import jakarta.websocket.EncodeException;
+
 import jakarta.websocket.OnClose;
 import jakarta.websocket.OnError;
 import jakarta.websocket.OnMessage;
 import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
+import jakarta.websocket.Encoder;
+*/
 import jakarta.websocket.server.ServerEndpoint;
 
 //import org.apache.juli.logging.Log;
@@ -39,7 +45,9 @@ import edu.wisc.game.util.Logging;
 
 //import util.HTMLFilter;
 
-@ServerEndpoint(value = "/websocket/watchPlayer")
+@ServerEndpoint(value = "/websocket/watchPlayer" ,
+		encoders = {WatchPlayer.PickEncoder.class}
+		)
 public class WatchPlayer {
 
     //    private static final Log log = LogFactory.getLog(WatchPlayer.class);
@@ -61,7 +69,7 @@ public class WatchPlayer {
      * The queue of messages that may build up while another message is being sent. The thread that sends a message is
      * responsible for clearing any queue that builds up while that message is being sent.
      */
-    private Queue<String> messageBacklog = new ArrayDeque<>();
+    private Queue<Object> messageBacklog = new ArrayDeque<>();
     private boolean messageInProgress = false;
 
     public WatchPlayer() {
@@ -128,7 +136,7 @@ public class WatchPlayer {
      * synchronized blocks are limited to operations that are expected to be quick. More specifically, messages are not
      * sent from within a synchronized block.
      */
-    private void sendMessage(String msg) //throws IOException
+    private void sendMessage(Object msg) //throws IOException
     {
 
 
@@ -145,9 +153,18 @@ public class WatchPlayer {
 
         boolean queueHasMessagesToBeSent = true;
 
-        String messageToSend = msg;
+        Object messageToSend = msg;
         do {
-            session.getBasicRemote().sendText(messageToSend);
+	    if (messageToSend instanceof String) {
+		session.getBasicRemote().sendText((String)messageToSend);
+	    } else {
+		try {
+		    session.getBasicRemote().sendObject(messageToSend);
+		} catch(EncodeException ex) {
+		    Logging.error("Send error for object ("+messageToSend+"): " + ex.toString());
+		}
+		    
+	    }
             synchronized (this) {
                 messageToSend = messageBacklog.poll();
                 if (messageToSend == null) {
@@ -196,18 +213,50 @@ public class WatchPlayer {
         }
     }
 
+    public static class WatchMessage {
+	Object o;
+	WatchMessage(Object _o) { o  = _o; }
+    }
+    
     private void showMe(String pid, String text) {
 	if (pid==null  || !pid.equals(watchedPid)) return;
 	String s = "At " + (new Date()) + ", action by player '" + pid +"': " + text;
 	sendMessage(s);
     }
 
+    private void showMe2(String pid, Object m) {
+	if (pid==null  || !pid.equals(watchedPid)) return;
+	sendMessage(m);
+    }
+
     /** Methods handling important events during the game call this method
 	to let watchers now about the most recent event */
-    public static void showThem(String pid, String text) {
+    public static <T> void showThem(String pid, T msg) {
 	for (WatchPlayer client : connections) {
-	    client.showMe(pid, text);
+	    if (msg instanceof String) {
+		client.showMe(pid, (String)msg);
+	    } else { //if (msg instanceof WatchMessage) {
+		client.showMe2(pid, msg);
+		//	    } else {
+		//Logging.error("Wrong message type: " + msg.getClass());
+	    }
 	}
     }
-    
+
+    /** See https://docs.oracle.com/javaee/7/tutorial/websocket007.htm
+	for documentation on encoders */
+    static public class PickEncoder implements Encoder.Text<edu.wisc.game.sql.Episode.Pick> {
+	@Override
+	public void init(EndpointConfig ec) { }
+	@Override
+	public void destroy() { }
+	@Override
+	/** This method can use reflection to make a nice JSON string out of
+	    the object; but at the moment I just use toString.
+	*/
+	public String encode(edu.wisc.game.sql.Episode.Pick pick) throws EncodeException {
+	    // Access msgA's properties and convert to JSON text...
+	    return "[pick/move: "+pick+"]";
+	}
+    }
 }
