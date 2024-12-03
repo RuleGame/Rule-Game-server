@@ -4,7 +4,7 @@
 <body>
   <h1>The Export Transcripts tool</h1>
 
-<div align="center"><em>Updated 2024-11-30, for Game Server 6.045</em></div>
+<div align="center"><em>Updated 2024-12-02, for Game Server 6.046</em></div>
 
 <h2>Introduction</h2>
 
@@ -132,10 +132,12 @@ total 436
 
     <p>This file contains some processed information about each player's interaction with the first rule set of his trial list (i.e. the rule set for which he was a "naive player"). The content looks like this:
       <pre>
-#playerId,trialListId,seriesNo,rule,maxToRemove,episodes,attempts,removed,couldAlsoAttempt,couldAlsoRemove,finishCode
-prolific-671b8-5e90,basic-02-A,0,quadNearby,27,2,12,11,16,16,5
-prolific-671b8-5e4d,basic-03-A,0,quadNearby,27,3,46,27,0,0,1
-prolific-671b8-5c65,basic-03-B,0,quadMixed1,27,3,93,27,0,0,1
+#playerId,trialListId,seriesNo,rule,maxToRemove,episodes,attempts,removed,couldAlsoAttempt,couldAlsoRemove,finishCode,xFactor
+prolific-671b8ae84509b9a624b95e13-5e9088a8a4b6ed018b45ba7b,basic-02-A,0,quadNearby,27,2,12,11,16,16,5,4
+prolific-671b8ae84509b9a624b95e13-5e4d01bbca55661437cd235b,basic-03-A,0,quadNearby,27,3,46,27,0,0,1,0
+prolific-671b8ae84509b9a624b95e13-5c655e3c42faef0001283e77,basic-03-B,0,quadMixed1,27,3,93,27,0,0,1,0
+prolific-671b8ae84509b9a624b95e13-5e64e9aae18d1524c7743b5d,basic-04-A,0,allOfColOrd_BRKY,27,3,37,27,0,0,1,0
+prolific-671b8ae84509b9a624b95e13-613018599782583980fbf406,basic-04-B,0,allOfShaOrd_qcts,27,3,36,27,0,0,1,2
 ...
       </pre>
 
@@ -151,7 +153,8 @@ prolific-671b8-5c65,basic-03-B,0,quadMixed1,27,3,93,27,0,0,1
 	<li>removed -- the total number of objects removed by this player from the boards
 	<li>couldAlsoAttempt -- if the player ended with an "early win" (without actually clearing all his boards), he would have need to make at least this many moved to actually clear all boards. This is computed as maxToRemove-removed. For all other players, 0.
 	<li>couldAlsoRemove -- if the player ended with an "early win" (without actually clearing all his boards), this is how many objects he wasn't given an opportunity to remove. This is the same number as the one above. For all other players, 0.
-	  <li>finishCode -- the finish code for the last played episode. (1 for success, 3 for "give up", 5 for "early win")
+	<li>finishCode -- the finish code for the last played episode. (1 for success, 3 for "give up", 5 for "early win")
+	<li>xFactor -- in games with DOUBLING or LIKELIHOOD incentive schemes, this is 2 or 4 for players who achieved doubling or quadrupling of their scores, 0 for all other players. In all other games, 0.
       </ul>
       
       <h3>scores.csv</h3>
@@ -159,26 +162,26 @@ prolific-671b8-5c65,basic-03-B,0,quadMixed1,27,3,93,27,0,0,1
 <p>Aggregate information about the naive player's performance on each rule set.
       
       <pre>
-	sql> more scores.csv 
-#rule,n,avgAttempts,score,scoreTimesObjectCnt
-allOfColOrd_BRKY,10,59.1000,2.2074,59.6000
-allOfShaOrd_qcts,11,51.1818,1.9327,52.1818
-ccw,10,47.8000,1.9333,52.2000
-cm_RBKY,9,36.1111,1.4897,40.2222
-col1OrdBuck_BRKY0213,12,117.6667,4.3580,117.6667
-col1Ord_BRKY,10,54.4000,2.0985,56.6591
-colOrdL1_BRKY,10,95.4000,3.6565,98.7252
-cw,11,56.1818,2.2803,61.5675
-ordL1,22,65.6364,2.6875,72.5625
-ordL1_Nearby,10,84.5000,3.2741,88.4000
-ordRevOfL1,10,70.8000,2.7000,72.9000
-ordRevOfL1_Remotest,11,113.0000,4.4607,120.4393
-quadMixed1,10,81.7000,3.1303,84.5172
-quadNearby,21,52.5238,2.0970,56.6190
-sha1OrdBuck_qcts0213,12,97.1667,3.9731,107.2727
-sha1Ord_qcts,11,54.0909,2.1246,57.3636
-shaOrdL1_qcts,10,80.5000,3.1074,83.9000
-sm_csqt,10,47.4000,1.8815,50.8000
+	sql> more scores.csv
+#rule,n,avgAttempts,score,scoreTimesObjectCnt,x
+allOfColOrd_BRKY,10,59.1000,2.2074,59.6000,0.30000000
+allOfShaOrd_qcts,11,51.1818,1.9327,52.1818,0.50000000
+ccw,10,47.8000,1.9333,52.2000,0.45000000
+cm_RBKY,9,36.1111,1.4897,40.2222,0.77777778
+col1OrdBuck_BRKY0213,12,117.6667,4.3580,117.6667,0.20833333
+col1Ord_BRKY,10,54.4000,2.0985,56.6591,0.35000000
+colOrdL1_BRKY,10,95.4000,3.6565,98.7252,0.15000000
+cw,11,56.1818,2.2803,61.5675,0.50000000
+ordL1,22,65.6364,2.6875,72.5625,0.56818182
+ordL1_Nearby,10,84.5000,3.2741,88.4000,0.65000000
+ordRevOfL1,10,70.8000,2.7000,72.9000,0.55000000
+ordRevOfL1_Remotest,11,113.0000,4.4607,120.4393,0.40909091
+quadMixed1,10,81.7000,3.1303,84.5172,0E-8
+quadNearby,21,52.5238,2.0970,56.6190,0.54761905
+sha1OrdBuck_qcts0213,12,97.1667,3.9731,107.2727,0.58333333
+sha1Ord_qcts,11,54.0909,2.1246,57.3636,0.40909091
+shaOrdL1_qcts,10,80.5000,3.1074,83.9000,0.40000000
+sm_csqt,10,47.4000,1.8815,50.8000,0.65000000
 	</pre>
 <p>
   The semantics of the columns is as follows:
@@ -189,7 +192,8 @@ sm_csqt,10,47.4000,1.8815,50.8000
       "difficulty score": the average number of move attempts made by a player on that rule set. If all players cleared all boards shown to them, this would be a very good metric; but since in real life some players give up or walk away, this can be improved a bit.
     <li>score - a "corrected score", as described below.
     <li>scoreTimesObjectCnt - the "corrected score" multiplied by the expected number of objects that a player would have to remove to clear all boards. If all players have cleared all boards, this number would be exactly the same as avgAttempts.
-      <li>scoreTimesObjectCnt =  score*maxToRemove for this rule set. If all players have cleared all boards, this would have been exactly equal to avgAttempts.
+    <li>scoreTimesObjectCnt =  score*maxToRemove for this rule set. If all players have cleared all boards, this would have been exactly equal to avgAttempts.
+    <li>x - the value of xFactor, averaged over all players who played this rule. In games with the DOUBLING or LIKELIHOOD incentive schemes, this value may range from 0 (no player displayed a good level or learning) to 1.0 (all players demonstrated a good level or learning). In all other games, 0.
   </ul>
 
 <p>The <strong>corrected score</strong> for a rule set is computed as
