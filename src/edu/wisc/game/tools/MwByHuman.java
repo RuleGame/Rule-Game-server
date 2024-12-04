@@ -613,36 +613,34 @@ m*
 			     Vector<EpisodeHandle> includedEpisodes)
 	throws  IOException, IllegalInputException,  RuleParseException {
 
-
 	int je =0;
-
-	MwSeries ser = null;
 	int streak=0;
 	double lastR = 0;
 
 	if (includedEpisodes.size()==0) return; // empty series (all "give-ups")
+
 	EpisodeHandle eh = includedEpisodes.firstElement();
 	Vector<Board> boardHistory = null;
 	double rValues[] = computeP0andR(section, eh.para, eh.ruleSetName, boardHistory).rValues;
 
-	
+	MwSeries ser = new MwSeries(eh);
+	boolean shouldRecord = (target==null) || eh.ruleSetName.equals(target);
+	shouldRecord = shouldRecord && !(precMode == PrecMode.Naive && ser.precedingRules.size()>0);
+		
+	streak=0;
+	ser.errcnt = 0;
+	ser.mStar = defaultMStar;
+	if (precMode == PrecMode.EveryCond) {
+	    ser.adjustPreceding(savedMws);
+	}
+	// Do recording only after a successful adjustPreceding (if applicable)
+	if (shouldRecord) 		savedMws.add(ser);
+
 	for(TranscriptManager.ReadTranscriptData.Entry[] subsection: section) {
 	    eh = includedEpisodes.get(je ++);
-	    
-	    if (ser==null || !ser.ruleSetName.equals(eh.ruleSetName)) {
-		ser = new MwSeries(eh);
-		boolean shouldRecord = (target==null) || eh.ruleSetName.equals(target);
 
-		shouldRecord = shouldRecord && !(precMode == PrecMode.Naive && ser.precedingRules.size()>0);
-		
-		streak=0;
-		ser.errcnt = 0;
-		ser.mStar = defaultMStar;
-		if (precMode == PrecMode.EveryCond) {
-		    ser.adjustPreceding(savedMws);
-		}
-		// Do recording only after a successful adjustPreceding (if applicable)
-		if (shouldRecord) 		savedMws.add(ser);
+	    if (!ser.ruleSetName.equals(eh.ruleSetName)) {
+		throw new IllegalArgumentException("Rule set name changed in the middle of a series");
 	    }
 
 	    // We will skip the rest of transcript for the rule set (i.e. this
