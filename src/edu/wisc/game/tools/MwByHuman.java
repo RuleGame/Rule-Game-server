@@ -636,7 +636,8 @@ m*
 	if (shouldRecord) 		savedMws.add(ser);
 
 	if (debug) System.out.println("Scoring");
-	
+
+	int k=0;
 	for(TranscriptManager.ReadTranscriptData.Entry[] subsection: section) {
 	    eh = includedEpisodes.get(je ++);
 
@@ -652,7 +653,7 @@ m*
 		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
 		if (!eh.episodeId.equals(e.eid)) throw new IllegalArgumentException("Array mismatch");
 
-		double r = rValues[j];
+		double r = rValues[k++];
 		
 		if (e.code==CODE.ACCEPT) {
 		    if (e.pick instanceof Episode.Move) {
