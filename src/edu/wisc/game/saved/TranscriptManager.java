@@ -68,8 +68,8 @@ public class TranscriptManager {
 	when we need to read and statistically analyze old transcripts.
      */
     public static class ReadTranscriptData extends Vector<ReadTranscriptData.Entry> {
-	/** Stores the content of one line read back from the transcript 
-	    file */
+	/** Stores the content of one line (representing one move/pick
+	    attempt) read back from the transcript file */
 	public static class Entry {
 	    final public CsvData.BasicLineEntry csv;
 	    
@@ -78,7 +78,7 @@ public class TranscriptManager {
 	    final public String timeString;
 	    /** Pick or move, as the case may be */
 	    final public Pick pick;
-	    /** The success coderead from the transcript */
+	    /** The success code read from the transcript */
 	    final public int code;
 
 	    Entry(CsvData.BasicLineEntry e) {
@@ -95,12 +95,13 @@ public class TranscriptManager {
 		boolean isMove =(by!=null);
 	
 		Pos pos = new Pos(qx,qy);
-		    pick = isMove?
+		pick = isMove?
 		    new Move(pos, new Pos(bx, by)):
 		    new Pick(pos);
 
 		
 		code = e.getColInt(j++);
+		pick.setCode( code);
 	    }
 
 	    /** Requires the equality of the strings in all columns */

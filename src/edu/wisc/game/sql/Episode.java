@@ -66,6 +66,7 @@ public class Episode {
 	/** Acceptance code; will be recorded upon processing */
 	int code;
  	public int getCode() { return code; }
+	public void setCode(int _code) { code = _code; }
 	final public Date time = new Date();
 	public String toString() {
 	    return "PICK " + pos + " " +new Pos(pos) +", code=" + code;
@@ -76,7 +77,7 @@ public class Episode {
 	    during the acceptance process. */
 	double rValue = 0;
 	void setRValue(double r)  { rValue = r; }
-	double getRValue()  { return rValue; }
+	public double getRValue()  { return rValue; }
     }
 
     /** A Move instance describes an [attempted] act of picking a piece
@@ -301,7 +302,7 @@ public class Episode {
 	    double inverseProbFullKnowledge = countMovables * countDest;
 	    double r = inverseProbRandom/inverseProbFullKnowledge;
 
-	    Logging.info("r=("+countTryMovables+"/"+countMovables+")*(4/"+countDest+")=" + r);
+	    //Logging.debug("r=("+countTryMovables+"/"+countMovables+")*(4/"+countDest+")=" + r);
 	    
 	    return r;
 	    
@@ -347,7 +348,6 @@ public class Episode {
 		if (pieces[pos]==null) {
 		    acceptanceMap[pos]=null;
 		} else {
-		    // ZZZZ
 		    acceptanceMap[pos] = pieceAcceptance(pieces[pos], eligibleForEachOrder);
 		}
 	    }
@@ -449,7 +449,24 @@ public class Episode {
 	    }
 	    return whoAccepts;
 	}
-    
+
+	/** Sets the R-value of a pick/move */
+	private void callComputeR(Pick pick) {
+	    boolean movable = isMoveable[pick.pos];
+	    if (!movable) {  // immovable piece
+		pick.setRValue(0);
+	    } else if (!(pick instanceof Move)) {  // accepted pick
+		// accepted picks don't affect the cumulative R, so just use 1
+		pick.setRValue(1);
+	    } else {
+		// Move attempted on a moveable piece
+		Move move  = (Move) pick;
+		double rValue = ruleLine.computeR(move);
+		move.setRValue(rValue);
+	    }
+	}
+
+	
 	/** Requests acceptance for this move or pick. In case of
 	    acceptance of an actual move (not just a pick), decrements
 	    appropriate counters, removes the piece from the board;
@@ -458,7 +475,7 @@ public class Episode {
 
 	    <p> If the "pick" object is a Move, this method also
 	    computes and sets the R-value (see "Bayesian-based
-	    intervention") in the "pick" object.
+	    intervention") in the "pick" object.	    
 
 	    @return result  (accept/deny)
 	*/
@@ -475,20 +492,16 @@ public class Episode {
 	    if (pick.piece==null) return pick.code=CODE.EMPTY_CELL;	    
 	    pick.pieceId = (int)pick.piece.getId();
 
-	    if (!isMoveable[pick.pos]) {  // immovable piece
-		pick.setRValue(0);
+	    boolean movable = isMoveable[pick.pos];
+	    callComputeR(pick);
+
+	    if (!movable) {  // immovable piece
 		return pick.code =  CODE.IMMOVABLE;
 	    } else if (!(pick instanceof Move)) {  // accepted pick
 		successfulPickCnt++;
-		// accepted picks don't affect the cumulative R, so just use 1
-		pick.setRValue(1);
 		return pick.code = CODE.ACCEPT;
 	    }
-
-	    // Move attempted on a moveable piece
-	    Move move  = (Move) pick;
-	    double rValue = ruleLine.computeR(move);
-	    move.setRValue(rValue);
+	    Move move = (Move)pick;
 		
 	    BitSet[] r = acceptanceMap[move.pos];
 	    
@@ -1016,7 +1029,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
 
     /** The current version of the application */
-    public static final String version = "6.047";
+    public static final String version = "6.048";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }

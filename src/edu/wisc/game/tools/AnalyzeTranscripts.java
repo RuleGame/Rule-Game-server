@@ -539,7 +539,8 @@ public class AnalyzeTranscripts {
 	String outHeader="#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,orderInSeries,episodeId," + "moveNo,timestamp,y,x,by,bx,code";
 	if (needP0) {
 	    outHeader += ",p0";
-	    p0 = computeP0(section, eh0.para, eh0.ruleSetName, boardHistory);
+	    
+	    p0 = computeP0andR(section, eh0.para, eh0.ruleSetName, boardHistory).p0;
 	    if (needBoards) outHeader += ",board";
 	}
 	if (weWantPredecessorEnvironment) {
@@ -659,6 +660,15 @@ public class AnalyzeTranscripts {
 	}
     }
 
+
+    static class P0andR {
+	final double [] p0, rValues;
+	
+	P0andR(int n) {
+	    p0 = new double[n];
+	    rValues = new double[n];
+	}
+    }
     
     /** Reconstructs and replays the historical episode, computing p0 for
 	every pick or move attempt.
@@ -669,12 +679,14 @@ public class AnalyzeTranscripts {
 	@return An array containing p0 values for each move.
 
      */
-    private double[] computeP0(Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections, ParaSet para, String ruleSetName,
+    protected P0andR computeP0andR(Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections, ParaSet para, String ruleSetName,
 			       Vector<Board> boardHistory
 			       )  throws  IOException, IllegalInputException,  RuleParseException{
+
+	
 	RuleSet rules = AllRuleSets.obtain( ruleSetName);
 
-	double [] p0 = new double[sumLen(subsections)];
+	P0andR result = new P0andR( sumLen(subsections));
 	int k=0;
 	
 	for(TranscriptManager.ReadTranscriptData.Entry[] subsection: subsections) {
@@ -684,42 +696,42 @@ public class AnalyzeTranscripts {
 	    Game game = new Game(rules, board);
 	    ReplayedEpisode rep = new ReplayedEpisode(episodeId, para, game, randomPlayerModel);
 
-	    System.out.println("------------- eid=" + episodeId);
+	    //System.out.println("- P&R ---------- eid=" + episodeId);
 
-	    System.out.println("All moves:");
+	    //System.out.println("All moves:");
 	    for(int j=0; j<subsection.length; j++) {
 		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
-		System.out.println(e.pick.toString());
+		//System.out.println(e.pick.toString());
 	    }
 	
 	    for(int j=0; j<subsection.length; j++) {
 		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
 
-		System.out.println("j=" + j);
-		System.out.println(rep.graphicDisplay());
+		//System.out.println("j=" + j);
+		//System.out.println(rep.graphicDisplay());
 
 		if (boardHistory!=null) {		
 		    Board b = rep.getCurrentBoard();
 		    boardHistory.add(b);
 		}
 
-
-
-		
 		double p =rep.computeP0(e.pick, e.code);	    
-		p0[k++] = p;
-
+		result.p0[k] = p;
+	    
 		//-- replay the move/pick attempt 
 		int code = rep.accept(e.pick);
-		
-		System.out.println(e.pick.toString() +", p0=" + p+", code=" + code);
+
+		result.rValues[k] = e.pick.getRValue();
+		k++;
+
+		//System.out.println(e.pick.toString() +", p0=" + p+", replay code=" + code);
 
 		if (code!=e.code) {
-		    throw new IllegalArgumentException("Unexpected code in replay: " + code +", vs. the recorded code=" + e.code);
+		    throw new IllegalArgumentException("Unexpected code in episode "+episodeId+", replay code=" + code +", vs. the recorded code=" + e.code);
 		}
 	    }
 	}
-	return p0;
+	return result;
     }
 
 
@@ -753,7 +765,7 @@ public class AnalyzeTranscripts {
 	// One subsection per episode
 	if (!quiet) System.out.println("Player "+playerId+": split the transcript ("+transcript.size()+" moves) into "+subsections.size()+ " episode sections");
 	    
-	String lastRid="";
+	String lastRid=null;
 	// all episodes' subsections for a given rule sets
 	Vector<TranscriptManager.ReadTranscriptData.Entry[]> section=new Vector<>();
 	Vector<EpisodeHandle> includedEpisodes=new Vector<>();
@@ -768,7 +780,9 @@ public class AnalyzeTranscripts {
 	    }
 	    
 	    String rid=eh.ruleSetName;
-	    if (!lastRid.equals(rid)) {
+
+	    if (lastRid == null) lastRid = rid;
+	    else if (!lastRid.equals(rid)) {
 		saveAnyData( section, includedEpisodes);
 		lastRid=rid;
 	    }

@@ -32,13 +32,15 @@ public class MwByHuman extends AnalyzeTranscripts {
     private static Set<String> ignorePrec = new HashSet<>();
     private static int ignorePrecCnt=0;
     
-    /** @param  _targetStreak this is how many consecutive error-free moves the player must make (e.g. 10) in order to demonstrate successful learning.
+    /** @param  _targetStreak this is how many consecutive error-free moves the player must make (e.g. 10) in order to demonstrate successful learning. If 0 or negative, this criterion is turned off
+	@param _targetR the product of R values of a series of consecutive moves should be at least this high) in order to demonstrate successful learning. If 0 or negative, this criterion is turned off
      */
-    public MwByHuman(MwByHuman.PrecMode _precMode, int _targetStreak, double _defaultMStar,Fmter _fm    ) {
+    public MwByHuman(MwByHuman.PrecMode _precMode, int _targetStreak, double _targetR, double _defaultMStar,Fmter _fm    ) {
 	super( null, null);	
 	quiet = true;
 	precMode = _precMode;
 	targetStreak = _targetStreak;
+	targetR = _targetR;
 	defaultMStar = _defaultMStar;
 	fm = _fm; 
     }
@@ -67,7 +69,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 	Vector<String> nicknames = new Vector<>();
 	Vector<Long> uids = new Vector<>();
 
-	int targetStreak = 10;
+	int targetStreak = 0;
+	double targetR = 0;
 	double defaultMStar=300;
 	PrecMode precMode = PrecMode.Naive;
 	boolean useMDagger = false;
@@ -102,6 +105,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 		importFrom.add(argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-targetStreak")) {
 		targetStreak = Integer.parseInt( argv[++j] );
+	    } else if (j+1< argv.length && a.equals("-targetR")) {
+		targetR = Double.parseDouble( argv[++j] );
 	    } else if (j+1< argv.length && a.equals("-defaultMStar")) {
 		defaultMStar = Double.parseDouble( argv[++j] );
 	    } else if (j+1< argv.length && a.equals("-precMode")) {
@@ -129,6 +134,13 @@ public class MwByHuman extends AnalyzeTranscripts {
 
 	}
 
+
+	System.out.println("ARGV: targetStreak=" + targetStreak+", targetR="+targetR );
+	if (targetStreak<=0 && targetR <=0) {
+	    targetStreak = 10;
+	}
+
+	System.out.println("Adjusted: targetStreak=" + targetStreak+", targetR="+targetR );	
 	if (config!=null) {
 	    // Instead of the master conf file in /opt/w2020, use the customized one
 	    MainConfig.setPath(config);
@@ -150,7 +162,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	}
 
 	Fmter plainFm = new Fmter();
-	MwByHuman processor = new MwByHuman(precMode, targetStreak, defaultMStar, plainFm);
+	MwByHuman processor = new MwByHuman(precMode, targetStreak, targetR, defaultMStar, plainFm);
 
 	try {
 	    if (importFrom.size()==0) {
@@ -325,7 +337,11 @@ public class MwByHuman extends AnalyzeTranscripts {
 	if (fromFile) {
 	    result.append( fm.para("Processing data from an imported CSV file"));
 	} else {
-	    result.append( fm.para("In the tables below, 'learning' means demonstrating the ability to make "+fm.tt(""+targetStreak)+" consecutive moves with no errorrs"));
+	    Vector<String> v = new Vector<>();
+	    if (targetStreak>0) v.add("to make "+fm.tt(""+targetStreak)+" consecutive moves with no errors");
+	    if (targetR>0) v.add("to make a series of successful consecutive moves with the product of R values at or above "+fm.tt(""+targetR));
+	    
+	    result.append( fm.para("In the tables below, 'learning' means demonstrating the ability " + Util.joinNonBlank(" or ", v)));
 
 	    result.append( fm.para("mStar is the number of errors the player make until he 'learns' by the above definition. Those who have not learned, or take more than "+fm.tt(""+defaultMStar)+" errors to learn, are assigned mStar="+defaultMStar));
 	    result.append( fm.para("M-W matrix is computed based on " + (useMDagger? "mDagger" : "mStar")));
@@ -569,6 +585,7 @@ m*
 
 
     private final int targetStreak;
+    private final double targetR;
     /** It is double rather than int so that Infinity could be represented */
     private final double  defaultMStar;
 
@@ -579,9 +596,13 @@ m*
 	In some cases, a series can be skipped (not saved). This is the case
 	if only the data for a specific target is requested (target!=null),
 	or if we only want the data for "Naive" players.
+
+	<p>This method is called from AnalyzeTranscripts.analyzePlayerRecord(),
+	overriding the eponymous method in that class.
 	
 	@param section A vector of arrays, each array representing the recorded
-	moves for one episode.
+	moves for one episode. In its entirety, section describes all episodes
+	in the series.
 	@param includedEpisodes All non-empty episodes played by this player in this rule set. This array must be aligned with section[]
     */
   
@@ -593,11 +614,19 @@ m*
 	int je =0;
 
 	MwSeries ser = null;
-	int streak=0;       
+	int streak=0;
+	double lastR = 0;
+
+	EpisodeHandle eh = includedEpisodes.firstElement();
+	Vector<Board> boardHistory = null;
+	double rValues[] = computeP0andR(section, eh.para, eh.ruleSetName, boardHistory).rValues;
+
 	
 	for(TranscriptManager.ReadTranscriptData.Entry[] subsection: section) {
-	    EpisodeHandle eh = includedEpisodes.get(je ++);
+	    eh = includedEpisodes.get(je ++);
 
+
+	    
 	    if (ser==null || !ser.ruleSetName.equals(eh.ruleSetName)) {
 		ser = new MwSeries(eh);
 		boolean shouldRecord = (target==null) || eh.ruleSetName.equals(target);
@@ -621,16 +650,28 @@ m*
 	    for(; j<subsection.length && !ser.learned; j++) {
 		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
 		if (!eh.episodeId.equals(e.eid)) throw new IllegalArgumentException("Array mismatch");
+
+		double r = rValues[j];
 		
 		if (e.code==CODE.ACCEPT) {
-		    if (e.pick instanceof Episode.Move) streak++;
+		    if (e.pick instanceof Episode.Move) {
+			streak++;
+			if (lastR==0) lastR=1;
+			lastR *= r;
+		    }
 		} else {
 		    streak = 0;
+		    lastR = 0;
 		    ser.errcnt ++;
 		    ser.totalErrors++;
 		}
 
-		if (streak>=targetStreak) {
+
+		boolean learned =
+		    (targetStreak>0 && streak>=targetStreak) ||
+		    (targetR>0 && lastR>=targetR);
+		
+		if (learned) {
 		    ser.learned=true;
 		    ser.mStar = Math.min( ser.errcnt, ser.mStar);
 		}		

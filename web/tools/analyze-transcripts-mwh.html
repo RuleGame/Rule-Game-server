@@ -6,7 +6,7 @@
 
 <h1>Processing human players' transcripts for Mann-Whitney comparison</h1>
 
-<div align="center"><em>Updated 2024-03-03, for Game Server 6.026</em></div>
+<div align="center"><em>Updated 2024-12-03, for Game Server 6.048</em></div>
 
 <p>This document describes the functionality of the script <tt>scripts/analyze-transcripts-mwh.sh</tt>, which is designed to analyze human players' transcripts in order to compare rule sets with respect to their ease/difficulty for the human players' population. The underlying Java class is <tt>edu.wisc.game.tools.MwByHuman</tt>
 
@@ -58,8 +58,13 @@ These modes are discussed below.
 
   <ul>
     <li><tt>-targetStreak 10</tt> : this is how many consecutive error-free moves the player must make in order to demonstrate successful learning.
+    <li><tt>-targetR 1000</tt> : the product of R-values of a consecutive sequence of good moves must reach this threshold in order to demonstrate successful learning. (This is the same R-value that's used in games with the LIKELIHOOD incentive scheme).
     <li><tt>-defaultMStar 300</tt> : this value the program will assign as <em>m<sub>*</sub></em> (mStar) to the players who have failed to learn (as per the above criterion) the rule set they were playing. You can use the value <tt>Infinity</tt> to ensure that all non-learners are distinct from all learners; however, any positive value that's larger than the maximum number of moves in any player's series will work just as well. Because M-W is based on comparisons, 300 will work exactly the same way as  <tt>Infinity</tt> as long as no successful player has put more than 300 move attempts into any rule set.
   </ul>
+
+<p>One normally should supply only one option <tt>-targetStreak <em>n</em></tt> or  <tt>-targetStreak <em>r</em></tt>, so that only one "criterion of mastery" is used. If both are supplied, then the player will be deemed to have learned the rule as soon as either of the two criteria is satisfied. Either way, <em>m_<sub>*</sub></em> of a pair (player,ruleSet) will be computed as the number of errors the player has made before before demonstrating the learning by whichever criterion is in effect.
+
+<P>If neither of the options <tt>-targetStreak <em>n</em></tt> or  <tt>-targetStreak <em>r</em></tt> have been supplied, the tool will used the default <tt>targetStreak</tt> of 10 (which is the mastery criterion typically used in games with the DOUBLING incentive scheme).
 
 <p>Other options:
   <ul>

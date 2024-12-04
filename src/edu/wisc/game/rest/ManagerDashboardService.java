@@ -32,6 +32,7 @@ public class ManagerDashboardService {
     @Produces(MediaType.TEXT_HTML)
     public String summary(@QueryParam("exp") List<String> _plans,
 			  @DefaultValue("10") @QueryParam("targetStreak") int targetStreak,
+			  @DefaultValue("0") @QueryParam("targetR") int targetR,
 			  @DefaultValue("300") @QueryParam("defaultMStar") double defaultMStar,
 
 			  @DefaultValue("Naive") @QueryParam("prec") String precString,
@@ -58,7 +59,7 @@ public class ManagerDashboardService {
 
 	    body += fm.para("Taking into account players assigned to the following experiment plans: " + fm.tt( String.join(", " , plans)));
 
-	    MwByHuman processor = new MwByHuman(precMode, targetStreak, defaultMStar, fm);
+	    MwByHuman processor = new MwByHuman(precMode, targetStreak, targetR, defaultMStar, fm);
 
 	    // Extract the data from the transcript, and put them into savedMws
 	    processor.processStage1(plans, pids, nicknames, uids);

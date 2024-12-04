@@ -302,8 +302,10 @@ public class Ecd {
 
 	    // Eigenvalue analysis
 	    Fmter plainFm = new Fmter();
+	    final int targetStreak=10;
+	    final double targetR = 0;
 	    MwByHuman processor = new MwByHuman(PrecMode.EveryCond,
-						10, 300, plainFm);
+						targetStreak, targetR, 300, plainFm);
 	    processor.savedMws.addAll(data);
 
 	    String ta = (target==null ?  "cross-target comparison" : "Target " + target);

@@ -30,8 +30,9 @@ ContextInfo main = new ContextInfo(request,response);
 <td valign="top">   
 <h3>Stage 1: Transcript processing parameters</h3>
 <br>
-Learning attainment criterion:
-<input type="text" name="targetStreak" size="4" value="10"> consecutive error-free moves
+Learning attainment criterion (enter one):<br>
+<input type="text" name="targetStreak" size="4" value="10"> consecutive error-free moves, or <br>
+R &ge; <input type="text" name="targetR" size="10" value="1000">
 
 <br>Default mStar =
 <input type="text" name="defaultMStar" size="6" value="300">  (You can also enter the value <tt>Infinity</tt>)
@@ -55,6 +56,7 @@ R2:R3:<strong>R1</strong> are merged, viewed as the same "R1 experience").
 
 <hr>
 	    <strong><button type="submit">Compare rule sets</button></strong>
+(only click once)
 	    </tr>
 	    </table>
 </form>
