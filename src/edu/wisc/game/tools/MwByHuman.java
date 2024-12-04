@@ -95,6 +95,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 		argType = ArgType.PID;
 	    } else if  (a.equals("-file")) {
 		fromFile=true;
+	    } else if  (a.equals("-debug")) {
+		debug=true;
 	    } else if (a.equals("-mDagger")) {
 		useMDagger = true;
 	    } else if (j+1< argv.length && a.equals("-config")) {
@@ -626,8 +628,6 @@ m*
 	
 	for(TranscriptManager.ReadTranscriptData.Entry[] subsection: section) {
 	    eh = includedEpisodes.get(je ++);
-
-
 	    
 	    if (ser==null || !ser.ruleSetName.equals(eh.ruleSetName)) {
 		ser = new MwSeries(eh);
@@ -645,7 +645,7 @@ m*
 		if (shouldRecord) 		savedMws.add(ser);
 	    }
 
-	    // skip the rest of transcript for the rule set (i.e. this
+	    // We will skip the rest of transcript for the rule set (i.e. this
 	    // series) if the player has already demonstrated his
 	    // mastery of this rule set
 	    int j=0;

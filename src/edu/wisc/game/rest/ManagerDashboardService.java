@@ -31,7 +31,7 @@ public class ManagerDashboardService {
     @Path("/compareRulesForHumans")
     @Produces(MediaType.TEXT_HTML)
     public String summary(@QueryParam("exp") List<String> _plans,
-			  @DefaultValue("10") @QueryParam("targetStreak") int targetStreak,
+			  @DefaultValue("0") @QueryParam("targetStreak") int targetStreak,
 			  @DefaultValue("0") @QueryParam("targetR") int targetR,
 			  @DefaultValue("300") @QueryParam("defaultMStar") double defaultMStar,
 
@@ -39,6 +39,9 @@ public class ManagerDashboardService {
 			  @DefaultValue("false") @QueryParam("mDagger") boolean useMDagger			  
 			  
 			  ) {
+
+
+	if (targetStreak <=0 && targetR <=0) targetStreak = 10;
 
 	
 	MwByHuman.PrecMode precMode = Enum.valueOf(MwByHuman.PrecMode.class, 

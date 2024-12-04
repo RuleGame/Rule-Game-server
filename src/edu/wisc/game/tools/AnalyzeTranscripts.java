@@ -28,6 +28,7 @@ import edu.wisc.game.parser.RuleParseException;
 public class AnalyzeTranscripts {
 
     protected boolean quiet = false;
+    static boolean debug=false;
     
     private static void usage() {
 	usage(null);
@@ -696,12 +697,12 @@ public class AnalyzeTranscripts {
 	    Game game = new Game(rules, board);
 	    ReplayedEpisode rep = new ReplayedEpisode(episodeId, para, game, randomPlayerModel);
 
-	    //System.out.println("- P&R ---------- eid=" + episodeId);
+	    if (debug) System.out.println("- P&R ---------- eid=" + episodeId);
 
-	    //System.out.println("All moves:");
+	    if (debug) System.out.println("All moves:");
 	    for(int j=0; j<subsection.length; j++) {
 		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
-		//System.out.println(e.pick.toString());
+		if (debug) System.out.println(e.pick.toString());
 	    }
 	
 	    for(int j=0; j<subsection.length; j++) {
@@ -722,10 +723,12 @@ public class AnalyzeTranscripts {
 		int code = rep.accept(e.pick);
 
 		result.rValues[k] = e.pick.getRValue();
+
+		if (debug) System.out.println("Move["+k+"]=" +e.pick.toString() +", p0=" + p+", replay code=" + code +", r=" + result.rValues[k]);
+
 		k++;
 
-		//System.out.println(e.pick.toString() +", p0=" + p+", replay code=" + code);
-
+		
 		if (!Episode.CODE.areSimilar(code, e.code)) {
 		    throw new IllegalArgumentException("Unexpected code in episode "+episodeId+", replay code=" + code +", vs. the recorded code=" + e.code);
 		}
