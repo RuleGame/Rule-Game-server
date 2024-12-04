@@ -627,7 +627,6 @@ m*
 	boolean shouldRecord = (target==null) || eh.ruleSetName.equals(target);
 	shouldRecord = shouldRecord && !(precMode == PrecMode.Naive && ser.precedingRules.size()>0);
 		
-	streak=0;
 	ser.errcnt = 0;
 	ser.mStar = defaultMStar;
 	if (precMode == PrecMode.EveryCond) {
@@ -636,6 +635,8 @@ m*
 	// Do recording only after a successful adjustPreceding (if applicable)
 	if (shouldRecord) 		savedMws.add(ser);
 
+	if (debug) System.out.println("Scoring");
+	
 	for(TranscriptManager.ReadTranscriptData.Entry[] subsection: section) {
 	    eh = includedEpisodes.get(je ++);
 
@@ -658,10 +659,14 @@ m*
 			streak++;
 			if (lastR==0) lastR=1;
 			lastR *= r;
+			if (debug) System.out.println("["+j+"] R*" + r + "=" +lastR);
+		    } else {
+			if (debug) System.out.println("["+j+"] successful pick");
 		    }
 		} else {
 		    streak = 0;
 		    lastR = 0;
+		    if (debug) System.out.println("["+j+"] R=" + lastR);
 		    ser.errcnt ++;
 		    ser.totalErrors++;
 		}
