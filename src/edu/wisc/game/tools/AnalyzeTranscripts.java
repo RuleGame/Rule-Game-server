@@ -726,7 +726,7 @@ public class AnalyzeTranscripts {
 
 		//System.out.println(e.pick.toString() +", p0=" + p+", replay code=" + code);
 
-		if (code!=e.code) {
+		if (!Episode.CODE.areSimilar(code, e.code)) {
 		    throw new IllegalArgumentException("Unexpected code in episode "+episodeId+", replay code=" + code +", vs. the recorded code=" + e.code);
 		}
 	    }
@@ -734,6 +734,7 @@ public class AnalyzeTranscripts {
 	return result;
     }
 
+    
 
     /** The initial boards for all episodes of this player */
     private HashMap<String,Board> boards;

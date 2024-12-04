@@ -277,6 +277,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    } catch(Exception ex) {
 		String msg = "ERROR: Cannot process data for player=" +playerId+" due to missing data. The problem is as follows:";
 		result.append(fm.para(msg));
+		result.append(fm.para(ex.toString()));
 		System.err.println(msg);
 		System.err.println(ex);
 		ex.printStackTrace(System.err);
@@ -617,6 +618,7 @@ m*
 	int streak=0;
 	double lastR = 0;
 
+	if (includedEpisodes.size()==0) return; // empty series (all "give-ups")
 	EpisodeHandle eh = includedEpisodes.firstElement();
 	Vector<Board> boardHistory = null;
 	double rValues[] = computeP0andR(section, eh.para, eh.ruleSetName, boardHistory).rValues;

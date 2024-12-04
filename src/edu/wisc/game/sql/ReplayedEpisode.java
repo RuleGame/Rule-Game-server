@@ -93,7 +93,7 @@ public ReplayedEpisode(String _episodeId, ParaSet _para, Game game,
 	}
 
 	boolean successfulPick = !(nextMove instanceof Move) && code==CODE.ACCEPT;
-	System.out.println("RE.computeP0(" +nextMove+"); code="+code+", successfulPick=" + successfulPick);
+	//System.out.println("RE.computeP0(" +nextMove+"); code="+code+", successfulPick=" + successfulPick);
 
 	
 	return  successfulPick?

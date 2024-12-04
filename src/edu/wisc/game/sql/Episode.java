@@ -689,7 +689,17 @@ public class Episode {
 	// indicate that it was a display (no actual move requested)
 	// and not a MOVE	    
 	    JUST_A_DISPLAY = -8;
-	    
+
+	/** This is used when comparing codes read from old
+	    transcripts and recomputed codes, to take into account
+	    a more recent creation of code 7 */
+	public static int legacy(int code) {
+	    return code==IMMOVABLE? DENY: code;
+	}
+	public static boolean areSimilar(int code1, int code2) {
+	    return legacy(code1)==legacy(code2);
+	}
+	
     }
 
     public static class FINISH_CODE {
