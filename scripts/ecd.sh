@@ -37,6 +37,7 @@
 # -hbAll true: If this option is provided, we use the HB process to compare all pairs of ECD curves, rather than only comparing ECD curves against the naive curve.
 # -colors red,green,purple : curve colors
 # -linkColor black : HB connector color
+# -labels labels.csv : a CSV file that assigns lables to rules. Format "label,rule", e.g fdcl-labels.csv in this directory
 #--------------------------------------------------------------------
 
 #-- The directory where this script is

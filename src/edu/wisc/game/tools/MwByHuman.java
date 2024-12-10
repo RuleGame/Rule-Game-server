@@ -137,12 +137,12 @@ public class MwByHuman extends AnalyzeTranscripts {
 	}
 
 
-	System.out.println("ARGV: targetStreak=" + targetStreak+", targetR="+targetR );
+	//System.out.println("ARGV: targetStreak=" + targetStreak+", targetR="+targetR );
 	if (targetStreak<=0 && targetR <=0) {
 	    targetStreak = 10;
 	}
 
-	System.out.println("Adjusted: targetStreak=" + targetStreak+", targetR="+targetR );	
+	//System.out.println("Adjusted: targetStreak=" + targetStreak+", targetR="+targetR );	
 	if (config!=null) {
 	    // Instead of the master conf file in /opt/w2020, use the customized one
 	    MainConfig.setPath(config);

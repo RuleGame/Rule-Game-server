@@ -1,32 +1,27 @@
 package edu.wisc.game.tools.pooling;
 
-
-//import java.io.*;
+import java.io.*;
 import java.util.*;
-//import java.util.regex.*;
-//import java.util.stream.*;
-//import java.text.*;
+import edu.wisc.game.util.*;
 
 
-//import edu.wisc.game.util.*;
-
-
-/** Maps false.someThingXandY to X, etc. This is used in compact labeling
+/** Maps "false.someThingXandY" to "X", etc. This is used in compact labeling
     of conditions.
 
+    <p>
     The underlying HashMap may map "some_foo" to "F"; the method map1()
     will map "true.some_foo" to "F", and "false.some_foo" to "F". The method
     mapCond() may map "true.some_foo:false.other_bar" to "Fb".
   
 */
-public class LabelMap extends HashMap<String, Character> {
+public class LabelMap extends HashMap<String, String> {
 
     /** @param s "outcome.ruleSetName", e.g. true.some_abe
 	@param noPrefix If true, there is no "outcome.prefix". This is the case
 	with the last element of the key (the target name) in the cross-target mode.
 	@return e.g. 'A' or 'a', depending on the prefix. (Always uppercase if no prefix)
      */
-    char map1(String s, boolean noPrefix) {
+    String map1(String s, boolean noPrefix) {
 	String pt = "true.", pf = "false.";
 	//	if (s.equals("")) {
 	//  return "0";
@@ -42,7 +37,7 @@ public class LabelMap extends HashMap<String, Character> {
 	} else 	if (s.startsWith(pf)) {
 	    String key = s.substring(pf.length());
 	    if (get(key)==null) throw new IllegalArgumentException("No label registered for key="  + key);
-	    return Character.toLowerCase(get(key));
+	    return get(key).toLowerCase();
 	} else  {
 	    throw new IllegalArgumentException("Argument should beging with 'true.' or 'false.'. Instead, have '"  + s + "'");
 	}
@@ -72,8 +67,8 @@ public class LabelMap extends HashMap<String, Character> {
     String letterToKey(char c, boolean noPrefix) {
 	char uc = Character.toUpperCase(c);
 	for(String x: keySet()) {
-	    char a = get(x);
-	    if (a==uc) {
+	    String a = get(x);
+	    if (a.equals(""+uc)) {
 		return (noPrefix) ? x:
 		 (c==uc ? "true." : "false.") + x;
 	    }
@@ -102,8 +97,23 @@ public class LabelMap extends HashMap<String, Character> {
 
        @param _crossTarget If true, the last element of each key string is the target name, and contains no "true."/"false." prefix
 
+       @parm f If not null, the CSV file with "#alphaLabel,ruleName" pairs. Labels from this file are used in preference to automatically generated
+
      */
-    LabelMap(String[] keys, boolean _crossTarget) {
+    LabelMap(String[] keys, boolean _crossTarget, File f) throws IOException, IllegalInputException {
+
+
+	if (f!=null) {
+	    if (!f.exists()) throw new IOException("Label file does not exist: " + f);
+	    CsvData  csv= new CsvData(f, false, false, new int[] {2});
+	    for(CsvData.LineEntry _e: csv.entries) {
+		CsvData.BasicLineEntry e = (CsvData.BasicLineEntry)_e;
+		String letter = e.getKey();
+		String rule = e.getCol(1);
+		put(rule, letter);
+	    }
+	}
+	
 	crossTarget = _crossTarget;
 	HashSet<String> h = new HashSet<>();
 	for(String key: keys) {
@@ -115,10 +125,11 @@ public class LabelMap extends HashMap<String, Character> {
 	}
 	
 	String[] z = h.toArray(new String[0]);
-	char[] letters = assignLetters(z);
+	String[] letters = assignLetters(z, new HashSet<String>(values()));
 	for(int j=0; j<z.length; j++) {
-	    if (letters[j]==0) throw new AssertionError("Have not assigned a letter to key no. " + j);
-	    put(z[j], letters[j]);
+	    if (containsKey(z[j])) continue; // maybe there is a value from file already
+	    if (letters[j]==null) throw new AssertionError("Have not assigned a letter to key no. " + j);
+	    put(z[j],letters[j]);
 	}
     }
 
@@ -126,10 +137,12 @@ public class LabelMap extends HashMap<String, Character> {
     /** Creates a more or less intelligent mapping from strings in z[]
 	to uppercase alphabet letters
     */
-    static private char[] assignLetters(String [] z) {
+    static private String[] assignLetters(String [] z, HashSet<String> usedLetters) {
+	
+	if (usedLetters==null) usedLetters = new HashSet<>();
 	
 	String[] w = new String[z.length];
-	char[] letters = new char[z.length];
+	String[] letters = new String[z.length];
 	if (z.length==0) return letters;
 	
 
@@ -139,7 +152,7 @@ public class LabelMap extends HashMap<String, Character> {
 	    w[j] = stripPunctuation( u );
 	    if (w[j].length()==0) w[j]=null;
 	}
-	HashSet<Character> usedLetters = new HashSet<>();
+
 
 	
 	// see if some of the first letters are unique
@@ -148,14 +161,14 @@ public class LabelMap extends HashMap<String, Character> {
 	    //System.out.println("FL map=" + fcnt);
 	    int newDone = 0, stripDone = 0;
 	    for(int j=0; j<w.length; j++) {
-		if (letters[j]!=0) continue;
+		if (letters[j]!=null) continue;
 		String q = w[j];
 		if (q==null) continue;
 		char x = q.charAt(0);
 		int cnt = fcnt.get(x);
-		if (cnt==1 && !usedLetters.contains(x)) {
-		    letters[j] = x;
-		    usedLetters.add(x);
+		if (cnt==1 && !usedLetters.contains(""+x)) {
+		    letters[j] = ""+x;
+		    usedLetters.add(""+x);
 		    //System.out.println("Assigned unique letter[" + j +"]=" + letters[j] + " to key=" + w[j]);
 		    w[j]=null;
 		    newDone ++;
@@ -169,17 +182,17 @@ public class LabelMap extends HashMap<String, Character> {
 	}
 	
 	for(int j=0; j<w.length; j++) {
-	    if (letters[j]!=0) continue;
+	    if (letters[j]!=null) continue;
 	    for(char c = 'A'; c<='Z'; c++) {
-		if (!usedLetters.contains(c)) {
-		    letters[j] = c;
-		    usedLetters.add(c);
+		if (!usedLetters.contains(""+c)) {
+		    letters[j] = ""+c;
+		    usedLetters.add(""+c);
 		    //System.out.println("Assigned letter[" + j +"]=" + letters[j] + " to key=" + w[j]);
 		    w[j]=null;
 		    break;
 		}
 	    }
-	    if (letters[j]==0) throw new IllegalArgumentException("Ran out of alphabet letters for labels!");   
+	    if (letters[j]==null) throw new IllegalArgumentException("Ran out of alphabet letters for labels!");   
 	}
 	return letters;
 	    
@@ -223,12 +236,39 @@ public class LabelMap extends HashMap<String, Character> {
     }
 
     public static void main(String[] argv) throws Exception {
-	LabelMap lam = new LabelMap(argv, false);
+
+	String labelFile = null;
+
+	int j=0;
+	for(; j<argv.length; j++) {
+	    String a = argv[j];	    
+	    if  (j+1< argv.length && a.equals("-labels")) {
+		labelFile = argv[++j];
+	    } else break;
+	}
+
+	System.out.println("labelFile=" +labelFile + ", j=" +j);
+	
+	/*
+	Vector<String>v = new Vector<>();
+	for(; j<argv.length; j++) {
+	    String a = argv[j];
+	    v.add(a);
+	    
+	    }
+v.toArray(new String[0])
+	*/
+	String a[] = Arrays.copyOfRange(argv, j, argv.length);	
+	File lf = (labelFile!=null)? new File(labelFile): null;
+
+	System.out.println("a=" + Util.joinNonBlank(";", a));
+	
+	LabelMap lam = new LabelMap(a, false, lf);
 	for(String key: lam.keySet()) {
 	    System.out.println( "Label(" + key+")='" + lam.get(key)  + "'");
 	}
 
-	for(String cond: argv) {
+	for(String cond: a) {
 	    System.out.println( lam.mapCond(cond) + " --> " + cond);
 	}
     }

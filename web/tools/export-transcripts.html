@@ -39,7 +39,7 @@
   <p>Log in to the Game Server host using <tt>ssh</tt>, go to the directory where you have put the summary files, and run the export transcripts script:
 <pre>
       cd fdcl-01
-      /home/vmenkov/w2020/scripts/export-transcripts.sh -pid -file prolific_export_671*.csv 
+      /home/vmenkov/w2020/game/scripts/export-transcripts.sh -pid -file prolific_export_671*.csv 
 </pre>
   
   <p>If the script runs successfully, you will find that it has created a directory named <tt>tmp</tt>, with the following content:
@@ -65,7 +65,7 @@ and then transfer <tt>tmp.zip</tt> to your personal computer, or any another hos
 
   <p>Suppose you ran an experiment without using Prolific, by directly sending an invitation URL to a group of students. You have ensured that all participants' player IDs match a certain pattern, e.g. they start with <tt>RU-FDCL-basic-</tt>. In this example we also assume that you want to include <strong>all</strong> players with a matching ID into your analysis, because you have never used that exact prefix for your preview. In this case, you can use the following command line:
     <pre>
- /home/vmenkov/w2020/scripts/export-transcripts.sh -pid 'RU-FDCL-basic-%'
+ /home/vmenkov/w2020/game/scripts/export-transcripts.sh -pid 'RU-FDCL-basic-%'
     </pre>
 (Note the single quotes and the percent sign, rather than asterisk, in the player ID pattern. This is the syntax needed to instruct the MySQL server to carry out "<a href="https://dev.mysql.com/doc/refman/8.4/en/pattern-matching.html">pattern matching</a>", which is similar to wildcard expansion for file names in a UNIX shell, but uses different special characters.)
 
@@ -94,7 +94,7 @@ and then transfer <tt>tmp.zip</tt> to your personal computer, or any another hos
     <p>After that, you can feed the CSV file to the export transcript tool, much like in Example 1:
     
       <pre>
- /home/vmenkov/w2020/scripts/export-transcripts.sh -pid -file my-pids.csv
+ /home/vmenkov/w2020/game/scripts/export-transcripts.sh -pid -file my-pids.csv
       </pre>
 
     <p>The subsequent processing is the  same as in Example 1.
@@ -109,7 +109,7 @@ and then transfer <tt>tmp.zip</tt> to your personal computer, or any another hos
 	<li>
 	  In the directory where your Prolific summary files and your PID file are, feed both of them to the export script:
 <pre>
-      /home/vmenkov/w2020/scripts/export-transcripts.sh -pid -file prolific_export_671*.csv  my-pids.csv
+      /home/vmenkov/w2020/game/scripts/export-transcripts.sh -pid -file prolific_export_671*.csv  my-pids.csv
       </pre>
 	<li>The subsequent processing is the  same as in Example 1.
       </ol>

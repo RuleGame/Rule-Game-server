@@ -58,9 +58,16 @@ public class Ecd {
 	return m;
     }
 
+    /** This is just used when we need to put the "median" of a no-learner
+	set curve */
+    private double xRange;
+    private void setXRange(double _xRange) { xRange = _xRange; }
+    
     double getMedianMStar() {
-	if (learnedCnt==0) return 0;
-	else if (learnedCnt % 2 == 0) {
+	if (learnedCnt==0) {
+	    //return 0;
+	    return xRange;
+	} else if (learnedCnt % 2 == 0) {
 	    return 0.5* (orderedSample[learnedCnt/2-1] +
 			 orderedSample[learnedCnt/2]);
 	} else {
@@ -207,7 +214,8 @@ public class Ecd {
 	
 	Vector<String> importFrom = new Vector<>();
 	Long seed = null;
-
+	String labelFile = null;
+	
 	for(int j=0; j<argv.length; j++) {
 	    String a = argv[j];
 	    
@@ -239,6 +247,8 @@ public class Ecd {
 		colors = argv[++j].split(",");
 	    } else if (j+1< argv.length && a.equals("-linkColor")) {
 		linkColor = argv[++j];
+	    } else if (j+1< argv.length && a.equals("-labels")) {
+		labelFile = argv[++j];
 	    } else if ( a.equals("-checkSym")) {
 		checkSym = true;
 	    }
@@ -285,7 +295,8 @@ public class Ecd {
 		keys.add(key);
 	    }
 
-	    LabelMap lam = new LabelMap( keys.toArray(new String[0]), target==null);
+	    File lf = (labelFile!=null)? new File(labelFile): null;
+	    LabelMap lam = new LabelMap( keys.toArray(new String[0]), target==null, lf);
 
 	    //-- Maps labels to ECD objects
 	    TreeMap<String, Ecd> h = new TreeMap<>();
@@ -443,7 +454,7 @@ private static String linkColor = "black";
 	    xRange = Math.max(xRange, ecd.getMaxMStar());
 	}
 	
-	xRange += 1;
+	xRange += 10;
 	
 	String sp = pooled? "(pooled)":"";
 	String tasp = (target==null ?  "cross-target comparison" : "target " + target) +
@@ -708,6 +719,10 @@ private static String linkColor = "black";
 	Vector<String> v = new Vector<>();
 	v.add( SvgEcd.drawFrame(xRange));
 	    
+	
+	for(Ecd ecd: h.values()) {
+	    ecd.setXRange(xRange);
+	}
 	
 	for(Ecd ecd: h.values()) {
 	    //System.out.println("Making SVG for " + ecd.orderedSample.length + " points");
