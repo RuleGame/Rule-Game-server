@@ -27,7 +27,7 @@
 #  -csvOut outputDirectoryName
 # -alpha value
 # -beta value
-# -sim MW | KS | Min | Max  : How  the similarity (in both HB calculations and in clustering) is computed from the MW and KS p-values:        using one of them, or the min or max of the two. The defaul   was Max for HB and Min for clustering.
+# -sim MW | KS | Min | Max  : How  the similarity (in both HB calculations and in clustering) is computed from the MW and KS p-values: using one of them, or the min or max of the two. The defaul  was Max for HB and Min for clustering.
 # -simHB  MW | KS | Min | Max  : similarity measure to use in HB 
 # -simClustering  MW | KS | Min | Max  : similarity measure to use in clustering
 # -untie aSmallRealValue : artificial jitter 

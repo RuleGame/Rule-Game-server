@@ -200,10 +200,12 @@ public class Clustering {
     /** As per PK, 2023-05-25: Distance(a,b) = 1-sim(a,b)
 	  The distance d(C,(A,B )) is the larger of d(C,A) and d(C,B).
 	  ("Maximum or complete-linkage clustering", as per Wikipedia)
-     */
-    static Node doClustering(Map<String, Ecd> h, Linkage linkage, Ecd.SimMethod simMethod) {
 
-	DistMap ph = Ecd.computeSimilarities(h, simMethod);
+	  @param base Just used to form output file names
+     */
+    static Node doClustering(String base, Map<String, Ecd> h, Linkage linkage, Ecd.SimMethod simMethod) throws IOException {
+
+	DistMap ph = Ecd.computeSimilarities(base, h, simMethod);
 	
 	Vector<Node> roots = new Vector<>();
 	for(Ecd ecd: h.values()) {
@@ -225,7 +227,7 @@ public class Clustering {
 	}
 
 	//-- Keep merging, until just 1 root remains
-	while( roots.size()>1) {
+	while(roots.size()>1) {
 	    int jmin=0, kmin=0;
 	    double minDist = 2;
 	    //-- find the lowest-distance pair
@@ -269,15 +271,8 @@ public class Clustering {
 		dist.put2(merged, n, d);
 		dist.put2(n, merged, d);
 	    }   
-
-	    
 	}
-		
 	return roots.get(0);
-	
     }
-	
-
-    
     
 }

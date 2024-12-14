@@ -215,7 +215,8 @@ public class Ecd {
 	Vector<String> importFrom = new Vector<>();
 	Long seed = null;
 	String labelFile = null;
-	
+	Clustering.Linkage linkage = Clustering.Linkage.MAX;
+
 	for(int j=0; j<argv.length; j++) {
 	    String a = argv[j];
 	    
@@ -235,6 +236,8 @@ public class Ecd {
 		simHB =  Enum.valueOf(SimMethod.class, argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-simClustering")) {
 		simClustering =  Enum.valueOf(SimMethod.class, argv[++j]);
+	    } else if (j+1< argv.length && a.equals("-linkage")) {
+		linkage =  Enum.valueOf(Clustering.Linkage.class, argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-untie")) {
 		untie =  Double.parseDouble(argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-seed")) {
@@ -344,12 +347,13 @@ public class Ecd {
 
 	    System.out.println("=== Clustering ===");
 
-	    Clustering.Linkage links[] ={ Clustering.Linkage.MAX,
+	    //Clustering.Linkage links[] ={ Clustering.Linkage.MAX,
 		//Clustering.Linkage.MERGE
-	    };
+	    //};
 
-	    for(Clustering.Linkage linkage: links) {
-		Node root = Clustering.doClustering(h, linkage, simClustering);
+	    //for(Clustering.Linkage linkage: links)
+	    {
+		Node root = Clustering.doClustering(base, h, linkage, simClustering);
 		System.out.println("Dendrogram for linkage=" + linkage +
 				   ", beta="+Clustering.beta+":");
 		System.out.println(root);
@@ -473,7 +477,7 @@ private static String linkColor = "black";
 	String fname = base2 + "-basic";
 	writeSvg(fname, v);
 	
-	Vector<String> hbLabels = analyzeSimilarities(h, pooled);
+	Vector<String> hbLabels = analyzeSimilarities(pooled?null:base, h, pooled);
 	//colors = new String[] {"red"};
 	v = drawAllCurves(h, xRange, yRange, colors, hbLabels);
 	fname = base2 + "-hb" + simHB;
@@ -554,7 +558,7 @@ private static String linkColor = "black";
     
     /** Computes the similarity between this ECD and another ECD.
         @param simMethod How to compute the similarity based on MW
-	and/or KS p-values. The default is Max.
+	and/or KS p-values. The default is Max, which means max(MW,KS).
      */
     double computeSimilarity(Ecd o, SimMethod simMethod) {
 	double	mwp = mw.mannWhitneyUTest(orderedSample,o.orderedSample);
@@ -604,13 +608,24 @@ private static String linkColor = "black";
 	
 	The default is useMin=false, i.e. using the max of the two p-values
 
+	@param base Used to form file names
+
 	@return The upper triangular matrix (label1 &lt; label2) of similarities between different ECDs.
     */
-    static DistMap computeSimilarities(Map<String, Ecd> h, SimMethod simMethod) {
+    static DistMap computeSimilarities(String base, Map<String, Ecd> h, SimMethod simMethod) throws IOException {
 
 	DistMap ph = new DistMap();
-
+	
 	System.out.println("=== p-Values ===");
+
+
+	int n = h.keySet().size();
+	String lines[][] = new String[n*n+1][];
+	int j = 0;
+	lines[j++] = new String[] { "rule1", "rule2", "distance"};
+
+
+	
 	for( String label1: h.keySet()) {
 	    Ecd ecd1 = h.get(label1);
 	    Vector<String> v = new Vector<>();
@@ -619,16 +634,26 @@ private static String linkColor = "black";
 		
 		double p = ecd1.computeSimilarity( ecd2, simMethod);
 		v.add("p("+label1+","+label2+")="+p);
+		lines[j++] = new String[] { label1, label2, ""+ (1-p)};
 		if (label1.compareTo(label2)<0) {
 		    ph.put2(label1,label2, p);
 		}
 	    }
 	    System.out.println(Util.joinNonBlank("\t", v));
 	}
+
+	//-- print distances to a CSV file
+	if (base!=null) {
+	    File f = new File(base + "-distance-" + simMethod + ".csv");
+	    System.out.println("The distance data (1-p) are also saved into file " + f);
+	    ImportCSV.escapeAndwriteToFile(lines, f);       			 
+	}
+	
 	return ph;
     }
     
-    /**
+    /**@param base Used to form file names
+       
        @param pooled True if we are working with pooled ECDs, rather
        than original ones. This parameter does not affect
        computations, but is used to generate correct messages
@@ -636,9 +661,9 @@ private static String linkColor = "black";
        @return The HB results: ECDs that are really different from the "naive" ECD (unless -hbAll in effect, in which case we get all ECDs pairs that are really different from each other)
 	
      */
-    static private Vector<String> analyzeSimilarities(Map<String, Ecd> h, boolean pooled) {
+    static private Vector<String> analyzeSimilarities(String base, Map<String, Ecd> h, boolean pooled)  throws IOException {
 	
-	DistMap ph = computeSimilarities(h, simHB);
+	DistMap ph = computeSimilarities(base, h, simHB);
 
 	//-- HB for all pairs
 	Vector<String> order = new Vector<>();
