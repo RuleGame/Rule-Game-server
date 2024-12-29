@@ -1,0 +1,6 @@
+.ButtonState{display:none}
+.Button{height: 40px; display: inline-block;
+	// padding:3px;
+	margin:4px; background:#fff; border:3px solid #eee; 
+cursor:pointer;}
+.ButtonState:checked + .Button{border:3px solid #333;}
