@@ -22,7 +22,6 @@ import edu.wisc.game.reflect.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.formatter.*;
-//import edu.wisc.game.web.LoginServlet.UserResponse;
 import edu.wisc.game.web.LaunchRulesBase;
 
 /** The "Second Batch" of API calls, primarily for use with players constrained by an experiment plan, and playing a sequence of games as outlined in the trial list to which the player is assigned. This API is set up in accordance with Kevin Mui's request, 2020-08-17.
@@ -61,7 +60,7 @@ public class GameService2 {
 				 )
 
     {
-
+	if (playerId!=null && playerId.equals("null")) playerId=null;
 	return new PlayerResponse( playerId, exp, uid);
     }
 
@@ -93,11 +92,14 @@ public class GameService2 {
     @GET
     @Path("/display") 
     @Produces(MediaType.APPLICATION_JSON)
-    public EpisodeInfo.ExtendedDisplay display(@QueryParam("episode") String episodeId)   {
+    public EpisodeInfo.ExtendedDisplay display(@DefaultValue("null") @QueryParam("playerId") String playerId,
+					       @QueryParam("episode") String episodeId
+					       					       )   {
 	EpisodeInfo epi = EpisodeInfo.locateEpisode(episodeId);
 	if (epi==null) return dummyEpisode.dummyDisplay(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID");
 	//return epi.dummyDisplay(Episode.CODE.JUST_A_DISPLAY, "Display requested");
-	EpisodeInfo.ExtendedDisplay dis = epi.mkDisplay();
+	if (playerId!=null && playerId.equals("null")) playerId=null;
+	EpisodeInfo.ExtendedDisplay dis = epi.mkDisplay(playerId);
 
 	Logging.info("/display("+episodeId+") returning: "+ JsonReflect.reflectToJSONObject(dis, true));
 	return dis;
@@ -108,18 +110,20 @@ public class GameService2 {
     @Path("/move") 
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
-    public EpisodeInfo.ExtendedDisplay move(@FormParam("episode") String episodeId,
-				@FormParam("x") int x,
-				@FormParam("y") int y,
-				@FormParam("bx") int bx,
-				@FormParam("by") int by,
-				@FormParam("cnt") int cnt
+    public EpisodeInfo.ExtendedDisplay move(@DefaultValue("null") @FormParam("playerId") String playerId,
+					    @FormParam("episode") String episodeId,
+					    @FormParam("x") int x,
+					    @FormParam("y") int y,
+					    @FormParam("bx") int bx,
+					    @FormParam("by") int by,
+					    @FormParam("cnt") int cnt
 				)   {
 	EpisodeInfo.ExtendedDisplay rv=null;
 	EpisodeInfo epi = EpisodeInfo.locateEpisode(episodeId);
 	if (epi==null) return dummyEpisode.dummyDisplay(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID: "+episodeId);
+	if (playerId!=null && playerId.equals("null")) playerId=null;
 	try {	    
-	    return rv=epi.doMove(y,x,by,bx, cnt);
+	    return rv=epi.doMove(playerId, y,x,by,bx, cnt);
 	} catch( Exception ex) {
 	    System.err.print("/move: " + ex);
 	    ex.printStackTrace(System.err);
@@ -133,16 +137,18 @@ public class GameService2 {
     @Path("/pick") 
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
-    public EpisodeInfo.ExtendedDisplay move(@FormParam("episode") String episodeId,
-				@FormParam("x") int x,
-				@FormParam("y") int y,
-				@FormParam("cnt") int cnt
-				)   {
+    public EpisodeInfo.ExtendedDisplay move(@DefaultValue("null") @FormParam("playerId") String playerId,
+					    @FormParam("episode") String episodeId,
+					    @FormParam("x") int x,
+					    @FormParam("y") int y,
+					    @FormParam("cnt") int cnt
+					    )   {
 	EpisodeInfo.ExtendedDisplay rv=null;
 	EpisodeInfo epi = EpisodeInfo.locateEpisode(episodeId);
 	if (epi==null) return dummyEpisode.dummyDisplay(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID: "+episodeId);
+	if (playerId!=null && playerId.equals("null")) playerId=null;
 	try {	    
-	    return rv=epi.doPick(y,x, cnt);
+	    return rv=epi.doPick(playerId, y,x, cnt);
 	} catch( Exception ex) {
 	    System.err.print("/pick: " + ex);
 	    ex.printStackTrace(System.err);
@@ -201,11 +207,13 @@ public class GameService2 {
     @Path("/guess")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
-    public FileWriteReport guess(@FormParam("episode") String episodeId,
+    public FileWriteReport guess(@DefaultValue("null") @FormParam("playerId") String playerId,
+				 @FormParam("episode") String episodeId,
 				 @FormParam("data") String text,
 				 @DefaultValue("-1") @FormParam("confidence") int confidence
 				 ) {
-	return GuessWriteReport.writeGuess( episodeId, text, confidence);
+	if (playerId!=null && playerId.equals("null")) playerId=null;
+	return GuessWriteReport.writeGuess( playerId, episodeId, text, confidence);
     }
 
     /** Returns a hash map that maps each color name (in upper case)

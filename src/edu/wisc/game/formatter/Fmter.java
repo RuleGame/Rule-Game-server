@@ -221,7 +221,11 @@ public class  Fmter {
 
     public String html(String title, String body) {
 	String h = wrap("title", title) + style();
-	return wrap("html", wrap("head", h) + "\n" + wrap("body", body));       
+	return html2( h, body);       
+    }
+
+    public String html2(String head, String body) {
+	return wrap("html", wrap("head", head) + "\n" + wrap("body", body));       
     }
 
 

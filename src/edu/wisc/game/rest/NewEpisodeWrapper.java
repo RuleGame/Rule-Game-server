@@ -75,7 +75,7 @@ public class NewEpisodeWrapper extends ResponseBase {
 	    board = epi.getCurrentBoard();
 	    
 	    EpisodeInfo.globalAllEpisodes.put( episodeId = epi.episodeId, epi);
-	    setDisplay(epi.mkDisplay());
+	    setDisplay(epi.mkDisplay(null));
 
 	    setError( false);
 	

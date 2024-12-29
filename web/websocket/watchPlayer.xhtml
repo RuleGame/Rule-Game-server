@@ -1,19 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Licensed to the Apache Software Foundation (ASF) under one or more
-  contributor license agreements.  See the NOTICE file distributed with
-  this work for additional information regarding copyright ownership.
-  The ASF licenses this file to You under the Apache License, Version 2.0
-  (the "License"); you may not use this file except in compliance with
-  the License.  You may obtain a copy of the License at
+    This can also be used as
+    watchPlayer.xhtml?watch=whom_I_want_to_watch
+    watchPlayer.xhtml?iam=my_pid
 
-      http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
 -->
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
@@ -45,6 +35,17 @@
     <script type="application/javascript"><![CDATA[
         "use strict";
 
+
+	function getQueryVariable(variable)	{
+       		 var query = window.location.search.substring(1);
+       		 var vars = query.split("&");
+        	 for (var i=0;i<vars.length;i++) {
+               	     var pair = vars[i].split("=");
+               	     if(pair[0] == variable){return pair[1];}
+        	 }
+       		 return(false);
+	}
+
         var Chat = {};
 
         Chat.socket = null;
@@ -66,6 +67,12 @@
                         Chat.sendMessage();
                     }
                 };
+		
+		var pid = getQueryVariable("iam");
+		if (pid)	{	                    Chat.socket.send('IAM '  + pid);            }
+		pid = getQueryVariable("watch");
+		if (pid)	{	                    Chat.socket.send('WATCH '  + pid);            }
+
             };
 
             Chat.socket.onclose = function () {
@@ -86,7 +93,7 @@
         Chat.sendMessage = (function() {
             var message = document.getElementById('chat').value;
             if (message != '') {
-                Chat.socket.send(message);
+                Chat.socket.send('WATCH ' + message);
                 document.getElementById('chat').value = '';
             }
         });
@@ -115,7 +122,7 @@
                 noscripts[i].parentNode.removeChild(noscripts[i]);
             }
         }, false);
-
+    
     ]]></script>
 </head>
 <body>

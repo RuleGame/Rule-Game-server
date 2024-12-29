@@ -31,7 +31,7 @@ public class ReplayedEpisode extends Episode {
     /** We tell the player where all movable pieces are, unless the 
 	para set mandates "free" mode.
      */
-    boolean weShowAllMovables() {
+    public boolean weShowAllMovables() {
 	return !para.isFeedbackSwitchesFree();
     }
 

@@ -85,7 +85,7 @@ public class BoardDisplayService {
     public static String doBoard(Board board,  int cellWidth) {	    
 	Piece[] pieces= board.asBoardPieces();
 	boolean[] isMoveable = new boolean[Board.N*Board.N+1];	
-	return Episode.doHtmlDisplay(pieces, -1, false, isMoveable, cellWidth);
+	return HtmlDisplay.htmlDisplay(pieces, -1, false, isMoveable, cellWidth, false);
     }
 
     /** The ASCII-art alternative */

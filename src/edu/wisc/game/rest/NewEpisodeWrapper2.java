@@ -22,6 +22,16 @@ import edu.wisc.game.websocket.WatchPlayer;
 FIXME: need to add periodic purge on episodes 
  */
 public class NewEpisodeWrapper2 extends ResponseBase {
+
+    private boolean mustWait;
+    /** This flag is true if the episode is not ready yet. The caller must wait
+	for a "READY" signal to arrive via the websocket connection, and
+	then repeat the /newEpisode call. */
+    public boolean getMustWait() { return mustWait; }
+    @XmlElement
+    public void setMustWait(boolean _mustWait) { mustWait = _mustWait; }
+
+
     String episodeId=null;
     /** The episode ID of the resumed or newly created episode */
     public String getEpisodeId() { return episodeId; }
@@ -54,9 +64,13 @@ public class NewEpisodeWrapper2 extends ResponseBase {
        (See {@link edu.wisc.game.sql.EpisodeInfo.ExtendedDisplay} for the full structure that's actually found here)
     */
     public Episode.Display getDisplay() { return display; }
-    private void setDisplay(Episode.Display _display) { display = _display; }
+    private void setDisplay(Episode.Display _display) { display = _display; }    
 
-    /** @param existing If true, look for the most recent existing episode (completed or incomplete); if false, return the recent incomplete expisode or create a new one */
+    
+    /** Depending on the parameters, creates a new episode or looks up an already existing one that should be
+	continued. Serves the /newEpisode and /mostRecentEpisode API calls.
+
+       @param existing If true, look for the most recent existing episode (completed or incomplete); if false, return the recent incomplete expisode or create a new one */
     NewEpisodeWrapper2(String pid, boolean existing, boolean activateBonus, boolean giveUp) {
 
 	Logging.info("NewEpisodeWrapper2(pid="+ pid+", existing="+existing+
@@ -75,31 +89,41 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	    return;
 	}
 
-	
+	boolean partnerMissing = false;
 	try {
-	    // register the player if he has not been registered
-	    /*
-	    PlayerResponse q =new PlayerResponse(pid, null);
-
-	    if (q.error) {
-		setError(true);
-		setErrmsg(q.getErrmsg());
-		return;
-	    }
-	    */
 
 	    PlayerInfo x = PlayerResponse.findPlayerInfo(null, pid);
 	    Logging.info("NewEpisodeWrapper2(pid="+ pid+"): player="+
-			 (x==null? "null" : "\n" + x.report()));
+			 (x==null? "null" : "" + x + "\n" + x.report()));
 	    if (x==null) {
 		setError(true);
 		setErrmsg("Player not found: " + pid);
 		return;
+	    }
+
+	    // See if this is a 2-player game (2PG)
+	    partnerMissing = Pairing.ensurePairingNow(x);
+
+	    if (partnerMissing) { // tell the client to wait until the game can start
+		Logging.info("NewEpisodeWrapper2(pid="+ pid+"): no partner assigned yet!");
+		setMustWait(true);
+		return;
 	    } 
-	    EpisodeInfo epi = existing? x.mostRecentEpisode(): x.episodeToDo();
+		
+
+	    Logging.info("NewEpisodeWrapper2(pid="+ pid+"): partner=" + x.xgetPartner());
+	    
+	    PlayerInfo y = x;
+	    //-- if it's a 2PG, all episodes are stored by player ZERO
+	    if (x.xgetPartner()!=null && x.getPairState()==Pairing.State.ONE) {
+		y = x.xgetPartner();
+	    }	    
+	    Logging.info("NewEpisodeWrapper2(pid="+ pid+"): x="+x+", y=" + y);
+	    
+	    EpisodeInfo epi = existing? y.mostRecentEpisode(): y.episodeToDo();
     
-	    alreadyFinished = x.alreadyFinished();
-	    completionCode = x.getCompletionCode();
+	    alreadyFinished = y.alreadyFinished();
+	    completionCode = y.getCompletionCode();
 	    if (epi==null) {
 		setError(true);
 		String msg = alreadyFinished ?
@@ -109,9 +133,17 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 		setErrmsg(msg);
 		return;	
 	    }
-	    para = x.getPara(epi);
+	    para = y.getPara(epi);
 	    episodeId = epi.episodeId;
-	    setDisplay(epi.mkDisplay());
+	    setDisplay(epi.mkDisplay(pid));
+
+
+	    // Tell the other player that the episode is ready
+	    if (x.isTwoPlayerGame()) {
+		WatchPlayer.tellHim(x.getPartnerPlayerId(), WatchPlayer.Ready.EPI);
+	    }
+
+	
 	    
 	    setError( false);
 
@@ -133,7 +165,11 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	} finally {
 	    Logging.info("NewEpisodeWrapper2(pid="+ pid+"): returning:\n" +
 			 JsonReflect.reflectToJSONObject(this, true));
-	    WatchPlayer.showThem(pid, "Starting on episode "  + episodeId);
+	    if (partnerMissing) {
+		WatchPlayer.tellAbout(pid, "Waiting for a partner to start an episode");
+	    } else {
+		WatchPlayer.tellAbout(pid, "Starting on episode "  + episodeId);
+	    }
 	    //WatchPlayer.showThem(pid, this);
 
 

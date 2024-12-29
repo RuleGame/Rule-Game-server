@@ -166,7 +166,14 @@
 	  "error":false,
 	  "alreadyFinished":false,
 	  "display":{
-	  "board":{"id":0,"value":[{"buckets":[3],"color":"BLUE","id":1,"shape":"SQUARE","x":5,"y":5}]},"code":-8,"errmsg":"Display requested\nDEBUG\n[0][20200827-153052-F66ITP; FC=1; M 2/2 $10][20200827-153246-R7LHH9; FC=1; M 3/3 $10]\n[1][20200827-160602-PYQTAJ; FC=1; M 2/2 $10][20200827-162713-2HRENR; FC=1; M 2/2 $10]\n*M*[2][20200905-120700-PDF966; FC=1; M 1/1 $10][20200905-121136-7L3EHY; FC=0; M 0/1 $0]\nR=$50",
+	  "board":{"id":0,"value":[{"buckets":[3],"color":"BLUE","id":1,"shape":"SQUARE","x":5,"y":5}]},
+	  "code":-8,
+	  "errmsg":"Display requested\n
+	  DEBUG\n
+	  [0][20200827-153052-F66ITP; FC=1; M 2/2 $10][20200827-153246-R7LHH9; FC=1; M 3/3 $10]\n
+	  [1][20200827-160602-PYQTAJ; FC=1; M 2/2 $10][20200827-162713-2HRENR; FC=1; M 2/2 $10]\n
+	  *M*[2][20200905-120700-PDF966; FC=1; M 1/1 $10][20200905-121136-7L3EHY; FC=0; M 0/1 $0]\n
+	  R=$50",
 	  "finishCode":0,
 	  "numMovesMade":1,
 	  "bonus":false,
@@ -188,7 +195,6 @@
 <p>display.transcript contains the description of all previous moves, as a vector. Each element has pos=the origin position (as an integer, numbered from 1=(1,1) to 36=(6,6), by row from left bottom corner), bucketNo=the destination bucket number, and the success code (same meaning as display.code)
 	
  <br>Sample output 
-<pre>
 	
 <pre>
   {"errmsg":"Debug...", <em> // either used to describe errors, or contains various status info for debugging.</em>
@@ -222,7 +228,7 @@
 "totalRewardEarned":33 <em> // the sum total of rewards earned by this player in all episodes so far</em>
 }
 </pre>
-<p>As of ver. 1.011, in the board description the field <tt>dropped</tt> is shown only in the pieces that have been already removed from the board; the value is the ientifying number (0 thru 3) of the bucket into which the piece has been dropped.</p>
+<p>As of ver. 1.011, in the board description the field <tt>dropped</tt> is shown only in the pieces that have been already removed from the board; the value is the identifying number (0 thru 3) of the bucket into which the piece has been dropped.</p>
 
 
   </li>
@@ -263,7 +269,11 @@
 <pre>
   {"board":{"id":0,"value":[{"buckets":[3],"color":"BLUE","dropped":3,"id":0,"shape":"SQUARE","x":5,"y":5}]},
   "code":-8,
-   "errmsg":"Display requested\nDEBUG\n[0][20200827-153052-F66ITP; FC=1; M 2/2 $10][20200827-153246-R7LHH9; FC=1; M 3/3 $10]\n[1][20200827-160602-PYQTAJ; FC=1; M 2/2 $10][20200827-162713-2HRENR; FC=1; M 2/2 $10]\n*B*[2][20200905-120700-PDF966; FC=1; M 1/1 $10][20200905-121136-7L3EHY; FC=1; B 1/1 $10]\nR=$60", // <em>just a progress report for this session, handy for debugging </em>
+  "errmsg":"Display requested\nDEBUG\n
+  [0][20200827-153052-F66ITP; FC=1; M 2/2 $10][20200827-153246-R7LHH9; FC=1; M 3/3 $10]\n
+  [1][20200827-160602-PYQTAJ; FC=1; M 2/2 $10][20200827-162713-2HRENR; FC=1; M 2/2 $10]\n
+  *B*[2][20200905-120700-PDF966; FC=1; M 1/1 $10][20200905-121136-7L3EHY; FC=1; B 1/1 $10]\n
+  R=$60", // <em>just a progress report for this session, handy for debugging </em>
   "finishCode":1,
   "numMovesMade":1,
   "bonus":true,
@@ -273,8 +283,9 @@
   "guessSaved":false, // <em>has the guess been recorded for this episode?</em>
   "seriesNo":2, // <em>sequential number of this series in the trial list (0-based)</em>
   "totalBoardsPredicted":3, // <em>The current prediction for the total number of episodes to be played in this series.
-    // During the main subserties, this is simply para.max_boards; during the bonus subseries, this is A+para.clear_how_many,
-    // where A is the number of non-bonus episodes that had been played in this series before bonus was activated.</em>
+    // During the main subserties, this is simply para.max_boards; during the bonus subseries,
+    // this is A+para.clear_how_many,  where A is the number of non-bonus episodes that had been
+    // played in this series before bonus was activated.</em>
   "totalRewardEarned":60}
       </pre>
       <br>Sample output (in ver. 1.011)
@@ -306,15 +317,24 @@ If the rule set file was specified in the param set as an absolute path, that's 
 </pre>
 
 <p>As of ver 4.005, there is support for the new incentive scheme, called <tt>DOUBLING</tt>. The output may look as follows (with the fields relevant for this incentive scheme shown in bold):
-  <pre>{"board":{"id":0,"value":[{"buckets":[0,1],"color":"YELLOW","id":2,"shape":"STAR","x":3,"y":3},{"buckets":[0,1],"color":"BLACK","id":3,"shape":"SQUARE","x":4,"y":3},{"buckets":[0,1],"color":"BLACK","id":4,"shape":"STAR","x":2,"y":4},{"buckets":[0,1],"color":"YELLOW","id":5,"shape":"STAR","x":5,"y":4},{"buckets":[0,1],"color":"BLACK","id":7,"shape":"SQUARE","x":4,"y":6},{"buckets":[0,1],"color":"RED","id":8,"shape":"TRIANGLE","x":6,"y":6},{"buckets":[],"color":"BLUE","dropped":3,"id":0,"shape":"SQUARE","x":4,"y":1},{"buckets":[],"color":"YELLOW","dropped":3,"id":1,"shape":"CIRCLE","x":3,"y":2},{"buckets":[],"color":"RED","dropped":0,"id":6,"shape":"SQUARE","x":3,"y":6}]},
+  <pre>{"board":{"id":0,"value":[{"buckets":[0,1],"color":"YELLOW","id":2,"shape":"STAR","x":3,"y":3},
+    {"buckets":[0,1],"color":"BLACK","id":3,"shape":"SQUARE","x":4,"y":3},
+    {"buckets":[0,1],"color":"BLACK","id":4,"shape":"STAR","x":2,"y":4},
+    {"buckets":[0,1],"color":"YELLOW","id":5,"shape":"STAR","x":5,"y":4},
+    ....
+    {"buckets":[],"color":"RED","dropped":0,"id":6,"shape":"SQUARE","x":3,"y":6}]},
     "code":-8,
-    "errmsg":"Display requested\nDEBUG\n*M*[S0][20211222-124942-JRNZOF; FC=1g; m 9/9 $10][20211222-130206-M51PK8; FC=0; m 3/9 $0]\n[S1]\n[S2]\nid=115, curSer=0 b=false, R=$10",
+    "errmsg":"Display requested\nDEBUG\n
+    *M*[S0][20211222-124942-JRNZOF; FC=1g; m 9/9 $10][20211222-130206-M51PK8; FC=0; m 3/9 $0]\n
+    [S1]\n[S2]\nid=115, curSer=0 b=false, R=$10",
     "error":false,
     "explainCounters":"* / 1",
     "finishCode":0,"numMovesMade":3,
     "ruleLineNo":1,
     "rulesSrc":{"orders":[],"rows":["(1,*,*,*,[2, 3])","(1,*,*,*,[0, 1])"]},
-    "transcript":[{"code":0,"pieceId":0,"pos":4,"time":"2021-12-22T18:06:27.543Z[UTC]","bucketNo":3},{"code":0,"pieceId":6,"pos":33,"time":"2021-12-22T18:06:41.463Z[UTC]","bucketNo":0},{"code":0,"pieceId":1,"pos":9,"time":"2021-12-22T18:06:52.927Z[UTC]","bucketNo":3}],
+    "transcript":[{"code":0,"pieceId":0,"pos":4,"time":"2021-12-22T18:06:27.543Z[UTC]","bucketNo":3},
+    {"code":0,"pieceId":6,"pos":33,"time":"2021-12-22T18:06:41.463Z[UTC]","bucketNo":0},
+    {"code":0,"pieceId":1,"pos":9,"time":"2021-12-22T18:06:52.927Z[UTC]","bucketNo":3}],
     "bonus":false,"bonusEpisodeNo":0,"canActivateBonus":false,
     "episodeNo":1,
     <strong>
@@ -342,7 +362,7 @@ If the rule set file was specified in the param set as an absolute path, that's 
 </pre>
 The value is the range within which the reward for the current episode could conceivably fall once episode is ended. The first value is the lower bound; this is what the player would earn if it will make an inordinately large number of mistakes before he completes the episode (i.e. clears the board or reaches a stalemate). The second value is the upper bound; this is what the player will earn if he completes the episode without making any more mistakes in addition to those he may have made already. (If the episode has been completed already, this field is still provided, and the upper bound of the range represents the actual reward for the episode).  These reward numbers do not include any doubling/quadrupling factor that may attach to this episode (and the series) if the DOUBLING incentive scheme is in effect.
   
-<p>If the <tt>finishCode</tt> in the display structure has a value other than 0 (thus indicating that the episode has completed), the display structure will also have a <tt>transitionMap</tt> field. That fields contains a structure whose content is explained under <a href="#guess">/guess</a>, below.
+<p>If the <tt>finishCode</tt> in the display structure has a value other than 0 (thus indicating that the episode has completed), the display structure will also have a <tt>transitionMap</tt> field. That field contains a structure whose content is explained under <tt><a href="#guess">/guess</a></tt>, below.
   
  <li>POST <strong><tt>/move</tt>: Make a move:</strong>
       <form method="post" action="game-data/GameService2/move"
@@ -503,7 +523,7 @@ Response (on success):
 	</form>
 	This should return a structure with the field named <tt>value</tt> whose value is a list of shapes. E.g.:<pre>
 {"error":false,
-"values":["cloud-lightning","moon","blank","cloud-off","sun","cloud","cloud-rain","cloud-drizzle","triangle","star","cloud-snow","arrows/arrow-up","arrows/arrow-left","arrows/arrow-down-left","arrows/arrow-down-right","arrows/arrow-up-left","arrows/arrow-right","arrows/arrow-up-right","arrows/arrow-down","square","circle"]}
+"values":["cloud-lightning","moon","blank","cloud-off","sun","cloud","cloud-rain","cloud-drizzle",...,"circle"]}
 	  </pre>
 The shape names are given using the same case as in the file names. They are not case-sensitive, though.
 	<br>

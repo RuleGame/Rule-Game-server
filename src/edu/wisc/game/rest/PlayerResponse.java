@@ -65,7 +65,19 @@ public class PlayerResponse extends ResponseBase {
 	player is in the right plan */
     private String experimentPlan;
     public String getExperimentPlan() { return experimentPlan; }
- 
+
+    
+    private boolean isCoopGame;
+    private boolean isAdveGame;
+    public boolean getIsCoopGame() { return isCoopGame; }
+    @XmlElement
+    public void setIsCoopGame(boolean _isCoopGame) { isCoopGame = _isCoopGame; }
+    public boolean getIsAdveGame() { return isAdveGame; }
+    @XmlElement
+    public void setIsAdveGame(boolean _isAdveGame) { isAdveGame = _isAdveGame; }
+    public boolean getIsTwoPlayerGame() {
+	return getIsCoopGame() || getIsAdveGame();
+    }
 
     static private final Pattern repeatUserPat = Pattern.compile("^RepeatUser-([0-9]+)-");
 
@@ -89,7 +101,7 @@ public class PlayerResponse extends ResponseBase {
 	Date now = new Date();
 	
 	Matcher m;
-
+	EntityManager em =null;
 	if (pid==null) { 	    
 	    if (uid<0) {
 		hasError("Neither player Id nor user Id have been provided");
@@ -107,57 +119,50 @@ public class PlayerResponse extends ResponseBase {
 	if (badPid(pid)) hasError("Invalid player Id = '"+pid+"'. Player IDs may only contain alphanumeric characters, underlines, and hyphens.");
 
 	
-	EntityManager em = Main.getNewEM();
-
 
 	try {
 
 	    Logging.info("PlayerResponse(pid="+ pid+", exp="+exp+")");
 	    if (pid==null || pid.trim().equals("") || pid.equals("null")) throw new IOException("Missing or invalid playerId");
-	    PlayerInfo x = findPlayerInfo(em, pid);
+	    PlayerInfo x = findPlayerInfoAlreadyCached(pid);
 	    if (debug) playerInfo=x;
 	    
 	    setErrmsg("Debug: pid="+pid+"; Retrieved x="+x);
 	    setNewlyRegistered(x==null);
-	    if (x!=null) {  // existing player
-		Logging.info("Found existing player=" + x + ", with plan=" + x.getExperimentPlan());
-		trialList  = new TrialList(x.getExperimentPlan(), x.getTrialListId());		
-		alreadyFinished = x.alreadyFinished();
-		completionCode = x.getCompletionCode();
+	    if (x!=null) {  // existing and already cached player
+		setupResponseForExistingPlayer(x, pid, exp, uid);
+	    } else synchronized (lock) {
+		// keep this part synchronized, to avoid creating 2 entries if the player clicks twice
+		em = Main.getNewEM();
+	
+		x = findPlayerInfo(em, pid);
+		if (debug) playerInfo=x;
 
-		String msg=null;
-		if (exp!=null  && !x.getExperimentPlan().equals(exp)) {
-		    msg = "Cannot play experiment plan '" + exp + "' with playerId=" + pid + ", because that playerId is already assigned to experiment plan '" + x.getExperimentPlan() +"'";
 
-		} else 	if (uid>=0 && x.getUser()==null) {
-		    msg = "Cannot use playerId=" + pid + " with a user ID=" + uid +", because this playerId is  already created without a user ID";
-		} else if (uid<0 && x.getUser()!=null) {
-		    msg = "Cannot use playerId=" + pid + " without a user ID, because this playerId is  already created with user ID=" + x.getUser().getId();
-		} else if (uid>=0 &&  x.getUser()!=null && uid!=x.getUser().getId()) {
-		    msg = "Cannot use playerId=" + pid + " without user ID="+uid+", because this playerId is  already created with user ID=" + x.getUser().getId();    
-		}		
-		if (msg!=null) {
-		    hasError(msg);
-		    return;
-		}		
-	    } else { // new player
-		x = new PlayerInfo();
-		x.setDate(now);
-		x.setPlayerId(pid);
-
-		if (uid>=0) {
-		    User user = (User)em.find(User.class, uid);
-		    if (user==null) {
-			String msg="Invalid user id=" + uid+". No user exists with that ID";
-			hasError(msg);
-			return;
+		if (x!=null) {  // existing  player
+		    setupResponseForExistingPlayer(x, pid, exp, uid);
+		} else {
+		    // new player
+		    x = new PlayerInfo();
+		    x.setDate(now);
+		    x.setPlayerId(pid);
+		    x.initPairing();
+		    
+		    if (uid>=0) {
+			User user = (User)em.find(User.class, uid);
+			if (user==null) {
+			    String msg="Invalid user id=" + uid+". No user exists with that ID";
+			    hasError(msg);
+			    return;
+			}
+			x.setUser(user);
 		    }
-		    x.setUser(user);
 		}
-		
 		if (exp==null) exp= TrialList.extractExperimentPlanFromPlayerId(pid);
-		x.setExperimentPlan(exp);
+		x.setExperimentPlan(exp);		
 		assignRandomTrialList(x);
+		// Check if it's a pair game
+		Pairing.newPlayerRegistration(x);
 		
 		em.getTransaction().begin();
 		em.persist(x);
@@ -165,10 +170,13 @@ public class PlayerResponse extends ResponseBase {
 		em.getTransaction().commit();
 		Logging.info("Persisted new player=" + x);
 		allPlayers.put(pid,x);
-	    }	
+	    }
+	    
 	    playerId = x.getPlayerId();
 	    experimentPlan = x.getExperimentPlan();
 	    trialListId = x.getTrialListId();	
+	    isCoopGame = x.isCoopGame();
+	    isAdveGame = x.isAdveGame();
 	    setError(false);
 	    setErrmsg("Debug:\n" + x.report());
 
@@ -179,32 +187,76 @@ public class PlayerResponse extends ResponseBase {
 	    setError(true);
 	    setErrmsg(e.toString());
 	} finally {
-	    try {	    em.close();} catch(Exception ex) {}
+	    try { if (em!=null)	    em.close();} catch(Exception ex) {}
 	    Logging.info("PlayerResponse(pid="+ pid+", exp="+exp+"), returning:\n" +
 			 JsonReflect.reflectToJSONObject(this, true));
 	}
     }
 
+    private void setupResponseForExistingPlayer(PlayerInfo x, String pid, String exp, int uid) throws IOException, IllegalInputException {
+	Logging.info("Found existing player=" + x + ", with plan=" + x.getExperimentPlan());
+	trialList  = new TrialList(x.getExperimentPlan(), x.getTrialListId());		
+	alreadyFinished = x.alreadyFinished();
+	completionCode = x.getCompletionCode();
+	
+	String msg=null;
+	if (exp!=null  && !x.getExperimentPlan().equals(exp)) {
+	    msg = "Cannot play experiment plan '" + exp + "' with playerId=" + pid + ", because that playerId is already assigned to experiment plan '" + x.getExperimentPlan() +"'";
+	    
+	} else 	if (uid>=0 && x.getUser()==null) {
+	    msg = "Cannot use playerId=" + pid + " with a user ID=" + uid +", because this playerId is  already created without a user ID";
+	} else if (uid<0 && x.getUser()!=null) {
+	    msg = "Cannot use playerId=" + pid + " without a user ID, because this playerId is  already created with user ID=" + x.getUser().getId();
+	} else if (uid>=0 &&  x.getUser()!=null && uid!=x.getUser().getId()) {
+	    msg = "Cannot use playerId=" + pid + " without user ID="+uid+", because this playerId is  already created with user ID=" + x.getUser().getId();    
+	}		
+	if (msg!=null) {
+	    hasError(msg);
+	    return;
+	}		
+
+    }
+    
     /** Server's local cache, used to reduce database calls, and to store
 	"transient" info (such as the transripts of epsiodes)
      */
     private static HashMap<String, PlayerInfo> allPlayers = new HashMap<String, PlayerInfo>();
         
+    private static String lock = "lock";
 
-    /** Find the matching record for a player. First looks it up in the local cache; then, if not found, in the SQL database.
-	@em The EntityManager to use, if needed. If null is given, the EM will
+    
+    /** Checks if the matching record is already cached. This method
+	is used so that we won't need to synchronize so much. However, if
+	it returns null, one will need to go for the full findPlayer(),
+	which will also look into the database, and has a synchronized block.
+	@return cached matched record, or null if none is found.
+    */
+    static PlayerInfo findPlayerInfoAlreadyCached(String pid) { //throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
+	return allPlayers.get(pid);
+    }
+    
+    /** Find the matching record for a player. First looks it up in
+	the local cache; then, if not found, in the SQL database. The
+	main block is synchronized, to ensure that we don't put
+	duplicate copies of a database entry into the cache.
+	@param em The EntityManager to use, if needed. If null is given, the EM will
 	be created when needed, and then closed, so that the returned object will be detached.
 	
 	@return The PlayerInfo object with the matching name, or null if none is found */
     static PlayerInfo findPlayerInfo(EntityManager em, String pid) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
 	if (badPid(pid)) throw new  IllegalInputException("Player ID contains illegal characters: '"+pid+"'");
-	PlayerInfo x = allPlayers.get(pid);
+
+	PlayerInfo x =  findPlayerInfoAlreadyCached( pid);
+	if (x!=null) return x;
+
+	synchronized(lock) {
+	x = allPlayers.get(pid);
 	if (x!=null) return x;
 
 	boolean mustClose=(em==null);
 	if (mustClose) em=Main.getNewEM();
 	try {
-	synchronized(em) {
+	    //synchronized(em) {
 
 	Query q = em.createQuery("select m from PlayerInfo m where m.playerId=:c");
 	q.setParameter("c", pid);
@@ -214,7 +266,7 @@ public class PlayerResponse extends ResponseBase {
 	} else {
 	    return null;
 	}
-	}
+	//}
 	} finally {
 	    if (mustClose) { em.close(); em=null; }
 	}
@@ -222,6 +274,7 @@ public class PlayerResponse extends ResponseBase {
 	x.restoreTransientFields(); // make it ready to use
 	for(EpisodeInfo epi: x.getAllEpisodes())  {
 	    epi.cache();
+	}
 	}
 	return x;
     }    

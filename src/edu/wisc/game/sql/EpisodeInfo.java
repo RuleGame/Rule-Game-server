@@ -36,6 +36,9 @@ public class EpisodeInfo extends Episode {
     public PlayerInfo getPlayer() { return player; }
     public void setPlayer(PlayerInfo _player) { player = _player; }
 
+    /** Table with all episodes recently played on this server. It is kept to enable quick lookup
+	of episode by id.
+	FIXME: should purge the table occasionally, to save memory */
     public static HashMap<String, EpisodeInfo> globalAllEpisodes = new HashMap<>();
     public static EpisodeInfo locateEpisode(String eid) {
 	return globalAllEpisodes.get(eid);
@@ -92,9 +95,22 @@ public class EpisodeInfo extends Episode {
     
     @Basic
     boolean guessSaved;
+    /** Has the guess from the player (in 1PG) or from player 0 (in 2PG) been saved? */
     public boolean getGuessSaved() { return guessSaved; }
     public void setGuessSaved(boolean _guessSaved) { guessSaved = _guessSaved; }
 
+    @Basic
+    boolean guess1Saved;
+    /** Has the guess from player 1 (in 2PG) been saved? */
+    public boolean getGuess1Saved() { return guess1Saved; }
+    public void setGuess1Saved(boolean _guess1Saved) { guess1Saved = _guess1Saved; }
+
+    /** @return the "guessSaved" fields for a particular player */
+    public boolean getGuessSavedBy(int mover) {
+	return (mover==Pairing.State.ONE)? guess1Saved : guessSaved;
+    }
+
+    
     /** The default length is varchar(255) */
     @Basic
     String guess = null;	
@@ -107,9 +123,24 @@ public class EpisodeInfo extends Episode {
     }    
 
     @Basic
+    String guess1 = null;	
+    public String getGuess1() { return guess1; }
+    /** Sets the guess value, truncating it if necessary */
+    public void setGuess1(String _guess1) {
+	final int L =255;
+	if (_guess1.length()>L)  _guess1 = _guess1.substring(0,L);
+	guess1 = _guess1;
+    }    
+
+    @Basic
     int guessConfidence;
     public int getGuessConfidence() { return guessConfidence; }
     public void setGuessConfidence(int _guessConfidence) { guessConfidence = _guessConfidence; }
+
+    @Basic
+    int guess1Confidence;
+    public int getGuess1Confidence() { return guess1Confidence; }
+    public void setGuess1Confidence(int _guess1Confidence) { guess1Confidence = _guess1Confidence; }
 
     /** If we look at the sequence of all move/pick attempts in this
 	series up to and including this episode (including the last [so
@@ -141,6 +172,16 @@ public class EpisodeInfo extends Episode {
     @XmlElement
     public void setXFactor(int _xFactor) { xFactor = _xFactor; }
 
+
+    /** If this is a 2PG, who started (or is to start) the episode? (Value from Pairing.State). This is
+        set on episode creation. */
+    int firstMover;
+    public int getFirstMover() { return firstMover; }
+    @XmlElement
+    public void setFirstMover(int _firstMover) { firstMover = _firstMover; }
+  
+
+    
     /** If the default no-arg constructor is used when restoring a series
 	from the SQL database, the ParaSet needs to be set again */
     @Transient
@@ -180,8 +221,10 @@ public class EpisodeInfo extends Episode {
 
 
     /** Creates a new episode, whose rules and initial board are based (with 
-	appropriate randomization) on a specified parameter set */
-    static EpisodeInfo mkEpisodeInfo(int seriesNo, int displaySeriesNo, GameGenerator gg, ParaSet para, boolean bonus)
+	appropriate randomization) on a specified parameter set
+	@param p The player who plays this episode. (Or, in a 2PG, the player-ZERO of this game). 
+    */
+    static EpisodeInfo mkEpisodeInfo(PlayerInfo p, int seriesNo, int displaySeriesNo, GameGenerator gg, ParaSet para, boolean bonus)
 	throws IOException, RuleParseException {
 	   
 	Game game = gg.nextGame();
@@ -189,7 +232,11 @@ public class EpisodeInfo extends Episode {
 	epi.bonus = bonus;
 	epi.seriesNo = seriesNo;
 	epi.displaySeriesNo = displaySeriesNo;
+	epi.setPlayer(p);
 	
+	int epiNo = p.getSeries(seriesNo).size();
+	epi.firstMover = Pairing.whoWillStartEpisode(p, seriesNo, epiNo );
+
 	epi.cache();
 	return epi;	    	      
     }
@@ -206,7 +253,7 @@ public class EpisodeInfo extends Episode {
     /** Our GUI tells the player where all movable pieces are, unless the 
 	para set mandates "free" mode.
      */
-    boolean weShowAllMovables() {
+    public boolean weShowAllMovables() {
 	return !para.isFeedbackSwitchesFree();
     }
     
@@ -235,23 +282,36 @@ public class EpisodeInfo extends Episode {
     /** An allowance for rounding */
     private static final double eps = 1e-6;
 
-    /** Calls Episode.doMove, and then does various adjustments related to 
+    /** The main method invoked on a /doMove web API call.
+	Calls Episode.doMove, and then does various adjustments related to 
 	this episode's role in the experiment plan.  If the player has
 	failed to complete a bonus episode on time, this is the place
 	that sets the "lost" flag.
+
+	@param playerId null in single-player games; playerId in 2PG
      */
-    public ExtendedDisplay doMove(int y, int x, int by, int bx, int _attemptCnt) throws IOException {
+    public ExtendedDisplay doMove(String moverPlayerId, int y, int x, int by, int bx, int _attemptCnt) throws IOException {
+	ExtendedDisplay d = checkWhoseTurn(moverPlayerId);
+	if (d!=null) return d;
 	Display _q = super.doMove(y, x, by, bx, _attemptCnt);
 
 	Pick move = _q.pick;
-	
-	return processMove(_q, move);
+	move.mover = player.getRoleForPlayerId(moverPlayerId);
+	d = processMove(_q, move);
+	return d;
     }
 
-    public ExtendedDisplay doPick(int y, int x, int _attemptCnt) throws IOException {
+    /** Like /doMove, but without a destination (because the game piece was not movable,
+	or because the player just dropped in on the board) */
+    public ExtendedDisplay doPick(String moverPlayerId, int y, int x, int _attemptCnt) throws IOException {
+	ExtendedDisplay d = checkWhoseTurn(moverPlayerId);
+	if (d!=null) return d;
 	Display _q = super.doPick(y, x, _attemptCnt);
 	Pick pick = _q.pick;
-	return processMove(_q, pick);
+	pick.mover = player.getRoleForPlayerId(moverPlayerId);
+
+	d = processMove(_q, pick);
+	return d;
     }
 
     /** This is set when the player first reach a new threshold. The info
@@ -285,9 +345,9 @@ public class EpisodeInfo extends Episode {
 
  */
     private ExtendedDisplay processMove(Display _q, Pick move) throws IOException  {
-	WatchPlayer.showThem( getPlayer().getPlayerId(),
+	WatchPlayer.tellAbout( player.getPlayerId(),
 			     "Made a move: " + move);
-	WatchPlayer.showThem( getPlayer().getPlayerId(), move);
+	WatchPlayer.tellAbout( player.getPlayerId(), move);
 	
 	boolean isMove = (move instanceof Move);
 	justReachedX2=justReachedX4=false;
@@ -317,7 +377,15 @@ public class EpisodeInfo extends Episode {
 		factorPromised = 4;
 		//setXFactor(4);
 		justReachedX4=true;
-		if (!cleared) earlyWin = true;
+
+
+		// Since ver 7.0, the "EARLY_WIN" finish code is assigned even if
+		// "displaying mastery" happens to coincide with the removal of the
+		// last game piece, so the win isn't really "early".)
+
+		//-- if (!cleared)
+		
+		earlyWin = true;
 	    } else if (f<2 && factorPromised < 2 && lastStretch>=x2) {
 		factorPromised = 2;
 		//setXFactor(2);
@@ -387,18 +455,42 @@ public class EpisodeInfo extends Episode {
 	updateFinishCode();
 	// must do ExtendedDisplay after the "ended()" call, to have correct reward!
 	// must convert to ExtendedDisplay to get params such as "moves left"
-	ExtendedDisplay q = new ExtendedDisplay(_q);
+	ExtendedDisplay q = new ExtendedDisplay(move.mover, _q);
+
+	// tell the mover's partner to update his screen
+	if (player.isTwoPlayerGame()) {
+	    int other = 1-move.mover;
+	    String otherPid = player.getPlayerIdForRole(other);
+	    WatchPlayer.tellHim(otherPid, WatchPlayer.Ready.DIS);
+	}
+
+		
 	return q;
     }
 
+    /** The key that can be printed next to reports to help understand them */
+    public String reportKey() {
+	Incentive incentive = mySeries().para.getIncentive();
+	String s = "[EpisodeID; FC=finishCode g-if-guess-saved; "+
+	    ((incentive==Incentive.BONUS) ? "MainOrBonus; ":
+	     (incentive==Incentive.DOUBLING || incentive==Incentive.LIKELIHOOD)? "xFactor; ":"") +
+	    "moveCnt/initPieceCnt; $reward]";
+	return s;
+    }
+    
     /** Concise report, handy for debugging */
     public String report() {
+	Incentive incentive = mySeries().para.getIncentive();
+	
 	return "["+episodeId+"; FC="+getFinishCode()+
-	    (getGuessSaved()? "g" : "") +   	    "; "+
-	    (earnedBonus? "BB" :
-	     bonusSuccessful? "B" :
-	     bonus&lost? "L" :
-	     bonus?"b":"m")+" " +
+	    (getGuessSaved()? "g" : "") +   (getGuess1Saved()? "G" : "") +  	    "; "+
+	    ((incentive==Incentive.BONUS) ?
+	     (earnedBonus? "BB" :
+	      bonusSuccessful? "B" :
+	      bonus&lost? "L" :
+	      bonus?"b":"m"):
+	     (incentive==Incentive.DOUBLING || incentive==Incentive.LIKELIHOOD)? 
+	     ("x" + xFactor): "") 	     +" " +
 	    attemptCnt + "/"+getNPiecesStart()  +
 	    " $"+getTotalRewardEarned()+"]";
     }
@@ -421,20 +513,31 @@ public class EpisodeInfo extends Episode {
      */
     public class ExtendedDisplay extends Display {
 
-	ExtendedDisplay(int _code,  String _errmsg) {
-	    this(_code, _errmsg, false);
+	ExtendedDisplay(int mover, int _code,  String _errmsg) {
+	    this(mover, _code, _errmsg, false);
 	}
  
-	/** @param dummy If true, the returned structure will contain
+	/** Assembles an ExtendedDisplay structure based on the
+	    current state of this EpisodeInfo object. The super(...)
+	    call executes the Episode.Display's constructor, which
+	    initializes a lot of fields, such as "transcript".
+	    
+	    @param mover In a 2PG, which of the two players made this call? (Pairing.State). In 1PG, this value is not relevant; it can be 0 or -2
+
+	    @param If this is a /move or /pick call, the success code of the move/pick. 
+	    
+	    @param dummy If true, the returned structure will contain
 	    just the error message and no real data.
 	*/
-	private ExtendedDisplay(int _code, 	String _errmsg, boolean dummy) {
+	private ExtendedDisplay(int mover, int _code, 	String _errmsg, boolean dummy) {
 	    super(_code, _errmsg);
+	    this.mover = mover;
 	    if (dummy) return;
 	    bonus = EpisodeInfo.this.isBonus();
 	    seriesNo = EpisodeInfo.this.getSeriesNo();
 	    displaySeriesNo = EpisodeInfo.this.displaySeriesNo;
-
+	    incentive =  EpisodeInfo.this.xgetIncentive();
+	    
 	    if (getPlayer()!=null) {
 		PlayerInfo p = getPlayer();
 
@@ -457,6 +560,7 @@ public class EpisodeInfo extends Episode {
 		double d = attemptSpent - doneMoveCnt;
 		rewardRange = para.kantorLupyanRewardRange(d);
 
+		guessSaved =  EpisodeInfo.this.getGuessSavedBy(mover);
 		
 		if (getFinishCode()!=FINISH_CODE.NO) {
 		    transitionMap = p.new TransitionMap();
@@ -464,7 +568,7 @@ public class EpisodeInfo extends Episode {
 
 		incentive2();
 		
-		errmsg += "\nDEBUG\n" + getPlayer().report();
+		errmsg += "\nDEBUG\n" + p.report();
 
 
 		if (EpisodeInfo.this.isNotPlayable()) {
@@ -475,18 +579,44 @@ public class EpisodeInfo extends Episode {
 
 		faces =p.computeFaces(EpisodeInfo.this);
 
+
+		if (p.isTwoPlayerGame() && getFinishCode()==FINISH_CODE.NO)  {
+		    int whoMustPlay = whoMustMakeNextMove();
+		    if (whoMustPlay != mover) {
+			mustWait = true;
+		    }
+		}
+		
 		
 	    }
 	    //	    Logging.info("Prepared EpisodeInfo.ExtendedDisplay=" +
 	    //		 JsonReflect.reflectToJSONObject(this, true));
 
 	}
-	ExtendedDisplay(Display d) {
-	    this(d.code, d.errmsg);
+	ExtendedDisplay(int mover, Display d) {
+	    this(mover, d.code, d.errmsg);
 	}
 
+	
+	private int mover;
+	/** What is the role of the player in the episode? In 1PG it's
+	    always 0; in 2PG, it's 0 for player 0 of the pair (the one
+	    who owns all episodes), and 1 for player 1 */
+	public int getMover() { return mover; }
+	@XmlElement
+	public void setMover(int _mover) { mover = _mover; }
+
+	
+	private boolean mustWait;
+	/** This flag is true if the episode playable, but it's not this player's turn yet. The caller must wait
+	    for a "READY" signal to arrive via the websocket connection, and
+	    then repeat the /display call. */
+	public boolean getMustWait() { return mustWait; }
+	@XmlElement
+	public void setMustWait(boolean _mustWait) { mustWait = _mustWait; }
+
 	boolean bonus;
-	/** True if this episode is part of a bonus subseries. */
+	/** In games with the BONUS incentive scheme, true if this episode is part of a bonus subseries. */
 	public boolean isBonus() { return bonus; }
 	//	@XmlElement
 	//	public void setBonus(boolean _bonus) { bonus = _bonus; }
@@ -542,9 +672,14 @@ public class EpisodeInfo extends Episode {
 	*/
 	public int getTotalBoardsPredicted() { return totalBoardsPredicted; }
 
-	boolean guessSaved =  EpisodeInfo.this.guessSaved;
-	/** True if the player's guess has been recorded at the end of this episode */
+	boolean guessSaved; 
+	/** True if this player's guess has been recorded at the end
+	    of this episode. In a 2PG, this refers to the player identified by the "mover"
+	    field.
+	 */
 	public boolean getGuessSaved() { return guessSaved; }
+
+
 
 	Double movesLeftToStayInBonus = null;
 	/**
@@ -575,8 +710,9 @@ public class EpisodeInfo extends Episode {
 	public String getTrialListId() { return trialListId; }
         public String getRuleSetName() { return ruleSetName; }
 
-	/** Indicators for the incentive scheme (BONUS, DOUBLING, LIKELIHOOD)*/
+	/** The name of the incentive scheme in the current game (null, BONUS, DOUBLING, LIKELIHOOD)*/
 	Incentive incentive;
+	//@XmlElement
         public Incentive getIncentive() { return incentive; }
 
 	int lastStretch;
@@ -648,13 +784,19 @@ public class EpisodeInfo extends Episode {
 	
     }
     
-    /** Builds a display to be sent out over the web UI */
-    public ExtendedDisplay mkDisplay() {
-    	return new ExtendedDisplay(Episode.CODE.JUST_A_DISPLAY, "Display requested");
+    /** Builds a display to be sent out over the web UI
+	@param playerId This can be null in 1PG, but in 2PG it must
+	identify the player to whom we are to show the display
+     */
+    public ExtendedDisplay mkDisplay(String playerId) {
+	int mover = player.getRoleForPlayerId(playerId); // can be -2 in 1PG
+	//	if (mover<0) return new ExtendedDisplay(0, CODE.OUT_OF_TURN, "Player " + playerId + " is not a party to this game at all!");
+
+    	return new ExtendedDisplay(mover, Episode.CODE.JUST_A_DISPLAY, "Display requested");
     }
 
     public ExtendedDisplay dummyDisplay(int _code, 	String _errmsg) {
-	return new ExtendedDisplay(_code, _errmsg, true);
+	return new ExtendedDisplay(0, _code, _errmsg, true);
     }
 
 
@@ -746,8 +888,11 @@ public class EpisodeInfo extends Episode {
        }
    }
 	
-    /** Records the player-provided "guess" to a CSV file */
-    public void saveGuessToFile(File f, String guessText, int confidence) {
+    /** Records the player-provided "guess" to a CSV file
+	@param moverPlayerId The playerId of the actual player who made the guess. In a 2PG,
+	this is not necessarily the same player who owns the EpisodeInfo instance.
+     */
+    public void saveGuessToFile(File f, String moverPlayerId, String guessText, int confidence) {
 	     final String[] keys = 
 	   { "playerId",
 	     "trialListId",  // string "trial_1"
@@ -760,13 +905,12 @@ public class EpisodeInfo extends Episode {
 	   };
 
        HashMap<String, Object> h = new HashMap<>();
-       PlayerInfo x = getPlayer();
        int moveNo=0;
        Date prevTime = getStartTime();
        int objectCnt = getNPiecesStart();
        h.clear();
-       h.put( "playerId", x.getPlayerId());
-       h.put( "trialListId", x.getTrialListId());
+       h.put( "playerId", moverPlayerId);
+       h.put( "trialListId", getPlayer().getTrialListId());
        h.put( "seriesNo", getSeriesNo());
        PlayerInfo.Series ser =  mySeries();
        h.put( "ruleId",  ser.para.getRuleSetName());
@@ -792,6 +936,79 @@ public class EpisodeInfo extends Episode {
          
     }
 
+    /** Which player made the last recorded move of this episode? (Needed for 2PG only)
+	@return 0 or 1
+     */
+    public int whoMadeLastMove() {
+	return lastMove().mover;
+    }
+
+    public Pick lastMove() {
+	return transcript.lastElement();
+    }
+
+    /** Called at the beginning of /move call, before testing for acceptance. Also can be called at the end of
+	the /move or /display call (after acceptance and recording in the transcript), to decide who'll make the
+	following move.
+     */
+    int whoMustMakeNextMove() {
+	if (attemptCnt==0) {
+	    return firstMover;
+	}
+	Pick m = lastMove();
+	int z = m.getMover();
+	if (player.isCoopGame()) {
+	    // Players alternate moves within episode
+	    return 1-z;
+	} else if (player.isAdveGame()) {
+	    // After a correct move, another attempt is given
+	    return (m.getCode()==CODE.ACCEPT) ? z : 1-z;
+	} else { // single-player
+	    return Pairing.State.ZERO;
+	}
+    }
+	
     
+    /** Checks if the  /move or /pick call in a 2PG is being made by the player whose turn it is to move.
+
+	<P>Episode.player always refers to the player with
+	pairState=State.ZERO, because all episodes of a 2PG are stored
+	in that player. Thus if the the playerId sent by the client is
+	different from Episode.player.playerId, then the move is
+	attempted by the player with pairState=State.ONE.
+	
+	@param playerId The playerId of the player who wants to make a move now
+	
+	@return null if there is no problem （i.e. it's a 1PG, or it's
+	a 2PG and the move is made in turn); an ExtendedDisplay with a
+	proper message if an out-of-turn request */
+    private ExtendedDisplay checkWhoseTurn(String playerId) {
+	if (!player.isTwoPlayerGame()) return null;
+
+	if (playerId==null) return  new ExtendedDisplay(0, CODE.OUT_OF_TURN, "playerId not sent in a /move or /pick call. This parameter is mandatory in 2PG");
+	       
+	int mover = player.getRoleForPlayerId(playerId);
+	if (mover<0) return new ExtendedDisplay(0, CODE.OUT_OF_TURN, "Player " + playerId + " is not a party to this game at all!");
+	
+	int whoMustPlay =whoMustMakeNextMove();
+	
+	return  (mover==whoMustPlay)? null:
+	    new ExtendedDisplay(mover, CODE.OUT_OF_TURN, "Player " + playerId + " tried to make a move out of turn");
+    }
+
+    /** @return the role of the player who made this /move, /pick, or
+      /display call, or -2 if an impossible player (not a party to
+      this game) */
+    /*
+    private int whoMadeCall(String playerId) {
+	if (playerId.equals(player.getPlayerId())) {
+	    return  Pairing.State.ZERO;
+	} else if (playerId.equals(player.getPartnerPlayerId())) {
+	    return  Pairing.State.ONE;
+	} else {
+	    return  Pairing.State.ERROR;
+	}
+    }
+    */	
     
 }

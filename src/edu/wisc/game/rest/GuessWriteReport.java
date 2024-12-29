@@ -24,10 +24,12 @@ public class GuessWriteReport extends FileWriteReport {
     }
 
     /** Records a guess.
+	@param moverPlayerId The player who actually made the guess. (In a 2PG, it may be different from the
+	player who owns the episode)
 	@param text The text of the guess, entered by the player, to record
 	@param  guessConfidence The integer "confidence level" entered by the player
      */
-    static FileWriteReport writeGuess( String episodeId,  String text, int guessConfidence) {
+    static FileWriteReport writeGuess(String moverPlayerId,  String episodeId,  String text, int guessConfidence) {
 	
 	try {
 	    if (text==null) {
@@ -50,10 +52,10 @@ public class GuessWriteReport extends FileWriteReport {
 		return new FileWriteReport(true,"No such episode: " + episodeId);
 	    }
 	    PlayerInfo x = epi.getPlayer();
-	    String pid = x.getPlayerId();
+	    //String pid = x.getPlayerId();
 	    
-	    File f= Files.guessesFile(pid);
-	    epi.saveGuessToFile(f, text, guessConfidence);
+	    File f= Files.guessesFile(moverPlayerId);
+	    epi.saveGuessToFile(f, moverPlayerId, text, guessConfidence);
 	    epi.setGuessSaved(true);
 	    epi.setGuess(text);
 	    if (guessConfidence>=0) {

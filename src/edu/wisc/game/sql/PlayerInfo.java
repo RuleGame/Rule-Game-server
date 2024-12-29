@@ -59,7 +59,38 @@ public class PlayerInfo {
 	R:ruleSet:modifier.
      */
     public String getExperimentPlan() { return experimentPlan; }
-    public void setExperimentPlan(String _experimentPlan) { experimentPlan = _experimentPlan; }
+    public void setExperimentPlan(String _experimentPlan) {
+	experimentPlan = _experimentPlan;
+	postLoad1();
+    }
+
+    @PostLoad() 
+    private void postLoad1() {
+	String[] z = experimentPlan.split("/");
+	coopGame = z[z.length-1].startsWith("coop.");
+	adveGame = z[z.length-1].startsWith("adve.");
+    }
+
+    /** These are set in setExperimentPlan */
+    @Transient
+    private boolean coopGame, adveGame;
+
+    
+        /** @return true if the name of the experiment plan indicates that this
+	is a cooperative two-player game */
+    public boolean isCoopGame() {
+	return coopGame;
+    }
+    /** @return true if the name of the experiment plan indicates that this
+	is an adversarial two-player game */
+    public boolean isAdveGame() {
+	return adveGame;
+    }
+    /** @return true if the name of the experiment plan indicates that this
+	is a two-player game (cooperative or adversary) */
+    public boolean isTwoPlayerGame() {
+	return coopGame || adveGame;
+    }
 
     
     @Basic 
@@ -84,6 +115,66 @@ public class PlayerInfo {
     public String getPartnerPlayerId() { return partnerPlayerId; }
     public void setPartnerPlayerId(String _partnerPlayerId) { partnerPlayerId = _partnerPlayerId; }
 
+    /** The playerId of player 0 or player 1
+	@param mover Whose playerId do you want? 
+     */
+    String getPlayerIdForRole(int mover) {
+	return mover==Pairing.State.ZERO? getPlayerId(): getPartnerPlayerId();
+    }
+
+    /** Is this playerId of player 0 or player 1 in a 2PG?
+	@param pid The playerId of this player, or of its partner
+	@return 0 or 1
+     */
+    int getRoleForPlayerId(String pid) {
+	if (pid==null) {
+	    return Pairing.State.ERROR;
+	} else if (pid.equals(getPlayerId())) {
+	    return  Pairing.State.ZERO;
+	} else if (pid.equals(getPartnerPlayerId())) {
+	    return  Pairing.State.ONE;
+	} else {
+	    return Pairing.State.ERROR;
+	}
+    }
+
+    
+    @Transient
+    private PlayerInfo partner = null;
+    public PlayerInfo xgetPartner() {
+	// FIXME: need to add loading, if we restore them from the database
+	return partner;
+    }
+    /** Sets links in both directions */
+    public void linkToPartner( PlayerInfo _partner, int myRole) {
+	partner = _partner;
+	setPartnerPlayerId(partner.getPlayerId());
+	setPairState(myRole);
+	partner.partner = this;
+	partner.setPartnerPlayerId(getPlayerId());
+	partner.setPairState(1-myRole);
+    }
+
+    
+    @Basic 
+    private int pairState;
+    /** For a player in a two-player game, this is his current status with respect
+	to pairing. The value is from Pairing.Mode.
+     */
+    public int getPairState() { return pairState; }
+    @XmlElement
+    public void setPairState(int _pairState) { pairState = _pairState; }
+
+
+    /** Sets certain pairing-related fields in the object for a newly created player */
+    public void initPairing() {
+	pairState = Pairing.State.NONE;
+	partnerPlayerId = null;
+    }
+	
+		
+
+    // ZZZZ
 
     /** FIXME: this may result in an Episode being persisted before its completed, 
 	which we, generally, don't like. Usually not a big deal though.
@@ -117,14 +208,16 @@ public class PlayerInfo {
     //    }
 
     public String toString() {
-	return "(PlayerInfo: id=" + id +",  playerId="+ playerId+", trialListId=" + trialListId +", date=" + date+")";
+	return "(PlayerInfo: id=" + id +",  playerId="+ playerId+", pair="+pairState+
+	    (partnerPlayerId==null? "": ":" + partnerPlayerId) +
+	    ", trialListId=" + trialListId +", date=" + date+")";
     }
 
 
     /** A Series is a list of all episodes played under a specific param set. A player
 	has as many Series objects as there are lines in that player's trial list.
      */
-    class Series {
+    public class Series {
 	final ParaSet para;
 	/** This is true when this series "continues" into the next
 	    series, forming a super-series. (It may continue further 
@@ -132,7 +225,7 @@ public class PlayerInfo {
 	*/
 	final boolean cont;
 	final GameGenerator gg;
-	Vector<EpisodeInfo> episodes = new Vector<>();
+	public Vector<EpisodeInfo> episodes = new Vector<>();
 	int size() { return episodes.size(); }
 	
 	Series(ParaSet _para) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
@@ -140,6 +233,13 @@ public class PlayerInfo {
 	    cont = para.getBoolean("continue", Boolean.FALSE);
 	    gg = GameGenerator.mkGameGenerator(Episode.random, para);
 	}
+
+	boolean canGiveUp() {
+	    int canGiveUpAt = para.getInt("give_up_at", true, 999);
+	    return (canGiveUpAt>=0) && (size()<=canGiveUpAt);
+	}
+
+		
 	
 	public String toString() {
 	    return "(Series: para.rules=" +	para.getRuleSetName() +
@@ -202,7 +302,7 @@ public class PlayerInfo {
 
 	/** True if we have the DOUBLING (or LIKELIHOOD) incentive scheme, and this 
 	    series has been ended by the x4 achievement */
-	boolean seriesHasX4() {
+	public boolean seriesHasX4() {
 	    return (para.getIncentive()==ParaSet.Incentive.DOUBLING ||
 		    para.getIncentive()==ParaSet.Incentive.LIKELIHOOD)  &&
 		findXFactor()==4;
@@ -212,7 +312,7 @@ public class PlayerInfo {
     }
 
 
-    Series getSeries(int k) {
+    public Series getSeries(int k) {
 	return allSeries.get(k);
     }
     
@@ -556,11 +656,11 @@ public class PlayerInfo {
 	    
 	    EpisodeInfo epi = null;
 	    if (canHaveAnotherRegularEpisode()) {
-		epi = EpisodeInfo.mkEpisodeInfo(currentSeriesNo, currentDisplaySeriesNo,
+		epi = EpisodeInfo.mkEpisodeInfo(this, currentSeriesNo, currentDisplaySeriesNo,
 
 						ser.gg, ser.para, false);
 	    } else if (canHaveAnotherBonusEpisode()) {
-		epi = EpisodeInfo.mkEpisodeInfo(currentSeriesNo,  currentDisplaySeriesNo,
+		epi = EpisodeInfo.mkEpisodeInfo(this, currentSeriesNo,  currentDisplaySeriesNo,
 						ser.gg, ser.para, true);
 	    }
 
@@ -803,7 +903,7 @@ public class PlayerInfo {
 	f =  Files.detailedTranscriptsFile(playerId);
 	epi.saveDetailedTranscriptToFile(f);
 
-	WatchPlayer.showThem(playerId, "Ended episode " +epi.getEpisodeId()+
+	WatchPlayer.tellAbout(playerId, "Ended episode " +epi.getEpisodeId()+
 			     " with finishCode =" + epi.finishCode);
 	
     }
@@ -865,11 +965,13 @@ public class PlayerInfo {
 
 	    // Where do you really get if you are done with this series?
 	    Transition whitherNext = isLastSeries?Transition.END: Transition.NEXT;
-	    
+
+	    boolean mayGiveUp = ser.canGiveUp();
+
 	    if (inBonus) {
 		if (canHaveAnotherBonusEpisode()) {
 		    put(Transition.BONUS, Action.DEFAULT);
-		    put(whitherNext, Action.GIVE_UP);
+		    if (mayGiveUp) put(whitherNext, Action.GIVE_UP);
 		} else {
 		    put(whitherNext, Action.DEFAULT);
 		}
@@ -878,7 +980,7 @@ public class PlayerInfo {
 		if (canHaveAnotherRegularEpisode()) {
 		    // space left to continue or give up
 		    put(Transition.MAIN, Action.DEFAULT);
-		    put(whitherNext, Action.GIVE_UP);
+		    if (mayGiveUp) put(whitherNext, Action.GIVE_UP);
 		} else {
 		    // end of series
 		    put(whitherNext, Action.DEFAULT);
@@ -969,6 +1071,8 @@ public class PlayerInfo {
 	} else return 0;
     } 
 
+
+    
     
 }
  

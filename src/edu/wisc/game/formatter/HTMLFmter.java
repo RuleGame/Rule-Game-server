@@ -31,11 +31,16 @@ public class HTMLFmter extends Fmter {
     /** The STYLE or LINK REL=STYLESHEET element for this HTML file, as the case may be */
     public String style() {
 	return css!=null?  wrap2("style",  "type=\"text/css\"", css) +"\n":
-	    cssUrl!=null? "<link rel=\"stylesheet\" type=\"text/css\" href=\""+cssUrl+"\"/>":
+	    cssUrl!=null? style(cssUrl):
 	    "";
-
     }
 
+    /** A LINK REL=STYLESHEET element  */
+    public String style(String cssUrl) {
+	return  "<link rel=\"stylesheet\" type=\"text/css\" href=\""+cssUrl+"\"/>";
+    }
+
+    
     
     public String br() { 
 	return "<br>\n";
@@ -82,6 +87,13 @@ public class HTMLFmter extends Fmter {
 	return wrap(wrap, null, text);
     }
 
+    public String input2(String name, String extra) {
+	String s = "<input name='" + name + "' type='text'";
+	if (extra!=null) s += " " + extra;
+	s += ">";
+	return s;
+    }
+ 	    
      
     public String input(String name, String value, int size) {
 	String s = "<input name='" + name + "' type='text'";
@@ -200,6 +212,10 @@ public class HTMLFmter extends Fmter {
 	if (extraClauses!=null) s += " " +extraClauses;
 	s += ">" + text + "</a>";
 	return s;
+    }
+
+    public String title(String s) {
+	return wrap("title", s) + "\n";
     }
     
     public static HTMLFmter htmlFmter = new HTMLFmter();

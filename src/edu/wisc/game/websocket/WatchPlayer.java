@@ -17,11 +17,8 @@
 //package websocket.chat;
 package edu.wisc.game.websocket;
 
-import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Queue;
-import java.util.Set;
-import java.util.Date;
+import java.io.*;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -46,7 +43,7 @@ import edu.wisc.game.util.Logging;
 //import util.HTMLFilter;
 
 @ServerEndpoint(value = "/websocket/watchPlayer" ,
-		encoders = {WatchPlayer.PickEncoder.class}
+		encoders = {WatchPlayer.PickEncoder.class,WatchPlayer.ReadyEncoder.class}
 		)
 public class WatchPlayer {
 
@@ -61,6 +58,7 @@ public class WatchPlayer {
 
     /** The ID of the player whom the client associated with this connection
 	wants to watch */
+    private String myPid=null;
     private String watchedPid =null;
     private final Date startAt;
 
@@ -96,30 +94,56 @@ public class WatchPlayer {
     }
 
 
+    /** Expects
+	WATCH pid
+	IAM pid
+    */
     @OnMessage
     public void incoming(String message) {
         // Never trust the client
         //String filteredMessage = String.format("%s: %s", nickname, HTMLFilter.filter(message.toString()));
         //broadcast(filteredMessage);
 
-
+	String  s = "At " + (new Date()) +", ";
 	//sendMessage("[M1] " + message);
 	//        broadcast("[B] " + message);
-
+	String watch = null, iam = null;
+	final String WATCH = "WATCH", IAM = "IAM";
+	if (message.startsWith(WATCH)) {
+	    watch = message.substring(WATCH.length()).trim();
+	} else 	if (message.startsWith(IAM)) {
+	    iam = message.substring(IAM.length()).trim();
+	} else {
+	    s+= "ignoring message: " + message;
+	}
+	
 
 	String pid = message.trim();
 	//sendMessage("[M2] pid=" + pid);
 	if (pid.equals("")) return;
-	String  s = "At " + (new Date()) +", ";
+
 	synchronized (this) {
-	    if (watchedPid != null) {
-		s += "stopped watching player '" + watchedPid+ "', ";
+	    if (watch!=null) {
+		if (watchedPid != null) {
+		    s += "stopped watching player '" + watchedPid+ "', ";
+		}
+		watchedPid = watch;
+		s += "started watching player '" + watchedPid+ "'. ";
+	    } else if (iam!=null) {
+		if (myPid != null) {
+		    s += "stopped receiving messages for '" + myPid+ "', ";
+		}
+		myPid = iam;
+		s += "started receiving messages for '" + myPid+ "'. ";
+			
 	    }
-	    watchedPid = pid;
-	    s += "started watching player '" + watchedPid+ "'. ";
+		
 	}
 	//try {
-	    sendMessage("[Y] " + s);
+
+	Logging.info("Chat(i="+myPid+")(w="+watchedPid+"): " + s);
+			   
+	    sendMessage(s);
 	    //} catch(IOException t) {
 	    //Logging.error("Cannot send a websocket message about player "  + watchedPid +"; error=" + t);
 	    //}
@@ -128,7 +152,12 @@ public class WatchPlayer {
 
     @OnError
     public void onError(Throwable t) throws Throwable {
+
+	StringWriter sw = new StringWriter();
+	t.printStackTrace(new PrintWriter(sw));
+	
         Logging.error("Chat Error: " + t.toString());
+        Logging.error("Trace: " + sw);
     }
 
 
@@ -218,32 +247,52 @@ public class WatchPlayer {
 	WatchMessage(Object _o) { o  = _o; }
     }
     
-    private void showMe(String pid, String text) {
+  
+    private void tellHim1b(String pid, Ready m) {
+	if (pid==null  || !pid.equals(myPid)) return;
+	sendMessage(m);
+    }
+
+    private void tellAbout1a(String pid, String text) {
 	if (pid==null  || !pid.equals(watchedPid)) return;
 	String s = "At " + (new Date()) + ", action by player '" + pid +"': " + text;
 	sendMessage(s);
     }
 
-    private void showMe2(String pid, Object m) {
+    private void tellAbout1b(String pid, Object m) {
 	if (pid==null  || !pid.equals(watchedPid)) return;
 	sendMessage(m);
     }
 
+    /** Messages sent to a GUI client to tell it that something is ready
+	for it, and it can make another /newEpisode or /display call */
+    public enum Ready {
+	EPI,
+	DIS
+    };
+
+    
     /** Methods handling important events during the game call this method
 	to let watchers now about the most recent event */
-    public static <T> void showThem(String pid, T msg) {
+    public static <T> void tellAbout(String pid, T msg) {
 	for (WatchPlayer client : connections) {
 	    if (msg instanceof String) {
-		client.showMe(pid, (String)msg);
+		client.tellAbout1a(pid, (String)msg);
 	    } else { //if (msg instanceof WatchMessage) {
-		client.showMe2(pid, msg);
+		client.tellAbout1b(pid, msg);
 		//	    } else {
 		//Logging.error("Wrong message type: " + msg.getClass());
 	    }
 	}
     }
+    public static void tellHim(String pid, Ready msg) {
+	for (WatchPlayer client : connections) {
+	    client.tellHim1b(pid, msg);
+	}
+    }
 
-    /** See https://docs.oracle.com/javaee/7/tutorial/websocket007.htm
+    /** See https://docs.oracle.com/javaee/7/tutorial/websocket007.htm or
+	https://www.baeldung.com/java-websockets
 	for documentation on encoders */
     static public class PickEncoder implements Encoder.Text<edu.wisc.game.sql.Episode.Pick> {
 	@Override
@@ -259,4 +308,22 @@ public class WatchPlayer {
 	    return "[pick/move: "+pick+"]";
 	}
     }
+
+    static public class ReadyEncoder implements Encoder.Text<Ready> {
+	@Override
+	public void init(EndpointConfig ec) { }
+	@Override
+	public void destroy() { }
+	@Override
+	/** This method can use reflection to make a nice JSON string out of
+	    the object; but at the moment we simply send "READY EPI" or "READY DIS",
+	    and attach the time stamp.
+	*/
+	public String encode(Ready msg) throws EncodeException {
+	    return "READY " + msg.toString() + " " + (new Date()) ;
+	}
+    }
+
+    
+    
 }

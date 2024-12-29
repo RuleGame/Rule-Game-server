@@ -324,7 +324,6 @@ public class Ecd {
 
 	    String ta = (target==null ?  "cross-target comparison" : "Target " + target);
 
-	    
 	    System.out.println("=== "+ta+" ===");
 	    
 	    // M-W test on the data from savedMws

@@ -32,7 +32,7 @@ public class TranscriptManager {
 	synchronized(file_writing_lock) {
 	try {	    
 	    PrintWriter w = new PrintWriter(new	FileWriter(f, true));
-	    if (f.length()==0) w.println("#pid,episodeId,moveNo,timestamp,y,x,by,bx,code");
+	    if (f.length()==0) w.println("#pid,episodeId,moveNo,timestamp,mover,y,x,by,bx,code");
 	    Vector<String> v = new Vector<>();
 	    int k=0;
 	    for(Pick move: transcript) {
@@ -41,6 +41,7 @@ public class TranscriptManager {
 		v.add(eid);
 		v.add(""+(k++));
 		v.add( Episode.sdf2.format(move.time));
+		v.add(""+move.getMover());
 		Pos q = new Pos(move.pos);
 		v.add(""+q.y);
 		v.add(""+q.x);
@@ -71,7 +72,11 @@ public class TranscriptManager {
 	/** Stores the content of one line (representing one move/pick
 	    attempt) read back from the transcript file */
 	public static class Entry {
-	    final public CsvData.BasicLineEntry csv;
+	    
+	    // thru ver 6.*: "#pid,episodeId,moveNo,timestamp,y,x,by,bx,code"
+	    // from ver 7.*: "#pid,episodeId,moveNo,timestamp,mover,y,x,by,bx,code"
+	    
+	    final public CsvData.BasicLineEntry csv;	    
 	    
 	    final public String pid, eid;
 	    final public int k;
@@ -80,14 +85,21 @@ public class TranscriptManager {
 	    final public Pick pick;
 	    /** The success code read from the transcript */
 	    final public int code;
+	    final public int mover;
 
+	    
 	    Entry(CsvData.BasicLineEntry e) {
+		//-- the "mover" column was added in GS 7.0
+		final boolean hasMover = (e.nCol() > 9);
+
+		
 		csv = e;
 		int j=0;
 		pid = e.getCol(j++);
 		eid = e.getCol(j++);
 		k = e.getColInt(j++);
 		timeString = e.getCol(j++);
+		mover = hasMover? e.getColInt(j++) : 0;
 		int qy = e.getColInt(j++);
 		int qx = e.getColInt(j++);
 		Integer by = e.getColInt(j++);

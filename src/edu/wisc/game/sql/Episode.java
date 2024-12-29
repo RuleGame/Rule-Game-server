@@ -78,6 +78,12 @@ public class Episode {
 	double rValue = 0;
 	void setRValue(double r)  { rValue = r; }
 	public double getRValue()  { return rValue; }
+
+	/** In a two-player game, which player made this move? (Pairing.State.ZERO or ONE)
+	 */
+	int mover=0;
+	public int getMover() { return mover; }
+
     }
 
     /** A Move instance describes an [attempted] act of picking a piece
@@ -112,6 +118,8 @@ public class Episode {
 	for positions where pieces currently are. */
     @Transient
     private Piece[] pieces = null;
+    public Piece[] getPieces() { return  pieces;}
+    
     /** Pieces are moved into this array once they are removed from the board.
 	This is only shown in web UI.
      */
@@ -140,14 +148,15 @@ public class Episode {
 	in this episode */
     @Transient
     Vector<Pick> transcript = new Vector<>();
-  
+
+    
     /** Set when appropriate at the end of the episode */
     boolean stalemate = false;
     boolean cleared = false;
     boolean givenUp = false;
     boolean lost = false;
     boolean earlyWin = false;
-    
+
     /** Which row of rules do we look at now? (0-based) */
     @Transient
     protected int ruleLineNo = 0;
@@ -688,7 +697,9 @@ public class Episode {
 	// This code is returned on successful DISPLAY calls, to
 	// indicate that it was a display (no actual move requested)
 	// and not a MOVE	    
-	    JUST_A_DISPLAY = -8;
+	    JUST_A_DISPLAY = -8,
+	// A /pick or /move call made by a wrong player in a 2PG
+	    OUT_OF_TURN = -9;
 
 	/** This is used when comparing codes read from old
 	    transcripts and recomputed codes, to take into account
@@ -718,10 +729,14 @@ public class Episode {
 	    required number of steps */
 	    LOST = 4,
 	/** The server decided that the player is so good that 
-	    it terminated the episode early, giving the player full
+	    it terminated the episode, giving the player full
 	    points that he'd get if he completed the episode 
 	    without any additional errors. This is sometimes done
-	    when the DOUBLING (or LIKELIHOOD) incentive scheme is in effect. */
+	    when the DOUBLING (or LIKELIHOOD) incentive scheme is in effect.
+	    (Note, that since ver 7.0, this code is assigned even if
+	    "displaying mastery" happens to coincide with the removal of the
+	    last game piece, so the win isn't really "early".)
+	*/
 	    EARLY_WIN = 5
 	    ;
     }
@@ -792,6 +807,10 @@ public class Episode {
     @Transient
     private Pick lastMove = null;
 
+    public int getLastMovePos() {
+	return lastMove==null? -1:  lastMove.pos;
+    }
+
     /**    	    One normally should not use this method directly; use
 	    doPick() or doMove() instead.
     */
@@ -816,7 +835,7 @@ public class Episode {
     /** The basic mode tells the player where all movable pieces are, 
 	but EpisodeInfo will override it if the para set mandates "free" mode.
      */
-    boolean weShowAllMovables() {
+    public boolean weShowAllMovables() {
 	return true;
     }
  
@@ -835,115 +854,21 @@ public class Episode {
     */
     public String graphicDisplay(boolean html) {
 
-	int lastMovePos =  (lastMove==null)? -1:  lastMove.pos;
-	//	private boolean[] isMoveable = new boolean[Board.N*Board.N+1];
 	boolean[] isMoveable = ruleLine.isMoveable;
 
 	if (isNotPlayable()) {
 	    return "This episode must have been restored from SQL server, and does not have the details necessary to show the board";
 	}
 	
+	if (!html) return graphicDisplayAscii(pieces, getLastMovePos(),  weShowAllMovables(), isMoveable, html);
 
-
-	if (!html) return// graphicDisplayAscii(html);
-					  graphicDisplayAscii(pieces, lastMovePos,  weShowAllMovables(), isMoveable, html);
-	
-	String s = 
-	    fm.wrap("li", "(X) - a movable piece" +
-		    (!weShowAllMovables()? " (only marked on the last touched piece)": "")) +
-	    fm.wrap("li","[X] - the position to which the last move or pick attempt (whether successful or not) was applied");
-	String result = fm.para( "Notation: " + fm.wrap("ul",s));
-	
-	result+=doHtmlDisplay(pieces, lastMovePos,  weShowAllMovables(), isMoveable, 80);
+	String notation = HtmlDisplay.notation(weShowAllMovables());	
+	String display =HtmlDisplay.htmlDisplay(pieces, getLastMovePos(),  weShowAllMovables(), isMoveable, 80, false);
+	String result = fm.td(display)  + fm.td("valign='top'", notation);
+	result = fm.tr(result);
+	result = fm.table("", result);
 	return result;
-
     }
-
-    /** @param pieces An array of N*N values, with nulls for empty cells */
-    public static String doHtmlDisplay(Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveable, int cellWidth) {
-
-
-	String result="";
-	
-	ColorMap cm = new ColorMap();
- 	
-	Vector<String> rows = new Vector<>();
-	
-	Vector<String> v = new Vector<>();
-	v.add(fm.td(""));
-	for(int x=1; x<=Board.N; x++) v.add(fm.td("align='center'", "" + x));
-	String topRow = fm.tr(String.join("", v));
-	rows.add(topRow);
-	
-	
-	for(int y=Board.N; y>0; y--) {
-	    v.clear();
-	    v.add(fm.td(""+y));
-
-	    //-- we use borders if there are any images with color properties
-	    boolean needBorder=false;
-	    for(Piece p: pieces) {
-		if (p!=null && p.xgetColor()!=null) needBorder=true;
-	    }
-	    
-
-	    for(int x=1; x<=Board.N; x++) {
-		int pos = (new Pos(x,y)).num();
-		String sh = "BLANK";
-		String hexColor = "#FFFFFF";
-		ImageObject io = null;
-		
-		if (pieces[pos]!=null) {
-		    Piece p = pieces[pos];
-		    io = p.getImageObject();		    
-		    sh = (io!=null) ? io.key : p.xgetShape().toString();
-		    hexColor = "#"+ (io!=null? "FFFFFF" : cm.getHex(p.xgetColor(), true));
-		}
-
-		//-- The style is provided to ensure a proper color border
-		//-- around Ellise's elements, whose color is not affected by
-		//-- the background color of TD
-		String z = "<img ";
-		if (needBorder) z += "style='border: 5px solid "+hexColor+"' ";
-		String ke = null;
-		try {
-		    ke  = java.net.URLEncoder.encode(sh, "UTF-8");
-		} catch( UnsupportedEncodingException ex) {}
-		
-		z += "width='"+cellWidth+"' src=\"../../GetImageServlet?image="+ke+"\">";
-		//z = (lastMove!=null && lastMovePos==pos) ?    "[" + z + "]" :
-		//    ruleLine.isMoveable[pos]?     "(" + z + ")" :
-		//    "&nbsp;" + z + "&nbsp;";
-
-		boolean isLastMovePos =  (lastMovePos==pos);
-		boolean padded=true;
-		
-		if (isMoveable[pos] && (weShowAllMovables || isLastMovePos)) {
-		    z="(" + z + ")";
-		    padded=true;
-		}
-
-		if (isLastMovePos) {
-		    z="[" + z + "]";
-		    padded=true;
-		}
-
-		if (!padded) z = "&nbsp;" + z + "&nbsp;";
-		String td = (io!=null)?
-		    fm.td( z):
-		    fm.td("bgcolor=\"" + hexColor+"\"", z);
-		v.add(td);
-	    }
-	    rows.add(fm.tr(String.join("", v)));
-	}
-	rows.add(topRow);
-	result+= fm.table("border='1'", rows);
-	return result; 
-    }
-
-
-    //(Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveable, int cellWidth) {
-
     
     /** Retired from the web game server; still used in Captive Game Server. */
     static public String graphicDisplayAscii(
@@ -1039,7 +964,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
 
     /** The current version of the application */
-    public static final String version = "6.050";
+    public static final String version = "7.000";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }
@@ -1379,5 +1304,9 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	    attemptCnt + "/"+getNPiecesStart()  +
 	    "]";
     }
+
+    
+    public boolean[] positionsOfMoveablePieces() { return ruleLine.isMoveable;}
+    
     
 }

@@ -469,7 +469,17 @@ public class ParaSet extends HashMap<String, Object> {
     }
 
     /** Various incentive schemes available to experiment designers. */
-    public enum Incentive { BONUS, DOUBLING, LIKELIHOOD };
+    public enum Incentive { BONUS, DOUBLING, LIKELIHOOD;
+	/** Is this one of those schemes (DOUBLING or LIKELIHOOD) where
+	    an early win is triggered once the player passes some
+	    mastery criterion?
+	 */
+	public boolean mastery() {
+	    return (this==DOUBLING) || (this==LIKELIHOOD);
+	}
+	
+			    
+    };
 
     /** Returns the name of the incentive scheme in use in this para set,
 	or null if none is apparenly is in effect. This is determined
