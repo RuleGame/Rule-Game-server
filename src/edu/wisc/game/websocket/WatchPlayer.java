@@ -14,7 +14,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-//package websocket.chat;
 package edu.wisc.game.websocket;
 
 import java.io.*;
@@ -143,7 +142,7 @@ public class WatchPlayer {
 
 	Logging.info("Chat(i="+myPid+")(w="+watchedPid+"): " + s);
 			   
-	    sendMessage(s);
+	sendMessage(s);
 	    //} catch(IOException t) {
 	    //Logging.error("Cannot send a websocket message about player "  + watchedPid +"; error=" + t);
 	    //}
@@ -167,7 +166,6 @@ public class WatchPlayer {
      */
     private void sendMessage(Object msg) //throws IOException
     {
-
 
 	try {
 	

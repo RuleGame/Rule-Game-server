@@ -57,8 +57,12 @@ Chat.connect = (function(host) {
    
 
 Chat.initialize = function() {
-           var proto= (window.location.protocol == 'http:') ? "ws" : "wss";
-           var url = proto + '://' + window.location.host + '/w2020/websocket/watchPlayer';
+   var proto= (window.location.protocol == 'http:') ? "ws" : "wss";
+   var path = window.location.pathname;
+   var words = path.split("/");
+   var app = words[1];
+           var url = proto + '://' + window.location.host + '/' + app + '/websocket/watchPlayer';
+  window.alert('Will use URL ' + url);
            Chat.connect(url);
 };
 
