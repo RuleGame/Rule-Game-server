@@ -62,7 +62,7 @@ Chat.initialize = function() {
    var words = path.split("/");
    var app = words[1];
            var url = proto + '://' + window.location.host + '/' + app + '/websocket/watchPlayer';
-  window.alert('Will use URL ' + url);
+//  window.alert('Will use URL ' + url);
            Chat.connect(url);
 };
 
