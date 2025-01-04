@@ -94,7 +94,7 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 
 	    PlayerInfo x = PlayerResponse.findPlayerInfo(null, pid);
 	    Logging.info("NewEpisodeWrapper2(pid="+ pid+"): player="+
-			 (x==null? "null" : "" + x + "\n" + x.report()));
+			 (x==null? "null" : "" +x+ "\n" + x.report()));
 	    if (x==null) {
 		setError(true);
 		setErrmsg("Player not found: " + pid);
@@ -139,7 +139,7 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 
 
 	    // Tell the other player that the episode is ready
-	    if (x.isTwoPlayerGame()) {
+	    if (x.is2PG()) {
 		WatchPlayer.tellHim(x.getPartnerPlayerId(), WatchPlayer.Ready.EPI);
 	    }
 

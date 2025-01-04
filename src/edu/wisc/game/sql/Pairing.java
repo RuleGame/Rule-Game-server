@@ -48,7 +48,7 @@ public class Pairing {
 	@return true if the player is in the "wait to be paired" state
     */
     static public void newPlayerRegistration(PlayerInfo p) {
-	if (!p.isTwoPlayerGame()) return;
+	if (!p.is2PG()) return;
 	if (p.getPartnerPlayerId()!=null) return;
 	PairingQueue q = getPairingQueue(p.getExperimentPlan());
 	q.register(p);
@@ -61,8 +61,11 @@ public class Pairing {
 	now, and therefore p has to wait to start playing
     */
     static public boolean ensurePairingNow(PlayerInfo p) {
-	if (!p.isTwoPlayerGame()) return false;
-	if (p.getPartnerPlayerId()!=null) return false;
+	if (!p.is2PG()) return false;
+	if (p.getPartnerPlayerId()!=null) {
+	    p.xgetPartner(); 	    /// ensure that p.partner is loaded
+	    return false;
+	}
 	PairingQueue q = getPairingQueue(p.getExperimentPlan());
 	PlayerInfo other = q.tryPairing(p);
 	return (other==null);
@@ -176,10 +179,10 @@ public class Pairing {
 	} else if (p.isAdveGame()) {
 	    // After an early win, the losing player starts the next series; otherwise, alternation
 	    PlayerInfo.Series lastSeries = p.getSeries(seriesNo-1);
-	    if (lastSeries.seriesHasX4()) {
-		// who was the winner?
-		EpisodeInfo lastEpi = lastSeries.episodes.lastElement();
-		return 1-lastEpi.whoMadeLastMove();
+	    if (lastSeries.seriesHasX4(State.ZERO)) {
+		return State.ONE;
+	    } else if (lastSeries.seriesHasX4(State.ONE)) {
+		return State.ZERO;
 	    } else {
 		return 1-lastSeries.episodes.firstElement().getFirstMover();
 	    }

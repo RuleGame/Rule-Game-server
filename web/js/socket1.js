@@ -28,7 +28,7 @@ Chat.connect = (function(host) {
 
    Chat.socket.onopen = function () {
 //window.alert('send: IAM '  + myPid);            
-		Chat.socket.send('IAM '  + myPid);            
+	Chat.socket.send('IAM '  + myPid);            
 		//pid = getQueryVariable("watch");
 		//if (pid)	{	                    Chat.socket.send('WATCH '  + pid);            }
 
@@ -40,17 +40,11 @@ Chat.connect = (function(host) {
    };
 
    Chat.socket.onmessage = function (message) {
-      if(true) { // typeOf message.data === String ){
-//         window.alert("Received text message: " + message.data);
-//       Console.log(message.data);
          if (message.data.startsWith("READY EPI")) {
 	       document.getElementById("readyEpiForm").submit();
          } else  if (message.data.startsWith("READY DIS")) {
 	       document.getElementById("readyDisForm").submit();
          }
-      } else {
-//         window.alert("Received non-text ("+typeof(message.data)   +") message: " + message.data);
-      }
    };
 });
    
@@ -61,9 +55,9 @@ Chat.initialize = function() {
    var path = window.location.pathname;
    var words = path.split("/");
    var app = words[1];
-           var url = proto + '://' + window.location.host + '/' + app + '/websocket/watchPlayer';
+   var url = proto + '://' + window.location.host + '/' + app + '/websocket/watchPlayer';
 //  window.alert('Will use URL ' + url);
-           Chat.connect(url);
+   Chat.connect(url);
 };
 
 Chat.sendMessage = (function() {

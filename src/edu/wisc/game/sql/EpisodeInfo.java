@@ -23,6 +23,7 @@ import jakarta.xml.bind.annotation.XmlElement;
     a parameter set, and for managing earned reward amount.
  */
 @Entity  
+@Access(AccessType.FIELD)
 public class EpisodeInfo extends Episode {
 
     /** Since 4.007, this will fully activate the mode proposed by
@@ -35,6 +36,21 @@ public class EpisodeInfo extends Episode {
     private PlayerInfo player;
     public PlayerInfo getPlayer() { return player; }
     public void setPlayer(PlayerInfo _player) { player = _player; }
+
+   /** (2PG only) The count of all attempts (move and pick) done so far  by Player 1, including successful and unsuccessful ones.
+	
+     */
+    int attemptCnt1=0;
+    /** The total cost of all attempts (move and pick) done so far by Player 1 (in 2PG only)
+	including successful and unsuccessful ones. If cost_pick!=1,
+	this value may be different from attemptCnt. */
+    double attemptSpent1=0;
+    /** All successful moves (not picks) so far, by Player 1
+     */
+    int doneMoveCnt1=0;
+    /** The count of successful picks (not moves) so far, by Player 1 */
+    int successfulPickCnt1=0;
+
 
     /** Table with all episodes recently played on this server. It is kept to enable quick lookup
 	of episode by id.
@@ -69,14 +85,25 @@ public class EpisodeInfo extends Episode {
     episode. This typically is the last episode of a successful
     bonus subseries. */     
     boolean earnedBonus;
-    /** The standard reward that has been given for this episode. It is assigned for every episode that has been completed (board cleared), and perhaps
-(depending on the stalematesAsClears flag) also for stalemated episodes. */
-    int rewardMain;
-    /** The bonus reward that has been given for this episode. This is only applicable to the BONUS reward scheme. At most one episode in a series (namely, the last episode of a successful bonus subseries) may have this reward; this episode is marked with earnedBonus=true */
+    /** The standard reward that has been given for this episode. It
+	is assigned for every episode that has been completed (board
+	cleared), and perhaps (depending on the stalematesAsClears
+	flag) also for stalemated episodes. */
+    int rewardMain[] = new int[2];//ZZZZ
+    @Access(AccessType.PROPERTY)
+    public int getRewardMain() { return rewardMain[0]; }
+    public void setRewardMain(int x) { rewardMain[0]=x; }
+    @Access(AccessType.PROPERTY)
+    public int getRewardMain1() { return rewardMain[1]; }
+    public void setRewardMain1(int x) { rewardMain[1]=x; }
+
+    public void setRewardMain(int j, int x) { rewardMain[j]=x; }
+    
+    /** The bonus reward that has been given for this episode. This is only applicable to the BONUS reward scheme, which is only used in 1PG. At most one episode in a series (namely, the last episode of a successful bonus subseries) may have this reward; this episode is marked with earnedBonus=true */
     int rewardBonus;
 
-    /** The total reward earned in this episode */
-    int getTotalRewardEarned() { return rewardMain +  rewardBonus; }
+    /** The total reward earned in this episode by a particular player */
+    int getTotalRewardEarned(int mj) { return rewardMain[mj] +  rewardBonus; }
     
     /** Indicates the number of the series (within a player's set of
 	episodes) to which this episode belongs. This is used during
@@ -149,28 +176,51 @@ public class EpisodeInfo extends Episode {
 	completed, this episode's number is preserved in this episode's
 	SQL server record.
     */
-    int lastStretch;
-    public int getLastStretch() { return lastStretch; }
-    @XmlElement
-    public void setLastStretch(int _lastStretch) { lastStretch = _lastStretch; }
+    //int lastStretch;
+    private int lastStretch[] = new int[2];
+    @Access(AccessType.PROPERTY)
+    public int getLastStretch() { return lastStretch[0]; }
+    //    @XmlElement
+    public void setLastStretch(int x) { lastStretch[0] = x; }
 
-    /** Bayesian-based intervention */
-    double lastR;
-    public double getLastR() { return lastR; }
+    //int lastStretch1;
+    /** For Player 1, in adversarial games only */
+    @Access(AccessType.PROPERTY)
+    public int getLastStretch1() { return lastStretch[1]; }
+    //    @XmlElement
+    public void setLastStretch1(int x) { lastStretch[1] = x; }
+
+    
+    /** Bayesian-based intervention: the R product for the last stretch of good moves */
+    //double lastR;
+    private double lastR[] = new double[2];
+    @Access(AccessType.PROPERTY)
+    public double getLastR() { return lastR[0]; }
+    //@XmlElement
+    public void setLastR(double x) { lastR[0] = x; }
+
+    //double lastR1;
+    /** For Player 1, in adversarial games only */
+    @Access(AccessType.PROPERTY)
+    public double getLastR1() { return lastR[1]; }
     @XmlElement
-    public void setLastR(double _lastR) { lastR = _lastR; }
+    public void setLastR1(double x) { lastR[1] = x; }
 
     
     /** In a series with the DOUBLING (or LIKELIHOOD) incentive scheme, the episode
-	that triggered x2 for the series has the value of 2 stored
+	that triggered x2 (but did not trigger x4) for the series has the value of 2 stored
 	here, and the episode that triggered x4 has 4 stored here. 
 	The default value for this field (stored in all other episodes)
 	is 0.
      */
-    int xFactor;
-    public int getXFactor() { return xFactor; }
-    @XmlElement
-    public void setXFactor(int _xFactor) { xFactor = _xFactor; }
+    //int xFactor;
+    int xFactor[] = new int[2] ;
+    @Access(AccessType.PROPERTY)
+    public int getXFactor() { return xFactor[0]; }
+    public void setXFactor(int x) { xFactor[0] = x; }
+    @Access(AccessType.PROPERTY)
+    public int getXFactor1() { return xFactor[1]; }
+    public void setXFactor1(int x) { xFactor[1] = x; }
 
 
     /** If this is a 2PG, who started (or is to start) the episode? (Value from Pairing.State). This is
@@ -289,6 +339,10 @@ public class EpisodeInfo extends Episode {
 	that sets the "lost" flag.
 
 	@param playerId null in single-player games; playerId in 2PG
+
+	@param _attemptCnt According to the client, this is how many /move or /pick
+	calls it has made before this call; so this is how long the transcript of
+	this episode should be.	
      */
     public ExtendedDisplay doMove(String moverPlayerId, int y, int x, int by, int bx, int _attemptCnt) throws IOException {
 	ExtendedDisplay d = checkWhoseTurn(moverPlayerId);
@@ -316,8 +370,10 @@ public class EpisodeInfo extends Episode {
 
     /** This is set when the player first reach a new threshold. The info
      should be kept until the end of the episode. */
-    private int factorPromised = 0;
-    private boolean justReachedX2=false, justReachedX4=false;
+    @Transient
+    private int factorPromised[] = new int[2];
+    @Transient
+    private boolean[] justReachedX2=new boolean[2], justReachedX4=new boolean[2];
     
     /** The common part of doMove and doPick: after a move or pick has
 	been completed, see how it affects the current state of the
@@ -343,6 +399,12 @@ public class EpisodeInfo extends Episode {
 	stretch (and R) calculations, to prevent the player from gaming the
 	system.
 
+	<P>In 1PG and in co-op 2PG, all good moves contribute to
+	lastStretch and lastR. In adversarial 2PG, separate count is
+	done for the two players, lastStretch1 and lastR1 being used
+	for Player 1.
+
+	@move The just-made pick or move. In 2PG, the move.mover field identifies the player who made the move.
  */
     private ExtendedDisplay processMove(Display _q, Pick move) throws IOException  {
 	WatchPlayer.tellAbout( player.getPlayerId(),
@@ -350,33 +412,74 @@ public class EpisodeInfo extends Episode {
 	WatchPlayer.tellAbout( player.getPlayerId(), move);
 	
 	boolean isMove = (move instanceof Move);
-	justReachedX2=justReachedX4=false;
 
-	double prevR = lastR;
+	// Variables attemptCnt etc (incremented in Episode.accept())
+	// sum moves of both players; attemptCnt1 etc count those of Player 1
+	if (move.mover==Pairing.State.ONE) {
+	    attemptCnt1++;
+	    attemptSpent1 += (move instanceof Move) ? 1.0: xgetPickCost();
+	    if (move.code==CODE.ACCEPT) {
+		if (move instanceof Move) {
+		    doneMoveCnt1++;
+		} else {
+		    successfulPickCnt++;
+		}
+	    }
+	}
 	
+
+	// Should stretch and R be counted as Player 1's separate numbers?
+	//boolean forP1 = (player.isAdveGame() && move.mover==Pairing.State.ONE);
+	int mj = (player.isAdveGame() && move.mover==Pairing.State.ONE) ? 1: 0;
+
+
+	justReachedX2[mj]=justReachedX4[mj]=false;
+
+	double prevR = lastR[mj];
+
+
 	if (_q.code==CODE.ACCEPT) {
 	    // count succcessful moves only, but ignore successful picks
+		/*
 	    if (isMove) {
-		lastStretch++;
-		if (lastR==0) lastR=1;
-		lastR *= move.getRValue();
+		if (forP1) {
+		    lastStretch1++;
+		    if (lastR1==0) lastR1=1;
+		    lastR1 *= move.getRValue();		    
+		} else {
+		    lastStretch++;
+		    if (lastR==0) lastR=1;
+		    lastR *= move.getRValue();		    
+		}
+	    } else { // failed move or pick
+		if (forP1) {
+		    lastStretch1=0;
+		    lastR1 = 0;
+		} else {
+		    lastStretch=0;
+		    lastR = 0;
+		}
 	    }
-	} else { // failed move or pick
-	    lastStretch=0;
-	    lastR = 0;
+		*/
+	    if (isMove) {
+		lastStretch[mj]++;
+		if (lastR[mj]==0) lastR[mj]=1;
+		lastR[mj] *= move.getRValue();		    
+	    } else { // failed move or pick
+		lastStretch[mj]=0;
+		lastR[mj] = 0;
+	    }
 	}
 
-	
 	if (xgetIncentive()==Incentive.DOUBLING) {
 	    final int x2=para.getInt("x2_after"), x4=para.getInt("x4_after");
 
 	    PlayerInfo.Series ser =  mySeries();
-	    int f = ser.findXFactor();
+	    int f = ser.findXFactor(mj); 
 
-	    if (f < 4 && factorPromised < 4 && lastStretch>=x4) {
-		factorPromised = 4;
-		//setXFactor(4);
-		justReachedX4=true;
+	    if (f < 4 && factorPromised[mj] < 4 && lastStretch[mj]>=x4) {
+		factorPromised[mj] = 4;
+		justReachedX4[mj]=true;
 
 
 		// Since ver 7.0, the "EARLY_WIN" finish code is assigned even if
@@ -386,15 +489,14 @@ public class EpisodeInfo extends Episode {
 		//-- if (!cleared)
 		
 		earlyWin = true;
-	    } else if (f<2 && factorPromised < 2 && lastStretch>=x2) {
-		factorPromised = 2;
-		//setXFactor(2);
-		justReachedX2=true;
+	    } else if (f<2 && factorPromised[mj] < 2 && lastStretch[mj]>=x2) {
+		factorPromised[mj] = 2;
+		justReachedX2[mj]=true;
 	    }
 	   
 	    if (cleared || earlyWin ||
-		stalematesAsClears && stalemate) {
-		if (getXFactor()<factorPromised) setXFactor(factorPromised);
+		stalematesAsClears && stalemate) {  
+		if (xFactor[mj]<factorPromised[mj]) xFactor[mj] = factorPromised[mj];
 	    }
 
 	}
@@ -403,26 +505,25 @@ public class EpisodeInfo extends Episode {
 	    final double x2=para.getInt("x2_likelihood"), x4=para.getInt("x4_likelihood");
 
 	    PlayerInfo.Series ser =  mySeries();
-	    int f = ser.findXFactor();
+	    int f = ser.findXFactor(mj);
 
-	    if (f < 4 && factorPromised < 4 && lastR >=x4) {
-		factorPromised = 4;
-		//setXFactor(4);
-		justReachedX4=true;
+	    if (f < 4 && factorPromised[mj] < 4 && lastR[mj] >=x4) {
+		factorPromised[mj] = 4;
+		justReachedX4[mj]=true;
 		if (!cleared) earlyWin = true;
-		Logging.info("Setting factorPromised=" + factorPromised);
-	    } else if (f <2 && factorPromised < 2 && lastR>=x2) {
-		factorPromised = 2;
-		//setXFactor(2);
-		justReachedX2=true;
-		Logging.info("Setting factorPromised=" + factorPromised);
+		Logging.info("Setting factorPromised["+mj+"]=" + factorPromised[mj]);
+	    } else if (f <2 && factorPromised[mj] < 2 && lastR[mj] >=x2) {
+		factorPromised[mj] = 2;
+		
+		justReachedX2[mj]=true;
+		Logging.info("Setting factorPromised["+mj+"]=" + factorPromised[mj]);
 	    } else {
-		Logging.info("Keeping factorPromised=" + factorPromised +", as lastR=" + lastR + " for x2="+x2+", x4="+x4);
+		Logging.info("Keeping factorPromised["+mj+"]=" + factorPromised[mj] +", as lastR=" + lastR[mj] + " for x2="+x2+", x4="+x4);
 	    }
 	   
 	    if (cleared || earlyWin ||
 		stalematesAsClears && stalemate) {
-		if (getXFactor()<factorPromised) setXFactor(factorPromised);
+		if (xFactor[mj]<factorPromised[mj]) xFactor[mj]=factorPromised[mj];
 	    }
 
 	}
@@ -458,7 +559,7 @@ public class EpisodeInfo extends Episode {
 	ExtendedDisplay q = new ExtendedDisplay(move.mover, _q);
 
 	// tell the mover's partner to update his screen
-	if (player.isTwoPlayerGame()) {
+	if (player.is2PG()) {
 	    int other = 1-move.mover;
 	    String otherPid = player.getPlayerIdForRole(other);
 	    WatchPlayer.tellHim(otherPid, WatchPlayer.Ready.DIS);
@@ -473,7 +574,7 @@ public class EpisodeInfo extends Episode {
 	Incentive incentive = mySeries().para.getIncentive();
 	String s = "[EpisodeID; FC=finishCode g-if-guess-saved; "+
 	    ((incentive==Incentive.BONUS) ? "MainOrBonus; ":
-	     (incentive==Incentive.DOUBLING || incentive==Incentive.LIKELIHOOD)? "xFactor; ":"") +
+	     incentive.mastery()? "xFactor; ":"") +
 	    "moveCnt/initPieceCnt; $reward]";
 	return s;
     }
@@ -482,17 +583,20 @@ public class EpisodeInfo extends Episode {
     public String report() {
 	Incentive incentive = mySeries().para.getIncentive();
 	
-	return "["+episodeId+"; FC="+getFinishCode()+
-	    (getGuessSaved()? "g" : "") +   (getGuess1Saved()? "G" : "") +  	    "; "+
-	    ((incentive==Incentive.BONUS) ?
+	String s = "["+episodeId+"; FC="+getFinishCode()+
+	    (getGuessSaved()? "g" : "") +   (getGuess1Saved()? "G" : "") +  	    "; ";
+	s += (incentive==Incentive.BONUS) ?
 	     (earnedBonus? "BB" :
 	      bonusSuccessful? "B" :
 	      bonus&lost? "L" :
 	      bonus?"b":"m"):
-	     (incentive==Incentive.DOUBLING || incentive==Incentive.LIKELIHOOD)? 
-	     ("x" + xFactor): "") 	     +" " +
+	     (incentive.mastery()? 
+	      ("x" + xFactor[0]+":"+xFactor[1]+")"): "");
+	s += " " +
 	    attemptCnt + "/"+getNPiecesStart()  +
-	    " $"+getTotalRewardEarned()+"]";
+	    " $"+getTotalRewardEarned(0)+":"+getTotalRewardEarned(1)+
+	    "]";
+	return s;
     }
     
     /** Shows tHe current board (including dropped pieces, which are labeled as such) */
@@ -540,6 +644,10 @@ public class EpisodeInfo extends Episode {
 	    
 	    if (getPlayer()!=null) {
 		PlayerInfo p = getPlayer();
+		// Whose reward numbers we're pulling?
+		int mj = (p.isAdveGame() && mover==Pairing.State.ONE) ? 1:0;
+		boolean needPartnerReward = p.isAdveGame();
+		
 
 		trialListId = p.getTrialListId();
 		
@@ -549,7 +657,9 @@ public class EpisodeInfo extends Episode {
 		bonusEpisodeNo = bonus? p.countBonusEpisodes(seriesNo)-1 : 0;
 
 		canActivateBonus = p.canActivateBonus();
-		totalRewardEarned = p.getTotalRewardEarned();
+		int[] reward = {p.getTotalRewardEarned(), p.is2PG()?  p.xgetPartner().getTotalRewardEarned():0};
+		totalRewardEarned = reward[mj]; 
+		if (needPartnerReward) totalRewardEarnedPartner = reward[1-mj];
 
 		totalBoardsPredicted = p.totalBoardsPredicted();
 
@@ -557,7 +667,11 @@ public class EpisodeInfo extends Episode {
 		ruleSetName = para.getRuleSetName();
 		movesLeftToStayInBonus = EpisodeInfo.this.movesLeftToStayInBonus();
 
+		// Score for 1PG/coop/adve
 		double d = attemptSpent - doneMoveCnt;
+		double d1 = attemptSpent1 - doneMoveCnt1;
+		if (p.isAdveGame()) d = (mover==Pairing.State.ZERO? d-d1: d1);
+		    
 		rewardRange = para.kantorLupyanRewardRange(d);
 
 		guessSaved =  EpisodeInfo.this.getGuessSavedBy(mover);
@@ -566,7 +680,7 @@ public class EpisodeInfo extends Episode {
 		    transitionMap = p.new TransitionMap();
 		}
 
-		incentive2();
+		incentive2(mj);
 		
 		errmsg += "\nDEBUG\n" + p.report();
 
@@ -575,12 +689,15 @@ public class EpisodeInfo extends Episode {
 		    String msg = "Sadly, you cannot continue playing, because the server has been restarted since the last episode, and the board has been purged out of the server memory. This problem could perhaps have been prevented if the client had made a /newEpisode call, rather than /display, after the last /mostRecentEpisode.";
 		    setErrmsg(msg);
 		    setError( true);		
+		
 		}
+		Vector[] w=p.computeFaces(mover, EpisodeInfo.this);
+		faces = w[0];
+		facesMine = w[1];
+		//		faces =p.computeFaces(mover, EpisodeInfo.this);
 
-		faces =p.computeFaces(EpisodeInfo.this);
 
-
-		if (p.isTwoPlayerGame() && getFinishCode()==FINISH_CODE.NO)  {
+		if (p.is2PG() && getFinishCode()==FINISH_CODE.NO)  {
 		    int whoMustPlay = whoMustMakeNextMove();
 		    if (whoMustPlay != mover) {
 			mustWait = true;
@@ -588,7 +705,7 @@ public class EpisodeInfo extends Episode {
 		}
 		
 		
-	    }
+		}
 	    //	    Logging.info("Prepared EpisodeInfo.ExtendedDisplay=" +
 	    //		 JsonReflect.reflectToJSONObject(this, true));
 
@@ -618,14 +735,14 @@ public class EpisodeInfo extends Episode {
 	boolean bonus;
 	/** In games with the BONUS incentive scheme, true if this episode is part of a bonus subseries. */
 	public boolean isBonus() { return bonus; }
-	//	@XmlElement
-	//	public void setBonus(boolean _bonus) { bonus = _bonus; }
-
+    
 	int totalRewardEarned=0;
 	/** The total reward earned by this player so far, including the regular rewards and any bonuses, for all episodes. */
 	public int getTotalRewardEarned() { return totalRewardEarned; }
-	//@XmlElement
-	//public void setTotalRewardEarned(int _totalRewardEarned) { totalRewardEarned = _totalRewardEarned; }
+
+	/** Your partner's earnings. (Only in 2PG adversarial) */
+	int totalRewardEarnedPartner=0;
+	public int getTotalRewardEarnedPartner() { return totalRewardEarnedPartner; }
 	
 	int seriesNo;
 	/** The number of the current series (zero-based) among all series in the trial list.
@@ -712,7 +829,6 @@ public class EpisodeInfo extends Episode {
 
 	/** The name of the incentive scheme in the current game (null, BONUS, DOUBLING, LIKELIHOOD)*/
 	Incentive incentive;
-	//@XmlElement
         public Incentive getIncentive() { return incentive; }
 
 	int lastStretch;
@@ -729,6 +845,13 @@ public class EpisodeInfo extends Episode {
 	private Vector<Boolean> faces =  null;
 	public Vector<Boolean> getFaces() { return faces; }
 
+	/** Since GS 7.001, this is an array of the same length as faces. In 2PG, facesMine[j]==true
+	    iff faces[j] is attributed to a move by the player for whome we're preparing the ExpandedDisplay
+	    structure. In this way it can emphasize the "my own" elements of faces in its display.
+	*/
+	private Vector<Boolean> facesMine =  null;
+	public Vector<Boolean> getFacesMine() { return facesMine; }
+
 	
 	/** The components of the total reward: an array of
 	    (reward,factor) pairs for all series so far.
@@ -743,8 +866,9 @@ public class EpisodeInfo extends Episode {
 	int factorAchieved;
 	/** This factor (1,2,4) will be in effect once the current
 	    episode has been completed. This may be higher than
-	    factorAchieved between the point when a new threshold has
-	    been achieved in this episode and the completion of the episode */
+	    factorAchieved, during the interval between the pont when
+	    a new threshold has been achieved in this episode and the
+	    completion of the episode */
 	int factorPromised;
 	public int[][] getRewardsAndFactorsPerSeries() {
 	    if (rewardsAndFactorsPerSeries==null) {
@@ -763,23 +887,24 @@ public class EpisodeInfo extends Episode {
         public int getFactorAchieved() { return factorAchieved; }
         public int getFactorPromised() { return factorPromised; }
 
-	/** Sets a few fields related to the DOUBLING or LIKELIHOOD incentive scheme */
-	private void incentive2() {	    
+	/** Sets a few fields related to the DOUBLING or LIKELIHOOD incentive scheme.
+	    @param mj Whose record do we look at? (0 for 1PG or coop 2PG; actual player for adversarial 2PG)
+	 */
+	private void incentive2(int mj) {	    
 	    incentive = xgetIncentive();
-	    lastStretch = EpisodeInfo.this.lastStretch;
-	    lastR = EpisodeInfo.this.lastR;
-	    rewardsAndFactorsPerSeries = getPlayer().getRewardsAndFactorsPerSeries();
+	    lastStretch = EpisodeInfo.this.lastStretch[mj]; 
+	    lastR = EpisodeInfo.this.lastR[mj];
+	    rewardsAndFactorsPerSeries = getPlayer().getRewardsAndFactorsPerSeries(mj);
 	    Logging.info("EpisodeInfo.ED.incentive2(): obtained rewardsAndFactorsPerSeries = " + rewardsAndFactorsPerSeries);
-	    justReachedX2 = EpisodeInfo.this.justReachedX2;
- 	    justReachedX4 = EpisodeInfo.this.justReachedX4;
-
+	    justReachedX2 = EpisodeInfo.this.justReachedX2[mj];
+ 	    justReachedX4 = EpisodeInfo.this.justReachedX4[mj];
 	    factorAchieved=1;
 	    try {
 		factorAchieved = rewardsAndFactorsPerSeries.getFactorAchieved();
 	    } catch(Exception ex) {
 		Logging.warning("EpisodeInfo.ED.incentive2(): exception: " + ex);
 	    } // fixme - silly fix for Kevin's report ,2022-01-28
-	    factorPromised =  EpisodeInfo.this.factorPromised;
+	    factorPromised =  EpisodeInfo.this.factorPromised[mj];
 	}
 	
     }
@@ -812,6 +937,7 @@ public class EpisodeInfo extends Episode {
 	     "episodeId",
 	     "moveNo", // 0-based number of the move in the transcript
 	     "timestamp", // YYYYMMDD-hhmmss.sss
+	     "mover", // who made the move? 0 or 1. (Since ver 7.001)
 	     "reactionTime", // (* diff ; also use e.startTime)
 	     "objectType", // "yellow_circle" in GS 1&2; image.png for image-based objects in GS 3
 	     "objectId", // Typically 0-based index within the episode's object list
@@ -839,6 +965,7 @@ public class EpisodeInfo extends Episode {
 	   h.put( "episodeId", getEpisodeId());	   
 	   h.put( "moveNo", moveNo++);
 	   h.put( "timestamp", 	sdf2.format(move.time));
+	   h.put( "mover", ""+move.mover);
 	   long msec = move.time.getTime() - prevTime.getTime();
 	   h.put(  "reactionTime", "" + (double)msec/1000.0);
 	   prevTime = move.time;
@@ -889,8 +1016,10 @@ public class EpisodeInfo extends Episode {
    }
 	
     /** Records the player-provided "guess" to a CSV file
-	@param moverPlayerId The playerId of the actual player who made the guess. In a 2PG,
-	this is not necessarily the same player who owns the EpisodeInfo instance.
+	@param moverPlayerId The playerId of the actual player who
+	made the guess. In a 2PG, this is not necessarily the same
+	player who owns the EpisodeInfo instance, because each partner's
+	guess goes into his own file.
      */
     public void saveGuessToFile(File f, String moverPlayerId, String guessText, int confidence) {
 	     final String[] keys = 
@@ -983,7 +1112,7 @@ public class EpisodeInfo extends Episode {
 	a 2PG and the move is made in turn); an ExtendedDisplay with a
 	proper message if an out-of-turn request */
     private ExtendedDisplay checkWhoseTurn(String playerId) {
-	if (!player.isTwoPlayerGame()) return null;
+	if (!player.is2PG()) return null;
 
 	if (playerId==null) return  new ExtendedDisplay(0, CODE.OUT_OF_TURN, "playerId not sent in a /move or /pick call. This parameter is mandatory in 2PG");
 	       
@@ -1010,5 +1139,22 @@ public class EpisodeInfo extends Episode {
 	}
     }
     */	
+
+    /** Sets all guess-related fields of this episode for one of the partners */
+    public void setAllGuessData(int mover, String text, int confidence) {
+	if (mover==Pairing.State.ONE) {
+	    setGuess1Saved(true);
+	    setGuess1(text);
+	    if (confidence>=0) {
+		setGuess1Confidence(confidence);
+	    }
+	} else {
+	    setGuessSaved(true);
+	    setGuess(text);
+	    if (confidence>=0) {
+		setGuessConfidence(confidence);
+	    }
+	}
+    }
     
 }

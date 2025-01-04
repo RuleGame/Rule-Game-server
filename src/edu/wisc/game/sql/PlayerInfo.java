@@ -13,6 +13,7 @@ import edu.wisc.game.parser.*;
 import edu.wisc.game.rest.ParaSet;
 import edu.wisc.game.rest.TrialList;
 import edu.wisc.game.rest.Files;
+import edu.wisc.game.rest.PlayerResponse;
 import edu.wisc.game.engine.RuleSet;
 import edu.wisc.game.engine.AllRuleSets;
 import edu.wisc.game.saved.*;
@@ -88,7 +89,7 @@ public class PlayerInfo {
     }
     /** @return true if the name of the experiment plan indicates that this
 	is a two-player game (cooperative or adversary) */
-    public boolean isTwoPlayerGame() {
+    public boolean is2PG() {
 	return coopGame || adveGame;
     }
 
@@ -138,11 +139,25 @@ public class PlayerInfo {
 	}
     }
 
+    /** This method recognizes that an older 1PG client may not pass a playerId;
+	thus, it interprets null as Player 0 (the default player)
+     */
+    public int getRoleForPlayerIdPermissive(String pid) {
+	return pid==null?  Pairing.State.ZERO : getRoleForPlayerId(pid);
+    }
     
     @Transient
-    private PlayerInfo partner = null;
+    private PlayerInfo partner = null;    
     public PlayerInfo xgetPartner() {
-	// FIXME: need to add loading, if we restore them from the database
+	if (partnerPlayerId==null || partner!=null) return partner;
+	// If the entry has been restored from the databse, the partner PlayerInfo may not have been loaded yet.
+	// Reload it from the database then.
+	EntityManager em  = Main.getEM();
+	synchronized(em) {
+	    try {
+		partner = PlayerResponse.findPlayerInfo(em, partnerPlayerId);
+	    } catch (Exception ex) {}
+	}
 	return partner;
     }
     /** Sets links in both directions */
@@ -168,7 +183,7 @@ public class PlayerInfo {
 
     /** Sets certain pairing-related fields in the object for a newly created player */
     public void initPairing() {
-	pairState = Pairing.State.NONE;
+	pairState = is2PG()? Pairing.State.NONE: 0;
 	partnerPlayerId = null;
     }
 	
@@ -290,24 +305,23 @@ public class PlayerInfo {
 	/** Scans the episodes of the series to see if the xFactor has
 	    been set for this series. Only appliable to series with 
 	    DOUBLING (or LIKELIHOOD) incentive scheme.
+	    @param mj Which player's record do we look at? (1PG or coop 2PG only have 0; adve 2PG has 0 and 1)
 	    @return 1,2, or 4.
 	 */
-	int findXFactor() {
+	int findXFactor(int mj) {
 	    int f = 1;
 	    for(EpisodeInfo x: episodes) {
-		if (x.getXFactor()>f) f=x.getXFactor();
+		if (x.xFactor[mj]>f) f=x.xFactor[mj];
 	    }
 	    return f;
 	}
 
 	/** True if we have the DOUBLING (or LIKELIHOOD) incentive scheme, and this 
 	    series has been ended by the x4 achievement */
-	public boolean seriesHasX4() {
-	    return (para.getIncentive()==ParaSet.Incentive.DOUBLING ||
-		    para.getIncentive()==ParaSet.Incentive.LIKELIHOOD)  &&
-		findXFactor()==4;
+	public boolean seriesHasX4(int mj) {
+	    return para.getIncentive().mastery() &&
+		findXFactor(mj)==4;
 	}
-
  	
     }
 
@@ -459,7 +473,7 @@ public class PlayerInfo {
     private boolean canHaveAnotherRegularEpisode() {
 	Series ser=getCurrentSeries();
 	if (ser==null) return false;
-	if (ser.seriesHasX4()) return false;
+	if (ser.seriesHasX4(0) || ser.seriesHasX4(1)) return false;
 	if (inBonus) return false;
 	return  ser.size()<ser.para.getMaxBoards();
     } 
@@ -536,7 +550,7 @@ public class PlayerInfo {
     /** This is usesd when a player is first registered and a PlayerInfo object is first created.  */
     public void initSeries(TrialList trialList) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
 
-	if (allSeries.size()>0) throw new IllegalArgumentException("Attempt to initialize PlayerInfo.allSeries again");
+	if (allSeries.size()>0) throw new IllegalArgumentException("Attempt to initialize PlayerInfo.allSeries again for playerId="+playerId);
 	allSeries.clear();
 	for( ParaSet para: trialList) {
 	    allSeries.add(new Series(para));
@@ -757,13 +771,18 @@ public class PlayerInfo {
     }
 
     private int totalRewardEarned;
+    /** The total reward shown to this player. In 2PG, each PlayerInfo has a value stored; the two
+	partners' value are the same in a coop game, but different in an adversarial game */
     public int getTotalRewardEarned() {
 	//System.err.println("getTotalReward("+playerId+")=" + totalRewardEarned);
 	return totalRewardEarned;
     }
     public void setTotalRewardEarned(int _totalRewardEarned) { totalRewardEarned = _totalRewardEarned; }
 
-    /** Recomputes this player's totalRewardEarned, based on all episodes in his record*/
+    /** Recomputes this player's (and his partner's, in 2PG) totalRewardEarned, based on all episodes in his record.
+	In 2PG, this method is only called on the PlayerInfo who "owns" the episode, i.e. Player 0; the call also
+	updates the numbers for Player 1.
+     */
     private void updateTotalReward() {
 	/*
 	int sum=0;
@@ -778,9 +797,20 @@ public class PlayerInfo {
 	    sum += s;
 	}
 	totalRewardEarned=sum; */
-	RewardsAndFactorsPerSeries rx = getRewardsAndFactorsPerSeries();
-	totalRewardEarned= rx.getSum();
-	Logging.info("updateTotalReward(): Total reward("+playerId+"):=" + rx);
+
+	int z[] = {0,0};
+	for(int mj=0; mj<2; mj++) {
+	    RewardsAndFactorsPerSeries rx = getRewardsAndFactorsPerSeries(mj);
+	    z[mj] = rx.getSum();
+	}
+       
+	totalRewardEarned = z[0];
+	if (partnerPlayerId!=null) {
+	    partner.setTotalRewardEarned( z[ isAdveGame()? 1:0]);
+	}
+	    
+	
+	Logging.info("updateTotalReward(): Total reward("+playerId+"):=" + z[0]);
     }
 
     /** This structure contains all information needed to calculate the player's
@@ -791,10 +821,14 @@ public class PlayerInfo {
 	final int[][] raw;
 	int epiCnt = 0;
 
-	/** @return { {s0,f0}, {s1,f1}, {s2,f2}....}, which are the
+	/** @param mj The partner based on whose record we compute
+	    rewards. For 1PG and coop 2PG, it's always 0; for adve 2PG,
+	    the actual player to whom we show the reward.
+
+	    @return { {s0,f0}, {s1,f1}, {s2,f2}....}, which are the
 	    per-series components that sum to reward=s0*f0+ s1*f1+ s2*f2 +....
 	*/
-	RewardsAndFactorsPerSeries() {
+	RewardsAndFactorsPerSeries(int mj) {
 	    int n = Math.min( currentSeriesNo+1, allSeries.size());
 	    raw = new int[n][];
 
@@ -803,8 +837,8 @@ public class PlayerInfo {
 		int s=0, f=1;
 		for(EpisodeInfo epi: ser.episodes) {
 		    epiCnt ++;
-		    s += epi.getTotalRewardEarned();
-		    f = Math.max(f, epi.getXFactor());
+		    s += epi.getTotalRewardEarned(mj);
+		    f = Math.max(f, epi.xFactor[mj]);
 		}
 		raw[j] = new int[]{s, f};
 	    }
@@ -847,8 +881,8 @@ public class PlayerInfo {
 	}
     }
 
-    RewardsAndFactorsPerSeries  getRewardsAndFactorsPerSeries() {
-	return new RewardsAndFactorsPerSeries();
+    RewardsAndFactorsPerSeries  getRewardsAndFactorsPerSeries(int mj) {
+	return new RewardsAndFactorsPerSeries(mj);
     }
     
     /** This method is called after an episode completes. It computes
@@ -856,6 +890,9 @@ public class PlayerInfo {
 	(since 4.007) stalemared, calls the SQL persist operations,
 	writes CSV files, and, if needed, switches the series and
 	subseries.
+
+	In a 2PG this method is only called on the player who "owns" the episode
+	(Player 0).
 
 	@param epi An episode that's just completed; so all data are in memory 
 	now.
@@ -872,18 +909,25 @@ public class PlayerInfo {
 	    goToNextSeries();
 	} else if (epi.cleared || epi.earlyWin ||
 		   epi.stalemate && epi.stalematesAsClears) {
-	    //double smax = ser.para.getDouble("max_points");
-	    //double smin = ser.para.getDouble("min_points");
-	    //double b = ser.para.getDouble("b");
-
-	    //double d = epi.attemptSpent - epi.getNPiecesStart();
 	    // For completions, nPiecesStart==doneMoveCnt, but for
 	    // stalemates, we must use the latter
-	    double d = epi.attemptSpent - epi.doneMoveCnt;
+	    double q = epi.attemptSpent - epi.doneMoveCnt;
+	    if (isAdveGame()) { // Reward for each player is based on his error count and number of pieces removed
+		double d1 = epi.attemptSpent1 - epi.doneMoveCnt1;
+		double d[] = {q-d1,d1};
+		int done[] = {epi.doneMoveCnt - epi.doneMoveCnt1, epi.doneMoveCnt1};
+		for(int j=0; j<2; j++) {
+		    double score = ser.para.kantorLupyanReward0(d[j]) * done[j]/(double)epi.doneMoveCnt;
+		    epi.setRewardMain(j,  (int)Math.round(score));
+		}
+	    } else {
+		int score =  ser.para.kantorLupyanReward(q);
+		epi.setRewardMain(0,  score);
+		epi.setRewardMain(1,  score);
+	    }
+		       
 	    
-	    epi.rewardMain =  ser.para.kantorLupyanReward(d);
 	    
-	    //(int)Math.round( smin + (smax-smin)/(1.0 + Math.exp(b*(d-2))));
 	    if (epi.bonus) {
 		ser.assignBonus();
 	    }
@@ -1005,6 +1049,8 @@ public class PlayerInfo {
 	in the DOUBLING  incentive scheme display (ver 4.006)
 
 
+	@param If it's a 2PG, who am I in the pair?
+
 	@param epi The current (possibly, just finished) episode. We
 	pass it in so that everything will work correctly even if this
 	is part of a /move call that ended the last episode of the
@@ -1018,21 +1064,24 @@ public class PlayerInfo {
 	system.)
 
     */
-    Vector<Boolean> computeFaces(EpisodeInfo epi)// throws IOException
+    Vector[] computeFaces(int mover, EpisodeInfo epi)// throws IOException
     {
 	Series ser = whoseEpisode(epi);
-	Vector<Boolean> v = new Vector<>();
-	if (ser==null) return v;
+	Vector<Boolean> v= new Vector<Boolean>(), mine=new Vector<Boolean>();
+	Vector[] w = {v, mine};
+	if (ser==null) return w;
 	for(Episode e: ser.episodes) {
 	    Vector<Episode.Pick> t=e.transcript;
 	    if (t==null) continue;
 	    for(Episode.Pick pick: t) {
 		if (pick instanceof Episode.Move ||
-		    pick.code!=Episode.CODE.ACCEPT)
-		v.add( pick.code==Episode.CODE.ACCEPT);
+		    pick.code!=Episode.CODE.ACCEPT) {
+		    v.add( pick.code==Episode.CODE.ACCEPT);
+		    mine.add( pick.mover == mover);
+		}
 	    }
 	}
-	return v;
+	return w;
     }
 
     /** Compute the "goodness score" of this player, intended to measure
@@ -1061,7 +1110,7 @@ public class PlayerInfo {
 	    int sumFactor = 0;
 	    for(Series ser: allSeries) {
 		if (ser!=null) {
-		    int f = ser.findXFactor();
+		    int f = ser.findXFactor(pairState);
 		    if (f>1) sumFactor+=f;
 		}
 	    }

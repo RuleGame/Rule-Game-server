@@ -338,12 +338,10 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	return withJS( uriInfo, playerId, title, body);
     }
 
-    /** Draws the board with the current position, and shows the player's
-	history as well.
+    /** Shows the player's history.
      */
     static private String showHistory(EpisodeInfo epi,
-				      EpisodeInfo.ExtendedDisplay d
-				      ) {
+				      EpisodeInfo.ExtendedDisplay d) {
 	String body;
 	if (epi==null) {
 	    body = fm.para("No episode in memory");
@@ -356,12 +354,66 @@ path = /w2020/game-data/GameService2Html/playerHtml
 		final NumberFormat df = new DecimalFormat("#.##");
 		body += fm.para("Moves left: " + df.format(d.getMovesLeftToStayInBonus()));
 	    }
-	}
-	
-	return body;// + fm.hr();
-	
+	}	
+	return body;// + fm.hr();	
    }
 
+    /** Shows the "faces" illustrating the current transcript.
+     */
+    static private String showFaces(EpisodeInfo epi,
+				    EpisodeInfo.ExtendedDisplay d) {
+	String body ="";
+	if (epi==null) {
+	    body = fm.para("No episode in memory");
+	} else {
+	    Vector<Boolean> faces = d.getFaces();
+	    Vector<Boolean> facesMine = d.getFacesMine();
+
+
+	    // Here I pull them from EpisodeInfo; in the GUI client, this info can be stored in memory from the
+	    // initial /player response
+	    boolean isAdve = epi.getPlayer().isAdveGame();
+	    boolean isCoop = epi.getPlayer().isCoopGame();
+
+	    if (isAdve) {
+		String s1 = "My moves: ",   s2 = "Opponent's moves: ";
+		for(int i=0; i<faces.size(); i++) {
+		    String q = faceImg(faces.get(i), facesMine.get(i));
+		    if (facesMine.get(i)) {
+			s1 += q;
+		    } else {
+			s2 += q;
+		    }
+		}
+		body += fm.para(s1);
+		body += fm.para(s2);
+	    } else {
+		//Vector<String> v= new Vector<>();
+		String s = "";
+		for(int i=0; i<faces.size(); i++) {
+		    String q = faceImg(faces.get(i), facesMine.get(i));
+		    s += q;
+		}
+		body += fm.para(s);
+	    }
+	}
+	return body;// + fm.hr();	
+   }
+
+    // From: http://localhost:8080/w2020/game-data/GameService2Html/playerHtml
+    //  /w2020/admin/getSvg.jsp?shape=unhappy
+    static final String base = "../../admin/getSvg.jsp?shape=";
+    static final String happy = base + "happy"; 
+    static final String unhappy = base + "unhappy";
+
+    private static String faceImg(boolean isHappy, boolean big) {
+	String src = isHappy? happy: unhappy;
+	String w =  big? "20" : "10";
+	String s= "<img src='"+src+"' height='"+w+"'>";
+	if (!isHappy) s = "<span style='background:red'>"+s+"</span>";
+	return s;
+    }
+   
 
     /** Looks at the ExtendedDisplay (returned by a /pick or /move or /display call) to see
 	if the most recent move attempt was made by this player, and was a success. */  
@@ -384,11 +436,16 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	
 	String body = "";
 	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
-
+	boolean isAdve = epi.getPlayer().isAdveGame();
+	
 	String s = "Rule " + (d.getDisplaySeriesNo()+1) + ". ";
 	if (d.getDisplaySeriesNo() != d.getSeriesNo()) s += " (internally "+(d.getSeriesNo()+1)+")";
-	s += "Episode " + (d.getDisplayEpisodeNo()+1) + " of "+ d.getTotalBoardsPredicted();
-	s += ". " + d.xgetRewardsAndFactorsPerSeriesString();
+	s += "Episode " + (d.getDisplayEpisodeNo()+1) + " of "+ d.getTotalBoardsPredicted() + ". ";
+	if (isAdve) {
+	    s += "Score: me " + d.getTotalRewardEarned() + " : opponent " + d.getTotalRewardEarnedPartner();
+	} else {
+	    s += d.xgetRewardsAndFactorsPerSeriesString();
+	}
 	body += fm.para(s);
 	
 	body+= fm.h4("Current position");
@@ -512,6 +569,12 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	}
 	body += fm.para(s) + fm.hr();
 
+	body += showFaces(epi, d);
+
+	if (isAdve) { // print it here, because in Adve mode it's not shown on top
+	    body += fm.para("My Score breakdown: " + d.xgetRewardsAndFactorsPerSeriesString());
+	}
+	
 	body += showHistory(epi,  d);
 
 	
@@ -558,7 +621,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
     private static String transitionTable(EpisodeInfo epi, String playerId, PlayerInfo.TransitionMap map) {
 	Vector<String> rows= new Vector<>();
 
-	boolean canAutoTransition = epi.getPlayer().isTwoPlayerGame() && map.size()==1 &&
+	boolean canAutoTransition = epi.getPlayer().is2PG() && map.size()==1 &&
 	    (map.get(PlayerInfo.Transition.MAIN)!=null ||
 	     map.get(PlayerInfo.Transition.NEXT)==PlayerInfo.Action.DEFAULT);
 	

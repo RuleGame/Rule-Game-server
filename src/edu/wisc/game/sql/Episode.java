@@ -131,13 +131,15 @@ public class Episode {
     double xgetPickCost() { return 1.0;}
 
     
-    /** The count of all attempts (move and pick) done so far, including successful and unsuccessful ones. */
+    /** The count of all attempts (move and pick) done so far, including successful and unsuccessful ones.
+	(In 2PG, this includes moves of both players. If there is Player 1, his moves are in EpisodeInfo.attemptCnt1, etc)
+     */
     int attemptCnt=0;
-    /** The total cost of all attempts (move and pick) done so far,
+    /** The total cost of all attempts (move and pick) done so far. (If it's 2PG, by both players),
 	including successful and unsuccessful ones. If cost_pick!=1,
 	this value may be different from attemptCnt. */
     double attemptSpent=0;
-    /** All successful moves (not picks) so far.  Since each successful move removes
+    /** All successful moves (not picks) so far. (If it's 2PG, by both players) Since each successful move removes
 	a game piece, the number of pieces remaining on the board can be 
 	computed as (nPiecesStart - doneMoveCnt).
      */
@@ -964,7 +966,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
 
     /** The current version of the application */
-    public static final String version = "7.000";
+    public static final String version = "7.001";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }

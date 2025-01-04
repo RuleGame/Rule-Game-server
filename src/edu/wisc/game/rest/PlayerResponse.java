@@ -132,45 +132,44 @@ public class PlayerResponse extends ResponseBase {
 	    if (x!=null) {  // existing and already cached player
 		setupResponseForExistingPlayer(x, pid, exp, uid);
 	    } else synchronized (lock) {
-		// keep this part synchronized, to avoid creating 2 entries if the player clicks twice
-		em = Main.getNewEM();
+		    // keep this part synchronized, to avoid creating 2 entries if the player clicks twice
+		    em = Main.getNewEM();
 	
-		x = findPlayerInfo(em, pid);
-		if (debug) playerInfo=x;
-
-
-		if (x!=null) {  // existing  player
-		    setupResponseForExistingPlayer(x, pid, exp, uid);
-		} else {
-		    // new player
-		    x = new PlayerInfo();
-		    x.setDate(now);
-		    x.setPlayerId(pid);
-		    x.initPairing();
+		    x = findPlayerInfo(em, pid);  // either a new player, or one restored from the database
+		    if (debug) playerInfo=x;
 		    
-		    if (uid>=0) {
-			User user = (User)em.find(User.class, uid);
-			if (user==null) {
-			    String msg="Invalid user id=" + uid+". No user exists with that ID";
-			    hasError(msg);
-			    return;
+		    
+		    if (x!=null) {  // existing  player
+			setupResponseForExistingPlayer(x, pid, exp, uid);
+		    } else {
+			// new player
+			x = new PlayerInfo();
+			x.setDate(now);
+			x.setPlayerId(pid);
+			
+			if (uid>=0) {
+			    User user = (User)em.find(User.class, uid);
+			    if (user==null) {
+				String msg="Invalid user id=" + uid+". No user exists with that ID";
+				hasError(msg);
+				return;
+			    }
+			    x.setUser(user);
 			}
-			x.setUser(user);
+			if (exp==null) exp= TrialList.extractExperimentPlanFromPlayerId(pid);
+			x.setExperimentPlan(exp);		
+			assignRandomTrialList(x);
+			// Check if it's a pair game
+			x.initPairing();
+			Pairing.newPlayerRegistration(x);
+			em.getTransaction().begin();
+			em.persist(x);
+			em.flush(); // to get the new ID in
+			em.getTransaction().commit();
+			Logging.info("Persisted new player=" + x);
 		    }
+		    allPlayers.put(pid,x);
 		}
-		if (exp==null) exp= TrialList.extractExperimentPlanFromPlayerId(pid);
-		x.setExperimentPlan(exp);		
-		assignRandomTrialList(x);
-		// Check if it's a pair game
-		Pairing.newPlayerRegistration(x);
-		
-		em.getTransaction().begin();
-		em.persist(x);
-		em.flush(); // to get the new ID in
-		em.getTransaction().commit();
-		Logging.info("Persisted new player=" + x);
-		allPlayers.put(pid,x);
-	    }
 	    
 	    playerId = x.getPlayerId();
 	    experimentPlan = x.getExperimentPlan();
@@ -180,12 +179,17 @@ public class PlayerResponse extends ResponseBase {
 	    setError(false);
 	    setErrmsg("Debug:\n" + x.report());
 
-	} catch(Exception e) {
-	    Logging.info("PlayerResponse.catch: " + e);
-	    System.err.println(e);
-	    e.printStackTrace(System.err);
+	} catch(Exception ex) {
+	    Logging.info("PlayerResponse.catch: " + ex);
+	    StringWriter sw = new StringWriter();
+	    ex.printStackTrace(new PrintWriter(sw));
+	    String s = sw.toString();
+	    Logging.warning(s);
+
+	    //System.err.println(ex);
+	    //ex.printStackTrace(System.err);
 	    setError(true);
-	    setErrmsg(e.toString());
+	    setErrmsg(ex.toString());
 	} finally {
 	    try { if (em!=null)	    em.close();} catch(Exception ex) {}
 	    Logging.info("PlayerResponse(pid="+ pid+", exp="+exp+"), returning:\n" +
@@ -243,7 +247,7 @@ public class PlayerResponse extends ResponseBase {
 	be created when needed, and then closed, so that the returned object will be detached.
 	
 	@return The PlayerInfo object with the matching name, or null if none is found */
-    static PlayerInfo findPlayerInfo(EntityManager em, String pid) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
+    public static PlayerInfo findPlayerInfo(EntityManager em, String pid) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
 	if (badPid(pid)) throw new  IllegalInputException("Player ID contains illegal characters: '"+pid+"'");
 
 	PlayerInfo x =  findPlayerInfoAlreadyCached( pid);

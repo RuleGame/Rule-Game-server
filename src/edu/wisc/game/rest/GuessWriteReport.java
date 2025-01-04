@@ -53,14 +53,12 @@ public class GuessWriteReport extends FileWriteReport {
 	    }
 	    PlayerInfo x = epi.getPlayer();
 	    //String pid = x.getPlayerId();
-	    
+	    int mover = x.getRoleForPlayerIdPermissive(moverPlayerId);
+	    if (mover < 0) throw new IllegalArgumentException("PlayerId " + moverPlayerId + " is not a party to episode " + episodeId);
+
 	    File f= Files.guessesFile(moverPlayerId);
 	    epi.saveGuessToFile(f, moverPlayerId, text, guessConfidence);
-	    epi.setGuessSaved(true);
-	    epi.setGuess(text);
-	    if (guessConfidence>=0) {
-		epi.setGuessConfidence(guessConfidence);
-	    }
+	    epi.setAllGuessData(mover, text, guessConfidence);
 	    //Main.persistObjects(epi);
 	    //Main.saveObject(epi); // does this create duplicate Episode rows?
 	    x.saveMe(); 

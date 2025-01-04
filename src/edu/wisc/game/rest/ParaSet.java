@@ -560,13 +560,17 @@ public class ParaSet extends HashMap<String, Object> {
 	in order to compute the lower bound of possible reward.
     */
     public int kantorLupyanReward(double errors)     {
+	return (int)Math.round(kantorLupyanReward0( errors));
+    }
+    
+    public double kantorLupyanReward0(double errors)     {
 
 	double smax = getDouble("max_points");
 	double smin = getDouble("min_points");
 	double b = getDouble("b");
 
 	if (errors==Double.POSITIVE_INFINITY) return (int)smin;
-	return (int)Math.round( smin + (smax-smin)/(1.0 + Math.exp(b*(errors-2))));
+	return smin + (smax-smin)/(1.0 + Math.exp(b*(errors-2)));
     }
 
     /** @return (lowerBound, upperBound)
