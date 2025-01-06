@@ -444,7 +444,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	if (isAdve) {
 	    s += "Score: me " + d.getTotalRewardEarned() + " : opponent " + d.getTotalRewardEarnedPartner();
 	} else {
-	    s += d.xgetRewardsAndFactorsPerSeriesString();
+	    s += "" + d.xgetRewardsAndFactorsPerSeriesString();
 	}
 	body += fm.para(s);
 	

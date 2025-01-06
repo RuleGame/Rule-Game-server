@@ -1,0 +1,509 @@
+<html>
+  <head>
+    <title>
+Supporting Two-Player Games in the GOHR Framework
+    </title>
+  </head>
+  <body>
+    <h1>
+Supporting Two-Player Games in the GOHR Framework
+    </h1>
+
+    <div align="center"><em>
+	Updated 2025-01-04 for GS 7.001</em>
+	</div>
+
+    <p>
+      Game Server 7.* supports two types of two-player games (2PG): cooperative and adversarial. This documents describes essential points in which managing 2PG differes from managing single-player games (1PG).
+    
+      <h2>
+	Experiment preparation
+      </h2>
+
+
+    <p>
+      When planning an experiment with a two-player game, the
+      experiment designer will have to construct a trial list file in
+      the following way.
+
+      <ul>
+	<li>
+For obvious logistical reasons, "being played by two players" needs to be a property not of a single parameter set, and not even of a single trial list, but of an entire experiment plan. Therefore, we need to designate entire 
+experiment plans as "two-player". This is done by naming your experiment plan directory using prefix
+<tt>coop.</tt> (for cooperative games) or
+<tt>adve.</tt> (for adversarial games). For example, the experiment plan
+<tt>vm/adve.colorVshape</tt>, whose trial list file sits in the directory
+<tt>/opt/w2020/game-data/trial-lists/vm/adve.colorVshape</tt>, describes an experiment with adversarial two-player game(s).
+
+<li>To simplify matching players in pairs, a two-player experiment plan should contain only 1 trial list, so that all participants in the experiment will be assigned to the same trial list. (This is different from 1PGs, where an experiment plan may have multiple trial lists, to which  players will are pseudo-randomly assigned by the server).
+
+
+Just like in 1PGs, each trial list may include one or several parameter sets. In each parameter set of each trial list, the experiment designer will have to indicate the parameters of the relevant incentive scheme. Those will control , when the play is stopped, and how the reward of each player is computed.
+
+  <li>As in 1PG,
+The first rule set of each trial list should reference an appropriate pregame experience, one with an instruction booklet that explains the two-person play.
+
+<li>A 2PG can be played with no incentive scheme, or with the LIKELIHOOD or DOUBLING incentive scheme. The BONUS incentive scheme is not supported in 2PG.
+  
+<li>The parameter sets must not allow "giving up" on a rule set.
+
+<li>
+Once the experiment plan has been created and tested, the experiment designer can schedule a study using Prolific, requesting a desired (even) number of players to be recruited.
+
+</ul>
+
+<h2>
+  A player's experience
+  </h2>
+
+<p>
+When a player follows a link to a two-player experiment plan, the Rule Game server's actions will be somewhat different if that's an "odd-numbered" player (1st, 3rd, 5th etc) who has followed the link and started interacting with the system, or an "even-numbered" one (2nd, 4th, 6th...).
+
+<p>
+An "odd-numbered" player, upon arrival to the Rule Game server, will be assigned to the one player list within the experiment plan. He will be then presented, one by one,  the pages of the instruction booklet. Once done with the booklet, he most likely will be shown a "please wait for the second player" page, until the second player in the pair has arrived and has gone through the instruction booklet as well.
+
+<p>
+When an "even-numbered" player arrives, the system will immediately match him with the preceding "odd-numbered" player. He, too, will be shown the instruction booklet, and -- if somehow he finishes reading his booklet before his partner -- he may see the "waiting for the second player" page as well.
+
+<P><strike>
+If desired by the PI, we can attempt to make the "cooperative" or "competitive" aspect of the game a bit more real for the players by letting him pick human-readable player names. Maybe we can assign the names to them randomly (e.g. by randomly combining geographic names and animal species names, e.g. "Connecticut Woodchuck" or "Saskatchewan Koala", or the names of famous sports teams), or can offer them to invent names themselves (hoping that they won't use obscenities). So the display board shown to the player will show both parties' names.</strike>
+
+<p>
+Once both players in a pair have gone through their instruction booklets, they will be shown playing board and the appropriate progress/statistical information. The main differences from the presentations currently provided in single-player games will include the following:
+
+<P>
+It should be made clear to the player when it's his turn to make a move attempt, and when it isn't. This probably can be made by changing the shape of the cursor (and also greying it), as well as perhaps somewhat greying the board itself. Of course, for the benefits of people who aren't good at understanding graphic cues, we probably should write somewhere in big letters, "YOUR MOVE!" / "YOUR OPPONENT'S MOVE" (or "YOUR PARTNER'S MOVE").
+
+<P>
+The player should be shown the opponents/partners actions (both successful moves and failed move attempts), using more or less the same display tools that show to him his own actions. This includes game pieces moving across the board, smiling/frowning faces as pieces fit or don't fit into buckets, and (in certain display modes) showing pieces already put into buckets.
+
+<p>
+The display elements showing progress (how many moves attempts have been made, how many of them have been successful) will need to be expanded, to show the relevant numbers for both players and their sum.
+
+<p>Rewards earned so far for both players will be shown as well.
+
+<p>
+The stopping criteria for each parameter set (i.e. a series of episodes with a given rule set) will be determined by the appropriate parameters in the parameter set. This is discussed in a seprate section below.
+
+<p>
+Once the last series of a trial list is completed, both players will be directed to the demographics pages, as usual.
+
+<p><strike>
+    ISSUE: Drop outs. Although the players recruited through Amazon M-Turk or Prolific are paid, not all of them will diligently complete their game. (On our M-Turk sample, out of ca. 2277 players, 336 (15%) did not complete even a single episode (may have dropped out while reading the instruction booklet), 511 (22%) played one or more episodes but never got a completion code, and only 1430 (63%) got a completion code. M-Turkers in our single players did not have time pressure, and could take breaks as needed, e.g. when their mother or wife would call them to have a dinner, or when they received a phone call. If participants in two-player games drop out at the same rate, we will end up with a large number of incompleted experiments, when one player dropped out (or just took a long break so that the other player did not bother waiting for hime to return). I am not sure what's the best strategy to reduce the number of unhappy abandoned partners and incomplete experiments.
+    </strike>
+
+  <strike>
+  <h2> Incentive schemes, stopping considerations, etc</h2>
+
+  <p>
+In the single-player games, while each parameter set always specifies the default number of episodes to be played with the rule set (max_boards), we also support a variety of options for "flow control" within the series. In particular, a player may be allowed to "give up" on an rule set, thus terminating the series early; in this case, he is just given reward for any episodes he has completed. A player may be allowed to request a "bonus subseries" -- a number of episodes that he needs to play well (with few errors) in order to get a bonus reward on top of the standard reward for each episode. (That's the BONUS incentive scheme). The series may have a provision for doubling the reward if a certain level of proficiency has been achieved, and for quadrupling the reward and automatic early termination. (The DOUBLING or LIKELIHOOD incentive schemes).
+
+<p>
+What control options/incentive schemes can we use in two-player games?
+
+<p>
+* If "giving up" on a rule set is allowed, how does it work? If it terminates the series for both players, then it's probably annoying for the player who still wants to play. If it terminates the series for the player (player B) who has elected to give up, then player A will have to complete the series as in a single-player game, while player B will have to twiddle his thumbs until the next series starts. While doing that, player B may just walk away... and then player A won't have a partner for the subsequent para sets. Overall, not a good situation either way.
+
+<p>
+* If we want something like the current BONUS incentive scheme, how would that work? Would either player be allowed to ask for a bonus subseries, regardless of how the other player feels? Presumably, if a bonus subseries is played, it will be continued for as long as at least one of the players maintaind sufficiently good performance; for the purposes of issuing the bonus reward, each player will be judged individually, based on his own moves.
+
+<p>
+* Doubling/quadrupling incentive schemes (DOUBLING or LIKELIHOOD). It seems like these should be handled differently for "cooperative" and "competitive" games. In cooperative games, we are looking at the "team's mastery of the rules"; i.e. the mastery criterion will be based on the sequence of moves without regard to who made them; the doubling and quadrupling double and quadruple both players' rewards, and when mastery is achieved, the game is stopped, and both players are asked for their ideas. In competitive games, we can look at only the moves of one player to decide if he has reached partial mastery (doubling the reward) or full mastery (quadrupling). I suppose as soone as one player has achieved full mastery, we can end the series; the other player is thus a (comparative) "loser", since he did not get his quadrupling.
+</strike>
+
+<h2>Rewards</h2>
+
+<P>The following rules have been agreed upon.
+
+<h3>Cooperative games</h3>
+In a cooperative game, we can compute the "total reward" W for the series, in the same way we'd do as if the entire game was played by a single player, under the incentive scheme in effect (e.g. DOUBLING or LIKELIHOOD). This then becomes the reward for each player.
+
+<strike><p>
+After that, we can give W points to each player; or we can divide the total of 2*W points among the two players in a slightly different way, e.g. taking into account the number of successful and failed moves that each player has made. E.g. if the first player has removed n1 pieces from the board, and the second player has removed n2 pieces, we can give
+ w1 = (2*W)*n1/(n1+n2)
+points to the first player for this series, and
+ w2 = (2*W)*n2/(n1+n2)
+points to the second player.
+</strike>
+
+
+<h3>Adversarial games</h3>
+
+
+<p>
+Since the players are competing, we should compute each player's score based on his own actions. For each episode, the base reward for player <em>j</em> (<em>j</em>=0 or 1) can be computed by, first, using the Kantor-Lupyan formula, but only taking into account that player's errors during that episode; then, prorating by the number of game pieces that were removed by that player. Thus, if players 0 and 1 removed <em>n</em><sub>0</sub> and <em>n</em><sub>1</sub> pieces from the board of   <em>n</em>=<em>n</em><sub>0</sub>+<em>n</em><sub>1</sub>
+pieces, and made <em>e</em><sub>0</sub> and <em>e</em><sub>1</sub> errors respectively, their base rewards will be
+<br>
+<em>r</em><sub>0</sub> = KL(<em>e</em><sub>0</sub>) &sdot; <em>n</em><sub>0</sub> / <em>n</em>,
+<em>r</em><sub>1</sub> = KL(<em>e</em><sub>1</sub>) &sdot; <em>n</em><sub>1</sub> / <em>n</em>.
+<br>
+(I have introduced the prorating term, <em>n</em><sub>j</sub> / <em>n</em> ,  in order to avoid the counterintuitive assignment of a higher reward to the partner who made fewer errors because he also removed fewer pieces).
+
+<p>
+When a mastery-based incentive scheme (LIKELIHOOD or DOUBLING) is used, the "mastery metric" (the length of a "good stretch", or the Bayesian R product) will be computed individually for each player, based only on his moves (and entirely ignoring the other player's moves). Based on that metric, the reward of the player who has demonstrated mastery will be doubled or quadrupled, as appropriate.
+
+	  <h2>Policy for taking turns. (Subject to change after Paul's email review)</h2>
+
+	  <p>
+	    Below, Player A is the one who is given the first turn in the first episode.
+
+	    <h3>
+	      Cooperative games</h3>
+
+	    <ul>
+<li> Players A and B start series in alternating order. (That is, player A starts the series for Rule set 1, player B starts the series for Rule set 2, etc).
+<li> Within a given series, players A and B start episodes in alternating order. (E.g., once player B started the first episode of the second series (the series for Rule set 2), player A will start the 2nd episode of that series, and so on)
+<li> Within an episode, A and B strictly alternate making move attempts.
+	    </ul>
+	    
+	    <h3>
+	      Adversarial games
+	    </h3>
+
+	    <ul>
+<li> Within a given series (= several episodes with the same rule set), a player is given another attempt after each successful move. After a failed attempt, the contol is transferred to the other player.
+<li> If an incentive plan with "early win" is used (i.e. DOUBLING or LIKELIHOOD), then, if a series ends with an "early win" (x4) by one player, the next series will be started by the other ("losing") player.
+<li> If no incentive plan is used, or if a series is played to the end without an "early win", then players alternate starting series. (That is, series j+1 is started by the other player than series j).
+	    </ul>
+
+
+	    <h2>Data structures</h2>
+
+<p>
+This section, outlying major changes to the Game Server's data stored data structures, is of little interest to the PIs, but I keep it here for my later reference.
+
+<p>
+  We will say that in each two-player game there is the "first player" (Playe 0) and the "second player" (Player 1). The PlayerInfo table will have an extra column used to link the two, so that the first player's table entry would contain a link to the second player. The Episode table won't need to change; it will link episodes to the first player.
+
+<p>
+  The transcript of an episode (as dumped into the transcipt CSV file) will contain an extra column, indicating for each move [attempt] whether the move was made by the first or second player of the game.
+
+<h2>Considerations for the client-server communication </h2>
+
+In the "single-player world"  (Rule Game Server versions through 6.*, and the GUI client as of Oct 2024), all of communication between the GUI client and the Rule Game server is via HTTP requests, which the server tries to satisfy ASAP. In GS 7.*, we also use Websockets messages, primarily for the server to tell the client that something has changed (your partner has made a move, etc) and the player's client needs to make another <tt>/display</tt> etc call to update its state.
+
+<p>
+  The following two sections describe first the HTTP message exchange in GS 6.*, and then the proposed message exchange in GS 7.*
+
+<h3>HTTP Message exchange in GS 6.*</h3>
+
+<p>
+The data exchange in GS 6.* is built purely on HTTP requests and responses. The available API calls (HTTP requests) are described in more detail in 
+<a href="http://localhost:8080/w2020/game-api-2.html">Game API</a>;
+here we just describe the most essential parts of this exchange. The following notation is used:
+
+<h4>
+NOTATION:
+</h4>
+
+<pre>
+  REQUEST
+  ==================>
+  <=================
+  RESPONSE
+    </pre>
+
+
+<h4>
+MESSAGE EXCHANGE:
+</h4>
+
+<pre>
+
+/player
+=====================>
+     <=======================
+confirmation of registration
+     trial list ID
+
+
+/newEpisode
+=====================>
+     <=======================
+      episode ID
+
+/display
+=====================>
+     <=======================
+     initial game state
+
+/move or /pick (describes the player action)
+=====================>
+     <=======================
+     response code (accept/reject) + new game state
+
+
+/display
+=====================>
+     <=======================
+     current game state
+       </pre>
+
+
+<p>
+The "game state" sent by the server in response to /move, /pick, and /display calls includes the current state of the board, the finishCode (0 if the episode continues, or some other value to indicate that the episode has finished, and in what way it finished), various progress indicators. If the episode has finished, this also includes 
+	  
+<h2>Proposed message exchange in GS 7.*</h2>
+
+<p>
+While it is possible to entirely replace the exchange of HTTP requests and responses, I am in favor of a more conservative appoaches: mostly keeping the HTTP requests as they are, but adding to some responses some additional information.
+
+<p>
+In particular:
+
+<ul>
+<li> In the beginning of an episode, a /display response may include a
+"WAIT FOR BOARD" flag, indicating that the first board is not available yet. 
+The client then should open a websocket (WS) connection, and wait for a websocket  message (<tt>READY EPI</tt> or <tt>READY DIS</tt>) that will invite
+it to send a /display call again.
+
+<li> During the game, the "display" structure returned by a /move or /pick call, which
+  shows the board after that move,  may also
+include a flag indicating that moves by this player are not allowed now, because
+it's the other player's turn. Again, the client should wait for a WS message (<tt>READY DIS</tt>)
+
+<li> Whenever the other player makes a move or pick (successful or unsuccessful), the server sends a
+  WS message (<tt>READY DIS</tt>),  with the info about that pick or move, so that the client can somehow display that info (which may or may not include removing a game piece from the board).
+
+<li> When it's this player's turn to make a move again, the server sends a <tt>READY DIS</tt> WS  message, which tells the client to make a /display HTTP call again.
+</ul>
+
+<h4>
+NOTATION:
+</h4>
+
+<pre>
+  HTTP REQUEST
+  ==================>
+  <=================
+  HTTP RESPONSE
+
+
+   websocket opening connection
+   ...................>
+
+   websocket message
+   <...................
+   </pre>
+
+<h4>
+MESSAGE EXCHANGE:
+</h4>
+
+<pre>
+/player
+=====================>
+       <=======================
+confirmation of registration
+	 ; info on game type (isAdveGame, isCoopGame)
+     trial list ID
+
+
+/newEpisode
+=====================>
+     <=======================
+       episode ID, or "wait" flag
+
+client opening a socket connection, and identifying itself
+........................>
+
+<.......................
+"READY EPI", asking the client to make a /display call
+
+       
+
+  /display
+=====================>
+     <=======================
+     initial game state; possibly a "wait" flag
+
+       
+       
+/move or /pick (describes the player action)
+=====================>
+     <=======================
+     response code (accept/reject) + new game state (+ possibly a WAIT flag)
+
+
+<...............................
+ "READY DIS", teling the client to make a /display call
+
+  /display
+=====================>
+     <=======================
+     current game state and  the partner's recent move(s)
+
+ 
+<...............................
+ "READY DIS"
+
+
+/display
+=====================>
+     <=======================
+     current game state
+</pre>
+
+<h2><a name="api">Specific API calls</a></h2>
+
+
+<p>This section describes important changes in the behavior of some calls as compared to that seen in the
+  <a href="game-api-2.html">GS 6.* API</a>
+
+
+  <h3>/player</h3>
+
+<p>This is the call made by the GUI client in the beginning of the player's interaction with the system. The returned structure now includes the following fields:
+<ul>  
+<li>isCoopGame: true if this is a coop 2PG
+<li>isAdveGame: true if this is an adversarial 2PG
+<li>twoPlayerGame: true if either of the above fields is true
+</ul>
+  <p>
+    If the client sees that twoPlayerGame==true, it should open a websocket connection, so that it will be able to receieve socket messages in the future. The WS URL (the server endpoint) for that WS connection is <tt> /websocket/watchPlayer </tt> (relative to the base URL of the GS web application; so for example if the base URL of the Game Server you're using is is http://localhost:8080/w2020/ , then the absolute URL for the WS server endpoint will be <tt> http://localhost:8080/w2020/websocket/watchPlayer </tt>). Once the connection has been opened, the GUI client should identify itself to the server, by send to it, over the WS connection, the message with the text
+    <pre>
+    IAM <em>xxxx</em>
+    </pre>
+    where  <em>xxxx</em> stands for the player's playerId.
+
+    <p>
+    The WS connection should stay open for the duration of the session; if the client detects that it's been closed by the server, it should reopen it.
+
+    <h3>/newEpisode</h3>
+
+    <p>This call is made once the player has made it through the intro pages (the instruction booklet), and is ready to play his first episode. Later, such a call is made to start every subsequent episode.
+
+    <p>In GS 7.*, the returned structure may include the field
+      <ul>
+<li><tt>mustWait</tt>=true or false. If <tt>mustWait==true</tt>, this  means that the episode is not ready yet. The caller must wait for a <tt>READY EPI</tt> signal to arrive via the websocket connection, and
+	then repeat the /newEpisode call.
+      </ul>
+      
+      <h3>/move, /pick, /display</h3>
+
+    <p>This 3 calls return essentially the same structure, describing the state of the game, either after the player has made a move/pick attempt (the /move or /pick call), or simply because the the client wants to see the current state. 
+      The only difference in the structure returned by these calls is that in the /move and /pick calls, the <tt>code</tt> fields contains the result of the players pick or move attempt (successful or not), while in the /display call this field has a special value (-8, i.e. EPISODE.CODE.JUST_A_DISPLAY).
+
+      <p>Arguments:
+      <ol>
+      <li> Unlike GS 6.*, when the client makes these calls in GS 7.*, it must send one more parameter, <tt>playerId=xxxx</tt>. If a 1PG is played, this parameter is ignored, but in a 2PG the server needs this value in order to know which player is making the move, or which player's view of the border is to be shown.
+
+If the server detects that the submitted value of playerId is wrong (i.e. it's not your turn to make a move), the returned Display structure will include <tt>code=-9</tt> (that's Episode.CODE.OUT_OF_TURN). If this happens while you're sure that the client has sent a correct playerId, this indicates an internal error in the client or server related to keeping track of whose turn it's to move. More info can come in <tt>errmsg</tt>. One probably should just show a big error message here and stop the game.
+</ol>
+
+      <p>Return structure:
+	<ol>
+      <li> If finishCode==0 in the return structure (i.e. the episode has not been completed yet), the return structure may contain the field
+mustWait. If mustWait==true, it means that this player is not allowed to make a move at this time; if that is the case, the client must wait for a "READY DIS" message to come via the WS connection, and, once that message comes in, it can make another /display call.
+
+      <li> The field numMovesMade in the return structure contain the total number of attempts made by both players in this episode so far. This is the value that the client needs to passed to the next /move or /pick call as cnt=...., much like it's done in GS 6.*.
+
+      <li>The new field <tt>mover</tt>, with the value 0 or 1, indicates the player's role in the game: whether he is Player 0 or Player 1. (This value never changes for a given player, so there is really no need to include it into every call's return value; but this is done for the client's convenience).
+	
+      <li> The semantics of the field <tt>transcript</tt> has been extended. As before, it contains the description of all moves/picks (and move/pick attempts) that have been made in the current episode, by both players. In order for the client to know which player made which move, each move now has the field  <tt>mover</tt>, with the value 0 or 1. By comparing this value with the value of the top-level <tt>mover</tt> field, the client can distinguish this player's moves from those of his partner.<br>
+
+	The  <tt>transcript</tt> data can be used by the client to do a visual display of the partner's moves. To do this, the client should keep track of all partner's moves in this episode that it has already displayed to the player. Every time the /display call is made, the client can look at the  <tt>transcript</tt> structure, identify the partner's moves (those with the value of <tt>mover</tt> being different from this player's own  <tt>mover</tt> value), and display those of them that it has not displayed yet.
+
+      <li>In GS 6.*, the field <tt>faces</tt> (a vector of booleans) was used to draw a row of happy and unhappy faces, indicating the player's successful and failed moves in the current series of episodes, if a mastery-based incentive scheme (DOUBLING or LIKELIHOOD) was used. In GS 7.*, the field <tt>faces</tt> includes both players' moves; to distinguish the two players' moves, 
+	one more field, <tt>facesMine</tt> (also a vector of booleans, of the same length) has been added. Its semantics is as follows:  <tt>facesMine[j]</tt> is true if  <tt>faces[j]</tt> describes this player's move (rather than a move of his partner).
+
+	<br>
+	The client can combine these two fields for a variety of visual representation of the players' activity history. Specifically, in a cooperative game both players' faces can be shown in a single row, but with different brightness: the faces for this player's moves being brighter, and those for his partner, a bit faded. In an adversarial game, the client can separate this player's and his adversary's faces, and display them separately (say, in two separate rows), with an appropriate legend.
+	</ol>
+
+	<h3>/guess</h3>
+
+	<p>
+	  This call also takes the <tt>playerId=...</tt> parameter now, so that the server will correctly record the guess.
+
+	  <h2>Other GUI client design notes</h2>
+
+	<p>In games with a mastery-based incentive scheme, make sure to offer "guess entry" box to the losing player too.
+
+	  <h2><a name="html">The HTML play</a></h2>
+
+	  <h3>How to use HTML play</h3>
+	  <p>
+	    To see how the server works when playing a 2PG, you can use the <a href="html-play.jsp">HTML play</a> interface. This is how to use it:
+
+	    <ol>
+	      <li>
+	    In that screen, pick a sample cooperative or adversarial 2PG plan (e.g. vm/adve.colorVshape or vm/coop.colorVshape), pick a unique player name (maybe something that includes your name and date and a unique suffix, so that you can easily identify it later in the logs).   As usual, click on the "Register player" button, and then continue clicking through the screens.
+
+<li> On another computer in the same room, or simply in another window or tab (of the same or different web browser) on the same computer, go to the same URL, pick a different player name and the same experiment plan,  and go through the same motions.
+
+<li> When both players have been registered, and you manage to start playing an episode on one of the computers, you should see that the same board will also be automatically displayed on the other computer too. However, at any time, only one player will be invited to make a move; the other will be told to wait.
+
+<li> You can make your moves in 2 clicks, first clicking on a game piece and then on the destination bucket. You can see that once one player (the one whose turn it is now), the display on the other player's screen is automatically updated to stay in sync. The players will take turns playing based on the rules we discussed for adversarial and cooperative games. (I have not actually tested a coop game yet; if you want, you can create an experiment plan with a "coop." prefix in its name, and see if it works as expected).
+
+<li> Transitions between episodes, as well as transitions between series, are also supposed to be more or less synchronous (as long as the players occasionally click on transition buttons), until all series end as per the experiment plan.
+	    </ol>
+
+	    <h3>How HTML play works, and how to use it as the model for the GUI client</h3>
+	    
+	  <P>During the game, the HTML pages used in the HTML play cause the browser to make server requests with URLs similar to those that the GUI client would be using: e.g. /displayHtml and /moveHtml instead of /display and /move. Each of these calls returns a new HTML page that would contain most of the same elements (board display and various progress indicators, buttons, etc) that the GUI client would display at the same stage in the game.
+
+	  <p>At the bottom of each screen, you would see the entire content of the JSON structure that the apppropriate API call (/display, /move, etc) would return in this situation. It is the content of this data structure that is used by the server to create the HTML page you see --- and in the GUI client it will be the same data structure whose content will be used to show everything the GUI client shows.
+
+	  <p>One can see how these HTML pages are generated by looking at the source code of the server class
+	     edu.wisc.game.rest.GameService2Html; the structure from which it takes all the necessary data is an instance of  EpisodeInfo.ExtendedDisplay, and it is exactly this structure which, in JSON form, is sent to the GUI client as the response to the /move, /pick, and /display calls.
+
+	  <p>(Note: if you look at the GameService2Html code, you will see that very occasionally this class uses data that are not available in  EpisodeInfo.ExtendedDisplay. For example, it accesses methods PlayerInfo.isAdveGame(), isCoopGame(), is2PG(). What the GUI client should do instead is to save in its variables the fields isAdveGame etc from the response of the /player call, and then use these variables later, whenever processing the response of /move or /display etc calls.)
+
+	  <p>The HTML play pages also have a built-in functionality for exchanging WS messages. Every time an HTML page of the HTML play loads, it opens a WS connection and sends an identifying message. (This is done by the JS code in the file js/socket1.js, included into the HTML coded). The JS code attaches a listener to its WS endpoint; that listener analyzes incoming messages from the server, and when the "READY EPI" or "READY DIS" message comes, it triggers the submission of an appropriate form in the HTML page, which makes an appropriate server HTTP call (such as /displayHtml), which reloads the page.
+	    
+	  <p>The GUI client, which is writte in TypeScript/React, will of course do this a little bit different; it may choose to open the connection only once, early on (although subsequently it will need to monitor its status, and if it closes, reopen it). When the listener detects a "READY ..." message, the client will simply make an appropriate /newEpisode or /display call, to obtain the data to be processed, much like the current client already does.
+	    
+	    
+
+<h2>Appendix: some data on the M-Turk population</h2>
+
+
+<pre>
+(The M-Turk population:
+ 847 players did not get a completion code,
+    among them 336 did not complete a single episode,
+    139 competed a single episode,
+    etc
+1430 players got a completion code)
+ 
+mysql> select count(*)  from PlayerInfo where REGEXP_LIKE(PlayerId,  '^A[A-Z0-9]........', 'c') and completionCode is null order by PlayerId;
++----------+
+| count(*) |
++----------+
+|      847 |
+
+
+mysql> select count(*)  from PlayerInfo where REGEXP_LIKE(PlayerId,  '^A[A-Z0-9]........', 'c') and completionCode is not null order by PlayerId;
++----------+
+| count(*) |
++----------+
+|     1430 |
++----------+
+
+select count(*) from PlayerInfo p where  REGEXP_LIKE(playerId,  '^A[A-Z0-9]........', 'c') and (select count(*) from Episode e where p.id=e.PLAYER_ID) = 0;
++----------+
+| count(*) |
++----------+
+|      336 |
++----------+
+1 row in set (0.03 sec)
+
+select count(*) from PlayerInfo p where  REGEXP_LIKE(playerId,  '^A[A-Z0-9]........', 'c') and (select count(*) from Episode e where p.id=e.PLAYER_ID) = 1;
++----------+
+| count(*) |
++----------+
+|      139 |
++----------+
+
+select count(*) from PlayerInfo p where  REGEXP_LIKE(playerId,  '^A[A-Z0-9]........', 'c') and (select count(*) from Episode e where p.id=e.PLAYER_ID) = 1;
+
+REGEXP_LIKE(playerId,  '^A[A-Z0-9]........', 'c') and p.completionCode is not null group by p.id;
+(count(*) from Episode e where PlayerInfo.id=e.PLAYER_ID) c   from PlayerInfo p where REGEXP_LIKE(playerId,  '^A[A-Z0-9]........', 'c') and p.completionCode is not null group by p.id;
+
+
+(ISSUE: what happens if one drops out?)
+</pre>
+
+  </body>
+  </html>
