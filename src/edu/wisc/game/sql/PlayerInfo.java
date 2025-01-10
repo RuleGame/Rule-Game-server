@@ -168,6 +168,9 @@ public class PlayerInfo {
 	partner.partner = this;
 	partner.setPartnerPlayerId(getPlayerId());
 	partner.setPairState(1-myRole);
+	// make sure the info goes into the database
+	saveMe();
+	partner.saveMe();
     }
 
     
@@ -187,9 +190,6 @@ public class PlayerInfo {
 	partnerPlayerId = null;
     }
 	
-		
-
-    // ZZZZ
 
     /** FIXME: this may result in an Episode being persisted before its completed, 
 	which we, generally, don't like. Usually not a big deal though.
@@ -957,6 +957,7 @@ public class PlayerInfo {
 	progress) by this player, broken down by series. */
     public String report() {
 	Vector<String> v = new Vector<>();
+	v.add(toString());
 	int j=0;
 	for(Series ser: allSeries) {
 	    String s="";

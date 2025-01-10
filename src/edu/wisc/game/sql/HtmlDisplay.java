@@ -14,7 +14,13 @@ import edu.wisc.game.formatter.*;
 
     Buttons: with some inspiration from
     https://stackoverflow.com/questions/63846699/how-do-i-keep-the-selected-button-highlighted
- */
+
+    <p>
+    For the buttons etc to work correctly, the HTML page
+    into which this code is included should also include the JS
+    snippet from js/boardDisplay.js
+
+*/
 public class HtmlDisplay {
 
    private static HTMLFmter fm = new HTMLFmter();

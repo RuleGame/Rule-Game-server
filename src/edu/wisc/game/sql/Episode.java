@@ -966,7 +966,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
 
     /** The current version of the application */
-    public static final String version = "7.001";
+    public static final String version = "7.002";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }

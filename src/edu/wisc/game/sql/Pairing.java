@@ -2,20 +2,11 @@ package edu.wisc.game.sql;
 
 import java.io.*;
 import java.util.*;
-import javax.persistence.*;
-
-import org.apache.openjpa.persistence.jdbc.*;
-
-import jakarta.xml.bind.annotation.XmlElement; 
 
 import edu.wisc.game.util.*;
-import edu.wisc.game.parser.*;
-import edu.wisc.game.rest.ParaSet;
-import edu.wisc.game.rest.TrialList;
-import edu.wisc.game.rest.Files;
-import edu.wisc.game.engine.RuleSet;
-import edu.wisc.game.engine.AllRuleSets;
-import edu.wisc.game.saved.*;
+//import edu.wisc.game.rest.ParaSet;
+//import edu.wisc.game.rest.TrialList;
+//import edu.wisc.game.rest.Files;
 
 import edu.wisc.game.websocket.WatchPlayer;
 
@@ -159,10 +150,10 @@ public class Pairing {
 	return q;
     }
     
-    /** Tries to provide a partner from a new, still unpaired player. If the potetnial partner is found,
-	the two are paired.
+    /** Tries to provide a partner from a new, still unpaired
+	player. If the potetnial partner is found, the two are paired.
      */
-    static public PlayerInfo providePartner(PlayerInfo p) {
+    static private PlayerInfo providePartner(PlayerInfo p) {
 	if (p.getPairState()!=State.NONE || p.getPartnerPlayerId()!=null) throw new IllegalArgumentException("Player " + p + " is already paired");
 	String exp = p.getExperimentPlan();
 	PairingQueue q = getPairingQueue(exp);
@@ -192,17 +183,28 @@ public class Pairing {
 	}
     }
 
+    /** @param epiNo episode number within the series (0-based)
+     */
     public static int whoWillStartEpisode(PlayerInfo p, int seriesNo, int epiNo ) {
 	if (epiNo==0) return whoWillStartSeries(p, seriesNo);
 
 	PlayerInfo.Series ser = p.getSeries(seriesNo);
 	EpisodeInfo lastEpi = ser.episodes.get(epiNo-1);
+	Episode.Pick lastMove = lastEpi.lastMove();
+
+	// this may only happen if the last episode was empty (given up
+	// without playing)
+	if (lastMove==null) return State.ZERO;
+
+	
 	if (p.isCoopGame()) {
-	    // Players alternate starting episodes within the series
-	    return 1-lastEpi.getFirstMover();
+	    //-- Players alternate starting episodes within the series
+	    // return 1-lastEpi.getFirstMover();
+	    //-- Ver 7.002: players alternate moves through the border of episodes
+	    int z = lastMove.getMover();
+	    return  1-z;	    
 	} else if (p.isAdveGame()) {
 	    // After a correct move, another attempt is given
-	    Episode.Pick lastMove = lastEpi.lastMove();
 	    int z = lastMove.getMover();
 	    return (lastMove.getCode()==Episode.CODE.ACCEPT) ? z : 1-z;
 	} else { // single-player

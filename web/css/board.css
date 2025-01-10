@@ -4,3 +4,26 @@
 	margin:4px; background:#fff; border:3px solid #eee; 
 cursor:pointer;}
 .ButtonState:checked + .Button{border:3px solid #333;}
+
+       input#chat {
+            width: 410px
+        }
+
+        #console-container {
+            width: 1000px;
+        }
+
+        #console {
+            border: 1px solid #CCCCCC;
+            border-right-color: #999999;
+            border-bottom-color: #999999;
+            height: 300px;
+            overflow-y: scroll;
+            padding: 5px;
+            width: 100%;
+        }
+
+        #console p {
+            padding: 0;
+            margin: 0;
+        }

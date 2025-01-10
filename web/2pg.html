@@ -10,7 +10,7 @@ Supporting Two-Player Games in the GOHR Framework
     </h1>
 
     <div align="center"><em>
-	Updated 2025-01-04 for GS 7.001</em>
+	Updated 2025-01-10 for GS 7.002</em>
 	</div>
 
     <p>
@@ -142,7 +142,7 @@ pieces, and made <em>e</em><sub>0</sub> and <em>e</em><sub>1</sub> errors respec
 <p>
 When a mastery-based incentive scheme (LIKELIHOOD or DOUBLING) is used, the "mastery metric" (the length of a "good stretch", or the Bayesian R product) will be computed individually for each player, based only on his moves (and entirely ignoring the other player's moves). Based on that metric, the reward of the player who has demonstrated mastery will be doubled or quadrupled, as appropriate.
 
-	  <h2>Policy for taking turns. (Subject to change after Paul's email review)</h2>
+	  <h2>Policy for taking turns. (Finalized 2025-01-06)</h2>
 
 	  <p>
 	    Below, Player A is the one who is given the first turn in the first episode.
@@ -152,8 +152,7 @@ When a mastery-based incentive scheme (LIKELIHOOD or DOUBLING) is used, the "mas
 
 	    <ul>
 <li> Players A and B start series in alternating order. (That is, player A starts the series for Rule set 1, player B starts the series for Rule set 2, etc).
-<li> Within a given series, players A and B start episodes in alternating order. (E.g., once player B started the first episode of the second series (the series for Rule set 2), player A will start the 2nd episode of that series, and so on)
-<li> Within an episode, A and B strictly alternate making move attempts.
+<li> Within a series, A and B strictly alternate making move attempts. Alternation crosses the boundary of episodes (within one series), so that if the last move in episode j was made by player A, the first move attempt in episode j+1 of the same series will be made by player B.
 	    </ul>
 	    
 	    <h3>
@@ -393,14 +392,14 @@ If the server detects that the submitted value of playerId is wrong (i.e. it's n
 
       <p>Return structure:
 	<ol>
-      <li> If finishCode==0 in the return structure (i.e. the episode has not been completed yet), the return structure may contain the field
-mustWait. If mustWait==true, it means that this player is not allowed to make a move at this time; if that is the case, the client must wait for a "READY DIS" message to come via the WS connection, and, once that message comes in, it can make another /display call.
+      <li> If <tt>finishCode==0</tt> in the return structure (i.e. the episode has not been completed yet), the return structure may contain the field
+<tt>mustWait</tt>. If <tt>mustWait==true</tt>, it means that this player is not allowed to make a move at this time; if that is the case, the client must wait for a "READY DIS" message to come via the WS connection, and, once that message comes in, it can make another /display call.
 
-      <li> The field numMovesMade in the return structure contain the total number of attempts made by both players in this episode so far. This is the value that the client needs to passed to the next /move or /pick call as cnt=...., much like it's done in GS 6.*.
+      <li> The field <tt>numMovesMade</tt> in the return structure contain the total number of attempts made by both players in this episode so far. This is the value that the client needs to passed to the next /move or /pick call as cnt=...., much like it's done in GS 6.*.
 
       <li>The new field <tt>mover</tt>, with the value 0 or 1, indicates the player's role in the game: whether he is Player 0 or Player 1. (This value never changes for a given player, so there is really no need to include it into every call's return value; but this is done for the client's convenience).
 	
-      <li> The semantics of the field <tt>transcript</tt> has been extended. As before, it contains the description of all moves/picks (and move/pick attempts) that have been made in the current episode, by both players. In order for the client to know which player made which move, each move now has the field  <tt>mover</tt>, with the value 0 or 1. By comparing this value with the value of the top-level <tt>mover</tt> field, the client can distinguish this player's moves from those of his partner.<br>
+      <li> The semantics of the field <tt>transcript</tt> have been extended. As before, it contains the description of all moves/picks (and move/pick attempts) that have been made in the current episode, by both players. In order for the client to know which player made which move, each move now has the field  <tt>mover</tt>, with the value 0 or 1. By comparing this value with the value of the top-level <tt>mover</tt> field, the client can distinguish this player's moves from those of his partner.<br>
 
 	The  <tt>transcript</tt> data can be used by the client to do a visual display of the partner's moves. To do this, the client should keep track of all partner's moves in this episode that it has already displayed to the player. Every time the /display call is made, the client can look at the  <tt>transcript</tt> structure, identify the partner's moves (those with the value of <tt>mover</tt> being different from this player's own  <tt>mover</tt> value), and display those of them that it has not displayed yet.
 
@@ -409,6 +408,10 @@ mustWait. If mustWait==true, it means that this player is not allowed to make a 
 
 	<br>
 	The client can combine these two fields for a variety of visual representation of the players' activity history. Specifically, in a cooperative game both players' faces can be shown in a single row, but with different brightness: the faces for this player's moves being brighter, and those for his partner, a bit faded. In an adversarial game, the client can separate this player's and his adversary's faces, and display them separately (say, in two separate rows), with an appropriate legend.
+
+      <li> In addition to <tt>totalRewardEarned</tt>, containing the player's total reward so far, the new field <tt>totalRewardEarnedPartner</tt> provides a similar value for the partner. In coop games, the two values are always the same (because both players receive the same "common reward"; in adversarial games they are different, as each player is rewarded for his own moves only.
+
+
 	</ol>
 
 	<h3>/guess</h3>

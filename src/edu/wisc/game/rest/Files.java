@@ -83,10 +83,12 @@ public class Files {
 	    BOARDS = "boards",
 	    TRANSCRIPTS = "transcripts",
 	    DETAILED_TRANSCRIPTS = "detailed-transcripts",
+	    CHATS = "chats",
 	    MLC = "mlc";
 	/** The list of subdirs to be processed by MergeDatasets */
 	static public String mergeable[] = {
 	    GUESSES,
+	    CHATS,
 	    BOARDS,
 	    TRANSCRIPTS,
 	    DETAILED_TRANSCRIPTS};
@@ -100,10 +102,16 @@ public class Files {
     
     /** The file into which guesses by a given player are written */
     public static File guessesFile(String playerId) throws IOException {
-
 	File d = savedSubDir( Saved.GUESSES);
 	testWriteDir(d);
 	File f= new File(d, playerId + ".guesses.csv");
+	return f;
+    }
+
+    public static File chatFile(String playerId) throws IOException {
+	File d = savedSubDir( Saved.CHATS);
+	testWriteDir(d);
+	File f= new File(d, playerId + ".chat.csv");
 	return f;
     }
 

@@ -45,14 +45,14 @@ public class GameService2Html extends GameService2 {
     }
 
     /** Some extra HTML code to put at the end of BODY */
-    private static String makeEnding() {
+    /*    private static String makeEnding() {
 	String s= 
 	    "<div id=\"console-container\">\n" +
 	    "<div id=\"console\"/>\n" +
 	    "</div>";
 	return s;
     }
-
+    */
     
     private static String makeWatchClientUrl( UriInfo uriInfo, String myPlayerId) {
 	//UriBuilder ub = uriIndo.getAbsolutePathBuilder();
@@ -103,7 +103,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
     /** Produces the final document, attaching JS snippets to the head and body */
     private static String withJS(  UriInfo uriInfo, String playerId, String title, String body) {
 	String head = fm.title(title) + makeJS(uriInfo,  playerId);
-        body += makeEnding();
+        //body += makeEnding();
 	return fm.html2(head, body);	
     }
 
@@ -256,12 +256,24 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	} else {	
 	    body += moveForm(playerId, w.getDisplay(),  episodeId);
 	}
+	body += chatSection();
+
 	body += fm.hr();
+	
 	body +=  fm.h4( "Response")+fm.para(  ""+JsonReflect.reflectToJSONObject(w, true));
 
 	return withJS( uriInfo, playerId, title, body);
     }
 
+    static String chatSection() {
+	String body = fm.hr();
+	body += fm.para("In the box below, you can type a message to be sent to your partner; then press ENTER to send it.");
+	body += fm.para("<input type='text' placeholder='Type a message and press ENTER' id='chat'/>");
+	body += "<div id='console-container'>  <div id='console'/> </div>\n";
+	return body;
+    }
+
+    
     @GET
     @Path("/displayHtml")
     @Produces(MediaType.TEXT_HTML)
@@ -275,6 +287,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	//body += fm.h1(title);
 
 	body += moveForm(playerId, d,  episodeId);
+	body += chatSection();
 
 	body += fm.hr();
 	body += fm.h4("Server response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true));
@@ -304,6 +317,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	body += fm.para(title);
 
 	body += moveForm(playerId, d,  episodeId);
+	body += chatSection();
 
 	body += fm.hr();
 	body += fm.h4("Server response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true));
@@ -332,6 +346,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	body += fm.para(title);
 
 	body += moveForm(playerId, d,  episodeId);
+	body += chatSection();
 	body += fm.hr();
 	body += fm.h4("Server response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true));
 
@@ -672,4 +687,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	return "<form method='post' action='"+action+"'><strong>"+text+"</strong><input type='submit'></form>";
     }
 
+    
+
+    
 }

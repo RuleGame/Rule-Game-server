@@ -1,4 +1,4 @@
-/*
+/* 
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
  *  this work for additional information regarding copyright ownership.
@@ -38,6 +38,8 @@ import jakarta.websocket.server.ServerEndpoint;
 //import org.apache.juli.logging.LogFactory;
 
 import edu.wisc.game.util.Logging;
+import edu.wisc.game.rest.ChatWriteReport;
+import edu.wisc.game.rest.FileWriteReport;
 
 //import util.HTMLFilter;
 
@@ -58,6 +60,7 @@ public class WatchPlayer {
     /** The ID of the player whom the client associated with this connection
 	wants to watch */
     private String myPid=null;
+    /** This can be also used as the destination for chat messages */
     private String watchedPid =null;
     private final Date startAt;
 
@@ -79,8 +82,8 @@ public class WatchPlayer {
     public void start(Session session) {
         this.session = session;
         connections.add(this);
-        String message = "[V1] At " + startAt + ", watcher " + String.format("* %s %s", nickname, "has joined.");
-	sendMessage( message);
+        String message = "At " + startAt + ", watcher " + String.format("* %s %s", nickname, "has joined.");
+	sendMessage( "STATUS " + message);
         //broadcast("[B] " + message);
     }
 
@@ -94,8 +97,11 @@ public class WatchPlayer {
 
 
     /** Expects
+	<pre>
 	WATCH pid
 	IAM pid
+	CHAT text
+	</pre>
     */
     @OnMessage
     public void incoming(String message) {
@@ -104,14 +110,14 @@ public class WatchPlayer {
         //broadcast(filteredMessage);
 
 	String  s = "At " + (new Date()) +", ";
-	//sendMessage("[M1] " + message);
-	//        broadcast("[B] " + message);
-	String watch = null, iam = null;
-	final String WATCH = "WATCH", IAM = "IAM";
+	String watch = null, iam = null, chat = null;
+	final String WATCH = "WATCH", IAM = "IAM", CHAT = "CHAT";
 	if (message.startsWith(WATCH)) {
 	    watch = message.substring(WATCH.length()).trim();
 	} else 	if (message.startsWith(IAM)) {
 	    iam = message.substring(IAM.length()).trim();
+	} else 	if (message.startsWith(CHAT)) {
+	    chat = message.substring(CHAT.length()).trim();
 	} else {
 	    s+= "ignoring message: " + message;
 	}
@@ -135,14 +141,29 @@ public class WatchPlayer {
 		myPid = iam;
 		s += "started receiving messages for '" + myPid+ "'. ";
 			
-	    }
-		
+	    }		
 	}
+
+	if (chat!=null) {
+	    if (myPid == null) {
+		Logging.error("Received a chat message from a WS channel without known myPid: " + chat);
+	    } else {
+		if (watchedPid==null) {
+		    watchedPid =ChatWriteReport.findPartnerPlayerId(myPid);
+		}
+		if (watchedPid!=null) {
+		    sendHimChat(watchedPid, "CHAT " + chat);
+		    FileWriteReport r=ChatWriteReport.writeChat(myPid, chat);
+		}
+	    }
+	} else {
+	
 	//try {
 
-	Logging.info("Chat(i="+myPid+")(w="+watchedPid+"): " + s);
+	    Logging.info("Chat(i="+myPid+")(w="+watchedPid+"): " + s);
 			   
-	sendMessage(s);
+	    sendMessage("STATUS " + s);
+	}
 	    //} catch(IOException t) {
 	    //Logging.error("Cannot send a websocket message about player "  + watchedPid +"; error=" + t);
 	    //}
@@ -245,7 +266,12 @@ public class WatchPlayer {
 	WatchMessage(Object _o) { o  = _o; }
     }
     
-  
+
+    private void sendHim1Chat(String pid, String m) {
+	if (pid==null  || !pid.equals(myPid)) return;
+	sendMessage(m);
+    }
+    
     private void tellHim1b(String pid, Ready m) {
 	if (pid==null  || !pid.equals(myPid)) return;
 	sendMessage(m);
@@ -286,6 +312,11 @@ public class WatchPlayer {
     public static void tellHim(String pid, Ready msg) {
 	for (WatchPlayer client : connections) {
 	    client.tellHim1b(pid, msg);
+	}
+    }
+    public static void sendHimChat(String pid, String s) {
+	for (WatchPlayer client : connections) {
+	    client.sendHim1Chat(pid, s);
 	}
     }
 

@@ -137,13 +137,10 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	    episodeId = epi.episodeId;
 	    setDisplay(epi.mkDisplay(pid));
 
-
 	    // Tell the other player that the episode is ready
 	    if (x.is2PG()) {
 		WatchPlayer.tellHim(x.getPartnerPlayerId(), WatchPlayer.Ready.EPI);
 	    }
-
-	
 	    
 	    setError( false);
 
@@ -154,7 +151,6 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	    setErrmsg(msg);
 	    System.err.print(ex);
 	    ex.printStackTrace(System.err);
-
 	    
 	    StringWriter sw = new StringWriter();
 	    ex.printStackTrace(new PrintWriter(sw));
@@ -170,8 +166,6 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	    } else {
 		WatchPlayer.tellAbout(pid, "Starting on episode "  + episodeId);
 	    }
-	    //WatchPlayer.showThem(pid, this);
-
 
 	}
 		     

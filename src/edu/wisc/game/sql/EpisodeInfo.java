@@ -1065,15 +1065,64 @@ public class EpisodeInfo extends Episode {
          
     }
 
-    /** Which player made the last recorded move of this episode? (Needed for 2PG only)
-	@return 0 or 1
+        /**
+       	<pre>
+	#mover,seriesNo,episodeNo,timestamp,text
+	</pre>
      */
-    public int whoMadeLastMove() {
-	return lastMove().mover;
+    public void saveChatToFile(File f, int mover,
+				       String text) {
+	     final String[] keys = 
+	   { "mover",
+	     "seriesNo",
+	     "episodeNo", // position of the episode in the series, 0-based
+	     "moveNo", 
+	     "timestamp",
+	     "text"
+	   };
+
+       HashMap<String, Object> h = new HashMap<>();
+       h.clear();
+       h.put( "mover", mover);
+       h.put( "seriesNo", getSeriesNo());
+       PlayerInfo.Series ser =  mySeries();
+       h.put( "episodeNo", ser.episodes.indexOf(this));
+       h.put( "moveNo", attemptCnt); 
+       h.put( "timestamp", 	sdf2.format(new Date()));
+       h.put( "text",   ImportCSV.escape(text));
+       Vector<String> v = new Vector<>();
+       for(String key: keys) v.add("" + h.get(key));
+       String line = String.join(",", v);
+
+       synchronized(file_writing_lock) {
+	   try {	    
+	       PrintWriter w = new PrintWriter(new	FileWriter(f, true));
+	       if (f.length()==0) w.println("#" + String.join(",", keys));
+	       w.println(line);
+	       w.close();
+	   } catch(IOException ex) {
+	       System.err.println("Error writing the guess: " + ex);
+	       ex.printStackTrace(System.err);
+	   }	    
+       }
+         
     }
 
+
+
+    /** Which player made the last recorded move of this episode? (Needed for 2PG only)
+	@return normally, 0 or 1; if there were no moves, -1
+     */
+    public int whoMadeLastMove() {
+	Pick move = lastMove();
+	return move==null? -1: lastMove().mover;
+    }
+
+    /** @return The last move of the episode, or null if the episode was empty (no moves, because the
+	para set allowed the player to give up without playing)
+    */
     public Pick lastMove() {
-	return transcript.lastElement();
+	return transcript.isEmpty()? null: transcript.lastElement();
     }
 
     /** Called at the beginning of /move call, before testing for acceptance. Also can be called at the end of
