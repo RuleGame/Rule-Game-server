@@ -437,38 +437,17 @@ public class EpisodeInfo extends Episode {
 
 	double prevR = lastR[mj];
 
-
 	if (_q.code==CODE.ACCEPT) {
-	    // count succcessful moves only, but ignore successful picks
-		/*
-	    if (isMove) {
-		if (forP1) {
-		    lastStretch1++;
-		    if (lastR1==0) lastR1=1;
-		    lastR1 *= move.getRValue();		    
-		} else {
-		    lastStretch++;
-		    if (lastR==0) lastR=1;
-		    lastR *= move.getRValue();		    
-		}
-	    } else { // failed move or pick
-		if (forP1) {
-		    lastStretch1=0;
-		    lastR1 = 0;
-		} else {
-		    lastStretch=0;
-		    lastR = 0;
-		}
-	    }
-		*/
+	    // for mastery criteria, we count succcessful moves only,
+	    // but ignore successful picks
 	    if (isMove) {
 		lastStretch[mj]++;
 		if (lastR[mj]==0) lastR[mj]=1;
 		lastR[mj] *= move.getRValue();		    
-	    } else { // failed move or pick
-		lastStretch[mj]=0;
-		lastR[mj] = 0;
 	    }
+	} else { // a failed move or pick breaks the "mastery stretch"
+	    lastStretch[mj]=0;
+	    lastR[mj] = 0;
 	}
 
 	if (xgetIncentive()==Incentive.DOUBLING) {
@@ -481,13 +460,12 @@ public class EpisodeInfo extends Episode {
 		factorPromised[mj] = 4;
 		justReachedX4[mj]=true;
 
+		// Since ver 7.0, the "EARLY_WIN" finish code is
+		// assigned even when "displaying mastery" happens to
+		// coincide with the removal of the last game piece.
+		// (i.e. cleared==true)
+		// In this edge case, the win isn't really "early".
 
-		// Since ver 7.0, the "EARLY_WIN" finish code is assigned even if
-		// "displaying mastery" happens to coincide with the removal of the
-		// last game piece, so the win isn't really "early".)
-
-		//-- if (!cleared)
-		
 		earlyWin = true;
 	    } else if (f<2 && factorPromised[mj] < 2 && lastStretch[mj]>=x2) {
 		factorPromised[mj] = 2;

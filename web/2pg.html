@@ -10,7 +10,7 @@ Supporting Two-Player Games in the GOHR Framework
     </h1>
 
     <div align="center"><em>
-	Updated 2025-01-10 for GS 7.002</em>
+	Updated 2025-01-15 for GS 7.003</em>
 	</div>
 
     <p>
@@ -357,6 +357,7 @@ client opening a socket connection, and identifying itself
 <li>isCoopGame: true if this is a coop 2PG
 <li>isAdveGame: true if this is an adversarial 2PG
 <li>twoPlayerGame: true if either of the above fields is true
+<li>needChat: true if the experiment's plan requires a chat box to be displayed for chat communication between the two player. The server sets this flag true in 2PG with <tt>chat==true</tt> in the first parameter set of the trial list.
 </ul>
   <p>
     If the client sees that twoPlayerGame==true, it should open a websocket connection, so that it will be able to receieve socket messages in the future. The WS URL (the server endpoint) for that WS connection is <tt> /websocket/watchPlayer </tt> (relative to the base URL of the GS web application; so for example if the base URL of the Game Server you're using is is http://localhost:8080/w2020/ , then the absolute URL for the WS server endpoint will be <tt> http://localhost:8080/w2020/websocket/watchPlayer </tt>). Once the connection has been opened, the GUI client should identify itself to the server, by send to it, over the WS connection, the message with the text
@@ -419,6 +420,15 @@ If the server detects that the submitted value of playerId is wrong (i.e. it's n
 	<p>
 	  This call also takes the <tt>playerId=...</tt> parameter now, so that the server will correctly record the guess.
 
+	  <h2>Chat between players</h2>
+
+	<p>The GUI client should enable the chat GUI element, consisting from a text entry box and the message exchange display box, if <tt>needChat==true</tt> was receieved in the response of the /player call.
+
+	<p>When the player enters text in the text entry box, the client should send the entered text, with the prefix "CHAT ", prepended, as a text message over the WS connection (which, in any 2PG, must have been opened since the beginning of the session).
+
+	<p>In 2PG, the client must be watching over the WS connection all the time, in order to receieve "READY" messages. Whenever it receives a message and discovers that it starts with the prefix "CHAT ", rather thean "READY ", it should treat the text that follows that prefix as a chat message from the partner, and add it to the list of messages displayed in the  message exchange display box.
+
+	  
 	  <h2>Other GUI client design notes</h2>
 
 	<p>In games with a mastery-based incentive scheme, make sure to offer "guess entry" box to the losing player too.

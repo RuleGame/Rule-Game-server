@@ -72,14 +72,14 @@ public class PregameService {
 	@XmlElement
 	public void setGoodnessScore(double _goodnessScore) { goodnessScore = _goodnessScore; }
 
-	/** Identifies and tests the pregame experience directory for the
-	    player's experiment plan. The main parameter for that is
-	    "pregame", but for legacy (pre ver. 6.*) plans we also look
-	    at "init".
+	/** Identifies and tests the pregame experience directory for
+	    the player's experiment plan. The main parameter for that
+	    is "pregame", but for legacy (pre ver. 6.*) plans we also
+	    look at "init". We only look at this parameter ("pregame")
+	    in the first parameter set of the experiment, and ignore its
+	    values in subsequent para sets.
 
 	    @param pid playerId. The server will look up the  pregame experience directory for that player's experiment plan.
-	    @param name The pregame experience file to retrieve from the 
-	    PGE directory, e.g. "consent.html"
 	 */
 	 public PregameResponseBase(String pid) {
 	    try {
@@ -90,11 +90,12 @@ public class PregameService {
 		}
 		ParaSet para = x.getFirstPara();
 		if (para==null) {
-		    hasError("Don't know the players parameter set");
+		    hasError("Don't know the player's parameter set");
 		    return;
 		}
 		String pregame = (String)para.get("pregame");
 		if (pregame==null || pregame.trim().equals("")) {
+		    //-- Legacy controls (via "init", rather than "pregame")
 		    int init = para.getInt("init", true, -1);
 		    if (init < 0) {
 			pregame = "default";

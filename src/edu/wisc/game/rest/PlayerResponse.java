@@ -69,15 +69,23 @@ public class PlayerResponse extends ResponseBase {
     
     private boolean isCoopGame;
     private boolean isAdveGame;
+    /** Are we playing a cooperative two-player game (2PG)? */
     public boolean getIsCoopGame() { return isCoopGame; }
-    @XmlElement
-    public void setIsCoopGame(boolean _isCoopGame) { isCoopGame = _isCoopGame; }
+    //    @XmlElement   
+    //    public void setIsCoopGame(boolean _isCoopGame) { isCoopGame = _isCoopGame; }
+    /** Are we playing an adversarial 2PG? */
     public boolean getIsAdveGame() { return isAdveGame; }
-    @XmlElement
-    public void setIsAdveGame(boolean _isAdveGame) { isAdveGame = _isAdveGame; }
+    //@XmlElement
+    //public void setIsAdveGame(boolean _isAdveGame) { isAdveGame = _isAdveGame; }
+    /** Are we playing a 2PG? (A 2PG may be adversarial or cooperative) */
     public boolean getIsTwoPlayerGame() {
 	return getIsCoopGame() || getIsAdveGame();
     }
+
+    private boolean needChat;
+    /** Do we need a between-player chat element in the GUI? (In 2PG only,
+	based on para.chat */
+    public boolean getNeedChat() { return needChat; }
 
     static private final Pattern repeatUserPat = Pattern.compile("^RepeatUser-([0-9]+)-");
 
@@ -156,9 +164,14 @@ public class PlayerResponse extends ResponseBase {
 			    }
 			    x.setUser(user);
 			}
-			if (exp==null) exp= TrialList.extractExperimentPlanFromPlayerId(pid);
+			if (exp==null) {
+			    //exp= TrialList.extractExperimentPlanFromPlayerId(pid);
+			    hasError("Attempt to register a new plan without specifying an experiment plan");
+			    return;
+			}
 			x.setExperimentPlan(exp);		
 			assignRandomTrialList(x);
+			x.postLoad1();
 			// Check if it's a pair game
 			x.initPairing();
 			Pairing.newPlayerRegistration(x);
@@ -176,6 +189,9 @@ public class PlayerResponse extends ResponseBase {
 	    trialListId = x.getTrialListId();	
 	    isCoopGame = x.isCoopGame();
 	    isAdveGame = x.isAdveGame();
+	    needChat = x.getNeedChat();
+
+		
 	    setError(false);
 	    setErrmsg("Debug:\n" + x.report());
 
@@ -239,46 +255,53 @@ public class PlayerResponse extends ResponseBase {
 	return allPlayers.get(pid);
     }
     
-    /** Find the matching record for a player. First looks it up in
-	the local cache; then, if not found, in the SQL database. The
-	main block is synchronized, to ensure that we don't put
-	duplicate copies of a database entry into the cache.
-	@param em The EntityManager to use, if needed. If null is given, the EM will
-	be created when needed, and then closed, so that the returned object will be detached.
+    /** Find the matching record for a player, in the cache of the
+	database. First looks it up in the local cache; then, if not
+	found, in the SQL database. The main block is synchronized, to
+	ensure that we don't put duplicate copies of a database entry
+	into the cache.
+	
+	@param em The EntityManager to use, if needed. If null is
+	given, the EM will be created when needed, and then closed, so
+	that the returned object will be detached.
 	
 	@return The PlayerInfo object with the matching name, or null if none is found */
     public static PlayerInfo findPlayerInfo(EntityManager em, String pid) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
 	if (badPid(pid)) throw new  IllegalInputException("Player ID contains illegal characters: '"+pid+"'");
 
+	//-- Maybe it's already in cache, and is thus fully ready to use?
 	PlayerInfo x =  findPlayerInfoAlreadyCached( pid);
 	if (x!=null) return x;
 
+	//-- Not cached; we next check is it is in the SQL database
+	//-- and can be restored from there (and cached).
+	//-- This part (including a preliminary cache lookup) must be
+	//-- static-synchronized, to avoid accidentally creating 2 Java
+	//-- objects in cache for the same player ID.
+	
 	synchronized(lock) {
-	x = allPlayers.get(pid);
-	if (x!=null) return x;
-
-	boolean mustClose=(em==null);
-	if (mustClose) em=Main.getNewEM();
-	try {
-	    //synchronized(em) {
-
-	Query q = em.createQuery("select m from PlayerInfo m where m.playerId=:c");
-	q.setParameter("c", pid);
-	List<PlayerInfo> res = (List<PlayerInfo>)q.getResultList();
-	if (res.size() != 0) {
-	    x = res.iterator().next();
-	} else {
-	    return null;
-	}
-	//}
-	} finally {
-	    if (mustClose) { em.close(); em=null; }
-	}
-	allPlayers.put(pid,x); // save in a local cache for faster lookup later
-	x.restoreTransientFields(); // make it ready to use
-	for(EpisodeInfo epi: x.getAllEpisodes())  {
-	    epi.cache();
-	}
+	    x = allPlayers.get(pid); // double-checking, to avoid race conditions
+	    if (x!=null) return x;
+	    
+	    boolean mustClose=(em==null);
+	    if (mustClose) em=Main.getNewEM();
+	    try {		
+		Query q = em.createQuery("select m from PlayerInfo m where m.playerId=:c");
+		q.setParameter("c", pid);
+		List<PlayerInfo> res = (List<PlayerInfo>)q.getResultList();
+		if (res.size() != 0) {
+		    x = res.iterator().next();
+		} else {
+		    return null;
+		}
+	    } finally {
+		if (mustClose) { em.close(); em=null; }
+	    }
+	    allPlayers.put(pid,x); // save in a local cache for faster lookup later
+	    x.restoreTransientFields(); // make it ready to use
+	    for(EpisodeInfo epi: x.getAllEpisodes())  {
+		epi.cache();
+	    }
 	}
 	return x;
     }    
@@ -296,7 +319,13 @@ public class PlayerResponse extends ResponseBase {
 	x.initSeries(trialList);
     }
     
-    /** Picks a suitable trial list for a new player in a given experiment plan 
+    /** Picks a suitable trial list for a new player in a given
+	experiment plan.  The intent is to provide "balancing" between
+	trial lists, i.e. to pick such a trial list that the
+	number of "non-trivial" planners (completers, plus those who
+	have started recently, and maybe are still playing) assigned
+	to each trial list in the experiment plan is roughly the same.
+	
 	@param exp The name of the experiment plan
      */
     private static synchronized String chooseRandomTrialList(String exp, double hrs, boolean debug) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {

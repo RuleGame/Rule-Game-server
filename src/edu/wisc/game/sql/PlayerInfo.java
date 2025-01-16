@@ -62,19 +62,40 @@ public class PlayerInfo {
     public String getExperimentPlan() { return experimentPlan; }
     public void setExperimentPlan(String _experimentPlan) {
 	experimentPlan = _experimentPlan;
-	postLoad1();
     }
 
+    /** Sets some (transient) properties of this object which depend
+	on the name of the experiment plan. For new objects, this
+	method is called from PlayerResponse, after an object has been
+	created and some basic initialization (setExperimentPlan(),
+	initSeries()) took place. For those restored from the
+	database, it is called automatically due to the @PostLoad
+	directive.
+
+	<P>Note: this method can only be called after initSeries(), because
+	otherwise getFirstPara() won't work.
+     */
     @PostLoad() 
-    private void postLoad1() {
+    public void postLoad1() {
 	String[] z = experimentPlan.split("/");
 	coopGame = z[z.length-1].startsWith("coop.");
 	adveGame = z[z.length-1].startsWith("adve.");
+
+	if (is2PG()) {
+	    ParaSet para = getFirstPara(); 
+	    if (para==null) {
+		throw new IllegalArgumentException("Cannot access the player's parameter sets: " + playerId);
+	    }
+	    needChat = para.getBoolean("chat", false);
+	} else {
+	    needChat = false;
+	}
+	
     }
 
     /** These are set in setExperimentPlan */
     @Transient
-    private boolean coopGame, adveGame;
+    private boolean coopGame, adveGame, needChat;
 
     
         /** @return true if the name of the experiment plan indicates that this
@@ -92,7 +113,10 @@ public class PlayerInfo {
     public boolean is2PG() {
 	return coopGame || adveGame;
     }
-
+    /** Do we need a between-player chat element in the GUI? (In 2PG only,
+	based on para.chat of the first para set of this player.  */
+    public boolean getNeedChat() { return needChat; }
+  
     
     @Basic 
     private String trialListId;

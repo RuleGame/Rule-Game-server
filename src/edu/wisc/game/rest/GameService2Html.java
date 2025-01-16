@@ -23,7 +23,29 @@ import edu.wisc.game.formatter.*;
 import edu.wisc.game.rest.ParaSet.Incentive;
 
 
-/** The HTML wrapper for the Second Batch calls, to allow for the "HTML Play".
+/** The page generator for the HTML Play interface.
+
+    <p> Each REST API method (e.g. /moveHtml) here returns an HTML
+    wrapper for the corresponding Second Batch Rule Game API call
+    (e.g. /move), to enable "HTML Play".
+
+    <p>The designer of the GUI Client can look at various methods of
+    this class to see how the Java structure returned by the
+    underlying API calls (such as /player, /newEpisode, /move, /pick,
+    or /display) is analyzed to extract the information needed to
+    correctly generate all the data-presenting elements of the GUI.
+    In the GUI Client, the same exactly data are returned by the Game
+    Server API calls in the form of JSON structures.
+
+    <P>There is a minor difference between the data available to this
+    class's methods and to the GUI Client: this method sometimes
+    directly access EpisodeInfo or PlayerInfo objects, which of course
+    are not available in the GUI client. However, here we access these
+    structures in a very limited way, and for each of these accesses
+    there is an alternative way to get ahold of the needed piece of
+    data, usually by saving some value (such as "adveGame" or
+    "needChat") from the result of a /player or /newEpisode call, and
+    using it later on (e.g. during a /display call).
  */
 
 @Path("/GameService2Html") 
@@ -232,6 +254,8 @@ path = /w2020/game-data/GameService2Html/playerHtml
 
 	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
 
+
+	
 	if (w.getError()) {
 	    if (w.getAlreadyFinished()) {
 		body += fm.para("The player has finished all episodes. Completion code = " +w.getCompletionCode());
@@ -252,25 +276,20 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	    form = fm.wrap("form", "id='readyEpiForm' method='post' action='newEpisodeHtml'", form);
 	    body  += fm.para(form);
 
-	    
-	} else {	
+	    PlayerInfo x = PlayerResponse.findPlayerInfoAlreadyCached(playerId);
+	    if (x.getNeedChat()) {
+		body += chatSection();
+	    }	    
+	} else {
+	    //-- The moveForm also includes the chatSection at the end
 	    body += moveForm(playerId, w.getDisplay(),  episodeId);
 	}
-	body += chatSection();
 
 	body += fm.hr();
 	
 	body +=  fm.h4( "Response")+fm.para(  ""+JsonReflect.reflectToJSONObject(w, true));
 
 	return withJS( uriInfo, playerId, title, body);
-    }
-
-    static String chatSection() {
-	String body = fm.hr();
-	body += fm.para("In the box below, you can type a message to be sent to your partner; then press ENTER to send it.");
-	body += fm.para("<input type='text' placeholder='Type a message and press ENTER' id='chat'/>");
-	body += "<div id='console-container'>  <div id='console'/> </div>\n";
-	return body;
     }
 
     
@@ -287,7 +306,6 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	//body += fm.h1(title);
 
 	body += moveForm(playerId, d,  episodeId);
-	body += chatSection();
 
 	body += fm.hr();
 	body += fm.h4("Server response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true));
@@ -317,14 +335,11 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	body += fm.para(title);
 
 	body += moveForm(playerId, d,  episodeId);
-	body += chatSection();
 
 	body += fm.hr();
 	body += fm.h4("Server response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true));
 
-
 	return withJS( uriInfo, playerId, title, body);
-	//	return fm.html(head, body);	
     }
 
     @POST
@@ -346,7 +361,6 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	body += fm.para(title);
 
 	body += moveForm(playerId, d,  episodeId);
-	body += chatSection();
 	body += fm.hr();
 	body += fm.h4("Server response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true));
 
@@ -591,7 +605,10 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	}
 	
 	body += showHistory(epi,  d);
-
+	
+	if (epi.getPlayer().getNeedChat()) {
+	    body += chatSection();
+	}
 	
 	return body;
     }
@@ -627,6 +644,12 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	    body += transitionTable(epi, playerId, map);
 
 	}
+
+	if (epi.getPlayer().getNeedChat()) {
+	    body += chatSection();
+	}
+
+	
 	return fm.html(head, body);	
     }
 
@@ -683,11 +706,29 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	return fm.wrap("table", "border=1", String.join("\n",rows)) +fm.br();
     }
 
-    private String transitionButton(String action, String episodeId, String text) {
+    private static String transitionButton(String action, String episodeId, String text) {
 	return "<form method='post' action='"+action+"'><strong>"+text+"</strong><input type='submit'></form>";
     }
 
     
+    /** Generates the HTML snippet for between-player chat: the text
+	entry box, and the conversation display box. In the HTML Play
+	page generator, this method is only called when
+	PlayerInfo.needChat for the current player is true.  In the
+	GUI client, the this flag should be obtained from the needChat
+	field of the return structure of the /player call that starts
+	the session.
+     */
+    static private String chatSection() {
+	String body = fm.hr();
+	body += fm.para("In the box below, you can type a message to be sent to your partner; then press ENTER to send it.");
+	// The text entry box
+	body += fm.para("<input type='text' placeholder='Type a message and press ENTER' id='chat'/>");
+	// The conversation display box
+	body += "<div id='console-container'>  <div id='console'/> </div>\n";
+	return body;
+    }
+
 
     
 }
