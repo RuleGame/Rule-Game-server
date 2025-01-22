@@ -12,7 +12,7 @@ String cla=main.dev?"pink":"yellow";
  <script type="text/javascript">
       function submitForm() {      	       
           const clientUrl = document.querySelector("#clientUrl").value;
-	  window.alert("clientUrl=" + clientUrl);
+	  //	  window.alert("clientUrl=" + clientUrl);
       	  document.getElementById('mainForm').action = clientUrl;	
           return true;
       }
@@ -42,11 +42,17 @@ the production version of the client, which offers the same experience the M-Tur
 
 <form id="mainForm" method="get"> <!-- action="javascript:submitForm()" -->
 <hr>
-<p>Client URL (change this to point to the client installation you want to test, e.g. <tt><%=main.clientUrl%></tt>,
-<tt>file:///Users/vmenkov/w2020/gui/build/index.html</tt>, <tt>http://localhost:8080/rule-game/prod</tt>, etc<br>
+<p>Client URL (change this to point to the client installation you want to test, e.g.
+<tt>/rule-game-test/prod</tt> for Aryan's current test version,
+<tt><%=main.clientUrl%></tt>,
+<tt>file:///Users/vmenkov/w2020/gui/build/index.html</tt>,
+<tt>http://localhost:8080/rule-game/prod</tt>,
+etc. The host:port part of the URL may be omitted.)<br>
 <input id="clientUrl" name="clientUrl" type="text" size="100" value="http://localhost:8080/rule-game/prod">
 <hr>
-<p>Game Server (don't change this): <input type=text name="server" size=80 value="<%=main.serverUrl%>">
+<p>Game Server (you can use  <tt>/w2020-dev</tt> for
+testing 2PG):
+<input type=text name="server" size=80 value="<%=main.serverUrl%>">
 
 
 <table border="1">
