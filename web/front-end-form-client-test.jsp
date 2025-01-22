@@ -48,7 +48,8 @@ the production version of the client, which offers the same experience the M-Tur
 <tt>file:///Users/vmenkov/w2020/gui/build/index.html</tt>,
 <tt>http://localhost:8080/rule-game/prod</tt>,
 etc. The host:port part of the URL may be omitted.)<br>
-<input id="clientUrl" name="clientUrl" type="text" size="100" value="http://localhost:8080/rule-game/prod">
+<input id="clientUrl" name="clientUrl" type="text" size="100"
+value="<%=main.clientUrl%>">
 <hr>
 <p>Game Server (you can use  <tt>/w2020-dev</tt> for
 testing 2PG):
