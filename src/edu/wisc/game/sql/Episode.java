@@ -63,7 +63,8 @@ public class Episode {
 	public int getPos() { return pos; }
         public int getPieceId() { return pieceId; }	
 	Piece piece =  null;
-	/** Acceptance code; will be recorded upon processing */
+	/** Acceptance code; will be recorded upon processing. The value is from
+	 Episode.CODE */
 	int code;
  	public int getCode() { return code; }
 	public void setCode(int _code) { code = _code; }
@@ -966,7 +967,7 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
 
     /** The current version of the application */
-    public static final String version = "7.003";
+    public static final String version = "7.004";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }
@@ -1026,7 +1027,12 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	/** The list of all move/picks attempts (successful or not) done so far
 	    in this episode */
 	public Vector<Pick> getTranscript() { return transcript; }
-
+	
+	private RecentKnowledge recentKnowledge =  new RecentKnowledge(Episode.this.transcript);
+	public RecentKnowledge getRecentKnowledge() {
+	    return recentKnowledge;
+	}
+	
 	RuleSet.ReportedSrc rulesSrc = (rules==null)? null:rules.reportSrc();
 	/** A structure that describes the rules of the game being played in this episode. */
 	public RuleSet.ReportedSrc getRulesSrc() { return rulesSrc; }

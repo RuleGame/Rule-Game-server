@@ -316,6 +316,20 @@ The Java programming language guarantees that the operands of operators appear t
 	return result;
     }
 
+    /** @return an array containing the indexes of the "on" bits */
+    public static int[] listBits(BitSet b) {
+	int[] a = new int[b.cardinality()];
+	int j=0;
+	for (int i = b.nextSetBit(0); i >= 0; i = b.nextSetBit(i+1)) {
+	    a[j++] = i;
+	    //if (i == Integer.MAX_VALUE) {
+	    //	throw new IllegalArgumentException("BitSet is too big");
+		//break; // or (i+1) would overflow
+	    //}
+	}
+	return a;
+    }
+
     public static <T> HashSet<String> eachToString(Collection<T> v) {
 	HashSet<String> h = new HashSet<>();
 	for(T x: v) h.add(x.toString());

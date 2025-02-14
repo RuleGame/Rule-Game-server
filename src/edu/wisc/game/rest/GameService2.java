@@ -101,7 +101,7 @@ public class GameService2 {
 	if (playerId!=null && playerId.equals("null")) playerId=null;
 	EpisodeInfo.ExtendedDisplay dis = epi.mkDisplay(playerId);
 
-	Logging.info("/display("+episodeId+") returning: "+ JsonReflect.reflectToJSONObject(dis, true));
+	Logging.info("/display("+episodeId+") returning: "+ JsonReflect.reflectToJSONObject(dis, true, null, 6));
 	return dis;
 
     }

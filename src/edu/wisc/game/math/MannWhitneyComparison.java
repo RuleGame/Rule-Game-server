@@ -30,10 +30,12 @@ public class MannWhitneyComparison {
 	mode = _mode;
     }
 
-    /** Creates a SQL query which, depending on the mode, will find
-	either the entries for all algos playing the specified rule
-	set ("rule"), or the entires for all rules that the specified algo
-	("nickname") has played.
+    /** Creates a SQL query on the MLC data, which, depending on the
+	mode, will find either the entries for all algos playing the
+	specified rule set ("rule"), or the entires for all rules that
+	the specified algo ("nickname") has played.
+	@param rule In  the CMP_ALGOS mode, we will be comparing algos with respect to their performance on this rule. In other modes, ignored
+	@param nickname In  the CMP_RULES mode, we will be comparing rules with respect to this algo's performance on them. In other modes, ignored
      */
     private Query mkQuery(EntityManager em, String nickname,  String rule) {
 	Query q;
@@ -59,10 +61,13 @@ public class MannWhitneyComparison {
 
     /** Creates a list of comparanda based on MLC data, either to compare
 	ML algos or to compare rule sets.
-       @return {learnedOnes[], nonLearnedOnes[]}
+
+	@param rule In  the CMP_ALGOS mode, we will be comparing algos with respect to their performance on this rule. In other modes, ignored
+	@param nickname In  the CMP_RULES mode, we will be comparing rules with respect to this algo's performance on them. In other modes, ignored
+	
+	@return {learnedOnes[], nonLearnedOnes[]}
      */
     public Comparandum[][] mkMlcComparanda(String nickname,  String rule) {
-
 	
 	EntityManager em=null;
 

@@ -75,14 +75,14 @@ public class PlayerInfo {
 	<P>Note: this method can only be called after initSeries(), because
 	otherwise getFirstPara() won't work.
      */
-    @PostLoad() 
+    //-- no, let's do it explicitly, in right order @PostLoad() 
     public void postLoad1() {
 	String[] z = experimentPlan.split("/");
 	coopGame = z[z.length-1].startsWith("coop.");
 	adveGame = z[z.length-1].startsWith("adve.");
 
 	if (is2PG()) {
-	    ParaSet para = getFirstPara(); 
+	    ParaSet para = getFirstPara(); //-- this can only be done after initSeries() or restoreTransientFields()
 	    if (para==null) {
 		throw new IllegalArgumentException("Cannot access the player's parameter sets: " + playerId);
 	    }

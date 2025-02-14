@@ -10,6 +10,11 @@ import edu.wisc.game.util.Logging;
 /** Tools for exporting Java objects as JSON structures */
 public class JsonReflect {
 
+    private int maxLevel = 3;
+
+    /** Using a higher m allows showing deeper structure */
+    void setMaxLevel(int m) { maxLevel = m; }
+    
     /* @param g String, Integer, or an arbitrary object */
     private JsonValue toJsonValue(Object g, int level) {
 	//	System.out.println("toJsonValue(" + g.getClass()+")");
@@ -43,7 +48,7 @@ public class JsonReflect {
 	    arrayBuilder.add( g.toString());
 	} else if (g instanceof Date) {
 	    arrayBuilder.add( dateToJsonString((Date)g));
-	} else if (level>3) {
+	} else if (level>maxLevel) {
 	    String s= "TOO_DEEP";
 	    arrayBuilder.add( s);
 	} else if (g.getClass().isArray()) { // an array
@@ -285,6 +290,12 @@ public class JsonReflect {
 	return r.reflectToJSON(o, 0).build();
     }
 
+    public static JsonObject reflectToJSONObject(Object o, boolean skipNulls, HashSet<String> excludableNames, int _maxLevel) {
+	JsonReflect r = new JsonReflect(skipNulls, excludableNames);
+	r.setMaxLevel(_maxLevel);
+	return r.reflectToJSON(o, 0).build();
+    }
+    
     public static JsonArray reflectToJSONArray(Object o, boolean skipNulls) {       
 	JsonReflect r = new JsonReflect(skipNulls, null);
 	JsonArrayBuilder builder = r.toJsonArrayBuilder(o, 0);

@@ -288,6 +288,7 @@ public class PlayerResponse extends ResponseBase {
 	    try {		
 		Query q = em.createQuery("select m from PlayerInfo m where m.playerId=:c");
 		q.setParameter("c", pid);
+		//-- Note that this will trigger @PostLoad methods on the retrieved PlayerInfo objects 
 		List<PlayerInfo> res = (List<PlayerInfo>)q.getResultList();
 		if (res.size() != 0) {
 		    x = res.iterator().next();
@@ -299,6 +300,7 @@ public class PlayerResponse extends ResponseBase {
 	    }
 	    allPlayers.put(pid,x); // save in a local cache for faster lookup later
 	    x.restoreTransientFields(); // make it ready to use
+	    x.postLoad1(); // safe to do it now
 	    for(EpisodeInfo epi: x.getAllEpisodes())  {
 		epi.cache();
 	    }

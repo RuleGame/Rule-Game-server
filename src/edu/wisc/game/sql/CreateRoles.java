@@ -2,10 +2,7 @@ package edu.wisc.game.sql;
 
 import java.util.*;
 import java.util.regex.*;
-//import java.lang.reflect.*;
 import javax.persistence.*;
-//import edu.rutgers.axs.web.WebException;
-//import edu.wisc.game.reflect.Reflect;
 
 /** A very simple, stand-alone program that creates necessary Role
     entities in the roles table, and at least one User entity.
@@ -23,7 +20,7 @@ public class CreateRoles {
 	System.err.println("To create a user with the 'mlc' role:\n");
 	System.err.println("  java [options]  edu.wisc.game.sql.CreateRoles nickname email password");
 	System.err.println("For testing:\n");
-	System.err.println("  java [options]  edu.wisc.game.engine.Captive");
+	System.err.println("  java [options]  edu.wisc.game.sql.CreateRoles");
 	if (msg!=null) 	System.err.println( "\n" + msg + "\n");
 	System.exit(1);
     }

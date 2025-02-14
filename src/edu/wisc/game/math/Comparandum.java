@@ -25,6 +25,8 @@ public class Comparandum implements Comparable<Comparandum> {
     /** This is true if e.g. the algo has learned all rule sets */
     final boolean learned;
     final double[] a;
+    /** Could represent all algos who have played this
+	rule set; or all rule sets that this algo has played */
     final MlcEntry[] mlc;
     final MwSeries[] humanSer;
     private double ev;

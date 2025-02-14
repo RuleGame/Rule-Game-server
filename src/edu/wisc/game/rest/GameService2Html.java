@@ -308,7 +308,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	body += moveForm(playerId, d,  episodeId);
 
 	body += fm.hr();
-	body += fm.h4("Server response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true));
+	body += fm.h4("Server response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true, null, 6));
 
 	return withJS( uriInfo, playerId, title, body);
     }
@@ -337,7 +337,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	body += moveForm(playerId, d,  episodeId);
 
 	body += fm.hr();
-	body += fm.h4("Server response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true));
+	body += fm.h4("Server response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true, null, 6));
 
 	return withJS( uriInfo, playerId, title, body);
     }
@@ -362,7 +362,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
 
 	body += moveForm(playerId, d,  episodeId);
 	body += fm.hr();
-	body += fm.h4("Server response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true));
+	body += fm.h4("Server response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true, null, 6));
 
 	return withJS( uriInfo, playerId, title, body);
     }

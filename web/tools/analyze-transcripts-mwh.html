@@ -62,9 +62,11 @@ These modes are discussed below.
     <li><tt>-defaultMStar 300</tt> : this value the program will assign as <em>m<sub>*</sub></em> (mStar) to the players who have failed to learn (as per the above criterion) the rule set they were playing. You can use the value <tt>Infinity</tt> to ensure that all non-learners are distinct from all learners; however, any positive value that's larger than the maximum number of moves in any player's series will work just as well. Because M-W is based on comparisons, 300 will work exactly the same way as  <tt>Infinity</tt> as long as no successful player has put more than 300 move attempts into any rule set.
   </ul>
 
-<p>One normally should supply only one option <tt>-targetStreak <em>n</em></tt> or  <tt>-targetStreak <em>r</em></tt>, so that only one "criterion of mastery" is used. If both are supplied, then the player will be deemed to have learned the rule as soon as either of the two criteria is satisfied. Either way, <em>m_<sub>*</sub></em> of a pair (player,ruleSet) will be computed as the number of errors the player has made before before demonstrating the learning by whichever criterion is in effect.
+<p>One normally should supply only one option <tt>-targetStreak <em>n</em></tt> or  <tt>-targetR <em>r</em></tt>, so that only one "criterion of mastery" is used. If both are supplied, then the player will be deemed to have learned the rule as soon as either of the two criteria is satisfied. Either way, <em>m_<sub>*</sub></em> of a pair (player,ruleSet) will be computed as the number of errors the player has made before before demonstrating the learning by whichever criterion is in effect.
 
-<P>If neither of the options <tt>-targetStreak <em>n</em></tt> or  <tt>-targetStreak <em>r</em></tt> have been supplied, the tool will used the default <tt>targetStreak</tt> of 10 (which is the mastery criterion typically used in games with the DOUBLING incentive scheme).
+<P>If neither of the options <tt>-targetStreak <em>n</em></tt> or  <tt>-targetR <em>r</em></tt> have been supplied, the tool will used the default <tt>targetStreak</tt> of 10 (which is the mastery criterion typically used in games with the DOUBLING incentive scheme).
+
+  <p>Note that if the experiments whose data were analyzed have been run with a mastery-based incentive scheme (such as DOUBLING or LIKELIHOOD) and you want to use <tt>-prec EveryCond</tt> during the analysis, than you should use a mastery criterion (-targetStreak or -targetR) that is consistent with, and is no stricter than, the termination criterion that was used in runtime. (As an obvious example, if the game was stopped and the player was congratulated when R=1e6 was achieved, then you would not want to use "-targetR 1e7", because if you do, the script will think that no one ever learned anything!)
 
 <p>Other options:
   <ul>
@@ -79,7 +81,7 @@ These modes are discussed below.
     <li><tt>-mDagger</tt>: if this option is supplied, the M-W computation will be based on the mDagger values, rather than mStar. Unlike the normal (mStar) mode, players who have not learned any of their rule sets (and therefore have mDagger=NaN) will be ignored in the M-W computation.
     
     
-    <li><tt>-precMode [Naive | Every | Ignore]</tt> : This controls how different series are assigned to different "experiences" to be compared. This is how the 3 modes work:
+    <li><tt>-precMode [Naive | Every | EveryCond | Ignore]</tt> : This controls how different series are assigned to different "experiences" to be compared. This is how the 3 modes work:
       <ul>
 	<li><tt>Naive</tt> (the default mode): For each rule sets, only include "naive" players (those who played this rule set as their first rule set). In other word, if a player played 3 rules sets, R1, R2, and R3, in this order, then only his experience of playing R1 is analyzed.
 <li><tt>Every</tt> : Consider each (rule set + preceding set) combination as a separate experience to be ranked. (That is,
@@ -127,7 +129,7 @@ ep/1_2_color_4m,,ep/rule_ambiguity/ambiguity4,ambiguity4_6,0,A10G8U9316K46H,fals
     <li>ruleSetName - the rule set being played
     <li>precedingRules - the semicolon-separated list of rule sets, if any, this player played before encountering this rule set
     <li>exp,trialListId,seriesNo - the experiment plan, and the trial list within that plan, and the sequential number (0-based) of the rule set in the trial list
-    <li>learned - "true" or "false" depending on whether the player has "demonstrated learning" in that series (i.e. managed to make the prescribed number [targetStreak] of consecutive error free moves)
+    <li>learned - "true" or "false" depending on whether the player has "demonstrated learning" in that series (i.e. managed either to make the prescribed number [targetStreak] of consecutive error free moves, or to reach the prescribed "unlikelihood factor" [targetR], as the case may be)
     <li>total_moves - the total number of move and pick attempts in all episodes of the series
     <li>total_errors - the total number of failed move and pick attempts in the series
     <li>mStar - the number of errors (i.e. failed move and pick attempts) the player has made in this series before he "demonstrated learning", or the <em>defaultMStar</em> value (which can be <tt>infinity</tt>) if the learning was not demonstrated (or if it took more than <em>defaultMStar</em> errors to achieve learning).

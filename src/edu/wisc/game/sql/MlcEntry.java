@@ -140,7 +140,7 @@ public class MlcEntry {
     }
 
     /** How many error-free episodes must be found at the of the transcript
-	to demonstrate "full learning" */
+	to demonstrate "full learning"? */
     final int REQUIRED_STREAK_EPISODES = 10;
     
     
