@@ -5,7 +5,7 @@
 <body>
   <h1>Web API for the use by the Rule Game client: pregame and postgame experience</h1>
 
-  <p align="center"><em>Version 6.029,  2024-03-18</em></p>
+  <p align="center"><em>Version 6.029,  2025-02-19</em></p>
 
   <p>This document describes an addition to the <a href="game-api-2.html">Rule Game Web API</a>, designed to provide the client with the bundle of files controlling the player's pregame and postgame experience (PGE). This was discussed in email by Vladimir and Kevin with Paul and Gary around 2022-11-10.
 
@@ -160,7 +160,9 @@ default/  doubling/  relational/  stalemate/
 
     <li>In your new experience directory, edit the consent page, debriefing page, etc, as needed for your planned group of experiments.
 
-    <li>If you have produced a new bunch of image files (e.g. PNG or JPG) for the instruction booklet, put them into <tt>my-new-experience/instructions</tt> instead of the default image files.  It is up to you how you name the files, but in order for them to be presented to the player in the desired order, make sure they have a numerical component in the file names, so that the server can discern your desired order. For example, slide-1.png, slide-2.png, ... slide-12.png, slide-13.png. 
+    <li>If you have produced a new bunch of image files (e.g. PNG or JPG) for the instruction booklet, put them into <tt>my-new-experience/instructions</tt> instead of the default image files.  It is up to you how you name the files, but in order for them to be presented to the player in the desired order, make sure they have a numerical component in the file names, so that the server can discern your desired order. For example, <tt>slide-1.png, slide-2.png</tt>, ... <tt>slide-12.png, slide-13.png</tt>.  (Leading zeros in the numbers are fine, if you like using them. You can choose to name your files e.g.  <tt>slide-01.png, slide-02.png</tt>, ... <tt>slide-12.png, slide-13.png</tt>.) <br>
+
+      If the file names have no numerical component, or if the first numerical component in them is the same, they will be sorted in the usual "dictionary order" (based on ASCII character code), e.g. "2PG-about.png, 2PG-intro.png, 2PG-story1.png, 2PG-story2.png", much like <tt>ls | sort</tt> would sort them.
 
     <li>In the trial list files for your new experiments, put the name of the new experiment in the <tt>pregame</tt> column. (This supersedes the technique of putting the hard-coded instruction bundle ID number in the <tt>init</tt> column, which you may have done in the past, prior to server ver 6.*; that's obsoleted now).
 

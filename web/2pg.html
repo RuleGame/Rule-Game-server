@@ -10,7 +10,7 @@ Supporting Two-Player Games in the GOHR Framework
     </h1>
 
     <div align="center"><em>
-	Updated 2025-01-15 for GS 7.003</em>
+	Updated 2025-02-23 for GS 7.004</em>
 	</div>
 
     <p>
@@ -412,6 +412,26 @@ If the server detects that the submitted value of playerId is wrong (i.e. it's n
 
       <li> In addition to <tt>totalRewardEarned</tt>, containing the player's total reward so far, the new field <tt>totalRewardEarnedPartner</tt> provides a similar value for the partner. In coop games, the two values are always the same (because both players receive the same "common reward"; in adversarial games they are different, as each player is rewarded for his own moves only.
 
+
+	<li>Since ver 7.004, to better address the client's needs (not having to muddle through the "transcript" structures to extract the relevant info), the return structure has one more new field, called <tt>recentKnowledge</tt>. The content of that field is derived from transcript, and contains just the information about the board that is derivable from move/pick attempts since the last board change. Example (showing these 2 fields together):
+<br>
+<tt>	  
+"transcript":[{"bucketNo":0,"pos":31,"pieceId":6,"code":0,"rValue":1.0,"mover":0},{"bucketNo":1,"pos":33,"pieceId":8,"code":4,"rValue":4.0,"mover":0},{"bucketNo":0,"pos":33,"pieceId":8,"code":4,"rValue":4.0,"mover":1},{"bucketNo":0,"pos":28,"pieceId":5,"code":4,"rValue":4.0,"mover":0},{"bucketNo":2,"pos":32,"pieceId":7,"code":4,"rValue":4.0,"mover":1}],
+<br>
+"recentKnowledge":
+{"32":{"pos":32,"knownMovable":true,"knownImmovable":false,"deniedBuckets":[2]},
+"33":{"pos":33,"knownMovable":true,"knownImmovable":false,"deniedBuckets":[0,1]},
+"28":{"pos":28,"knownMovable":true,"knownImmovable":false,"deniedBuckets":[0]}},
+</tt>
+<br>
+As you can see, this structure (transcript ) is a map. The keys are the positions of the game pieces about which we have learned something since the last board change (i.e. since the last successful move). (In this example, these are pieces in cells no. 28, 32, and 33). For each game piece listed here, 3 pieces of information may be available:
+<ul>
+<li>"knownMovable": this is true if we have discovered (thru a failed move or a successful pick) that the piece is movable.
+
+<li>"knownImmovable": this is true if we have discovered (thru a failed pick) that the piece is not movable.
+
+<li>"deniedBuckets":[0,1] : this contains the list of bucket into which we know this game piece cannot go. (Because we have learned this from failed moves to those buckets).
+</ul>
 
 	</ol>
 

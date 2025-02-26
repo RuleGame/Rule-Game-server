@@ -95,7 +95,11 @@ public class PlayerResponse extends ResponseBase {
 
 
     /** Registers a new player, or finds an existing player record.
-      
+	In the former case, the player will be assigned to the specified
+	experiment plan; in the latter case, we verify that the existing
+	player has already been assigned to that plan.
+
+	@param exp The experiment plan that the player must play.
 	@param pid The player ID. If it is not supplied, the uid
 	must be supplied, and this method will create a semi-random 
 	player ID.

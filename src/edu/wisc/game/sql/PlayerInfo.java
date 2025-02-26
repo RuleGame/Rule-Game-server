@@ -208,7 +208,7 @@ public class PlayerInfo {
     public void setPairState(int _pairState) { pairState = _pairState; }
 
 
-    /** Sets certain pairing-related fields in the object for a newly created player */
+    /** Sets certain pairing-related fields in the object for a newly created player. The settings are to the initial "not paired yet" state. */
     public void initPairing() {
 	pairState = is2PG()? Pairing.State.NONE: 0;
 	partnerPlayerId = null;
@@ -1145,8 +1145,16 @@ public class PlayerInfo {
 	} else return 0;
     } 
 
-
-    
+    /** This is used to keep track of when a player joins the pairing queue */
+    @Transient
+    private Date pairingRegistrationTime = null;
+    /** Mark this player as someone who is interested in pairing right now */
+    void  setPairingRegistrationTimeNow() {
+	pairingRegistrationTime = new Date();
+    }
+    Date getPairingRegistrationTime() {
+	return pairingRegistrationTime;
+    }
     
 }
  

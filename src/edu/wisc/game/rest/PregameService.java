@@ -8,7 +8,6 @@ import jakarta.json.*;
 
 import jakarta.xml.bind.annotation.XmlElement; 
 
-
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
 
@@ -16,7 +15,6 @@ import edu.wisc.game.util.*;
 import edu.wisc.game.reflect.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
-//import edu.wisc.game.formatter.*;
 
 /** Retrieving various pages needed by the client to customize the player's pregame and postgame experience. Discussed with Kevin, Paul and Gary (2022-11-10).
 
@@ -184,7 +182,7 @@ public class PregameService {
     /** Checks if the file name is of the PNG or JPG type
 	@return "image/jpeg" or "image/png", or null
      */
-    static String getMimeTime(String name) {
+    static String getMimeType(String name) {
 	String s= name.toLowerCase();
 	return s.endsWith(".png") ? "image/png" :
 	    (s.endsWith(".jpg") || s.endsWith(".jpeg")) ? "image/jpeg":
@@ -199,7 +197,7 @@ public class PregameService {
 	for(File f: dir.listFiles()) {
 	    if (!f.isFile()) continue;
 	    String name = f.getName();
-	    if (getMimeTime(name)==null) continue;
+	    if (getMimeType(name)==null) continue;
 	    FileEntry e = new FileEntry(f);
 	    if (e.bad) continue;
 	    v.add(e);

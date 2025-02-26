@@ -4,9 +4,6 @@ import java.io.*;
 import java.util.*;
 
 import edu.wisc.game.util.*;
-//import edu.wisc.game.rest.ParaSet;
-//import edu.wisc.game.rest.TrialList;
-//import edu.wisc.game.rest.Files;
 
 import edu.wisc.game.websocket.WatchPlayer;
 
@@ -41,8 +38,8 @@ public class Pairing {
     static public void newPlayerRegistration(PlayerInfo p) {
 	if (!p.is2PG()) return;
 	if (p.getPartnerPlayerId()!=null) return;
-	PairingQueue q = getPairingQueue(p.getExperimentPlan());
-	q.register(p);
+	//PairingQueue q = getPairingQueue(p.getExperimentPlan());
+	//q.register(p);
     }
 
     /** This is called at the beginning of each episode (on a
@@ -57,7 +54,11 @@ public class Pairing {
 	    p.xgetPartner(); 	    /// ensure that p.partner is loaded
 	    return false;
 	}
+
+	//PairingQueue q = getPairingQueue(p.getExperimentPlan());
+	
 	PairingQueue q = getPairingQueue(p.getExperimentPlan());
+	//q.register(p);
 	PlayerInfo other = q.tryPairing(p);
 	return (other==null);
     }
@@ -83,6 +84,45 @@ public class Pairing {
 	    return null;
 	}
 
+	/** After how many msec a potential pair player is considered
+	    "timed out", and won't be matched with any one any more */
+	final long TIME_OUT_MSEC = 30 * 60 * 1000L;
+	
+	/** Looks for someone who can become a good partner for p.
+	    This should be called when the queue does not contain p... but
+	    we check for that anyway.
+
+	    <p>At present, the "best" is the one who's most recently registered.
+	 */
+	PlayerInfo findGoodPartner(PlayerInfo p) {
+	    String pid = p.getPlayerId();
+	    PlayerInfo best = null;
+	    long bestAgo = 0;
+	    Date now = new Date();
+	    Vector<PlayerInfo> timedOutList = new Vector<>();
+	    for(PlayerInfo z: this) {
+		if (z==p || z.getPlayerId().equals(pid)) continue;
+		Date d = z.getPairingRegistrationTime();
+		if (d==null) throw new IllegalArgumentException("Player without a registration date found in the pairing queue");
+		long msecAgo = now.getTime() - d.getTime();
+		if (msecAgo > TIME_OUT_MSEC) {
+		    timedOutList.add(z);
+		    continue;
+		}
+
+		
+		//if (best == null || msecAgo < bestAgo)
+
+
+
+	    }
+	    
+	    return null;
+	}
+
+
+	
+	/*
 	synchronized void register(PlayerInfo p) {
 	    PlayerInfo has = findByPid(p);
 	    if (has!=null) {
@@ -91,12 +131,19 @@ public class Pairing {
 		push(p);
 	    }
 	}
+	*/
+
+	// ZZZ
 	
-	/** Pairs p with some other player wating for pairing in this queue, if at all possible. This is done
-	    on /newEpisode.
+	/** Pairs player p with some other player wating for pairing
+	    in this queue, if at all possible. This is done on
+	    /newEpisode.
 	    @param p The player to pair with somebody. It may already be in the list.
 	 */
 	synchronized PlayerInfo tryPairing(PlayerInfo p) {
+
+	    p.setPairingRegistrationTimeNow();
+	    
 	    // If this player is already in the queue, remove him
 	    PlayerInfo has = findByPid(p);
 	    if (has!=null) {
@@ -120,7 +167,7 @@ public class Pairing {
 		throw new IllegalArgumentException("Unexpectedly, we have players playing two different trial lists in a two-player plan: (" + p + ") and ("+other+")");
 	    }
 
-	    // verify that the two players are the same point in their episode sequence
+	    // verify that the two players are at the same point in their episode sequence
 	    // (normally, 0==0, unless we have restored players from database)
 	    if (p.getCurrentSeriesNo()>0 || other.getCurrentSeriesNo()>0) throw new  IllegalArgumentException("Unexpectedly, we are trying to pair a player who already has comlpeted some series: p=(" + p + "), other=("+other+")");
 
