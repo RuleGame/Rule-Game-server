@@ -360,7 +360,7 @@ client opening a socket connection, and identifying itself
 <li>needChat: true if the experiment's plan requires a chat box to be displayed for chat communication between the two player. The server sets this flag true in 2PG with <tt>chat==true</tt> in the first parameter set of the trial list.
 </ul>
   <p>
-    If the client sees that twoPlayerGame==true, it should open a websocket connection, so that it will be able to receieve socket messages in the future. The WS URL (the server endpoint) for that WS connection is <tt> /websocket/watchPlayer </tt> (relative to the base URL of the GS web application; so for example if the base URL of the Game Server you're using is is http://localhost:8080/w2020/ , then the absolute URL for the WS server endpoint will be <tt> http://localhost:8080/w2020/websocket/watchPlayer </tt>). Once the connection has been opened, the GUI client should identify itself to the server, by send to it, over the WS connection, the message with the text
+    If the client sees that twoPlayerGame==true, it should open a websocket connection, so that it will be able to receieve socket messages in the future. The WS URL (the server endpoint) for that WS connection is <tt> /websocket/watchPlayer </tt> (relative to the base URL of the GS web application; so for example if the base URL of the Game Server you're using is is http://localhost:8080/w2020/ , then the absolute URL for the WS server endpoint will be <tt> http://localhost:8080/w2020/websocket/watchPlayer </tt>). Once the connection has been opened, the GUI client should identify itself to the server, by sending to it, over the WS connection, the message with the text
     <pre>
     IAM <em>xxxx</em>
     </pre>

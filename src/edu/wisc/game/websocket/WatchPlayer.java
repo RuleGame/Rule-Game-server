@@ -364,7 +364,7 @@ public class WatchPlayer {
 	    and attach the time stamp.
 	*/
 	public String encode(Ready msg) throws EncodeException {
-	    return "READY " + msg.toString() + " " + (new Date()) ;
+	    return "READY " + msg.name() + " " + (new Date()) ;
 	}
     }
 
