@@ -64,12 +64,17 @@ public class WatchPlayer {
         nickname = GUEST_PREFIX + connectionIds.getAndIncrement();
     }
 
+    public String toString() {
+	return "WatchPlayer(" + nickname + ": " + watchedPid + "->" + myPid+")";
+    }
+    
 
     @OnOpen
     public void start(Session session) {
         this.session = session;
         connections.add(this);
         String message = "At " + startAt + ", watcher " + String.format("* %s %s", nickname, "has joined.");
+	Logging.info(toString() + ", started channel");
 	sendMessage( "STATUS " + message);
         //broadcast("[B] " + message);
     }
@@ -77,7 +82,7 @@ public class WatchPlayer {
 
     @OnClose
     public void end() {
-	Logging.info("WatchPlayer(" + watchedPid + "->" + myPid+"), closing connection");
+	Logging.info(toString() + ", closing connection");
         connections.remove(this);
         //String message = String.format("* %s %s", nickname, "has disconnected.");
         //broadcast(message);
@@ -130,7 +135,7 @@ public class WatchPlayer {
 		s += "started receiving messages for '" + myPid+ "'. ";
 			
 	    }
-	    Logging.info("WatchPlayer: " + s);
+	    Logging.info(toString() + ": " + s);
 	}
 
 	if (chat!=null) {
@@ -204,7 +209,7 @@ public class WatchPlayer {
 	    }
 
 
-	    Logging.info("WatchPlayer(" + watchedPid + "->" + myPid+"), sent message: " + messageToSend);
+	    Logging.info(toString() +", sent message: " + messageToSend);
 	    
             synchronized (this) {
                 messageToSend = messageBacklog.poll();
