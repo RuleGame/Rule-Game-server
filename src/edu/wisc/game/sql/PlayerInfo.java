@@ -726,6 +726,7 @@ public class PlayerInfo {
 	return null;
     }
 
+    /** To which series does the specified episode belong? */
     private Series whoseEpisode(EpisodeInfo epi) {
 	Series s = allSeries.get( epi.seriesNo);
 	
@@ -733,7 +734,7 @@ public class PlayerInfo {
 	    if (e==epi) return s;
 	}
 	// This could indicate some problem with the way we use JPA
-	System.err.println("whoseEpisode: detected an episod not stored in the current series structure : " + epi);
+	System.err.println("whoseEpisode: detected an episode not stored in the current series structure : " + epi);
 	return null;
     }
 
@@ -1154,6 +1155,12 @@ public class PlayerInfo {
     }
     Date getPairingRegistrationTime() {
 	return pairingRegistrationTime;
+    }
+
+    /** Does this player's playerId look like one generated in one of
+	our Prolific studies? */
+    boolean isProlific() {
+	return getPlayerId().startsWith("prolific-");
     }
     
 }

@@ -92,10 +92,18 @@ public class Pairing {
 	    This should be called when the queue does not contain p... but
 	    we check for that anyway.
 
-	    <p>At present, the "best" is the one who's most recently registered.
+	    <p>At present, the "best" is the one who is also in/out of
+	    Prolific (so that Prolific players are only matched to
+	    other Prolific players) and is most recently registered.
+
+	    <p>This method also removes "timed out" players (those who have
+	    waited for too long, without being ever paired with anyone)
+	    out of the queue, assuming that the player there is not
+	    waiting any more.
 	 */
 	PlayerInfo findGoodPartner(PlayerInfo p) {
 	    String pid = p.getPlayerId();
+	    boolean isProlific = p.isProlific();
 	    PlayerInfo best = null;
 	    long bestAgo = 0;
 	    Date now = new Date();
@@ -109,15 +117,17 @@ public class Pairing {
 		    timedOutList.add(z);
 		    continue;
 		}
-
+		if (z.isProlific()!=isProlific) continue;
 		
-		//if (best == null || msecAgo < bestAgo)
-
+		if (best == null || msecAgo < bestAgo) {
+		    best = z;
+		    bestAgo = msecAgo;
+		}
 
 
 	    }
 	    
-	    return null;
+	    return best;
 	}
 
 
@@ -133,8 +143,7 @@ public class Pairing {
 	}
 	*/
 
-	// ZZZ
-	
+		
 	/** Pairs player p with some other player wating for pairing
 	    in this queue, if at all possible. This is done on
 	    /newEpisode.
@@ -154,13 +163,15 @@ public class Pairing {
 	    }
 
 	    
-	    PlayerInfo other =  poll();
-	    Logging.info("Pairing: popped " + other + " for pairing");
+	    //    PlayerInfo other =  poll();
+	    PlayerInfo other = findGoodPartner(p);
+	    Logging.info("Pairing: selected " + other + " for pairing with " + p);
 	    if (other==null) { // push this player back, because there is no one to pair it with
 		push(p);
-		Logging.info("Pairing: pushed " + p);
+		Logging.info("Pairing: no pair found yet for this player; he'll have to wait: " + p);
 		return null;
 	    }
+	    remove(other);
 	    if (other.getPairState()!=State.NONE || other.getPartnerPlayerId()!=null) throw new IllegalArgumentException("Found an already paired player in the pairing queue: "+other);
 	    // FIXME: maybe need proper support for trialListId match
 	    if (!other.getTrialListId().equals(p.getTrialListId())) {

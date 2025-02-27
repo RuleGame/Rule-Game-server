@@ -22,20 +22,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import jakarta.websocket.*;
-/*
-import jakarta.websocket.EncodeException;
 
-import jakarta.websocket.OnClose;
-import jakarta.websocket.OnError;
-import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
-import jakarta.websocket.Session;
-import jakarta.websocket.Encoder;
-*/
 import jakarta.websocket.server.ServerEndpoint;
 
-//import org.apache.juli.logging.Log;
-//import org.apache.juli.logging.LogFactory;
 
 import edu.wisc.game.util.Logging;
 import edu.wisc.game.rest.ChatWriteReport;
@@ -47,8 +36,6 @@ import edu.wisc.game.rest.FileWriteReport;
 		encoders = {WatchPlayer.PickEncoder.class,WatchPlayer.ReadyEncoder.class}
 		)
 public class WatchPlayer {
-
-    //    private static final Log log = LogFactory.getLog(WatchPlayer.class);
 
     private static final String GUEST_PREFIX = "Guest";
     private static final AtomicInteger connectionIds = new AtomicInteger(0);
@@ -90,6 +77,7 @@ public class WatchPlayer {
 
     @OnClose
     public void end() {
+	Logging.info("WatchPlayer(" + watchedPid + "->" + myPid+"), closing connection");
         connections.remove(this);
         //String message = String.format("* %s %s", nickname, "has disconnected.");
         //broadcast(message);
@@ -141,7 +129,8 @@ public class WatchPlayer {
 		myPid = iam;
 		s += "started receiving messages for '" + myPid+ "'. ";
 			
-	    }		
+	    }
+	    Logging.info("WatchPlayer: " + s);
 	}
 
 	if (chat!=null) {
@@ -187,7 +176,7 @@ public class WatchPlayer {
      */
     private void sendMessage(Object msg) //throws IOException
     {
-
+	
 	try {
 	
         synchronized (this) {
@@ -213,6 +202,10 @@ public class WatchPlayer {
 		}
 		    
 	    }
+
+
+	    Logging.info("WatchPlayer(" + watchedPid + "->" + myPid+"), sent message: " + messageToSend);
+	    
             synchronized (this) {
                 messageToSend = messageBacklog.poll();
                 if (messageToSend == null) {
@@ -271,12 +264,17 @@ public class WatchPlayer {
 	if (pid==null  || !pid.equals(myPid)) return;
 	sendMessage(m);
     }
-    
+
+    /** @param pid The destination player ID */
     private void tellHim1b(String pid, Ready m) {
 	if (pid==null  || !pid.equals(myPid)) return;
 	sendMessage(m);
     }
 
+    /** @param pid The sender's player ID. The message is sent only if
+	this WatchPlayer is set up to watch that specific pid.
+	
+     */
     private void tellAbout1a(String pid, String text) {
 	if (pid==null  || !pid.equals(watchedPid)) return;
 	String s = "At " + (new Date()) + ", action by player '" + pid +"': " + text;
@@ -292,13 +290,22 @@ public class WatchPlayer {
 	for it, and it can make another /newEpisode or /display call */
     public enum Ready {
 	EPI,
-	DIS
+	DIS;
+	public String toString() {
+	    return "Ready " + name();
+	}
     };
 
     
     /** Methods handling important events during the game call this method
-	to let watchers now about the most recent event */
+	to let watchers now about the most recent event
+	
+	@param pid The sender's player ID. The message will be sent to everyone
+	who is watching that player. (In a 2PG, that will be that player's
+	partner, of course)
+    */
     public static <T> void tellAbout(String pid, T msg) {
+	Logging.info("WatchPlayer: The server wants to send a message from " + pid + " to its watchers: " + msg);
 	for (WatchPlayer client : connections) {
 	    if (msg instanceof String) {
 		client.tellAbout1a(pid, (String)msg);
@@ -309,7 +316,10 @@ public class WatchPlayer {
 	    }
 	}
     }
+
+    /** @param pid The destination player ID */
     public static void tellHim(String pid, Ready msg) {
+	Logging.info("WatchPlayer: The server wants to send a message to " + pid + ": " + msg);
 	for (WatchPlayer client : connections) {
 	    client.tellHim1b(pid, msg);
 	}

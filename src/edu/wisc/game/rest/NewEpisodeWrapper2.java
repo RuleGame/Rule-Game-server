@@ -107,6 +107,14 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	    if (partnerMissing) { // tell the client to wait until the game can start
 		Logging.info("NewEpisodeWrapper2(pid="+ pid+"): no partner assigned yet!");
 		setMustWait(true);
+
+		// Ver 7.005: the client apparently sometimes wants to look
+		// at the parameter set even if the episode is not ready...
+		// so let's just give it the first para set.
+		// This is to avoid the client's error message,
+		// "Cannot read properties of undefined (reading 'grid_memory_show_order')", coming from trials.ts
+
+		para = x.getFirstPara();
 		return;
 	    } 
 		
