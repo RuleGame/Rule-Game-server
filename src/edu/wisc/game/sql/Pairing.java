@@ -124,7 +124,15 @@ public class Pairing {
 		    bestAgo = msecAgo;
 		}
 
+	    }
 
+	    for(PlayerInfo z: timedOutList) {
+		remove(z);
+
+		Date d = z.getPairingRegistrationTime();
+		long msecAgo = now.getTime() - d.getTime();
+
+		Logging.info("Pairing: removed unlucky timed-out player " +z + " (who was registered "+ (msecAgo/1000) + " sec ago) from the queue" );
 	    }
 	    
 	    return best;
