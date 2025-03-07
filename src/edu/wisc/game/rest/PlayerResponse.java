@@ -175,7 +175,7 @@ public class PlayerResponse extends ResponseBase {
 			}
 			x.setExperimentPlan(exp);		
 			assignRandomTrialList(x);
-			x.postLoad1();
+			x.postLoad();
 			// Check if it's a pair game
 			x.initPairing();
 			Pairing.newPlayerRegistration(x);
@@ -303,8 +303,7 @@ public class PlayerResponse extends ResponseBase {
 		if (mustClose) { em.close(); em=null; }
 	    }
 	    allPlayers.put(pid,x); // save in a local cache for faster lookup later
-	    x.restoreTransientFields(); // make it ready to use
-	    x.postLoad1(); // safe to do it now
+	    x.restoreTransientFields(); // make it ready to use. This also calls postLoad()
 	    for(EpisodeInfo epi: x.getAllEpisodes())  {
 		epi.cache();
 	    }

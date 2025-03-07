@@ -773,7 +773,8 @@ public class AnalyzeTranscripts {
 	// all episodes' subsections for a given rule sets
 	Vector<TranscriptManager.ReadTranscriptData.Entry[]> section=new Vector<>();
 	Vector<EpisodeHandle> includedEpisodes=new Vector<>();
-	
+
+	// For each episode...
 	for(TranscriptManager.ReadTranscriptData.Entry[] subsection: subsections)  {
 	    String eid = subsection[0].eid;
 	    EpisodeHandle eh = findEpisodeHandle(v, eid);

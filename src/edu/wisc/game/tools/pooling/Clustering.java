@@ -13,7 +13,6 @@ import org.apache.commons.math3.stat.inference.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.tools.*;
-import edu.wisc.game.tools.MwByHuman.MwSeries;
 import edu.wisc.game.tools.MwByHuman.PrecMode;
 import edu.wisc.game.svg.*;
 import edu.wisc.game.svg.SvgEcd.Point;

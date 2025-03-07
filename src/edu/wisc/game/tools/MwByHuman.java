@@ -31,7 +31,18 @@ public class MwByHuman extends AnalyzeTranscripts {
     */
     private static Set<String> ignorePrec = new HashSet<>();
     private static int ignorePrecCnt=0;
+    static void incrementIgnorePrecCnt() {
+	ignorePrecCnt++;
+    }
     
+    /** Info about each episode gets added here */
+    public Vector<MwSeries> savedMws = new Vector<>();
+
+    private final int targetStreak;
+    private final double targetR;
+    /** It is double rather than int so that Infinity could be represented */
+    private final double  defaultMStar;
+
     /** @param  _targetStreak this is how many consecutive error-free moves the player must make (e.g. 10) in order to demonstrate successful learning. If 0 or negative, this criterion is turned off
 	@param _targetR the product of R values of a series of consecutive moves should be at least this high) in order to demonstrate successful learning. If 0 or negative, this criterion is turned off
      */
@@ -333,8 +344,9 @@ public class MwByHuman extends AnalyzeTranscripts {
 	
 	MannWhitneyComparison.Mode mode = MannWhitneyComparison.Mode.CMP_RULES_HUMAN;
 	MannWhitneyComparison mwc = new MannWhitneyComparison(mode);
-	
-	Comparandum[][] allComp = Comparandum.mkHumanComparanda(savedMws.toArray(new MwSeries[0]),  precMode, useMDagger);	
+
+	MwSeries[] a = savedMws.toArray(new MwSeries[0]);
+	Comparandum[][] allComp = Comparandum.mkHumanComparanda(a,  precMode, useMDagger);	
 	//System.out.println("DEBUG: Human comparanda: "+allComp[0].length+" learned, "+allComp[1].length+" unlearned, ");
 	
 	if (fromFile) {
@@ -365,236 +377,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 	Ignore
     }
     
-    /**  An MWSeries object contains the data for one series (group of episodes played by one player under the same rule set) needed to contribute a number to an M-W Comparandum. For each episode, we need these data:
-	 <pre>
-playerId
-episodeId
-ruleSetName
-predecessors
-achieved10
-m*
-</pre>
-     */
-    public static class MwSeries {
 
-	public final String ruleSetName;	
-	/** Which other rules preceded this rule in the trial list? */
-	private final Vector<String> precedingRules;
-	final String exp;
-	final String trialListId;
-	final int seriesNo;
-	final String playerId;
-
-	/** When a value is put here, it it used instead of the
-	    normally-computed key. This is used in the Pooling app,
-	    when working with pooled samples.
-	 */
-	private String forcedKey = null;
-	public void setForcedKey(String key) { forcedKey = key; }
-	
-	/** The 'key' (what comparandum, if any, this series belongs to) depends on the mode */
-	public String getKey(PrecMode mode) {
-	    if (forcedKey!=null) return forcedKey;
-	    
-	    switch (mode) {
-	    case Ignore: return ruleSetName;	    
-	    case Every:
-	    case EveryCond:
-		String s = String.join(":", precedingRules);
-		if (s.length()>0) s += ":";
-		return s + ruleSetName;
-	    case Naive: return (precedingRules.size()==0)? ruleSetName: null;
-	    default: throw new IllegalArgumentException("" + mode);
-	    }
-	}
-
-	/** Used for EveryCond; only lists the preceding,
-	    and does not include the target */
-	public String getLightKey() {
-	    if (forcedKey!=null) return forcedKey;
-	    String s = String.join(":", precedingRules);
-	    return s;
-	}
-	
-	boolean learned=false;
-	public boolean getLearned() { return learned; }
-	/** The number of errors until the first "winning streak" has been
-	    achieved, or in the entire series (if no winning streak) */
-	int errcnt=0;
-	/** The number of errors until the first  "winning streak" has been
-	    achieved, or the large default number otherwise */
-	double mStar=0;
-	/** Total failed attempt (including those after the "achievement of learning") */
-	int totalErrors=0;
-	public int getTotalErrors() { return totalErrors; }
-	/** Total move and pick attempts (successful and unsuccessful) */
-	int totalMoves=0;
-	public int getTotalMoves() { return totalMoves; }
-	
-	public double getMStar() { return mStar; }
-	/** An integer approimation to MStar */
-	public int getMStarInt() {
-	    return (mStar >= Integer.MAX_VALUE)? Integer.MAX_VALUE:
-		(int)Math.round(mStar);
-	}
-	public int getMDaggerInt() {
-	    return (mDagger >= Integer.MAX_VALUE)? Integer.MAX_VALUE:
-		(int)Math.round(mDagger);
-	}
-
-	/** As per PK's messages, 2023-01 */
-	double mDagger=0;
-	public double getMDagger() { return mDagger; }
-	
-	MwSeries(EpisodeHandle o) {
-	    ruleSetName = o.ruleSetName;
-	    precedingRules = new Vector<String>();
-	    for(String r: o.precedingRules) {
-		if (ignorePrec.contains(r)) {
-		    ignorePrecCnt++;
-		    continue;
-		}
-		precedingRules.add(r);
-	    }
-	    exp = o.exp;
-	    trialListId = o.trialListId;
-	    seriesNo = o.seriesNo;
-	    playerId = o.playerId;
-	}
-
-	static final String header="#ruleSetName,precedingRules,"+
-	    "exp,trialListId,seriesNo,playerId,learned,total_moves,total_errors,mStar,mDagger";
-
-	String toCsv() {
-	    String[] v = { ruleSetName,
-			   String.join(":", precedingRules),
-			   exp,
-			   trialListId,
-			   ""+seriesNo,
-			   playerId,
-			   ""+learned,
-			   ""+getTotalMoves(),
-			   ""+getTotalErrors(),
-			   ""+mStar,
-			   ""+mDagger};
-	    return ImportCSV.escape(v);
-	}
-
-	/** Reads a CSV file with MwSeries entries.
-	    @param into Adds the data into this vector.
-	 */
-	public static void readFromFile(File f, Vector<MwSeries> into) throws IOException, IllegalInputException {
-	    if (!f.exists()) throw new IOException("File does not exist: " + f);
-	    if (!f.canRead()) throw new IOException("Cannot read file: " + f);
-	    CsvData csv = new CsvData(f, false, false, null);
-
-	    if (csv.entries.length<2) throw new IOException("No data found in file: " + f);
-	    CsvData.BasicLineEntry header =  (CsvData.BasicLineEntry)csv.header;
-	    //System.out.println("Header=" + header);
-	    //int nCol = header.nCol();
-	    
-	    for(int j=0; j<csv.entries.length; j++) {
-		CsvData.BasicLineEntry line = (CsvData.BasicLineEntry)csv.entries[j];
-		//System.out.println("DEBUG: TL(f=" + f+"), adding para set " + j);
-		into.add(new MwSeries( header, line));
-	    }
-	}
-	
-	/**  This is basically the inverse of toCsv() */
-	MwSeries(CsvData.BasicLineEntry header, CsvData.BasicLineEntry line) throws  IllegalInputException {
-
-	    // header="#ruleSetName,precedingRules,"+
-	    //"exp,trialListId,seriesNo,playerId,learned,total_moves,total_errors,mStar";
-	    
-	    ruleSetName = line.getColByName(header, "ruleSetName", null);
-	    if (ruleSetName==null) throw new  IllegalInputException("No ruleSetName");
-	    String q =  line.getColByName(header, "precedingRules", "");
-	    precedingRules = new Vector<>( Arrays.stream( q.split("[;:]")).filter(e->!e.isEmpty()).collect(Collectors.toList()));
-
-	    //precedingRules = Util.array2vector( q.split("[;:]"));
-
-	    exp = line.getColByName(header, "exp", "");
-	    trialListId =  line.getColByName(header, "trialListId", "");
-	    seriesNo =  Integer.parseInt(line.getColByName(header, "seriesNo", "0"));
-	    playerId =  line.getColByName(header, "playerId", "");
-	    learned =  Boolean.parseBoolean(line.getColByName(header, "learned", "false"));
-	    totalMoves = Integer.parseInt(line.getColByName(header, "total_moves", "0"));
-	    totalErrors = Integer.parseInt(line.getColByName(header, "total_errors", "0"));
-	    mStar = Double.parseDouble(line.getColByName(header, "mStar", "-1"));
-	    if (mStar<0)  throw new  IllegalInputException("No mStar value");
-	    // mDagger is optional in input files. (But it had better
-	    // be there if we want to use it, of course!)	    
-	    mDagger = Double.parseDouble(line.getColByName(header, "mStar", "NaN"));
-
-
-	}
-
-	/** Computes and sets mDagger in every field, as mDagger(P,E)
-	    = mStar(P,E) - Avg( mStar(P,*)), where averaging is
-	    carried over all "successful" experiences of P (i.e. over
-	    all rules sets that P played and learned).
-
-	    <p>The value of mDagger will be NaN in all (P,E) pairs where
-	    P learned the rules neither in E nor in any other experience.
-	 */
-	static void computeMDagger(Vector<MwSeries> v) {
-	    // maps playerId to {sum, count}
-	    HashMap<String,double[]> h = new HashMap<>();
-	    for(MwSeries ser: v) {
-		double[] z = h.get(ser.playerId);
-		if (z==null) h.put(ser.playerId, z=new double[2]);
-		if (ser.learned) {
-		    z[0] += ser.mStar;
-		    z[1] += 1;
-		}
-	    }
-	    for(MwSeries ser: v) {
-		double[] z = h.get(ser.playerId);
-		ser.mDagger = ser.mStar - z[0]/z[1];
-	    }
-	}
-
-	/** Modifies the precedingRules array, prepending "true." or
-	    "false." to each element depending on whether successful
-	    learning took place in the corresponding series. This is
-	    used in PrecMode.EveryCond mode.
-	*/
-	void adjustPreceding(Vector<MwSeries> savedMws) {
-	    for(int j=0; j< precedingRules.size(); j++) {
-		String r = precedingRules.get(j);
-		if (r.startsWith("true.") ||r.startsWith("false.")) continue;
-		MwSeries old = null;
-		// FIXME quadratic...
-		for(MwSeries x: savedMws) {
-		    if (x.playerId.equals(playerId) &&
-			x.ruleSetName.equals(r)) {
-			old = x;
-			break;
-		    }
-		}
-		if (old==null) throw new IllegalArgumentException("Cannot find preceding series for p="+playerId+", perhaps because the trial list files have been erased, or the player skipped the series for rule="+r);
-		r = "" + old.learned + "." + r;
-
-		//if (ignorePrec.contains(r)) continue;
-		precedingRules.set(j, r);
-	    }   
-	}
-    
-	
-    }
-
-    /** Info about each episode gets added here */
-    public Vector<MwSeries> savedMws = new Vector<>();
-
-
-    private final int targetStreak;
-    private final double targetR;
-    /** It is double rather than int so that Infinity could be represented */
-    private final double  defaultMStar;
-
-    //    private HashMap<String, MWSeries[]
-    
-    /** Saves the data (the summary of a series) for a single (player, ruleSet) pair.
+    /** Saves the data (the summary of a series) for a single (player, ruleSet) pair. The saved data is put into an MwSeries object, which is then appened to savedMws.
 
 	In some cases, a series can be skipped (not saved). This is the case
 	if only the data for a specific target is requested (target!=null),
@@ -604,18 +388,14 @@ m*
 	overriding the eponymous method in that class.
 	
 	@param section A vector of arrays, each array representing the recorded
-	moves for one episode. In its entirety, section describes all episodes
-	in the series.
-	@param includedEpisodes All non-empty episodes played by this player in this rule set. This array must be aligned with section[]
+	moves for one episode. In its entirety, <tt>section</tt> describes all episodes
+	in the series. Before returning, this method clears this array.
+	@param includedEpisodes All non-empty episodes played by this player in this rule set. This array must be aligned with section[]. Before returning, this method clears this array.
     */
   
     protected void saveAnyData(Vector<TranscriptManager.ReadTranscriptData.Entry[]> section,
-			     Vector<EpisodeHandle> includedEpisodes)
+			       Vector<EpisodeHandle> includedEpisodes)
 	throws  IOException, IllegalInputException,  RuleParseException {
-
-	int je =0;
-	int streak=0;
-	double lastR = 0;
 
 	if (includedEpisodes.size()==0) return; // empty series (all "give-ups")
 
@@ -623,10 +403,45 @@ m*
 	Vector<Board> boardHistory = null;
 	double rValues[] = computeP0andR(section, eh.para, eh.ruleSetName, boardHistory).rValues;
 
-	MwSeries ser = new MwSeries(eh);
+	if (eh.neededPartnerPlayerId != null) {
+	    System.out.println("For " +eh.playerId + ", also make partner entry for " + eh.neededPartnerPlayerId);
+	    MwSeries[] ser={
+		fillMwSeries(section, includedEpisodes, rValues, 0),
+		fillMwSeries(section, includedEpisodes, rValues, 1)};
+	} else {
+	    System.out.println("For " +eh.playerId + ", no partner needed");
+	    MwSeries ser = fillMwSeries(section, includedEpisodes, rValues, -1);
+	}
+
+	section.clear();
+	includedEpisodes.clear();
+    }
+
+
+    /** Creates an MwSeries object for a (player,rule set)
+	interaction, and adds it to savedMws, if appropriate.
+
+
+        @param chosenMover If it's -1, the entire transcript is
+	analyzed. (That's the case for 1PG and coop 2PG). In adve 2PG,
+	it is 0 or 1, and indicates which partner's record one extracts
+	from the transcript.
+     */
+    private 	MwSeries fillMwSeries(Vector<TranscriptManager.ReadTranscriptData.Entry[]> section,
+				      Vector<EpisodeHandle> includedEpisodes,
+				      double[] rValues, int chosenMover)
+	throws  IOException, IllegalInputException,  RuleParseException {
+
+	EpisodeHandle eh = includedEpisodes.firstElement();
+	MwSeries ser = new MwSeries(eh, ignorePrec);
+
 	boolean shouldRecord = (target==null) || eh.ruleSetName.equals(target);
 	shouldRecord = shouldRecord && !(precMode == PrecMode.Naive && ser.precedingRules.size()>0);
-		
+	
+	int je =0;
+	int streak=0;
+	double lastR = 0;
+
 	ser.errcnt = 0;
 	ser.mStar = defaultMStar;
 	if (precMode == PrecMode.EveryCond) {
@@ -654,6 +469,9 @@ m*
 		if (!eh.episodeId.equals(e.eid)) throw new IllegalArgumentException("Array mismatch");
 
 		double r = rValues[k++];
+
+		boolean wrongPlayer= (chosenMover>0) && (e.mover!=chosenMover);
+		if (wrongPlayer) continue;
 		
 		if (e.code==CODE.ACCEPT) {
 		    if (e.pick instanceof Episode.Move) {
@@ -695,10 +513,7 @@ m*
 	    
 	    ser.totalMoves += subsection.length;
 	}
-
-	section.clear();
-	includedEpisodes.clear();
-
+	return ser;
     }
     
 }

@@ -10,7 +10,7 @@ import edu.wisc.game.util.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.formatter.*;
 import edu.wisc.game.tools.MwByHuman;
-import edu.wisc.game.tools.MwByHuman.MwSeries;
+import edu.wisc.game.tools.MwSeries;
 
 
 /** Represents a thing to be compared using the Mann-Whitney-test:

@@ -23,22 +23,24 @@ import edu.wisc.game.reflect.*;
 import edu.wisc.game.parser.RuleParseException;
 
 
-
-/** Auxiliary class for AnalyzeTranscripts. This is a map which, for each player, contains the list of episodes
-	played by that player.
+/** An auxiliary class for AnalyzeTranscripts. This is a map which,
+    for each player, contains the list of episodes played by that
+    player.
 */
 class EpisodesByPlayer extends TreeMap<String,Vector<EpisodeHandle>> {
 
 	/** for each rule set name, keep the list of all episodes */
 	TreeMap<String, Vector<EpisodeHandle>> allHandles= new TreeMap<>();
 
-	/** Adds to this map the data about all episodes played by a specified player.
+	/** Adds to this map the data about all episodes played by a specified player. 
 	    @param p The player in question
 	    @param  trialListMap Lists all trial lists of the relevant plan
 	 */
 	void doOnePlayer(PlayerInfo p,  AnalyzeTranscripts.TrialListMap trialListMap,
 			 Vector<EpisodeHandle> handles) {
 		
+	    // Partner' activity is treated as a separate entry (in e.g. MW analysis) only in adversarial 2PG games.
+	    String neededPartnerPlayerId = p.isAdveGame()?p.getPartnerPlayerId(): null;
 	    String trialListId = p.getTrialListId();
 	    TrialList t = trialListMap.get( trialListId);
 	    if (t==null) {
@@ -51,7 +53,8 @@ class EpisodesByPlayer extends TreeMap<String,Vector<EpisodeHandle>> {
 	    for(EpisodeInfo e: p.getAllEpisodes()) {
 		int seriesNo = e.getSeriesNo();
 		if (seriesNo != lastSeriesNo) orderInSeries = 0;
-		EpisodeHandle eh = new EpisodeHandle(p.getExperimentPlan(), trialListId, t, p.getPlayerId(), e, orderInSeries);
+
+		EpisodeHandle eh = new EpisodeHandle(p.getExperimentPlan(), trialListId, t, p.getPlayerId(), neededPartnerPlayerId, e, orderInSeries);
 		//		    handles.add(eh);
 		handles.add(eh);
 		Vector<EpisodeHandle> v = allHandles.get( eh.ruleSetName);

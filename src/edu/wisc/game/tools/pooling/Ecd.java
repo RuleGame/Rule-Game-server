@@ -3,7 +3,6 @@ package edu.wisc.game.tools.pooling;
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
-import java.util.stream.*;
 import java.text.*;
 
 
@@ -12,7 +11,6 @@ import org.apache.commons.math3.stat.inference.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.tools.*;
-import edu.wisc.game.tools.MwByHuman.MwSeries;
 import edu.wisc.game.tools.MwByHuman.PrecMode;
 import edu.wisc.game.svg.*;
 import edu.wisc.game.svg.SvgEcd.Point;

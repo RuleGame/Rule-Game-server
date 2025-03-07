@@ -577,7 +577,7 @@ public class EpisodeInfo extends Episode {
 	return s;
     }
     
-    /** Shows tHe current board (including dropped pieces, which are labeled as such) */
+    /** Shows the current board (including dropped pieces, which are labeled as such) */
     public Board getCurrentBoard() {
 	return getCurrentBoard(true);
     }

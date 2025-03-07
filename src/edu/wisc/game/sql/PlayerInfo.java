@@ -65,22 +65,34 @@ public class PlayerInfo {
     }
 
     /** Sets some (transient) properties of this object which depend
-	on the name of the experiment plan. For new objects, this
-	method is called from PlayerResponse, after an object has been
+	on the name of the experiment plan. For new objects, this method is called (via postLoad()) from PlayerResponse, after an object has been
 	created and some basic initialization (setExperimentPlan(),
 	initSeries()) took place. For those restored from the
 	database, it is called automatically due to the @PostLoad
 	directive.
-
-	<P>Note: this method can only be called after initSeries(), because
-	otherwise getFirstPara() won't work.
-     */
-    //-- no, let's do it explicitly, in right order @PostLoad() 
-    public void postLoad1() {
+    */
+    @PostLoad() 
+    public void postLoadPart1() {
 	String[] z = experimentPlan.split("/");
 	coopGame = z[z.length-1].startsWith("coop.");
 	adveGame = z[z.length-1].startsWith("adve.");
+    }
 
+    /** Sets some (transient) properties of this object which depend
+	on the name of the experiment plan. For new objects, this
+	method is called from PlayerResponse, after an object has been
+	created and some basic initialization (setExperimentPlan(),
+	initSeries()) took place. For those restored from the
+	database, it is called via restoreTransientFields().
+
+       	<P>Note: this method can only be called after initSeries(), because
+	otherwise getFirstPara() won't work.
+
+	<p>FIXME: What if an object restored from the database,
+	e.g. in a MW tools context, needs the needChat flag?
+    */	
+    public void postLoad() {
+	postLoadPart1();
 	if (is2PG()) {
 	    ParaSet para = getFirstPara(); //-- this can only be done after initSeries() or restoreTransientFields()
 	    if (para==null) {
@@ -643,7 +655,8 @@ public class PlayerInfo {
 	    if (needSave) saveMe();
 	}
 
-	
+	// Just in case we need to restore the needChat field as well
+	postLoad();
     }
 
     /** Retrieves the most recent episode, which may be completed or incomplete.
