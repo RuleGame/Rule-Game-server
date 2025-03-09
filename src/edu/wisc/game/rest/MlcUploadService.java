@@ -42,7 +42,6 @@ public class MlcUploadService {
     /** As REST is stateless, this table is used for authorization, instead of sessions. It is worked by MlcLoginServlet (via LoginServlet) */
     private static HashMap<String,String> userKeyTable = new HashMap<String,String>();
 
-
     private static Random random = new Random();
 
     /** Used by the MlcLoginServlet etc */
@@ -69,7 +68,7 @@ public class MlcUploadService {
 	return s!=null && s.equals(key);
     }
 
-    /** Enures that the header line appears in the standard
+    /** Ensures that the header line appears in the standard
 	format, with the leading '#'
     */
     private static String prepareHeaderLine(String s) {

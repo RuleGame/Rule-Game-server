@@ -13,14 +13,13 @@ ContextInfo main = new ContextInfo(request,response);
 <h2>Choose experiment plans</h2>
 <div>
 
-<p>Note: there is also a command-line inteface for this tool, scripts/analyze-transcripts-mwh.sh; it has more modes and options than available via the web interface. Documentation is <a href="analyze-transcripts-mwh.html">here</a>.
+<p>Note: there is also a command-line interface for this tool, scripts/analyze-transcripts-mwh.sh; it has more modes and options than available via the web interface. Documentation is <a href="analyze-transcripts-mwh.html">here</a>.
 
 <hr>
 
 <p>Choose one or several experiment plans from the list below. All rule sets included in those plans will be compared.<p>
 
 <form method="get" action="../game-data/ManagerDashboardService/compareRulesForHumans">
-
 
 <table border="1">
 <tr><td valign="top">

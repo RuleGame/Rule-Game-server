@@ -246,6 +246,7 @@ public class MannWhitneyComparison {
 		headers=new String[] {keyCell,
 			      "Learned? (learned/not learned)",
 			      "EV score",
+			      //			      "Difficulty", 
 			      "Runs",
 			      "Avg episodes till learned",
 			      "Avg errors till learned",
@@ -255,6 +256,7 @@ public class MannWhitneyComparison {
 		matt[0] = new String[] {keyCell,
 					"Learned", "Not learned",
 					"EV score",
+					//"Difficulty",
 					"Runs",
 					"Avg episodes till learned",
 					"Avg errors till learned",
@@ -263,7 +265,7 @@ public class MannWhitneyComparison {
 
 	    
 
-	    } else {
+	    } else { // CMP_RULES_HUMAN
 		boolean useMDagger = (order.size()>0 && 
 		    learnedOnes[order.get(0)].useMDagger);
 		String ms = useMDagger? "m<sub>&dagger;</sub>":  "m<sub>*</sub>";
@@ -272,6 +274,8 @@ public class MannWhitneyComparison {
 		headers=new String[] {keyCell,
 				      "Learned/not learned",
 				      "EV score",
+				      "Difficulty",
+				      "Transfer",
 				      "Avg "+ms + " (learners/all)",
 				      "min-median-max "+ms+fm.brHtml()+"(learners)",
 				      "Harmonic mean "+ms + fm.brHtml() + "(learners/all)",
@@ -282,6 +286,8 @@ public class MannWhitneyComparison {
 		matt[0]=new String[] {keyCell,
 				      "Learned", "Not learned",
 				      "EV score",
+				      "Difficulty",
+				      "Transfer",
 				      "Avg "+ms+" on learners",  "Avg "+ms+" on all",
 				      "min "+ms, "med "+ms, "max "+ms,
 				      "Harmonic mean "+ms+" on learners",
@@ -299,6 +305,31 @@ public class MannWhitneyComparison {
 	    
 	    rows.add( row);
 
+	    //-- The difficulty of rules for naive players
+	    //-- In reality, the table will contain some other stuff too,
+	    //-- but we don't care
+	    Map<String,Double> naiveDifficulty = new HashMap<>();
+	    
+	    double minEv = 1.0;
+	    for(int k=0; k< order.size(); k++) {
+		int j=order.get(k);		
+		double evScore = ev[j];
+		if (evScore < minEv) minEv = evScore;
+	    }
+	    
+	    for(int k=0; k< order.size(); k++) {
+		int j=order.get(k);		
+		double evScore = ev[j];
+		double difficulty = minEv/evScore;
+		Comparandum q = learnedOnes[j];
+		String key = q.key;
+		if (isNaiveKey(key)) naiveDifficulty.put(key, difficulty);
+	    }
+		   
+
+
+
+	    
 	    // the learned ones
 	    for(int k=0; k< order.size(); k++) {
 		int j=order.get(k);
@@ -307,7 +338,12 @@ public class MannWhitneyComparison {
 		String key = q.key;
 		
 		double evScore = ev[j];
-
+		double difficulty = minEv/evScore;
+		String target = getTargetFromHumanKey(key);
+		double transfer =
+		    (naiveDifficulty.get(target)==null) ? Double.NaN:
+		    1 -  difficulty/naiveDifficulty.get(target);
+		
 		boolean isMe = key.equals(myKey);
 		String w2[]={};
 
@@ -352,7 +388,7 @@ public class MannWhitneyComparison {
 
 		} else if (q.humanSer!=null) { // human
 		    //"Learned/not learned",
-		    //"EV score",
+		    //"EV score", "Difficulty"
 		    //"m* (errors till learned)",
 		    int learnedCnt=0;
 		    double sumM=0, sumMLearned=0;
@@ -392,6 +428,10 @@ public class MannWhitneyComparison {
 			fkey,
 			""+learnedCnt+"/" + (q.humanSer.length-learnedCnt),
 			fm.sprintf("%6.4g", evScore),
+			fm.sprintf("%4.3g", difficulty),
+			// zzz
+			(Double.isNaN(transfer)? "--" :
+			 isNaiveKey(key)? "": fm.sprintf("%4.3g", transfer)),
 			fm.sprintf("%6.2f",avgMLearned) + "/" +
 			fm.sprintf("%6.2f",avgM),
 			(ma.length>0) ? (int)mmm[0] + " - " +
@@ -406,6 +446,8 @@ public class MannWhitneyComparison {
 			fkey,
 			""+learnedCnt, "" + (q.humanSer.length-learnedCnt),
 			""+ evScore,
+			""+ difficulty,
+			""+ transfer,
 			""+avgMLearned, ""+avgM,
 			(ma.length>0) ? ""+mmm[0]: "",
 			(ma.length>0) ? ""+mmm[1]: "",
@@ -563,6 +605,19 @@ public class MannWhitneyComparison {
 	z[z.length-1] = fm.strong(z[z.length-1]);
 	return String.join(":", z);
     }
+
+    static private String getTargetFromHumanKey(String key) {
+	String z[] = key.split(":");
+	return z[z.length-1];
+    }
+
+    /** The key for a "naive" experience has no semicolons in it */
+    static private boolean isNaiveKey(String key) {
+	String z[] = key.split(":");
+	return z.length==1;
+    }
+
+    
 
     /** Suggests names for CSV output files */
     public static File[] expandCsvOutDir(File csvOutDir) {
