@@ -106,7 +106,10 @@ abstract public class GameGenerator {
     RuleSet condRules=null;
     boolean testing = false;
     public boolean getTesting() { return testing; }
-    public void setTesting(boolean _testing) { testing = _testing; }
+    public void setTesting(boolean _testing) {
+	testing = _testing;
+	initPositionMask();
+    }
 
     /** This is set to true by setConditions if the condRules parameter
 	is supplied and can be interpreted as some kind of position mask.
@@ -119,8 +122,15 @@ abstract public class GameGenerator {
     public void setConditions(boolean _testing, RuleSet _condRules) {
 	testing = _testing;
 	condRules = _condRules;
+	initPositionMask();
+    }
+
+    /** Initializes the position mask, as (and if) mandated by the current
+	condRules and the testing flag */
+    private void initPositionMask() {
 	positionMask = new PositionMask(testing, condRules);
 	if (!positionMask.hasPositionMask) positionMask = null;
+	System.out.println("# positionMask=" + positionMask);
     }
 
     /** For Captive server, to be priented via JSON Reflect. */

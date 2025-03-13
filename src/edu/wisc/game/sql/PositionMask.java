@@ -2,10 +2,9 @@ package edu.wisc.game.sql;
 
 import java.io.*;
 import java.util.*;
-//import java.text.*;
 
 import edu.wisc.game.util.*;
-import edu.wisc.game.parser.*;
+//import edu.wisc.game.parser.*;
 import edu.wisc.game.engine.*;
 
 /** An auxiliary data structure describing optional restrictions on
@@ -23,6 +22,8 @@ class PositionMask {
     int[] allPiecesMustBeHere = null;
     /** May be used in testing stage when position mask is in effect.*/
     int[] atLeastOnePieceMustBeHere = null;
+    /** Same as the above, as a set */
+    HashSet<Integer> atLeastOnePieceMustBeHereHash = null;
 
     
     /** For the training/testing restrictions on boards, as introduced in GS 6.010. See email discusion with Paul on 2023-03-08, and captive.html#cond
@@ -42,10 +43,23 @@ class PositionMask {
 	
 	if (testing) {
 	    atLeastOnePieceMustBeHere = w;
+	    atLeastOnePieceMustBeHereHash = new HashSet<>();
+	    for(int j: atLeastOnePieceMustBeHere) atLeastOnePieceMustBeHereHash.add(j);
 	} else { // training
 	    allPiecesMustBeHere = w;
 	}
     }
 
+    public String toString() {
+	String s = "PositionMask(";
+	if (allPiecesMustBeHere != null) {
+	    s += "allPiecesMustBeHere=["+Util.joinNonBlank(",", allPiecesMustBeHere )+"]";
+	}
+	if (atLeastOnePieceMustBeHere!= null) {
+	    s += "atLeastOnePieceMustBeHere=["+Util.joinNonBlank(",", atLeastOnePieceMustBeHere )+"]";
+	}
+	s += ")";
+	return s;
+    }
     	    	    
 }

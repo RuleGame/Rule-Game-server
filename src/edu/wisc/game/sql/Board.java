@@ -275,7 +275,7 @@ public class Board {
 
 	
 	for(int i=0; i<randomCnt; i++) {
-	    Pos pos = new Pos(w.get(i)+1);
+	    Pos pos = new Pos(w.get(i));
 	    
 	    Piece p = new Piece( useShapes[i], useColors[i],  pos.x, pos.y);
 	    p.setId(i);
@@ -342,18 +342,43 @@ public class Board {
 
     /** Creates a list of n positions on the board, randomly selected
 	either all over the board, or within the constraints given
-	by positionMask */
+	by positionMask
+	@return a vector of n values in the [1..N^2] range
+    */
     private Vector<Integer> randomPositions(RandomRG random,PositionMask positionMask, int n) {
 	if (positionMask != null && positionMask.allPiecesMustBeHere != null){
 	    Vector<Integer> q  = random.randomSubsetOrdered(positionMask.allPiecesMustBeHere.length, n);
+	    System.out.println("# Selecting at these indexes from 'must': " + Util.joinNonBlank(",", q));
 	    Vector<Integer> w = new Vector();
 	    for(int j: q) {
-		w.add( positionMask.allPiecesMustBeHere[ q.get(j) ]);
+		w.add( positionMask.allPiecesMustBeHere[ j ]);
 	    }
+	    System.out.println("# Selected these positions: " + Util.joinNonBlank(",", w));
 	    return w;
 	} 
-	Vector<Integer> w  = random.randomSubsetOrdered(N*N, n);
-	    
+	Vector<Integer> w  = random.randomSubsetOrdered(N*N, n); // [0..N^2-1]
+	// now bring them to [1..N^2] range
+	for(int j=0; j<w.size(); j++) {
+	    w.set(j, w.get(j)+1);
+	}
+
+	if (positionMask != null && positionMask.atLeastOnePieceMustBeHere != null){
+	    // making sure at least one piece satisfies the condition
+	    for(int pos: w) {
+		if (positionMask.atLeastOnePieceMustBeHereHash.contains(pos)) {
+		    return w;
+		}
+	    }
+	    // replace
+	    Integer [] ww = w.toArray(new Integer[0]);
+	    int j = random.nextInt( ww.length);
+	    int pos = positionMask.atLeastOnePieceMustBeHere[ random.nextInt(positionMask.atLeastOnePieceMustBeHere.length)];
+	    ww[j] =pos;
+	    Arrays.sort(ww);
+	    w = Util.array2vector(ww);
+	} else {
+	}
+		   
 	return w;
     }
 
