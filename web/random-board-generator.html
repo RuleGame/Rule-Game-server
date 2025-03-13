@@ -13,11 +13,13 @@
 <p>In some plans, however, you may want to give your players a set of boards that satisfies some more sophisticated design requirements, e.g. making sure that a particular color+shape combination does not occur in any initial board, or that no pieces are put to certain cells of the board. Or you may want to ensure that every player gets the same sequence of initial boards. Both of these objectives  can be achieved by creatig a number of JSON files describing initial boards, either manually or using some kind of tool, and then configuring your experiment plan to use these initial boards, as explained in
   <a href="para-set.html#defineBoard">Rule Game Server parameter sets /Using prefedined initial boards</a>.
 
+<p>Customized predefined initial boards can be used in the ML/AI experiments using the <a href="captive.html">Captive Game Server</a> as well. To do that, you must run the CGS with a trial list file that refers to these predefined boards. For details, see <a href="captive.html#cmd7">Captive Game Server | Use a trial list file.</a>
+  
   <h2>The command-line random board generator</h2>
 
-<p>The random board generator used by the Game Server is also accessible as a command-line tool, on sapir or on any computer on which you have <a href="deploy.html">checked out and build the server code</a>. It can be used to create a desired number of initial boards files with specified properties.
+<p>The random board generator used by the Game Server is also accessible as a command-line tool, on our main server or on any computer on which you have <a href="deploy.html">checked out and build the server code</a>. It can be used to create a desired number of initial boards files with specified properties.
 
-<p>The script resides on sapir in <code>/home/vmenkov/w2020/game/scripts/random-boards.sh</code>; you can use it in that location. (Don't copy it into your own directory, as it relies on its location to find JAR files etc). It will be found on at a similar location in your directory tree if you follow the  <a href="deploy.html">SOP instructions for checking  out and building the server code</a> on your own machine. The script is to be used as follows:
+<p>The script resides on our server host in <code>/home/vmenkov/w2020/game/scripts/random-boards.sh</code>; you can use it in that location. (Don't copy it into your own directory, as it relies on its location to find JAR files etc). It will be found on at a similar location in your directory tree if you follow the  <a href="deploy.html">SOP instructions for checking  out and building the server code</a> on your own machine. The script is to be used as follows:
 
 <pre>
 /home/vmenkov/w2020/game/scripts/random-boards.sh <em>out-dir number-of-boards objects-range  shapes-range  colors-range [shapes-list colors-list]</em>

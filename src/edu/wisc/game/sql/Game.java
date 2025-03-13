@@ -97,16 +97,23 @@ public class Game {
 
     private RuleSet condRules=null;
     private boolean testing = false;
+    private boolean hasPositionMask = false;
     
     /** For the training/testing restrictions on boards, as introduced in GS 6.010. See email discusion with Paul on 2023-03-08, and captive.html#cond
      */
-    void setConditions(boolean _testing, RuleSet _condRules) {
+    void setConditions(boolean _testing, RuleSet _condRules, boolean _hasPositionMask) {
 	testing = _testing;
 	condRules = _condRules;
+	hasPositionMask = _hasPositionMask;
     }
 
     /** Produces the board for this game. If additional train/test conditions
 	exist, tries to satisfy them by repeated tries.
+	<p>
+	FIXME: if an additional condition is difficult to satisfy (e.g.
+	less than 1 out of 1000 random boards do it), the method may fail
+	to find a satisfactory board, even though some such boards exist.
+     
      */
     Board giveBoard() {
 

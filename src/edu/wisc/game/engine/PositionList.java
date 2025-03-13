@@ -82,13 +82,17 @@ public class PositionList {
     /** Does this position list presently allow picking a piece from the
 	specified position?
 	@param  eligibleForEachOrder What positions are now "in front"
-	of each order */
+	of each order. If null is passed here (that's only used in some
+	simplified board generation modes), no acceptance based on orders
+	happens.
+    */
     public boolean allowsPicking(int pos,
 				 HashMap<String, BitSet> eligibleForEachOrder) {
 	if (any) return true;
 	for(int k: list1) {
 	    if (k==pos) return true;
 	}
+	if (eligibleForEachOrder==null) return false; // just for use in simplified conditional board generation 
 	for(String orderName: list2) {
 	    BitSet eligible =  eligibleForEachOrder.get(orderName);
 	    

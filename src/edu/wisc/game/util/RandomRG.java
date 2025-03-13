@@ -42,7 +42,8 @@ public class RandomRG extends Random {
     class IntCmp implements Comparator<Integer> {
 	public int compare(Integer o1, Integer o2) { return o1.compareTo(o2);}
     }
-	 
+
+    /** A random subset of m numbers out of [0:n-1], in ascending order */
     public Vector<Integer> randomSubsetOrdered(int n, int m) {
 	Vector<Integer> q = randomSubsetPermuted(n,  m);
 	q.sort( new IntCmp());

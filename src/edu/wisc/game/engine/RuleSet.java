@@ -841,6 +841,21 @@ public class RuleSet {
 	return x;
  
     }
+
+    /** This method returns true if this RuleSet is purely a fixed position
+	selector, i.e. it simply tells that certain positions are allowed.
+	FIXME: this is not precise, but is just a heuristic, to help the
+	random board generator when conditions are imposed
+    */
+    public boolean isPositionMask() {
+	if (rows.size()!=1) return false;
+	Row row = rows.get(0);
+	if (row.size()!=1) return false;
+	Atom atom = row.get(0);
+
+	return atom.shapes==null && atom.colors == null && atom.plist != null;
+    }
+
     
     public static void main(String[] argv) throws IOException,  RuleParseException {
 	System.out.println("Have " + argv.length + " files to read");

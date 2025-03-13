@@ -91,7 +91,7 @@ public class RandomGameGenerator extends GameGenerator {
     }
     
 
-    /** Builds a RandomGameGenerator from command-line arguments. Used in Captive Game Server
+    /** Builds a RandomGameGenerator from command-line arguments. Used in Captive Game Server, and for various other tools, such as the command-line random board generator.
 	@param f If specified, this is the rule set file to use. It can be null, if you just need the generator to create boards, and not to play a game.
 	@param ja Use argv[ja:...]
      */

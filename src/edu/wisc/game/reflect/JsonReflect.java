@@ -11,6 +11,7 @@ import edu.wisc.game.util.Logging;
 public class JsonReflect {
 
     private int maxLevel = 3;
+    //    private int maxLevel = 30;
 
     /** Using a higher m allows showing deeper structure */
     void setMaxLevel(int m) { maxLevel = m; }
@@ -127,23 +128,6 @@ public class JsonReflect {
 	JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
 
 
-	//---- ZZZZ
-	/*
-    private JsonArrayBuilder  toJsonArrayBuilder(Object g) {
-	JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-	//	System.out.println("toJsonArrayBuilder(" + g.getClass()+")");
-
-	if (g.getClass().isArray()) { // an array
-
-
-	    JsonArrayBuilder x = doCollection(arrayX2vector(g));
-	    arrayBuilder.add(x);		
-	}
-
-	*/
-	//---
-
-	// ZZZ
 	Reflect r = Reflect.getReflect(  o.getClass());
 	//System.out.println("DEBUG: Reflecting on object "+o	+", class="+ o.getClass() +"; reflect=" + r + ", has " + r.entries.length + " entries");
 	for(Reflect.Entry e: r.entries) {

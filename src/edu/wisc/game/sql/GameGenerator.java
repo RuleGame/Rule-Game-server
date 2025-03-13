@@ -45,7 +45,7 @@ abstract public class GameGenerator {
      */
 
     void next(Game game) {
-	game.setConditions(testing, condRules);       
+	game.setConditions(testing, condRules,  hasPositionMask);       
 	produceCnt++;
     }
 
@@ -107,12 +107,19 @@ abstract public class GameGenerator {
     boolean testing = false;
     public boolean getTesting() { return testing; }
     public void setTesting(boolean _testing) { testing = _testing; }
-   
+
+    /** This is set to true by setConditions if the condRules parameter
+	is supplied and can be interpreted as some kind of position mask.
+     */
+    boolean hasPositionMask = false;
+
+    
     /** For the training/testing restrictions on boards, as introduced in GS 6.010. See email discusion with Paul on 2023-03-08, and captive.html#cond
      */
     public void setConditions(boolean _testing, RuleSet _condRules) {
 	testing = _testing;
 	condRules = _condRules;
+	hasPositionMask = condRules.isPositionMask();
     }
 
     /** For Captive server, to be priented via JSON Reflect. */

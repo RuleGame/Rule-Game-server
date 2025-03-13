@@ -19,10 +19,11 @@ import edu.wisc.game.sql.EpisodeMemory.BucketVarMap2;
 
 public class BoardConditionsChecker {
 
-    /** In the training mode, the board is acceptable if no game piece
-	satisfies any condition (i.e. is accepted by any row). In the
-	testing mode, the board is acceptable if at least one piece
-	does.
+    /** @param testing How is the condition applied? In the training
+	mode (testing==false), the board is acceptable if no game
+	piece satisfies any condition (i.e. is accepted by any
+	row). In the testing mode (testing==true), the board is
+	acceptable if at least one piece does.
 
 	@param board The board to test
 	@param rules The conditions, formatted as a rule set. Each row of the rule set represents one condition. 
@@ -48,7 +49,7 @@ public class BoardConditionsChecker {
 
     /** How many rows will accept the specified game piece?
 
-	We do the tests NBU =4) times, with different destination
+	We do the tests NBU (=4) times, with different destination
 	buckets. Normally, this should not be necessary, as the
 	training/testing conditions are not likely to refer to bucket
 	numbers. But if for some reasons they do (e.g. because the
@@ -89,7 +90,32 @@ public class BoardConditionsChecker {
 	 }
 	 return  acceptingRowCnt++;
     }
-    
+
+    ///for(int pos=1; pos<= Board.N * Board.N; pos++) {
+
+    /** This is to make board generation more efficient in the presence of
+	a position-only rule. (For GS 7.008)
+	@param rules a very simple rules set, consisting of a single fixed-position-only rule
+
+	@return In training (testing==false), returns true if the rule set does not accept this position. In testing (testing==true), returns true if the rule set accepts this position.
+    */
+    public static boolean positionIsAllowed(int pos, RuleSet rules, boolean testing) {
+
+	int acceptingRowCnt = 0;
+	 
+	for(RuleSet.Row row: rules.rows) {
+
+	    int acceptingAtomCnt = 0;
+	    for(int j=0; j<row.size(); j++) {
+		RuleSet.Atom atom = row.get(j);
+		if (atom.plist.allowsPicking(pos, null)) acceptingAtomCnt++;
+	    }
+	    if (acceptingAtomCnt == row.size())  acceptingRowCnt++;
+	}
+	boolean accepts = (acceptingRowCnt>0);
+	
+	return testing ? accepts: !accepts;
+    }
 
     
 }

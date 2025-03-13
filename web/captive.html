@@ -307,7 +307,7 @@ as the main argument on your command line. Both  <em>ruleSet</em> and <em>modifi
 
 <h4><a name="cond">9. Train/test: prohibiting or enforcing certain board properties when using the 6-parameter distribution</a></h4>
 		 
-<p>Based on a discussion with Paul on March 8, 2023, a new feature has been introduced in the CGS starting from version 6.010. It is now possible to run the CGS, with the usual 6-parameter random board generator whose behavior is modified in the following way:
+<p>Based on a discussion with Paul on March 8, 2023, a new feature has been introduced in the CGS starting from version 6.010. It is now possible to run the CGS with the usual 6-parameter random board generator whose behavior is modified in the following way:
   <ul>
     <li>The CGS is aware of whether a given episode is played in the "training mode" or "testing mode".
     <li>An additional "condition file" is provided, which contains a number of predicated ("conditions") that may apply to game pieces. (E.g. Condition 1 is "the game piece is located in positions 31 or 36"; Condition 2 is "the game piece is red"; Condition 3 is "the game piece is a square").

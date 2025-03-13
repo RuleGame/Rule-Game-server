@@ -43,10 +43,10 @@ public class Files {
 	of the tree that contains the experiment control files.
 	You only need to use this method if you want trial list 
 	files, rule set files, etc. to be read from directories
-	in a directory tree other than the default ("/opt/tomcat/game-data").
+	in a directory tree other than the default ("/opt/w2020/game-data", or on older systems "/opt/tomcat/game-data").
 	So, for example, the Captive Game Server may use this method. If you use
 	it, do so early in your application.
-	@param path E.g. "/opt/tomcat/game-data" 
+	@param path E.g. "/opt/w2020/game-data" 
     */
     static public void setInputDir(String path) {
 	inputDir = new File(path);
@@ -457,6 +457,12 @@ public class Files {
     public static File pregameDir(String pregame) throws IOException {
 	return new File( new File(inputDir, "pregame"), pregame);
     }
+
+
+    public static File geminiDir() {
+	return new File(inputDir, "gemini");
+    }
+
 }
 
     
