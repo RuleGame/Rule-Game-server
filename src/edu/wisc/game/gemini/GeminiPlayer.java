@@ -18,7 +18,7 @@ import edu.wisc.game.engine.*;
 public class GeminiPlayer {
 
     /**
-       curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyBv_dFQT2bpLNnyYwyx600fREhHWwhAWUE" \
+       curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=XXXX" \
 -H 'Content-Type: application/json' \
 -X POST \
 -d '{
@@ -31,9 +31,9 @@ public class GeminiPlayer {
 
     private void doOneRequest(GeminiRequest gr) throws MalformedURLException, IOException, ProtocolException
     {
-	String key = "AIzaSyBv_dFQT2bpLNnyYwyx600fREhHWwhAWUE";
+	readApiKey();
 	String u = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
-	u += "?key=" + key;
+	u += "?key=" + gemini_api_key;
 	
 	URL url = new URL(u);
 	HttpURLConnection con = (HttpURLConnection)url.openConnection();
@@ -84,6 +84,15 @@ public class GeminiPlayer {
 	
 	gr.addUserText("How do you use borax?");
 	return gr;
+    }
+
+    static String gemini_api_key = null;
+
+    static void readApiKey() throws IOException {
+	if ( gemini_api_key != null) return;
+	String s = Util.readTextFile(new File("/opt/w2020/gemini-api-key.txt"));
+	s = s.replaceAll("\\s", "");
+	gemini_api_key = s;
     }
     
     public static void main(String[] argv) throws Exception {
