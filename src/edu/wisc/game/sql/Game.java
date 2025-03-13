@@ -97,16 +97,19 @@ public class Game {
 
     private RuleSet condRules=null;
     private boolean testing = false;
-    private boolean hasPositionMask = false;
+    private PositionMask positionMask = null;
     
     /** For the training/testing restrictions on boards, as introduced in GS 6.010. See email discusion with Paul on 2023-03-08, and captive.html#cond
      */
-    void setConditions(boolean _testing, RuleSet _condRules, boolean _hasPositionMask) {
+    void setConditions(boolean _testing, RuleSet _condRules, PositionMask _positionMask) {
 	testing = _testing;
 	condRules = _condRules;
-	hasPositionMask = _hasPositionMask;
+	positionMask = _positionMask;
     }
 
+    
+
+    
     /** Produces the board for this game. If additional train/test conditions
 	exist, tries to satisfy them by repeated tries.
 	<p>
@@ -119,22 +122,21 @@ public class Game {
 
 	final int M = 1000;
 
-	Board b;
+	Board b = initialBoard;
+	if (b!=null) return b;
+	
 	for(int tryCnt = 0;  tryCnt<M; tryCnt++) {
-	    b = initialBoard;
-	    if (b==null) {
-		if (imageGenerator!=null) {
-		    b = new Board(random,  randomObjCnt,  imageGenerator);
-		} else { 
-		    b = new Board(random,  randomObjCnt, nShapes, nColors, allShapes, allColors);
-		}
+
+	    if (imageGenerator!=null) {
+		b = new Board(random,  randomObjCnt,  imageGenerator);
+	    } else { 
+		b = new Board(random,  positionMask, randomObjCnt, nShapes, nColors, allShapes, allColors);
 	    }
 
 	    if (condRules == null ||
 		BoardConditionsChecker.boardIsAcceptable(b,condRules,testing)) {
 		return b;
 	    }
-	    	    
 	}
 
 	String msg = "Cannot create a board satisfying conditions, even after "+M+" attempts. condRules from file " + condRules.getFile() +", testing=" + testing;

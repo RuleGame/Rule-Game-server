@@ -253,19 +253,20 @@ public class Board {
     
     /** The main constructor for a random initial board in GS 2.*.
 	@param random The random number generator to use
+	@param positionMask This may restrict the positions to which game pieces may be placed
 	@param randomCnt required number of pieces. 
 	@param nShapes required number of shapes. If 0 is passed, there is no restriction (independent decision is made for each piece)
 	@param nColors required number of colors. If 0 is passed, there is no restriction (independent decision is made for each piece)
 	@param allShapes the set from which shapes are drawn
 	@param allColors the set from which colors are drawn
      */
-    public Board(RandomRG random, int randomCnt, int nShapes, int nColors, Piece.Shape[] allShapes, Piece.Color[] allColors) {
+    public Board(RandomRG random,  PositionMask positionMask, int randomCnt, int nShapes, int nColors, Piece.Shape[] allShapes, Piece.Color[] allColors) {
 	setName("Random board with " + randomCnt + " pieces, "+nShapes+" shapes, and " + nColors+" colors");
 	if (randomCnt>N*N) throw new IllegalArgumentException("Cannot fit " + randomCnt + " pieces on an "+ N + " square board!");
 	if (nShapes<0 || nShapes>allShapes.length) throw new IllegalArgumentException("Invalid number of shapes: " + nShapes);
 	if (nColors<0 || nColors>allColors.length) throw new IllegalArgumentException("Invalid number of colors: " + nColors);
-	
-	Vector<Integer> w  = random.randomSubsetOrdered(N*N, randomCnt); 
+
+	Vector<Integer> w = randomPositions(random,  positionMask, randomCnt);
 
 	Piece.Shape[] useShapes = new Piece.Shape[randomCnt];
 	Piece.Color[] useColors = new Piece.Color[randomCnt];	
@@ -338,6 +339,24 @@ public class Board {
 	    }
 	}
     }
+
+    /** Creates a list of n positions on the board, randomly selected
+	either all over the board, or within the constraints given
+	by positionMask */
+    private Vector<Integer> randomPositions(RandomRG random,PositionMask positionMask, int n) {
+	if (positionMask != null && positionMask.allPiecesMustBeHere != null){
+	    Vector<Integer> q  = random.randomSubsetOrdered(positionMask.allPiecesMustBeHere.length, n);
+	    Vector<Integer> w = new Vector();
+	    for(int j: q) {
+		w.add( positionMask.allPiecesMustBeHere[ q.get(j) ]);
+	    }
+	    return w;
+	} 
+	Vector<Integer> w  = random.randomSubsetOrdered(N*N, n);
+	    
+	return w;
+    }
+
 
 
     /** Produces an array of pieces with N*N elements, with nulls
