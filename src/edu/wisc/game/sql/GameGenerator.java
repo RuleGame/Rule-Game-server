@@ -130,7 +130,7 @@ abstract public class GameGenerator {
     private void initPositionMask() {
 	positionMask = new PositionMask(testing, condRules);
 	if (!positionMask.hasPositionMask) positionMask = null;
-	System.out.println("# positionMask=" + positionMask);
+	//System.out.println("# positionMask=" + positionMask);
     }
 
     /** For Captive server, to be priented via JSON Reflect. */

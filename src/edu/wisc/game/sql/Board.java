@@ -198,16 +198,15 @@ public class Board {
     
     /** The simple constructor, creates a random board with a given number  
      of pieces, using the 4 legacy colors. */
-    public Board(RandomRG random, int randomCnt) {
+    public Board(RandomRG random, PositionMask positionMask, int randomCnt) {
 	setName("Random board with " + randomCnt + " pieces");
 	Piece.Shape[] shapes = 	Piece.Shape.legacyShapes;
 	Piece.Color[] colors = 	Piece.Color.legacyColors;
 	if (randomCnt>N*N) throw new IllegalArgumentException("Cannot fit " + randomCnt + " pieces on an "+ N + " square board!");
-
-	Vector<Integer> w  = random.randomSubsetOrdered(N*N, randomCnt); 
+	Vector<Integer> w = randomPositions(random,  positionMask, randomCnt);
 	
 	for(int i=0; i<randomCnt; i++) {
-	    Pos pos = new Pos(w.get(i)+1);
+	    Pos pos = new Pos(w.get(i));
 	    
 	    Piece p =new Piece( shapes[random.nextInt(shapes.length)],
 				colors[random.nextInt(colors.length)],
@@ -348,12 +347,12 @@ public class Board {
     private Vector<Integer> randomPositions(RandomRG random,PositionMask positionMask, int n) {
 	if (positionMask != null && positionMask.allPiecesMustBeHere != null){
 	    Vector<Integer> q  = random.randomSubsetOrdered(positionMask.allPiecesMustBeHere.length, n);
-	    System.out.println("# Selecting at these indexes from 'must': " + Util.joinNonBlank(",", q));
+	    //System.out.println("# Selecting at these indexes from 'must': " + Util.joinNonBlank(",", q));
 	    Vector<Integer> w = new Vector();
 	    for(int j: q) {
 		w.add( positionMask.allPiecesMustBeHere[ j ]);
 	    }
-	    System.out.println("# Selected these positions: " + Util.joinNonBlank(",", w));
+	    //System.out.println("# Selected these positions: " + Util.joinNonBlank(",", w));
 	    return w;
 	} 
 	Vector<Integer> w  = random.randomSubsetOrdered(N*N, n); // [0..N^2-1]
