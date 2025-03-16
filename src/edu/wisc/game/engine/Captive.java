@@ -62,23 +62,7 @@ public class Captive {
 					    // Vector<String> simpleRuleSetName
 					    ) throws IOException,  RuleParseException, ReflectiveOperationException, IllegalInputException{
 	GameGenerator gg = buildGameGenerator2(ht, argv);
-
-	String condTrain = ht.getOption("condTrain",null);
-	String condTest = ht.getOption("condTest",null);
-	boolean testing = (condTest!=null);
-	File condFile = null;
-	
-	if (condTrain!=null) {
-	    if (testing) throw new IllegalInputException("Cannot specify condTrain and condTest in the same run. Just choose one initial mode!");
-	    condFile = new File(condTrain);
-	} else if (testing) {
-	    condFile = new File(condTest);
-	}
-		
-	if (condFile!=null) {   
-	    gg.setConditions(testing, AllRuleSets.read(condFile));
-	}
-
+	gg.setConditionsFromHT(ht);
 	return gg;
     }
 
@@ -89,11 +73,8 @@ public class Captive {
 
 	
 	long seed = ht.getOptionLong("seed", 0L);
-	//if (seed != 0L) Board.initRandom(seed);
-
 	final RandomRG random= (seed != 0L)? new RandomRG(seed): new RandomRG();
   	
-	//System.out.println("output mode=" +  outputMode);
 	int ja=0;
 	if (argv.length<1) throw new IllegalInputException("No params specified");
 	String fname = argv[ja++];
@@ -114,23 +95,26 @@ public class Captive {
 
 
 	if (argv.length<2) throw new IllegalInputException("No params specified");
-	String b = argv[ja++];
 
 	//System.out.println("isR=" + isR+"; fname=" + fname);
 	
 	if (f.getName().endsWith(".csv")) { // Trial list file + row number
-	    TrialList trialList = new TrialList(f);
-	    int rowNo = Integer.parseInt(b);
-	    if (rowNo<=0 || rowNo> trialList.size())   throw new IllegalInputException("Invalid row number (" + rowNo+ "). Row numbers should be positive, and should not exceed the size of the trial list ("+trialList.size()+")");
-	    ParaSet para = trialList.elementAt(rowNo-1);
-	    return  GameGenerator.mkGameGenerator(random, para);
 
-	} else if (b.indexOf(".")>=0) { // Rule file + initial board file
+		// argv[ja:...] can contain either  (trialListFile, rowNo), or (nPieceRanges, ...)
+ 
+		return RandomGameGenerator.buildFromArgv(random, null, ht, argv, ja-1);
+
+	}
+
+	String b = argv[ja++];
+	if (b.indexOf(".")>=0) { // Rule file + initial board file
 	    File bf = new File(b);
 	    Board board = Board.readBoard(bf);
 	    return new TrivialGameGenerator(random, new Game(AllRuleSets.read(f), board));
 	} else { // Rule file + numeric params
 	    try {
+		// argv[ja:...] can contain either  (trialListFile, rowNo), or (nPieceRanges, ...)
+ 
 		return RandomGameGenerator.buildFromArgv(random, f, ht, argv, ja-1);
 	    } catch(IllegalArgumentException ex) {
 		throw ex;
@@ -187,7 +171,7 @@ public class Captive {
 	
 	ParseConfig ht = new ParseConfig();
 
-	// allows seed=... , colors=.... etc among argv
+	// allows seed=... , colors=..., condTrain=... etc among argv
 	argv = ht.enrichFromArgv(argv);
 
 	//System.out.println("output=" +  ht.getOption("output", null));

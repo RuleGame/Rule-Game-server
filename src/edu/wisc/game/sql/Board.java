@@ -420,11 +420,14 @@ public class Board {
 	JsonObject obj = jsonReader.readObject();
 	jsonReader.close();
 
+	//System.err.println("DEBUG: Have read the JSON object:\n" + obj);
+	
 	Board board = new Board();
 	JsonToJava.json2java(obj, board);
 
-	//System.err.println("Have imported the board:\n" + 
-	// JsonReflect.reflectToJSONObject(board, true));	
+	// crowd shows fine
+	System.err.println("DEBUG: Have imported the board:\n" + 
+	JsonReflect.reflectToJSONObject(board, true));	
 
 	return board;
     }

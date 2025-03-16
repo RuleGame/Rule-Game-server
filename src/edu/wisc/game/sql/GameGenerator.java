@@ -99,7 +99,7 @@ abstract public class GameGenerator {
 					nColorsRange, para.shapes, para.colors);
 	}
 	gg.para = para;
-
+	gg.setConditionsFromParaSet(para);
 	return gg;
     }
 
@@ -159,6 +159,51 @@ abstract public class GameGenerator {
 	}
 
     }
+
+    /** Sets the constraints if they are specified in the command-line
+	options
+	@param ht contains command-line options */
+    public void setConditionsFromHT(ParseConfig ht) throws IOException, IllegalInputException, RuleParseException {
+	
+	String condTrain = ht.getOption("condTrain",null);
+	String condTest = ht.getOption("condTest",null);
+	boolean testing = (condTest!=null);
+	File condFile = null;
+	
+	if (condTrain!=null) {
+	    if (testing) throw new IllegalInputException("Cannot specify condTrain and condTest in the same run. Just choose one initial mode!");
+	    condFile = new File(condTrain);
+	} else if (testing) {
+	    condFile = new File(condTest);
+	}
+		
+	if (condFile!=null) {   
+	    setConditions(testing, AllRuleSets.read(condFile));
+	}
+    }
+
     
+    /** Sets the constraints if they are specified in the parameter set
+	@param para Parameter set */
+    public void setConditionsFromParaSet(ParaSet para) throws IOException, IllegalInputException, RuleParseException
+    {
+	
+	String condTrain = para.getString("condTrain",null);
+	String condTest = para.getString("condTest",null);
+	boolean testing = (condTest!=null);
+	File condFile = null;
+	
+	if (condTrain!=null) {
+	    if (testing) throw new IllegalInputException("Cannot specify condTrain and condTest in the same run. Just choose one initial mode!");
+	    condFile = Files.condFile(condTrain);
+	} else if (testing) {
+	    condFile = Files.condFile(condTest);
+	}
+		
+	if (condFile!=null) {   
+	    setConditions(testing, AllRuleSets.read(condFile));
+	}
+    }
+
     
 }

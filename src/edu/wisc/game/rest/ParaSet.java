@@ -319,6 +319,12 @@ public class ParaSet extends HashMap<String, Object> {
 
     }
 
+    public String getString(String key, String defVal) {
+	String s = (String)get(key);
+	if (s==null || s.trim().equals("")) return defVal;
+	return s.trim();
+    }
+
     public int getInt(String key) {
 	Integer o = (Integer)get(key);
 	if (o==null) throw new IllegalArgumentException("Parameter set has no variable named "+key);

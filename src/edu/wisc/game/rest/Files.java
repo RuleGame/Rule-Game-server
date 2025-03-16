@@ -463,6 +463,14 @@ public class Files {
 	return new File(inputDir, "gemini");
     }
 
+    /** @param condFileName Relative to /opt/w2020/game-data/cond
+     */
+    public static File condFile(String condFileName) throws IOException {
+	if (condFileName==null || condFileName.equals("")) throw new IOException("Constraint file name not specified");
+	return inputFile(condFileName, "cond", ".txt");
+    }
+
+    
 }
 
     

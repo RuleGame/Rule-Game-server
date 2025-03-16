@@ -3,7 +3,7 @@
   <body>
     <h1>Creating initial boards with a random board generator</h1>
 
-<div align="center"><em>Updated 2024-11-24 for ver 6.045</em></div>
+<div align="center"><em>Updated 2025-03-16 for ver 7.009</em></div>
     
     <p>When <a href="sop-experiment.html">creating an experiment plan</a>, you need to give a thought to where intial boards are coming from.
 
@@ -22,7 +22,7 @@
 <p>The script resides on our server host in <code>/home/vmenkov/w2020/game/scripts/random-boards.sh</code>; you can use it in that location. (Don't copy it into your own directory, as it relies on its location to find JAR files etc). It will be found on at a similar location in your directory tree if you follow the  <a href="deploy.html">SOP instructions for checking  out and building the server code</a> on your own machine. The script is to be used as follows:
 
 <pre>
-/home/vmenkov/w2020/game/scripts/random-boards.sh <em>out-dir number-of-boards objects-range  shapes-range  colors-range [shapes-list colors-list]</em>
+/home/vmenkov/w2020/game/scripts/random-boards.sh <em>out-dir number-of-boards objects-range  shapes-range  colors-range [shapes-list colors-list] [options]</em>
 </pre>
 
 Here,
@@ -34,6 +34,7 @@ Here,
   <li>colors-range = the number of different colors to be used on the board. (A positive integer or a range)
   <li>shapes-list = unless you want to use the 4 legacy shapes and 4 legacy colors, use this parameter to specify the list from which shapes are to be drawn. Wildcards are allowed. (A single-quoted semicolon-separated list, e.g. <tt>'camel;cat;duck'</tt>, or <tt>'arrows/*;rainbows/*'</tt>).
   <li>colors-list =  unless you want to use the 4 legacy colors, use this parameter to specify the list from which colors are to be drawn. (A single-quoted semicolon-separated list, e.g. <tt>'red;pink;orange;mauve'</tt>). As with any colors, the colors mentioned here must exist in the color map on your server.
+  <li>options = include <tt>condTrain</tt> or <tt>condTest</tt>, which can be used for position constraints in the same way as in <a href="captive.html#cond">the Captive Game Server</a>
 </ul>
 
 <p>

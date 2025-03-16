@@ -93,11 +93,14 @@ public class RandomGameGenerator extends GameGenerator {
 
     /** Builds a RandomGameGenerator from command-line arguments. Used in Captive Game Server, and for various other tools, such as the command-line random board generator.
 	@param f If specified, this is the rule set file to use. It can be null, if you just need the generator to create boards, and not to play a game.
-	@param ja Use argv[ja:...]
+	@param ja Use argv[ja:...]. This can contain either  (trialListFile, rowNo), or (nPieceRanges, ...)
      */
     public static GameGenerator buildFromArgv(RandomRG _random, File f, ParseConfig ht, String[] argv, int ja) throws IOException, RuleParseException, IllegalInputException, ReflectiveOperationException {
-	String b = argv[ja++];
 
+	System.out.println("#DEBUG: bFA, ht=\n" + ht);
+
+	
+	String b = argv[ja++];	
 	if (b.endsWith(".csv")) {
 	    File tf = new File(b);
 	    TrialList trialList = new TrialList(tf);
@@ -106,12 +109,14 @@ public class RandomGameGenerator extends GameGenerator {
 	    else if (ja+1 != argv.length) usage("Too many arguments");
 	    b = argv[ja++];
 	    int rowNo = Integer.parseInt(b);
+	    System.out.println("#DEBUG: tf=" + tf +", rowNo=" + rowNo);
 	    if (rowNo<=0 || rowNo> trialList.size())   throw new IllegalInputException("Invalid row number (" + rowNo+ "). Row numbers should be positive, and should not exceed the size of the trial list ("+trialList.size()+")");
 	    ParaSet para = trialList.elementAt(rowNo-1);
 	    return mkGameGenerator(_random,  para);
 	}
 
-	
+	System.out.println("#DEBUG: rule file=" + f +", nPieceRange=" + b);
+	    
 	int[] nPiecesRange = range(b);
 	if (nPiecesRange[0] <= 0) throw new IllegalArgumentException("Invalid number of pieces ("+b+"); The number of pieces must be positive");
 
@@ -153,6 +158,11 @@ public class RandomGameGenerator extends GameGenerator {
     public static void main(String[] argv) throws IOException,  RuleParseException, ReflectiveOperationException, IllegalInputException{ 
 
 	ParseConfig ht = new ParseConfig();
+
+	// allows seed=... , colors=..., condTrain=... etc among argv
+	argv = ht.enrichFromArgv(argv);
+
+	
 	int ja =0;
 	if (argv.length<3) usage(null);
 	String dirName = argv[ja++];
@@ -166,7 +176,8 @@ public class RandomGameGenerator extends GameGenerator {
 	DecimalFormat fmt =new DecimalFormat(fs);
 
 	GameGenerator gg=buildFromArgv(new RandomRG(), null, ht, argv, ja);
-	
+	gg.setConditionsFromHT(ht);
+
 	RandomRG random = new RandomRG();
 	for(int j=0; j<nb; j++) {
 	    File f = new File(dir, fmt.format(j) +".json");

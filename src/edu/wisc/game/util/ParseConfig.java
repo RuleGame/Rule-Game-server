@@ -376,16 +376,30 @@ public final class ParseConfig extends Hashtable<String,Object> {
     public String[] enrichFromArgv(String [] argv) {
 	Vector<String> v = new Vector<>();
 	Pattern p = Pattern.compile("([a-zA-Z_-][a-zA-Z_\\.-]*)=(.+)");
-	for(String s: argv) {
-	    Matcher m = p.matcher(s.trim());
+	Pattern p2 = Pattern.compile("([a-zA-Z_-][a-zA-Z_\\.-]*)=");
+	for(int j=0; j< argv.length; j++) {
+	    String s =argv[j].trim();
+	    Matcher m = p.matcher(s);
 	    //System.out.println("# arg is '"+s+"'; match=" + m.matches() +", match0=" + p0.matcher(s.trim()).matches());
 
+	    // name=value
 	    if (m.matches()) {
 		String key=m.group(1), text=m.group(2);
 		put(key, text2obj(text));
-	    } else {
-		v.add(s);
+		continue;
 	    }
+
+	    // name= value
+	    m = p2.matcher(s);
+
+	    if (m.matches() && j+1 < argv.length) {
+		String key=m.group(1), text=argv[ ++j];
+		put(key, text2obj(text));
+		continue;
+	    }
+
+	    
+	    v.add(s);
 	}
 	return v.toArray(new String[0]);
     }
@@ -402,8 +416,16 @@ public final class ParseConfig extends Hashtable<String,Object> {
 	} catch(Exception ex) {}
 	return text;
     }
-    
-	/** 
+
+    public String toString() {
+	Vector<String> v  = new Vector<>();
+	for(String key: keySet()) {
+	    v.add(key + " --> " + get(key));	   
+	}
+	return String.join("\n", v);
+    }
+
+    /** 
 	 * Purely for testing.
 	 */
 	static public void main(String argv[]) throws FileNotFoundException, IOException {
