@@ -53,13 +53,15 @@ public ReplayedEpisode(String _episodeId, ParaSet _para, Game game,
 	
     }
 
-    /** The player knowledge obtained by failed attempts on the current board */
+    /** The player knowledge obtained by failed attempts on the current board.
+	Indexed by j (piece number in the Episode's array)
+     */
     private BitSet failedPicks = new BitSet();    
     private Vector<BitSet> failedMoves=new Vector<>();
-    private BitSet movesFor(int pos) {	
- 	if (failedMoves.size()<=pos) failedMoves.setSize(pos+1);
-	BitSet b = failedMoves.get(pos);
-	if (b==null) failedMoves.set(pos, b = new BitSet(NBU));
+    private BitSet movesForJ(int j) {	
+ 	if (failedMoves.size()<=j) failedMoves.setSize(j+1);
+	BitSet b = failedMoves.get(j);
+	if (b==null) failedMoves.set(j, b = new BitSet(NBU));
 	return b;
    }
 
@@ -126,24 +128,25 @@ public ReplayedEpisode(String _episodeId, ParaSet _para, Game game,
 	    }
 	} else {
 	    // The player's knowledge has increased
-	    int pos = pick.getPos();
+	    int j = findJ(pick);
+	    
 	    if (pick instanceof Move) {
 		// In the show-movables mode, only movable pieces are taken into account.
 		// Ideally, this conditional is not even needed, since in the show-movables
 		// mode the GUI client should not even allow the client to attempt moving
 		// an immovable piece. But we have the condition just in case the client
 		// does not behaves quite right; and also for the HTML Play.
-		if (!weShowAllMovables() ||  ruleLine.isMoveable[pos]) {
-		    BitSet b = movesFor(pos);
+		if (!weShowAllMovables() ||  ruleLine.isJMoveable[j]) {
+		    BitSet b = movesForJ(j);
 		    Move move = (Move)pick;
 		    b.set(move.getBucketNo());
-		    if (b.cardinality()==NBU) failedPicks.set(pos);
+		    if (b.cardinality()==NBU) failedPicks.set(j);
 		}
 	    } else {
-		failedPicks.set(pos);
+		failedPicks.set(j);
 		// A failed pick prohibits all NBU=4 moves for this piece, too!
-		BitSet b = movesFor(pos);
-		for(int j=0; j<NBU; j++) b.set(j);
+		BitSet b = movesForJ(j);
+		b.set(0, NBU);
 	    }
 	    
 	}

@@ -266,6 +266,10 @@ public class Piece  implements Serializable {
     @XmlElement 
     public void setY(int _y) { y = _y; }
 
+    public Board.Pos xgetPos() {
+	return new Board.Pos(x,y);  
+    }
+    
     public Integer getDropped() { return dropped; }
     @XmlElement
     public void setDropped(Integer _dropped) { dropped = _dropped; }

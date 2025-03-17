@@ -55,8 +55,18 @@ public class Episode {
     /** A Pick instance describes the act of picking a piece, without 
 	specifying its destination */
     public static class Pick {
+	/** Creation mode */
+	//enum Mode { BY_ID, BY_POS};
+	
 	/** The position of the piece being moved, in the [1:N*N] range */
 	public final int pos;
+
+	Pick(Piece _piece) {
+	    piece = _piece;
+	    pieceId = (int)piece.getId();
+	    pos = piece.xgetPos().num();	    
+	}
+
 	Pick(int _pos) { pos = _pos; }
 	public Pick(Pos  pos) { this(pos.num()); }
 	int pieceId = -1;
@@ -101,6 +111,11 @@ public class Episode {
 	public Move(Pos pos, Pos bu) {
 	    this(pos.num(), bu.bucketNo());
 	}
+	Move(Piece _piece, int b) {
+	    super(_piece);
+	    bucketNo = b;
+	}
+
 	public String toString() {
 	    return "MOVE " + pos + " " +new Pos(pos) +	" to B" + bucketNo+", code=" + code;
 	}
@@ -117,15 +132,49 @@ public class Episode {
     /** The current board: an array of N*N+1 elements (only positions
 	[1..N*N] are used), with nulls for empty cells and non-nulls
 	for positions where pieces currently are. */
+    //@Transient
+    //private Piece[] pieces = null;
+    //public Piece[] getPieces() { return  pieces;}
+
+    /** An array of game pieces currently on the board. No nulls in this
+	array. Access to anything by scanning the whole thing */
     @Transient
-    private Piece[] pieces = null;
-    public Piece[] getPieces() { return  pieces;}
+    private Vector<Piece> values = new Vector<>();
+    public Vector<Piece> getValues() { return  values;}
+
+
+    /** Where in the values array do we have a game piece with the specified id? */
+    private int findJforId(long id) {
+	for(int j=0; j<values.size(); j++) {
+	    if (values.get(j).getId()==id) return j;
+	}
+	throw new IllegalArgumentException("Board has no game piece with id=" + id);
+    }
+
+    /** Where in the values array do we have a game piece referred to by this Pick or Move? (The match is by piece ID) */ 
+    protected int findJ(Pick pick) {
+	return findJforId(pick.getPieceId());
+    }
+
+    /** What pieces, if any, are in the specified cell? */
+    private int[] findJforPos(int pos) {
+	return findJforPos(pos, values);
+    }
+    static int[] findJforPos(int pos,  Vector<Piece> values) {
+	Vector<Integer> v = new Vector<>();
+	for(int j=0; j<values.size(); j++) {
+	    if (values.get(j).pos().num()==pos) v.add(j);
+	}
+	int [] a = new int[v.size()];
+	for(int k=0; k<a.length; k++) a[k] = v.get(k);
+	return a;
+    }
     
     /** Pieces are moved into this array once they are removed from the board.
 	This is only shown in web UI.
      */
     @Transient
-    private Piece[] removedPieces = new Piece[Board.N*Board.N + 1];
+    private Vector<Piece> removedValues = new Vector<>();
 
     /** The cost of a pick in terms of the cost of a move. EpisodeInfo 
 	overrides this method, making use of ParaSet */
@@ -219,7 +268,7 @@ public class Episode {
 	    ourGlobalCounter = row.globalCounter;
 	    ourCounter = new int[row.size()];
 	    for(int i=0; i<ourCounter.length; i++) ourCounter[i] = row.get(i).counter;
-	    doneWith = exhausted() || !buildAcceptanceMap();
+	    doneWith = exhausted() || !buildJAcceptanceMap();
 	    //   	    System.err.println("Constructed "+ this+"; exhausted()=" + exhausted()+"; doneWith =" + doneWith);
 	}
 
@@ -231,8 +280,12 @@ public class Episode {
 	/** The bit acceptanceMap[pos][atomNo][dest] is set if the
 	    rule atom[atomNo] in the current rule line allows moving
 	    the piece currently at pos to bucket[dest]. */
-	private BitSet[][] acceptanceMap = new BitSet[Board.N*Board.N+1][];
-	protected boolean[] isMoveable = new boolean[Board.N*Board.N+1];
+	//private BitSet[][] acceptanceMap = new BitSet[Board.N*Board.N+1][];
+	//protected boolean[] isMoveable = new boolean[Board.N*Board.N+1];
+	/** Based on the pieces currently on the board; the arrays are coordinate with values[] */
+	  
+	private BitSet[][] jAcceptanceMap = null;//new BitSet[][];
+	protected boolean[] isJMoveable = null; //new boolean[];
 
 	/** Computes the probability that a random pick by a frugal player
 	    (one who does not repeat a failed pick) would be successful.
@@ -248,13 +301,11 @@ public class Episode {
 	 */
 
 	double computeP0ForPicks(int knownFailedPicks) {
-	    int countPieces=0, countMovablePieces=0;
-	    for(int pos=0; pos<pieces.length; pos++) {		
-		if (pieces[pos]!=null) {
-		    countPieces++;
-		    if (isMoveable[pos]) countMovablePieces++;
-		}		
-	    }
+	    int countPieces=values.size(), countMovablePieces=0;
+	    for(int j=0; j<values.size(); j++) {
+		if (isJMoveable[j]) countMovablePieces++;
+	    }		
+	    
 	    if ( knownFailedPicks>countPieces) throw new IllegalArgumentException("You could not have really tried to pick " +knownFailedPicks+ " pieces, as the board only has " +  countPieces);
 	    countPieces -= knownFailedPicks;
 	    if (countMovablePieces>countPieces)  throw new IllegalArgumentException("What, there are more moveable pieces (" + countMovablePieces+") than not-tested-yet pieces ("+countPieces+")?");
@@ -266,20 +317,18 @@ public class Episode {
 	     player would be successful */
   	double computeP0ForMoves(int knownFailedMoves) {
 	    int countMoves=0, countAllowedMoves=0;
-	    for(int pos=0; pos<pieces.length; pos++) {		
-		if (pieces[pos]!=null) {
-		    // In the show-movables ("fixed") mode, only movable pieces are taken into account
-		    if (weShowAllMovables() && !isMoveable[pos]) continue;
+	    for(int j=0; j<values.size(); j++) {
+		// In the show-movables ("fixed") mode, only movable pieces are taken into account
+		if (weShowAllMovables() && !isJMoveable[j]) continue;
 
 		    
-		    countMoves += 4;
+		countMoves += 4;
 
-		    BitSet a = new BitSet();
-		    for(BitSet z: acceptanceMap[pos]) {
-			a.or(z);
-		    }
-		    countAllowedMoves += a.cardinality();
-		}		
+		BitSet a = new BitSet();
+		for(BitSet z: jAcceptanceMap[j]) {
+		    a.or(z);
+		}
+		countAllowedMoves += a.cardinality();
 	    }
 	    if ( knownFailedMoves>countMoves) throw new IllegalArgumentException("You could not have really tried to make " +knownFailedMoves+ " moves, as the board only has enough pieces for " +  countMoves);
 	    countMoves -= knownFailedMoves;
@@ -295,20 +344,18 @@ public class Episode {
 	 */
 	double computeR(Move move) {
 
-	    //int countMoves=0, countAllowedMoves=0;
 	    int countMovables = 0, countTryMovables = 0;
-	    for(int pos=0; pos<pieces.length; pos++) {		
-		if (pieces[pos]!=null) {
-		    // In the show-movables ("fixed") mode, only movable pieces are taken into account
-		    if (weShowAllMovables() && !isMoveable[pos]) continue;
+	    for(int j=0; j<values.size(); j++) {
+		// In the show-movables ("fixed") mode, only movable pieces are taken into account
+		if (weShowAllMovables() && !isJMoveable[j]) continue;
 
-
-		    if (isMoveable[pos]) countMovables ++;
-		    countTryMovables ++;
-		}		
-	    }
-
-	    int countDest = pieceMovableTo(move.getPos()).cardinality();
+		
+		if (isJMoveable[j]) countMovables ++;
+		countTryMovables ++;
+	    }		
+	    
+	    int j = findJforId( move.getPieceId());
+	    int countDest = pieceJMovableTo(j).cardinality();
 	    
 	    double inverseProbRandom = countTryMovables * 4;
 	    double inverseProbFullKnowledge = countMovables * countDest;
@@ -320,13 +367,14 @@ public class Episode {
 	    
 	}
 
-	/** At this moment, which buckets accept the game piece from cell pos? */
-	private BitSet pieceMovableTo(int pos) {
+	/** At this moment, which buckets accept the game piece with the
+	    specified number?
+
+	    @param j index into values[] */
+	private BitSet pieceJMovableTo(int j) {
 	    BitSet r = new BitSet(); // to what buckets this piece can go
-	    if (pieces[pos]!=null) {
-		for(BitSet b: acceptanceMap[pos]) {
-		    r.or(b);
-		}
+	    for(BitSet b: jAcceptanceMap[j]) {
+		r.or(b);
 	    }
 	    return r;
 	}
@@ -334,11 +382,12 @@ public class Episode {
 	/** For each piece, where can it go? (OR of all currently
 	    active rules).  The acceptanceMap needs to be computed
 	    before this method can be called.
+	    @return an array with 1 element per game piece, coordinated with values[]
 	 */
-	BitSet[] moveableTo() {
-	    BitSet[] q =  new BitSet[Board.N*Board.N+1];
-	    for(int pos=0; pos<pieces.length; pos++) {
-		q[pos] = pieceMovableTo(pos);
+	BitSet[] jMoveableTo() {
+	    BitSet[] q =  new BitSet[values.size()];
+	    for(int j=0; j<values.size(); j++) {
+		q[j] = pieceJMovableTo(j);
 	    }
 	    return q;	    
 	}
@@ -350,27 +399,22 @@ public class Episode {
 	
 	    @return true if at least one piece can be moved
 	*/
-	private boolean buildAcceptanceMap() {
-
+	private boolean buildJAcceptanceMap() {
 	    EligibilityForOrders eligibleForEachOrder = new EligibilityForOrders(rules, onBoard());
 	    //System.err.println("eligibileForEachOrder=" + eligibleForEachOrder);
 
-	    
-	    for(int pos=0; pos<pieces.length; pos++) {
-		if (pieces[pos]==null) {
-		    acceptanceMap[pos]=null;
-		} else {
-		    acceptanceMap[pos] = pieceAcceptance(pieces[pos], eligibleForEachOrder);
-		}
+
+	    for(int j=0; j<values.size(); j++) {
+		jAcceptanceMap[j] = pieceAcceptance(values.get(j), eligibleForEachOrder);
+		
 	    }
 
 	    // modify the acceptance map as per any post-orders
-	    PostOrder.applyPostPosToAcceptanceMap(rules, row,  acceptanceMap);
+	    PostOrder.applyPostPosToAcceptanceMap(rules, row,  jAcceptanceMap);
 
 
-	    
-	    for(int pos=0; pos<pieces.length; pos++) {
-		isMoveable[pos]= !pieceMovableTo(pos).isEmpty();		
+	    for(int j=0; j<values.size(); j++) {
+		isJMoveable[j]= !pieceJMovableTo(j).isEmpty();		
 	    }
 	    return  isAnythingMoveable();
 	}
@@ -378,49 +422,13 @@ public class Episode {
 	/** Looks at the current acceptance map to see if any of the 
 	    currently present pieces can be moved */
 	private boolean isAnythingMoveable() {
-	    for(int pos=0; pos<pieces.length; pos++) {
-		if (pieces[pos]!=null && isMoveable[pos]) return true;
+	    for(int j=0; j<values.size(); j++) {
+		if (isJMoveable[j]) return true;
 	    }
 	    return false;	
 	}
 
 	
-	/** (OBSOLETE) Into which buckets, if any, can the specified piece be moved?
-	    (The original method, used in GS 1 thru 4. It has become obsolete
-	    in GS 5, because more complex logic can be used now)
-	   @return result[j] is the set of buckets into which the j-th
-	   rule (atom) allows the specified piece to be moved.
-	*/
-	private BitSet[] pieceAcceptance0(Piece p,  EligibilityForOrders eligibleForEachOrder) {
-	    
-	    //	    System.err.println("DEBUG: pieceAcceptance(p=" +p+")");
-	    if (doneWith) throw new IllegalArgumentException("Forgot to scroll?");
-
-	    if (row.globalCounter>=0 &&  ourGlobalCounter<=0)  throw new IllegalArgumentException("Forgot to set the scroll flag on 0 counter!");
-	    
-	    // for each rule, the list of accepting buckets
-	    BitSet whoAccepts[] = new BitSet[row.size()];
-	    Pos pos = p.pos();
-	    BucketVarMap  varMap = memory.new  BucketVarMap(p);
-
-	    //System.err.println("varMap=" + varMap);
-
-	    
-	    for(int j=0; j<row.size(); j++) {
-		whoAccepts[j] = new BitSet(NBU);
-		RuleSet.Atom atom = row.get(j);
-		if (atom.counter>=0 && ourCounter[j]==0) continue;
-		if (!atom.acceptsColorShapeAndProperties(p, null)) continue;
-		//System.err.println("Atom " +j+" shape and color OK");
-		if (!atom.plist.allowsPicking(pos.num(), eligibleForEachOrder)) continue;
-		//System.err.println("DEBUG: Atom " +j+" allowsPicking ok");
-		BitSet d = atom.bucketList.destinations( varMap);
-		whoAccepts[j].or(d);
-		//System.err.println("pieceAcceptance(p=" +p+"), dest="+d+", whoAccepts["+j+"]=" + 	whoAccepts[j]);
-	    }
-	    return whoAccepts;
-	}
-
 	/** For GS 5. Here, we try each bucket separately, as the
 	    destination bucket may affect some variables.
 
@@ -447,9 +455,6 @@ public class Episode {
 	    
 		BucketVarMap2  varMap = memory.new BucketVarMap2(p, bucketNo);
 
-		//System.err.println("#DEBUG: varMap=" + varMap);
-		
-	    
 		for(int j=0; j<row.size(); j++) {
 		    RuleSet.Atom atom = row.get(j);
 		    if (atom.counter>=0 && ourCounter[j]==0) continue;
@@ -462,9 +467,11 @@ public class Episode {
 	    return whoAccepts;
 	}
 
+	
 	/** Sets the R-value of a pick/move */
 	private void callComputeR(Pick pick) {
-	    boolean movable = isMoveable[pick.pos];
+	    int j =  findJ(pick);
+	    boolean movable = isJMoveable[j];
 	    if (!movable) {  // immovable piece
 		pick.setRValue(0);
 	    } else if (!(pick instanceof Move)) {  // accepted pick
@@ -500,11 +507,25 @@ public class Episode {
 	    attemptCnt++;
 	    attemptSpent += (pick instanceof Move) ? 1.0: xgetPickCost();
 
-	    pick.piece =pieces[pick.pos];
-	    if (pick.piece==null) return pick.code=CODE.EMPTY_CELL;	    
-	    pick.pieceId = (int)pick.piece.getId();
 
-	    boolean movable = isMoveable[pick.pos];
+	    int j=-1;
+	    if (pick.getPieceId()>=0) { // modern client supplies piece ID
+		try {
+		    j = findJ(pick);
+		} catch(IllegalArgumentException ex) {
+		    return pick.code=CODE.INVALID_OBJECT_ID;
+		}
+	    } else {
+	        int[] jj = findJforPos(pick.pos);
+		if (jj.length==0) return pick.code=CODE.EMPTY_CELL;
+		else if (jj.length>0) return pick.code=CODE.MULTIPLE_OBJECTS_IN_CELL;
+		j = jj[0];
+		pick.pieceId = (int)values.get(j).getId();
+	    }
+	    
+	    pick.piece = values.get(j);
+
+	    boolean movable = isJMoveable[j];
 	    callComputeR(pick);
 
 	    if (!movable) {  // immovable piece
@@ -515,16 +536,16 @@ public class Episode {
 	    }
 	    Move move = (Move)pick;
 		
-	    BitSet[] r = acceptanceMap[move.pos];
+	    BitSet[] r = jAcceptanceMap[j];
 	    
 	    Vector<Integer> acceptingAtoms = new  Vector<>();
 	    Vector<String> v = new Vector<>();
-	    for(int j=0; j<row.size(); j++) {
-		if (r[j].get(move.bucketNo)) {
-		    v.add("" + j + "(c=" + ourCounter[j]+")");
-		    acceptingAtoms.add(j);
-		    if (ourCounter[j]>0) {
-			ourCounter[j]--;
+	    for(int i=0; i<row.size(); i++) {
+		if (r[i].get(move.bucketNo)) {
+		    v.add("" + i + "(c=" + ourCounter[i]+")");
+		    acceptingAtoms.add(i);
+		    if (ourCounter[i]>0) {
+			ourCounter[i]--;
 		    }
 		}
 	    }
@@ -539,16 +560,16 @@ public class Episode {
 
 	    // Remember where this piece was moved
 	    memory.enterMove(move.piece, move.bucketNo);
-
-	    pieces[move.pos].setBuckets(new int[0]); // empty the bucket list for the removed piece
-	    removedPieces[move.pos] = pieces[move.pos];
-	    removedPieces[move.pos].setDropped(move.bucketNo);
-	    pieces[move.pos] = null; // remove the piece
+	    pick.piece.setBuckets(new int[0]); // empty the bucket list for the removed piece
+	    
+	    values.remove(j);  // remove the piece
+	    removedValues.add(pick.piece);
+	    pick.piece.setDropped(move.bucketNo);
 	    //System.err.println("Removed piece from pos " + move.pos);
-		    
+
 	    // Check if this rule can continue to be used, and if so,
 	    // update its acceptance map
-	    doneWith = exhausted() || !buildAcceptanceMap();
+	    doneWith = exhausted() || !buildJAcceptanceMap();
 	    //System.err.println("doneWith=" + doneWith);
 	    
 	    //System.err.println("Episode.accept: move accepted. card=" + onBoard().cardinality());
@@ -571,11 +592,9 @@ public class Episode {
 		if (ourCounter[j]>0) return false;
 	    }
 	    return true;
-	}
-	
+	}	
     }
     
-  
     
     @Transient
     private OutputMode outputMode;
@@ -651,9 +670,9 @@ public class Episode {
 	Board b =  game.giveBoard();
 
 	nPiecesStart = b.getValue().size();
-	pieces = b.toPieceList();
-	doPrep();
-	
+	values = new Vector<>();
+	for(Piece p: b.getValue()) values.add(p);
+	doPrep();	
     }
 
     /** Return codes for the /move and /display API web API calls,
@@ -667,7 +686,8 @@ public class Episode {
 	    (stalemate). This means that the rule set is bad, and we
 	    owe an apology to the player */
 	    STALEMATE=2,
-	/** Move rejected, because there is no piece in the cell */
+	/** Move rejected, because there is no piece in the cell.
+	 */
 	    EMPTY_CELL= 3,
 	/** Move rejected, because this destination is not allowed.
 	    (Prior to GS 5.007, this code was also returned instead of
@@ -702,7 +722,12 @@ public class Episode {
 	// and not a MOVE	    
 	    JUST_A_DISPLAY = -8,
 	// A /pick or /move call made by a wrong player in a 2PG
-	    OUT_OF_TURN = -9;
+	    OUT_OF_TURN = -9,
+	// No game piece with specified ID exists
+	    INVALID_OBJECT_ID = -10,
+	// A /move or /pick call referencing a cell that has multiple pieces
+	    MULTIPLE_OBJECTS_IN_CELL  = -11;
+	    ;
 
 	/** This is used when comparing codes read from old
 	    transcripts and recomputed codes, to take into account
@@ -747,13 +772,13 @@ public class Episode {
     /** Creates a bit set with bits set in the positions where there are
 	pieces. The positions are, as usual, numbered 1 thru N^2.  */
     private BitSet onBoard() {
-	return onBoard(pieces);
+	return onBoard(values);
     }
     
-    static public BitSet onBoard(Piece pieces[]) {
+    static public BitSet onBoard(Vector<Piece> values) {
 	BitSet onBoard = new BitSet(Board.N*Board.N+1);
-	for(int i=0; i<pieces.length; i++) {
-	    if (pieces[i]!=null) onBoard.set(i);
+	for(Piece p: values) {
+	    onBoard.set(p.pos().num());
 	}
 	return onBoard;
     }
@@ -810,6 +835,7 @@ public class Episode {
     @Transient
     private Pick lastMove = null;
 
+    /// FIXME - who uses it and what does he need?
     public int getLastMovePos() {
 	return lastMove==null? -1:  lastMove.pos;
     }
@@ -822,7 +848,24 @@ public class Episode {
 	if (stalemate) {
 	    return CODE.STALEMATE;
 	}
-	if (move.pos<1 || move.pos>=pieces.length) return CODE.INVALID_POS;
+
+	int j=-1;
+	if (move.getPieceId()>=0) { // modern client supplies piece ID
+	    try {
+		j = findJ(move);
+	    } catch(IllegalArgumentException ex) {
+		return move.code=CODE.INVALID_OBJECT_ID;
+	    }
+	} else {
+	    if (move.pos<1 || move.pos>Board.N*Board.N) return CODE.INVALID_POS;
+	    int[] jj = findJforPos(move.pos);
+	    if (jj.length==0) return move.code=CODE.EMPTY_CELL;
+	    else if (jj.length>0) return move.code=CODE.MULTIPLE_OBJECTS_IN_CELL;
+	    j = jj[0];
+	    move.pieceId = (int)values.get(j).getId();
+	}
+	    
+	move.piece = values.get(j);
 
 	int code = ruleLine.accept(move);
 
@@ -857,32 +900,37 @@ public class Episode {
     */
     public String graphicDisplay(boolean html) {
 
-	boolean[] isMoveable = ruleLine.isMoveable;
+	boolean[] isJMoveable = ruleLine.isJMoveable;
 
 	if (isNotPlayable()) {
 	    return "This episode must have been restored from SQL server, and does not have the details necessary to show the board";
 	}
 	
-	if (!html) return graphicDisplayAscii(pieces, getLastMovePos(),  weShowAllMovables(), isMoveable, html);
+	if (!html) return graphicDisplayAscii(values, lastMove,  weShowAllMovables(), isJMoveable, html);
 
 	String notation = HtmlDisplay.notation(weShowAllMovables());	
-	String display =HtmlDisplay.htmlDisplay(pieces, getLastMovePos(),  weShowAllMovables(), isMoveable, 80, false);
+	String display =HtmlDisplay.htmlDisplay(values, getLastMovePos(),  weShowAllMovables(), isJMoveable, 80, false);
 	String result = fm.td(display)  + fm.td("valign='top'", notation);
 	result = fm.tr(result);
 	result = fm.table("", result);
 	return result;
     }
+
+   
     
     /** Retired from the web game server; still used in Captive Game Server. */
     static public String graphicDisplayAscii(
-Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveable, 
+Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMoveable, 
 
 					boolean html) {
 
 	Vector<String> w = new Vector<>();
-
+	int m = maxCrowd(values);
+     
 	String div = "#---+";
-	for(int x=1; x<=Board.N; x++) div += "-----";
+	String seg = "--";
+	for(int k=0; k<m; k++) seg += "---";
+	for(int x=1; x<=Board.N; x++) div += seg;
 	w.add(div);
 	
 	
@@ -890,11 +938,21 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	    String s = "# " + y + " |";
 	    for(int x=1; x<=Board.N; x++) {
 		int pos = (new Pos(x,y)).num();
-		String z = html? "." :   " .";
-		if (pieces[pos]!=null) {
-		    Piece p = pieces[pos];
+	        int[] jj = findJforPos(pos, values);
+
+		//----
+		String[] icons = new String[m], paren=new String[m+1];
+		for(int i=0; i<m; i++) {
+		    icons[i] = "  ";
+		    paren[i] = " ";
+		}
+		icons[0] =  html? "." :   " .";
+		paren[m] = " ";
+
+		for(int i=0; i<m; i++) {
+		    Piece p = values.get(jj[i]);
 		    ImageObject io = p.getImageObject();
-		    z = (io!=null)? io.symbol() :  p.xgetShape().symbol();
+		    String z = (io!=null)? io.symbol() :  p.xgetShape().symbol();
 		    if (html) {
 			String color =  p.getColor();
 			if (color!=null) z=fm.colored( color.toLowerCase(), z);
@@ -903,13 +961,28 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 			Piece.Color color = p.xgetColor();
 			if (color!=null) z = color.symbol() + z;
 		    }
+		    icons[i] = z;
+
+
+		    if (lastMove != null && lastMove.getPieceId()==p.getId()) {
+			paren[i] = "[";
+			paren[i+1] = "]";
+		    }
+		    
 		}
 
-		z = (lastMovePos==pos) ?    "[" + z + "]" :
-		    isMoveable[pos]?     "(" + z + ")" :
-		    " " + z + " ";
+		if (lastMove != null && lastMove.pos==pos && lastMove.code == CODE.ACCEPT) {
+		    // put the brackets around a blank spot (or dot)
+		    int i = jj.length;
+		    paren[i] = "(";
+		    paren[i+1] = ")";
+		} 
 
-		s += " " + z;
+		s += " ";
+	        for(int i=0; i<m; i++) {
+		    s += paren[i] + icons[i];
+		}
+		s += icons[m];
 	    }
 	    w.add(s);
 	}
@@ -935,7 +1008,6 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	if (msg!=null) s += "\n" + msg;
 	out.println(s);
     }    
-    
 
     /** Returns the current board, or, on a restored-from-SQL-server episodes,
 	null (or empty board, to keep the client from crashing).
@@ -944,10 +1016,11 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	if (isNotPlayable()) {
 	    return cleared? new Board() : null;
 	} else {
-	    return new Board(pieces,
-			     (showRemoved?removedPieces:null),
-			     ruleLine.moveableTo());
+	    return new Board(values,
+			     (showRemoved?removedValues:null),
+			     ruleLine.jMoveableTo());
 	}
+	
     }
 
     /** Shows the current board (without removed [dropped] pieces) */
@@ -1087,14 +1160,29 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     private Pick formMove( int y, int x) {
 	Pos pos = new Pos(x,y);
 	Pick move = new Pick( pos.num());
-	return move;
+	return move;	
     }
+
+    private Pick formMove2( int pieceId) {
+	int j=findJforId(pieceId);
+	Pick move = new Pick( values.get(j));
+	return move;	
+    }
+
     
     /** Evaluate a pick attempt */
     public Display doPick(int y, int x, int _attemptCnt) throws IOException {
 	Display errorDisplay =inputErrorCheck1(y, x, _attemptCnt);
 	if (errorDisplay!=null) return errorDisplay;
 	Pick move = formMove(y,x);
+	int code = accept(move);
+	return new Display(code, move, mkDisplayMsg());
+    }
+
+    public Display doPick2(int pieceId, int _attemptCnt) throws IOException {
+	Display errorDisplay =inputErrorCheck1(1,1, _attemptCnt);
+	if (errorDisplay!=null) return errorDisplay;
+	Pick move = formMove2(pieceId);
 	int code = accept(move);
 	return new Display(code, move, mkDisplayMsg());
     }
@@ -1106,14 +1194,25 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 
 	Pos pos = new Pos(x,y), bu =  new Pos(bx, by);
 	int buNo=bu.bucketNo();
-	if (buNo<0 || buNo>=Board.buckets.length) {
+	if (buNo<0 || buNo>=NBU) {
 	    throw new IllegalArgumentException("Invalid bucket coordinates");
 	}
 	Move move = new Move(pos.num(), buNo);
 	return move;
     }
 
-    
+    private Pick formMove2( int pieceId, int bucketId) {
+	if (bucketId<0 || bucketId >= NBU) throw new IllegalArgumentException("Invalid input: bucket ID=" + bucketId);
+	if (pieceId<0) throw new IllegalArgumentException("Invalid pieceId=" + pieceId);
+
+	int j = findJforId(pieceId);
+	Piece p = values.get(j);
+
+	Move move = new Move(p, bucketId);
+	return move;
+    }
+
+	    
     /** Evaluate a move attempt
 	@param x the x-coordinate (1 thru 6) of the game piece the player tries to move
 	@param y the y-coordinate of the game piece the player tries to move
@@ -1127,6 +1226,20 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
 	Move move;
 	try {
 	    move = (Move)formMove(y,x,by,bx);
+	} catch(IllegalArgumentException ex) {
+	    return new Display(CODE.INVALID_ARGUMENTS, ex.getMessage());
+	}
+	int code = accept(move);
+	return new Display(code, move, mkDisplayMsg());
+    }
+
+
+    public Display doMove2(int pieceId, int bucketId, int _attemptCnt) throws IOException {
+	Display errorDisplay =inputErrorCheck1(1,1, _attemptCnt);
+	if (errorDisplay!=null) return errorDisplay;
+	Move move;
+	try {
+	    move = (Move)formMove(pieceId,bucketId);
 	} catch(IllegalArgumentException ex) {
 	    return new Display(CODE.INVALID_ARGUMENTS, ex.getMessage());
 	}
@@ -1314,7 +1427,21 @@ Piece[] pieces, int  lastMovePos, boolean weShowAllMovables, boolean[] isMoveabl
     }
 
     
-    public boolean[] positionsOfMoveablePieces() { return ruleLine.isMoveable;}
-    
+    public boolean[] positionsOfMoveablePieces() { return ruleLine.isJMoveable;}
+
+    /** @return maxPopulation of a cell */
+    static int maxCrowd(Vector<Piece> values) {
+	int pop[] = new int[Board.N * Board.N + 1];
+	for(Piece p: values) {
+	    int pos = p.pos().num();
+	    pop[pos]++;
+	}
+	int max = 0;
+	for(int x: pop) {
+	    if (max<x) max=x;
+	}
+	return max;
+	
+    }
     
 }

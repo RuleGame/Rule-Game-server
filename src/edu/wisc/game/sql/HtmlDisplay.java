@@ -27,10 +27,11 @@ public class HtmlDisplay {
 
 
     
-/** @param pieces An array of N*N values, with nulls for empty cells
+/** @param pieces A dense array with no nulls, like Board.values
     @param canMove If true, the player can make a move, so buttons will be enabled
  */
-    public static String htmlDisplay(Piece[] pieces, int lastMovePos, boolean weShowAllMovables, boolean[] isMoveable, int cellWidth, boolean canMove) {
+    public static String htmlDisplay(Vector<Piece> pieces,
+				     int lastMovePos, boolean weShowAllMovables, boolean[] isJMoveable, int cellWidth, boolean canMove) {
 
 
 	String result="";
@@ -59,18 +60,22 @@ public class HtmlDisplay {
 		for(Piece p: pieces) {
 		    if (p!=null && p.xgetColor()!=null) needBorder=true;
 		}		
+
 		
 		for(int x=1; x<=Board.N; x++) {
 		    int pos = (new Pos(x,y)).num();
+
+		    int[] jj = Episode.findJforPos(pos, pieces);
+
 		    //-- blank pieces are used to make sure that even
 		    //-- empty columns are of the same width as non-empty ones
 		    String sh = "BLANK";
 		    String hexColor = "#FFFFFF";
 		    ImageObject io = null;
 
-		    boolean nonBlank = (pieces[pos]!=null);
+		    boolean nonBlank = (jj.length>0);
 		    if (nonBlank) {
-			Piece p = pieces[pos];
+			Piece p = pieces.get( jj[0]);
 			io = p.getImageObject();		    
 			sh = (io!=null) ? io.key : p.xgetShape().toString();
 			hexColor = "#"+ (io!=null? "FFFFFF" : cm.getHex(p.xgetColor(), true));
@@ -102,7 +107,7 @@ public class HtmlDisplay {
 		    boolean isLastMovePos =  (lastMovePos==pos);
 		    boolean padded=true;
 		
-		    if (isMoveable[pos] && (weShowAllMovables || isLastMovePos)) {
+		    if (isJMoveable[pos] && (weShowAllMovables || isLastMovePos)) {
 			z="(" + z + ")";
 			padded=true;
 		    }

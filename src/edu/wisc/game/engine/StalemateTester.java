@@ -108,15 +108,14 @@ public class StalemateTester {
 	    describes it as a plain N*N+1 array of pieces, so that it 
 	    can be converted to a regular Board object.
 	 */
-	Piece[] mono() {
+	Vector<Piece> mono() {
 	    if (size()!=Board.N*Board.N + 1) throw new IllegalArgumentException("Wrong size");
-	    Piece pieces[] = new Piece[size()];
+	    Vector<Piece> pieces = new Vector<>();
 	    for(int j=0; j<size(); j++) {
 		HashSet<Piece> g = get(j);
 		if (g.size()==0) {
-		    pieces[j]=null;
 		} else if (g.size()==1) {
-		    pieces[j]=g.iterator().next();
+		    pieces.add(g.iterator().next());
 		} else {
 		    throw new IllegalArgumentException("Cannot represent multi-Board as mono-Board, because of multiple pieces in cell "+j);
 					       

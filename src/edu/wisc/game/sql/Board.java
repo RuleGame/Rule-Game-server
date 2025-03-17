@@ -144,7 +144,8 @@ public class Board {
     //@OneToMany(cascade={CascadeType.ALL},        orphanRemoval = true)
     //@JoinColumn(name = "board_id")
 
-
+    
+    /** All the game pieces currently on the board. In certain modes, this array may include removed pieces too, with the "dropped" flag. */
      @OneToMany(
         mappedBy = "board",
         cascade = CascadeType.ALL,
@@ -186,16 +187,6 @@ public class Board {
 	value = new Vector<>();
     }
 
-    //    static public RandomRG random = new RandomRG();
-
-    /** This can be called on startup (from main()) if we want to initialize
-	the random number generator with a specific seed */
-    /*
-//    static public void initRandom(long seed) {
-//	random = new RandomRG(seed);	
-//    }
-    */
-    
     /** The simple constructor, creates a random board with a given number  
      of pieces, using the 4 legacy colors. */
     public Board(RandomRG random, PositionMask positionMask, int randomCnt) {
@@ -288,7 +279,6 @@ public class Board {
      */
     public Board(RandomRG random, int randomCnt,
 		  ImageObject.Generator imageGenerator
-		 //String[] allImages
 		 ) {
 	setName("Random board with " + randomCnt + " pieces, drawn from "+ imageGenerator.describeBrief());
 	if (randomCnt>N*N) throw new IllegalArgumentException("Cannot fit " + randomCnt + " pieces on an "+ N + " square board!");
@@ -309,33 +299,33 @@ public class Board {
 
     /** Creates a board object to be sent out (as JSON) to the player's client,
 	based on the current state of the episode.
-	@param pieces The pieces still on the board. (An array of N^2 elements,
+
+	
+	
+	@param pieces The pieces still on the board. (A dense array).
 	with nulls)
 	@param removedPieces If not null, these pieces will also be included
 	into the generated Board object, with the flag dropped=true. This is 
 	what the GUI client wants.
 	@param moveableTo Specifies to which buckets each piece can be moved to.
+	Coordinayed with "pieces"
      */
-    public Board(Piece[] pieces, Piece[] removedPieces, BitSet[] moveableTo) {
-	
-	for(Piece p: pieces) {
-	    if (p!=null) {
-		BitSet bi = (moveableTo!=null)?  moveableTo[ p.pos().num()]:
-		    new BitSet();
-		int[] z = new int[bi.cardinality()];
-		int k=0;
-		for(int i=0; i<bi.length(); i++) {
-		    if (bi.get(i)) z[k++] = i;
-		}
-		p.setBuckets(z);
-		value.add(p);
+    public Board(Vector<Piece> pieces, Vector<Piece> removedPieces, BitSet[] moveableTo) {
+
+	for(int j=0; j < pieces.size(); j++) {
+	    Piece p = pieces.get(j);
+	    BitSet bi = (moveableTo!=null)?  moveableTo[j]:   new BitSet();
+	    int[] z = new int[bi.cardinality()];
+	    int k=0;
+	    for(int i=0; i<bi.length(); i++) {
+		if (bi.get(i)) z[k++] = i;
 	    }
+	    p.setBuckets(z);
+	    value.add(p);
 	}
 	if (removedPieces==null) return;
 	for(Piece p: removedPieces) {
-	    if (p!=null) {
-		value.add(p);
-	    }
+	    value.add(p);
 	}
     }
 
@@ -375,7 +365,6 @@ public class Board {
 	    ww[j] =pos;
 	    Arrays.sort(ww);
 	    w = Util.array2vector(ww);
-	} else {
 	}
 		   
 	return w;
@@ -471,6 +460,7 @@ public class Board {
 
     /** Creates an array with N*N+1 elements, where the element in position
 	j represents the game piece, if any, in cell No. j. */
+    /*
     public Piece[] toPieceList() {
 	Piece[] pieces = new Piece[N*N + 1];
 	for(Piece p: getValue()) {
@@ -479,6 +469,7 @@ public class Board {
 	}
 	return pieces;
     }
+    */
 
 
     

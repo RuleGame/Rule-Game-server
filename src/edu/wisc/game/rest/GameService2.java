@@ -112,18 +112,26 @@ public class GameService2 {
     @Produces(MediaType.APPLICATION_JSON)
     public EpisodeInfo.ExtendedDisplay move(@DefaultValue("null") @FormParam("playerId") String playerId,
 					    @FormParam("episode") String episodeId,
-					    @FormParam("x") int x,
-					    @FormParam("y") int y,
-					    @FormParam("bx") int bx,
-					    @FormParam("by") int by,
+					    @DefaultValue("-1") @FormParam("x") int x, 
+					    @DefaultValue("-1") @FormParam("y") int y,
+					    @DefaultValue("-1") @FormParam("bx") int bx,
+					    @DefaultValue("-1") @FormParam("by") int by,
+
+					    @DefaultValue("-1") @FormParam("id") int pieceId,
+					    @DefaultValue("-1") @FormParam("bid") int bucketId,
+					    
 					    @FormParam("cnt") int cnt
 				)   {
 	EpisodeInfo.ExtendedDisplay rv=null;
 	EpisodeInfo epi = EpisodeInfo.locateEpisode(episodeId);
 	if (epi==null) return dummyEpisode.dummyDisplay(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID: "+episodeId);
 	if (playerId!=null && playerId.equals("null")) playerId=null;
-	try {	    
-	    return rv=epi.doMove(playerId, y,x,by,bx, cnt);
+	try {
+	    if (pieceId >= 0) { // modern (GS 8)
+		return rv=epi.doMove2(playerId, pieceId, bucketId, cnt);
+	    } else { // legacy (GS 1 thru GS 7)
+		return rv=epi.doMove(playerId, y,x,by,bx, cnt);
+	    }
 	} catch( Exception ex) {
 	    System.err.print("/move: " + ex);
 	    ex.printStackTrace(System.err);
@@ -139,8 +147,9 @@ public class GameService2 {
     @Produces(MediaType.APPLICATION_JSON)
     public EpisodeInfo.ExtendedDisplay move(@DefaultValue("null") @FormParam("playerId") String playerId,
 					    @FormParam("episode") String episodeId,
-					    @FormParam("x") int x,
-					    @FormParam("y") int y,
+					    @DefaultValue("-1") @FormParam("x") int x, 
+					    @DefaultValue("-1") @FormParam("y") int y,
+					    @DefaultValue("-1") @FormParam("id") int pieceId,
 					    @FormParam("cnt") int cnt
 					    )   {
 	EpisodeInfo.ExtendedDisplay rv=null;
@@ -148,7 +157,11 @@ public class GameService2 {
 	if (epi==null) return dummyEpisode.dummyDisplay(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID: "+episodeId);
 	if (playerId!=null && playerId.equals("null")) playerId=null;
 	try {	    
-	    return rv=epi.doPick(playerId, y,x, cnt);
+	    if (pieceId >= 0) { // modern (GS 8)
+		return rv=epi.doPick2(playerId, pieceId, cnt);
+	    } else { // legacy (GS 1 thru GS 7)
+		return rv=epi.doPick(playerId, y,x, cnt);
+	    }
 	} catch( Exception ex) {
 	    System.err.print("/pick: " + ex);
 	    ex.printStackTrace(System.err);

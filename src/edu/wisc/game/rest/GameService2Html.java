@@ -320,14 +320,18 @@ path = /w2020/game-data/GameService2Html/playerHtml
     @Produces(MediaType.TEXT_HTML)
     public String moveHtml(@FormParam("playerId") String playerId,
 			   @FormParam("episode") String episodeId,
-			   @FormParam("x") int x,
-			   @FormParam("y") int y,
-			   @FormParam("bx") int bx,
-			   @FormParam("by") int by,
+			   @DefaultValue("-1") @FormParam("x") int x, 
+			   @DefaultValue("-1") @FormParam("y") int y,
+			   @DefaultValue("-1") @FormParam("bx") int bx,
+			   @DefaultValue("-1") @FormParam("by") int by,
+			   
+			   @DefaultValue("-1") @FormParam("id") int pieceId,
+			   @DefaultValue("-1") @FormParam("bid") int bucketId,
+
 			   @FormParam("cnt") int cnt,
 			   final @Context UriInfo uriInfo){
 			   
-	Episode.Display d=move(playerId, episodeId,x,y,bx,by,cnt);
+	Episode.Display d=move(playerId, episodeId,x,y,bx,by,pieceId, bucketId, cnt);
 	
 	String title= episodeId +" : MOVE " + x + " " +y + " " + bx + " " + by;
 
@@ -348,12 +352,15 @@ path = /w2020/game-data/GameService2Html/playerHtml
     @Produces(MediaType.TEXT_HTML)
     public String pickHtml(@FormParam("playerId") String playerId,
 			   @FormParam("episode") String episodeId,
-			   @FormParam("x") int x,
-			   @FormParam("y") int y,
+
+			   @DefaultValue("-1") @FormParam("x") int x, 
+			   @DefaultValue("-1") @FormParam("y") int y,
+			   @DefaultValue("-1") @FormParam("id") int pieceId,
+
 			   @FormParam("cnt") int cnt,
 			   final @Context UriInfo uriInfo){
 			   
-	Episode.Display d=move(playerId, episodeId,x,y,cnt);
+	Episode.Display d=move(playerId, episodeId,x,y,pieceId,cnt);
 	
 	String title= episodeId +" : PICK " + x + " " +y;
 
@@ -486,7 +493,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	boolean[] isMoveable = epi.positionsOfMoveablePieces();
 	
 	String notation = HtmlDisplay.notation(epi.weShowAllMovables());	
-	String leftSide  =HtmlDisplay.htmlDisplay(epi.getPieces(), epi.getLastMovePos(),  epi.weShowAllMovables(), isMoveable, 40, canMove);
+	String leftSide  =HtmlDisplay.htmlDisplay(epi.getValues(), epi.getLastMovePos(),  epi.weShowAllMovables(), isMoveable, 40, canMove);
 
 	String rightSide = notation;
 	//------------

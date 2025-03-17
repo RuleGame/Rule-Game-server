@@ -355,12 +355,36 @@ public class EpisodeInfo extends Episode {
 	return d;
     }
 
+
+    public ExtendedDisplay doMove2(String moverPlayerId, int pieceId, int bucketId, int _attemptCnt) throws IOException {
+	ExtendedDisplay d = checkWhoseTurn(moverPlayerId);
+	if (d!=null) return d;
+	Display _q = super.doMove2(pieceId,  bucketId, _attemptCnt);
+
+	Pick move = _q.pick;
+	move.mover = player.getRoleForPlayerId(moverPlayerId);
+	d = processMove(_q, move);
+	return d;
+    }
+
+    
     /** Like /doMove, but without a destination (because the game piece was not movable,
 	or because the player just dropped in on the board) */
     public ExtendedDisplay doPick(String moverPlayerId, int y, int x, int _attemptCnt) throws IOException {
 	ExtendedDisplay d = checkWhoseTurn(moverPlayerId);
 	if (d!=null) return d;
 	Display _q = super.doPick(y, x, _attemptCnt);
+	Pick pick = _q.pick;
+	pick.mover = player.getRoleForPlayerId(moverPlayerId);
+
+	d = processMove(_q, pick);
+	return d;
+    }
+    
+    public ExtendedDisplay doPick2(String moverPlayerId,  int pieceId, int _attemptCnt) throws IOException {
+	ExtendedDisplay d = checkWhoseTurn(moverPlayerId);
+	if (d!=null) return d;
+	Display _q = super.doPick2(pieceId, _attemptCnt);
 	Pick pick = _q.pick;
 	pick.mover = player.getRoleForPlayerId(moverPlayerId);
 
