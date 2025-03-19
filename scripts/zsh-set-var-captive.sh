@@ -14,6 +14,7 @@
 
 #-- The directory where this script is (e.g. ~/w2020/game/scripts)
 sc=`dirname $0`
+echo "sc=$sc"
 #-- $h is the main directory (~/w2020/game)
 h=`(cd $sc/..; pwd)`
 
