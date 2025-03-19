@@ -53,7 +53,13 @@ public class Board {
 	    bucket is at (0,0), the corner cell is at (1,1). */
 	public final int x, y;
 
-
+	public boolean equals(Object o) {
+	    if (!(o instanceof Pos)) return false;
+	    Pos p = (Pos)o;
+	    return x==p.x && y==p.y;
+	}
+	    
+	
 	/** Counted by row (left-to-right), rows being arranged bottom-to-top.
 	    In other words, the lexicoraphic order for the (y,x) pairs. The
 	    ordering for cells is 1-based.
@@ -132,8 +138,16 @@ public class Board {
     final static public Pos buckets[] = {
 	new Pos(0, N+1), 	new Pos(N+1, N+1), 
 	new Pos(N+1, 0), 	new Pos(0, 0) };
-	
 
+    /** Which bucket is in this position? */
+    public int findBucketId(Pos p) {
+	for(int j=0; j<buckets.length; j++) {
+	    if (p.equals(buckets[j])) return j;
+	}
+	return -1;
+    }
+	
+    
     
     @Id 
     @GeneratedValue(strategy=GenerationType.IDENTITY)

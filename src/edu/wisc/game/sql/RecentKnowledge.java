@@ -15,7 +15,10 @@ import edu.wisc.game.sql.Episode.CODE;
 import jakarta.xml.bind.annotation.XmlElement; 
 
 
-/** An auxiliary data structure, used as an element of EpisodeInfo.ExtendedDisplay, used to sent to the GUI client, in a concise form, the info about the knowledge of the board acquired through the recent players' actions (those since the last board change, i.e the last successful move). This is used to make it easier for the client to display the feedback about the recent actions.  */
+/** An auxiliary data structure, used as an element of EpisodeInfo.ExtendedDisplay, used to sent to the GUI client, in a concise form, the info about the knowledge of the board acquired through the recent players' actions (those since the last board change, i.e the last successful move). This is used to make it easier for the client to display the feedback about the recent actions.
+
+<p>Starting GS 8.0, the key is the piece ID, rather than position (as it was in 7.*).
+ */
 
 public class RecentKnowledge extends HashMap<Integer, RecentKnowledge.Datum> {
 
@@ -25,8 +28,10 @@ public class RecentKnowledge extends HashMap<Integer, RecentKnowledge.Datum> {
     // {"bucketNo":0,"pos":26,"pieceId":3,"code":4,"rValue":2.0,"mover":0},
     static public class Datum {
 	/** Which game piece */
+	final int pieceId;	
 	final int pos;	
 	public int getPos() { return pos; }
+	public int getPieceId() { return pieceId; }
 	/** Set to true if we know it can be moved (due to a successful pick) */
 	boolean knownMovable=false;
 	public boolean getKnownMovable() {
@@ -43,11 +48,15 @@ public class RecentKnowledge extends HashMap<Integer, RecentKnowledge.Datum> {
 	public int [] getDeniedBuckets() {
 	    return deniedBuckets;
 	}
-	Datum(int _pos) { pos = _pos; }
+	Datum(int id, int _pos) {
+	    pieceId = id;
+	    pos = _pos;
+	}
 	void update( Episode.Pick pick ) {
 	    if (pick instanceof Episode.Move) { // Move, and it had better be failed
 		Episode.Move move = (Episode.Move) pick;
-		if (move.code != CODE.DENY) throw new IllegalArgumentException("Successful moves are not 'recent knowledge'");
+		if (move.code == CODE.ACCEPT) throw new IllegalArgumentException("Successful moves are not 'recent knowledge'. Code="+move.code);
+		if (move.code != CODE.DENY) Logging.info("Useless transcript entry does not add to 'recent knowledge'. Code="+move.code);
 		int b = move.bucketNo;
 		if (deniedBuckets==null) {
 		    deniedBuckets=new int[] { b };
@@ -78,9 +87,9 @@ public class RecentKnowledge extends HashMap<Integer, RecentKnowledge.Datum> {
 
 	for(int j=lastChangeAt+1; j<transcript.size(); j++) {
 	    Episode.Pick pick = transcript.elementAt(j);
-	    int pos = pick.pos;
-	    Datum datum = get(pos);
-	    if (datum == null) put(pos, datum=new Datum(pos));
+	    int id = pick.getPieceId();
+	    Datum datum = get(id);
+	    if (datum == null) put(id, datum=new Datum(id, pick.pos));
 	    datum.update(pick);
 	}
 

@@ -84,7 +84,7 @@ public class BoardDisplayService {
      */
     public static String doBoard(Board board,  int cellWidth) {	    
 	boolean[] isJMoveable = new boolean[board.getValue().size()];	
-	return HtmlDisplay.htmlDisplay(board.getValue(), -1, false, isJMoveable, cellWidth, false);
+	return HtmlDisplay.htmlDisplay(board.getValue(), null, false, isJMoveable, cellWidth, false);
     }
 
     /** The ASCII-art alternative */

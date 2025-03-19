@@ -426,9 +426,12 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	    } else {
 		//Vector<String> v= new Vector<>();
 		String s = "";
-		for(int i=0; i<faces.size(); i++) {
-		    String q = faceImg(faces.get(i), facesMine.get(i));
-		    s += q;
+		if (faces==null) s += "NO FACES?";
+		else {
+		    for(int i=0; i<faces.size(); i++) {
+			String q = faceImg(faces.get(i), facesMine.get(i));
+			s += q;
+		    }
 		}
 		body += fm.para(s);
 	    }
@@ -490,10 +493,10 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	//-----------
 
 	boolean canMove = (d.getFinishCode()==Episode.FINISH_CODE.NO) && !d.getMustWait();
-	boolean[] isMoveable = epi.positionsOfMoveablePieces();
-	
+	boolean[] isJMoveable = epi.getIsJMoveable();
+		
 	String notation = HtmlDisplay.notation(epi.weShowAllMovables());	
-	String leftSide  =HtmlDisplay.htmlDisplay(epi.getValues(), epi.getLastMovePos(),  epi.weShowAllMovables(), isMoveable, 40, canMove);
+	String leftSide  =HtmlDisplay.htmlDisplay(epi.getValues(), epi.getLastMove(),  epi.weShowAllMovables(), isJMoveable, 40, canMove);
 
 	String rightSide = notation;
 	//------------

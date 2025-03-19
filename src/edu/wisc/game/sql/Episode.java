@@ -403,7 +403,7 @@ public class Episode {
 	    EligibilityForOrders eligibleForEachOrder = new EligibilityForOrders(rules, onBoard());
 	    //System.err.println("eligibileForEachOrder=" + eligibleForEachOrder);
 
-
+	    jAcceptanceMap = new BitSet[values.size()][];
 	    for(int j=0; j<values.size(); j++) {
 		jAcceptanceMap[j] = pieceAcceptance(values.get(j), eligibleForEachOrder);
 		
@@ -412,7 +412,7 @@ public class Episode {
 	    // modify the acceptance map as per any post-orders
 	    PostOrder.applyPostPosToAcceptanceMap(rules, row,  jAcceptanceMap);
 
-
+	    isJMoveable = new boolean[values.size()];
 	    for(int j=0; j<values.size(); j++) {
 		isJMoveable[j]= !pieceJMovableTo(j).isEmpty();		
 	    }
@@ -834,7 +834,11 @@ public class Episode {
     /** The last pick or move (successful or failed attempt) */
     @Transient
     private Pick lastMove = null;
+    public Pick getLastMove() {
+	return lastMove;
+    }
 
+    
     /// FIXME - who uses it and what does he need?
     public int getLastMovePos() {
 	return lastMove==null? -1:  lastMove.pos;
@@ -860,7 +864,7 @@ public class Episode {
 	    if (move.pos<1 || move.pos>Board.N*Board.N) return CODE.INVALID_POS;
 	    int[] jj = findJforPos(move.pos);
 	    if (jj.length==0) return move.code=CODE.EMPTY_CELL;
-	    else if (jj.length>0) return move.code=CODE.MULTIPLE_OBJECTS_IN_CELL;
+	    else if (jj.length>1) return move.code=CODE.MULTIPLE_OBJECTS_IN_CELL;
 	    j = jj[0];
 	    move.pieceId = (int)values.get(j).getId();
 	}
@@ -909,7 +913,7 @@ public class Episode {
 	if (!html) return graphicDisplayAscii(values, lastMove,  weShowAllMovables(), isJMoveable, html);
 
 	String notation = HtmlDisplay.notation(weShowAllMovables());	
-	String display =HtmlDisplay.htmlDisplay(values, getLastMovePos(),  weShowAllMovables(), isJMoveable, 80, false);
+	String display =HtmlDisplay.htmlDisplay(values, getLastMove(),  weShowAllMovables(), isJMoveable, 80, false);
 	String result = fm.td(display)  + fm.td("valign='top'", notation);
 	result = fm.tr(result);
 	result = fm.table("", result);
@@ -926,6 +930,13 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 
 	Vector<String> w = new Vector<>();
 	int m = maxCrowd(values);
+	if (m==0) m=1;
+
+	// may need an extra space for the last-removed piece, to put brackewts around it
+	if (lastMove != null && lastMove instanceof Move && lastMove.code == CODE.ACCEPT) {
+	    int m1 = findJforPos(lastMove.pos, values).length + 1;
+	    if (m1>m) m = m1;
+	}
      
 	String div = "#---+";
 	String seg = "--";
@@ -949,7 +960,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 		icons[0] =  html? "." :   " .";
 		paren[m] = " ";
 
-		for(int i=0; i<m; i++) {
+		for(int i=0; i<jj.length; i++) {
 		    Piece p = values.get(jj[i]);
 		    ImageObject io = p.getImageObject();
 		    String z = (io!=null)? io.symbol() :  p.xgetShape().symbol();
@@ -982,7 +993,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	        for(int i=0; i<m; i++) {
 		    s += paren[i] + icons[i];
 		}
-		s += icons[m];
+		s += paren[m];
 	    }
 	    w.add(s);
 	}
@@ -1157,13 +1168,13 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	return null;
     }
 
-    private Pick formMove( int y, int x) {
+    private Pick formPick( int y, int x) {
 	Pos pos = new Pos(x,y);
 	Pick move = new Pick( pos.num());
 	return move;	
     }
 
-    private Pick formMove2( int pieceId) {
+    private Pick formPick2( int pieceId) {
 	int j=findJforId(pieceId);
 	Pick move = new Pick( values.get(j));
 	return move;	
@@ -1174,7 +1185,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     public Display doPick(int y, int x, int _attemptCnt) throws IOException {
 	Display errorDisplay =inputErrorCheck1(y, x, _attemptCnt);
 	if (errorDisplay!=null) return errorDisplay;
-	Pick move = formMove(y,x);
+	Pick move = formPick(y,x);
 	int code = accept(move);
 	return new Display(code, move, mkDisplayMsg());
     }
@@ -1182,7 +1193,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     public Display doPick2(int pieceId, int _attemptCnt) throws IOException {
 	Display errorDisplay =inputErrorCheck1(1,1, _attemptCnt);
 	if (errorDisplay!=null) return errorDisplay;
-	Pick move = formMove2(pieceId);
+	Pick move = formPick2(pieceId);
 	int code = accept(move);
 	return new Display(code, move, mkDisplayMsg());
     }
@@ -1227,6 +1238,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	try {
 	    move = (Move)formMove(y,x,by,bx);
 	} catch(IllegalArgumentException ex) {
+	    ex.printStackTrace(System.err);
 	    return new Display(CODE.INVALID_ARGUMENTS, ex.getMessage());
 	}
 	int code = accept(move);
@@ -1239,8 +1251,9 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	if (errorDisplay!=null) return errorDisplay;
 	Move move;
 	try {
-	    move = (Move)formMove(pieceId,bucketId);
+	    move = (Move)formMove2(pieceId,bucketId);
 	} catch(IllegalArgumentException ex) {
+	    ex.printStackTrace(System.err);
 	    return new Display(CODE.INVALID_ARGUMENTS, ex.getMessage());
 	}
 	int code = accept(move);
@@ -1309,6 +1322,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 		out.println("# Commands available:");
 		out.println("# FEATURES");
 		out.println("# MOVE row col bucket_row bucket_col");
+		out.println("# MOVE piece_id bucket_id");
 		out.println("# NEW");
 		out.println("# DISPLAY");
 		out.println("# DISPLAYFULL");
@@ -1360,15 +1374,17 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	    } else if (cmd.equals("MOVE")) {
 		
 		tokens.remove(0);
-		if (tokens.size()!=4) {
+		int q[] = new int[tokens.size()];
+		if (tokens.size()!=4 && tokens.size()!=2) {
 		    respond(CODE.INVALID_ARGUMENTS, "# Invalid input");
 		    continue;
 		}
-		int q[] = new int[4];
-		// y x By Bx
 
+		// y x By Bx
+		// pieceId bucketId
+		
 		boolean invalid=false;
-		for(int j=0; j<4; j++) {
+		for(int j=0; j<q.length; j++) {
 		    if (tokens.get(j).type!=Token.Type.NUMBER) {
 			respond(CODE.INVALID_ARGUMENTS, "# Invalid input: "+tokens.get(j));
 			invalid=true;
@@ -1379,7 +1395,10 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 		}
 		if (invalid) continue;
 
-		Display mr = doMove(q[0], q[1], q[2], q[3], attemptCnt);
+		Display mr =
+		    (q.length==2)?
+		    doMove2(q[0], q[1],  attemptCnt):
+		    doMove(q[0], q[1], q[2], q[3], attemptCnt);
 		respond(mr.code, "# " + mr.errmsg);
 		if (outputMode!=OutputMode.BRIEF) out.println(displayJson());
 		if (outputMode==OutputMode.FULL) out.println(graphicDisplay());
@@ -1427,7 +1446,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
     
-    public boolean[] positionsOfMoveablePieces() { return ruleLine.isJMoveable;}
+    public boolean[] getIsJMoveable() { return ruleLine.isJMoveable;}
 
     /** @return maxPopulation of a cell */
     static int maxCrowd(Vector<Piece> values) {

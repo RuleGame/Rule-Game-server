@@ -137,7 +137,10 @@ public class GameService2 {
 	    ex.printStackTrace(System.err);
 	    return rv=epi.dummyDisplay(Episode.CODE.INVALID_ARGUMENTS, ex.getMessage());
 	} finally {
-	    Logging.info("move(epi=" +  episodeId +", ("+x+","+y+") to ("+bx+","+by+"), cnt="+cnt+"), return " + JsonReflect.reflectToJSONObject(rv, true));
+	    Object s = (rv==null)? "null" :
+		JsonReflect.reflectToJSONObject(rv, true);
+
+	    Logging.info("move(epi=" +  episodeId +", ("+x+","+y+") to ("+bx+","+by+"), cnt="+cnt+"), return " + s);
 	}
     }
 
