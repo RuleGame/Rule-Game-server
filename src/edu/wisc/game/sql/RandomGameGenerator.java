@@ -97,7 +97,7 @@ public class RandomGameGenerator extends GameGenerator {
      */
     public static GameGenerator buildFromArgv(RandomRG _random, File f, ParseConfig ht, String[] argv, int ja) throws IOException, RuleParseException, IllegalInputException, ReflectiveOperationException {
 
-	System.out.println("#DEBUG: bFA, ht=\n" + ht);
+	//System.out.println("#DEBUG: bFA, ht=\n" + ht);
 
 	
 	String b = argv[ja++];	
