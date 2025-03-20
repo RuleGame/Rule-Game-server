@@ -40,7 +40,7 @@ function doBucket_old(bx,by) {
 //-- For GS 8.0
 function doBucket(bid) {
     const fid = document.getElementById("moveFormId");
-    const fbid = document.getElementById("moveFormY");
+    const fbid = document.getElementById("moveFormBid");
 
     fbid.value = bid;
 
@@ -48,7 +48,7 @@ function doBucket(bid) {
 	window.alert("No use to click on a bucket before a game piece has been selected!");
     } else {
 	//window.alert("Will submit");
-	document.getElementById("moveForm2").submit();  
+	document.getElementById("moveForm").submit();  
     }
 }
 

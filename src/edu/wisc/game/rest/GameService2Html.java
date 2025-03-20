@@ -333,7 +333,12 @@ path = /w2020/game-data/GameService2Html/playerHtml
 			   
 	Episode.Display d=move(playerId, episodeId,x,y,bx,by,pieceId, bucketId, cnt);
 	
-	String title= episodeId +" : MOVE " + x + " " +y + " " + bx + " " + by;
+	String title= episodeId +" : MOVE";
+	if (pieceId>=0) {
+	    title += " piece " + pieceId + " to bucket " + bucketId;
+	} else {
+	    title += " " 	+ x + " " +y + " " + bx + " " + by;
+	}
 
 	String body = "";
 	body += fm.para(title);
@@ -518,13 +523,13 @@ path = /w2020/game-data/GameService2Html/playerHtml
 		formA += fm.hidden("playerId", playerId);
 		formA += fm.hidden("episode", episodeId);
 		formA += fm.hidden("cnt", ""+d.getNumMovesMade());
-		formA += "Piece (x=" + fm.input2("x",  "id='moveFormX' size='2'") + 
-		    ", y=" + fm.input2("y",  "id='moveFormY' size='2'" ) +  ")" + fm.br();
+		formA += "Piece (id=" + fm.input2("id",  "id='moveFormId' size='3'") + 
+		    ")" + fm.br();
 		
 		String form = formA;
 		// 
-		form += "Bucket (x=" + fm.input2("bx", "id='moveFormBX' size='2'") +
-		    ", y=" + fm.input2("by",  "id='moveFormBY' size='2'")	+")"+   fm.br();
+		form += "Bucket no. " + fm.input2("bid", "id='moveFormBid' size='2'") +
+		    ")"+   fm.br();
 		form += "<input type='submit'>";
 		form = fm.wrap("form", "id=\"moveForm\" method='post' action='moveHtml'", form);
 		form = fm.h3( "Make a move!") +

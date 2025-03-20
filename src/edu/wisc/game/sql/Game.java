@@ -27,6 +27,9 @@ public class Game {
     public Board initialBoard;
     /** If starting with a random board, the number of pieces to use. Only used if initialBoard==null */
     public int randomObjCnt, nShapes=0, nColors=0;
+    public boolean crowded=false;
+    public boolean getCrowded() { return crowded; }
+    public void setCrowded(boolean _crowded) { crowded = _crowded; }
 
     /** For games with a random board generator and S+C game pieces, the set of shapes from
 	which shapes of game pieces are pulled. Null otherwise (i.e. for IPB games, or
@@ -83,21 +86,19 @@ public class Game {
     }
     /** A game with image-and-properties-based objects used as game pieces */
     public Game(RandomRG _random, RuleSet _rules, int _randomObjCnt,
-		ImageObject.Generator _imageGenerator
-		//String[] _allImages
-		) {
+		ImageObject.Generator _imageGenerator		) {
 	random = _random;
 	rules = _rules;
 	randomObjCnt = _randomObjCnt;
 	allShapes = null;
 	allColors = null;
 	imageGenerator = _imageGenerator;
-	//	allImages = _allImages;
     }
 
     private RuleSet condRules=null;
     private boolean testing = false;
     private PositionMask positionMask = null;
+    
     
     /** For the training/testing restrictions on boards, as introduced in GS 6.010. See email discusion with Paul on 2023-03-08, and captive.html#cond
      */
@@ -106,8 +107,6 @@ public class Game {
 	condRules = _condRules;
 	positionMask = _positionMask;
     }
-
-    
 
     
     /** Produces the board for this game. If additional train/test conditions
@@ -130,7 +129,7 @@ public class Game {
 	    if (imageGenerator!=null) {
 		b = new Board(random,  randomObjCnt,  imageGenerator);
 	    } else { 
-		b = new Board(random,  positionMask, randomObjCnt, nShapes, nColors, allShapes, allColors);
+		b = new Board(random,  positionMask, randomObjCnt, nShapes, nColors, allShapes, allColors, crowded);
 	    }
 
 	    if (condRules == null ||

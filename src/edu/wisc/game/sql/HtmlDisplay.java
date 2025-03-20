@@ -47,7 +47,7 @@ public class HtmlDisplay {
 	    if (y==Board.N+1 || y==0) { // top or bottom row, with buckets and column numbers
 		for(int x=0; x<=Board.N+1; x++) {
 		    if (x==0 || x==Board.N+1) {
-			int bid = Board.findBucketId( Board.Pos(x,y));
+			int bid = Board.findBucketId( new Pos(x,y));
 			
 			String a = ""+bid;
 			String s = "<button onclick=\"doBucket("+a+");\">B("+a+")</button>\n";
@@ -104,11 +104,10 @@ public class HtmlDisplay {
 			z += "height='"+cellWidth+"' src=\"../../GetImageServlet?image="+ke+"\">";
 
 			if (canMove && nonBlank) { //-- make the image into a BUTTON
-			    String a = ""+x+","+y;
-			    String c = a.replaceAll(",", "_");
-			    String id = "Button"+c;
+			    String a = ""+p.getId();
+			    String id = "Button_"+a;
 			    String s = "<input type=\"radio\" name=\"Button\" class=\"ButtonState\"  id=\""+id+"\" value=\""+
-				a+"\"  onchange=\"selectXY("+a+");\"/>\n";
+				a+"\"  onchange=\"selectPiece("+a+");\"/>\n";
 			    s += "<label class=\"Button\" for=\""+id+"\">" + z + "</label>\n";
 			    z = s;
 			}
@@ -121,6 +120,7 @@ public class HtmlDisplay {
 
 			// show that either this piece is movable,
 			// or we have just removed a piece from here
+			if (nonBlank) z = "" + p.getId() + z;
 			if (i<jj.length?
 			    isJMoveable[jj[i]] && (weShowAllMovables || lastWasHere) :
 			    (lastMove!=null && lastMove.pos==pos)) {
@@ -145,7 +145,7 @@ public class HtmlDisplay {
 			String tr = fm.tr(String.join("", tds));
 			String zrows[] = { fm.row("", tr)};
 			String table = fm.table("", zrows);
-			v.add( table );
+			v.add( fm.td(table) );
 		    }
 		}
 		v.add(fm.td(""+y));		

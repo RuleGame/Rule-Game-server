@@ -140,7 +140,7 @@ public class Board {
 	new Pos(N+1, 0), 	new Pos(0, 0) };
 
     /** Which bucket is in this position? */
-    public int findBucketId(Pos p) {
+    public static int findBucketId(Pos p) {
 	for(int j=0; j<buckets.length; j++) {
 	    if (p.equals(buckets[j])) return j;
 	}
@@ -203,12 +203,12 @@ public class Board {
 
     /** The simple constructor, creates a random board with a given number  
      of pieces, using the 4 legacy colors. */
-    public Board(RandomRG random, PositionMask positionMask, int randomCnt) {
+    public Board(RandomRG random, PositionMask positionMask, int randomCnt, boolean crowded) {
 	setName("Random board with " + randomCnt + " pieces");
 	Piece.Shape[] shapes = 	Piece.Shape.legacyShapes;
 	Piece.Color[] colors = 	Piece.Color.legacyColors;
 	if (randomCnt>N*N) throw new IllegalArgumentException("Cannot fit " + randomCnt + " pieces on an "+ N + " square board!");
-	Vector<Integer> w = randomPositions(random,  positionMask, randomCnt);
+	Vector<Integer> w = randomPositions(random,  positionMask, randomCnt, crowded);
 	
 	for(int i=0; i<randomCnt; i++) {
 	    Pos pos = new Pos(w.get(i));
@@ -264,13 +264,13 @@ public class Board {
 	@param allShapes the set from which shapes are drawn
 	@param allColors the set from which colors are drawn
      */
-    public Board(RandomRG random,  PositionMask positionMask, int randomCnt, int nShapes, int nColors, Piece.Shape[] allShapes, Piece.Color[] allColors) {
+    public Board(RandomRG random,  PositionMask positionMask, int randomCnt, int nShapes, int nColors, Piece.Shape[] allShapes, Piece.Color[] allColors, boolean crowded) {
 	setName("Random board with " + randomCnt + " pieces, "+nShapes+" shapes, and " + nColors+" colors");
 	if (randomCnt>N*N) throw new IllegalArgumentException("Cannot fit " + randomCnt + " pieces on an "+ N + " square board!");
 	if (nShapes<0 || nShapes>allShapes.length) throw new IllegalArgumentException("Invalid number of shapes: " + nShapes);
 	if (nColors<0 || nColors>allColors.length) throw new IllegalArgumentException("Invalid number of colors: " + nColors);
 
-	Vector<Integer> w = randomPositions(random,  positionMask, randomCnt);
+	Vector<Integer> w = randomPositions(random,  positionMask, randomCnt, crowded);
 
 	Piece.Shape[] useShapes = new Piece.Shape[randomCnt];
 	Piece.Color[] useColors = new Piece.Color[randomCnt];	
@@ -348,9 +348,13 @@ public class Board {
 	by positionMask
 	@return a vector of n values in the [1..N^2] range
     */
-    private Vector<Integer> randomPositions(RandomRG random,PositionMask positionMask, int n) {
+    private Vector<Integer> randomPositions(RandomRG random,PositionMask positionMask, int n, boolean crowded) {
 	if (positionMask != null && positionMask.allPiecesMustBeHere != null){
-	    Vector<Integer> q  = random.randomSubsetOrdered(positionMask.allPiecesMustBeHere.length, n);
+	    Vector<Integer> q  =
+		crowded?
+		random.randomVector(positionMask.allPiecesMustBeHere.length,n):
+
+		random.randomSubsetOrdered(positionMask.allPiecesMustBeHere.length, n);
 	    //System.out.println("# Selecting at these indexes from 'must': " + Util.joinNonBlank(",", q));
 	    Vector<Integer> w = new Vector();
 	    for(int j: q) {
@@ -359,7 +363,10 @@ public class Board {
 	    //System.out.println("# Selected these positions: " + Util.joinNonBlank(",", w));
 	    return w;
 	} 
-	Vector<Integer> w  = random.randomSubsetOrdered(N*N, n); // [0..N^2-1]
+	Vector<Integer> w  =	    crowded?
+	    random.randomVector(N*N, n):
+	    random.randomSubsetOrdered(N*N, n); // [0..N^2-1]
+	
 	// now bring them to [1..N^2] range
 	for(int j=0; j<w.size(); j++) {
 	    w.set(j, w.get(j)+1);

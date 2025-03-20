@@ -171,7 +171,7 @@ public class Captive {
 	
 	ParseConfig ht = new ParseConfig();
 
-	// allows seed=... , colors=..., condTrain=... etc among argv
+	// allows seed=... , colors=..., condTrain=..., crowded=... etc among argv
 	argv = ht.enrichFromArgv(argv);
 
 	//System.out.println("output=" +  ht.getOption("output", null));

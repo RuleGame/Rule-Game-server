@@ -45,6 +45,12 @@ public class Util {
 	return v;  	
     }
 
+    public static Vector<Integer> array2vector(int... a) {
+	Vector<Integer> v = new  Vector<>();
+	for(int x:a) v.add(x);
+	return v;  	
+    }
+
     public static <T> Vector<Object> loseType(Vector<T> a) {
 	Vector<Object> v = new  Vector<>();
 	v.addAll(a);

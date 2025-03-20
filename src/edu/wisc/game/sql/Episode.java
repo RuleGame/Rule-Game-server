@@ -72,6 +72,7 @@ public class Episode {
 	int pieceId = -1;
 	public int getPos() { return pos; }
         public int getPieceId() { return pieceId; }	
+        public void setPieceId(int id) {  pieceId=id; }	
 	Piece piece =  null;
 	/** Acceptance code; will be recorded upon processing. The value is from
 	 Episode.CODE */
@@ -1051,7 +1052,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
     /** The current version of the application */
-    public static final String version = "7.009";
+    public static final String version = "8.000";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }

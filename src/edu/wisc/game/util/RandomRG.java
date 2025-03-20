@@ -24,6 +24,13 @@ public class RandomRG extends Random {
 	return  getInRange(z[0], z[1]);
     }
 
+    /** A random "bag" of m numbers, each one independently drawn out of [0:n-1] */
+    public Vector<Integer> randomVector(int n, int m) {
+	int a[] = new int[m];
+	for(int j=0; j<m; j++) a[j] = nextInt(n);
+	Arrays.sort(a);
+	return Util.array2vector(a);
+    }
 
     /** A random subset of m numbers out of [0:n-1], in random order */
     public Vector<Integer> randomSubsetPermuted(int n, int m) {
