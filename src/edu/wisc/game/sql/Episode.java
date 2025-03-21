@@ -149,6 +149,7 @@ public class Episode {
 	for(int j=0; j<values.size(); j++) {
 	    if (values.get(j).getId()==id) return j;
 	}
+	//System.err.println("Board has no game piece with id=" + id +". values=" + Util.joinNonBlank(", ", values));
 	throw new IllegalArgumentException("Board has no game piece with id=" + id);
     }
 

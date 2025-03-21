@@ -331,7 +331,7 @@ public class Piece  implements Serializable {
     public void setBuckets(int[] _buckets) { buckets = _buckets; }
 
     public String toString() {
-	return "["+objectType()+", x="+x+", y="+y+"]";
+	return "[("+id + ") " + objectType()+", x="+x+", y="+y+"]";
     }
 
     /** Converts this Piece, or its ImageObject, to a PropMap object, which stores

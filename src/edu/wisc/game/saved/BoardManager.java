@@ -103,6 +103,7 @@ New (thru ver 7.*):
 	    
 	    int y =  e.getColInt(ja++);
 	    int x =  e.getColInt(ja++);
+	    if (objectId < 0) objectId = substituteObjectId(x,y);
 
 	    String _shape = e.getCol(ja++);
 	    String _color = e.getCol(ja++);
@@ -118,8 +119,7 @@ New (thru ver 7.*):
 		p = new Piece(shape, color, x,y);
 	    }
 
-
-	    if (objectId < 0) objectId = substituteObjectId(x,y);
+	    p.setId(objectId);
 	    
 	    b.addPiece(p);
 	}
