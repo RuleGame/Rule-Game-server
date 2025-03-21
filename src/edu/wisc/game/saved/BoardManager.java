@@ -75,14 +75,15 @@ New (thru ver 7.*):
 
 	CsvData.BasicLineEntry header = csv.header;
 
-
-	boolean hasObjectId = header.getCol(2).equals("objectId");
-	if (header.getCol(2 + (hasObjectId?1:0)).equals("y")) throw new  IllegalInputException("Don't see the y column in its place");
+	int ja = 2;
+	boolean hasObjectId = header.getCol(ja).equals("objectId");
+	if (hasObjectId) ja++;
+	if (!header.getCol(ja).equals("y")) throw new  IllegalInputException("Don't see the y column in its place");
 	
 	Board b = null;
 	String lastEid =null;
 	for(CsvData.LineEntry _e: csv.entries) {
-	    int ja=0;
+	    ja=0;
 
 	    ja++; // playerId;
 	    CsvData.BasicLineEntry e= (CsvData.BasicLineEntry )_e;

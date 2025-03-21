@@ -5,7 +5,7 @@
   <body>
     <h1>Captive Game Server</h1>
 
-    <div align="center"><em>Updated 2025-03-14 for Game Server ver 7.008</em></div>
+    <div align="center"><em>Updated 2025-03-20 for Game Server ver 8.000</em></div>
     
     <h2>Test the Rule Game</h2>
 
@@ -392,6 +392,16 @@ NEW
 	</pre>
       
 <p><strong>Note:</strong> If you specify conditions that are impossible to fulfill (e.g. prohibiting red and black pieces while requiring that each board contains pieces of at least 3 colors), the CGS won't detect this problem automatically. Instead, it will sit in a tight loop for a while, and then will terminate, with an error message going to its <tt>stderr</tt>. Thus before letting your ML program to play with the CGS using a particularly involved set of conditions, you may do well by testing the board generation parameters and the condition file, by playing at least one training episode and at least one testing episode from the command ine. (You don't even need to play the episode to the end; just make sure that a board is produced for you!)
+
+  <h4><a name="crowded">10. "Crowded boards": allowing multiple game pieces in one cell.  </a></h4>
+
+<p>Historically, all boards in Rule Game have at most one game piece per cell. However, since GS 8.000, boards with multiple game pieces per cell (so called "crowded boards") are allowed as well. You can allow the Captive Game Server's random board generator to put multiple pieces into a cell by adding the option
+  <pre>
+    crowded=true
+  </pre>
+  to the command line.
+
+  <p>You can also use crowded boards as predefined initial boards.
   
     <h3>Specifying the random generator seed</h3>
 
