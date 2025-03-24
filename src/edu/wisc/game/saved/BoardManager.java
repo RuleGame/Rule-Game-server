@@ -49,7 +49,20 @@ public class BoardManager {
     }
 
     /** Reads a CSV file into which a number of boards have been written by
-	Board.saveToFile()
+	Board.saveToFile().
+
+	<P>Since GS 8.0, every game piece needs an ID. Previously,
+	unfortunately, those weren't saved; so when reading old
+	(pre-GS-8.0) board files, this method assigns to each object a
+	"substitute ID", which just happens to be equal to its position
+	number. (When transcripts are read in, substutute IDs are assigned
+	in the same way, so everything matches. Now, the old detailed transcripts
+	do have true IDs in them, but we aren't using them).
+	
+	<p>When reading a board, this method checks for duplicates (based
+	on the real or substutute ID) and drops them. Such duplicates
+	may occur because the episode-saving routine may very occasionally save
+	the same episode twice by mistake.
 
 	@param f A player's boards file, from the saved/boards directory.
 
@@ -72,6 +85,10 @@ New (thru ver 7.*):
     public static HashMap<String,Board> readBoardFile(File f,
 						      HashMap <String,Boolean> useImagesTable)
 	throws IOException,  IllegalInputException{
+
+
+	//boolean debug = true;
+
 	HashMap<String,Board> h =new HashMap<>();
 	//CsvData csv = new CsvData(f);
 	CsvData csv = new CsvData(f, false, false, null);
@@ -83,10 +100,12 @@ New (thru ver 7.*):
 	boolean hasObjectId = header.getCol(ja).equals("objectId");
 	if (hasObjectId) ja++;
 	if (!header.getCol(ja).equals("y")) throw new  IllegalInputException("Don't see the y column in its place");
+
 	
 	Board b = null;
 	String lastEid =null;
-	HashSet<Integer> idSet = new HashSet<>();
+	HashMap<Integer,Piece> oSet = new HashMap<>(); // checking for duplicates
+	
 	for(CsvData.LineEntry _e: csv.entries) {
 	    ja=0;
 
@@ -102,6 +121,7 @@ New (thru ver 7.*):
 		}
 		b = new Board();
 		lastEid=episodeId;
+		oSet.clear();
 	    }
 
 	    int objectId = hasObjectId?  e.getColInt(ja++) : -1;
@@ -127,10 +147,12 @@ New (thru ver 7.*):
 	    p.setId(objectId);
 
 
-	    if (idSet.contains(objectId)) {
+	    Piece old = oSet.get(objectId);
+	    if (old!=null) {
 		// duplicate ID. Likely resulted from an accidental (erroneous) duplicate board saving in the past
+		System.err.println("Skipping duplicate pieces for eid="+episodeId+": " + old + " followed by " + p);
 	    } else {
-		idSet.add(objectId);
+		oSet.put(objectId,p);
 		b.addPiece(p);
 	    }
 	}

@@ -305,13 +305,19 @@ public class Piece  implements Serializable {
     }
 
     
-
+    /** This method is oversimplified, because it's
+	normally expected that the ID is unique within
+	a board */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Piece)) return false;
         return id == ((Piece) o).getId();
     }
+
+    /** Compares all properties */
+    //    public boolean fullyEquals(Object o) {...}
+	
  
     @Override
     public int hashCode() {
