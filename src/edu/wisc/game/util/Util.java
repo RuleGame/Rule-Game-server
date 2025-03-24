@@ -383,5 +383,25 @@ The Java programming language guarantees that the operands of operators appear t
 	return ci;
     }
 
+    public static <T> Vector<T> joinSubsections(Vector<T[]> w) {
+	Vector<T> v = new Vector<>();
+	for(T[] a: w) {
+	    for(T t: a) {
+		v.add(t);
+	    }
+	}
+	return v;
+    }
+    
+    public static <T> int sumLen(Vector<T[]> w) {
+	int len=0;
+	for(T[] a: w) {
+	    len+= a.length;
+	}
+	return len;
+    }
+
+
+    
 
 }

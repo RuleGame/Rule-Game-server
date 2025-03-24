@@ -363,8 +363,8 @@ public class AnalyzeTranscripts {
     
     /** Lists all trial lists for an experiment plan. The keys are
 	trial list IDs */
-    static class TrialListMap extends HashMap<String,TrialList> {
-	TrialListMap(String exp) throws IOException, IllegalInputException {
+    public static class TrialListMap extends HashMap<String,TrialList> {
+	public TrialListMap(String exp) throws IOException, IllegalInputException {
 	    Vector<String> trialListNames = TrialList.listTrialLists(exp);
 	    for(String trialListId: trialListNames) {
 		TrialList t = new  TrialList(exp, trialListId);
@@ -588,7 +588,7 @@ public class AnalyzeTranscripts {
 	w.close(); w=null;
 
 	if (weWantFitting) {
-	    OptimumExplained oe = analyzeSection( joinSubsections( section), eh0, wsum, needP0? p0: null);
+	    OptimumExplained oe = analyzeSection( Util.joinSubsections( section), eh0, wsum, needP0? p0: null);
 	}
 	section.clear();
 	includedEpisodes.clear();
@@ -597,7 +597,7 @@ public class AnalyzeTranscripts {
     /** Splits a section of transcript pertaining to a single rule set (i.e. a series of episodes) into subsections, each subsection pertaining to one specific
 	episode.
      */
-    private static Vector<TranscriptManager.ReadTranscriptData.Entry[]> splitTranscriptIntoEpisodes(Vector<TranscriptManager.ReadTranscriptData.Entry> section) {
+    static public Vector<TranscriptManager.ReadTranscriptData.Entry[]> splitTranscriptIntoEpisodes(Vector<TranscriptManager.ReadTranscriptData.Entry> section) {
 	Vector<TranscriptManager.ReadTranscriptData.Entry[]> result = new Vector<>();
 	Vector<TranscriptManager.ReadTranscriptData.Entry> q = new Vector<>();
 	String lastEid = "";
@@ -619,29 +619,11 @@ public class AnalyzeTranscripts {
 	return result;			
     }
 
-    private static <T> Vector<T> joinSubsections(Vector<T[]> w) {
-	Vector<T> v = new Vector<>();
-	for(T[] a: w) {
-	    for(T t: a) {
-		v.add(t);
-	    }
-	}
-	return v;
-    }
-    
-    private static <T> int sumLen(Vector<T[]> w) {
-	int len=0;
-	for(T[] a: w) {
-	    len+= a.length;
-	}
-	return len;
-    }
-
     /** Removes any duplicate entries from each subsection. Such
 	entries may have been created due to imperfections in the
 	transcript-saving process.
     */
-    void removeDuplicates(Vector<TranscriptManager.ReadTranscriptData.Entry[]>  subsections) {
+    static public void removeDuplicates(Vector<TranscriptManager.ReadTranscriptData.Entry[]>  subsections) {
 	for(int j=0; j<subsections.size(); j++) {
 	    TranscriptManager.ReadTranscriptData.Entry[] in = subsections.get(j);
 	    Vector<TranscriptManager.ReadTranscriptData.Entry> out = new Vector<>();
@@ -662,10 +644,10 @@ public class AnalyzeTranscripts {
     }
 
 
-    static class P0andR {
-	final double [] p0, rValues;
+    public static class P0andR {
+	public final double [] p0, rValues;
 	
-	P0andR(int n) {
+	public P0andR(int n) {
 	    p0 = new double[n];
 	    rValues = new double[n];
 	}
@@ -687,7 +669,7 @@ public class AnalyzeTranscripts {
 	
 	RuleSet rules = AllRuleSets.obtain( ruleSetName);
 
-	P0andR result = new P0andR( sumLen(subsections));
+	P0andR result = new P0andR( Util.sumLen(subsections));
 	int k=0;
 	
 	for(TranscriptManager.ReadTranscriptData.Entry[] subsection: subsections) {
@@ -729,7 +711,7 @@ public class AnalyzeTranscripts {
 		k++;
 
 		
-		if (!Episode.CODE.areSimilar(code, e.code)) {
+		if (!Episode.CODE.areSimilar(code,e.code)) {
 		    throw new IllegalArgumentException("Unexpected code in episode "+episodeId+", replay code=" + code +", vs. the recorded code=" + e.code);
 		}
 	    }

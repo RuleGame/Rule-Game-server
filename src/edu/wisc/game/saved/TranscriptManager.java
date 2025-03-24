@@ -7,6 +7,8 @@ import java.text.*;
 import edu.wisc.game.util.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.sql.*;
+import edu.wisc.game.tools.EpisodeHandle;
+import edu.wisc.game.tools.AnalyzeTranscripts.TrialListMap;
 
 import edu.wisc.game.sql.Board.Pos;
 import edu.wisc.game.sql.Episode.Pick;
@@ -177,5 +179,38 @@ public class TranscriptManager {
 	
     }
 
+
+    /** This method is used as a helper in a unit test for ReplayedEpisode;
+	its purpose is to find rule set names for various episodes
+	without accessing the SQL server.
+	@param  detailedTranscriptsFile A detailed transcript file, from which the rule set names will be obtained
+
+	<pre>
+	% more ./detailed-transcripts/RU-FDCL-basic-auto-20241105-113759-EPVDYK.detailed-transcripts.csv 
+#playerId,trialListId,seriesNo,ruleId,episodeNo,episodeId,moveNo,timestamp,reactionTime,objectType,objectId,y,x,bucketId,by,bx,code,objectCnt
+RU-FDCL-basic-auto-20241105-113759-EPVDYK,basic-07-A,0,FDCL/basic/ordL1,0,20241105-113932-D9DX8Y,0,20241105-113934.266,2.149,RED_SQUARE,0,1,1,,,,7,9
+</pre>
+    */
+    public static HashMap<String,EpisodeHandle> findRuleSetNames(String exp, TrialListMap trialListMap, File detailedTranscriptsFile) throws IOException, IllegalInputException {
+	CsvData csv = new CsvData(detailedTranscriptsFile, false, false, null);
+	//String header = csv.header;
+
+
+	HashMap<String,EpisodeHandle> h = new HashMap<>();
+	for(CsvData.LineEntry _e: csv.entries) {
+	    CsvData.BasicLineEntry e= (CsvData.BasicLineEntry )_e;
+	    /*
+	    String tid = e.getCol(1);
+	    String rid = e.getCol(3);
+	    String eid = e.getCol(4);
+	    h.put(rid,eid);
+	    */
+	    EpisodeHandle eh = new EpisodeHandle(exp, trialListMap, e);
+	    h.put(eh.episodeId, eh);
+	}
+	return h;
+
+    }
+    
     
 }

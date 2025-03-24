@@ -51,6 +51,10 @@ public class BoardManager {
     /** Reads a CSV file into which a number of boards have been written by
 	Board.saveToFile()
 
+	@param f A player's boards file, from the saved/boards directory.
+
+	@param useImagesTable Contains info which episodes use image-and-properties objects. One can supply null here, for use in a unit test on a known non-IPB player.
+
 	@return A hash map that maps episode IDs to initial boards.
 	
 <PRE>
@@ -89,7 +93,7 @@ New (thru ver 7.*):
 	    CsvData.BasicLineEntry e= (CsvData.BasicLineEntry )_e;
 	    //Entry z = new Entry(e);
 	    String episodeId = e.getCol(ja++);
-	    boolean useImages =  useImagesTable.get(episodeId);
+	    boolean useImages =  useImagesTable!=null &&  useImagesTable.get(episodeId);
 
 	    if (!episodeId.equals(lastEid)) {
 		if (b!=null) {

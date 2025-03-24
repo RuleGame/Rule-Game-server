@@ -942,7 +942,9 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
      
 	String div = "#---+";
 	String seg = "--";
+	String sem = "";
 	for(int k=0; k<m; k++) seg += "---";
+	for(int k=0; k<m; k++) sem += "---";
 	for(int x=1; x<=Board.N; x++) div += seg;
 	w.add(div);
 	
@@ -1001,7 +1003,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	}
 	w.add(div);
 	String s = "#   |";
-	for(int x=1; x<=Board.N; x++) s += "  "+(html?"": " ") + x + " ";
+	for(int x=1; x<=Board.N; x++) s += "  "+(html?"": " ") + x + " " + sem;
 	w.add(s);
 	return String.join("\n", w);
     }
@@ -1046,7 +1048,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 
     /** @return The description of the current board in the form of a JSON string.
      */
-    private String displayJson() {
+    protected String displayJson() {
 	Board b = getCurrentBoard();
 	JsonObject json = JsonReflect.reflectToJSONObject(b, true, excludableNames);
 	return json.toString();
