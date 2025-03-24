@@ -290,7 +290,7 @@ public class ReplayedEpisode extends Episode {
 
 	    //----
 
-	    if (debug) System.out.println("All moves:");
+	    if (debug) System.out.println("All moves for eid=" + eid + " :");
 	    for(j=0; j<subsection.length; j++) {
 		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
 		if (debug) System.out.println(e.pick.toString());
@@ -341,10 +341,6 @@ public class ReplayedEpisode extends Episode {
 
 
 	}
-
-	    
-	
-
 
     }
     

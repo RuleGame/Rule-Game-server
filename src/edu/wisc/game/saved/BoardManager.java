@@ -86,6 +86,7 @@ New (thru ver 7.*):
 	
 	Board b = null;
 	String lastEid =null;
+	HashSet<Integer> idSet = new HashSet<>();
 	for(CsvData.LineEntry _e: csv.entries) {
 	    ja=0;
 
@@ -124,8 +125,14 @@ New (thru ver 7.*):
 	    }
 
 	    p.setId(objectId);
-	    
-	    b.addPiece(p);
+
+
+	    if (idSet.contains(objectId)) {
+		// duplicate ID. Likely resulted from an accidental (erroneous) duplicate board saving in the past
+	    } else {
+		idSet.add(objectId);
+		b.addPiece(p);
+	    }
 	}
 
 
@@ -144,8 +151,11 @@ New (thru ver 7.*):
 	reading the transcript, but will be in a mismatch
 	with the true object IDs found in the detailed transcript
 	file.
+
+	@return A number in the range (1,36), equal to the position number, which can be used as piece ID in
+	games on a non-crowded board.
      */    
     static int substituteObjectId(int x, int y) {
-	return y*Board.N + x;
+	return (y-1)*Board.N + x;
     }
 }

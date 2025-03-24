@@ -81,7 +81,7 @@ public class Episode {
 	public void setCode(int _code) { code = _code; }
 	final public Date time = new Date();
 	public String toString() {
-	    return "PICK " + pos + " " +new Pos(pos) +", code=" + code;
+	    return "PICK " + pos + " " +new Pos(pos) +", id="+pieceId+", code=" + code;
 	}
 
 	/** The measure of "unlikelihood" of this move being made
@@ -930,6 +930,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 
 					boolean html) {
 
+	//boolean debug=true;
 	Vector<String> w = new Vector<>();
 	int m = maxCrowd(values);
 	if (m==0) m=1;
@@ -937,6 +938,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	// may need an extra space for the last-removed piece, to put brackewts around it
 	if (lastMove != null && lastMove instanceof Move && lastMove.code == CODE.ACCEPT) {
 	    int m1 = findJforPos(lastMove.pos, values).length + 1;
+	    //if (debug) System.out.println("m=" + m+", m1=" + m1);
 	    if (m1>m) m = m1;
 	}
      
@@ -944,7 +946,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	String seg = "--";
 	String sem = "";
 	for(int k=0; k<m; k++) seg += "---";
-	for(int k=0; k<m; k++) sem += "---";
+	for(int k=0; k<m; k++) sem += "   ";
 	for(int x=1; x<=Board.N; x++) div += seg;
 	w.add(div);
 	
@@ -964,6 +966,9 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 		icons[0] =  html? "." :   " .";
 		paren[m] = " ";
 
+
+		//		if (jj.length>m) System.err.println("for pos=" + pos+", jj=" + jj + " while m is only " + m + "!");
+		
 		for(int i=0; i<jj.length; i++) {
 		    Piece p = values.get(jj[i]);
 		    ImageObject io = p.getImageObject();
@@ -980,15 +985,22 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 
 
 		    if (lastMove != null && lastMove.getPieceId()==p.getId()) {
+			//if (i+1 >= paren.length) System.err.println("It will break for id=" + p.getId() +", i=" +i);
 			paren[i] = "[";
 			paren[i+1] = "]";
 		    }
 		    
 		}
+		
 
-		if (lastMove != null && lastMove.pos==pos && lastMove.code == CODE.ACCEPT) {
-		    // put the brackets around a blank spot (or dot)
+		if (lastMove != null && lastMove.pos==pos && (lastMove instanceof Move) && lastMove.code == CODE.ACCEPT) {
+
+		    // put the brackets around a blank spot (or dot), where a piece was removed
 		    int i = jj.length;
+
+		    //if (i+1 >= paren.length) System.err.println("Accept at pos=" + pos+", jj.length=" + jj.length+" : It will break for removed id=" + lastMove.pieceId +", i=" +i);
+
+		    
 		    paren[i] = "(";
 		    paren[i+1] = ")";
 		} 
@@ -1002,8 +1014,8 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	    w.add(s);
 	}
 	w.add(div);
-	String s = "#   |";
-	for(int x=1; x<=Board.N; x++) s += "  "+(html?"": " ") + x + " " + sem;
+	String s = "#   |  ";
+	for(int x=1; x<=Board.N; x++) s += (html?"": " ") + x  + sem;
 	w.add(s);
 	return String.join("\n", w);
     }
