@@ -403,7 +403,7 @@ public class Episode {
 	*/
 	private boolean buildJAcceptanceMap() {
 	    EligibilityForOrders eligibleForEachOrder = new EligibilityForOrders(rules, onBoard());
-	    //System.err.println("eligibileForEachOrder=" + eligibleForEachOrder);
+	    //System.err.println("DEBUG: eligibileForEachOrder=" + eligibleForEachOrder);
 
 	    jAcceptanceMap = new BitSet[values.size()][];
 	    for(int j=0; j<values.size(); j++) {
@@ -412,7 +412,7 @@ public class Episode {
 	    }
 
 	    // modify the acceptance map as per any post-orders
-	    PostOrder.applyPostPosToAcceptanceMap(rules, row,  jAcceptanceMap);
+	    PostOrder.applyPostPosToAcceptanceMap(rules, row,  values, jAcceptanceMap);
 
 	    isJMoveable = new boolean[values.size()];
 	    for(int j=0; j<values.size(); j++) {

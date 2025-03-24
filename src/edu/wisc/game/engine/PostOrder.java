@@ -27,7 +27,7 @@ public class PostOrder {
     //private BitSet[][] acceptanceMap = new BitSet[Board.N*Board.N+1][];
     */
 
-    public static void applyPostPosToAcceptanceMap(RuleSet rules, RuleSet.Row atoms, BitSet[][] acceptanceMap) {
+    public static void applyPostPosToAcceptanceMap(RuleSet rules, RuleSet.Row atoms, Vector<Piece> values, BitSet[][] jAcceptanceMap) {
 
 	for(int atomNo = 0; atomNo < atoms.size(); atomNo++) {
 	    RuleSet.Atom atom = atoms.elementAt(atomNo);
@@ -39,6 +39,28 @@ public class PostOrder {
 	    // Create a bit set with bits set in the positions where
 	    // there are pieces potentially moveable under this
 	    // atom. The positions are, as usual, numbered 1 thru N^2.
+	    BitSet movableOnBoard = new BitSet(Board.N*Board.N+1);
+	    for(int j=0; j<jAcceptanceMap.length; j++) {
+		if (jAcceptanceMap[j]!=null &&
+		    !jAcceptanceMap[j][atomNo].isEmpty()) {
+		    int pos = values.get(j).xgetPos().num();
+		    movableOnBoard.set(pos);
+		}
+	    }
+
+	    // Which of these pieces are "in front" of each order?
+	    EligibilityForOrders eligibleForEachOrder = new EligibilityForOrders(rules, movableOnBoard);
+
+	    for(int j=0; j<jAcceptanceMap.length; j++) {
+		if (jAcceptanceMap[j]==null) continue;
+		BitSet m = jAcceptanceMap[j][atomNo];
+		int pos = values.get(j).xgetPos().num();
+		if (!m.isEmpty() && !atom.postPlist.allowsPicking(pos, eligibleForEachOrder)) m.clear();
+	    }
+
+
+
+	    /*
 	    BitSet movableOnBoard = new BitSet(Board.N*Board.N+1);
 	    for(int pos=0; pos<acceptanceMap.length; pos++) {
 		if (acceptanceMap[pos]!=null &&
@@ -53,6 +75,7 @@ public class PostOrder {
 		BitSet m = acceptanceMap[pos][atomNo];
 		if (!m.isEmpty() && !atom.postPlist.allowsPicking(pos, eligibleForEachOrder)) m.clear();
 	    }
+	    */
 	}
     }
 
