@@ -17,7 +17,7 @@ import jakarta.xml.bind.annotation.XmlElement;
 
 /** An auxiliary data structure, used as an element of EpisodeInfo.ExtendedDisplay, used to sent to the GUI client, in a concise form, the info about the knowledge of the board acquired through the recent players' actions (those since the last board change, i.e the last successful move). This is used to make it easier for the client to display the feedback about the recent actions.
 
-<p>Starting GS 8.0, the key is the piece ID, rather than position (as it was in 7.*).
+<p>Starting GS 8.0, the key normally is the piece ID, rather than position (as it was in 7.*); however, the backward-compatibility mode, with the position as the ID, also exists.
  */
 
 public class RecentKnowledge extends HashMap<Integer, RecentKnowledge.Datum> {
@@ -75,10 +75,22 @@ public class RecentKnowledge extends HashMap<Integer, RecentKnowledge.Datum> {
 	}
     }
 
+    /** If this flag is on, the key is the numeric position (the GS 7
+       compatibility mode) rather than the piece ID (the GS 8+
+       mode). If the board has more than one piece in any cell,
+       the results will be incorrect, but we don't plan to have those
+       in human-player        
+     */
+    final boolean byPos;
 
-    /** @param transcript The list of all move/pick attempts (successful or not) done so far
-	in this episode */
-    RecentKnowledge(Vector<Episode.Pick> transcript) {
+    /** @param byPos If this flag is on, the key is the numeric
+	position (the GS 7 compatibility mode) rather than the piece ID
+	(the GS 8+ mode)
+
+	@param transcript The list of all move/pick attempts
+	(successful or not) done so far in this episode */
+    RecentKnowledge(Vector<Episode.Pick> transcript, boolean _byPos) {
+	byPos = _byPos;
 	int lastChangeAt = -1;
 	for(int j=0; j<transcript.size(); j++) {
 	    Episode.Pick pick = transcript.elementAt(j);
@@ -88,8 +100,10 @@ public class RecentKnowledge extends HashMap<Integer, RecentKnowledge.Datum> {
 	for(int j=lastChangeAt+1; j<transcript.size(); j++) {
 	    Episode.Pick pick = transcript.elementAt(j);
 	    int id = pick.getPieceId();
-	    Datum datum = get(id);
-	    if (datum == null) put(id, datum=new Datum(id, pick.pos));
+	    int pos = pick.pos;
+	    int key = byPos? pos: id;
+	    Datum datum = get(key);
+	    if (datum == null) put(key, datum=new Datum(id, pick.pos));
 	    datum.update(pick);
 	}
 
