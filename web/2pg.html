@@ -433,6 +433,8 @@ As you can see, this structure (transcript ) is a map. The keys are the position
 <li>"deniedBuckets":[0,1] : this contains the list of bucket into which we know this game piece cannot go. (Because we have learned this from failed moves to those buckets).
 </ul>
 
+<li>In ver 8.003, new field <tt>recentKnowledge2</tt> has been added. It is like  <tt>recentKnowledge</tt>, but the hash map keys are object IDs of game pieces, rather than their positions. The GUI client should swicth from using <tt>recentKnowledge</tt> to using <tt>recentKnowledge2</tt>, in order to be fully compatible with any games that may have "crowded boards" (boards with multiple game pieces per cell).
+
 	</ol>
 
 	<h3>/guess</h3>
