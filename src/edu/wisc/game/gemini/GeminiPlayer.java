@@ -86,6 +86,24 @@ public class GeminiPlayer {
 	return gr;
     }
 
+
+    static String instructions=null;
+    
+    static GeminiRequest makeRequestGame() throws IOException {
+	GeminiRequest gr = new GeminiRequest();
+
+	if (instructions==null) {
+	    instructions= Util.readTextFile(new File("/opt/w2020/system.txt"));
+	}
+
+	gr.addInstruction(instructions);
+
+	
+	gr.addUserText("How do you use borax?");
+	return gr;
+    }
+
+    
     static String gemini_api_key = null;
 
     static void readApiKey() throws IOException {
