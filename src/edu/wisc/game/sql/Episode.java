@@ -1450,7 +1450,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     /** @return true if this episode cannot accept any more move attempts,
 	for any reason (board cleared, stalemate, given up, lost).
      */
-    boolean isCompleted() {
+    public boolean isCompleted() {
 	return cleared || earlyWin|| stalemate || givenUp || lost;
     }
 

@@ -18,7 +18,7 @@ import edu.wisc.game.engine.*;
 
 
 
-public class GeminiPlayer {
+public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 
    static private void usage() {
 	usage(null);
@@ -155,7 +155,9 @@ public class GeminiPlayer {
 	int gameCnt=0;
 
 	if (log!=null) log.open();
-		
+
+	GeminiPlayer history = new GeminiPlayer();
+	
 	while(true) {
 	    Game game = gg.nextGame();
 	    if (outputMode== OutputMode.FULL) System.out.println(Captive.asComment(game.rules.toString()));
@@ -166,7 +168,8 @@ public class GeminiPlayer {
 
 
 	    EpisodeHistory his = new EpisodeHistory(epi);
-	    System.out.println("B=" + his.initialBoardAsString());
+	    history.add(his);
+	    //System.out.println("B=" + his.initialBoardAsString());
 
 	    
 	    //----
@@ -201,23 +204,9 @@ public class GeminiPlayer {
 	*/
     }
 
+    
 
     
-    static GeminiRequest makeRequestGame(Episode epi) throws IOException {
-	GeminiRequest gr = new GeminiRequest();
-
-
-	gr.addInstruction(instructions);
-
-	String text = "";
-	
-
-
-	
-	gr.addUserText("How do you use borax?");
-	return gr;
-    }
-
     /** What you need to know about an episode when sending that info to
 	Gemini */
     static class EpisodeHistory {
@@ -236,6 +225,49 @@ public class GeminiPlayer {
 	}
     }
 
+
+    GeminiPlayer() { super(); }
+
+
+    /** Makes a request based on the current state of this GeminiPlayer,
+	i.e. all episodes that have been completed, and the one
+	still in progress */
+    GeminiRequest makeRequest() throws IOException {
+	GeminiRequest gr = new GeminiRequest();
+	    
+	gr.addInstruction(instructions);
+
+	String text = "";
+	
+
+	gr.addUserText("How do you use borax?");
+	return gr;
+    }
+    
+
+    /** Plays the last (latest) episode of this GeminiPlayer, until it ends */
+    void playingLoop() {
+	EpisodeHistory ehi = lastElement();
+	Episode epi = ehi.epi;
+	while( !epi.isCompleted()){
+	    
+	}
+    }
+
+    static GeminiRequest makeRequestGame(Episode epi) throws IOException {
+	GeminiRequest gr = new GeminiRequest();
+
+	gr.addInstruction(instructions);
+
+	String text = "";
+	
+
+	gr.addUserText("How do you use borax?");
+	return gr;
+    }
+
+
+    
     /** Lets this episode play out until either all pieces are
 	cleared, or a stalemate is reached, or the player gives up
 	(sends an EXIT or NEW command). The episode takes commands from
