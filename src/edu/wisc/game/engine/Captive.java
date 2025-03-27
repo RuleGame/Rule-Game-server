@@ -199,7 +199,7 @@ public class Captive {
 		
 	while(true) {
 	    Game game = gg.nextGame();
-	    if (outputMode== OutputMode.FULL) System.out.println(asComment(game.rules.toString()));
+	    //	    if (outputMode== OutputMode.FULL) System.out.println(asComment(game.rules.toString()));
 
 	    Episode epi = new Episode(game, outputMode,
 				      new InputStreamReader(System.in),

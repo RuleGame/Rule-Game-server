@@ -62,10 +62,11 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	con.setDoOutput(true);
 
 	JsonObject jo = JsonReflect.reflectToJSONObject(gr, false, null, 10);
-
 	System.out.println("SENDING: " + jo.toString());
 	String jsonInputString =  jo.toString();
 
+	//if (true) System.exit(0);
+	
 	try(OutputStream os = con.getOutputStream()) {
 	    byte[] input = jsonInputString.getBytes("utf-8");
 	    os.write(input, 0, input.length);			
@@ -122,6 +123,9 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     /** Modeled on Captive.java */
     public static void main(String[] argv) throws Exception {
 
+	File f = new File( Files.geminiDir(), "system.txt");	
+	instructions = Util.readTextFile( f);
+
 	Files.allowCachingAllRules(true); // for greater efficiency
 	
 	// The captive server does not need the master conf file in /opt/w2020
@@ -171,8 +175,10 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 
 	    EpisodeHistory his = new EpisodeHistory(epi);
 	    history.add(his);
-	    //System.out.println("B=" + his.initialBoardAsString());
 
+	    System.out.println("DEBUG: B=" + his.initialBoardAsString());
+
+	    history.playingLoop();
 	    
 	    //----
 	    /*
@@ -198,8 +204,6 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	GeminiRequest gr = makeRequest1();
 	p.doOneRequest(gr);
 
-	File f = new File( Files.geminiDir(), "system.txt");	
-	instructions = Util.readTextFile( f);
 	gr = new GeminiRequest();
 
 	gr.addInstruction(instructions);
@@ -249,35 +253,57 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	if (size()>1) {
 	    // describe all previos episodes.
 	    v.add("You have completed " + size() + " episodes so far. Their summary follows.");
-	    for(int j=0; j<size()-1 ; j++) {
-		EpisodeHistory ehi = get(j);
-		v.add("Episode " + (j+1) + " had the following initial board: " +
-		      ehi.initialBoardAsString());
-		Vector<Pick> moves = ehi.epi.getTranscript();
-		v.add("During episode "+(j+1)+", you made the following "+ moves.size() + "move attempts, with the following results:");
-		for(int k=0; k<moves.size(); k++) {
-		    if (!(moves.get(k) instanceof Move))  throw new IllegalArgumentException("Unexpected entry in the transcript (j=" + j+", k=" + k+", The bot is only supposed to make moves, not picks!");
-		    Move move = (Move)moves.get(k);
-		    v.add("Move " + (k+1) + " :  " + move);		    
-		}
-		    
-		j++;
-	    }
-	    
 	}
+	for(int j=0; j<size(); j++) {
+	    v.addAll( episodeText(j));
+	}
+
+	v.add("YOUR MOVE?");
 	gr.addUserText(Util.joinNonBlank("\n", v));
 	return gr;
     }
-    
+
+    /** Creates lines describing an episode, to go into a request. */
+    private Vector<String> episodeText(int j) {
+	Vector<String> v = new Vector<>();
+	boolean isLast = (j==size()-1);
+	EpisodeHistory ehi = get(j);
+
+	Vector<Pick> moves = ehi.epi.getTranscript();
+
+	
+	if (j==size()-1) {
+	    v.add("You are playing Episode "+(j+1)+" now.");
+	}
+	
+	v.add("Episode " + (j+1)  + " had the following initial board: " +
+	      ehi.initialBoardAsString());
+	int n = moves.size();
+	v.add("During episode "+(j+1)+", you "+
+	      (isLast ? "have made so far ": "made ") +
+	      (n>0?       "the following ":"")+
+	      n + 	      " move attempts" +
+	      (n>0?       ", with the following results:": "."));
+	for(int k=0; k<n; k++) {
+	    if (!(moves.get(k) instanceof Move))  throw new IllegalArgumentException("Unexpected entry in the transcript (j=" + j+", k=" + k+", The bot is only supposed to make moves, not picks!");
+	    Move move = (Move)moves.get(k);
+	    v.add("Move " + (k+1) + " :  " + move);		    
+	}
+	return v;
+    }
 
     /** Plays the last (latest) episode of this GeminiPlayer, until it ends */
-    void playingLoop() {
+    void playingLoop()  throws IOException {	    
 	EpisodeHistory ehi = lastElement();
 	Episode epi = ehi.epi;
 	while( !epi.isCompleted()){
-	    
+	    GeminiRequest gr = makeRequest();
+	    doOneRequest(gr);
+	    return;
 	}
     }
+
+    // {"text": "MOVE 0 0\n"
     
     /*
     static GeminiRequest makeRequestGame(Episode epi) throws IOException {

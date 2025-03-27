@@ -97,7 +97,7 @@ public class RandomGameGenerator extends GameGenerator {
      */
     public static GameGenerator buildFromArgv(RandomRG _random, File f, ParseConfig ht, String[] argv, int ja) throws IOException, RuleParseException, IllegalInputException, ReflectiveOperationException {
 
-	System.out.println("#DEBUG: bFA, ht=\n" + ht);
+	//System.out.println("#DEBUG: bFA, ht=\n" + ht);
 
 	
 	String b = argv[ja++];	
@@ -109,13 +109,13 @@ public class RandomGameGenerator extends GameGenerator {
 	    else if (ja+1 != argv.length) usage("Too many arguments");
 	    b = argv[ja++];
 	    int rowNo = Integer.parseInt(b);
-	    System.out.println("#DEBUG: tf=" + tf +", rowNo=" + rowNo);
+	    //System.out.println("#DEBUG: tf=" + tf +", rowNo=" + rowNo);
 	    if (rowNo<=0 || rowNo> trialList.size())   throw new IllegalInputException("Invalid row number (" + rowNo+ "). Row numbers should be positive, and should not exceed the size of the trial list ("+trialList.size()+")");
 	    ParaSet para = trialList.elementAt(rowNo-1);
 	    return mkGameGenerator(_random,  para);
 	}
 
-	System.out.println("#DEBUG: rule file=" + f +", nPieceRange=" + b);
+	//System.out.println("#DEBUG: rule file=" + f +", nPieceRange=" + b);
 	    
 	int[] nPiecesRange = range(b);
 	if (nPiecesRange[0] <= 0) throw new IllegalArgumentException("Invalid number of pieces ("+b+"); The number of pieces must be positive");
