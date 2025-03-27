@@ -37,7 +37,11 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	System.exit(1);
     }
 
-    /**
+    /** Makes a request to the Gemini server.
+
+	@return the "text" part of the response
+
+	<pre>	
        curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=XXXX" \
 -H 'Content-Type: application/json' \
 -X POST \
@@ -46,10 +50,10 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     "parts":[{"text": "How much does it cost to transfer between terminals in Manila Airport?"}]
     }]
    }'
-
+   </pre>
     */  
 
-    private void doOneRequest(GeminiRequest gr) throws MalformedURLException, IOException, ProtocolException
+    private String doOneRequest(GeminiRequest gr) throws MalformedURLException, IOException, ProtocolException, ClassCastException
     {
 	readApiKey();
 	String u = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
@@ -84,15 +88,44 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	    is = con.getInputStream();
 	}
 	InputStreamReader isr = new InputStreamReader(is, "utf-8");
-    
+	JsonObject responseJo = null;
+	    
 	try(BufferedReader br = new BufferedReader(isr)) {
+	    /*
 	    StringBuilder response = new StringBuilder();
 	    String responseLine = null;
 	    while ((responseLine = br.readLine()) != null) {
 		response.append(responseLine.trim());
 	    }
-	    System.out.println(response.toString());
+	    */
+
+	    JsonReader jsonReader = Json.createReader(br);
+	    responseJo = jsonReader.readObject();
+	    jsonReader.close();
+
+	    
+	    System.out.println("RESPONSE: " + responseJo.toString());
 	}
+
+	if (responseJo==null) throw new IllegalArgumentException("Has not read anything");
+
+	JsonArray candidatesJa = responseJo.getJsonArray("candidates");
+	if (candidatesJa.size()!=1)  throw new IllegalArgumentException("Expected to find 1 candidate, found " + candidatesJa.size() + ". RESPONSE=\n" + responseJo);
+	JsonObject contentJo = candidatesJa.getJsonObject(0).getJsonObject("content");
+	JsonArray partsJa = contentJo.getJsonArray("parts");
+	if (partsJa.size()!=1)  throw new IllegalArgumentException("Expected to find 1 part, found " + partsJa.size() + ". RESPONSE=\n" + responseJo);	
+	String text = partsJa.getJsonObject(0).getString("text");
+	return text;
+	/*
+	"candidates":[
+  {"content": {"parts": [{"text": "MOVE 0 0\n"}],"role": "model"},
+   "finishReason": "STOP",
+   "avgLogprobs": -1.9414728740230203e-05}
+  ],
+"usageMetadata": ...
+	*/
+
+	
 	
     }
 
@@ -292,13 +325,34 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	return v;
     }
 
-    /** Plays the last (latest) episode of this GeminiPlayer, until it ends */
+    /** Plays the last (latest) episode of this GeminiPlayer, until it ends.
+
+	What comes back from Gemini is this:
+	
+{
+"candidates":[
+  {"content": {"parts": [{"text": "MOVE 0 0\n"}],"role": "model"},
+   "finishReason": "STOP",
+   "avgLogprobs": -1.9414728740230203e-05}
+  ],
+"usageMetadata":
+   {"promptTokenCount": 1219,
+    "candidatesTokenCount": 6,
+    "totalTokenCount": 1225,
+    "promptTokensDetails": [{"modality": "TEXT","tokenCount": 1219}],
+    "candidatesTokensDetails": [{"modality": "TEXT","tokenCount": 6}]
+    },
+"modelVersion": "gemini-2.0-flash"}
+[
+     */
     void playingLoop()  throws IOException {	    
 	EpisodeHistory ehi = lastElement();
 	Episode epi = ehi.epi;
 	while( !epi.isCompleted()){
 	    GeminiRequest gr = makeRequest();
-	    doOneRequest(gr);
+	    String line = doOneRequest(gr);
+	    System.out.println("Response text=" + line);
+			       
 	    return;
 	}
     }
