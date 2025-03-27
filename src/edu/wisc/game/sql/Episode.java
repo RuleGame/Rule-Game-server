@@ -1039,7 +1039,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     /** Returns the current board, or, on a restored-from-SQL-server episodes,
 	null (or empty board, to keep the client from crashing).
     */
-    Board getCurrentBoard(boolean showRemoved) {
+    public Board getCurrentBoard(boolean showRemoved) {
 	if (isNotPlayable()) {
 	    return cleared? new Board() : null;
 	} else {

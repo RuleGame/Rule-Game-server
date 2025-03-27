@@ -17,7 +17,7 @@ import edu.wisc.game.rest.*;
 public class Captive {
 
     /** Produces a single-line or multi-line comment to be used in stdout */
-    static String asComment(String s) {
+    public static String asComment(String s) {
 	String[] v = s.split("\n");
 	for(int i=0; i<v.length; i++) v[i] = "#" + v[i];
 	return String.join("\n", v);			  
@@ -58,7 +58,7 @@ public class Captive {
 	the simplified rule set name (no dir name and no extension)
 	will be put.
     */
-    static GameGenerator buildGameGenerator(ParseConfig ht, String[] argv//,
+    public static GameGenerator buildGameGenerator(ParseConfig ht, String[] argv//,
 					    // Vector<String> simpleRuleSetName
 					    ) throws IOException,  RuleParseException, ReflectiveOperationException, IllegalInputException{
 	GameGenerator gg = buildGameGenerator2(ht, argv);

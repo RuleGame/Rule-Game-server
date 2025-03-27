@@ -131,7 +131,14 @@ public class JsonReflect {
 	Reflect r = Reflect.getReflect(  o.getClass());
 	//System.out.println("DEBUG: Reflecting on object "+o	+", class="+ o.getClass() +"; reflect=" + r + ", has " + r.entries.length + " entries");
 	for(Reflect.Entry e: r.entries) {
-	    if (excludableNames!=null && excludableNames.contains(e.name)) continue;
+	    if (excludableNames!=null) {
+		if (excludableNames.contains(e.name)) continue;
+		String prefix = "" + level + ".";
+		if (excludableNames.contains(prefix + e.name)) continue;
+	    }
+
+
+	    
 	    Object val = null;
 
 	    try {
@@ -267,7 +274,8 @@ public class JsonReflect {
     /** Converts a Java object to a JSON object, to the extent possible.
 	@param o Object to convert
 	@param skipNulls If true, the output won't contain the fields that have null values in o
-	@param  excludableNames If not null, contains the set of field names that should be ignored.
+	@param  excludableNames If not null, contains the set of field names that should be ignored. Additinally, it can contain something like "level.name",
+	where the field "name" is excluded only if it occurs on level "level". This is handy for handling something like {"id": 0, "value": {"id":77, ...}}, when you only want to remove the top-level ID.
      */
     public static JsonObject reflectToJSONObject(Object o, boolean skipNulls, HashSet<String> excludableNames) {
 	JsonReflect r = new JsonReflect(skipNulls, excludableNames);
