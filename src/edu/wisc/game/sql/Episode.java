@@ -202,7 +202,8 @@ public class Episode {
 	in this episode */
     @Transient
     Vector<Pick> transcript = new Vector<>();
-
+    @Transient
+    public Vector<Pick> getTranscript() { return transcript; }
     
     /** Set when appropriate at the end of the episode */
     boolean stalemate = false;

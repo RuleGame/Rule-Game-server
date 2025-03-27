@@ -13,6 +13,8 @@ import edu.wisc.game.sql.*;
 //import edu.wisc.game.parser.*;
 import edu.wisc.game.sql.Episode.OutputMode;
 import edu.wisc.game.sql.Episode.CODE;
+import edu.wisc.game.sql.Episode.Pick;
+import edu.wisc.game.sql.Episode.Move;
 import edu.wisc.game.rest.*;
 import edu.wisc.game.engine.*;
 
@@ -229,18 +231,41 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     GeminiPlayer() { super(); }
 
 
-    /** Makes a request based on the current state of this GeminiPlayer,
-	i.e. all episodes that have been completed, and the one
-	still in progress */
+    /** Creates a request object based on the current state of this
+	GeminiPlayer, i.e. all episodes that have been completed, and
+	the one still in progress */
     GeminiRequest makeRequest() throws IOException {
 	GeminiRequest gr = new GeminiRequest();
 	    
 	gr.addInstruction(instructions);
 
-	String text = "";
+	Vector<String> v = new Vector<>();
 	
+	if (size()==0) throw new IllegalArgumentException("No episode exists yet. What to ask?");
+	//	EpisodeHistory ehi = lastElement();
+	//Episode epi = ehi.epi;
+	if (lastElement().epi.isCompleted())  throw new IllegalArgumentException("Last episode already completed. What to ask?");
 
-	gr.addUserText("How do you use borax?");
+	if (size()>1) {
+	    // describe all previos episodes.
+	    v.add("You have completed " + size() + " episodes so far. Their summary follows.");
+	    for(int j=0; j<size()-1 ; j++) {
+		EpisodeHistory ehi = get(j);
+		v.add("Episode " + (j+1) + " had the following initial board: " +
+		      ehi.initialBoardAsString());
+		Vector<Pick> moves = ehi.epi.getTranscript();
+		v.add("During episode "+(j+1)+", you made the following "+ moves.size() + "move attempts, with the following results:");
+		for(int k=0; k<moves.size(); k++) {
+		    if (!(moves.get(k) instanceof Move))  throw new IllegalArgumentException("Unexpected entry in the transcript (j=" + j+", k=" + k+", The bot is only supposed to make moves, not picks!");
+		    Move move = (Move)moves.get(k);
+		    v.add("Move " + (k+1) + " :  " + move);		    
+		}
+		    
+		j++;
+	    }
+	    
+	}
+	gr.addUserText(Util.joinNonBlank("\n", v));
 	return gr;
     }
     
@@ -253,19 +278,21 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	    
 	}
     }
-
+    
+    /*
     static GeminiRequest makeRequestGame(Episode epi) throws IOException {
 	GeminiRequest gr = new GeminiRequest();
 
 	gr.addInstruction(instructions);
 
 	String text = "";
-	
 
+	
+	
 	gr.addUserText("How do you use borax?");
 	return gr;
     }
-
+    */
 
     
     /** Lets this episode play out until either all pieces are
