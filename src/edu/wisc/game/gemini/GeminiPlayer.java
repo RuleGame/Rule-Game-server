@@ -147,6 +147,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     static String gemini_api_key = null;
     static String model = "gemini-2.0-flash";
     static long wait = 4000;
+    static int max_boards=10;
     
     static void readApiKey() throws IOException {
 	if ( gemini_api_key != null) return;
@@ -179,6 +180,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 
 	model = ht.getOption("model", model);
 	wait = ht.getOptionLong("wait", wait);
+	max_boards  = ht.getOption("max_boards", max_boards);
 	
 	System.out.println("Gemini model=" + model);
 	//System.out.println("output=" +  ht.getOption("output", null));
@@ -210,16 +212,14 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 
 	GeminiPlayer history = new GeminiPlayer();
 
-	int maxBoards = 10;       
-
 	System.out.println("Instructions are: " + instructions);
 
 	
-	while(gameCnt < maxBoards) {
+	while(gameCnt < max_boards) {
 	    Game game = gg.nextGame();
 	    //	    if (outputMode== OutputMode.FULL) System.out.println(Captive.asComment(game.rules.toString()));
 
-	    System.out.println("Starting episode " + (gameCnt+1) + " of no more tnan " + maxBoards);
+	    System.out.println("Starting episode " + (gameCnt+1) + " of up to " + max_boards);
 
 	    Episode epi = new Episode(game, outputMode,
 				      new InputStreamReader(System.in),
