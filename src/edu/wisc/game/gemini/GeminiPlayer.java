@@ -146,7 +146,8 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     
     static String gemini_api_key = null;
     static String model = "gemini-2.0-flash";
-
+    static long wait = 4000;
+    
     static void readApiKey() throws IOException {
 	if ( gemini_api_key != null) return;
 	String s = Util.readTextFile(new File("/opt/w2020/gemini-api-key.txt"));
@@ -156,6 +157,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 
     /** Modeled on Captive.java
 	model=gemini-2.0-flash
+	wait=4000  (wait time between requests in msec)
      */
     public static void main(String[] argv) throws Exception {
 
@@ -176,7 +178,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	argv = ht.enrichFromArgv(argv);
 
 	model = ht.getOption("model", model);
-
+	wait = ht.getOptionLong("wait", wait);
 	
 	System.out.println("Gemini model=" + model);
 	//System.out.println("output=" +  ht.getOption("output", null));
@@ -403,7 +405,7 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 	    Matcher m = movePat.matcher(line);
 	    if (!m.find()) throw new IllegalArgumentException("Could not find 'MOVE id bid' in this response text: " + line);
 	    int id = Integer.parseInt( m.group(1));
-	    int bid = Integer.parseInt( m.group(2))
+	    int bid = Integer.parseInt( m.group(2));
 
 	    Episode.Display q = epi.doMove2(id, bid,  attemptCnt);
 	    //if (outputMode!=OutputMode.BRIEF) out.println(displayJson());
@@ -419,7 +421,7 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 		lastR = 0;
 	    }
 	    System.out.println("transcript has "+epi.getTranscript().size()+" moves. Board pop="+epi.getValues().size()+". lastStretch=" + lastStretch + ", lastR=" + lastR);
-	    waitABit(3000); // 5 sec wait
+	    waitABit(wait); // 5 sec wait
 	    attemptCnt++;
 
 	    if (lastStretch>10 || lastR > 1e6) {
