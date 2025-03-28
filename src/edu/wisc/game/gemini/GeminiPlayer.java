@@ -240,7 +240,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	//System.out.println("#inputDir=" + inputDir);
 	if (inputDir!=null) Files.setInputDir(inputDir);
 
-	MlcLog log=null; //Captive.mkLog(ht);		      
+	MlcLog log=Captive.mkLog(ht);		      
 
 	GameGenerator gg=null;
 	try {
@@ -265,7 +265,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	System.out.println("Instructions are: " + instructions);
 
 	
-	while(gameCnt < max_boards) {
+	for(; gameCnt < max_boards; gameCnt++) {
 	    Game game = gg.nextGame();
 	    //	    if (outputMode== OutputMode.FULL) System.out.println(Captive.asComment(game.rules.toString()));
 
@@ -286,12 +286,11 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	    //----
 	    /*
 	    boolean z = epi.playGame(gg,gameCnt+1);
+	    */
 	    if (log!=null) log.logEpisode(epi, gameCnt);
+	    /*
 	    if (!z) break;
 	    */
-	    gameCnt++;
-	    boolean z = true;
-	    if (!z) break;
 	}
 
 	if (log!=null) log.close();

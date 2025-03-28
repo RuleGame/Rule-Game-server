@@ -130,7 +130,7 @@ public class Captive {
 	line params.
 	@return an MLC results logger object, or null if one is not requested
      */
-    static MlcLog mkLog(ParseConfig ht) {
+    static public MlcLog mkLog(ParseConfig ht) {
 
 	String logFileName=ht.getOption("log", null);
 	boolean append = false;
