@@ -39,8 +39,9 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 
     //    int sentCnt = 0;
     
-    /** Makes a request to the Gemini server.
+    /** Sends a request to the Gemini server, and processes the results.
 
+	@param gr The request to send
 	@return the "text" part of the response
 
 	<pre>	
@@ -55,6 +56,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
    </pre>
     */  
 
+  
     private String doOneRequest(GeminiRequest gr) throws MalformedURLException, IOException, ProtocolException, ClassCastException
     {
 	readApiKey();
@@ -63,55 +65,70 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	u += "?key=" + gemini_api_key;
 	
 	URL url = new URL(u);
-	HttpURLConnection con = (HttpURLConnection)url.openConnection();
-	con.setRequestMethod("POST");
-	con.setRequestProperty("Content-Type", "application/json");
-	con.setDoOutput(true);
 
 	JsonObject jo = JsonReflect.reflectToJSONObject(gr, false, null, 10);
 	//System.out.println("SENDING: " + jo.toString());
 	String jsonInputString =  jo.toString();
 
-	//if (true) System.exit(0);
-	
-	try(OutputStream os = con.getOutputStream()) {
-	    byte[] input = jsonInputString.getBytes("utf-8");
-	    os.write(input, 0, input.length);			
-	}
-
-
-	int code = con.getResponseCode();
-	InputStream is;
-    
-	if (code != 200) {
-	    System.out.println("Error: HTTP response code = " + code);
-	    is = con.getErrorStream();
-	    //return;
-	} else {
-	    is = con.getInputStream();
-	}
-	InputStreamReader isr = new InputStreamReader(is, "utf-8");
+	int retryCnt=0;
 	JsonObject responseJo = null;
+	for(; retryCnt < 3; retryCnt++) {
+
+	    HttpURLConnection con = (HttpURLConnection)url.openConnection();
+	    con.setRequestMethod("POST");
+	    con.setRequestProperty("Content-Type", "application/json");
+	    con.setDoOutput(true);
 	    
-	try(BufferedReader br = new BufferedReader(isr)) {
-	    /*
-	    StringBuilder response = new StringBuilder();
-	    String responseLine = null;
-	    while ((responseLine = br.readLine()) != null) {
-		response.append(responseLine.trim());
+	    
+	    try(OutputStream os = con.getOutputStream()) {
+		byte[] input = jsonInputString.getBytes("utf-8");
+		os.write(input, 0, input.length);			
 	    }
-	    */
-
-	    JsonReader jsonReader = Json.createReader(br);
-	    responseJo = jsonReader.readObject();
-	    jsonReader.close();
-
 	    
-	    //System.out.println("RESPONSE: " + responseJo.toString());
+	    
+	    int code = con.getResponseCode();
+	    InputStream is;
+	    
+	    if (code != 200) {
+		System.out.println("Error: HTTP response code = " + code);
+		is = con.getErrorStream();
+	    } else {
+		is = con.getInputStream();
+	    }
+	    InputStreamReader isr = new InputStreamReader(is, "utf-8");
+	    
+	    try(BufferedReader br = new BufferedReader(isr)) {
+		/*
+		  StringBuilder response = new StringBuilder();
+		  String responseLine = null;
+		  while ((responseLine = br.readLine()) != null) {
+		  response.append(responseLine.trim());
+		  }
+		*/
+		
+		JsonReader jsonReader = Json.createReader(br);
+		responseJo = jsonReader.readObject();
+		jsonReader.close();
+	    }		
+	    if (code==200) break;
+
+	    System.out.println("SERVER RESPONSE: " + responseJo.toString());
+
+	    if (code==429) {
+		int waitSec = error429(responseJo);
+		System.out.println("Waiting for " + waitSec + " seconds to retry, as told by the server");
+		waitABit(waitSec * 1000);
+	    } else {
+		throw new IllegalArgumentException("Don't know what to do with server error code " + code +"; terminating");
+	    }
+	    
 	}
 
 	if (responseJo==null) throw new IllegalArgumentException("Has not read anything");
 
+	
+
+	
 	JsonArray candidatesJa = responseJo.getJsonArray("candidates");
 	if (candidatesJa.size()!=1)  throw new IllegalArgumentException("Expected to find 1 candidate, found " + candidatesJa.size() + ". RESPONSE=\n" + responseJo);
 	JsonObject contentJo = candidatesJa.getJsonObject(0).getJsonObject("content");
@@ -126,13 +143,46 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
    "avgLogprobs": -1.9414728740230203e-05}
   ],
 "usageMetadata": ...
-	*/
+	*/	
+	
+	}
 
 	
-	
+
+    /* Extracts the recommended retry time from the error response of the Gemini
+       server.
+       <pre>
+        {"error":{"code":429,
+		 "message":"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.",
+		 "status":"RESOURCE_EXHAUSTED",
+		 "details":[
+		 {"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_requests","quotaId":"GenerateRequestsPerMinutePerProjectPerModel-FreeTier","quotaDimensions":{"model":"gemini-2.0-flash","location":"global"},"quotaValue":"15"}]},
+		 {"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Learn more about Gemini API quotas","url":"https://ai.google.dev/gemini-api/docs/rate-limits"}]		 },
+		 {"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"38s"}]
+		 }}
+		 </pre>
+    */
+
+    static int error429(JsonObject responseJo) {
+	JsonObject errorJo = responseJo.getJsonObject("error");
+	JsonArray detailsJa = errorJo.getJsonArray("details");
+	for(int j=0; j<detailsJa.size(); j++) {
+	    JsonObject detailJo = detailsJa.getJsonObject(j);
+	    String type = detailJo.getString("@type");
+	    if (type.equals("type.googleapis.com/google.rpc.RetryInfo")) {
+		String retryDelay = detailJo.getString("retryDelay");
+		Matcher m = secPat.matcher(retryDelay);
+		if (m.matches()) {
+		    int sec = Integer.parseInt( m.group(1));
+		    return sec;
+		} else throw new IllegalArgumentException("Could not parse retryDelay=" + retryDelay);
+	    }
+	}
+	throw new IllegalArgumentException("Could not find type.googleapis.com/google.rpc.RetryInfo in this response: " + responseJo);
     }
 
-
+    static final Pattern secPat = Pattern.compile("([0-9]+)s");
+    
     static GeminiRequest makeRequest1() {
 	GeminiRequest gr = new GeminiRequest();
 	gr.addInstruction("Please answer in German, if you can");	

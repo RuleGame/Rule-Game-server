@@ -3,7 +3,7 @@
 #---------------------------------------------------------------------
 #   Usage is similar to capitve-full.sh, e.g.:
 #
-#   scripts/gemini.sh /opt/w2020/game-data/rules/FDCL/basic/ccw.txt 9
+#   scripts/gemini.sh /opt/w2020/game-data/rules/FDCL/basic/ccw.txt 9 max_boards=100 
 #   scripts/gemini.sh /opt/w2020/game-data/rules/FDCL/basic/cm_KRBY.txt 9
 #
 #   scripts/gemini.sh  /opt/tomcat/game-data/rules/vm/TD-01.txt 6
