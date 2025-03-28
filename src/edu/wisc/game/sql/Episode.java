@@ -507,6 +507,7 @@ public class Episode {
 	    
 	    if (doneWith) throw  new IllegalArgumentException("Forgot to scroll?");
 	    transcript.add(pick);
+	    System.out.println("DEBUG A: transcript=" + getTranscript());
 	    attemptCnt++;
 	    attemptSpent += (pick instanceof Move) ? 1.0: xgetPickCost();
 
@@ -732,6 +733,13 @@ public class Episode {
 	    MULTIPLE_OBJECTS_IN_CELL  = -11;
 	    ;
 
+	/** Used to talk to Gemini */
+	public static String toBasicName(int code) {
+	    return code==ACCEPT? "ACCEPT":
+		code==DENY? "DENY":
+		code==IMMOVABLE? "IMMOVABLE":
+		"INVALID";
+	}
 	/** This is used when comparing codes read from old
 	    transcripts and recomputed codes, to take into account
 	    a more recent creation of code 7 */

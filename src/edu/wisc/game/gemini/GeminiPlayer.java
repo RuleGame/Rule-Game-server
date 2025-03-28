@@ -37,6 +37,8 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	System.exit(1);
     }
 
+    //    int sentCnt = 0;
+    
     /** Makes a request to the Gemini server.
 
 	@return the "text" part of the response
@@ -66,7 +68,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	con.setDoOutput(true);
 
 	JsonObject jo = JsonReflect.reflectToJSONObject(gr, false, null, 10);
-	System.out.println("SENDING: " + jo.toString());
+	//System.out.println("SENDING: " + jo.toString());
 	String jsonInputString =  jo.toString();
 
 	//if (true) System.exit(0);
@@ -132,10 +134,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 
     static GeminiRequest makeRequest1() {
 	GeminiRequest gr = new GeminiRequest();
-
-	gr.addInstruction("Please answer in German, if you can");
-
-	
+	gr.addInstruction("Please answer in German, if you can");	
 	gr.addUserText("How do you use borax?");
 	return gr;
     }
@@ -196,8 +195,10 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	if (log!=null) log.open();
 
 	GeminiPlayer history = new GeminiPlayer();
+
+	int maxBoards = 10;       
 	
-	while(true) {
+	while(gameCnt < maxBoards) {
 	    Game game = gg.nextGame();
 	    if (outputMode== OutputMode.FULL) System.out.println(Captive.asComment(game.rules.toString()));
 
@@ -220,7 +221,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	    if (!z) break;
 	    */
 	    gameCnt++;
-	    boolean z = false;
+	    boolean z = true;
 	    if (!z) break;
 	}
 
@@ -284,7 +285,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	if (lastElement().epi.isCompleted())  throw new IllegalArgumentException("Last episode already completed. What to ask?");
 
 	if (size()>1) {
-	    // describe all previos episodes.
+	    // describe all previous episodes.
 	    v.add("You have completed " + size() + " episodes so far. Their summary follows.");
 	}
 	for(int j=0; j<size(); j++) {
@@ -292,10 +293,16 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	}
 
 	v.add("YOUR MOVE?");
-	gr.addUserText(Util.joinNonBlank("\n", v));
+	String text = Util.joinNonBlank("\n", v);
+	System.out.println("===========================================\n"+
+			   "The text part of the request:\n" + text);
+	gr.addUserText(text);
 	return gr;
     }
 
+
+    static int lastLen = -1;
+    
     /** Creates lines describing an episode, to go into a request. */
     private Vector<String> episodeText(int j) {
 	Vector<String> v = new Vector<>();
@@ -312,6 +319,11 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	v.add("Episode " + (j+1)  + " had the following initial board: " +
 	      ehi.initialBoardAsString());
 	int n = moves.size();
+	if (n==lastLen) {
+	    throw new IllegalArgumentException("n="+ n + " still? how come?");
+	} else {
+	    lastLen = n;
+	}
 	v.add("During episode "+(j+1)+", you "+
 	      (isLast ? "have made so far ": "made ") +
 	      (n>0?       "the following ":"")+
@@ -320,11 +332,28 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	for(int k=0; k<n; k++) {
 	    if (!(moves.get(k) instanceof Move))  throw new IllegalArgumentException("Unexpected entry in the transcript (j=" + j+", k=" + k+", The bot is only supposed to make moves, not picks!");
 	    Move move = (Move)moves.get(k);
-	    v.add("Move " + (k+1) + " :  " + move);		    
+	    //	    v.add("Move " + (k+1) + " :  " + move);
+
+	    /*
+"MOVE id bucketId response",
+where "id" is the ID of the object that you attempted to move, "bucketId" is the ID of the bucket into which you wanted to place it, and "response" is whatever response I have given to that move. The response is one word, which can be one of the following: ACCEPT, NOT_MOVABLE, DENY, INVALID.
+	    */
+	    int code = move.getCode();
+
+	    
+	    String s = "MOVE " + move.getPieceId() + " " + move.getBucketNo() + " "+
+		CODE.toBasicName(code);
+	    v.add(s);
+	    
 	}
 	return v;
     }
 
+    final Pattern movePat = Pattern.compile("\\bMOVE\\s+([0-9]+)\\s+([0-9]+)");
+
+    int lastStretch;
+    double lastR;
+    
     /** Plays the last (latest) episode of this GeminiPlayer, until it ends.
 
 	What comes back from Gemini is this:
@@ -345,18 +374,63 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 "modelVersion": "gemini-2.0-flash"}
 [
      */
-    void playingLoop()  throws IOException {	    
+    void playingLoop()  throws IOException {
+
+	System.out.println("Instructions are: " + instructions);
+
 	EpisodeHistory ehi = lastElement();
 	Episode epi = ehi.epi;
+	int attemptCnt = 0;
 	while( !epi.isCompleted()){
 	    GeminiRequest gr = makeRequest();
 	    String line = doOneRequest(gr);
 	    System.out.println("Response text=" + line);
-			       
-	    return;
+	    Matcher m = movePat.matcher(line);
+	    if (!m.find()) throw new IllegalArgumentException("Could not find 'MOVE id bid' in this response text: " + line);
+	    int id = Integer.parseInt( m.group(1));
+	    int bid = Integer.parseInt( m.group(2))
+;	    System.out.println("Moving piece " + id + " to bucket " + bid + "...");
+	    Episode.Display q = epi.doMove2(id, bid,  attemptCnt);
+	    //if (outputMode!=OutputMode.BRIEF) out.println(displayJson());
+	    //if (outputMode==OutputMode.FULL) out.println(graphicDisplay());
+	    System.out.println("Code=" + q.getCode());
+	    System.out.println("DEBUG B: transcript=" + epi.getTranscript());
+	    if (q.getCode()==CODE.ACCEPT) { // add to the "mastery stretch"
+		lastStretch++;
+		if (lastR==0) lastR=1;
+		lastR *= epi.getLastMove().getRValue();		    
+	    } else { // a failed move or pick breaks the "mastery stretch"
+		lastStretch=0;
+		lastR = 0;
+	    }
+	    System.out.println("transcript has "+epi.getTranscript().size()+" moves. Board pop="+epi.getValues().size()+". lastStretch=" + lastStretch + ", lastR=" + lastR);
+	    waitABit(3000); // 5 sec wait
+	    attemptCnt++;
+
+	    if (lastStretch>10 || lastR > 1e6) {
+		System.out.println("Victory! transcript has "+epi.getTranscript().size()+" moves. Board pop="+epi.getValues().size()+". lastStretch=" + lastStretch + ", lastR=" + lastR);
+		System.exit(0);
+	    }
+	    
 	}
+
+	System.out.println("Episode ended. transcript has "+epi.getTranscript().size()+" moves. Board pop="+epi.getValues().size()+". lastStretch=" + lastStretch + ", lastR=" + lastR);
+	    
+	return;
     }
 
+    /** Out model is gemini-2.0-flash, which allows 15 RPM in the free tier.
+    https://ai.google.dev/gemini-api/docs/rate-limits
+    */
+    private void waitABit(long msec) {
+    
+	try {
+            Thread.sleep(3000); 
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+    
     // {"text": "MOVE 0 0\n"
     
     /*
