@@ -72,6 +72,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 
 	int retryCnt=0;
 	JsonObject responseJo = null;
+	int code=0;
 	for(; retryCnt < 3; retryCnt++) {
 
 	    HttpURLConnection con = (HttpURLConnection)url.openConnection();
@@ -86,7 +87,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	    }
 	    
 	    
-	    int code = con.getResponseCode();
+	    code = con.getResponseCode();
 	    InputStream is;
 	    
 	    if (code != 200) {
@@ -124,6 +125,11 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	    
 	}
 
+
+	if (code != 200) {
+	    throw new IllegalArgumentException("Retry count exceeded? Terminating");
+	}
+	
 	if (responseJo==null) throw new IllegalArgumentException("Has not read anything");
 
 	
@@ -491,7 +497,7 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
     private void waitABit(long msec) {
     
 	try {
-            Thread.sleep(3000); 
+            Thread.sleep(msec); 
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
