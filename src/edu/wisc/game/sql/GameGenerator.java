@@ -126,6 +126,16 @@ abstract public class GameGenerator {
 	initPositionMask();
     }
 
+    /** More info to be added to toString() */
+    public String extraToString() {
+	if (condRules==null) return "";
+	String s = "Extra constraint: testing=" + testing +", rules=" + condRules;
+	if (positionMask!=null) s += ". Position mask=" + positionMask;
+	return s;
+
+    }
+	
+    
     /** Initializes the position mask, as (and if) mandated by the current
 	condRules and the testing flag */
     private void initPositionMask() {

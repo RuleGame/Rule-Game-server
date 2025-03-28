@@ -20,7 +20,19 @@ public class RandomGameGenerator extends GameGenerator {
     final int[] nPiecesRange, nShapesRange, nColorsRange;
     final Piece.Shape[] allShapes;// = 	Piece.Shape.legacyShapes;
     final Piece.Color[] allColors;// = 	Piece.Color.legacyColors;
-  
+
+    public static String rangeToString(int [] range) {
+	if (range[0]==range[1]) return "" + range[0];
+	else return "["+range[0]+":"+range[1]+"]";
+    }
+
+    public String toString() {
+	String s = "RandomGameGenerator with nPieces=" + rangeToString(nPiecesRange) + ", nShapes="  + rangeToString(nShapesRange) + ", nColors="  + rangeToString(nColorsRange);
+	s += ". " + extraToString();
+	return s;
+	   
+    }
+
       
     RandomGameGenerator(RandomRG _random, String ruleSetName, int[] _nPiecesRange, int[] _nShapesRange,
 			int[] _nColorsRange,  Piece.Shape[] _allShapes, Piece.Color[] _allColors) throws IOException, RuleParseException {

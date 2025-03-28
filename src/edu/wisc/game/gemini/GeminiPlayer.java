@@ -58,7 +58,8 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     private String doOneRequest(GeminiRequest gr) throws MalformedURLException, IOException, ProtocolException, ClassCastException
     {
 	readApiKey();
-	String u = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+	String u = "https://generativelanguage.googleapis.com/v1beta/models/";
+	u += model + ":generateContent";
 	u += "?key=" + gemini_api_key;
 	
 	URL url = new URL(u);
@@ -106,7 +107,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	    jsonReader.close();
 
 	    
-	    System.out.println("RESPONSE: " + responseJo.toString());
+	    //System.out.println("RESPONSE: " + responseJo.toString());
 	}
 
 	if (responseJo==null) throw new IllegalArgumentException("Has not read anything");
@@ -144,6 +145,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     
     
     static String gemini_api_key = null;
+    static String model = "gemini-2.0-flash";
 
     static void readApiKey() throws IOException {
 	if ( gemini_api_key != null) return;
@@ -152,7 +154,9 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	gemini_api_key = s;
     }
 
-    /** Modeled on Captive.java */
+    /** Modeled on Captive.java
+	model=gemini-2.0-flash
+     */
     public static void main(String[] argv) throws Exception {
 
 	File f = new File( Files.geminiDir(), "system.txt");	
@@ -171,6 +175,10 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	// allows seed=... , colors=..., condTrain=..., crowded=... etc among argv
 	argv = ht.enrichFromArgv(argv);
 
+	model = ht.getOption("model", model);
+
+	
+	System.out.println("Gemini model=" + model);
 	//System.out.println("output=" +  ht.getOption("output", null));
 	OutputMode outputMode = ht.getOptionEnum(OutputMode.class, "output", OutputMode.FULL);
 
@@ -190,6 +198,10 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	if (log!=null) log.rule_name = gg.getRules().getFile().getName().replaceAll("\\.txt$", "");
 
 
+	System.out.println("Game generator=" + gg);
+	System.out.println("Rule set=" + gg.getRules().getFile());
+
+	
 	int gameCnt=0;
 
 	if (log!=null) log.open();
@@ -197,10 +209,15 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	GeminiPlayer history = new GeminiPlayer();
 
 	int maxBoards = 10;       
+
+	System.out.println("Instructions are: " + instructions);
+
 	
 	while(gameCnt < maxBoards) {
 	    Game game = gg.nextGame();
-	    if (outputMode== OutputMode.FULL) System.out.println(Captive.asComment(game.rules.toString()));
+	    //	    if (outputMode== OutputMode.FULL) System.out.println(Captive.asComment(game.rules.toString()));
+
+	    System.out.println("Starting episode " + (gameCnt+1) + " of no more tnan " + maxBoards);
 
 	    Episode epi = new Episode(game, outputMode,
 				      new InputStreamReader(System.in),
@@ -327,7 +344,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	v.add("During episode "+(j+1)+", you "+
 	      (isLast ? "have made so far ": "made ") +
 	      (n>0?       "the following ":"")+
-	      n + 	      " move attempts" +
+	      n + 	      " move attempt" + (n>1? "s":"") +
 	      (n>0?       ", with the following results:": "."));
 	for(int k=0; k<n; k++) {
 	    if (!(moves.get(k) instanceof Move))  throw new IllegalArgumentException("Unexpected entry in the transcript (j=" + j+", k=" + k+", The bot is only supposed to make moves, not picks!");
@@ -376,25 +393,23 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
      */
     void playingLoop()  throws IOException {
 
-	System.out.println("Instructions are: " + instructions);
-
 	EpisodeHistory ehi = lastElement();
 	Episode epi = ehi.epi;
 	int attemptCnt = 0;
 	while( !epi.isCompleted()){
 	    GeminiRequest gr = makeRequest();
 	    String line = doOneRequest(gr);
-	    System.out.println("Response text=" + line);
+	    System.out.println("Response text={" + line + "}");
 	    Matcher m = movePat.matcher(line);
 	    if (!m.find()) throw new IllegalArgumentException("Could not find 'MOVE id bid' in this response text: " + line);
 	    int id = Integer.parseInt( m.group(1));
 	    int bid = Integer.parseInt( m.group(2))
-;	    System.out.println("Moving piece " + id + " to bucket " + bid + "...");
+
 	    Episode.Display q = epi.doMove2(id, bid,  attemptCnt);
 	    //if (outputMode!=OutputMode.BRIEF) out.println(displayJson());
 	    //if (outputMode==OutputMode.FULL) out.println(graphicDisplay());
-	    System.out.println("Code=" + q.getCode());
-	    System.out.println("DEBUG B: transcript=" + epi.getTranscript());
+;	    System.out.println("Moving piece " + id + " to bucket " + bid + ". Code=" + q.getCode());
+	    //System.out.println("DEBUG B: transcript=" + epi.getTranscript());
 	    if (q.getCode()==CODE.ACCEPT) { // add to the "mastery stretch"
 		lastStretch++;
 		if (lastR==0) lastR=1;

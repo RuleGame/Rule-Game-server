@@ -507,7 +507,7 @@ public class Episode {
 	    
 	    if (doneWith) throw  new IllegalArgumentException("Forgot to scroll?");
 	    transcript.add(pick);
-	    System.out.println("DEBUG A: transcript=" + getTranscript());
+	    //System.out.println("DEBUG A: transcript=" + getTranscript());
 	    attemptCnt++;
 	    attemptSpent += (pick instanceof Move) ? 1.0: xgetPickCost();
 
@@ -1076,7 +1076,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
     /** The current version of the application */
-    public static final String version = "8.003";
+    public static final String version = "8.004";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }
