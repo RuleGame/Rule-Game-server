@@ -56,20 +56,50 @@ public class Episode {
 	specifying its destination */
     public static class Pick {
 	/** Creation mode */
-	//enum Mode { BY_ID, BY_POS};
-	
+	enum Mode { BY_ID, BY_POS};
+
+	/** The ID of the piece being moved. Normally, a non-negative integer
+	    corresponding to the ID of a game piece that actually was on the
+	    border when the Player made the pick or move.
+	    In an invalid Pick or Move    (e.g. the player tried to access a
+s	    non-existing piece) the value may be different from those of
+	    real pieces: it may refer to a piece that had been removed earlier,
+	    or one that never existed, or may even be negative. In such a pick,
+	    the code will reflect the invalidity of the player's action.
+	   
+	*/
+	int pieceId = -1;
+
+
 	/** The position of the piece being moved, in the [1:N*N] range */
 	public final int pos;
 
+	/** The normal constructor used when the player accesses a piece
+	    by its ID, which is considered the right way to do since GS 8.0
+	    @param _piece A game piece that actually is on the board at this
+	    moment
+	*/
 	Pick(Piece _piece) {
 	    piece = _piece;
 	    pieceId = (int)piece.getId();
 	    pos = piece.xgetPos().num();	    
 	}
 
+	/** The legacy constructor, used before GS 8.0. It may still be
+	    used with calls made through the GUI client. */
 	Pick(int _pos) { pos = _pos; }
+
+	/** This is typically used when one neeeds to create a Pick object
+	    representing an invalid /pick or /move call, especially in Gemini
+	    games */
+	Pick(Mode mode, int q) {
+	    if (mode == Mode.BY_POS) {
+		pos = q;
+	    } else 	    if (mode == Mode.BY_ID) {
+		pieceId = q;		
+	    }
+	}
 	public Pick(Pos  pos) { this(pos.num()); }
-	int pieceId = -1;
 	public int getPos() { return pos; }
         public int getPieceId() { return pieceId; }	
         public void setPieceId(int id) {  pieceId=id; }	
@@ -116,6 +146,10 @@ public class Episode {
 	    super(_piece);
 	    bucketNo = b;
 	}
+	Move(Mode mode, int q, int b) {
+	    super(mode,q);
+	    bucketNo = b;
+	}
 
 	public String toString() {
 	    return "MOVE " + pos + " " +new Pos(pos) +	" to B" + bucketNo+", code=" + code;
@@ -144,11 +178,19 @@ public class Episode {
     public Vector<Piece> getValues() { return  values;}
 
 
-    /** Where in the values array do we have a game piece with the specified id? */
-    private int findJforId(long id) {
+    /** Where in the values array do we have a game piece with the specified id?
+	@return array position, or -1 if no object with a matching ID can be found.
+     */
+    private int findJforIdZ(long id) {
 	for(int j=0; j<values.size(); j++) {
 	    if (values.get(j).getId()==id) return j;
 	}
+	return -1;
+    }
+    
+    private int findJforId(long id) {
+	int j = findJforIdZ(id);
+	if (j>=0) return j;
 	//System.err.println("Board has no game piece with id=" + id +". values=" + Util.joinNonBlank(", ", values));
 	throw new IllegalArgumentException("Board has no game piece with id=" + id);
     }
@@ -1250,11 +1292,21 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	if (bucketId<0 || bucketId >= NBU) throw new IllegalArgumentException("Invalid input: bucket ID=" + bucketId);
 	if (pieceId<0) throw new IllegalArgumentException("Invalid pieceId=" + pieceId);
 
-	int j = findJforId(pieceId);
-	Piece p = values.get(j);
 
-	Move move = new Move(p, bucketId);
-	return move;
+	int j = findJforIdZ(pieceId);
+
+	if (j<0) {
+	    // Invalid ID. Form a Move to be recorded in transcript.
+	    // (Needed in Gemini plays)
+	    Move move = new Move(Pick.BY_ID, pieceId, bucketId);
+	    move.code = CODE.INVALID_ARGUMENTS;
+	    return move;
+	} else {	
+	    Piece p = values.get(j);
+	    
+	    Move move = new Move(p, bucketId);
+	    return move;
+	}
     }
 
 	    
@@ -1288,9 +1340,15 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	    move = (Move)formMove2(pieceId,bucketId);
 	} catch(IllegalArgumentException ex) {
 	    ex.printStackTrace(System.err);
-	    return new Display(CODE.INVALID_ARGUMENTS, ex.getMessage());
+	    return new Display(move.code, ex.getMessage());
 	}
-	int code = accept(move);
+	int code;
+	if (move.code == CODE.INVALID_ARGUMENTS) {
+	    code = move.code;
+	    transcript.add(move);
+	} else {
+	    code = accept(move);
+	}
 	return new Display(code, move, mkDisplayMsg());
     }
 

@@ -172,6 +172,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     static int error429(JsonObject responseJo) {
 	JsonObject errorJo = responseJo.getJsonObject("error");
 	JsonArray detailsJa = errorJo.getJsonArray("details");
+	if (detailsJa==null)  throw new IllegalArgumentException("The Error 429 response came without the 'error/details' field: " + responseJo);
 	for(int j=0; j<detailsJa.size(); j++) {
 	    JsonObject detailJo = detailsJa.getJsonObject(j);
 	    String type = detailJo.getString("@type");
