@@ -71,7 +71,9 @@ s	    non-existing piece) the value may be different from those of
 	int pieceId = -1;
 
 
-	/** The position of the piece being moved, in the [1:N*N] range */
+	/** The position of the piece being moved, in the [1:N*N] range.
+	    May contain an invalid value on an invalid /move or /pick call.
+	 */
 	public final int pos;
 
 	/** The normal constructor used when the player accesses a piece
@@ -96,8 +98,9 @@ s	    non-existing piece) the value may be different from those of
 	    if (mode == Mode.BY_POS) {
 		pos = q;
 	    } else 	    if (mode == Mode.BY_ID) {
-		pieceId = q;		
-	    }
+		pieceId = q;
+		pos = -1;
+	    } else throw new IllegalArgumentException();
 	}
 	public Pick(Pos  pos) { this(pos.num()); }
 	public int getPos() { return pos; }
@@ -1298,7 +1301,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	if (j<0) {
 	    // Invalid ID. Form a Move to be recorded in transcript.
 	    // (Needed in Gemini plays)
-	    Move move = new Move(Pick.BY_ID, pieceId, bucketId);
+	    Move move = new Move(Pick.Mode.BY_ID, pieceId, bucketId);
 	    move.code = CODE.INVALID_ARGUMENTS;
 	    return move;
 	} else {	
@@ -1335,7 +1338,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     public Display doMove2(int pieceId, int bucketId, int _attemptCnt) throws IOException {
 	Display errorDisplay =inputErrorCheck1(1,1, _attemptCnt);
 	if (errorDisplay!=null) return errorDisplay;
-	Move move;
+	Move move=null;
 	try {
 	    move = (Move)formMove2(pieceId,bucketId);
 	} catch(IllegalArgumentException ex) {

@@ -56,7 +56,10 @@ public class RecentKnowledge extends HashMap<Integer, RecentKnowledge.Datum> {
 	    if (pick instanceof Episode.Move) { // Move, and it had better be failed
 		Episode.Move move = (Episode.Move) pick;
 		if (move.code == CODE.ACCEPT) throw new IllegalArgumentException("Successful moves are not 'recent knowledge'. Code="+move.code);
-		if (move.code != CODE.DENY) Logging.info("Useless transcript entry does not add to 'recent knowledge'. Code="+move.code);
+		if (move.code != CODE.DENY && move.code != CODE.IMMOVABLE) {
+		    Logging.info("Useless transcript entry does not add to 'recent knowledge'. Code="+move.code);
+		    return;
+		}
 		int b = move.bucketNo;
 		if (deniedBuckets==null) {
 		    deniedBuckets=new int[] { b };
