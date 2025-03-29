@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 import java.net.*;
+import java.text.*;
 import jakarta.json.*;
 
 
@@ -37,6 +38,9 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	System.exit(1);
     }
 
+    public static final DateFormat sqlDf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    static Date lastRequestTime = null;
+    
     //    int sentCnt = 0;
     
     /** Sends a request to the Gemini server, and processes the results.
@@ -74,7 +78,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	JsonObject responseJo = null;
 	int code=0;
 	for(; retryCnt < 3; retryCnt++) {
-
+	    lastRequestTime  = new Date();
 	    HttpURLConnection con = (HttpURLConnection)url.openConnection();
 	    con.setRequestMethod("POST");
 	    con.setRequestProperty("Content-Type", "application/json");
@@ -113,7 +117,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	    }		
 	    if (code==200) break;
 
-	    System.out.println("SERVER RESPONSE: " + responseJo.toString());
+	    System.out.println("At "+	sqlDf.format(lastRequestTime)+", SERVER RESPONSE: " + responseJo.toString());
 
 	    if (code==429) {
 		int waitSec = error429(responseJo);
@@ -286,18 +290,15 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	    EpisodeHistory his = new EpisodeHistory(epi);
 	    history.add(his);
 
-	    System.out.println("DEBUG: B=" + his.initialBoardAsString());
+	    //System.out.println("DEBUG: B=" + his.initialBoardAsString());
 
 	    history.playingLoop();
 	    
-	    //----
-	    /*
-	    boolean z = epi.playGame(gg,gameCnt+1);
-	    */
-	    if (log!=null) log.logEpisode(epi, gameCnt);
-	    /*
-	    if (!z) break;
-	    */
+	    if (log!=null) {
+		log.logEpisode(epi, gameCnt);
+		System.out.println("Logged episode " + (gameCnt+1) );
+	    }
+	    
 	}
 
 	if (log!=null) log.close();
@@ -466,7 +467,7 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 	    Episode.Display q = epi.doMove2(id, bid,  attemptCnt);
 	    //if (outputMode!=OutputMode.BRIEF) out.println(displayJson());
 	    //if (outputMode==OutputMode.FULL) out.println(graphicDisplay());
-;	    System.out.println("Moving piece " + id + " to bucket " + bid + ". Code=" + q.getCode());
+	    System.out.println("At "+	sqlDf.format(lastRequestTime)+", Moving piece " + id + " to bucket " + bid + ". Code=" + q.getCode());
 	    //System.out.println("DEBUG B: transcript=" + epi.getTranscript());
 	    if (q.getCode()==CODE.ACCEPT) { // add to the "mastery stretch"
 		lastStretch++;
