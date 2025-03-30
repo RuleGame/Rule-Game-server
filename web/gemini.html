@@ -1,0 +1,50 @@
+
+<html>
+  <head><title>Gemini</title>
+ <link rel="stylesheet" type="text/css" href="css/rule-game.css"/>
+  </head>  
+  <body>
+    <h1>Making Gemini play the GOHR</h1>
+
+    <div align="center"><em>Updated 2025-03-30 for Game Server ver 8.005</em></div>
+
+    <h2>Architecture</h2>
+
+    <p>The setup that we have for getting Google Gemini to play the Rule Game (aka the GOHR) is, in a way, the inverse of that of the <a href="captive.html">Captive Game Server</a> (CGS). With the CGS, the control resides in the ML (AI) program that wants to solve a GOHR problem; whenever the ML program makes a move, it sends its proposed move as a request to the CGS, and then the CGS applies the move to the current board and returns its decision (accept/deny) in the response. With our Gemini app, the control resides in our app; the app keeps sending requests to the Gemini server at Google, asking it to make its next move. The Gemini's proposed move, hopefully, arrives in the response, and our app then applies it to the board, and prepares to send to Gemini the next request for a move.
+
+      <h2>Gemini models</h2>
+
+    <p>As of the early 2025, Gemini offers a number of "models". We mostly use the model named <tt>gemini-2.0-flash</tt>, but it can be configured to use other models as well (with the command-line option <tt>model=...</tt>).
+
+      <h2>Conversation structure</h2>
+      
+    <p>A Gemini user could easily imaginge that  when a person or an app interacts with the Gemini server, the server somehow keeps track of the entire content f the "conversation",  perhaps by means of creating some kind of a "model"      of the knowledge conveyed to it by the user's input, in a suitable      internal representation,      and expanding and updating that model as more user input comes through.
+
+
+          <p>Somewhat unexpectedly, Gemini documentation implies that nothing like this takes place! The Gemini server is essentially stateless, meaning that when a person or an app interacts with the Gemini server it, the server does not keep track of the user's previous requests, and does not store any "model" of that knowledge.
+
+<p>Instead, if you desire to have a "conversation" with the Gemini bot, you need to supply the entire record of the conversation (what you said -- what the bot said -- what you said -- ... -- what you say now) in each of your HTTP requests! The JSON structure that one sends to the server in the request provides support for "packing" one's conversation into it.
+
+      <p>The GOHR, of course, is built on a dialogue, with the player and the Game Server typically exchanging a request/response pair (in whichever direction) per move. It is possible to literally pack one's dialogue into the Gemini request structure, using the framework provided. But since we are already quite inefficient, the decision was made to normally pack the entire transcript of a series (all episodes played in a single run of our app, on the same rule set) into a single prompt. Certain limited exceptions exist though, and are discussed in appropriate places below.
+
+
+     <h2>Observations</h2>
+
+   <p>When dealing with a system whose main strength is in generating natural language, one has to be ready to handle sensibly a great variety of situations. We don't intend, after all, to teach our own app to understand under natural language (such as Gemini produces); instead we put the bulk of our effort into getting Gemini to produce output in a formalized structured way that would be easy for our app to understand.
+     
+   <p>As mentioned above, the instructions I provide to Gemini emphasize that what I want to hear from it are descriptions of proposed moves in a standard format, <tt>MOVE objectId bucketId</tt>. On simpler problems, such as color matching, this is more or less what happens; although every once in a while Gemini decides to provide a long disquisition on its motivation and reasoning, its long message still includes the "MOVE ..." substring which our app extracts and uses as the next move. However, in more complicated problems (e.g. "counterclockwise") one can sometimes see Gemini slide into purely verbal descriptions of the move.
+
+     <P>
+     .... use 1 retry with an extra prompt ....
+
+     <p>
+       .... move already removed piece ...
+
+<p>... "IMMOVABLE" means that the object you have tried to move cannot at present be moved to any bucket, and the object stays on the board. This mean that you should not try to attempt to move this object again until the board has changed in some way (i.e. some other object has been successfully removed).
+       
+<h2>Usage quotas</h2>
+       
+       <h2>Usage</h2>
+     
+  </body>
+  </html>
