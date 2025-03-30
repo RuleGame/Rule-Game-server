@@ -27,12 +27,12 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	usage(null);
     }
     static private void usage(String msg) {
-	System.err.println("Captive Game Server (https://rulegame.wisc.edu/w2020/captive.html)\n");
+	System.err.println("Gemini Player (https://rulegame.wisc.edu/w2020/captive.html)\n");
 	System.err.println("Usage:\n");
-	System.err.println("  java [options]  edu.wisc.game.engine.Captive game-rule-file.txt board-file.json");
-	System.err.println("  java [options]  edu.wisc.game.engine.Captive game-rule-file.txt npieces [nshapes ncolors]");
-	System.err.println("  java [options]  edu.wisc.game.engine.Captive trial-list-file.csv rowNumber");
-	System.err.println("  java [options]  edu.wisc.game.engine.Captive R:rule-file.txt:modifier-file.csv");
+	System.err.println("  java [options]  edu.wisc.game.gemini.GeminiPlayer game-rule-file.txt board-file.json");
+	System.err.println("  java [options]  edu.wisc.game.gemini.GeminiPlayer game-rule-file.txt npieces [nshapes ncolors]");
+	System.err.println("  java [options]  edu.wisc.game.gemini.GeminiPlayer trial-list-file.csv rowNumber");
+	System.err.println("  java [options]  edu.wisc.game.gemini.GeminiPlayer R:rule-file.txt:modifier-file.csv");
 	System.err.println("Each of 'npieces', 'nshapes', and 'ncolors' is either 'n' (for a single value) or 'n1:n2' (for a range). '0' means 'any'");
 	if (msg!=null) 	System.err.println(msg + "\n");
 	System.exit(1);
@@ -457,10 +457,23 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 	int attemptCnt = 0;
 	while( !epi.isCompleted()){
 	    GeminiRequest gr = makeRequest();
-	    String line = doOneRequest(gr);
-	    System.out.println("Response text={" + line + "}");
-	    Matcher m = movePat.matcher(line);
-	    if (!m.find()) throw new IllegalArgumentException("Could not find 'MOVE id bid' in this response text: " + line);
+
+	    int tryCnt = 0;
+	    Matcher m = null;
+	    while(true) {
+		String line = doOneRequest(gr);
+		tryCnt++;
+		System.out.println("Response text={" + line + "}");
+		m = movePat.matcher(line);
+		if (m.find()) break;
+		if (tryCnt>=2) {
+		    throw new IllegalArgumentException("Could not find 'MOVE id bid' in this response text, even after "+tryCnt+" attempts: {" + line +"}");
+		}
+		// try to tell the bot to use the proper format
+		gr.addModelText(line);
+		gr.addUserText("Please say again what YOUR MOVE is, remembering to describe your attempted move in the following format: 'MOVE objectId bucketId'!");
+		waitABit(wait);
+	    }
 	    int id = Integer.parseInt( m.group(1));
 	    int bid = Integer.parseInt( m.group(2));
 

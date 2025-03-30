@@ -42,6 +42,7 @@ public class GeminiRequest {
     public Vector<ContentElement> getContents()  { return contents; }
 
     public static class ContentElement {
+	/** "user" or "model" */
 	final String role;
 	public String getRole() { return role; }
 	Vector<ElementPart> parts = new Vector<>();
@@ -55,9 +56,17 @@ public class GeminiRequest {
 	ElementPart(String _text) { text = _text; }
     }
 
+    /** Adds my query */
     void addUserText(String msg) {
 	ElementPart p = new ElementPart(msg);
 	ContentElement ce = new ContentElement("user");
+	ce.parts.add(p);
+	contents.add(ce);
+    }
+    /** Adds a bot's response (to be sent back to it) */
+    void addModelText(String msg) {
+	ElementPart p = new ElementPart(msg);
+	ContentElement ce = new ContentElement("model");
 	ce.parts.add(p);
 	contents.add(ce);
     }

@@ -42,9 +42,6 @@ source "$h/scripts/set-var-captive.sh"
 
 #echo "Options are $opt"
 
-#java -Doutput=FULL -DinputDir=/home/vmenkov/my-game-data edu.wisc.game.engine.Captive  $argv[1-]
-
-#java $opt edu.wisc.game.engine.Captive  $argv[1-]
 java  edu.wisc.game.gemini.GeminiPlayer  $argv[1-]
 
 
