@@ -381,7 +381,6 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     }
 
 
-    static int lastLen = -1;
     
     /** Creates lines describing an episode, to go into a request. */
     private Vector<String> episodeText(int j) {
@@ -399,11 +398,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	v.add("Episode " + (j+1)  + " had the following initial board: " +
 	      ehi.initialBoardAsString());
 	int n = moves.size();
-	if (n==lastLen) {
-	    throw new IllegalArgumentException("n="+ n + " still? how come?");
-	} else {
-	    lastLen = n;
-	}
+
 	v.add("During episode "+(j+1)+", you "+
 	      (isLast ? "have made so far ": "made ") +
 	      (n>0?       "the following ":"")+
