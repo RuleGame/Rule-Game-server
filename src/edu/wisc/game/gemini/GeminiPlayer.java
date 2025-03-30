@@ -339,6 +339,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	String initialBoardAsString() {
 	    HashSet<String> excludableNames = new HashSet<>();
 	    excludableNames.add("buckets");
+	    excludableNames.add("dropped");
 	    excludableNames.add("0.id");
 	    JsonObject jo = JsonReflect.reflectToJSONObject(initialBoard, true,  excludableNames);
 	    return jo.toString();
