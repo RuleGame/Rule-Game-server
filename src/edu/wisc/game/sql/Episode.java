@@ -229,7 +229,8 @@ s	    non-existing piece) the value may be different from those of
 
     
     /** The count of all attempts (move and pick) done so far, including successful and unsuccessful ones.
-	(In 2PG, this includes moves of both players. If there is Player 1, his moves are in EpisodeInfo.attemptCnt1, etc)
+	(In 2PG, this includes moves of both players. If there is Player 1, his moves are in EpisodeInfo.attemptCnt1, etc).
+	This counter is increased whenever a move is added to transcript.
      */
     int attemptCnt=0;
     /** The total cost of all attempts (move and pick) done so far. (If it's 2PG, by both players),
@@ -552,8 +553,8 @@ s	    non-existing piece) the value may be different from those of
 	    
 	    if (doneWith) throw  new IllegalArgumentException("Forgot to scroll?");
 	    transcript.add(pick);
-	    //System.out.println("DEBUG A: transcript=" + getTranscript());
 	    attemptCnt++;
+	    //System.out.println("DEBUG A: transcript=" + getTranscript());
 	    attemptSpent += (pick instanceof Move) ? 1.0: xgetPickCost();
 
 
@@ -1240,8 +1241,12 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	    return new Display(CODE.NO_GAME, "No game is on right now (cleared="+cleared+", stalemate="+stalemate+", earlyWin="+earlyWin+"). Use NEW to start a new game");
 	}
 
-	if (_attemptCnt != attemptCnt)  return new Display(CODE.ATTEMPT_CNT_MISMATCH, "Given attemptCnt="+_attemptCnt+", expected " + attemptCnt);
-		
+	if (_attemptCnt != attemptCnt) {
+	    String msg =  "Attempt count mismatch: client sends attemptCnt="+_attemptCnt+", expected " + attemptCnt;
+	    Logging.info(msg);
+	    return new Display(CODE.ATTEMPT_CNT_MISMATCH, msg);
+	}
+			
 	if (x<1 || x>Board.N) return new Display(CODE.INVALID_ARGUMENTS, "Invalid input: column="+x+" out of range");
 	if (y<1 || y>Board.N) return new Display(CODE.INVALID_ARGUMENTS, "Invalid input: row="+y+" out of range");
 	return null;
@@ -1318,7 +1323,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	@param y the y-coordinate of the game piece the player tries to move
 	@param bx the x-coordinate of the destination bucket (0 or 7)
 	@param by the y-coordinate of the destination bucket (0 or 7)
-
+	@param _attemptCnt the number of previously made attempts in this episode, according to the client that has sent this request. This number must match this.attemptCnt
      */
     public Display doMove(int y, int x, int by, int bx, int _attemptCnt) throws IOException {
 	Display errorDisplay =inputErrorCheck1(y, x, _attemptCnt);
@@ -1349,6 +1354,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	if (move.code == CODE.INVALID_ARGUMENTS) {
 	    code = move.code;
 	    transcript.add(move);
+	    attemptCnt++;
 	} else {
 	    code = accept(move);
 	}

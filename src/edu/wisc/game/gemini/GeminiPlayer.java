@@ -275,6 +275,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 
 	System.out.println("Instructions are: " + instructions);
 
+	try {
 	
 	for(; gameCnt < max_boards; gameCnt++) {
 	    Game game = gg.nextGame();
@@ -292,16 +293,19 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 
 	    //System.out.println("DEBUG: B=" + his.initialBoardAsString());
 
-	    history.playingLoop();
-	    
-	    if (log!=null) {
-		log.logEpisode(epi, gameCnt);
-		System.out.println("Logged episode " + (gameCnt+1) );
+	    try {
+		history.playingLoop();
+	    } finally {
+		if (log!=null) {
+		    log.logEpisode(epi, gameCnt);
+		    System.out.println("Logged episode " + (gameCnt+1) );
+		}
 	    }
-	    
 	}
 
-	if (log!=null) log.close();
+	} finally {
+	    if (log!=null) log.close();
+	}
   
 
 	//---------
@@ -362,7 +366,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 
 	if (size()>1) {
 	    // describe all previous episodes.
-	    v.add("You have completed " + size() + " episodes so far. Their summary follows.");
+	    int n=size()-1; v.add("You have completed " + n + " episodes so far. "+(n>1?"Their":"Its") + " summary follows.");
 	}
 	for(int j=0; j<size(); j++) {
 	    v.addAll( episodeText(j));
@@ -433,7 +437,7 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
     /** Plays the last (latest) episode of this GeminiPlayer, until it ends.
 
 	What comes back from Gemini is this:
-	
+<pre>	
 {
 "candidates":[
   {"content": {"parts": [{"text": "MOVE 0 0\n"}],"role": "model"},
@@ -448,13 +452,14 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
     "candidatesTokensDetails": [{"modality": "TEXT","tokenCount": 6}]
     },
 "modelVersion": "gemini-2.0-flash"}
-[
+</pre>
+
+@return true on victory (master demonstrated), false otherwise
      */
-    void playingLoop()  throws IOException {
+    boolean playingLoop()  throws IOException {
 
 	EpisodeHistory ehi = lastElement();
 	Episode epi = ehi.epi;
-	int attemptCnt = 0;
 	while( !epi.isCompleted()){
 	    GeminiRequest gr = makeRequest();
 
@@ -471,18 +476,27 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 		}
 		// try to tell the bot to use the proper format
 		gr.addModelText(line);
-		gr.addUserText("Please say again what YOUR MOVE is, remembering to describe your attempted move in the following format: 'MOVE objectId bucketId'!");
+		gr.addUserText("I don't understand English very well. Please say again what YOUR MOVE is, remembering to describe your attempted move in the following format: 'MOVE objectId bucketId'!");
+		System.out.println("At "+	sqlDf.format(lastRequestTime)+", received an incomprehensible response, and trying to ask again");
 		waitABit(wait);
 	    }
 	    int id = Integer.parseInt( m.group(1));
 	    int bid = Integer.parseInt( m.group(2));
 
-	    Episode.Display q = epi.doMove2(id, bid,  attemptCnt);
+	    Episode.Display q = epi.doMove2(id, bid,  epi.getTranscript().size());
 	    //if (outputMode!=OutputMode.BRIEF) out.println(displayJson());
 	    //if (outputMode==OutputMode.FULL) out.println(graphicDisplay());
-	    System.out.println("At "+	sqlDf.format(lastRequestTime)+", Moving piece " + id + " to bucket " + bid + ". Code=" + q.getCode());
+	    int code = q.getCode();
+	    System.out.println("At "+	sqlDf.format(lastRequestTime)+", Moving piece " + id + " to bucket " + bid + ". Code=" + code);
 	    //System.out.println("DEBUG B: transcript=" + epi.getTranscript());
-	    if (q.getCode()==CODE.ACCEPT) { // add to the "mastery stretch"
+
+
+	    if (code==CODE.ATTEMPT_CNT_MISMATCH) {
+		System.out.println("I have ended up with an attempt count mismatch somehow. My logic bug probably. Terminating");
+		return false;
+	    }
+	    
+	    if (code==CODE.ACCEPT) { // add to the "mastery stretch"
 		lastStretch++;
 		if (lastR==0) lastR=1;
 		lastR *= epi.getLastMove().getRValue();		    
@@ -490,20 +504,22 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 		lastStretch=0;
 		lastR = 0;
 	    }
-	    System.out.println("transcript has "+epi.getTranscript().size()+" moves. Board pop="+epi.getValues().size()+". lastStretch=" + lastStretch + ", lastR=" + lastR);
-	    waitABit(wait); // 5 sec wait
-	    attemptCnt++;
+
+	    String stats = "Transcript has "+epi.getTranscript().size()+" moves. Board pop="+epi.getValues().size()+". lastStretch=" + lastStretch + ", lastR=" + lastR;
+	    
+	    System.out.println(stats);
 
 	    if (lastStretch>10 || lastR > 1e6) {
-		System.out.println("Victory! transcript has "+epi.getTranscript().size()+" moves. Board pop="+epi.getValues().size()+". lastStretch=" + lastStretch + ", lastR=" + lastR);
-		System.exit(0);
+		System.out.println("Victory: mastery demonstrated! " + stats);
+		return true;
 	    }
+	    waitABit(wait); // 5 sec wait before the next request, to keep Gemini happy
 	    
 	}
 
 	System.out.println("Episode ended. transcript has "+epi.getTranscript().size()+" moves. Board pop="+epi.getValues().size()+". lastStretch=" + lastStretch + ", lastR=" + lastR);
 	    
-	return;
+	return false;
     }
 
     /** Out model is gemini-2.0-flash, which allows 15 RPM in the free tier.
@@ -519,170 +535,6 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
     }
     
     // {"text": "MOVE 0 0\n"
-    
-    /*
-    static GeminiRequest makeRequestGame(Episode epi) throws IOException {
-	GeminiRequest gr = new GeminiRequest();
-
-	gr.addInstruction(instructions);
-
-	String text = "";
-
-	
-	
-	gr.addUserText("How do you use borax?");
-	return gr;
-    }
-    */
-
-    
-    /** Lets this episode play out until either all pieces are
-	cleared, or a stalemate is reached, or the player gives up
-	(sends an EXIT or NEW command). The episode takes commands from
-	the reader, as in the Captive Game Server.
-
-	@param game This is passed just so that we can access the feature list for the FEATURES command
-	@param gameCnt The sequential number of the current episode. This is only used in a message.
-	@return true if another episode is requested, i.e. the player
-	has entered a NEW command. false is returned if the player
-	enters an EXIT command, or simply closes the input stream.
-    */
-    /*
-    public static boolean playGame(Episode epi, GameGenerator gg, //Game game,
-			    int gameCnt) throws IOException {
-
-	//private final
-	PrintWriter out = epi.out;
- 
-	try {
-	    String msg = "# Hello. This is Captive Game Server for Gemini ver. "+Episode.getVersion()+". Starting a new episode (no. "+gameCnt+")";
-	if (epi.stalemate) {
-	    epi.respond(CODE.STALEMATE, msg + " -- immediate stalemate. Our apologies!");
-	} else {
-	    epi.respond(CODE.NEW_GAME, msg);
-	}
-	out.println(epi.displayJson());
-	if (epi.outputMode==OutputMode.FULL) out.println(epi.graphicDisplay());
-	
-	LineNumberReader r = new LineNumberReader(epi.in);
-	String line = null;
-	while((line=readLine(r))!=null) {
-	    line = line.trim();
-	    if (line.equals("")) continue;
-	    Vector<Token> tokens;
-	    try {
-		tokens    = Token.tokenize(line);
-	    } catch(RuleParseException ex) {
-		epi.respond(CODE.INVALID_COMMAND,"# Invalid input - cannot parse");
-		continue; 		
-	    }
-	    if (tokens.size()==0 || tokens.get(0).type!=Token.Type.ID) {
-		epi.respond(CODE.INVALID_COMMAND, "# Invalid input");
-		continue;
-	    }
-	    String cmd = tokens.get(0).sVal.toUpperCase();
-	    if (cmd.equals("EXIT")) {
-		epi.respond(CODE.EXIT, "# Goodbye");
-		return false;
-	    } else if (cmd.equals("VERSION")) {
-		out.println("# " + version);
-	    } else if (cmd.equals("NEW")) {
-		return true;
-	    } else if (cmd.equals("HELP")) {		
-		out.println("# Commands available:");
-		out.println("# FEATURES");
-		out.println("# MOVE row col bucket_row bucket_col");
-		out.println("# MOVE piece_id bucket_id");
-		out.println("# NEW");
-		out.println("# DISPLAY");
-		out.println("# DISPLAYFULL");
-		out.println("# MODE <BRIEF|STANDARD|FULL>");
-		out.println("# COND <train|test>");
-		out.println("# EXIT");
-	    } else if (cmd.equals("DISPLAY")) {
-		out.println(displayJson());
-		if (outputMode==OutputMode.FULL) out.println(graphicDisplay());
-	    } else if (cmd.equals("FEATURES")) {
-		//Map<String, Vector<Object>> features = game.getAllFeatures();
-		JsonObject json = JsonReflect.reflectToJSONObject(gg.getAllFeatures(), true);
-		out.println(json);
-	    } else if (cmd.equals("DISPLAYFULL")) {
-		out.println(displayJson());
-		out.println(graphicDisplay());
-	    } else if (cmd.equals("MODE")) {
-		tokens.remove(0);
-		if (tokens.size()!=1 || tokens.get(0).type!=Token.Type.ID) {
-		    epi.respond(CODE.INVALID_ARGUMENTS, "# MODE command must be followed by the new mode value");
-		    continue;
-		}
-		String s = tokens.get(0).sVal.toUpperCase();
-		try {
-		    outputMode= Enum.valueOf( OutputMode.class, s);
-		} catch(IllegalArgumentException ex) {
-		    epi.respond(CODE.INVALID_ARGUMENTS, "# Not a known mode: " + s);
-		    continue;
-		}
-		out.println("# OK, mode=" + outputMode);
-	    } else if (cmd.equals("COND")) {
-		tokens.remove(0);		
-		if (tokens.size()==0) {
-		    //-- just show the current state
-		} else if (tokens.size()!=1 || tokens.get(0).type!=Token.Type.ID) {
-		    epi.respond(CODE.INVALID_ARGUMENTS, "# COND command must be followed by 'train' or 'test'");
-		    continue;
-		} else {
-		    String s = tokens.get(0).sVal.toLowerCase();
-		    if (s.equals("train")) {
-			gg.setTesting(false);
-		    } else if (s.equals("test")) {
-			gg.setTesting(true);
-		    } else {
-			epi.respond(CODE.INVALID_ARGUMENTS, "# COND command  must be followed by 'train' or 'test'; invalid value=" + s);
-		    }
-		}
-		out.println("# OK, cond=" + (gg.getTesting()? "test" : "train"));
-	    } else if (cmd.equals("MOVE")) {
-		
-		tokens.remove(0);
-		int q[] = new int[tokens.size()];
-		if (tokens.size()!=4 && tokens.size()!=2) {
-		    epi.respond(CODE.INVALID_ARGUMENTS, "# Invalid input");
-		    continue;
-		}
-
-		// y x By Bx
-		// pieceId bucketId
-		
-		boolean invalid=false;
-		for(int j=0; j<q.length; j++) {
-		    if (tokens.get(j).type!=Token.Type.NUMBER) {
-			epi.respond(CODE.INVALID_ARGUMENTS, "# Invalid input: "+tokens.get(j));
-			invalid=true;
-			break;
-		    }
-		    q[j] = tokens.get(j).nVal;
-
-		}
-		if (invalid) continue;
-
-		Display mr =
-		    (q.length==2)?
-		    doMove2(q[0], q[1],  attemptCnt):
-		    doMove(q[0], q[1], q[2], q[3], attemptCnt);
-		epi.respond(mr.code, "# " + mr.errmsg);
-		if (outputMode!=OutputMode.BRIEF) out.println(displayJson());
-		if (outputMode==OutputMode.FULL) out.println(graphicDisplay());
-		
-	    } else {
-		epi.respond(CODE.INVALID_COMMAND, "# Invalid command: " +cmd);
-		continue;
-	    }
-	}
-	return false;
-	} finally {
-	    out.flush();
-	}
-    }
-    */
-    
+  
+   
 }
