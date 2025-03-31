@@ -28,6 +28,21 @@
       <p>The GOHR, of course, is built on a dialogue, with the player and the Game Server typically exchanging a request/response pair (in whichever direction) per move. It is possible to literally pack one's dialogue into the Gemini request structure, using the framework provided. But since we are already quite inefficient, the decision was made to normally pack the entire transcript of a series (all episodes played in a single run of our app, on the same rule set) into a single prompt. Certain limited exceptions exist though, and are discussed in appropriate places below.
 
 
+  <h2>Gemini usage quotas</h2>
+
+<p>Since at the moment we are using Gemini as free-tier subscribers, we have to abide by the server's fairly strict <a href="https://ai.google.dev/gemini-api/docs/rate-limits">usage quotas</a>.
+
+<p>
+  The most important quota for us is the max number of requests per minute, which is 15. By sleeping 5 seconds between requeststs, we by and large avoid hitting that limit. As almost everything with the Gemini server, the limits and the way to reacting to the breaching of them are fluid, meaning that you cannot expect the same reaction every time. When the Gemini server decides that the limit is reached, it may respond with a detailed message, indicating how many seconds we should wait before retrying, in order to return to its good graces. Or it may send a more general message, in which case we try to sleep for 1 minute.
+
+  <p>The daily limit (1500 requests per day) fairly tightly restricts the number of problems we can ask Gemini to solve per day, unless we make sure to terminate a session after a fairly small number of episodes or moves.
+
+       
+    <h2>Using the app</h2>
+
+
+    <p>The main script is in <tt>/home/vmenkov/w2020/game/scripts/gemini.sh</tt>. The usage is very similar to that of <a href="captive.html"><tt>captive-full.sh</tt></a>; all the same arguments and options describing the rule set and the board generation are accepted.
+
      <h2>Observations</h2>
 
    <p>When dealing with a system whose main strength is in generating natural language, one has to be ready to handle sensibly a great variety of situations. We don't intend, after all, to teach our own app to understand under natural language (such as Gemini produces); instead we put the bulk of our effort into getting Gemini to produce output in a formalized structured way that would be easy for our app to understand.
@@ -40,11 +55,12 @@
      <p>
        .... move already removed piece ...
 
+
+... artifact of my reading -- he just talks about reasoning first, mentioning old moves, and then gives the new move at the end! ...
+       
 <p>... "IMMOVABLE" means that the object you have tried to move cannot at present be moved to any bucket, and the object stays on the board. This mean that you should not try to attempt to move this object again until the board has changed in some way (i.e. some other object has been successfully removed).
        
-<h2>Usage quotas</h2>
+
        
-       <h2>Usage</h2>
-     
   </body>
   </html>

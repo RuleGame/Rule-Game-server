@@ -41,6 +41,14 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     public static final DateFormat sqlDf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     static Date lastRequestTime = null;
     
+    static String now() {
+	return sqlDf.format(new Date());
+    }
+    static String reqt() {
+	return sqlDf.format(new Date());
+    }
+	   
+    
     //    int sentCnt = 0;
     
     /** Sends a request to the Gemini server, and processes the results.
@@ -117,7 +125,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	    }		
 	    if (code==200) break;
 
-	    System.out.println("At "+	sqlDf.format(lastRequestTime)+", SERVER RESPONSE: " + responseJo.toString());
+	    System.out.println("At "+	reqt()+", SERVER RESPONSE: " + responseJo.toString());
 
 	    if (code==429) {
 		int waitSec = error429(responseJo);
@@ -174,6 +182,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     */
 
     static int error429(JsonObject responseJo) {
+	try {
 	JsonObject errorJo = responseJo.getJsonObject("error");
 	JsonArray detailsJa = errorJo.getJsonArray("details");
 	if (detailsJa==null)  throw new IllegalArgumentException("The Error 429 response came without the 'error/details' field: " + responseJo);
@@ -190,6 +199,11 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	    }
 	}
 	throw new IllegalArgumentException("Could not find type.googleapis.com/google.rpc.RetryInfo in this response: " + responseJo);
+	} catch(IllegalArgumentException ex) {
+	    int sec = 60;
+	    System.out.println("Difficult to handle error 429: " +  ex +"\n; sleeping " +sec + " seconds instead");
+	    return sec;
+	}
     }
 
     static final Pattern secPat = Pattern.compile("([0-9]+)s");
@@ -243,6 +257,9 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	wait = ht.getOptionLong("wait", wait);
 	max_boards  = ht.getOption("max_boards", max_boards);
 	
+
+
+	System.out.println("At " + now() +", starting playing with Gemini. Game Server ver. "+ Episode.getVersion());
 	System.out.println("Gemini model=" + model);
 	//System.out.println("output=" +  ht.getOption("output", null));
 	OutputMode outputMode = ht.getOptionEnum(OutputMode.class, "output", OutputMode.FULL);
@@ -274,14 +291,15 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	GeminiPlayer history = new GeminiPlayer();
 
 	System.out.println("Instructions are: " + instructions);
-
-	try {
+	boolean won = false;
 	
-	for(; gameCnt < max_boards; gameCnt++) {
+	try {
+	    
+	for(; gameCnt < max_boards && !won; gameCnt++) {
 	    Game game = gg.nextGame();
 	    //	    if (outputMode== OutputMode.FULL) System.out.println(Captive.asComment(game.rules.toString()));
 
-	    System.out.println("Starting episode " + (gameCnt+1) + " of up to " + max_boards);
+	    System.out.println("At "+  now()+ " Starting episode " + (gameCnt+1) + " of up to " + max_boards);
 
 	    Episode epi = new Episode(game, outputMode,
 				      new InputStreamReader(System.in),
@@ -294,7 +312,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	    //System.out.println("DEBUG: B=" + his.initialBoardAsString());
 
 	    try {
-		history.playingLoop();
+		won = history.playingLoop();
 	    } finally {
 		if (log!=null) {
 		    log.logEpisode(epi, gameCnt);
@@ -450,7 +468,7 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 "modelVersion": "gemini-2.0-flash"}
 </pre>
 
-@return true on victory (master demonstrated), false otherwise
+@return true on victory (mastery demonstrated), false otherwise
      */
     boolean playingLoop()  throws IOException {
 
@@ -461,29 +479,30 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 
 	    int tryCnt = 0;
 	    Matcher m = null;
+	    int[] w = null;
 	    while(true) {
 		String line = doOneRequest(gr);
 		tryCnt++;
 		System.out.println("Response text={" + line + "}");
-		m = movePat.matcher(line);
-		if (m.find()) break;
+		w = parseResponse(line);
+		if (w!=null) break;
 		if (tryCnt>=2) {
 		    throw new IllegalArgumentException("Could not find 'MOVE id bid' in this response text, even after "+tryCnt+" attempts: {" + line +"}");
 		}
 		// try to tell the bot to use the proper format
 		gr.addModelText(line);
 		gr.addUserText("I don't understand English very well. Please say again what YOUR MOVE is, remembering to describe your attempted move in the following format: 'MOVE objectId bucketId'!");
-		System.out.println("At "+	sqlDf.format(lastRequestTime)+", received an incomprehensible response, and trying to ask again");
+		System.out.println("At "+reqt()+", received an incomprehensible response, and am trying to ask again");
 		waitABit(wait);
 	    }
-	    int id = Integer.parseInt( m.group(1));
-	    int bid = Integer.parseInt( m.group(2));
+	    int id = w[0];
+	    int bid = w[1];
 
 	    Episode.Display q = epi.doMove2(id, bid,  epi.getTranscript().size());
 	    //if (outputMode!=OutputMode.BRIEF) out.println(displayJson());
 	    //if (outputMode==OutputMode.FULL) out.println(graphicDisplay());
 	    int code = q.getCode();
-	    System.out.println("At "+	sqlDf.format(lastRequestTime)+", Moving piece " + id + " to bucket " + bid + ". Code=" + code);
+	    System.out.println("At "+	reqt()+", Moving piece " + id + " to bucket " + bid + ". Code=" + code);
 	    //System.out.println("DEBUG B: transcript=" + epi.getTranscript());
 
 
@@ -518,6 +537,26 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 	return false;
     }
 
+    /** Parses the text returned from Gemini, looking for the last "MOVE id bid" pattern
+	(thus skipping any preliminary discussion, quoting from the session's history,
+	which Gemini sometimes includes before its proposed move).
+	@return {id, bid} or null
+     */
+    int[] parseResponse(String line) {
+	Matcher m = movePat.matcher(line);
+	int [] result = null;
+	while(m.find()) {
+	    int[] q= {
+		Integer.parseInt( m.group(1)),
+		Integer.parseInt( m.group(2)) };
+	    result = q;
+	}
+	return result;
+    }
+      
+
+
+    
     /** Out model is gemini-2.0-flash, which allows 15 RPM in the free tier.
     https://ai.google.dev/gemini-api/docs/rate-limits
     */
