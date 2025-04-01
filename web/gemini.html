@@ -59,8 +59,42 @@
 ... artifact of my reading -- he just talks about reasoning first, mentioning old moves, and then gives the new move at the end! ...
        
 <p>... "IMMOVABLE" means that the object you have tried to move cannot at present be moved to any bucket, and the object stays on the board. This mean that you should not try to attempt to move this object again until the board has changed in some way (i.e. some other object has been successfully removed).
-       
 
+  <h3>Failing to realize that a piece has been removed already</h3>
+
+<p>This is rare, but has been seen on occasion. Seemingly unprovoked. E.g., in gemini-sm_qcts-03.txt:
+  <pre>
+    During episode 5, you have made so far the following 15 move attempts, with the following results:
+MOVE 8 3 ACCEPT
+MOVE 6 3 DENY
+MOVE 6 0 ACCEPT
+MOVE 5 2 DENY
+MOVE 4 0 DENY
+MOVE 4 0 DENY
+MOVE 4 2 ACCEPT
+<strong>MOVE 5 0 ACCEPT</strong>
+MOVE 0 2 ACCEPT
+MOVE 1 1 ACCEPT
+MOVE 3 1 DENY
+MOVE 3 1 DENY
+MOVE 3 1 DENY
+MOVE 3 0 ACCEPT
+MOVE 2 2 ACCEPT
+YOUR MOVE?
+Response text={Based on the previous episodes, I hypothesize the following:
+
+*   **Bucket 0:** Accepts Squares
+*   **Bucket 1:** Accepts Circles
+*   **Bucket 2:** Accepts Triangles
+*   **Bucket 3:** Accepts Stars
+
+<strong>Therefore, I will now try to move the remaining object, which is a Blue Square with ID 5, to Bucket 0.</strong>
+
+MOVE 5 0
+}
+    </pre>
+
+  So the bot for some reason repeats its earlier successful move, <tt>MOVE 5 0</tt>, even though it's staring right at him in the episode's transcript. I will try to help this problem in ver 8.006, by explicitly showing the current state of the board to the bot after each move.
        
   </body>
   </html>

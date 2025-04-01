@@ -354,13 +354,20 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	    epi = _epi;
 	    initialBoard = epi.getCurrentBoard(false);
 	}
-	String initialBoardAsString() {
-	    HashSet<String> excludableNames = new HashSet<>();
-	    excludableNames.add("buckets");
-	    excludableNames.add("dropped");
-	    excludableNames.add("0.id");
-	    JsonObject jo = JsonReflect.reflectToJSONObject(initialBoard, true,  excludableNames);
+	static HashSet<String> excludableNames =
+	    Util.array2set("buckets", 
+			   "dropped",
+			   "0.id");
+	
+	static String boardAsString(Board b) {
+	    JsonObject jo = JsonReflect.reflectToJSONObject(b, true,  excludableNames);
 	    return jo.toString();
+	}
+	String initialBoardAsString() {
+	    return boardAsString(initialBoard);
+	}
+	String currentBoardAsString() {
+	    return boardAsString(epi.getCurrentBoard(false));
 	}
     }
 
@@ -418,11 +425,17 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	      ehi.initialBoardAsString());
 	int n = moves.size();
 
-	v.add("During episode "+(j+1)+", you "+
-	      (isLast ? "have made so far ": "made ") +
-	      (n>0?       "the following ":"")+
-	      n + 	      " move attempt" + (n>1? "s":"") +
-	      (n>0?       ", with the following results:": "."));
+	if (ehi.epi.isCompleted()) {
+	    v.add("During episode "+(j+1)+", you cleared the board by making " +
+		  n + " move attempts. They are shown below, along with their results.");
+	} else {
+	
+	    v.add("During episode "+(j+1)+", you "+
+		  (isLast ? "have made so far ": "made ") +
+		  (n>0?       "the following ":"")+
+		  n + 	      " move attempt" + (n>1? "s":"") +
+		  (n>0?       ", with the following results:": "."));
+	}
 	for(int k=0; k<n; k++) {
 	    if (!(moves.get(k) instanceof Move))  throw new IllegalArgumentException("Unexpected entry in the transcript (j=" + j+", k=" + k+", The bot is only supposed to make moves, not picks!");
 	    Move move = (Move)moves.get(k);
@@ -439,6 +452,13 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 		CODE.toBasicName(code);
 	    v.add(s);
 	    
+	}
+	if (isLast && n>0) {
+	    // Showing the current board to the bot, because, at least very
+	    // occasional, the bot seems to "forget" that some pieces have been
+	    // removed. Hoping this will take care of the issue.
+	    v.add("Now the board contains the following objects:");
+	    v.add( ehi.currentBoardAsString());
 	}
 	return v;
     }
