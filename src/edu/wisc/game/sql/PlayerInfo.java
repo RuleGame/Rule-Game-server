@@ -794,6 +794,9 @@ public class PlayerInfo {
 	incremented. If the series number reaches the last possible
 	value (the one beyond the range of parameter set numbers), the
 	completion code for this player is set.
+
+	<p>In a 2PG, the partner (Player 1) gets the same completion code as well,
+	so that he will be shown one after his demographics page.
      */
     synchronized private void goToNextSeries() {
 	if (alreadyFinished()) return;
@@ -803,6 +806,13 @@ public class PlayerInfo {
 
 	if (alreadyFinished() && completionCode ==null) {
 	    completionCode = buildCompletionCode();
+
+	    if (partner!=null) { 
+		partner.completionCode = completionCode;
+		partner.saveMe();
+	    }
+
+	    
 	} 
 	//Main.persistObjects(this);
 	saveMe();
