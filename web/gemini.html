@@ -95,6 +95,30 @@ MOVE 5 0
     </pre>
 
   So the bot for some reason repeats its earlier successful move, <tt>MOVE 5 0</tt>, even though it's staring right at him in the episode's transcript. I will try to help this problem in ver 8.006, by explicitly showing the current state of the board to the bot after each move.
-       
+
+  <h3>Repeating a wrong move</h3>
+
+This happens both on code 7 (IMMOVABLE) and code 4 (DENY).
+  
+  <pre>
+%    grep At gemini-ordL1-01.txt
+    ...
+At 2025-04-01 11:23:46, Moving piece 0 to bucket 0. Code=7
+At 2025-04-01 11:23:51, Moving piece 0 to bucket 0. Code=7
+At 2025-04-01 11:23:57, Moving piece 0 to bucket 0. Code=7
+At 2025-04-01 11:24:02, Moving piece 0 to bucket 0. Code=7
+At 2025-04-01 11:24:08, Moving piece 0 to bucket 0. Code=7
+    ...
+  </pre>
+
+  (ccw)
+  <pre>
+At 2025-04-01 11:48:43, Moving piece 6 to bucket 0. Code=4
+At 2025-04-01 11:48:49, Moving piece 6 to bucket 0. Code=4
+</pre>
+  
+  This despite my instructions explicitly telling the bot not to repeat a failed move until the board changes.
+
+  
   </body>
   </html>

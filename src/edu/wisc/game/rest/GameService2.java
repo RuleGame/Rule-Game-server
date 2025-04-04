@@ -228,6 +228,7 @@ public class GameService2 {
 				 @FormParam("data") String text,
 				 @DefaultValue("-1") @FormParam("confidence") int confidence
 				 ) {
+	Logging.info("/guess(playerId=" + playerId +", epi=" + episodeId + ", text=" + text);
 	if (playerId!=null && playerId.equals("null")) playerId=null;
 	return GuessWriteReport.writeGuess( playerId, episodeId, text, confidence);
     }
