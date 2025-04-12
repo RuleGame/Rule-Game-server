@@ -1141,6 +1141,9 @@ public class PlayerInfo {
 	6.029), this score is only computed in a non-trivial way in
 	games with the incentive plan Incentive.DOUBLING.
 	
+	<p>In 2PG coop games, goodness is "joint" for the pair of players,
+	since that's how xfactor etc are computed and stored.
+
 	@return For players in games with the incentive plan
 	Incentive.DOUBLING (or LIKELIHOOD), the value of the score, in the range
 	[0..1], is simply the fraction of all rule sets so far that
@@ -1156,10 +1159,15 @@ public class PlayerInfo {
 
 	if ( para.getIncentive()==ParaSet.Incentive.DOUBLING ||
 	     para.getIncentive()==ParaSet.Incentive.LIKELIHOOD) {
+	    // Whose record do we look at? Only 2PG adve games have separate
+	    // xfactor records
+	    int mj = (isAdveGame() && pairState==Pairing.State.ONE) ? 1: 0;
+	
 	    int sumFactor = 0;
 	    for(Series ser: allSeries) {
 		if (ser!=null) {
-		    int f = ser.findXFactor(pairState);
+		    //int f = ser.findXFactor(pairState);
+		    int f = ser.findXFactor(mj);
 		    if (f>1) sumFactor+=f;
 		}
 	    }
