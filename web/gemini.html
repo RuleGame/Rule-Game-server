@@ -54,6 +54,8 @@
 
 	<li>model=gemini-2.0-flash -- the name of the Gemini model to use
 
+	<li>instructionsFile=/opt/w2020/game-data/gemini/system.txt -- the name of the text file with the "system instructions", which are set to the Gemini server with each request
+	  
 	<li>wait=4000 -- for how long (measured in milliseconds) the client waits between making two requests to the Gemini server. Since most models allow at most 15 queries per minute for free-tier users. The value of 4000 (i.e. 4 sec) is appropriate.
 
 	  <li>max_boards=10 -- the max number of episodes to run with each rule set

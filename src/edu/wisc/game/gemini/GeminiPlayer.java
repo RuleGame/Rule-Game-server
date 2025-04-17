@@ -219,6 +219,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     static String instructions=null;
     
     
+    static String instructionsFile = null;
     static String keyFile = "/opt/w2020/gemini-api-key.txt";
     static String gemini_api_key = null;
     static String model = "gemini-2.0-flash";
@@ -238,7 +239,9 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
      */
     public static void main(String[] argv) throws Exception {
 
-	File f = new File( Files.geminiDir(), "system.txt");	
+	
+	File f =  (instructionsFile==null)? new File( Files.geminiDir(), "system.txt"):
+	    new File(instructionsFile);
 	instructions = Util.readTextFile( f);
 
 	Files.allowCachingAllRules(true); // for greater efficiency
@@ -257,7 +260,8 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	model = ht.getOption("model", model);
 	wait = ht.getOptionLong("wait", wait);
 	max_boards  = ht.getOption("max_boards", max_boards);
-	keyFile = ht.getOption("keyFile", model);
+	keyFile = ht.getOption("keyFile", keyFile);
+	instructionsFile = ht.getOption("instructionsFile", instructionsFile);
 
 
 	System.out.println("At " + now() +", starting playing with Gemini. Game Server ver. "+ Episode.getVersion());
