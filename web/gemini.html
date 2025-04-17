@@ -6,7 +6,7 @@
   <body>
     <h1>Making Gemini play the GOHR</h1>
 
-    <div align="center"><em>Updated 2025-03-30 for Game Server ver 8.005</em></div>
+    <div align="center"><em>Updated 2025-04-16 for Game Server ver 8.009</em></div>
 
     <h2>Architecture</h2>
 
@@ -59,6 +59,7 @@
 	<li>wait=4000 -- for how long (measured in milliseconds) the client waits between making two requests to the Gemini server. Since most models allow at most 15 queries per minute for free-tier users. The value of 4000 (i.e. 4 sec) is appropriate.
 
 	  <li>max_boards=10 -- the max number of episodes to run with each rule set
+	  <li>max_requests=0 -- the max number of requests the client is allowed to make. (If no retries are ever needed, this is equal to the max total number of moves in all episodes). The default value, 0, means "no limit". If you feel the client sometimes likes to loop making the same request over and over, set this to something like 1000.
       </ul>
       
      <h2>Observations</h2>

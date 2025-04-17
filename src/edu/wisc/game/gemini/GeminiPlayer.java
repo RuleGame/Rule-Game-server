@@ -225,6 +225,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     static String model = "gemini-2.0-flash";
     static long wait = 4000;
     static int max_boards=10;
+    static int max_requests=0;
     
     static void readApiKey() throws IOException {
 	if ( gemini_api_key != null) return;
@@ -262,8 +263,8 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	max_boards  = ht.getOption("max_boards", max_boards);
 	keyFile = ht.getOption("keyFile", keyFile);
 	instructionsFile = ht.getOption("instructionsFile", instructionsFile);
-
-
+	max_requests  = ht.getOption("max_requests", max_requests);
+		
 	System.out.println("At " + now() +", starting playing with Gemini. Game Server ver. "+ Episode.getVersion());
 	System.out.println("Gemini model=" + model);
 	//System.out.println("output=" +  ht.getOption("output", null));
@@ -324,6 +325,12 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 		    System.out.println("Logged episode " + (gameCnt+1) );
 		}
 	    }
+
+	    if (maxRequests > 0 && requestCnt >= maxRequests) {
+		break;
+	    }
+
+	    
 	}
 
 	} finally {
@@ -472,6 +479,13 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 
     int lastStretch;
     double lastR;
+
+    /** The total number of Gemini requests made so far in all episodes played in this run.
+	Normally (if no retries are ever needed) this is equals to the number of moves
+	in all episodes so far.	
+    */
+    int requestCnt = 0;
+
     
     /** Plays the last (latest) episode of this GeminiPlayer, until it ends.
 
@@ -507,6 +521,7 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 	    int[] w = null;
 	    while(true) {
 		String line = doOneRequest(gr);
+		requestCnt ++;
 		tryCnt++;
 		System.out.println("Response text={" + line + "}");
 		w = parseResponse(line);
@@ -553,6 +568,13 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 		System.out.println("Victory: mastery demonstrated! " + stats);
 		return true;
 	    }
+
+
+	    if (maxRequests > 0 && requestCnt >= maxRequests) {
+		System.out.println("Request limit (" + maxRequests+") reached");
+		return false;
+	    }
+	    
 	    waitABit(wait); // 5 sec wait before the next request, to keep Gemini happy
 	    
 	}
