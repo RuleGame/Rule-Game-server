@@ -43,6 +43,22 @@
 
     <p>The main script is in <tt>/home/vmenkov/w2020/game/scripts/gemini.sh</tt>. The usage is very similar to that of <a href="captive.html"><tt>captive-full.sh</tt></a>; all the same arguments and options describing the rule set and the board generation are accepted.
 
+      <h3>Options</h3>
+
+      <p>
+      There are a number of additional options you can put on the command line, in the <em>key=value</em> format, as follows:
+
+      <ul>
+
+	<li>keyFile=/opt/w2020/gemini-api-key.txt  -- the location of the file with the Gemini API key
+
+	<li>model=gemini-2.0-flash -- the name of the Gemini model to use
+
+	<li>wait=4000 -- for how long (measured in milliseconds) the client waits between making two requests to the Gemini server. Since most models allow at most 15 queries per minute for free-tier users. The value of 4000 (i.e. 4 sec) is appropriate.
+
+	  <li>max_boards=10 -- the max number of episodes to run with each rule set
+      </ul>
+      
      <h2>Observations</h2>
 
    <p>When dealing with a system whose main strength is in generating natural language, one has to be ready to handle sensibly a great variety of situations. We don't intend, after all, to teach our own app to understand under natural language (such as Gemini produces); instead we put the bulk of our effort into getting Gemini to produce output in a formalized structured way that would be easy for our app to understand.

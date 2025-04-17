@@ -1141,7 +1141,8 @@ public class PlayerInfo {
 	6.029), this score is only computed in a non-trivial way in
 	games with the incentive plan Incentive.DOUBLING.
 	
-	<p>In 2PG coop games, goodness is "joint" for the pair of players,
+	<p>In 2PG, the record is stored in Player 0' PlayerInfo object,
+	so we refer to it. In oop games, goodness is "joint" for the pair of players,
 	since that's how xfactor etc are computed and stored.
 
 	@return For players in games with the incentive plan
@@ -1152,7 +1153,6 @@ public class PlayerInfo {
 	incentive plans, 0 is returned.
     */
     public double goodnessScore() {
-	
 	ParaSet para = getFirstPara();
 	if (para==null) return 0;
 	//hasError("Don't know the players parameter set");
@@ -1162,19 +1162,37 @@ public class PlayerInfo {
 	    // Whose record do we look at? Only 2PG adve games have separate
 	    // xfactor records
 	    int mj = (isAdveGame() && pairState==Pairing.State.ONE) ? 1: 0;
-	
-	    int sumFactor = 0;
-	    for(Series ser: allSeries) {
-		if (ser!=null) {
-		    //int f = ser.findXFactor(pairState);
-		    int f = ser.findXFactor(mj);
-		    if (f>1) sumFactor+=f;
-		}
-	    }
-	    double g=(double)sumFactor / (4 * (double) allSeries.size());
+	    double g = (pairState==Pairing.State.ONE) ? partner.goodnessScore(mj):
+		goodnessScore(mj);
 	    Logging.info("Goodness(pid="+playerId+")="+g);
 	    return g;
+
 	} else return 0;
+    }
+
+    /** Computes the goodness score literally in this PlayerInfo record,
+	so if it's 2PG, this player must be Player 0 of the pair (because
+	that's where both player's records and XFactors are stored).
+
+	This method must be only called from goodnessScore(), so that the 
+	incentive scheme is already checked.
+
+	@param mj Normally, 0. In adve 2PG, this may be 0 or 1, to refer
+	to a particular player's section of the stored record.
+     */
+    private double goodnessScore(int mj) {	
+	
+	int sumFactor = 0;
+	for(Series ser: allSeries) {
+	    if (ser!=null) {
+		//int f = ser.findXFactor(pairState);
+		int f = ser.findXFactor(mj);
+		if (f>1) sumFactor+=f;
+	    }
+	}
+	double g=(double)sumFactor / (4 * (double) allSeries.size());
+	Logging.info("Goodness(pid="+playerId+", mj="+mj+")="+g);
+	return g;
     } 
 
     /** This is used to keep track of when a player joins the pairing queue */
