@@ -326,7 +326,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 		}
 	    }
 
-	    if (maxRequests > 0 && requestCnt >= maxRequests) {
+	    if (max_requests > 0 && history.requestCnt >= max_requests) {
 		break;
 	    }
 
@@ -570,8 +570,8 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 	    }
 
 
-	    if (maxRequests > 0 && requestCnt >= maxRequests) {
-		System.out.println("Request limit (" + maxRequests+") reached");
+	    if (max_requests > 0 && requestCnt >= max_requests) {
+		System.out.println("Request limit (" + max_requests+") reached");
 		return false;
 	    }
 	    
