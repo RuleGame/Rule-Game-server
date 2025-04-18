@@ -132,6 +132,19 @@ public class LabelMap extends HashMap<String, String> {
 	    put(z[j],letters[j]);
 	}
     }
+    
+    /** A-Z, AA-ZZ */
+    private static String alphaList[];
+
+    static {
+	alphaList = new String[26*2];
+	int n=26;
+	for(int j=0; j<n; j++) {
+	    char c = (char)('A' + j);		
+	    alphaList[j] = "" + c;
+	    alphaList[n+j] = alphaList[j] + c;
+	}
+    }
 
     
     /** Creates a more or less intelligent mapping from strings in z[]
@@ -183,10 +196,11 @@ public class LabelMap extends HashMap<String, String> {
 	
 	for(int j=0; j<w.length; j++) {
 	    if (letters[j]!=null) continue;
-	    for(char c = 'A'; c<='Z'; c++) {
-		if (!usedLetters.contains(""+c)) {
-		    letters[j] = ""+c;
-		    usedLetters.add(""+c);
+	    for(int k=0; k<alphaList.length; k++) {
+		String x = alphaList[k];
+		if (!usedLetters.contains(x)) {
+		    letters[j] = x;
+		    usedLetters.add(x);
 		    //System.out.println("Assigned letter[" + j +"]=" + letters[j] + " to key=" + w[j]);
 		    w[j]=null;
 		    break;
@@ -197,7 +211,7 @@ public class LabelMap extends HashMap<String, String> {
 		for(int k=0; k<w.length; k++) {
 		    v.add(z[k] + ": " + letters[k]);
 		}
-		System.err.println("Label assignment map so far: " + Util.joinNonBlank("\n", v));
+		System.err.println("Label assignment map so far:\n" + Util.joinNonBlank("\n", v));
 		throw new IllegalArgumentException("Ran out of alphabet letters for labels!");
 	    }
 	}
