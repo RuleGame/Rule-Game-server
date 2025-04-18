@@ -192,7 +192,14 @@ public class LabelMap extends HashMap<String, String> {
 		    break;
 		}
 	    }
-	    if (letters[j]==null) throw new IllegalArgumentException("Ran out of alphabet letters for labels!");   
+	    if (letters[j]==null) {
+		Vector<String> v = new Vector<>();
+		for(int k=0; k<w.length; k++) {
+		    v.add(z[k] + ": " + letters[k]);
+		}
+		System.err.println("Label assignment map so far: " + Util.joinNonBlank("\n", v));
+		throw new IllegalArgumentException("Ran out of alphabet letters for labels!");
+	    }
 	}
 	return letters;
 	    
