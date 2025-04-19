@@ -22,9 +22,9 @@ public class EpisodeHandle {
     final int seriesNo;
     final int orderInSeries;
     final public String episodeId;
-    /** The player who played the episode. (Or Player 0 in 2PG) */
+    /** The player who played the episode (in 1PG), or Player 0 (in 2PG) */
     final String playerId;
-    /** Only set in adversarial 2PG, where we need to separate the two players'
+    /** The partner's (Player 1's) playerId in adversarial 2PG, where we need to separate the two players'
 	moves; null otherwise */
     final String neededPartnerPlayerId;
     final boolean useImages;

@@ -182,6 +182,11 @@ public class ReplayedEpisode extends Episode {
 	java ReplayedEpisode exp playerId
 	
 
+	<p>//FIXME: if the data set contains any adve 2PG, this thing
+	won't know what the adversary's (Player 1's) playerId was,
+	because it's not recorded in the CSV files. (It's only on the
+	SQL database).
+
     */
     public static void main(String[] argv) throws IOException, IllegalInputException,  RuleParseException {
 
