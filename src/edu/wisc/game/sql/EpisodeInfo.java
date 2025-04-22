@@ -53,7 +53,7 @@ public class EpisodeInfo extends Episode {
 
 
     /** Table with all episodes recently played on this server. It is kept to enable quick lookup
-	of episode by id.
+	of episode by id. Episode objects are put into this table upon creation.
 	FIXME: should purge the table occasionally, to save memory */
     public static HashMap<String, EpisodeInfo> globalAllEpisodes = new HashMap<>();
     public static EpisodeInfo locateEpisode(String eid) {
@@ -677,6 +677,8 @@ public class EpisodeInfo extends Episode {
 		rewardRange = para.kantorLupyanRewardRange(d);
 
 		guessSaved =  EpisodeInfo.this.getGuessSavedBy(mover);
+
+		// ZZZ - handle abandoned ones
 		
 		if (getFinishCode()!=FINISH_CODE.NO) {
 		    transitionMap = p.new TransitionMap();
@@ -685,7 +687,6 @@ public class EpisodeInfo extends Episode {
 		incentive2(mj);
 		
 		errmsg += "\nDEBUG\n" + p.report();
-
 
 		if (EpisodeInfo.this.isNotPlayable()) {
 		    String msg = "Sadly, you cannot continue playing, because the server has been restarted since the last episode, and the board has been purged out of the server memory. This problem could perhaps have been prevented if the client had made a /newEpisode call, rather than /display, after the last /mostRecentEpisode.";
@@ -696,8 +697,6 @@ public class EpisodeInfo extends Episode {
 		Vector[] w=p.computeFaces(mover, EpisodeInfo.this);
 		faces = w[0];
 		facesMine = w[1];
-		//		faces =p.computeFaces(mover, EpisodeInfo.this);
-
 
 		if (p.is2PG() && getFinishCode()==FINISH_CODE.NO)  {
 		    int whoMustPlay = whoMustMakeNextMove();

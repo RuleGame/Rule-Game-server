@@ -39,6 +39,8 @@ public class WatchPlayer {
 
     private static final String GUEST_PREFIX = "Guest";
     private static final AtomicInteger connectionIds = new AtomicInteger(0);
+    /** FIXME: if we ever have a lot of players playing simultaneously, this should be 
+	changed to a hash map, for faster lookup */
     private static final Set<WatchPlayer> connections = new CopyOnWriteArraySet<>();
 
     private final String nickname;

@@ -2,6 +2,10 @@ package edu.wisc.game.rest;
 
 import java.io.*;
 import java.util.*;
+import java.text.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.json.*;
 
@@ -95,17 +99,98 @@ public class GameService2 {
     public EpisodeInfo.ExtendedDisplay display(@DefaultValue("null") @QueryParam("playerId") String playerId,
 					       @QueryParam("episode") String episodeId
 					       					       )   {
+	TimeInfo timed = new TimeInfo(episodeId);
 	EpisodeInfo epi = EpisodeInfo.locateEpisode(episodeId);
-	if (epi==null) return dummyEpisode.dummyDisplay(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID");
-	//return epi.dummyDisplay(Episode.CODE.JUST_A_DISPLAY, "Display requested");
-	if (playerId!=null && playerId.equals("null")) playerId=null;
-	EpisodeInfo.ExtendedDisplay dis = epi.mkDisplay(playerId);
+	EpisodeInfo.ExtendedDisplay rv=null;
+	try {
+	    if (epi==null) return rv=dummyEpisode.dummyDisplay(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID");
+	    //return epi.dummyDisplay(Episode.CODE.JUST_A_DISPLAY, "Display requested");
+	    if (playerId!=null && playerId.equals("null")) playerId=null;
+	    return rv = epi.mkDisplay(playerId);
+	} finally {
+	    Object ro = (rv==null)? "null" : JsonReflect.reflectToJSONObject(rv, true);
+	    String msg = "/display("+episodeId+") returning: "+ JsonReflect.reflectToJSONObject(ro, true, null, 6);
+	    msg += timed.ending0();
+	    Logging.info(msg);
+	}
 
-	Logging.info("/display("+episodeId+") returning: "+ JsonReflect.reflectToJSONObject(dis, true, null, 6));
-	return dis;
 
     }
-  
+
+    /** Instrumentation: do we run multiple /move, /pick, /display calls for the same player at the same time?
+	It's not good...
+
+	We use episodeId as the key, rather than playerId, for historical reasons. (PID was not passed before 
+	GS 7.*)
+     */
+    static HashMap<String,AtomicInteger> callCnt = new HashMap<>();
+
+    static private int callIn(String key) {
+	AtomicInteger a = callCnt.get(key);
+	if (a==null) {
+	    synchronized(callCnt) {
+		a = callCnt.get(key);
+		if (a==null) callCnt.put(key, a = new AtomicInteger());
+	    }
+	}
+	return a.incrementAndGet();
+    }
+
+    static private int callOut(String key) {
+	AtomicInteger a = callCnt.get(key);
+	return a.decrementAndGet();
+    }
+    
+
+    
+    static private DateFormat df = new SimpleDateFormat("HH:mm:ss");
+
+    static class TimeInfo {
+	final Date startTime = new Date();
+	final int calls;
+	final String  episodeId;
+	TimeInfo(String _episodeId) {
+	    episodeId = _episodeId;
+	    calls = callIn(episodeId);
+	}
+
+	/** Timing at the end of the web API call + update the last activity time for the player.
+	    (Only used on /move and /pick, and not on /display) */
+	String ending(String playerId) {
+	    updatedPlayerLastActivityTime(playerId);
+	    return ending0();	    
+	}
+
+	/** Timing at the end of the web API call */
+	String ending0() {
+	    Date endTime = new Date();
+	    
+	    long spent = endTime.getTime() - startTime.getTime();
+	    String msg = "time=" + spent + " msec (" + df.format(startTime) + " to " + df.format(endTime);
+	    if (calls>1) msg += "; " + calls + " simultaneous calls";
+	    callOut(episodeId);
+	    return msg;
+	}
+
+	/** @param playerId May be null (it legacy code), or the actual mover (in 2PG) */
+	private void updatedPlayerLastActivityTime(String playerId) {
+	    EpisodeInfo epi = EpisodeInfo.locateEpisode(episodeId);
+	    if (epi==null) return;
+	    PlayerInfo p = epi.getPlayer();
+	    if (playerId != null && !p.getPlayerId().equals(playerId)) {
+		p = p.xgetPartner();
+		if (p==null || !p.getPlayerId().equals(playerId)) return;
+	    }
+	    p.setLastActivityTime(startTime);
+	}
+	
+    }	
+    
+
+
+
+
+
     @POST
     @Path("/move") 
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -122,6 +207,7 @@ public class GameService2 {
 					    
 					    @FormParam("cnt") int cnt
 				)   {
+	TimeInfo timed = new TimeInfo(episodeId);
 	EpisodeInfo.ExtendedDisplay rv=null;
 	EpisodeInfo epi = EpisodeInfo.locateEpisode(episodeId);
 	if (epi==null) return dummyEpisode.dummyDisplay(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID: "+episodeId);
@@ -137,10 +223,10 @@ public class GameService2 {
 	    ex.printStackTrace(System.err);
 	    return rv=epi.dummyDisplay(Episode.CODE.INVALID_ARGUMENTS, ex.getMessage());
 	} finally {
-	    Object s = (rv==null)? "null" :
-		JsonReflect.reflectToJSONObject(rv, true);
-
-	    Logging.info("move(epi=" +  episodeId +", ("+x+","+y+") to ("+bx+","+by+"), cnt="+cnt+"), return " + s);
+	    Object ro = (rv==null)? "null" : JsonReflect.reflectToJSONObject(rv, true);
+	    String msg = "/move(epi=" +  episodeId +", ("+x+","+y+") to ("+bx+","+by+"), cnt="+cnt+"), return " + ro;
+	    msg += timed.ending(playerId);
+	    Logging.info(msg);
 	}
     }
 
@@ -155,6 +241,7 @@ public class GameService2 {
 					    @DefaultValue("-1") @FormParam("id") int pieceId,
 					    @FormParam("cnt") int cnt
 					    )   {
+	TimeInfo timed = new TimeInfo(episodeId);
 	EpisodeInfo.ExtendedDisplay rv=null;
 	EpisodeInfo epi = EpisodeInfo.locateEpisode(episodeId);
 	if (epi==null) return dummyEpisode.dummyDisplay(Episode.CODE.NO_SUCH_EPISODE, "# Invalid episode ID: "+episodeId);
@@ -170,7 +257,10 @@ public class GameService2 {
 	    ex.printStackTrace(System.err);
 	    return rv=epi.dummyDisplay(Episode.CODE.INVALID_ARGUMENTS, ex.getMessage());
 	} finally {
-	    Logging.info("pick(epi=" +  episodeId +", ("+x+","+y+"), cnt="+cnt+"), return " + JsonReflect.reflectToJSONObject(rv, true));
+	    Object ro = (rv==null)? "null" : JsonReflect.reflectToJSONObject(rv, true);
+	    String msg = "/pick(epi=" +  episodeId +", ("+x+","+y+"), cnt="+cnt+"), return " + JsonReflect.reflectToJSONObject(ro, true);
+	    msg += timed.ending(playerId);
+	    Logging.info(msg);
 	}
     }
 

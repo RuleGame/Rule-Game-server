@@ -34,6 +34,10 @@ public class PlayerInfo {
     @Basic
     private Date date; 
 
+    /** The most recent activity. This is mostly used to detect "walk-aways" */
+    @Transient
+    Date lastActivityTime=null; 
+    
     /** Back link to the user, for JPA's use. It is non-null only for
 	player IDs created via the repeat-user launch pages, or via the
 	Android app.
@@ -143,7 +147,11 @@ public class PlayerInfo {
     public void setTrialListId(String _trialListId) { trialListId = _trialListId; }
     public Date getDate() { return date; }
     public void setDate(Date _date) { date = _date; }
+    public Date getLastActivityTime() { return lastActivityTime; }
+    public void setLastActivityTime(Date _lastActivityTime) { lastActivityTime = _lastActivityTime; }
 
+
+    
     @Basic 
     private String partnerPlayerId;
     /** The playerId value of the partner, if this is a two-player game, and
@@ -511,6 +519,8 @@ public class PlayerInfo {
 	if (ser==null) return false;
 	if (ser.seriesHasX4(0) || ser.seriesHasX4(1)) return false;
 	if (inBonus) return false;
+	if (completionMode == COMPLETION.ABANDONED ||
+	    completionMode == COMPLETION.WALKED_AWAY) return false;
 	return  ser.size()<ser.para.getMaxBoards();
     } 
 
@@ -521,6 +531,8 @@ public class PlayerInfo {
 	if (ser==null) return false;
 	System.err.println("ser=" + ser+", earned=" +  ser.bonusHasBeenEarned());
 	if (!inBonus || ser.bonusHasBeenEarned()) return false;
+	if (completionMode == COMPLETION.ABANDONED ||
+	    completionMode == COMPLETION.WALKED_AWAY) return false;
 	int cnt=0;
 	System.err.println("Have " +  ser.size() + " episodes to look at");
 	for(EpisodeInfo x: ser.episodes) {
@@ -777,6 +789,24 @@ public class PlayerInfo {
     public String getCompletionCode() { return completionCode; }
     public void setCompletionCode(String _completionCode) { completionCode = _completionCode; }
 
+
+    /** Completion modes */
+    static public class COMPLETION {
+	static public final int
+	/** Abandoned by partner */
+	    ABANDONED =1,
+	/** Walked away (thus abandoning the partner in the process) */
+	    WALKED_AWAY = 2;
+    }
+
+    /** This value, if not the default 0, may store additional
+	info about how the player's participation ended.
+	The value is a constant from COMPLETION */
+    private int completionMode;
+    public int getCompletionMode() { return completionMode; }
+    @XmlElement
+    public void setCompletionMode(int _completionMode) { completionMode = _completionMode; }
+
     /** Creates a more or less unique string ID for this Episode object */
     private String buildCompletionCode() {
 	String s = playerId + "-" + Episode.sdf.format(new Date()) + "-";
@@ -994,7 +1024,7 @@ public class PlayerInfo {
 	TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.transcript);
 	f =  Files.detailedTranscriptsFile(playerId);
 	epi.saveDetailedTranscriptToFile(f);
-
+	Logging.info("PlayerInfo.ended: saved transcripts for (epi=" + epi.getEpisodeId()+"); finishCode =" + epi.finishCode);
 	WatchPlayer.tellAbout(playerId, "Ended episode " +epi.getEpisodeId()+
 			     " with finishCode =" + epi.finishCode);
 	

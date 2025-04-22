@@ -822,8 +822,12 @@ s	    non-existing piece) the value may be different from those of
 	    "displaying mastery" happens to coincide with the removal of the
 	    last game piece, so the win isn't really "early".)
 	*/
-	    EARLY_WIN = 5
-	    ;
+	    EARLY_WIN = 5,
+	/** This may be recorded in a 2PG episode when one player has 
+	    "walked away" and abandoned the other. One should check
+	    PlayerInfo.completionMode to see who's at fault.
+	*/
+	    ABANDONED = 6;
     }
 
     /** Creates a bit set with bits set in the positions where there are
