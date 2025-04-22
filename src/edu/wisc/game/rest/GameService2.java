@@ -143,7 +143,7 @@ public class GameService2 {
     
 
     
-    static private DateFormat df = new SimpleDateFormat("HH:mm:ss");
+    static private DateFormat df = new SimpleDateFormat("HH:mm:ss.SSS");
 
     static class TimeInfo {
 	final Date startTime = new Date();
