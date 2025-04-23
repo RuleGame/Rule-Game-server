@@ -483,7 +483,7 @@ public class PlayerInfo {
 	em.getTransaction().commit();	        
     }
 
-    /** "Gives up" he current series, i.e. immediately switches the
+    /** "Gives up" the current series, i.e. immediately switches the
 	player to the next series (if there is one). */
     public void giveUp(int seriesNo) throws IOException {
 	Logging.info("giveUp(pid="+playerId+", seriesNo=" + seriesNo +"), currentSeriesNo=" +currentSeriesNo);
@@ -495,7 +495,7 @@ public class PlayerInfo {
 	if (seriesNo!=currentSeriesNo) throw new IllegalArgumentException("Cannot give up on series " + seriesNo +", because we presently are on series " + currentSeriesNo);
 	if (seriesNo>=allSeries.size())  throw new IllegalArgumentException("Already finished all "+allSeries.size()+" series");
 	Series ser=getCurrentSeries();
-	if (ser!=null || ser.size()>0) {
+	if (ser!=null && ser.size()>0) {
 	    EpisodeInfo epi = ser.episodes.lastElement();
 	    // give up on the currently active episode, if any
 	    if (!epi.isCompleted()) {
@@ -513,6 +513,42 @@ public class PlayerInfo {
     }
 
 
+    /** This may be invoked by a maintenance thread in 2PG, when it detects
+	that this player has been inactive for a while. (The method should be
+        usable in 1PG too, but it's not a major concern).
+     */
+    public void abandon() throws IOException {
+	Logging.info("abandoning by(pid="+playerId+"), currentSeriesNo=" +currentSeriesNo);
+
+	setCompletionMode(COMPLETION.WALKED_AWAY); // ZZZ
+	if (partner!=null) {
+	    partner.setCompletionMode(COMPLETION.ABANDONED);
+	    partner.setCompletionCode( buildCompletionCode() + "-ab");
+	}
+
+	// mark the current episode as abandoned, if needed
+
+
+	if (currentSeriesNo>=allSeries.size())  return; // finished all series already anyway
+	Series ser=getCurrentSeries();
+	if (ser!=null && ser.size()>0) {
+	    EpisodeInfo epi = ser.episodes.lastElement();
+	    // mark the currently active episode, if any, as abandoned
+	    if (!epi.isCompleted()) {
+		epi.abandoned = true;
+		Logging.info("giveUp: episodeId=" + epi.getEpisodeId()+", set abandoned=" + epi.abandoned);
+		//Main.persistObjects(epi);
+		// Persists SQL, and write CSV
+		ended(epi);
+	    }
+	}
+		   	
+	//goToNextSeries();
+	//Logging.info("abandoning completed, now currentSeriesNo=" +currentSeriesNo);
+
+	
+    }
+    
     /** Can a new "regular" (non-bonus) episode be started in the current series? */
     private boolean canHaveAnotherRegularEpisode() {
 	Series ser=getCurrentSeries();

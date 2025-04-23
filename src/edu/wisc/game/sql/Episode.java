@@ -257,6 +257,7 @@ s	    non-existing piece) the value may be different from those of
     boolean givenUp = false;
     boolean lost = false;
     boolean earlyWin = false;
+    boolean abandoned = false;
 
     /** Which row of rules do we look at now? (0-based) */
     @Transient
@@ -1085,6 +1086,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	     givenUp?  FINISH_CODE.GIVEN_UP :
 	     lost?  FINISH_CODE.LOST :
 	     earlyWin? FINISH_CODE.EARLY_WIN :
+	     abandoned? FINISH_CODE.ABANDONED :
 	     FINISH_CODE.NO;
     }
        
@@ -1528,10 +1530,10 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	FULL}; 
 
     /** @return true if this episode cannot accept any more move attempts,
-	for any reason (board cleared, stalemate, given up, lost).
+	for any reason (board cleared, stalemate, given up, lost, abandoned).
      */
     public boolean isCompleted() {
-	return cleared || earlyWin|| stalemate || givenUp || lost;
+	return cleared || earlyWin|| stalemate || givenUp || lost || abandoned;
     }
 
     /** Marks this episode as "given up" (unless it's already marked
