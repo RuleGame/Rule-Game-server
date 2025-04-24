@@ -67,8 +67,9 @@ public class NewEpisodeWrapper2 extends ResponseBase {
     private void setDisplay(Episode.Display _display) { display = _display; }    
 
     
-    /** Depending on the parameters, creates a new episode or looks up an already existing one that should be
-	continued. Serves the /newEpisode and /mostRecentEpisode API calls.
+    /** Depending on the parameters, creates a new episode or looks up
+	an already existing one that should be continued. Serves the
+	/newEpisode and /mostRecentEpisode API calls.
 
        @param existing If true, look for the most recent existing episode (completed or incomplete); if false, return the recent incomplete expisode or create a new one */
     NewEpisodeWrapper2(String pid, boolean existing, boolean activateBonus, boolean giveUp) {
@@ -118,7 +119,6 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 		return;
 	    } 
 		
-
 	    Logging.info("NewEpisodeWrapper2(pid="+ pid+"): partner=" + x.xgetPartner());
 	    
 	    PlayerInfo y = x;

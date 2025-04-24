@@ -384,9 +384,10 @@ public class PlayerInfo {
     /** Returns true if the current series number is set beyond the possible
 	range, which indicates that it has gone through the last possible
 	increment (and, therefore, the completion code has been set as well).
+	Since ver 8.012, also returns true if the game has been abandoned.
     */
     public boolean alreadyFinished() {
-	return currentSeriesNo>=allSeries.size();
+	return gameAbandoned() || currentSeriesNo>=allSeries.size();
     }
     
     /** Based on the current situation, what is the maximum number
@@ -555,8 +556,7 @@ public class PlayerInfo {
 	if (ser==null) return false;
 	if (ser.seriesHasX4(0) || ser.seriesHasX4(1)) return false;
 	if (inBonus) return false;
-	if (completionMode == COMPLETION.ABANDONED ||
-	    completionMode == COMPLETION.WALKED_AWAY) return false;
+	if (gameAbandoned()) return false;
 	return  ser.size()<ser.para.getMaxBoards();
     } 
 
@@ -567,8 +567,7 @@ public class PlayerInfo {
 	if (ser==null) return false;
 	System.err.println("ser=" + ser+", earned=" +  ser.bonusHasBeenEarned());
 	if (!inBonus || ser.bonusHasBeenEarned()) return false;
-	if (completionMode == COMPLETION.ABANDONED ||
-	    completionMode == COMPLETION.WALKED_AWAY) return false;
+	if (gameAbandoned()) return false;
 	int cnt=0;
 	System.err.println("Have " +  ser.size() + " episodes to look at");
 	for(EpisodeInfo x: ser.episodes) {
@@ -726,6 +725,7 @@ public class PlayerInfo {
 
 	Logging.info("episodeToDo(pid="+playerId+"); cs=" + currentSeriesNo +", finished=" + alreadyFinished());
 
+	if (alreadyFinished()) return null;
 	boolean needSave=false;
 	try {
 	while(currentSeriesNo < allSeries.size()) {	    
@@ -843,6 +843,13 @@ public class PlayerInfo {
     @XmlElement
     public void setCompletionMode(int _completionMode) { completionMode = _completionMode; }
 
+    public boolean gameAbandoned() {
+	return (completionMode == COMPLETION.ABANDONED ||
+		completionMode == COMPLETION.WALKED_AWAY);
+    }
+
+
+    
     /** Creates a more or less unique string ID for this Episode object */
     private String buildCompletionCode() {
 	String s = playerId + "-" + Episode.sdf.format(new Date()) + "-";
@@ -1001,7 +1008,7 @@ public class PlayerInfo {
     
     /** This method is called after an episode completes. It computes
 	the applicable rewards (if the board has been cleared or
-	(since 4.007) stalemared, calls the SQL persist operations,
+	(since 4.007) stalemated, calls the SQL persist operations,
 	writes CSV files, and, if needed, switches the series and
 	subseries.
 
@@ -1021,7 +1028,7 @@ public class PlayerInfo {
 	    // do not happen; but if one does, let just finish this series
 	    // to avoid extra annoyance for the player
 	    goToNextSeries();
-	} else if (epi.cleared || epi.earlyWin ||
+	} else if (epi.cleared || epi.earlyWin || epi.abandoned ||
 		   epi.stalemate && epi.stalematesAsClears) {
 	    // For completions, nPiecesStart==doneMoveCnt, but for
 	    // stalemates, we must use the latter

@@ -108,8 +108,8 @@ public class GameService2 {
 	    if (playerId!=null && playerId.equals("null")) playerId=null;
 	    return rv = epi.mkDisplay(playerId);
 	} finally {
-	    Object ro = (rv==null)? "null" : JsonReflect.reflectToJSONObject(rv, true);
-	    String msg = "/display("+episodeId+") returning: "+ JsonReflect.reflectToJSONObject(ro, true, null, 6);
+	    Object ro = (rv==null)? "null" : JsonReflect.reflectToJSONObject(rv, true, null, 6);
+	    String msg = "/display("+episodeId+") returning: "+ ro;
 	    msg += timed.ending0();
 	    Logging.info(msg);
 	}
@@ -223,7 +223,7 @@ public class GameService2 {
 	    ex.printStackTrace(System.err);
 	    return rv=epi.dummyDisplay(Episode.CODE.INVALID_ARGUMENTS, ex.getMessage());
 	} finally {
-	    Object ro = (rv==null)? "null" : JsonReflect.reflectToJSONObject(rv, true);
+	    Object ro = (rv==null)? "null" : JsonReflect.reflectToJSONObject(rv, true, null, 6);
 	    String msg = "/move(epi=" +  episodeId +", ("+x+","+y+") to ("+bx+","+by+"), cnt="+cnt+"), return " + ro;
 	    msg += timed.ending(playerId);
 	    Logging.info(msg);
@@ -258,7 +258,7 @@ public class GameService2 {
 	    return rv=epi.dummyDisplay(Episode.CODE.INVALID_ARGUMENTS, ex.getMessage());
 	} finally {
 	    Object ro = (rv==null)? "null" : JsonReflect.reflectToJSONObject(rv, true);
-	    String msg = "/pick(epi=" +  episodeId +", ("+x+","+y+"), cnt="+cnt+"), return " + JsonReflect.reflectToJSONObject(ro, true);
+	    String msg = "/pick(epi=" +  episodeId +", ("+x+","+y+"), cnt="+cnt+"), return " + ro;
 	    msg += timed.ending(playerId);
 	    Logging.info(msg);
 	}
