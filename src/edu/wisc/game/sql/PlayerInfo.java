@@ -35,7 +35,7 @@ public class PlayerInfo {
     private Date date; 
 
     /** The most recent activity. This is mostly used to detect "walk-aways" */
-    @Transient
+    // @Transient
     Date lastActivityTime=null; 
     
     /** Back link to the user, for JPA's use. It is non-null only for
@@ -146,7 +146,11 @@ public class PlayerInfo {
     public String getTrialListId() { return trialListId; }
     public void setTrialListId(String _trialListId) { trialListId = _trialListId; }
     public Date getDate() { return date; }
-    public void setDate(Date _date) { date = _date; }
+    /** Sets the creation date (and the last activity date). This is 
+	used on initialization */
+    public void setDate(Date _date) {
+	lastActivityTime = date = _date;
+    }
     public Date getLastActivityTime() { return lastActivityTime; }
     public void setLastActivityTime(Date _lastActivityTime) { lastActivityTime = _lastActivityTime; }
 
@@ -267,9 +271,12 @@ public class PlayerInfo {
     //    }
 
     public String toString() {
-	return "(PlayerInfo: id=" + id +",  playerId="+ playerId+", pair="+pairState+
+	String s = "(PlayerInfo: id=" + id +",  playerId="+ playerId+", pair="+pairState+
 	    (partnerPlayerId==null? "": ":" + partnerPlayerId) +
-	    ", trialListId=" + trialListId +", date=" + date+")";
+	    ", trialListId=" + trialListId +", date=" + date;
+	if (completionMode != 0) s += ", completionMode="+ completionMode;
+	s += ")";
+	return s;
     }
 
 
@@ -438,9 +445,9 @@ public class PlayerInfo {
 	the player is eligible to start bonus episodes, but has not done that yet */
     public boolean canActivateBonus() {
 	Series ser = getCurrentSeries();	
+	if (ser==null) return false;
 	if (ser.para.getIncentive()!=ParaSet.Incentive.BONUS) return false;
 	if (inBonus) return false;  // already doing a bonus subseries!
-	if (ser==null) return false;
 	int at = ser.para.getInt("activate_bonus_at");
 	// 0-based index of the episode on which activation will be in
 	// effect, if it happens
@@ -517,33 +524,49 @@ public class PlayerInfo {
     /** This may be invoked by a maintenance thread in 2PG, when it detects
 	that this player has been inactive for a while. (The method should be
         usable in 1PG too, but it's not a major concern).
+
+	<p>
+	Note that, inside this method, we "abandon" the episode before 
+	mareking the player as "abandoner", because otherwise
+	getCurrenSeries() won't retrieve the episode.
      */
     public void abandon() throws IOException {
 	Logging.info("abandoning by(pid="+playerId+"), currentSeriesNo=" +currentSeriesNo);
 
+	// mark the current episode as abandoned, if needed
+	boolean saved = false;
+
+	if (currentSeriesNo>=allSeries.size())  return; // finished all series already anyway
+	Series ser=getCurrentSeries();
+	
+	if (ser!=null && ser.size()>0) {
+	    EpisodeInfo epi = ser.episodes.lastElement();
+	    Logging.info("for pid="+playerId+", may need to abandond episode=" + epi.getEpisodeId());
+	    // mark the currently active episode, if any, as abandoned
+	    if (!epi.isCompleted()) {
+		epi.abandoned = true;
+		Logging.info("abandon: episodeId=" + epi.getEpisodeId()+", set abandoned=" + epi.abandoned);
+		//Main.persistObjects(epi);
+		// Persists SQL, and write CSV
+		ended(epi);
+		saved = true;
+	    }
+	} else if (ser==null) {
+	    Logging.info("abandon: ser=null");
+	} else {
+		Logging.info("abandon: ser.size=" + ser.size());
+	}
+	
 	setCompletionMode(COMPLETION.WALKED_AWAY); // ZZZ
 	if (partner!=null) {
 	    partner.setCompletionMode(COMPLETION.ABANDONED);
 	    partner.setCompletionCode( buildCompletionCode() + "-ab");
 	}
-
-	// mark the current episode as abandoned, if needed
-
-
-	if (currentSeriesNo>=allSeries.size())  return; // finished all series already anyway
-	Series ser=getCurrentSeries();
-	if (ser!=null && ser.size()>0) {
-	    EpisodeInfo epi = ser.episodes.lastElement();
-	    // mark the currently active episode, if any, as abandoned
-	    if (!epi.isCompleted()) {
-		epi.abandoned = true;
-		Logging.info("giveUp: episodeId=" + epi.getEpisodeId()+", set abandoned=" + epi.abandoned);
-		//Main.persistObjects(epi);
-		// Persists SQL, and write CSV
-		ended(epi);
-	    }
-	}
-		   	
+	
+	saveMe();
+	
+	
+	// ZZZ
 	//goToNextSeries();
 	//Logging.info("abandoning completed, now currentSeriesNo=" +currentSeriesNo);
 
@@ -1163,6 +1186,7 @@ public class PlayerInfo {
 	create a new EM and merge this object to the new persistence context.
      */
     public void saveMe() {
+	Logging.info("Saving player " + playerId);
 	Main.saveObject(this);
     }
 

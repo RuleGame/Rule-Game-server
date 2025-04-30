@@ -1,0 +1,151 @@
+package edu.wisc.game.threeads;
+
+import java.io.*;
+import java.util.*;
+import java.text.*;
+import javax.persistence.*;
+
+import org.apache.openjpa.persistence.jdbc.*;
+
+import jakarta.xml.bind.annotation.XmlElement; 
+
+import edu.wisc.game.util.*;
+import edu.wisc.game.sql.*;
+//import edu.wisc.game.rest.*;
+//import edu.wisc.game.rest.ParaSet;
+//import edu.wisc.game.rest.TrialList;
+//import edu.wisc.game.rest.Files;
+import edu.wisc.game.rest.PlayerResponse;
+//import edu.wisc.game.engine.RuleSet;
+//import edu.wisc.game.engine.AllRuleSets;
+//import edu.wisc.game.saved.*;
+
+//import edu.wisc.game.websocket.WatchPlayer;
+
+
+/** This thread performs maintenance functions, such as marking 
+    episodes as "abandoned"
+ */
+class MaintenanceThread extends Thread {
+
+    static MaintenanceThread oneMaintenanceThread = null;
+
+
+    /** Creates a thread. You must call its start() method next.
+	@param _runID Run id, which identifies this run (and its results)
+	within the session.
+     */
+    MaintenanceThread(String name) {
+	super(name);
+    }
+
+    /** This can be called any time someone wants to
+	make sure the maintenance thread has been started */
+    synchronized static void init() {
+	if ( oneMaintenanceThread != null) {
+	    return;
+	}
+
+	final DateFormat sqlDf = new SimpleDateFormat("yyyy-MM-dd-HHmmss");
+	String name = "MaintenanceThread-" + sqlDf.format(new Date());
+    	oneMaintenanceThread = new MaintenanceThread(name);
+	oneMaintenanceThread.start();
+    }
+
+
+    
+    int timeout2pg , timeout1pg;
+  
+    public void run()  {
+
+	timeout2pg = Integer.parseInt( MainConfig.getString("TIMEOUT_2PG", "300"));
+	timeout1pg = Integer.parseInt( MainConfig.getString("TIMEOUT_2PG", "36000"));
+
+	Logging.info("Started thread " + getName() + " with timeout2pg="+timeout2pg+", timeout1pg="+timeout1pg);
+	
+	//EntityManager em=null;
+
+	while(true) {
+
+	    long sleepMsec = 60*1000;
+	    try {
+		Thread.sleep(sleepMsec); 
+	    } catch (InterruptedException e) {
+		e.printStackTrace();
+	    }
+
+
+	    Logging.info("MaintenanceThread.run() wakes up"); 
+	    try {
+		Date now  = new Date();
+
+		HashMap<String, PlayerInfo> allPlayers = PlayerResponse.getAllCachedPlayers();
+		int cntAll1=0, cntTimeout1=0;
+		int cntAll2=0, cntTimeout2=0;
+		for(String playerId: allPlayers.keySet()) {
+		    PlayerInfo p = allPlayers.get(playerId);
+		    if (p.getCompletionCode()!=null || p.getCompletionMode()>0) continue;
+		    if (p.is2PG()) {
+			cntAll2++;
+			if (p.getPartnerPlayerId() == null) continue; // not paired yet
+			PlayerInfo y = p;
+			//-- if it's a 2PG, all episodes are stored by player ZERO
+			if (p.xgetPartner()!=null && p.getPairState()==Pairing.State.ONE) {
+			    y = p.xgetPartner();
+			}	    
+			
+			EpisodeInfo epi = y.mostRecentEpisode();
+
+			// If the previous episode has finished, but nobody has pressed "NEXT" yet, we create a new episode right here
+			// episodeInfo epi = y.episodeToDo();
+			if (epi.getFinishCode()==Episode.FINISH_CODE.NO)  { // episode in progress
+			    int whoMustPlay = epi.whoMustMakeNextMove();
+			    if (whoMustPlay != p.getPairState()) {
+				// this player is waiting for its partner
+				continue;
+			    } else {
+				// test this one
+			    }
+			} else {
+			    // there is no active episode at the moment anyway,
+			    // so no one is waiting for your move. Both players
+			    // have the NEXT button, and both can press it any time
+			    continue;
+			}
+			if (p.getLastActivityTime().getTime() + timeout2pg *1000 < now.getTime()) {
+			    cntTimeout2 ++;
+			    Logging.info("MaintenanceThread: Detected a 2PG walk-away: " + playerId + ", lastActive=" + p.getLastActivityTime());
+			    p.abandon();
+			}
+		    } else { // 1PG
+			if (p.getCompletionCode()!=null || p.getCompletionMode()>0) continue;
+			if (p.getLastActivityTime().getTime() + timeout1pg *1000 < now.getTime()) {
+			    cntTimeout1 ++;
+			    Logging.info("MaintenanceThread: Detected a 1PG walk-away: " + playerId + ", lastActive=" + p.getLastActivityTime());
+			    p.abandon();
+			}
+		    }
+			
+		}
+
+		Logging.info("MaintenanceThread: walk-away count: 1PG: " + cntTimeout1 + "/" +  cntAll1 +
+			     " 2PG: " + cntTimeout2 + "/" +  cntAll2); 
+		
+
+	    } catch(Exception ex) {
+		//error = true;
+		//errmsg = ex.getMessage();
+		Logging.error("Exception for Maintenance thread " + getName() + ": " + ex);
+		ex.printStackTrace(System.out);
+	    } finally {
+	    } 
+	}
+    }
+
+    public String toString() {
+	return "[Maintenance thread " +// getId() + "; " + parent.toString() +
+	    "]";
+    }
+ 
+}
+

@@ -10,7 +10,7 @@ Supporting Two-Player Games in the GOHR Framework
     </h1>
 
     <div align="center"><em>
-	Updated 2025-02-23 for GS 7.004</em>
+	Updated 2025-04-27 for GS 8.012</em>
 	</div>
 
     <p>
@@ -442,6 +442,41 @@ As you can see, this structure (transcript ) is a map. The keys are the position
 	<p>
 	  This call also takes the <tt>playerId=...</tt> parameter now, so that the server will correctly record the guess.
 
+	  <h2><a name="abandon">Walk-aways and their abandoned partners</h2>
+
+	  <h3>New player classes</h3>
+	  <p> In 1PG, we were satisfied with dividing all players into 2 classes: those who have not completed their game yet (and, therefore, can still continue playing, at least theoretically) and those who have (and got a completion code to prove that). To improve the experience of 2PG players, we are introducing, as of GS 8.012, two more classes of players:
+	  <ul>
+	    <li><strong>"Walk-away players".</strong> A 2PG player is considered to have "walked away" if, when it was his turn to make amove, it has failed to make a move during a certain amount of time. (This is set in the <a href="setup/setup-config.html">master config file</a> as <tt>TIMEOUT_2PG = 300</tt>, measured in seconds). After the player has "walked away", we will "release" his partner; therefore, we won't allow a "walk-away" to resume playing anymore.
+
+	      <br>It is also possible for the server to mark a 1PG player as a walk-away, in order to free server resources, but that is done after a much longer interval (e.g. <tt>TIMEOUT_1PG = 36000</tt>, i.e. 10 hrs), since in 1PG we generally won't mind if a player has a lunch and takes a nap before resuming his game.
+
+	    <li><strong>"Abandoned players".</strong> A 2PG player is considered "abandoned" if his partner has "walked away". Once we have marked a player as "abandoned", we can tell him that he no longer needs to wait for his partner's move, but should proceed to the demographics page etc. An abandoned player will get a completion code, and, if he's a Prolific subject, he may get paid.
+	      
+	  </ul>
+
+
+	  <h3>Internal representation</h3>
+	  <p>Internally, the walk-aways and the abandoned players are marked by the appropriate values of the field <tt>completionMode</tt> in the PlayerInfo table. The episode during which the "abandonment" is detected is marked by the bit <tt>abandoned</tt>
+
+	    <h3>Needed client behavior</h3>
+
+	    <p>This is what I would like the GUI client to do:
+
+	<P>(1) On a /move, /pick, or a /display call:
+	  <p>(a) If the return structure contains the field <tt>finishCode=7</tt>
+	  (<a href="/api/constant-values.html#edu.wisc.game.sql.Episode.FINISH_CODE.ABANDONED">FINISH_CODE.ABANDONED</a>), this indicates that this episode should not be played anymore, beceause the player has been abandoned by his partner. In this case, the GUI client should send the player to the "demographics instructions" page (the one before the actual demographics survey). The player also should be told something like, "Unfortunately, your partner has stoppped playing. Please proceed to the next page, so that you can still receive a partial credit for your work".
+
+	<p>(b) If the  if the return structure contains the field <tt>finishCode=6</tt>
+	  (<a href="/api/constant-values.html#edu.wisc.game.sql.Episode.FINISH_CODE.WALKED_AWAY">FINISH_CODE.WALKED_AWAY</a>), this indicates that this player has been previously deemed a "walk-away", and (if this was a 2PG) his partner has been let go. Now he has decided to return... but it's too late for him to resume playing.	In this case, the GUI client should display a message along the lines, "Your game session has been terminated due to inactivity".
+
+	<p>(2) On a /newEpisode call, look for the field <tt>completionCode</tt>. If it is present and contains the value 1 (<a href="api/constant-values.html#edu.wisc.game.sql.PlayerInfo.COMPLETION.ABANDONED">COMPLETION.ABANDONED</a>(), handle as per (1)(a) above. If this field is present and contains the value 2 (<a href="api/constant-values.html#edu.wisc.game.sql.PlayerInfo.COMPLETION.WALKED_AWAY">COMPLETION.WALKED_AWAY</a>), handle as per (1)(b) above.
+	  
+
+	  <h3>Simulating "walking-away"</h3>
+
+	  <p>In production, "walk-aways" will be detected and appropriately marked by a contnuously running maintenance thread. During testing, you can simulate "walking away" by ...
+	  
 	  <h2>Chat between players</h2>
 
 	<p>The GUI client should enable the chat GUI element, consisting from a text entry box and the message exchange display box, if <tt>needChat==true</tt> was receieved in the response of the /player call.

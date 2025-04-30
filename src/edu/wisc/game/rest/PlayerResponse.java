@@ -245,6 +245,8 @@ public class PlayerResponse extends ResponseBase {
 	"transient" info (such as the transripts of epsiodes)
      */
     private static HashMap<String, PlayerInfo> allPlayers = new HashMap<String, PlayerInfo>();
+
+    public static HashMap<String, PlayerInfo> getAllCachedPlayers() { return allPlayers; }
         
     private static String lock = "lock";
 

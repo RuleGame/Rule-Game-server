@@ -82,7 +82,7 @@
       <li>exp: the name of the dynamic experiment plan associated with this rule. This should be sent as YYY in the <tt>/player?uid=XXX&amp;exp=YYY</tt> call to be made if the user clicks this rule set's "PLAY" button.
 
       <li>completed: false is the button should be enabled, or true if the player has done playing this  rule set, and the button must be disabled.
-      <li>episodeCnt: how many episodes the user has played in this rule set. If non-zero, then, depending on the "completed" field  we either say something like "Played XXX episodes already" + "PLAY MORE" button, or disable the play button, saying something "Finished with this rule (XXX episodes)
+      <li>episodeCnt: how many episodes the user has played in this rule set. If non-zero, then, depending on the "completed" field  we either say something like "Played XXX episodes already" + "PLAY MORE" button, or disable the play button, saying something "Finished with this rule (XXX episodes)"
 
       <li>playerId: this is only supplied for rule sets for which this player has already played some episodes. If this field is present, send it as ZZZ in the  <tt>/player?uid=XXX&amp;exp=YYY&amp;playerId=ZZZ</tt> call to be made if the user clicks this rule set's "PLAY MORE" button. 
     </ul>
@@ -632,6 +632,21 @@ R:CGS/test-01:APP/APP-max-feedback
    </form>
   
 <hr>
+
+<h2>Unit tests</h2>
+
+<h3><a name="abandon">Abandon game</a></h3>
+
+<p>When you enter a player ID below and click on "Submit", the player will be marked as a "walk-away". If the player is in a 2PG, his partner will be marked as an "abandoned" player. This can be used to test the flow control in "abandonment" situations.
+  
+  <form method="post" action="game-data/GameService2/abandon"
+	 enctype="application/x-www-form-urlencoded">
+
+     playerId=<input name="playerId" type="text" size="25" value=""> 
+
+    <input type="submit">
+  </form>
+
 
 <h2>Where are the input files?</h2>
 

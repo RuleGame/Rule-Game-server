@@ -187,10 +187,6 @@ public class GameService2 {
     }	
     
 
-
-
-
-
     @POST
     @Path("/move") 
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -221,7 +217,7 @@ public class GameService2 {
 	} catch( Exception ex) {
 	    System.err.print("/move: " + ex);
 	    ex.printStackTrace(System.err);
-	    return rv=epi.dummyDisplay(Episode.CODE.INVALID_ARGUMENTS, ex.getMessage());
+	    return rv=epi.dummyDisplay(Episode.CODE.INVALID_ARGUMENTS, "move: Excepton: " + ex.getMessage());
 	} finally {
 	    Object ro = (rv==null)? "null" : JsonReflect.reflectToJSONObject(rv, true, null, 6);
 	    String msg = "/move(epi=" +  episodeId +", ("+x+","+y+") to ("+bx+","+by+"), cnt="+cnt+"), return " + ro;
@@ -359,5 +355,27 @@ public class GameService2 {
 	return new LaunchRulesBase.AndroidRuleInfoReport(uid);
     }
 
-    
+    @POST
+    @Path("/abandon")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    public String abandon(@FormParam("playerId") String playerId) {
+	Logging.info("/abandon(playerId=" + playerId +")");
+	if (playerId==null || playerId.equals("null")) return "No playerId supplied";
+	try {
+	    PlayerInfo x = PlayerResponse.findPlayerInfo(null, playerId);
+	    if (x==null) return "Player not found " + playerId;
+	    x.abandon();
+	    return "Abanonded: " + x;
+	} catch( Exception ex) {
+	    System.err.print("/pick: " + ex);
+	    ex.printStackTrace(System.err);
+	    return "Exception " + ex;
+	} finally {
+	} 
+    }
+
+
+
+
 }

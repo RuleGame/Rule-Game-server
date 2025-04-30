@@ -348,8 +348,8 @@ public class EpisodeInfo extends Episode {
 	ExtendedDisplay d = checkWhoseTurn(moverPlayerId);
 	if (d!=null) return d;
 	Display _q = super.doMove(y, x, by, bx, _attemptCnt);
-
 	Pick move = _q.pick;
+	if (move==null) return new ExtendedDisplay(0,_q); // FIXME: would be nice to have the correct mover value
 	move.mover = player.getRoleForPlayerId(moverPlayerId);
 	d = processMove(_q, move);
 	return d;
@@ -360,8 +360,9 @@ public class EpisodeInfo extends Episode {
 	ExtendedDisplay d = checkWhoseTurn(moverPlayerId);
 	if (d!=null) return d;
 	Display _q = super.doMove2(pieceId,  bucketId, _attemptCnt);
-
+	if (_q.error) return new ExtendedDisplay(0,_q); // FIXME: would be nice to have the correct mover value
 	Pick move = _q.pick;
+	if (move==null) return new ExtendedDisplay(0,_q); // FIXME: would be nice to have the correct mover value
 	move.mover = player.getRoleForPlayerId(moverPlayerId);
 	d = processMove(_q, move);
 	return d;
@@ -375,6 +376,7 @@ public class EpisodeInfo extends Episode {
 	if (d!=null) return d;
 	Display _q = super.doPick(y, x, _attemptCnt);
 	Pick pick = _q.pick;
+	if (pick==null) return new ExtendedDisplay(0,_q); // FIXME: would be nice to have the correct mover value
 	pick.mover = player.getRoleForPlayerId(moverPlayerId);
 
 	d = processMove(_q, pick);
@@ -386,6 +388,7 @@ public class EpisodeInfo extends Episode {
 	if (d!=null) return d;
 	Display _q = super.doPick2(pieceId, _attemptCnt);
 	Pick pick = _q.pick;
+	if (pick==null) return new ExtendedDisplay(0,_q); // FIXME: would be nice to have the correct mover value
 	pick.mover = player.getRoleForPlayerId(moverPlayerId);
 
 	d = processMove(_q, pick);
@@ -619,8 +622,9 @@ public class EpisodeInfo extends Episode {
      */
     public class ExtendedDisplay extends Display {
 
-	ExtendedDisplay(int mover, int _code,  String _errmsg) {
-	    this(mover, _code, _errmsg, false);
+	// ZZZ
+	ExtendedDisplay(int mover, int _code, boolean _error, String _errmsg) {
+	    this(mover, _code, _error, _errmsg, false);
 	}
  
 	/** Assembles an ExtendedDisplay structure based on the
@@ -635,8 +639,9 @@ public class EpisodeInfo extends Episode {
 	    @param dummy If true, the returned structure will contain
 	    just the error message and no real data.
 	*/
-	private ExtendedDisplay(int mover, int _code, 	String _errmsg, boolean dummy) {
+	private ExtendedDisplay(int mover, int _code,  boolean _error,	String _errmsg, boolean dummy) {
 	    super(_code, _errmsg);
+	    error = _error;
 	    this.mover = mover;
 	    if (dummy) return;
 	    bonus = EpisodeInfo.this.isBonus();
@@ -712,7 +717,8 @@ public class EpisodeInfo extends Episode {
 
 	}
 	ExtendedDisplay(int mover, Display d) {
-	    this(mover, d.code, d.errmsg);
+	    this(mover, d.code, d.error, d.errmsg);
+	    //Logging.debug("Extending display from " + d);
 	}
 
 	
@@ -918,11 +924,11 @@ public class EpisodeInfo extends Episode {
 	int mover = player.getRoleForPlayerId(playerId); // can be -2 in 1PG
 	//	if (mover<0) return new ExtendedDisplay(0, CODE.OUT_OF_TURN, "Player " + playerId + " is not a party to this game at all!");
 
-    	return new ExtendedDisplay(mover, Episode.CODE.JUST_A_DISPLAY, "Display requested");
+    	return new ExtendedDisplay(mover, Episode.CODE.JUST_A_DISPLAY, false, "Display requested");
     }
 
     public ExtendedDisplay dummyDisplay(int _code, 	String _errmsg) {
-	return new ExtendedDisplay(0, _code, _errmsg, true);
+	return new ExtendedDisplay(0, _code, false, _errmsg, true);
     }
 
 
@@ -1130,7 +1136,7 @@ public class EpisodeInfo extends Episode {
 	the /move or /display call (after acceptance and recording in the transcript), to decide who'll make the
 	following move.
      */
-    int whoMustMakeNextMove() {
+    public int whoMustMakeNextMove() {
 	if (attemptCnt==0) {
 	    return firstMover;
 	}
@@ -1164,15 +1170,15 @@ public class EpisodeInfo extends Episode {
     private ExtendedDisplay checkWhoseTurn(String playerId) {
 	if (!player.is2PG()) return null;
 
-	if (playerId==null) return  new ExtendedDisplay(0, CODE.OUT_OF_TURN, "playerId not sent in a /move or /pick call. This parameter is mandatory in 2PG");
+	if (playerId==null) return  new ExtendedDisplay(0, CODE.OUT_OF_TURN, true, "playerId not sent in a /move or /pick call. This parameter is mandatory in 2PG");
 	       
 	int mover = player.getRoleForPlayerId(playerId);
-	if (mover<0) return new ExtendedDisplay(0, CODE.OUT_OF_TURN, "Player " + playerId + " is not a party to this game at all!");
+	if (mover<0) return new ExtendedDisplay(0, CODE.OUT_OF_TURN, true,  "Player " + playerId + " is not a party to this game at all!");
 	
 	int whoMustPlay =whoMustMakeNextMove();
 	
 	return  (mover==whoMustPlay)? null:
-	    new ExtendedDisplay(mover, CODE.OUT_OF_TURN, "Player " + playerId + " tried to make a move out of turn");
+	    new ExtendedDisplay(mover, CODE.OUT_OF_TURN, true,  "Player " + playerId + " tried to make a move out of turn");
     }
 
     /** @return the role of the player who made this /move, /pick, or
@@ -1206,6 +1212,23 @@ public class EpisodeInfo extends Episode {
 	    }
 	}
     }
+
+    /** Overrides Episode.FinishCode, taking
+	special care of the walk away/abandoned
+	situation. (The episode entry is stored
+	only once, shared by the two players;
+	but the finish code should be returned
+	differently to the two players).
+    */
+    public int getFinishCode() {
+	int fc = super.getFinishCode();
+	if (fc==FINISH_CODE.ABANDONED || fc==FINISH_CODE.WALKED_AWAY  ) {
+	    if (player.getCompletionMode() == PlayerInfo.COMPLETION.WALKED_AWAY) fc = FINISH_CODE.WALKED_AWAY;
+	    else if (player.getCompletionMode() == PlayerInfo.COMPLETION.ABANDONED) fc = FINISH_CODE.ABANDONED;
+	}
+	return fc;
+    }
+       
     
 }
 

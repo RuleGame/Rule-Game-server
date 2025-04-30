@@ -96,6 +96,8 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	    PlayerInfo x = PlayerResponse.findPlayerInfo(null, pid);
 	    Logging.info("NewEpisodeWrapper2(pid="+ pid+"): player="+
 			 (x==null? "null" : "" +x+ "\n" + x.report()));
+	    x.setLastActivityTime(new Date());
+
 	    if (x==null) {
 		setError(true);
 		setErrmsg("Player not found: " + pid);

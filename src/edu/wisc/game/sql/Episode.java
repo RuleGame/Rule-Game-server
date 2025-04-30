@@ -31,6 +31,11 @@ import edu.wisc.game.sql.EpisodeMemory.BucketVarMap2;
 @Entity
 public class Episode {
 
+    /** Temporary flag used during the introduction of support
+	for "abandoned" players (8.012). True if we want to work
+	with the old client. */
+    boolean useOldClient = true;
+    
         @Id 
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private long id;
@@ -799,9 +804,13 @@ s	    non-existing piece) the value may be different from those of
 	
     }
 
+    /** Values that may be returned by getFinishCode(), describing
+	the episode's status */
     public static class FINISH_CODE {
 	public static final int
-	/** there are still pieces on the board, and some are moveable */
+	/** there are still pieces on the board, and some are moveable;
+	    playing may still continue
+	 */
 	    NO = 0,
 	/** no pieces left on the board */
 	    FINISH = 1,
@@ -828,7 +837,11 @@ s	    non-existing piece) the value may be different from those of
 	    "walked away" and abandoned the other. One should check
 	    PlayerInfo.completionMode to see who's at fault.
 	*/
-	    ABANDONED = 6;
+	    WALKED_AWAY = 6,
+	/** This is returned by EpisodeInfo.getFinishCode to
+	    the player who was "abandoned" by his partner.
+	*/
+	    ABANDONED = 7;
     }
 
     /** Creates a bit set with bits set in the positions where there are
@@ -1086,7 +1099,9 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	     givenUp?  FINISH_CODE.GIVEN_UP :
 	     lost?  FINISH_CODE.LOST :
 	     earlyWin? FINISH_CODE.EARLY_WIN :
-	     abandoned? FINISH_CODE.ABANDONED :
+	     abandoned? ( // FIXME: TEMPFIX
+			 useOldClient?	 FINISH_CODE.FINISH: 
+			 FINISH_CODE.ABANDONED) :
 	     FINISH_CODE.NO;
     }
        
@@ -1231,6 +1246,12 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	public Display(int _code, 	String _errmsg) {
 	    this(_code, null, _errmsg);
 	}
+
+
+	public String toString() {
+	    Object ro = JsonReflect.reflectToJSONObject(this, true, null, 6);
+	    return "" + ro;
+	}	
     }
 
     /** Builds a Display objecy to be sent out over the web UI upon a /display
