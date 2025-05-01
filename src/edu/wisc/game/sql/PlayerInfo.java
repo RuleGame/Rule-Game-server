@@ -531,17 +531,20 @@ public class PlayerInfo {
 	getCurrenSeries() won't retrieve the episode.
      */
     public void abandon() throws IOException {
-	Logging.info("abandoning by(pid="+playerId+"), currentSeriesNo=" +currentSeriesNo);
+
+	PlayerInfo y = (pairState==Pairing.State.ONE) ? partner: this;
+	    
+	Logging.info("abandoning by(pid="+playerId+"), currentSeriesNo=" + y.currentSeriesNo);
 
 	// mark the current episode as abandoned, if needed
 	boolean saved = false;
 
-	if (currentSeriesNo>=allSeries.size())  return; // finished all series already anyway
-	Series ser=getCurrentSeries();
+	if (y.currentSeriesNo>=y.allSeries.size())  return; // finished all series already anyway
+	Series ser=y.getCurrentSeries();
 	
 	if (ser!=null && ser.size()>0) {
 	    EpisodeInfo epi = ser.episodes.lastElement();
-	    Logging.info("for pid="+playerId+", may need to abandond episode=" + epi.getEpisodeId());
+	    Logging.info("abandon(playerId): may need to abandon episode=" + epi.getEpisodeId());
 	    // mark the currently active episode, if any, as abandoned
 	    if (!epi.isCompleted()) {
 		epi.abandoned = true;
@@ -554,13 +557,15 @@ public class PlayerInfo {
 	} else if (ser==null) {
 	    Logging.info("abandon: ser=null");
 	} else {
-		Logging.info("abandon: ser.size=" + ser.size());
+	    Logging.info("abandon: ser.size=" + ser.size());
 	}
 	
 	setCompletionMode(COMPLETION.WALKED_AWAY); // ZZZ
 	if (partner!=null) {
+	    Logging.info("abandon("+playerId+"): marking the partner, " + partner.getPlayerId() + ", as abandoned");
 	    partner.setCompletionMode(COMPLETION.ABANDONED);
 	    partner.setCompletionCode( buildCompletionCode() + "-ab");
+	    partner.saveMe();
 	}
 	
 	saveMe();

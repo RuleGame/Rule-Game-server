@@ -34,7 +34,8 @@ public class Episode {
     /** Temporary flag used during the introduction of support
 	for "abandoned" players (8.012). True if we want to work
 	with the old client. */
-    boolean useOldClient = true;
+    @Transient
+    boolean useOldClient = false;
     
         @Id 
     @GeneratedValue(strategy=GenerationType.IDENTITY)
@@ -1099,9 +1100,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	     givenUp?  FINISH_CODE.GIVEN_UP :
 	     lost?  FINISH_CODE.LOST :
 	     earlyWin? FINISH_CODE.EARLY_WIN :
-	     abandoned? ( // FIXME: TEMPFIX
-			 useOldClient?	 FINISH_CODE.FINISH: 
-			 FINISH_CODE.ABANDONED) :
+	     abandoned?  FINISH_CODE.ABANDONED :
 	     FINISH_CODE.NO;
     }
        

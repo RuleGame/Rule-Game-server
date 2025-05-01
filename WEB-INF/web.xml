@@ -6,13 +6,13 @@
    id = "WebApp_ID" version = "3.0">
 
   <description>
-    University of Wisconsin Rule-Game Application
+    University of Wisconsin / Rutgers University Rule-Game Application
   </description>
 
   <request-character-encoding>UTF-8</request-character-encoding>
 
  
-   <display-name>University of Wisconsin Rule-Game Application</display-name> 
+   <display-name>University of Wisconsin / Rutgers University Rule-Game Application</display-name> 
 
    <!-- Inserted as per Kevin Mui's request, 2020-07-31, to allow access from
 	JS code running on different hosts or at different ports.
@@ -30,8 +30,6 @@
      <filter-name>CorsFilter</filter-name>
      <url-pattern>/*</url-pattern>
    </filter-mapping>
-
-   <display-name>University of Wisconsin Rule-Game Application</display-name> 
 
    <servlet> 
       <servlet-name>Rule-Game-Test</servlet-name> 
@@ -63,8 +61,7 @@
       <url-pattern>/game-data/*</url-pattern> 
     </servlet-mapping>
 
- 
-    
+     
       <!-- inserted as per https://stackoverflow.com/questions/30653012/multipart-form-data-no-injection-source-found-for-a-parameter-of-type-public-ja, trying to handle the "injection" problem, but with no benefits achieved.
 See also https://stackoverflow.com/questions/45625925/what-exactly-is-the-resourceconfig-class-in-jersey-2
       -->
@@ -139,23 +136,22 @@ See also https://stackoverflow.com/questions/45625925/what-exactly-is-the-resour
   </servlet-mapping>
 
 
-     <security-role>
-      <description>
-        Admins can do anything, including user administration
-      </description>
-      <role-name>admin</role-name>
-    </security-role>
-   <security-role>
-      <description>
-      </description>
-      <role-name>researcher</role-name>
-    </security-role>
   <security-role>
-      <description>
-      </description>
-      <role-name>player</role-name>
-    </security-role>
-
+    <description>
+      Admins can do anything, including user administration
+    </description>
+    <role-name>admin</role-name>
+  </security-role>
+  <security-role>
+    <description>
+    </description>
+    <role-name>researcher</role-name>
+  </security-role>
+  <security-role>
+    <description>
+    </description>
+    <role-name>player</role-name>
+  </security-role>
 
 
   <security-constraint>
@@ -182,7 +178,6 @@ See also https://stackoverflow.com/questions/45625925/what-exactly-is-the-resour
         <form-error-page>/jsp/security/protected/error.jsp</form-error-page>
       </form-login-config>
     </login-config>
-
 
    
 </web-app>

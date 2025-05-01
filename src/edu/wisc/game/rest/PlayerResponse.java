@@ -13,6 +13,7 @@ import edu.wisc.game.util.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.reflect.JsonReflect;
 import edu.wisc.game.parser.RuleParseException;
+import edu.wisc.game.threads.*;
 
 
 /** The object returned by the /player call. This is the call that's
@@ -108,6 +109,8 @@ public class PlayerResponse extends ResponseBase {
 	as this is an M-Turker etc, and not a repeat user.
     */
     PlayerResponse(String pid, String exp, int uid, boolean debug) {
+	// Just a random place to make sure the maintenance thread is running
+	MaintenanceThread.init();
 	exp = regularize(exp);
 	pid = regularize(pid);
 	Date now = new Date();

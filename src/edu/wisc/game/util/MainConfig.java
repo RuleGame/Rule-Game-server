@@ -130,6 +130,7 @@ public class MainConfig {
 	    if (_path==null) throw new IllegalArgumentException("Master config path not specified");
 	    
 	    ht = new ParseConfig(path);
+	    Logging.info("MainConfig(" + path +") created, size=" + ht.size());
 	} catch(Exception ex) {
 	    System.err.println("Warning: Problem reading master configuration file '"+path +"'. Will use built-in default values instead, which can cause problems accessing the database server and data files. If you are running the Captive Server, you can ignore this message. " + ex);
 	    ex.printStackTrace(System.err);
@@ -137,7 +138,10 @@ public class MainConfig {
     }
 
     static public String getString(String name, String defVal) {
-	if (mainConfig==null) mainConfig = new MainConfig(defaultPath);
+	if (mainConfig==null) {
+	    Logging.info("MainConfig.get("+name+"): config init from " + defaultPath);
+	    mainConfig = new MainConfig(defaultPath);
+	}
 	return mainConfig.doGetString(name, defVal);
     }
     
