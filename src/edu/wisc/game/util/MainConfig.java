@@ -149,6 +149,18 @@ public class MainConfig {
 	return (ht==null)? defVal: ht.getString(name, defVal);
     }
 
+    static public int getInt(String name, int defVal) {
+	if (mainConfig==null) {
+	    Logging.info("MainConfig.get("+name+"): config init from " + defaultPath);
+	    mainConfig = new MainConfig(defaultPath);
+	}
+	return mainConfig.doGetInt(name, defVal);
+    }
+
+    public int doGetInt(String name, int defVal) {
+	return (ht==null)? defVal: ht.getInt(name, defVal);
+    }
+
     /** Looks up the path in the main config file of the app, adjusts
 	it if necessary (when on a DoIT shared hosting host), and
 	converts it to a File object */

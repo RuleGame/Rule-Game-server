@@ -51,6 +51,8 @@ public class MaintenanceThread extends Thread {
 	    return;
 	}
 	oneMaintenanceThread.pleaseStop = true;
+	Logging.info("Calling thread.interrupt()...");
+	oneMaintenanceThread.interrupt();
     }
 
     
@@ -58,10 +60,10 @@ public class MaintenanceThread extends Thread {
   
     public void run()  {
 
-	timeout2pg = Integer.parseInt( MainConfig.getString("TIMEOUT_2PG", "301"));
-	timeout1pg = Integer.parseInt( MainConfig.getString("TIMEOUT_1PG", "36001"));
+	timeout2pg = MainConfig.getInt("TIMEOUT_2PG", 301);
+	timeout1pg = MainConfig.getInt("TIMEOUT_1PG", 36001);
 
-	Logging.info("Started thread " + getName() + " with timeout2pg="+timeout2pg+", timeout1pg="+timeout1pg);
+	Logging.info("Started MaintenanceThread " + getName() + " with timeout2pg="+timeout2pg+", timeout1pg="+timeout1pg);
 	
 	//EntityManager em=null;
 
@@ -71,10 +73,11 @@ public class MaintenanceThread extends Thread {
 	    try {
 		Thread.sleep(sleepMsec); 
 	    } catch (InterruptedException e) {
+		if (pleaseStop) break;
 		e.printStackTrace();
 	    }
-	    if (pleaseStop) break;
 
+	    if (pleaseStop) break;
 
 	    try {
 		Logging.info("MaintenanceThread.run() wakes up"); 
@@ -143,6 +146,7 @@ public class MaintenanceThread extends Thread {
 	    } finally {
 	    } 
 	}
+	Logging.info("MaintenanceThread "+getName()+" finished");
     }
 
     public String toString() {
