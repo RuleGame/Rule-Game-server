@@ -459,6 +459,8 @@ As you can see, this structure (transcript ) is a map. The keys are the position
 	  <h3>Internal representation</h3>
 	  <p>Internally, the walk-aways and the abandoned players are marked by the appropriate values of the field <tt>completionMode</tt> in the PlayerInfo table. The episode during which the "abandonment" is detected is marked by the bit <tt>abandoned</tt>
 
+	    <h3>How this works in the server</h3>
+
 	    <h3>Needed client behavior</h3>
 
 	    <p>This is what I would like the GUI client to do:
@@ -475,7 +477,7 @@ As you can see, this structure (transcript ) is a map. The keys are the position
 
 	  <h3>Simulating "walking-away"</h3>
 
-	  <p>In production, "walk-aways" will be detected and appropriately marked by a contnuously running maintenance thread. During testing, you can simulate "walking away" by ...
+	<p>In the game server, "walk-aways" will be detected and appropriately marked by a contnuously running maintenance thread. when testing the "abandonment" support in the GUI client, you don't have to wait for the timeout to happen based on the configuration settings. Instead, you can simulate "walking away" by using the <tt>/abandon</tt> API call. To use it, go to the <a href="game-api-2.html#abandon">/abandon form</a> form, enter the palyerID of the player whom you want to "walk away", and click on "Submit". The server will then mark that player as a walk-away, and his partner (if that's a 2PG) as an abandoned player.
 	  
 	  <h2>Chat between players</h2>
 
