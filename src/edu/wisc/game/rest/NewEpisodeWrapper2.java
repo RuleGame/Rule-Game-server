@@ -56,7 +56,11 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	number is incremented beyond the last parameter set number.
      */
     public String getCompletionCode() { return completionCode; }
- 
+
+    private int completionMode;
+    public int getCompletionMode() { return completionMode; }
+
+    
   
     Episode.Display display;
    /** The structure with a lot of information about the current episode,
@@ -134,6 +138,7 @@ public class NewEpisodeWrapper2 extends ResponseBase {
     
 	    alreadyFinished = y.alreadyFinished();
 	    completionCode = y.getCompletionCode();
+	    completionMode = y.getCompletionMode();
 	    if (epi==null) {
 		setError(true);
 		String msg = alreadyFinished ?

@@ -525,9 +525,13 @@ public class PlayerInfo {
 	that this player has been inactive for a while. (The method should be
         usable in 1PG too, but it's not a major concern).
 
+	<p>If this is 2PG (i.e. players are listening to web sockets),
+	we send a Ready.DIS message to both players, so that their
+	clients will update their screens
+
 	<p>
 	Note that, inside this method, we "abandon" the episode before 
-	mareking the player as "abandoner", because otherwise
+	marking the player as "abandoner", because otherwise
 	getCurrenSeries() won't retrieve the episode.
      */
     public void abandon() throws IOException {
@@ -551,7 +555,7 @@ public class PlayerInfo {
 		Logging.info("abandon: episodeId=" + epi.getEpisodeId()+", set abandoned=" + epi.abandoned);
 		//Main.persistObjects(epi);
 		// Persists SQL, and write CSV
-		ended(epi);
+		y.ended(epi);
 		saved = true;
 	    }
 	} else if (ser==null) {
@@ -560,19 +564,34 @@ public class PlayerInfo {
 	    Logging.info("abandon: ser.size=" + ser.size());
 	}
 	
-	setCompletionMode(COMPLETION.WALKED_AWAY); // ZZZ
+	setCompletionMode(COMPLETION.WALKED_AWAY); 
 	if (partner!=null) {
-	    Logging.info("abandon("+playerId+"): marking the partner, " + partner.getPlayerId() + ", as abandoned");
+	    Logging.info("abandon("+playerId+"): marking the partner, " + partnerPlayerId + ", as abandoned");
 	    partner.setCompletionMode(COMPLETION.ABANDONED);
 	    partner.setCompletionCode( buildCompletionCode() + "-ab");
 	    partner.saveMe();
+
+	}
+	saveMe();
+
+	if (is2PG()) {
+	    try {
+		WatchPlayer.tellHim(playerId, WatchPlayer.Ready.DIS);
+	    } catch(Exception ex) {
+		Logging.error("Very unfortunately, caught exception when sending a Ready.DIS ws message to the walk-away player ("+playerId+"): " + ex);
+		ex.printStackTrace(System.err);
+	    }
 	}
 	
-	saveMe();
+	if (partner!=null) {
+	    try {
+		WatchPlayer.tellHim(partnerPlayerId, WatchPlayer.Ready.DIS);
+	    } catch(Exception ex) {
+		Logging.error("Somewhat unfortunately, caught exception when sending a Ready.DIS  ws message to the abandoned partner ("+partnerPlayerId+"): " + ex);
+		ex.printStackTrace(System.err);
+	    }
+	}
 	
-	
-	// ZZZ
-	//goToNextSeries();
 	//Logging.info("abandoning completed, now currentSeriesNo=" +currentSeriesNo);
 
 	
@@ -823,7 +842,7 @@ public class PlayerInfo {
 	    if (e==epi) return s;
 	}
 	// This could indicate some problem with the way we use JPA
-	System.err.println("whoseEpisode: detected an episode not stored in the current series structure : " + epi);
+	System.err.println("whoseEpisode: detected an episode not stored in the current series structure : " + epi.episodeId +", series " + epi.seriesNo);
 	return null;
     }
 
@@ -1096,8 +1115,13 @@ public class PlayerInfo {
 	f =  Files.detailedTranscriptsFile(playerId);
 	epi.saveDetailedTranscriptToFile(f);
 	Logging.info("PlayerInfo.ended: saved transcripts for (epi=" + epi.getEpisodeId()+"); finishCode =" + epi.finishCode);
-	WatchPlayer.tellAbout(playerId, "Ended episode " +epi.getEpisodeId()+
+	try {
+	    WatchPlayer.tellAbout(playerId, "Ended episode " +epi.getEpisodeId()+
 			     " with finishCode =" + epi.finishCode);
+	} catch(Exception ex) {
+	    Logging.error("caught exception when sending an info ws message about "+playerId+": " + ex);
+	    ex.printStackTrace(System.err);
+	}
 	
     }
 

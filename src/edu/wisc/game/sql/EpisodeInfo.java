@@ -434,9 +434,14 @@ public class EpisodeInfo extends Episode {
 	@move The just-made pick or move. In 2PG, the move.mover field identifies the player who made the move.
  */
     private ExtendedDisplay processMove(Display _q, Pick move) throws IOException  {
-	WatchPlayer.tellAbout( player.getPlayerId(),
-			     "Made a move: " + move);
-	WatchPlayer.tellAbout( player.getPlayerId(), move);
+	try {
+	    WatchPlayer.tellAbout( player.getPlayerId(),
+				   "Made a move: " + move);
+	    WatchPlayer.tellAbout( player.getPlayerId(), move);
+	} catch(Exception ex) {
+	    Logging.error("Caught exception when sending informational ws message: " + ex);
+	    ex.printStackTrace(System.err);
+	}
 	
 	boolean isMove = (move instanceof Move);
 
@@ -567,7 +572,13 @@ public class EpisodeInfo extends Episode {
 	if (player.is2PG()) {
 	    int other = 1-move.mover;
 	    String otherPid = player.getPlayerIdForRole(other);
-	    WatchPlayer.tellHim(otherPid, WatchPlayer.Ready.DIS);
+	    try {
+		WatchPlayer.tellHim(otherPid, WatchPlayer.Ready.DIS);
+	    } catch(Exception ex) {
+		Logging.error("Very unfortunately, caught exception when sending a Ready.DIS  ws message to "+otherPid+": " + ex);
+		ex.printStackTrace(System.err);
+	    }
+
 	}
 
 		

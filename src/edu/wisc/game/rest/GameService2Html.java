@@ -147,7 +147,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	PlayerResponse pr = new PlayerResponse( playerId, exp, uid);
 
 	Vector<String> v = new Vector<>();
-	boolean canPlay = false;
+	boolean canPlay = false, timedout = false, abandoned=false;
 
 	v.add("Response: " + fm.para(  ""+JsonReflect.reflectToJSONObject(pr, true)));
 
@@ -165,6 +165,16 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	    v.add(fm.para("Successfully registered new player"));
 	    canPlay = true;
 	    title="Registered player " + playerId;
+	} else if (pr.getCompletionMode()==PlayerInfo.COMPLETION.WALKED_AWAY) {
+	    title="Timed-out player " + playerId;
+	    v.add(fm.para("The game for player " + playerId + " was timed out because of an extended period of inactivity"));
+	    canPlay = false;
+	    timedout = true;
+	} else if (pr.getCompletionMode()==PlayerInfo.COMPLETION.ABANDONED) {
+	    title="Abandoned player " + playerId;
+	    v.add(fm.para("The game for player " + playerId + " was terminated because your partner just walked away"));
+	    canPlay = false;
+	    abandoned = true;
 	} else if (pr.getExperimentPlan().equals(exp)  && !pr.getAlreadyFinished()) {
 	    v.add(fm.para("This player already exists, but it is associated with the same experiment plan, and you can play more episodes"));
 	    canPlay = true;
@@ -175,7 +185,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	    title="Player " + playerId + " already exists";
 	}
 
-	if (pr.getIsTwoPlayerGame()) {
+	if (pr.getIsTwoPlayerGame() && !timedout && !abandoned) {
 	    String s = "This is a two-player-game";
 	    if (pr.getIsCoopGame()) s += " (cooperative)";
 	    else if (pr.getIsAdveGame()) s += " (adversarial)";	    
@@ -279,7 +289,22 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	    PlayerInfo x = PlayerResponse.findPlayerInfoAlreadyCached(playerId);
 	    if (x.getNeedChat()) {
 		body += chatSection();
-	    }	    
+	    }
+
+
+	} else if (w.getCompletionMode()==PlayerInfo.COMPLETION.WALKED_AWAY) {
+	    title="Timed-out player " + playerId;
+	    body += fm.para("The game for player " + playerId + " was timed out because of an extended period of inactivity");
+	    //canPlay = false;
+	    //timedout = true;
+	} else if (w.getCompletionMode()==PlayerInfo.COMPLETION.ABANDONED) {
+	    title="Abandoned player " + playerId;
+	    body += fm.para("The game for player " + playerId + " was terminated because your partner just walked away");
+	    body += fm.para("If this were the GUI client, this page would have a button to send you to the demographics survey page");
+	    //canPlay = false;
+	    //abandoned = true;
+
+	    
 	} else {
 	    //-- The moveForm also includes the chatSection at the end
 	    body += moveForm(playerId, w.getDisplay(),  episodeId);
@@ -479,8 +504,9 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	EpisodeInfo.ExtendedDisplay d = (EpisodeInfo.ExtendedDisplay)_d;
 	
 	String body = "";
+
 	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
-	boolean isAdve = epi.getPlayer().isAdveGame();
+	boolean isAdve = epi.getPlayer().isAdveGame();	
 	
 	String s = "Rule " + (d.getDisplaySeriesNo()+1) + ". ";
 	if (d.getDisplaySeriesNo() != d.getSeriesNo()) s += " (internally "+(d.getSeriesNo()+1)+")";
@@ -491,6 +517,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	    s += "" + d.xgetRewardsAndFactorsPerSeriesString();
 	}
 	body += fm.para(s);
+
 	
 	body+= fm.h4("Current position");
 
@@ -551,13 +578,24 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	    rightSide += fm.table("border='1'", fm.rowExtra("valign='top'",cells));
 	    
 	} else {
+	    boolean  abandoned=false;
+	    
 	    rightSide += fm.para("Game over - no move possible. Finish code=" + d.getFinishCode());
 
+	    if (d.getFinishCode()==Episode.FINISH_CODE.ABANDONED) {
+		rightSide += fm.para("(Game over for you because your partner just walked away... If this were the GUI client, you'd be reidirected to the demographics screen right away)");
+		abandoned=true;
+	    } else  if (d.getFinishCode()==Episode.FINISH_CODE.WALKED_AWAY) {
+		rightSide += fm.para("(Game over for you because you have been timed out due to inactivity)");
+		abandoned=true;
+	    }
+
+
 	    
-	    boolean mayNeedGuess =
+	    boolean mayNeedGuess = 
 		d.getIncentive().mastery() ?
 		d.getFinishCode()==Episode.FINISH_CODE.EARLY_WIN:
-		true;
+		!abandoned;
 	
 	    if (mayNeedGuess && !d.getGuessSaved()) {
 		rightSide += fm.h4("Your guess");
@@ -586,7 +624,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
 		form =  fm.wrap("form", "method='post' action='guessHtml'", form);
 		form = fm.para(form);
 		rightSide += form;
-	    } else {
+	    } else if (!abandoned) {
 		rightSide += fm.h3("What will you do next?");
 		PlayerInfo.TransitionMap map = d.getTransitionMap();	    
 		rightSide += transitionTable(epi, playerId, map);

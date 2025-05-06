@@ -61,7 +61,10 @@ public class PlayerResponse extends ResponseBase {
     
     private String completionCode = null;
     public String getCompletionCode() { return completionCode; }
+    private int completionMode;
+    public int getCompletionMode() { return completionMode; }
 
+    
     /** This is mostly used so that the caller can check if a re-used
 	player is in the right plan */
     private String experimentPlan;
@@ -225,6 +228,7 @@ public class PlayerResponse extends ResponseBase {
 	trialList  = new TrialList(x.getExperimentPlan(), x.getTrialListId());		
 	alreadyFinished = x.alreadyFinished();
 	completionCode = x.getCompletionCode();
+	completionMode = x.getCompletionMode();
 	
 	String msg=null;
 	if (exp!=null  && !x.getExperimentPlan().equals(exp)) {

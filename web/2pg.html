@@ -10,7 +10,7 @@ Supporting Two-Player Games in the GOHR Framework
     </h1>
 
     <div align="center"><em>
-	Updated 2025-04-27 for GS 8.012</em>
+	Updated 2025-05-05 for GS 8.011</em>
 	</div>
 
     <p>
@@ -455,29 +455,37 @@ As you can see, this structure (transcript ) is a map. The keys are the position
 	      
 	  </ul>
 
-
 	  <h3>Internal representation</h3>
-	  <p>Internally, the walk-aways and the abandoned players are marked by the appropriate values of the field <tt>completionMode</tt> in the PlayerInfo table. The episode during which the "abandonment" is detected is marked by the bit <tt>abandoned</tt>
+	  <p>Internally, the walk-aways and the abandoned players are marked by the appropriate values of the field <tt>completionMode</tt> in the PlayerInfo table.
+
+	    <p>
+	    The episode during which the "abandonment" is detected is marked by the bit <tt>abandoned</tt>. To be fully interpreted in the 2PG context (i.e. to see who abandoned whom), this bit needs  to be viewed together with the PlayerInfo's completionMode.
 
 	    <h3>How this works in the server</h3>
+
+	    <p>Since ver 8.011, the Game Server runs a so-called "maintenance thread", which wakes up every minute and looks for inactive players. When it finds a 2PG player whose turn is to move, but who has not made a move for several minutes, it will mark that player as a "walk-away", and his partner, as "abandoned". After that, he server will send "READY DIS" messages to both players via their web socket communication lines (provided, of course, those are still open), so that these players' GUI clients will make /display calls, pulling from the server  updated information about these players' status.
 
 	    <h3>Needed client behavior</h3>
 
 	    <p>This is what I would like the GUI client to do:
 
-	<P>(1) On a /move, /pick, or a /display call:
+	<P><strong>(1) On a /move, /pick, or a /display call:</strong>
 	  <p>(a) If the return structure contains the field <tt>finishCode=7</tt>
 	  (<a href="/api/constant-values.html#edu.wisc.game.sql.Episode.FINISH_CODE.ABANDONED">FINISH_CODE.ABANDONED</a>), this indicates that this episode should not be played anymore, beceause the player has been abandoned by his partner. In this case, the GUI client should send the player to the "demographics instructions" page (the one before the actual demographics survey). The player also should be told something like, "Unfortunately, your partner has stoppped playing. Please proceed to the next page, so that you can still receive a partial credit for your work".
 
 	<p>(b) If the  if the return structure contains the field <tt>finishCode=6</tt>
 	  (<a href="/api/constant-values.html#edu.wisc.game.sql.Episode.FINISH_CODE.WALKED_AWAY">FINISH_CODE.WALKED_AWAY</a>), this indicates that this player has been previously deemed a "walk-away", and (if this was a 2PG) his partner has been let go. Now he has decided to return... but it's too late for him to resume playing.	In this case, the GUI client should display a message along the lines, "Your game session has been terminated due to inactivity".
 
-	<p>(2) On a /newEpisode call, look for the field <tt>completionCode</tt>. If it is present and contains the value 1 (<a href="api/constant-values.html#edu.wisc.game.sql.PlayerInfo.COMPLETION.ABANDONED">COMPLETION.ABANDONED</a>(), handle as per (1)(a) above. If this field is present and contains the value 2 (<a href="api/constant-values.html#edu.wisc.game.sql.PlayerInfo.COMPLETION.WALKED_AWAY">COMPLETION.WALKED_AWAY</a>), handle as per (1)(b) above.
+	<p><strong>(2) On a /newEpisode call,</strong> look for the field <tt>completionCode</tt>. If it is present and contains the value 1 (<a href="api/constant-values.html#edu.wisc.game.sql.PlayerInfo.COMPLETION.ABANDONED">COMPLETION.ABANDONED</a>(), handle as per (1)(a) above. If this field is present and contains the value 2 (<a href="api/constant-values.html#edu.wisc.game.sql.PlayerInfo.COMPLETION.WALKED_AWAY">COMPLETION.WALKED_AWAY</a>), handle as per (1)(b) above.
 	  
 
+	<p><strong>(3) /player</strong>. The GUI client should not be hugely concerned with encountering a "walk-away" or an "abandoned" player when making the /player call, because in most participants' sessions that call is made only once, when the person first comes to the site. Nonetheless, it is possible that the person will reload an old starting URL after the game has been abandoned. For this reason, the following processing is advised. Look at the field <tt>completionCode</tt>. If it is present and contains the value 1 (<a href="api/constant-values.html#edu.wisc.game.sql.PlayerInfo.COMPLETION.ABANDONED">COMPLETION.ABANDONED</a>(), handle as per (1)(a) above.
+
+	  If this field is present and contains the value 2 (<a href="api/constant-values.html#edu.wisc.game.sql.PlayerInfo.COMPLETION.WALKED_AWAY">COMPLETION.WALKED_AWAY</a>), handle as per (1)(b) above.
+	  
 	  <h3>Simulating "walking-away"</h3>
 
-	<p>In the game server, "walk-aways" will be detected and appropriately marked by a contnuously running maintenance thread. when testing the "abandonment" support in the GUI client, you don't have to wait for the timeout to happen based on the configuration settings. Instead, you can simulate "walking away" by using the <tt>/abandon</tt> API call. To use it, go to the <a href="game-api-2.html#abandon">/abandon form</a> form, enter the palyerID of the player whom you want to "walk away", and click on "Submit". The server will then mark that player as a walk-away, and his partner (if that's a 2PG) as an abandoned player.
+	<p>As mentioned above, in the game server, "walk-aways" are detected and appropriately marked by a contnuously running maintenance thread. When testing the "abandonment" support in the GUI client, you don't have to wait for the timeout to happen based on the configuration settings. Instead, you can simulate "walking away" by using the <tt>/abandon</tt> API call. To use it, go to the <a href="game-api-2.html#abandon">/abandon form</a> form, enter the palyerID of the player whom you want to "walk away", and click on "Submit". The server will then mark that player as a walk-away, and his partner (if that's a 2PG) as an abandoned player.
 	  
 	  <h2>Chat between players</h2>
 
