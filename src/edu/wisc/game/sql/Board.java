@@ -311,10 +311,8 @@ public class Board {
     }
     
 
-    /** Creates a board object to be sent out (as JSON) to the player's client,
+    /** Creates a Board object to be sent out (as JSON) to the player's client,
 	based on the current state of the episode.
-
-	
 	
 	@param pieces The pieces still on the board. (A dense array).
 	with nulls)

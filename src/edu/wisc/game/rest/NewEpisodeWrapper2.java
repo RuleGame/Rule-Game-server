@@ -153,7 +153,7 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	    setDisplay(epi.mkDisplay(pid));
 
 	    // Tell the other player that the episode is ready
-	    if (x.is2PG()) {
+	    if (x.is2PG() && !x.isBotGame()) {
 		WatchPlayer.tellHim(x.getPartnerPlayerId(), WatchPlayer.Ready.EPI);
 	    }
 	    

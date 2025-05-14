@@ -16,9 +16,9 @@ Supporting Two-Player Games in the GOHR Framework
     <p>
       Game Server 7.* supports two types of two-player games (2PG): cooperative and adversarial. This documents describes essential points in which managing 2PG differes from managing single-player games (1PG) (as described in <a href="game-api-2.html">Web API for the use by the Rule Game client - second batch</a>)
     
-      <h2>
-	Experiment preparation
-      </h2>
+      <h2><a name="prep">
+	  Experiment preparation
+	  </a></h2>
 
 
     <p>
@@ -534,6 +534,12 @@ As you can see, this structure (transcript ) is a map. The keys are the position
 	    
 	  <p>The GUI client, which is writte in TypeScript/React, will of course do this a little bit different; it may choose to open the connection only once, early on (although subsequently it will need to monitor its status, and if it closes, reopen it). When the listener detects a "READY ..." message, the client will simply make an appropriate /newEpisode or /display call, to obtain the data to be processed, much like the current client already does.
 	    
+	    <h2>See also</h2>
+
+	    <ul>
+	      <li><a href="2pg-bot.html">Two-player games (2PG) with a bot</a>. (Since ver. 8.012)
+	    </ul>
+	      
 	    
 
 <h2>Appendix: some data on the M-Turk population</h2>

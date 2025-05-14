@@ -11,6 +11,7 @@ import java.text.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.sql.*;
+import edu.wisc.game.pseudo.Pseudo;
 import edu.wisc.game.rest.PlayerResponse;
 
 
@@ -69,7 +70,7 @@ public class MaintenanceThread extends Thread {
 
 	while(!pleaseStop) {
 
-	    long sleepMsec = 60*1000;
+	    long sleepMsec = 15*1000;
 	    try {
 		Thread.sleep(sleepMsec); 
 	    } catch (InterruptedException e) {
@@ -79,8 +80,13 @@ public class MaintenanceThread extends Thread {
 
 	    if (pleaseStop) break;
 
+	    int pseudoCnt = Pseudo.checkTasks();
+	    if (pseudoCnt>0) Logging.info("MaintenanceThread.run(): done " + pseudoCnt + " pseudo-AI moves");
+	    if (pleaseStop) break;
+
+	    
 	    try {
-		Logging.info("MaintenanceThread.run() wakes up"); 
+		//Logging.info("MaintenanceThread.run() wakes up"); 
 		Date now  = new Date();
 
 		HashMap<String, PlayerInfo> allPlayers = PlayerResponse.getAllCachedPlayers();
@@ -90,7 +96,7 @@ public class MaintenanceThread extends Thread {
 		    if (pleaseStop) break;
 		    PlayerInfo p = allPlayers.get(playerId);
 		    if (p.getCompletionCode()!=null || p.getCompletionMode()>0) continue;
-		    if (p.is2PG()) {
+		    if (p.is2PG() && !p.isBotGame()) {
 			cntAll2++;
 			if (p.getPartnerPlayerId() == null) continue; // not paired yet
 			PlayerInfo y = p;
@@ -122,7 +128,7 @@ public class MaintenanceThread extends Thread {
 			    Logging.info("MaintenanceThread: Detected a 2PG walk-away: " + playerId + ", lastActive=" + p.getLastActivityTime());
 			    p.abandon();
 			}
-		    } else { // 1PG
+		    } else { // 1PG, or bot game
 			cntAll1++;
 			if (p.getCompletionCode()!=null || p.getCompletionMode()>0) continue;
 			if (p.getLastActivityTime().getTime() + timeout1pg *1000 < now.getTime()) {
@@ -134,8 +140,10 @@ public class MaintenanceThread extends Thread {
 			
 		}
 
-		Logging.info("MaintenanceThread: walk-away count: 1PG: " + cntTimeout1 + "/" +  cntAll1 +
-			     "; 2PG: " + cntTimeout2 + "/" +  cntAll2); 
+		if ( cntTimeout1 + cntTimeout2 > 0) {
+		    Logging.info("MaintenanceThread: walk-away count: 1PG: " + cntTimeout1 + "/" +  cntAll1 +
+				 "; 2PG: " + cntTimeout2 + "/" +  cntAll2); 
+		}
 		
 
 	    } catch(Exception ex) {

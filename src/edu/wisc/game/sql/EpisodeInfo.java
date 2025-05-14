@@ -10,6 +10,7 @@ import edu.wisc.game.util.*;
 import edu.wisc.game.reflect.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.parser.*;
+import edu.wisc.game.pseudo.Pseudo;
 import edu.wisc.game.rest.ParaSet;
 import edu.wisc.game.rest.ParaSet.Incentive;
 
@@ -332,7 +333,7 @@ public class EpisodeInfo extends Episode {
     /** An allowance for rounding */
     private static final double eps = 1e-6;
 
-    /** The main method invoked on a /doMove web API call.
+    /** The main method invoked on a /move web API call.
 	Calls Episode.doMove, and then does various adjustments related to 
 	this episode's role in the experiment plan.  If the player has
 	failed to complete a bonus episode on time, this is the place
@@ -431,13 +432,14 @@ public class EpisodeInfo extends Episode {
 	done for the two players, lastStretch1 and lastR1 being used
 	for Player 1.
 
+	<P>Since ver 8.012, this method may also queue a task for the bot partner
+
 	@move The just-made pick or move. In 2PG, the move.mover field identifies the player who made the move.
  */
     private ExtendedDisplay processMove(Display _q, Pick move) throws IOException  {
 	try {
-	    WatchPlayer.tellAbout( player.getPlayerId(),
-				   "Made a move: " + move);
-	    WatchPlayer.tellAbout( player.getPlayerId(), move);
+	    // WatchPlayer.tellAbout( player.getPlayerId(),	    "Made a move: " + move);
+	    // WatchPlayer.tellAbout( player.getPlayerId(), move);
 	} catch(Exception ex) {
 	    Logging.error("Caught exception when sending informational ws message: " + ex);
 	    ex.printStackTrace(System.err);
@@ -568,15 +570,42 @@ public class EpisodeInfo extends Episode {
 	// must convert to ExtendedDisplay to get params such as "moves left"
 	ExtendedDisplay q = new ExtendedDisplay(move.mover, _q);
 
-	// tell the mover's partner to update his screen
+	// tell the mover's partner to update his screen;
+	// or if the partner is a bot, tell him to work, if appropriate.
+	// Note that "player" is Player 0, and not necessarily the mover
 	if (player.is2PG()) {
 	    int other = 1-move.mover;
-	    String otherPid = player.getPlayerIdForRole(other);
-	    try {
-		WatchPlayer.tellHim(otherPid, WatchPlayer.Ready.DIS);
-	    } catch(Exception ex) {
-		Logging.error("Very unfortunately, caught exception when sending a Ready.DIS  ws message to "+otherPid+": " + ex);
-		ex.printStackTrace(System.err);
+	    PlayerInfo thisPlayer = player.getPlayerForRole(move.mover);
+	    PlayerInfo otherPlayer = player.getPlayerForRole(other);
+	    //String otherPid = player.getPlayerIdForRole(other);
+	    String thisPid = thisPlayer.getPlayerId();
+	    String otherPid = otherPlayer.getPlayerId();
+
+
+	    Logging.info("Performed move for " + player.getPlayerIdForRole(move.mover)+ "; otherPlayer.amBot=" + otherPlayer.getAmBot() + "; this mover mustWait=" + q.mustWait);
+
+	    
+	    if (thisPlayer.getAmBot()) { // I am a bot 
+		if (!q.mustWait && !isCompleted()) { // and I am given another move
+		    Logging.info("Bot queuing another task for himself=" +thisPid);
+		    Pseudo.addTask(thisPlayer, this, attemptCnt);
+		}
+	    }
+	    
+	    if (otherPlayer.getAmBot()) { // bot partner
+		if (q.mustWait && !isCompleted()) { // and it's bot's turn
+		    Logging.info("Human queuing a task for bot=" + otherPid);
+		    Pseudo.addTask(otherPlayer, this, attemptCnt);
+		}
+
+	    } else {   // update the screen for the human partner
+		try {
+		    Logging.info("Sending READY DIS to human " + otherPid);
+		    WatchPlayer.tellHim(otherPid, WatchPlayer.Ready.DIS);
+		} catch(Exception ex) {
+		    Logging.error("Very unfortunately, caught exception when sending a Ready.DIS  ws message to "+otherPid+": " + ex);
+		    ex.printStackTrace(System.err);
+		}
 	    }
 
 	}
@@ -620,6 +649,15 @@ public class EpisodeInfo extends Episode {
 	return getCurrentBoard(true);
     }
 
+    /** Computes the "mustWait" flag for the current player */
+    private boolean computeMustWait(int mover) {
+	if (getPlayer().is2PG() && getFinishCode()==FINISH_CODE.NO)  {
+	    int whoMustPlay = whoMustMakeNextMove();
+	    return (whoMustPlay != mover);
+	}
+	return false;
+    }
+
  
 
     /** Provides some extra information related to the episode's
@@ -633,7 +671,6 @@ public class EpisodeInfo extends Episode {
      */
     public class ExtendedDisplay extends Display {
 
-	// ZZZ
 	ExtendedDisplay(int mover, int _code, boolean _error, String _errmsg) {
 	    this(mover, _code, _error, _errmsg, false);
 	}
@@ -713,16 +750,8 @@ public class EpisodeInfo extends Episode {
 		Vector[] w=p.computeFaces(mover, EpisodeInfo.this);
 		faces = w[0];
 		facesMine = w[1];
-
-		if (p.is2PG() && getFinishCode()==FINISH_CODE.NO)  {
-		    int whoMustPlay = whoMustMakeNextMove();
-		    if (whoMustPlay != mover) {
-			mustWait = true;
-		    }
-		}
-		
-		
-		}
+		mustWait = computeMustWait(mover);		
+	    }
 	    //	    Logging.info("Prepared EpisodeInfo.ExtendedDisplay=" +
 	    //		 JsonReflect.reflectToJSONObject(this, true));
 
@@ -913,7 +942,7 @@ public class EpisodeInfo extends Episode {
 	    lastStretch = EpisodeInfo.this.lastStretch[mj]; 
 	    lastR = EpisodeInfo.this.lastR[mj];
 	    rewardsAndFactorsPerSeries = getPlayer().getRewardsAndFactorsPerSeries(mj);
-	    Logging.info("EpisodeInfo.ED.incentive2(): obtained rewardsAndFactorsPerSeries = " + rewardsAndFactorsPerSeries);
+	    //Logging.info("EpisodeInfo.ED.incentive2(): obtained rewardsAndFactorsPerSeries = " + rewardsAndFactorsPerSeries);
 	    justReachedX2 = EpisodeInfo.this.justReachedX2[mj];
  	    justReachedX4 = EpisodeInfo.this.justReachedX4[mj];
 	    factorAchieved=1;
@@ -927,7 +956,7 @@ public class EpisodeInfo extends Episode {
 	
     }
     
-    /** Builds a display to be sent out over the web UI
+    /** Builds a Dsplay object to be sent out over the web UI on a /display call
 	@param playerId This can be null in 1PG, but in 2PG it must
 	identify the player to whom we are to show the display
      */
@@ -935,7 +964,20 @@ public class EpisodeInfo extends Episode {
 	int mover = player.getRoleForPlayerId(playerId); // can be -2 in 1PG
 	//	if (mover<0) return new ExtendedDisplay(0, CODE.OUT_OF_TURN, "Player " + playerId + " is not a party to this game at all!");
 
-    	return new ExtendedDisplay(mover, Episode.CODE.JUST_A_DISPLAY, false, "Display requested");
+   	ExtendedDisplay q= new ExtendedDisplay(mover, Episode.CODE.JUST_A_DISPLAY, false, "Display requested");
+	if (player.isBotGame() && q.mustWait && attemptCnt==0) { // the first move of an episode... and it's not your turn
+	    PlayerInfo player= getPlayer();  // owner of the record
+	    // the partner of the mover
+	    int other = 1-q.mover;
+	    PlayerInfo otherPlayer = player.getPlayerForRole(other);
+	    String otherPid = otherPlayer.getPlayerId();
+	    
+	    if (otherPlayer.getAmBot()) { // bot partner; get him to start playing
+		Logging.info("Human queuing initial task for bot=" + otherPid);
+		Pseudo.addTask(otherPlayer, this, attemptCnt);
+	    }
+	}
+    	return q;
     }
 
     public ExtendedDisplay dummyDisplay(int _code, 	String _errmsg) {
@@ -1181,10 +1223,21 @@ public class EpisodeInfo extends Episode {
     private ExtendedDisplay checkWhoseTurn(String playerId) {
 	if (!player.is2PG()) return null;
 
-	if (playerId==null) return  new ExtendedDisplay(0, CODE.OUT_OF_TURN, true, "playerId not sent in a /move or /pick call. This parameter is mandatory in 2PG");
+	if (playerId==null) return  new ExtendedDisplay(0, CODE.OUT_OF_TURN, true, "playerId was not sent in a /move or /pick call. This parameter is mandatory in 2PG");
 	       
 	int mover = player.getRoleForPlayerId(playerId);
-	if (mover<0) return new ExtendedDisplay(0, CODE.OUT_OF_TURN, true,  "Player " + playerId + " is not a party to this game at all!");
+	if (mover<0) return new ExtendedDisplay(0, CODE.OUT_OF_TURN, true,  "Player " + playerId + " is not a party to this game (episode "+episodeId+") at all!");
+
+	// Which player is associated with the request?
+	PlayerInfo moverPlayer = player.getPlayerForRole( mover );
+	
+	if (moverPlayer.getCompletionMode() == PlayerInfo.COMPLETION.WALKED_AWAY) {
+	    return new ExtendedDisplay(mover, CODE.NO_GAME, true,  "Player " + playerId + " has been timed out");
+	} else if (moverPlayer.getCompletionMode() == PlayerInfo.COMPLETION.ABANDONED) {
+	    return new ExtendedDisplay(mover, CODE.NO_GAME, true,  "Player " + playerId + " has been abandoned by the partner");
+	}
+
+	
 	
 	int whoMustPlay =whoMustMakeNextMove();
 	

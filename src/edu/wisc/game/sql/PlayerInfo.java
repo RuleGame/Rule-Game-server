@@ -57,7 +57,7 @@ public class PlayerInfo {
     public void setPlayerId(String _playerId) { playerId = _playerId; }
 
     @Basic 
-    private String experimentPlan;
+    private String  experimentPlan;
     /** The experiment plan historically was just a directory name, 
 	e.g. "pilot06". Starting from ver. 3.004, dynamic experiment 
 	plans are also supported, in the form P:plan:modifer or
@@ -103,8 +103,20 @@ public class PlayerInfo {
 		throw new IllegalArgumentException("Cannot access the player's parameter sets: " + playerId);
 	    }
 	    needChat = para.getBoolean("chat", false);
+
+
+	    botGameName = para.getString("bot", null);
+	    if (botGameName != null) {
+		if (botGameName.equals("pseudo")) {
+		    pseudoHalftime = para.getDouble("pseudo_halftime", false, 10);
+		} else {
+		    throw new IllegalArgumentException("Illegal bot name ("+botGameName+") for player " + playerId);
+		}
+	    }
+	    
 	} else {
 	    needChat = false;
+	    botGameName = null;
 	}
 	
     }
@@ -112,6 +124,10 @@ public class PlayerInfo {
     /** These are set in setExperimentPlan */
     @Transient
     private boolean coopGame, adveGame, needChat;
+    /** If not null, it means that this a 2PG game with a bot
+	partner, of the specified type */
+    @Transient
+    private String botGameName;
 
     
         /** @return true if the name of the experiment plan indicates that this
@@ -129,6 +145,22 @@ public class PlayerInfo {
     public boolean is2PG() {
 	return coopGame || adveGame;
     }
+    public boolean isBotGame() {
+	return botGameName!=null;
+    }
+
+
+    /** True if this particular player is a bot. (And not just the game involves a bot) */
+    @Basic
+    boolean amBot;
+    public boolean getAmBot() { return amBot; }
+    @XmlElement
+    public void setAmBot(boolean _amBot) { amBot = _amBot; }
+
+    /** This is used in pseudo-AI bots, to indicate how fast it pretends to learn */
+    @Transient
+    public double pseudoHalftime = 4.0;
+    
     /** Do we need a between-player chat element in the GUI? (In 2PG only,
 	based on para.chat of the first para set of this player.  */
     public boolean getNeedChat() { return needChat; }
@@ -164,13 +196,21 @@ public class PlayerInfo {
     public String getPartnerPlayerId() { return partnerPlayerId; }
     public void setPartnerPlayerId(String _partnerPlayerId) { partnerPlayerId = _partnerPlayerId; }
 
-    /** The playerId of player 0 or player 1
+    /** The playerId of player 0 or player 1. This should only be called on a paired player in 2PG.
 	@param mover Whose playerId do you want? 
      */
     String getPlayerIdForRole(int mover) {
-	return mover==Pairing.State.ZERO? getPlayerId(): getPartnerPlayerId();
+	return (pairState==mover)? getPlayerId(): getPartnerPlayerId();
     }
 
+    /** The PlayerInfo of the player with the specified role. This should only be called on a paired player in 2PG. 
+	@param mover Whose PlayerInfo do you want? 
+     */
+    public PlayerInfo getPlayerForRole(int mover) {
+	return (pairState==mover)? this: xgetPartner();
+    }
+    
+    
     /** Is this playerId of player 0 or player 1 in a 2PG?
 	@param pid The playerId of this player, or of its partner
 	@return 0 or 1
@@ -208,7 +248,7 @@ public class PlayerInfo {
 	}
 	return partner;
     }
-    /** Sets links in both directions */
+    /** Sets links in both directions, and saves both objects  */
     public void linkToPartner( PlayerInfo _partner, int myRole) {
 	partner = _partner;
 	setPartnerPlayerId(partner.getPlayerId());
@@ -438,7 +478,18 @@ public class PlayerInfo {
 	return n;
     }
 
-    
+
+    /** The total number of attempts in all episodes of this series.
+	This is used in pseudo-learning. */
+    public int seriesAttemptCnt() {
+	Series ser = getCurrentSeries();	
+	if (ser==null) return 0;
+	int n = 0;
+	for(EpisodeInfo epi: ser.episodes) {
+	    n += epi.getAttemptCnt();
+	}
+	return n;
+    }
     
     
     /** @return true if an "Activate Bonus" button can be displayed, i.e. 
@@ -536,6 +587,7 @@ public class PlayerInfo {
      */
     public void abandon() throws IOException {
 
+	// the one who stores the record
 	PlayerInfo y = (pairState==Pairing.State.ONE) ? partner: this;
 	    
 	Logging.info("abandoning by(pid="+playerId+"), currentSeriesNo=" + y.currentSeriesNo);
@@ -574,7 +626,7 @@ public class PlayerInfo {
 	}
 	saveMe();
 
-	if (is2PG()) {
+	if (is2PG() && isBotGame()) {
 	    try {
 		WatchPlayer.tellHim(playerId, WatchPlayer.Ready.DIS);
 	    } catch(Exception ex) {
@@ -583,7 +635,7 @@ public class PlayerInfo {
 	    }
 	}
 	
-	if (partner!=null) {
+	if (partner!=null && isBotGame()) {
 	    try {
 		WatchPlayer.tellHim(partnerPlayerId, WatchPlayer.Ready.DIS);
 	    } catch(Exception ex) {
@@ -1010,7 +1062,7 @@ public class PlayerInfo {
 		}
 		raw[j] = new int[]{s, f};
 	    }
-	    Logging.info("Created RewardsAndFactorsPerSeries=" + this);
+	    //Logging.info("Created RewardsAndFactorsPerSeries=" + this);
 	}
 
 	public String toString() {

@@ -93,7 +93,7 @@ public class PlayerResponse extends ResponseBase {
 
     static private final Pattern repeatUserPat = Pattern.compile("^RepeatUser-([0-9]+)-");
 
-    PlayerResponse(String pid, String exp, int uid) {
+    public PlayerResponse(String pid, String exp, int uid) {
 	this(pid, exp, uid, false);
     }
 
@@ -110,8 +110,10 @@ public class PlayerResponse extends ResponseBase {
 	@param uid The numeric ID of the repeat user who creates this 
 	playerId for himself. If negative, this parameter is ignored,
 	as this is an M-Turker etc, and not a repeat user.
+	@param debug If true, set this.playerInfo. (This is useful
+	in Pseudo-Learning bot)
     */
-    PlayerResponse(String pid, String exp, int uid, boolean debug) {
+    public PlayerResponse(String pid, String exp, int uid, boolean debug) {
 	// Just a random place to make sure the maintenance thread is running
 	MaintenanceThread.init();
 	exp = regularize(exp);
@@ -162,6 +164,7 @@ public class PlayerResponse extends ResponseBase {
 		    } else {
 			// new player
 			x = new PlayerInfo();
+			if (debug) playerInfo=x;
 			x.setDate(now);
 			x.setPlayerId(pid);
 			

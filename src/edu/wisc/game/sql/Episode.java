@@ -239,6 +239,7 @@ s	    non-existing piece) the value may be different from those of
 	This counter is increased whenever a move is added to transcript.
      */
     int attemptCnt=0;
+    public int getAttemptCnt() { return attemptCnt; }
     /** The total cost of all attempts (move and pick) done so far. (If it's 2PG, by both players),
 	including successful and unsuccessful ones. If cost_pick!=1,
 	this value may be different from attemptCnt. */
@@ -1142,7 +1143,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
     /** The current version of the application */
-    public static final String version = "8.011";
+    public static final String version = "8.012";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }

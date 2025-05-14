@@ -1,0 +1,49 @@
+<html>
+  <head>
+    <title>
+Two-Player Games with a bot player
+    </title>
+  </head>
+  <body>
+    <h1>
+      Two-Player Games with a bot player
+    </h1>
+
+    <div align="center"><em>
+	Updated 2025-05-13 for GS 8.012</em>
+	</div>
+
+    <p>Since GS ver. 8.012, two-player games with a bot (AI) player are supported. This framework pairs a human player with a bot player; from the human player's point of view it looks very much like a normal <a href="2ph.html">two-player game (2PG)</a>
+
+      <h2><a name="prep">
+	  Experiment preparation
+	  </a></h2>
+
+
+<P>See also: <a href="2ph.html#preep">two-player games -- Experiment preparation</a>
+      
+      <p>To create an experiment plan for an adversarial or collaborative 2PG with a bot, you need to create an experiment plan with a name starting with the prefix <tt>coop.</tt> (for cooperative games) or
+<tt>adve.</tt> (for adversarial games). For example, the experiment plan
+<tt>vm/adve.colorVshape-bot</tt>,
+whose trial list file sits in the directory
+<tt>/opt/w2020/game-data/trial-lists/vm/adve.colorVshape-bot</tt>, describes an experiment with adversarial two-player game(s); the plan 
+<tt>vm/coop.colorVshape-bot</tt>, for a cooperative ones.
+This is exactly the same name pattern as used for 2PGs with two human players.
+
+<p>
+  To indicate to the server that you want the 2PG to involve a human and a bot, you need each of your trial lists files to have a column named <tt>bot</tt>, the value in which should indicate the name of the bot you want to use (typically, a wrapper over some AI algorithm). The only bot included in GS 8.012 is <tt>pseudo</tt>, which stands for "pseudo learning".
+
+<p>Additionally, the trial list file may include columns containing the necessary parameter values for the bot in question. The one   column that the
+  bot <tt>pseudo</tt> uses is named <tt>pseudo_halftime</tt>; it contains an integer value that specifies how fast the bot pretends to learn.
+
+  <h2>The pseudo-learning bot</h2>
+
+<p>This bot does not have much of real AI in it. It merely pretends to learn, as in reality it cheats, since it "knows" the rule set from the start.
+
+<p>This bot works as follows: if the bot makes the first move on some rule set, hen it picks any move attempt (trying to move any game piece to any bucket) with an equal probability; so the attempt will likely fail, depending on how many pieces are movable, and to how many buckets. For each subsequent attempted move, the bot decreases the probability of being wrong; the decrease is exponential, so that after the two players have made in total  <tt>pseudo_halftime</tt> move attempts on a give rule set, the probability of the bot's move being incorrect is 1/2 of what that probability was for the first move.
+
+<p>This means that eventually (after the players have made several times as many move attempts as  <tt>pseudo_halftime</tt>), the pseudo-learning bot will rarely make mistakes any more. As a result, if you're playing an adversarial game (where a player is allowed to keep making moves, as long as they are successful), the bot, once allowed to make a move, will likely clear the entire board without allowing the human player to make even a single move. If you're playing a coop gsame, then, when the bot is making no more mistakes, achieving a team win will be entirely up to the human player.
+
+
+  </body>
+</html>
