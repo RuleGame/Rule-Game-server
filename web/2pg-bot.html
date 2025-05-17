@@ -36,6 +36,15 @@ This is exactly the same name pattern as used for 2PGs with two human players.
 <p>Additionally, the trial list file may include columns containing the necessary parameter values for the bot in question. The one   column that the
   bot <tt>pseudo</tt> uses is named <tt>pseudo_halftime</tt>; it contains an integer value that specifies how fast the bot pretends to learn.
 
+  <h3>Using a dynamic plan</h3>
+
+<p>If you have a 2PG experiment plan which you normally use for a game of two human partners (your "base plan"), you can also use it for a 2PG-with-a-bot play. To do that:  go to the <a href="front-end-form.jsp">launch form</a>, scroll down to Form 2, and enter a <a href="concepts.html#sd">P:-type dynamic plan name</a> which will include the name of your "base plan" and the name of a modifier. For example,
+  <tt>P:2PG/adve.test_1:bot/pseudo-10</tt>
+			 
+
+  
+			 
+
   <h2>The pseudo-learning bot</h2>
 
 <p>This bot does not have much of real AI in it. It merely pretends to learn, as in reality it cheats, since it "knows" the rule set from the start.

@@ -21,7 +21,12 @@
     <p>A Gemini user could easily imaginge that  when a person or an app interacts with the Gemini server, the server somehow keeps track of the entire content f the "conversation",  perhaps by means of creating some kind of a "model"      of the knowledge conveyed to it by the user's input, in a suitable      internal representation,      and expanding and updating that model as more user input comes through.
 
 
-          <p>Somewhat unexpectedly, Gemini documentation implies that nothing like this takes place! The Gemini server is essentially stateless, meaning that when a person or an app interacts with the Gemini server it, the server does not keep track of the user's previous requests, and does not store any "model" of that knowledge.
+    <p>Somewhat unexpectedly, Gemini documentation
+      (see e.g. <a href="https://ai.google.dev/api/generate-content#v1beta.GenerateContentResponse">Home |
+Gemini API  |
+Models | 
+API Reference |
+Generating content</a>)      implies that nothing like this takes place! The Gemini server is essentially stateless, meaning that when a person or an app interacts with the Gemini server it, the server does not keep track of the user's previous requests, and does not store any "model" of that knowledge.
 
 <p>Instead, if you desire to have a "conversation" with the Gemini bot, you need to supply the entire record of the conversation (what you said -- what the bot said -- what you said -- ... -- what you say now) in each of your HTTP requests! The JSON structure that one sends to the server in the request provides support for "packing" one's conversation into it.
 

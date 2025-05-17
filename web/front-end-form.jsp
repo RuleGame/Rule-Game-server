@@ -11,11 +11,15 @@ String cla=main.dev?"pink":"yellow";
 <body>
 <h1>Play using the GUI front end</h1>
 
-<h2>Choose experiment plan from a list</h2>
-<div class="<%=cla%>">
-<h2>GUI play
+
+<h2> GUI play
 <%= main.dev? "(with development client)": "(with production client)"  %> 
 </h2>
+
+<p>You can use either Form 1 (choosing a static plan from a list) or Form 2 (entering a plan name manually, including a dynamic plan)
+
+<div class="<%=cla%>">
+<h2>Form 1: Choose experiment plan from a list</h2>
 
 <!-- <p>ServerPort=<%= main.serverPort %> -->
 

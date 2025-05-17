@@ -74,12 +74,26 @@ public class PlayerInfo {
 	initSeries()) took place. For those restored from the
 	database, it is called automatically due to the @PostLoad
 	directive.
+
+	<p>This method looks for "coop." or "adve." prefix in the
+	experiment plan directory name (for a static or dynamic plan)
+	to decide if this is a 2PG of some kind.
     */
     @PostLoad() 
     public void postLoadPart1() {
-	String[] z = experimentPlan.split("/");
-	coopGame = z[z.length-1].startsWith("coop.");
-	adveGame = z[z.length-1].startsWith("adve.");
+	String q = "";
+	try {
+	    q = new TrialList.ExperimentPlanHandle(experimentPlan).mainDir.getName();
+	    Logging.info("postLoadPart1: q=" + q);
+	} catch (IOException ex) {
+	    Logging.error(""+ex);
+	    ex.printStackTrace(System.err);
+	}
+
+	//String[] z = experimentPlan.split("/");
+	//String q  = z[z.length-1];
+	coopGame = q.startsWith("coop.");
+	adveGame = q.startsWith("adve.");
     }
 
     /** Sets some (transient) properties of this object which depend
