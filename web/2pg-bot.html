@@ -10,7 +10,7 @@ Two-Player Games with a bot player
     </h1>
 
     <div align="center"><em>
-	Updated 2025-05-13 for GS 8.012</em>
+	Updated 2025-05-15 for GS 8.013</em>
 	</div>
 
     <p>Since GS ver. 8.012, two-player games with a bot (AI) player are supported. This framework pairs a human player with a bot player; from the human player's point of view it looks very much like a normal <a href="2ph.html">two-player game (2PG)</a>
@@ -38,13 +38,14 @@ This is exactly the same name pattern as used for 2PGs with two human players.
 
   <h3>Using a dynamic plan</h3>
 
-<p>If you have a 2PG experiment plan which you normally use for a game of two human partners (your "base plan"), you can also use it for a 2PG-with-a-bot play. To do that:  go to the <a href="front-end-form.jsp">launch form</a>, scroll down to Form 2, and enter a <a href="concepts.html#sd">P:-type dynamic plan name</a> which will include the name of your "base plan" and the name of a modifier. For example,
-  <tt>P:2PG/adve.test_1:bot/pseudo-10</tt>
+<p>If you have a 2PG experiment plan which you normally use for a game of two human partners (your "base plan"), you can also use it for a 2PG-with-a-bot play. To do that:  go to the <a href="front-end-form.jsp">launch form</a>, scroll down to Form 2, and enter a <a href="concepts.html#sd">P:-type dynamic plan name</a> which will include the name of your "base plan" and the name of a modifier. For example, if your base plan is   <tt>2PG/adve.test_1</tt>, and you want to use the modifier <tt>bot/pseudo-10</tt> (whose file is in <tt>/opt/w2020/game-data/modifiers/bot/pseudo-10</tt>, you will enter 
+  <strong><tt>P:2PG/adve.test_1:bot/pseudo-10</tt></strong> in the plan name box.
+
+<p>The way P:-type dynamic plan works, the columns from the modifier file (which, in this case, specify the bot type and parameters) are virtually pasted at the end of all lines of the base plan's trial list files, thus resulting in a 2PG-with-a-bot file.
 			 
 
   
 			 
-
   <h2>The pseudo-learning bot</h2>
 
 <p>This bot does not have much of real AI in it. It merely pretends to learn, as in reality it cheats, since it "knows" the rule set from the start.
