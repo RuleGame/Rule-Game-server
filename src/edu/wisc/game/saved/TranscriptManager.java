@@ -88,6 +88,7 @@ public class TranscriptManager {
 	    
 	    final public String pid, eid;
 	    final public int k;
+	    /** YYYYMMDD-hhmmss.sss */
 	    final public String timeString;
 	    /** Pick or move, as the case may be */
 	    final public Pick pick;
@@ -95,6 +96,13 @@ public class TranscriptManager {
 	    final public int code;
 	    final public int mover;
 
+	    /** Parses the timeString value, using the same 
+		format that was used to write it */
+	    public Date timestamp() {
+		ParsePosition pos = new ParsePosition(0);
+		return Episode.sdf2.parse(timeString, pos);
+	    }
+	    
 	    
 	    Entry(CsvData.BasicLineEntry e, boolean hasMover, boolean hasObjectId) {
 		//-- the "mover" column was added in GS 7.0

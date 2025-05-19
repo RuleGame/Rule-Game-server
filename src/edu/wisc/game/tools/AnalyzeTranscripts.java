@@ -69,6 +69,9 @@ public class AnalyzeTranscripts {
 	can be set to false, with the "-nofit" option, to skip curve
 	fitting */
     private static boolean weWantFitting=true;
+    /** Produce a CSV file with episode counts, move numbers, timing
+	numbers etc for all players */
+    private static boolean weWantTiming=true;
 
     /** Various ways to interpret argv elements -- as experiment plan
 	names, player IDs, etc. */
@@ -139,6 +142,10 @@ public class AnalyzeTranscripts {
 	    } else if  (a.equals("-pre")) {
 		weWantPredecessorEnvironment  = true;
 		System.out.println("weWantPredecessorEnvironment=" + weWantPredecessorEnvironment);
+	    } else if  (a.equals("-timing")) {
+		weWantTiming=true;
+	    } else if  (a.equals("-fit")) {
+		weWantFitting=true;
 	    } else if  (a.equals("-nofit")) {
 		weWantFitting=false;
 	    } else if (j+1< argv.length && a.equals("-out")) {
@@ -205,10 +212,17 @@ public class AnalyzeTranscripts {
 	if (!base.isDirectory() || !base.canWrite()) usage("Not a writeable directory: " + base);
 
 	PrintWriter wsum =null;
-	if (weWantFitting) {
+	if (weWantFitting || weWantTiming) {
 	    File gsum=new File(base, needP0? "summary-p0-"+randomPlayerModel+".csv" : "summary-flat.csv");
 	    wsum = new PrintWriter(new FileWriter(gsum, false));
-	    String sumHeader = "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,yy,B,C,t_I,k,Z,n,L/n,AIC/n";
+	    String sumHeader = "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo";
+	    if (weWantFitting) {
+		sumHeader += ",yy,B,C,t_I,k,Z,n,L/n,AIC/n";
+	    }
+	    if (weWantTiming) {
+		sumHeader += ",episodes,moves,sec";
+	    }
+
 	    wsum.println(sumHeader);
 	}
 
@@ -587,7 +601,7 @@ public class AnalyzeTranscripts {
 
 	w.close(); w=null;
 
-	if (weWantFitting) {
+	if (weWantFitting || weWantTiming) {
 	    OptimumExplained oe = analyzeSection( Util.joinSubsections( section), eh0, wsum, needP0? p0: null);
 	}
 	section.clear();
@@ -790,7 +804,7 @@ public class AnalyzeTranscripts {
     final static DecimalFormat df = new DecimalFormat("0.000");
 
     /** Processes the sequence of all moves for a (player, rule set) pair
-       @param eh A handle for one of the episodes in this  (player, rule set) series. It is only used to access the information common for the entire series, not for the specific episode.
+       @param eh A handle for one of the episodes in this  (player, rule set) series. It is only used to access the information common for the entire series, not for this specific episode.
      */
     private static OptimumExplained analyzeSection(Vector<TranscriptManager.ReadTranscriptData.Entry> section,
 						   EpisodeHandle eh,   PrintWriter wsum, double[] p0
@@ -798,21 +812,63 @@ public class AnalyzeTranscripts {
 	int[] y = TranscriptManager.ReadTranscriptData.asVectorY(section);
 	if (y.length<2) return null;
 	
-	OptimumExplained oe =  analyzeSection(eh.playerId, y, p0, null);
+	String rid=eh.ruleSetName;
+	String line = rid+","+eh.playerId+","+eh.exp+","+eh.trialListId+","+eh.seriesNo;
 
-	if (oe!=null) {
-	    String rid=eh.ruleSetName;
-	    //	 sumHeader = "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,yy,B,C,t_I,k,Z";
-	    wsum.print(rid+","+eh.playerId+","+eh.exp+","+eh.trialListId+","+eh.seriesNo+",");
-	    wsum.println(mkYString(y)+"," + oe.toCsvString() );
+	OptimumExplained oe = null;
+	if (weWantFitting) {
+	    oe =  analyzeSection(eh.playerId, y, p0, null);
+		
+	    if (oe!=null) {
+		//	 sumHeader = "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,yy,B,C,t_I,k,Z";
+		line += "," +  mkYString(y)+"," + oe.toCsvString();
+	    }
 	}
 
+	if (weWantTiming) {
+	    TimingStats ts = new TimingStats(section);
+	    line += "," + ts.toString();
+	}
+	
+	wsum.println(line);
 
 	
 	return oe;
     }
 
+    /** Used to count episodes, moves, and seconds in a player's interaction
+	with a rule set */
+    private static class TimingStats {
 
+	final int episodes, moves;
+	final long msec;
+
+	private static NumberFormat df = new DecimalFormat("0.000");
+	/**  "episodes,moves,sec" */
+	public String toString() {
+	    return "" + episodes + "," + moves + "," + df.format(msec);
+	}
+	
+	TimingStats(Vector<TranscriptManager.ReadTranscriptData.Entry> section) {
+	    long minMsec=section.get(0).timestamp().getTime();
+	    long maxMsec=minMsec;
+	    moves = section.size();
+	    String lastEid = null;
+	    int ne = 0;
+	    for(TranscriptManager.ReadTranscriptData.Entry e: section) {
+		if (!e.eid.equals(lastEid)) {
+		    lastEid = e.eid;
+		    ne++;
+		}
+		long t = e.timestamp().getTime();
+		if (t<minMsec) minMsec = t;
+		if (t>maxMsec) maxMsec = t;
+	    }
+	    episodes = ne;
+	    msec = maxMsec - minMsec;
+	}
+    }
+    
     /** An auxiliary class used to pinpoint possible inflection points */
     static class Divider {
 	final double avg0, avg1, L;
