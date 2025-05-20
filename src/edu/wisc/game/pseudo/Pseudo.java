@@ -46,7 +46,7 @@ public class Pseudo {
 	return x;
     }
 
-    Pseudo(   PlayerInfo _p,     EpisodeInfo _epi, int _expectedAttemptCnt) {
+    public Pseudo(   PlayerInfo _p,     EpisodeInfo _epi, int _expectedAttemptCnt) {
 	p = _p;
 	epi = _epi;
 	expectedAttemptCnt = _expectedAttemptCnt;
@@ -66,16 +66,15 @@ public class Pseudo {
 
     static final double log2 = Math.log(2.0);
 
-    void doTask() throws IOException {
 
-
+    /** Pseudo-randomly proposes a move, without actually executing it */
+    public Episode.Move proposeMove() throws IOException {
 	if (expectedAttemptCnt < epi.getAttemptCnt()) {
 	    Logging.info("Pseudo: skipping apparently duplicate request " + this);
-	    return;
+	    return null;
 	}
 
-	if (epi.getFinishCode()!=Episode.FINISH_CODE.NO) return; // episode completed
-
+	if (epi.getFinishCode()!=Episode.FINISH_CODE.NO) return null; // episode completed
 	
 	// Player 0, who owns the episodes
 	PlayerInfo owner = p.getPlayerForRole(Pairing.State.ZERO);
@@ -122,8 +121,13 @@ public class Pseudo {
 		k = bu[ Episode.random.nextInt( bu.length) ];
 	    }			 
 	}
+	return new Episode.Move(piece, k);
+    }
 
-	ExtendedDisplay q = epi.doMove2(p.getPlayerId(), (int)piece.getId(), k, expectedAttemptCnt);
+    void doTask() throws IOException {
+	Episode.Move move = proposeMove();
+	
+	ExtendedDisplay q = epi.doMove2(p.getPlayerId(), move.getPieceId(), move.getBucketNo(), expectedAttemptCnt);
 	
     }
 

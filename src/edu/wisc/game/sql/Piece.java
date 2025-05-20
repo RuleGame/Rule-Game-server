@@ -198,7 +198,11 @@ public class Piece  implements Serializable {
     
     public long getId() { return id; }
     @XmlElement 
-    public void setId(long _id) { id = _id; }
+    public void setId(long _id) {
+	id = _id;
+	char c = (char)('@' + id);
+	setLabel("" + c);
+    }
 
     /** Exists on IPB and composite objects; null on S+C objects. */
     private String image;
@@ -274,6 +278,19 @@ public class Piece  implements Serializable {
     @XmlElement
     public void setDropped(Integer _dropped) { dropped = _dropped; }
 
+
+    /** Used to print a human-readable label next to each piece in GUI client
+	(vs. 8.014+). We use an alphabetic label rather than ID because
+	PK is worrying that an ID will be confused with the sequence number
+	(also shown in the GUI client) */
+
+    String label;
+
+    public String getLabel() { return label; }
+    @XmlElement
+    public void setLabel(String _label) { label = _label; }
+
+    
     static private long maxId = 1;
     
     public Piece(){} 

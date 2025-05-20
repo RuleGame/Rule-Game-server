@@ -610,7 +610,20 @@ public class EpisodeInfo extends Episode {
 
 	}
 
-		
+
+	if (player.hasBotAssist()) { // Assuming it's 1PG. (FIXME: what if 2PG?)
+	    Pseudo task = new Pseudo(player, this, attemptCnt);
+	    Move proposed = task.proposeMove();
+	    String chat = null;
+	    if (proposed==null) {
+		chat = "Bot has no idea";
+	    } else {
+		chat = "I suggest moving piece " + proposed.getPiece().getLabel() + " to bucket " + proposed.getBucketNo();
+	    }
+	    q.setBotAssistChat(chat);
+	    
+	}
+	
 	return q;
     }
 
@@ -953,7 +966,14 @@ public class EpisodeInfo extends Episode {
 	    } // fixme - silly fix for Kevin's report ,2022-01-28
 	    factorPromised =  EpisodeInfo.this.factorPromised[mj];
 	}
-	
+
+
+	/** If there is a bot assist, it can send a message here */
+	String botAssistChat = null;
+	public String getBotAssistChat() { return botAssistChat; }
+        @XmlElement
+        public void setBotAssistChat(String _botAssistChat) { botAssistChat = _botAssistChat; }
+
     }
     
     /** Builds a Dsplay object to be sent out over the web UI on a /display call

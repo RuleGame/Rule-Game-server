@@ -111,7 +111,13 @@ s	    non-existing piece) the value may be different from those of
 	public Pick(Pos  pos) { this(pos.num()); }
 	public int getPos() { return pos; }
         public int getPieceId() { return pieceId; }	
-        public void setPieceId(int id) {  pieceId=id; }	
+        public void setPieceId(int id) {  pieceId=id; }
+	/** This method should only be used if the Pick object 
+	    has been created by a constructor that takes a Piece
+	    argument; otherwise, null may be returned */
+	Piece getPiece() {
+	    return piece;
+	}
 	Piece piece =  null;
 	/** Acceptance code; will be recorded upon processing. The value is from
 	 Episode.CODE */
@@ -151,7 +157,7 @@ s	    non-existing piece) the value may be different from those of
 	public Move(Pos pos, Pos bu) {
 	    this(pos.num(), bu.bucketNo());
 	}
-	Move(Piece _piece, int b) {
+	public Move(Piece _piece, int b) {
 	    super(_piece);
 	    bucketNo = b;
 	}
@@ -1143,7 +1149,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
     /** The current version of the application */
-    public static final String version = "8.013";
+    public static final String version = "8.014";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }

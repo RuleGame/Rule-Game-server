@@ -815,6 +815,7 @@ public class AnalyzeTranscripts {
 	String rid=eh.ruleSetName;
 	String line = rid+","+eh.playerId+","+eh.exp+","+eh.trialListId+","+eh.seriesNo;
 
+	
 	OptimumExplained oe = null;
 	if (weWantFitting) {
 	    oe =  analyzeSection(eh.playerId, y, p0, null);

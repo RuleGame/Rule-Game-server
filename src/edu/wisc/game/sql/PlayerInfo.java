@@ -111,8 +111,8 @@ public class PlayerInfo {
     */	
     public void postLoad() {
 	postLoadPart1();
+	ParaSet para = getFirstPara(); //-- this can only be done after initSeries() or restoreTransientFields()
 	if (is2PG()) {
-	    ParaSet para = getFirstPara(); //-- this can only be done after initSeries() or restoreTransientFields()
 	    if (para==null) {
 		throw new IllegalArgumentException("Cannot access the player's parameter sets: " + playerId);
 	    }
@@ -124,14 +124,29 @@ public class PlayerInfo {
 		if (botGameName.equals("pseudo")) {
 		    pseudoHalftime = para.getDouble("pseudo_halftime", false, 10);
 		} else {
-		    throw new IllegalArgumentException("Illegal bot name ("+botGameName+") for player " + playerId);
+		    throw new IllegalArgumentException("Illegal bot partner name ("+botGameName+") for player " + playerId);
 		}
 	    }
 	    
 	} else {
 	    needChat = false;
 	    botGameName = null;
+	    botGameName = null;
 	}
+
+	//-- Bot Assist is mostly for 1PG 
+	botAssistName = para.getString("bot_assist", null);
+	if (botAssistName != null) {
+	    if (botAssistName.equals("pseudo")) {
+		pseudoHalftime = para.getDouble("pseudo_halftime", false, 10);
+	    } else {
+		throw new IllegalArgumentException("Illegal bot assist name ("+botAssistName+") for player " + playerId);
+	    }
+	}
+	    
+
+
+
 	
     }
 
@@ -142,6 +157,9 @@ public class PlayerInfo {
 	partner, of the specified type */
     @Transient
     private String botGameName;
+    /** If not null, there is a bot assistant (8.014+) */
+    @Transient
+    private String botAssistName;
 
     
         /** @return true if the name of the experiment plan indicates that this
@@ -161,6 +179,9 @@ public class PlayerInfo {
     }
     public boolean isBotGame() {
 	return botGameName!=null;
+    }
+    public boolean hasBotAssist() {
+	return botAssistName!=null;
     }
 
 
