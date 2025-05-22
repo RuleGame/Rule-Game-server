@@ -183,7 +183,7 @@ and our script will carry out the PID conversion on the fly.
 
 <p><strong> 2. Curve fitting.</strong> If the <tt>-nofit</tt> option is given, no additional computations are carried out.
 
-<p>Otherwise, log-like curve-fitting is carried out, either with no <em>p</em><sub>0</sub>, or with <em>p</em><sub>0</sub>, computed based on a particular baseline player model. Currently, two such models are supported:
+<p>Otherwise (whether the explicit  <tt>-nofit</tt> option is given or not), log-like curve-fitting is carried out, either with no <em>p</em><sub>0</sub>, or with <em>p</em><sub>0</sub>, computed based on a particular baseline player model. Currently, two such models are supported:
   <ul>
     <li><tt>-p0 random</tt> -- Completely Random Player (understands notaion, but has no memory)
     <li><tt>-p0 mcp1</tt> -- MCP1 (Minimally Competent Player 1 -- one who does not repeat failed move/pick attempts until the board position changes.) 
@@ -193,7 +193,14 @@ and our script will carry out the PID conversion on the fly.
 
 <p>The curve fitting parameters are written into a file named <tt>summary-flat.csv</tt>, <tt>summary-p0-COMPLETELY_RANDOM.csv</tt>, or <tt>summary-p0-MCP.csv</tt>, as the case may be.
 
-<p><strong>3. Board positions.</strong> If the <tt>-boards</tt> option is supplied, the analyzer saves the board position before each move. It is written into the same CSV output file, in a column named "board" that follows the column "p0". The board  description is saved in a JSON format, similar to what is used in the client-server communication (as illustrated in the <a href="../game-api-2.html">Game API</a> document, under <tt>/display</tt>).
+<p><strong>3. Timing.</strong> If the <tt>-timing</tt> option is supplied, the analyzer reports the time, in seconds, the player has taken playing each rule set. This is measured as the interval from the first move of the first episode to the last move or the last recorded episode. (Note that if the player just walked out in the middle of an episode, that episode may not be recorded). This number is reported along with the number of episodes the player played in that rule set, and the total number of moves in those episodes.
+
+<p>Example:
+  <pre>
+    /home/vmenkov/game/w2020/scripts/analyze-transcripts.sh -nofit -timing FDCL/basic
+    </pre>
+  
+<p><strong>4. Board positions.</strong> If the <tt>-boards</tt> option is supplied, the analyzer saves the board position before each move. It is written into the same CSV output file, in a column named "board" that follows the column "p0". The board  description is saved in a JSON format, similar to what is used in the client-server communication (as illustrated in the <a href="../game-api-2.html">Game API</a> document, under <tt>/display</tt>).
 
 <p>This option can only be used with the <tt>-p0...</tt> option.
   

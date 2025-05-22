@@ -847,7 +847,7 @@ public class AnalyzeTranscripts {
 	private static NumberFormat df = new DecimalFormat("0.000");
 	/**  "episodes,moves,sec" */
 	public String toString() {
-	    return "" + episodes + "," + moves + "," + df.format(msec);
+	    return "" + episodes + "," + moves + "," + df.format(msec * 0.001);
 	}
 	
 	TimingStats(Vector<TranscriptManager.ReadTranscriptData.Entry> section) {
