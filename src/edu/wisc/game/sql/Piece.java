@@ -200,7 +200,7 @@ public class Piece  implements Serializable {
     @XmlElement 
     public void setId(long _id) {
 	id = _id;
-	char c = (char)('@' + id);
+	char c = (char)('A' + id);
 	setLabel("" + c);
     }
 

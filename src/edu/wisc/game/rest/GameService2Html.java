@@ -506,7 +506,32 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	String body = "";
 
 	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
-	boolean isAdve = epi.getPlayer().isAdveGame();	
+	boolean isAdve = epi.getPlayer().isAdveGame();
+
+
+	String botSays = d.getBotAssistChat();
+	if (botSays!=null) {
+	    Episode.Move proposed = epi.xgetLastProposed();
+	    String s = fm.strong("Bot assistant says: " + botSays );
+	    s += "&nbsp;";
+
+	    if (proposed!=null) {
+		String formA="";
+		formA += fm.hidden("playerId", playerId);
+		formA += fm.hidden("episode", episodeId);
+		formA += fm.hidden("cnt", ""+d.getNumMovesMade());
+		formA += fm.hidden("id", ""+ proposed.getPieceId());
+		formA += fm.hidden("bid", ""+proposed.getBucketNo());
+		formA += fm.wrap("button", "type='submit'", "Follow this suggestion");
+		s += fm.wrap("form", "id=\"followForm\" method='post' action='moveHtml'", formA);
+	    } else {
+		s += " (No info)";
+	    }
+	    
+	    body += fm.para(s);
+
+	    
+	}
 	
 	String s = "Rule " + (d.getDisplaySeriesNo()+1) + ". ";
 	if (d.getDisplaySeriesNo() != d.getSeriesNo()) s += " (internally "+(d.getSeriesNo()+1)+")";

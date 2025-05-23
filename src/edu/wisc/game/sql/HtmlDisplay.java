@@ -120,7 +120,7 @@ public class HtmlDisplay {
 
 			// show that either this piece is movable,
 			// or we have just removed a piece from here
-			if (nonBlank) z = "" + p.getId() + z;
+			if (nonBlank) z = "" + p.getId() + " " + p.getLabel() + " " + z;
 			if (i<jj.length?
 			    isJMoveable[jj[i]] && (weShowAllMovables || lastWasHere) :
 			    (lastMove!=null && lastMove.pos==pos)) {

@@ -1198,7 +1198,11 @@ public class PlayerInfo {
 	Board b = epi.getCurrentBoard(true);
 	BoardManager.saveToFile(b, playerId, epi.episodeId, f);
 	f =  Files.transcriptsFile(playerId);
-	TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.transcript);
+	TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.transcript, hasBotAssist());
+	if (hasBotAssist()) {
+	    f = Files.botAssistFile(playerId);
+	    TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.botAssist.botAssistTranscript, false);
+	}
 	f =  Files.detailedTranscriptsFile(playerId);
 	epi.saveDetailedTranscriptToFile(f);
 	Logging.info("PlayerInfo.ended: saved transcripts for (epi=" + epi.getEpisodeId()+"); finishCode =" + epi.finishCode);

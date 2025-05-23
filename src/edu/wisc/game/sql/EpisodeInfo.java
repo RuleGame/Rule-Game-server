@@ -612,16 +612,22 @@ public class EpisodeInfo extends Episode {
 
 
 	if (player.hasBotAssist()) { // Assuming it's 1PG. (FIXME: what if 2PG?)
+	    if (botAssist==null) botAssist=new BotAssist();
+
+	    botAssist.didHeFollow(move);
+	    botAssist.makeSuggestion(this, q);
+	    /*
 	    Pseudo task = new Pseudo(player, this, attemptCnt);
 	    Move proposed = task.proposeMove();
 	    String chat = null;
 	    if (proposed==null) {
 		chat = "Bot has no idea";
 	    } else {
+		botAssistTranscript.add(proposed);
 		chat = "I suggest moving piece " + proposed.getPiece().getLabel() + " to bucket " + proposed.getBucketNo();
 	    }
 	    q.setBotAssistChat(chat);
-	    
+	    */
 	}
 	
 	return q;
@@ -1313,6 +1319,12 @@ public class EpisodeInfo extends Episode {
 	return fc;
     }
        
+    /** In Bot Assist games, the list of all move suggestions made by the bot in this episode */
+    @Transient
+    BotAssist botAssist = null;
+    public Move xgetLastProposed() {
+	return botAssist.proposed;
+    }
     
 }
 

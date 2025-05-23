@@ -25,40 +25,28 @@ public class TranscriptManager {
 	
 
     /* Saves all the recorded moves (the transcript of the episode) into a CSV file.
+
        <pre>
        transcripts/pid.transcript.csv
       pid,episodeId,moveNo,y,x,by,bx,code
 </pre>
+
+       @param includeFollow Include the "didFollow" column
     */    
-    public static void saveTranscriptToFile(String pid, String eid, File f,     Vector<Pick> transcript) {
+    public static void saveTranscriptToFile(String pid, String eid, File f,     Vector<Pick> transcript, boolean includeFollow) {
 	synchronized(file_writing_lock) {
 	try {	    
 	    PrintWriter w = new PrintWriter(new	FileWriter(f, true));
-	    if (f.length()==0) w.println("#pid,episodeId,moveNo,timestamp,mover,objectId,y,x,by,bx,code");
+	    if (f.length()==0) {
+		String header = "#pid,episodeId,moveNo,timestamp,mover,objectId,y,x,by,bx,code";
+		if (includeFollow) header += ",followed";
+		w.println(header);
+	    }
 	    Vector<String> v = new Vector<>();
 	    int k=0;
 	    for(Pick move: transcript) {
-		v.clear();
-		v.add(pid);
-		v.add(eid);
-		v.add(""+(k++));
-		v.add( Episode.sdf2.format(move.time));
-		v.add(""+move.getMover());
-		v.add(""+ move.getPieceId());
-		Pos q = new Pos(move.pos);
-		v.add(""+q.y);
-		v.add(""+q.x);
-		if (move instanceof Move) { // a real move with a destination
-		    Move m = (Move)move;
-		    Board.Pos b = Board.buckets[m.bucketNo];
-		    v.add(""+b.y);
-		    v.add(""+b.x);
-		} else { // just a pick -- no destination
-		    v.add("");
-		    v.add("");
-		}
-		v.add(""+move.getCode());
-		w.println(String.join(",", v));
+		String s = move2line(pid, eid, k++, move, includeFollow);
+		w.println(s);
 	    }
 	    w.close();
 	} catch(IOException ex) {
@@ -68,6 +56,34 @@ public class TranscriptManager {
 	}  
     }
 
+
+    /** Creates one line of the transcript file */
+    private static String move2line(String pid, String eid, int k, Pick move, boolean includeFollow) {
+	Vector<String> v = new Vector<>();
+	v.add(pid);
+	v.add(eid);
+	v.add(""+k);
+	v.add( Episode.sdf2.format(move.time));
+	v.add(""+move.getMover());
+	v.add(""+ move.getPieceId());
+	Pos q = new Pos(move.pos);
+	v.add(""+q.y);
+	v.add(""+q.x);
+	if (move instanceof Move) { // a real move with a destination
+	    Move m = (Move)move;
+	    Board.Pos b = Board.buckets[m.bucketNo];
+	    v.add(""+b.y);
+	    v.add(""+b.x);
+	} else { // just a pick -- no destination
+	    v.add("");
+	    v.add("");
+	}
+	v.add(""+move.getCode());
+	if (includeFollow) v.add(move.getDidFollow()? "1":"0");
+	return String.join(",", v);	
+    }
+    
+    
     /** Some of the transcript data read back from a file. This is used
 	when we need to read and statistically analyze old transcripts.
      */

@@ -83,6 +83,7 @@ public class Files {
 	    BOARDS = "boards",
 	    TRANSCRIPTS = "transcripts",
 	    DETAILED_TRANSCRIPTS = "detailed-transcripts",
+	    BOT_ASSIST = "bot-assist",
 	    CHATS = "chats",
 	    MLC = "mlc";
 	/** The list of subdirs to be processed by MergeDatasets */
@@ -91,7 +92,9 @@ public class Files {
 	    CHATS,
 	    BOARDS,
 	    TRANSCRIPTS,
-	    DETAILED_TRANSCRIPTS};
+	    DETAILED_TRANSCRIPTS,
+	    BOT_ASSIST
+	};
 	    
     }
 
@@ -139,6 +142,18 @@ public class Files {
 	return new File(d, playerId + ".transcripts.csv");
     }
 
+
+     public static File botAssistFile(String playerId) throws IOException {
+	 return botAssistFile(playerId,false); 
+    }
+
+    public static File botAssistFile(String playerId, boolean readOnly) throws IOException {
+	File d = savedSubDir( Saved.BOT_ASSIST);
+	if (!readOnly) testWriteDir(d);
+	return new File(d, playerId + ".bot-assist.csv");
+    }
+
+    
     public static File detailedTranscriptsFile(String playerId) throws IOException {
 	 return detailedTranscriptsFile(playerId,false); 
     }

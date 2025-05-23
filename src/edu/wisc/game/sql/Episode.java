@@ -141,6 +141,18 @@ s	    non-existing piece) the value may be different from those of
 	int mover=0;
 	public int getMover() { return mover; }
 
+	/** Did the other Pick pick the same game piece? */
+	boolean pickedSamePiece(Pick pick) {
+	    return (pieceId >= 0 && pick.pieceId >= 0) && pieceId == pick.pieceId;
+	}
+
+	/** In Bot Assist games, this is set to true when the player
+	    is seen to follow the preceding bot suggestion */
+	@Basic boolean didFollow = false;
+	public boolean getDidFollow() { return didFollow; }
+	@XmlElement
+	public void setDidFollow(boolean _didFollow) { didFollow = _didFollow; }    
+
     }
 
     /** A Move instance describes an [attempted] act of picking a piece
@@ -168,6 +180,13 @@ s	    non-existing piece) the value may be different from those of
 
 	public String toString() {
 	    return "MOVE " + pos + " " +new Pos(pos) +	" to B" + bucketNo+", code=" + code;
+	}
+
+
+	boolean sameMove(Pick pick) {
+	    if (!(pick instanceof Move)) return false;
+	    Move move = (Move) pick;
+	    return pickedSamePiece(move) && bucketNo==move.bucketNo;
 	}
    }
     
@@ -1149,7 +1168,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
     /** The current version of the application */
-    public static final String version = "8.014";
+    public static final String version = "8.015";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }
@@ -1596,5 +1615,6 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	return max;
 	
     }
+
     
 }
