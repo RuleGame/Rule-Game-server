@@ -1,0 +1,134 @@
+<html>
+  <head>
+    <title>
+Bot Assist
+    </title>
+  </head>
+  <body>
+    <h1>
+Bot Assist
+    </h1>
+
+    <div align="center"><em>
+	Updated 2025-05-21 for GS 8.014</em>
+	</div>
+
+    <p>This is document provides an overview of the "Bot Assist" feature, which ay be introduced in GS ver. 8.014.
+
+      <h2>Overview</h2>
+
+    <p>The Bot Assist functionality is intended to work as follows. After each move (succesful or unsuccessful) by the player, the "bot" of some kind will provide him with a suggestion of what would be the next move to try. The suggestion can be delivered to the player via a "chat box", similar to that used in 2PG coop games.
+
+      <p>The Bot Assist feature is primarily designed for traditional single-player games (2PG); however, it would not be difficult to also offer it to one or both players in two-player games (2PG).
+      
+      <h2><a name="prep">
+	  Experiment preparation
+	  </a></h2>
+
+
+      <P>See also: <a href="2pg-bot.html#prep">two-player games with a bot -- Experiment preparation</a>
+
+      <p>Here we assume that you want to enable Bot Assist in a 1PG. To do that, you need to add to your trial list file a column named <tt>bot_assist</tt>, the value in which should indicate the name of the bot you want to use (typically, a wrapper over some AI algorithm). This should be chosen from the same set of bots that's also available for adve and coop 2PGs with a bot partner, where the corresponding value is put in the column named <tt>bot</tt>.
+
+	<p>
+	The only bot included in GS 8.014 is <tt>pseudo</tt>, which stands for "pseudo learning".
+	
+<p>Additionally, the trial list file may include columns containing the necessary parameter values for the bot in question. The one   column that the
+  bot <tt>pseudo</tt> uses is named <tt>pseudo_halftime</tt>; it contains an integer value that specifies how fast the bot pretends to learn. These parameters also have the same syntax and semantics as those for the partner bot in 2PG.
+
+<p>For an example, see the plan
+  <tt>vm/colorVshape-bot-assist</tt>.
+
+  <h3>Using a dynamic plan</h3>
+
+<p>You can take any 1PG experiment plan  (your "base plan"), you can also use it for a play with bot assist. To do that:  go to the <a href="front-end-form.jsp">launch form</a>, scroll down to Form 2, and enter a <a href="concepts.html#sd">P:-type dynamic plan name</a> which will include the name of your "base plan" and the name of a modifier. For example, if your base plan is   <tt>FDCL/basic</tt>, and you want to use the modifier <tt>bot-assist/pseudo-10</tt> (whose file is in <tt>/opt/w2020/game-data/modifiers/bot-assist/pseudo-10.csv</tt>, you will enter 
+  <strong><tt>P:FDCL/basic:bot-assist/pseudo-10</tt></strong> in the plan name box.
+
+<p>The way P:-type dynamic plan works, the columns from the modifier file (which, in this case, specify the bot type and parameters) are virtually pasted at the end of all lines of the base plan's trial list files, thus adding the bot assist feature to your base plan.
+			 
+
+  <h2>Issues for the GUI client</h2>
+
+<p>This section contains some guidance for implementing support for the "Bot Assist" feature in the GUI Client.
+
+  <p>
+  1) The data fields discussed below are available in the Game Server 8.014, currently running on action.rutgers.edu/w2020-dev
+
+  <p>
+2) The experiment plan you can use for testing is vm/colorVshape-bot-assist. It's a normal 1PG plan, but it computes, after each /move or /pick, a "suggestion by bot", which is sent to the player as part of the /move or /pick return structure; the client can then show that suggestion to the player in the chat box.
+
+<p>
+3) The GUI client may want to find out, at the very beginning of the game, that it's a "bot assist" game, so that it can choose to display the chat panel (which normally is not needed in 1PG games). To do that, the client shall look at the return value of the very first /newEpisode call; inside that value, there is a "para" structure; if that structure has a field named "bot_assist" with a non-null value, you now you're in a bot assiste game. For example (quoting from catalina.out):
+
+<br>
+<tt>
+20-May-2025 02:03:53.700 INFO [http-nio-1234-exec-191] edu.wisc.game.util.Logging.info NewEpisodeWrapper2(pid=vm-2025-05-18-b): returning:
+{"mustWait":false,"episodeId":"20250520-020353-BT3DX2",
+"para":{"max_points":10,"b":1.5,"min_points":2,"max_colors":4,"feedback_switches":"free","pseudo_halftime":10,"min_objects":4,"rule_id":"pk/shapeVcolor","x4_likelihood":10000,"max_objects":6,"grid_memory_show_order":true,"min_shapes":2,"bot_assist":"pseudo","pregame":"doubling","x2_likelihood":100,"give_up_at":0,"stack_memory_show_order":true,"max_shapes":4,"min_colors":2,"stack_memory_depth":10,"max_boards":4},
+"alreadyFinished":false,"completionMode":0,"display":{"mover":0,"mustWait":false,"bonus":false,"totalRewardEarned":0,"totalRewardEarnedPartner":0,"seriesNo":0,"displaySeriesNo":0,"episodeNo":0,
+"displayEpisodeNo":0,"bonusEpisodeNo":0,"canActivateBonus":false,"totalBoardsPredicted":4,"guessSaved":false,"rewardRange":[2,10],"trialListId":"colorVshape","ruleSetName":"pk/shapeVcolor","incentive":"LIKELIHOOD","lastStretch":0,"lastR":0.0,"faces":"TOO_DEEP","facesMine":"TOO_DEEP","rewardsAndFactorsPerSeries":[[0,1]],"justReachedX2":false,"justReachedX4":false,"factorAchieved":1,"factorPromised":0,"finishCode":0,"board":"TOO_DEEP","code":-8,"errmsg":"Display requested....". ...}
+</tt>
+
+<p>
+I reckon you may feel that the first /newEpisode is a tad to late to learn about the peculiarities of the game. In that case, you can pull that info from the response of the /player call as well, since it includes all parameter sets too. You can just look at the first one. For example:
+
+<br>
+<tt>
+20-May-2025 02:03:53.589 INFO [http-nio-1234-exec-190] edu.wisc.game.util.Logging.info PlayerResponse(pid=vm-2025-05-18-b, exp=vm/colorVshape-bot-assist), returning:
+{"newlyRegistered":true,"trialListId":"colorVshape",
+"trialList":[{"max_points":10,"b":1.5,"min_points":2,"max_colors":4,"feedback_switches":"free","pseudo_halftime":10,"min_objects":4,"rule_id":"pk/shapeVcolor","x4_
+likelihood":10000,"max_objects":6,"grid_memory_show_order":true,"min_shapes":2,"bot_assist":"pseudo","pregame":"doubling","x2_likelihood":100,"give_up_at":0,"stack_memory_show_order":true,"max_shapes":4,"min_colors"
+:2,"stack_memory_depth":10,"max_boards":4},{"max_points":10,"b":1.5,"min_points":2,"max_colors":4,"feedback_switches":"free","pseudo_halftime":10,"min_objects":4,"rule_id":"FDCL/basic/cw","x4_likelihood":10000,"max_
+objects":6,"grid_memory_show_order":true,"min_shapes":2,"bot_assist":"pseudo","pregame":"doubling","x2_likelihood":100,"give_up_at":0,"stack_memory_show_order":true,"max_shapes":4,"min_colors":2,"stack_memory_depth"
+:10,"max_boards":4},{"max_points":10,"b":1.5,"min_points":2,"max_colors":4,"feedback_switches":"free","pseudo_halftime":10,"min_objects":4,"rule_id":"FDCL/basic/ccw","x4_likelihood":10000,"max_objects":6,"grid_memor
+y_show_order":true,"min_shapes":2,"bot_assist":"pseudo","pregame":"doubling","x2_likelihood":100,"give_up_at":0,"stack_memory_show_order":true,"max_shapes":4,"min_colors":2,"stack_memory_depth":10,"max_boards":4}],"
+playerId":"vm-2025-05-18-b","alreadyFinished":false,"completionMode":0,
+"experimentPlan":"vm/colorVshape-bot-assist",
+"isCoopGame":false,"isAdveGame":false,"needChat":false,"error":false,"errmsg":"Debug:\n(PlayerInfo:
+ id=1503,  playerId=vm-2025-05-18-b, pair=0, trialListId=colorVshape, date=Tue May 20 02:03:53 EDT 2025)\n*M*[S0]\n[S1]\n[S2]\nid=1503, curSer=0 b=false, R=$0"}
+</tt>
+
+<p>
+In any event, once the client learns that the game to be played is a bot assist game, it should enable the screen to display the chat panel. Since there seems to be no reason why the human player may say anything useful to the bot (my bots are dumb and don't understand any words anyway), I would suggest that unlike in a coop 2PG game, this chat panel should not allow the user to enter any text. (Maybe there should be no entry box at all, to avoid distracting the player).
+
+<p>
+4) The buckets are numbered clockwise, 0 1 2 3, starting with the top left one. In a bot assist game, some kind of labels indicating that numbering, should be shown at or near the buckets.
+
+<p>
+5) In the return structures of all calls (/move, /pick, /display) that include a board description, each game piece will have, along with the field "id", also the field "label", whose value will be a string to be displayed somewhere on or near the game piece. For example:
+
+<br>
+<tt>
+20-May-2025 02:03:59.755 INFO [http-nio-1234-exec-193] edu.wisc.game.util.Logging.info /display(20250520-020353-BT3DX2) returning: {"mover":0,"mustWait":false,"bonus":false,"totalRewardEarned":0,"totalRewardEarnedPartner":0,"seriesNo":0,"displaySeriesNo":0,"episodeNo":0,"displayEpisodeNo":0,"bonusEpisodeNo":0,"canActivateBonus":false,"totalBoardsPredicted":4,"guessSaved":false,"rewardRange":[2,9],"trialListId":"colorVshape","ruleSetName":"pk/shapeVcolor","incentive":"LIKELIHOOD","lastStretch":0,"lastR":0.0,"faces":[true,false],"facesMine":[true,true],"rewardsAndFactorsPerSeries":[[0,1]],"justReachedX2":false,"justReachedX4":false,"factorAchieved":1,"factorPromised":0,"finishCode":0,
+"board":{"id":0,"value":[{"id":0,"color":"yellow","shape":"triangle","x":3,"y":3,"image":"pk/shapeVcolor/triangle_yellow.png","label":"@","buckets":[1,2]},{"id":1,"color":"blue","shape":"triangle","x":5,"y":3,"image":"pk/shapeVcolor/triangle_blue.png","label":"A","buckets":[2,3]},{"id":2,"color":"yellow","shape":"square","x":6,"y":3,"image":"pk/shapeVcolor/square_yellow.png","label":"B","buckets":[0,1]},{"id":3,"color":"yellow","shape":"square","x":6,"y":4,"image":"pk/shapeVcolor/square_yellow.png","label":"C","buckets":[0,1]},{"id":4,"color":"blue","shape":"square","x":1,"y":6,"dropped":0,"image":"pk/shapeVcolor/square_blue.png","label":"D","buckets":[]}]},
+"code":-8,"errmsg":"Display requested...", ....}
+</tt>
+
+<p>
+6) The return value of a /move or /pick call may contain the field named "botAssistChat". If that field is present and has a non-null value, that value should be displayed as a message in the chat box. For example:
+
+<br>
+<tt>
+20-May-2025 02:03:58.557 INFO [http-nio-1234-exec-188] edu.wisc.game.util.Logging.info /move(epi=20250520-020353-BT3DX2, (3,3) to (0,0), cnt=1), return {"mover":0,"mustWait":false,"bonus":false,"totalRewardEarned":0,"totalRewardEarnedPartner":0,"seriesNo":0,"displaySeriesNo":0,"episodeNo":0,"displayEpisodeNo":0,"bonusEpisodeNo":0,"canActivateBonus":false,"totalBoardsPredicted":4,"guessSaved":false,"rewardRange":[2,9],"trialListId":"colorVshape","ruleSetName":"pk/shapeVcolor","incentive":"LIKELIHOOD","lastStretch":0,"lastR":0.0,"faces":[true,false],"facesMine":[true,true],"rewardsAndFactorsPerSeries":[[0,1]],"justReachedX2":false,"justReachedX4":false,"factorAchieved":1,"factorPromised":0,
+"botAssistChat":"I suggest moving piece A to bucket 3",
+"finishCode":0,"board":{"id":0,"value":[{"id":0,"color":"yellow","shape":"triangle","x":3,"y":3,"image":"pk/shapeVcolor/triangle_yellow.png","label":"@","buckets":[1,2]},{"id":1,"color":"blue","shape":"triangle","x":5,"y":3,"image":"pk/shapeVcolor/triangle_blue.png","label":"A","buckets":[2,3]},{"id":2,"color":"yellow","shape":"square","x":6,"y":3,"image":"pk/shapeVcolor/square_yellow.png","label":"B","buckets":[0,1]},{"id":3,"color":"yellow","shape":"square","x":6,"y":4,"image":"pk/shapeVcolor/square_yellow.png","label":"C","buckets":[0,1]},{"id":4,"color":"blue","shape":"square","x":1,"y":6,"dropped":0,"image":"pk/shapeVcolor/square_blue.png","label":"D","buckets":[]}]},"code":4,"errmsg":"null\nDEBUG\n(PlayerInfo: id=1503,  playerId=vm-2025-05-18-b, pair=0, trialListId=colorVshape, date=Tue May 20 02:03:53 EDT 2025)\n*M*[S0][20250520-020353-BT3DX2; FC=0; x0:0) 2/5 $0:0]\n[S1]\n[S2]\nid=1503, curSer=0 b=false, R=$0","error":false,"numMovesMade":2,"transcript":[{"bucketNo":0,"pieceId":4,"pos":31,"code":0,"rValue":2.0,"mover":0},{"bucketNo":3,"pieceId":0,"pos":15,"code":4,"rValue":2.0,"mover":0}],"recentKnowledge":{"15":{"pieceId":0,"pos":15,"knownMovable":true,"knownImmovable":false,"deniedBuckets":[3]}},"recentKnowledge2":{"0":{"pieceId":0,"pos":15,"knownMovable":true,"knownImmovable":false,"deniedBuckets":[3]}},"rulesSrc":{"orders":[],"rows":["(*,SQUARE,*,*,0) (*,CIRCLE,*,*,1) (*,TRIANGLE,*,*,2) (*,STAR,*,*,3) (*,*,RED,*,0) (*,*,YELLOW,*,1) (*,*,GREEN,*,2) (*,*,BLUE,*,3)"]},"explainCounters":"* / *,*,*,*,*,*,*,*","ruleLineNo":0}
+</tt>
+
+
+  
+			 
+  <h2>The pseudo-learning bot</h2>
+
+  <p>For details on how this bot works, please see the section on
+    <a href="2pg-bot.html#pseudo">the pseudo-learning bot</a> in the document on the 2PG with a bot partner.
+
+    <h2><a name="transcript">Recording suggestions</a></h2>
+
+  <p>When a game with bot assist is played, the game server, in addition to recording the player's moves in the transcript file, also records the bot's suggestions in the bot assist suggestions file. These files are located in the directory <tt>bot-assist</tt> under the main saved data directory (typically,
+    <tt>/opt/w2020/saved</tt>), and have names such as
+    <tt><em>player-id</em>.bot-assist.csv</tt>
+
+    <p>The file format of bot assiste suggestions files is identical to that of the transcript files, describing the proposed move in terms of the game piece ID and the destination bucket ID. Since both the entries in the game's transcript file and those in the bot assist file contain time stamps, it should be possible for an analysis script to match the two, and to figure which bot suggestion was offered before which move of the player.
+  
+  </body>
+</html>
