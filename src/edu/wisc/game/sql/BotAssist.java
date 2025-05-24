@@ -39,9 +39,13 @@ class BotAssist {
 	String chat = null;
 	if (proposed==null) {
 	    chat = null; //"Bot has no idea";
+	    Logging.info("BotAssist: no suggestion");
 	} else {
 	    botAssistTranscript.add(proposed);
 	    chat = "I suggest moving piece " + proposed.getPiece().getLabel() + " to bucket " + proposed.getBucketNo();
+	    int pc = (int)(task.confidence * 100);
+	    chat += ". I am "+pc+"% confident in this move";
+	    Logging.info("BotAssist: " + chat);
 	}
 	q.setBotAssistChat(chat);
     }

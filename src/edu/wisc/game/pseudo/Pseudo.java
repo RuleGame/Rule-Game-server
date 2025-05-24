@@ -2,21 +2,22 @@ package edu.wisc.game.pseudo;
 
 import java.io.*;
 import java.util.*;
-import javax.persistence.*;
+//import javax.persistence.*;
 
-import org.apache.openjpa.persistence.jdbc.*;
+//import org.apache.openjpa.persistence.jdbc.*;
 
-import jakarta.xml.bind.annotation.XmlElement; 
+//import jakarta.xml.bind.annotation.XmlElement; 
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.sql.*;
+import edu.wisc.game.sql.Episode.Move;
 import edu.wisc.game.sql.EpisodeInfo.ExtendedDisplay;
 import edu.wisc.game.rest.ParaSet;
-import edu.wisc.game.rest.TrialList;
+//import edu.wisc.game.rest.TrialList;
 import edu.wisc.game.rest.Files;
 import edu.wisc.game.rest.PlayerResponse;
-import edu.wisc.game.engine.RuleSet;
-import edu.wisc.game.engine.AllRuleSets;
+//import edu.wisc.game.engine.RuleSet;
+//import edu.wisc.game.engine.AllRuleSets;
 import edu.wisc.game.saved.*;
 
 import edu.wisc.game.websocket.WatchPlayer;
@@ -66,20 +67,26 @@ public class Pseudo {
 
     static final double log2 = Math.log(2.0);
 
+    /** This value, set by each proposeMove() call, contains the probability
+	of that call returning a good move.
+     */
+    public double confidence = 0;
 
     /** Pseudo-randomly proposes a move, without actually executing it */
-    public Episode.Move proposeMove() throws IOException {
+    public Move proposeMove() throws IOException {
 	if (expectedAttemptCnt < epi.getAttemptCnt()) {
 	    Logging.info("Pseudo: skipping apparently duplicate request " + this);
 	    return null;
 	}
 
-	if (epi.getFinishCode()!=Episode.FINISH_CODE.NO) return null; // episode completed
+	if (epi.getFinishCode()!=Episode.FINISH_CODE.NO) {
+	    Logging.info("Pseudo: episode already completed, fc=" + epi.getFinishCode());
+	}
 	
 	// Player 0, who owns the episodes
 	PlayerInfo owner = p.getPlayerForRole(Pairing.State.ZERO);
 	
-	double	halfTime = p.pseudoHalftime;
+	double	halftime = p.pseudoHalftime;
 
         //Board b = d.getBoard();
 	Board b =  epi.getCurrentBoard(true);
@@ -87,10 +94,17 @@ public class Pseudo {
 
 	Vector<Piece> pieces = new Vector<>();
 	Vector<Piece> movablePieces = new Vector<>();
+	int allCnt=0, goodCnt=0;
 	for(Piece piece: b.getValue()) {
 	    if (piece.getDropped()!=null) continue;
-	    if (piece.getBuckets().length>0) movablePieces.add(piece);
-	    if (!show || piece.getBuckets().length>0) pieces.add(piece);
+	    int n = piece.getBuckets().length;
+	    goodCnt += n;
+	    
+	    if (n>0) movablePieces.add(piece);
+	    if (!show || n>0) {
+		pieces.add(piece);
+		allCnt += Episode.NBU;
+	    }
 	}
 
 	
@@ -100,6 +114,11 @@ public class Pseudo {
 	int k =  Episode.random.nextInt( Episode.NBU);
 	int t = owner.seriesAttemptCnt(); // the sum for all episodes in the series
 
+	double ex =
+	    (halftime <= 0)? 0:
+	    (halftime == Double.POSITIVE_INFINITY) ? 1:
+	    Math.exp( -t/halftime*log2);
+
 	boolean allowed = false;
 	int[] bu = piece.getBuckets();
 	for(int i: bu) {
@@ -108,11 +127,11 @@ public class Pseudo {
 	}
 	if (!allowed) {
 	    boolean mustRedo;
-	    if (halfTime <= 0) mustRedo=true;
-	    else if (halfTime == Double.POSITIVE_INFINITY)  mustRedo=false;
+	    if (halftime <= 0) mustRedo=true;
+	    else if (halftime == Double.POSITIVE_INFINITY)  mustRedo=false;
 	    else {
-		double redoProb = 1 - Math.exp( -t/halfTime*log2);
-		Logging.info("Pseudo-AI: after " +t+ "/"+halfTime + "m, redoProb=" + redoProb);
+		double redoProb = 1 - ex;
+		Logging.info("Pseudo-AI: after " +t+ "/"+halftime + "m, redoProb=" + redoProb);
 		mustRedo = (Episode.random.nextDouble() < redoProb);
 	    }
 	    if (mustRedo) { // replace bad move with a guaranteed good one
@@ -121,7 +140,13 @@ public class Pseudo {
 		k = bu[ Episode.random.nextInt( bu.length) ];
 	    }			 
 	}
-	return new Episode.Move(piece, k);
+	Move answer = new Move(piece, k);
+		
+	/** "Confidence" estimates for the message to the player */
+	double bad = (double)(allCnt-goodCnt)/(double)allCnt;
+	confidence = 1 - bad * ex; 
+	
+	return answer;
     }
 
     void doTask() throws IOException {

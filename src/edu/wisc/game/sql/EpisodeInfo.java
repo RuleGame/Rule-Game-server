@@ -718,6 +718,16 @@ public class EpisodeInfo extends Episode {
 	    
 	    if (getPlayer()!=null) {
 		PlayerInfo p = getPlayer();
+		// In 1PG, we don't send RecentKnowledge to the client,
+		// because Paul asked not to show this kind of feedback.
+		// (2025-05-24)
+		if (!p.is2PG()) {
+		    setRecentKnowledge(null);
+		    setRecentKnowledge2(null);
+		}
+	      
+
+		
 		// Whose reward numbers we're pulling?
 		int mj = (p.isAdveGame() && mover==Pairing.State.ONE) ? 1:0;
 		boolean needPartnerReward = p.isAdveGame();
