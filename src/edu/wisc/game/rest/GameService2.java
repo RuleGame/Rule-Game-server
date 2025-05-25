@@ -220,7 +220,7 @@ public class GameService2 {
 	    return rv=epi.dummyDisplay(Episode.CODE.INVALID_ARGUMENTS, "move: Excepton: " + ex.getMessage());
 	} finally {
 	    Object ro = (rv==null)? "null" : JsonReflect.reflectToJSONObject(rv, true, null, 6);
-	    String msg = "/move(epi=" +  episodeId +", ("+x+","+y+") to ("+bx+","+by+"), cnt="+cnt+"), return " + ro;
+	    String msg = "/move(epi=" +  episodeId +", "+pieceId+"("+x+","+y+") to "+bucketId+"("+bx+","+by+"), cnt="+cnt+"), return " + ro;
 	    msg += timed.ending(playerId);
 	    Logging.info(msg);
 	}
@@ -254,7 +254,7 @@ public class GameService2 {
 	    return rv=epi.dummyDisplay(Episode.CODE.INVALID_ARGUMENTS, ex.getMessage());
 	} finally {
 	    Object ro = (rv==null)? "null" : JsonReflect.reflectToJSONObject(rv, true);
-	    String msg = "/pick(epi=" +  episodeId +", ("+x+","+y+"), cnt="+cnt+"), return " + ro;
+	    String msg = "/pick(epi=" +  episodeId +", "+pieceId+"("+x+","+y+"), cnt="+cnt+"), return " + ro;
 	    msg += timed.ending(playerId);
 	    Logging.info(msg);
 	}
