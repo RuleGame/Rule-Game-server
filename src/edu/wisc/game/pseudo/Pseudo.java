@@ -81,6 +81,7 @@ public class Pseudo {
 
 	if (epi.getFinishCode()!=Episode.FINISH_CODE.NO) {
 	    Logging.info("Pseudo: episode already completed, fc=" + epi.getFinishCode());
+	    return null;
 	}
 	
 	// Player 0, who owns the episodes
