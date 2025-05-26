@@ -723,7 +723,7 @@ public class EpisodeInfo extends Episode {
 		// (2025-05-24)
 		if (!p.is2PG()) {
 		    setRecentKnowledge(null);
-		    setRecentKnowledge2(null);
+		    setRecentKnowledge0(null);
 		}
 	      
 
