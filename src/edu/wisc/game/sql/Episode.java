@@ -1168,7 +1168,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
     /** The current version of the application */
-    public static final String version = "8.016";
+    public static final String version = "8.017";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }
@@ -1229,25 +1229,25 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	    in this episode */
 	public Vector<Pick> getTranscript() { return transcript; }
 	
-	private RecentKnowledge recentKnowledge =  new RecentKnowledge(Episode.this.transcript, true);
-	/** Keyed by position (GS 7 compatibility mode, for use with
-	    the GUI client which has not been upgraded).
-	*/
+	private RecentKnowledge recentKnowledge =  new RecentKnowledge(Episode.this.transcript, false);
+	/** Keyed by object ID */
 	public RecentKnowledge getRecentKnowledge() {
 	    return recentKnowledge;
 	}
+	/** Keyed by object ID */
 	public void setRecentKnowledge(RecentKnowledge x) {
 	    recentKnowledge = x;
 	}
 
-	/** Keyed by object ID */
-	private RecentKnowledge recentKnowledge2 =  new RecentKnowledge(Episode.this.transcript, false);
-	/** Keyed by piece ID */
-	public RecentKnowledge getRecentKnowledge2() {
-	    return recentKnowledge2;
+	/** Keyed by position (GS 7 compatibility mode, for use with
+	    the GUI client which has not been upgraded).
+	*/
+	private RecentKnowledge recentKnowledge0 =  new RecentKnowledge(Episode.this.transcript, true);
+	public RecentKnowledge getRecentKnowledge0() {
+	    return recentKnowledge0;
 	}
-	public void setRecentKnowledge2(RecentKnowledge x) {
-	    recentKnowledge2 = x;
+	public void setRecentKnowledge0(RecentKnowledge x) {
+	    recentKnowledge0 = x;
 	}
 	
 	RuleSet.ReportedSrc rulesSrc = (rules==null)? null:rules.reportSrc();
