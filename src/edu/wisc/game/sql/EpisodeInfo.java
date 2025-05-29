@@ -434,6 +434,11 @@ public class EpisodeInfo extends Episode {
 
 	<P>Since ver 8.012, this method may also queue a task for the bot partner
 
+	<p>FIXME: a lot more actions probably could be skipped when
+	ignored==true. However, this should matter in real life,
+	since a good client should not allow such moves in the 
+	first place
+
 	@move The just-made pick or move. In 2PG, the move.mover field identifies the player who made the move.
  */
     private ExtendedDisplay processMove(Display _q, Pick move) throws IOException  {
@@ -447,9 +452,16 @@ public class EpisodeInfo extends Episode {
 	
 	boolean isMove = (move instanceof Move);
 
+	// The move was not recorded in the transcript[] and faces[]
+	// (probably because it was an EMPTY_CELL or some other client
+	// error). Since we want the mastery stretch ("golden number")
+	// and faces[] to be consistent (and we want any replay to be
+	// consistent too), we ignore this move here too
+	boolean ignored = (transcript.size()==0 || move!=transcript.lastElement());
+	
 	// Variables attemptCnt etc (incremented in Episode.accept())
 	// sum moves of both players; attemptCnt1 etc count those of Player 1
-	if (move.mover==Pairing.State.ONE) {
+	if (move.mover==Pairing.State.ONE && !ignored) {
 	    attemptCnt1++;
 	    attemptSpent1 += (move instanceof Move) ? 1.0: xgetPickCost();
 	    if (move.code==CODE.ACCEPT) {
@@ -472,14 +484,16 @@ public class EpisodeInfo extends Episode {
 	double prevR = lastR[mj];
 
 	if (_q.code==CODE.ACCEPT) {
-	    // for mastery criteria, we count succcessful moves only,
+	    // For the mastery criteria, we count succcessful moves only,
 	    // but ignore successful picks
 	    if (isMove) {
 		lastStretch[mj]++;
 		if (lastR[mj]==0) lastR[mj]=1;
 		lastR[mj] *= move.getRValue();		    
 	    }
-	} else { // a failed move or pick breaks the "mastery stretch"
+	} else if (ignored) {
+	} else {
+	    // a failed move or pick breaks the "mastery stretch"
 	    lastStretch[mj]=0;
 	    lastR[mj] = 0;
 	}
@@ -598,36 +612,22 @@ public class EpisodeInfo extends Episode {
 		    Pseudo.addTask(otherPlayer, this, attemptCnt);
 		}
 
-	    } else {   // update the screen for the human partner
+	    } else {   // human partner; update his screen
 		try {
 		    Logging.info("Sending READY DIS to human " + otherPid);
 		    WatchPlayer.tellHim(otherPid, WatchPlayer.Ready.DIS);
 		} catch(Exception ex) {
-		    Logging.error("Very unfortunately, caught exception when sending a Ready.DIS  ws message to "+otherPid+": " + ex);
+		    Logging.error("Very unfortunately, caught exception when sending a Ready.DIS ws message to "+otherPid+": " + ex);
 		    ex.printStackTrace(System.err);
 		}
 	    }
-
 	}
 
 
 	if (player.hasBotAssist()) { // Assuming it's 1PG. (FIXME: what if 2PG?)
 	    if (botAssist==null) botAssist=new BotAssist();
-
 	    botAssist.didHeFollow(move);
 	    botAssist.makeSuggestion(this, q);
-	    /*
-	    Pseudo task = new Pseudo(player, this, attemptCnt);
-	    Move proposed = task.proposeMove();
-	    String chat = null;
-	    if (proposed==null) {
-		chat = "Bot has no idea";
-	    } else {
-		botAssistTranscript.add(proposed);
-		chat = "I suggest moving piece " + proposed.getPiece().getLabel() + " to bucket " + proposed.getBucketNo();
-	    }
-	    q.setBotAssistChat(chat);
-	    */
 	}
 	
 	return q;

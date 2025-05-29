@@ -217,7 +217,7 @@ public class GameService2 {
 	} catch( Exception ex) {
 	    System.err.print("/move: " + ex);
 	    ex.printStackTrace(System.err);
-	    return rv=epi.dummyDisplay(Episode.CODE.INVALID_ARGUMENTS, "move: Excepton: " + ex.getMessage());
+	    return rv=epi.dummyDisplay(Episode.CODE.INVALID_ARGUMENTS, "move: Exception: " + ex.getMessage());
 	} finally {
 	    Object ro = (rv==null)? "null" : JsonReflect.reflectToJSONObject(rv, true, null, 6);
 	    String msg = "/move(epi=" +  episodeId +", "+pieceId+"("+x+","+y+") to "+bucketId+"("+bx+","+by+"), cnt="+cnt+"), return " + ro;

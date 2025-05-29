@@ -259,7 +259,8 @@ s	    non-existing piece) the value may be different from those of
     double xgetPickCost() { return 1.0;}
 
     
-    /** The count of all attempts (move and pick) done so far, including successful and unsuccessful ones.
+    /** The count of all attempts (move and pick) done so far, including successful and unsuccessful ones. 
+	(Ignoring certain "client errors" moves, such as EMPTY_CELL)
 	(In 2PG, this includes moves of both players. If there is Player 1, his moves are in EpisodeInfo.attemptCnt1, etc).
 	This counter is increased whenever a move is added to transcript.
      */
@@ -973,7 +974,7 @@ s	    non-existing piece) the value may be different from those of
 	    
 	move.piece = values.get(j);
 
-	int code = ruleLine.accept(move);
+	int code = ruleLine.accept(move); // this is where the move may be added to the transcript
 
 	// Update the data structures describing the current rule line, acceptance, etc
 	if (move instanceof Move && code==CODE.ACCEPT && !cleared && !earlyWin && !stalemate && !givenUp) {
@@ -1168,7 +1169,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
     /** The current version of the application */
-    public static final String version = "8.017";
+    public static final String version = "8.018";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }
