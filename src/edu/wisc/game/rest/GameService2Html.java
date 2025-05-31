@@ -52,16 +52,18 @@ import edu.wisc.game.rest.ParaSet.Incentive;
 public class GameService2Html extends GameService2 {
 
     /** JavaScript elements to put inside HEAD */
-    private static String makeJS(UriInfo uriInfo, String myPlayerId) {
+    private static String makeJS(UriInfo uriInfo, String myPlayerId, boolean is2pg) {
 	String watchUrl = makeWatchServerUrl( uriInfo, myPlayerId);
 
 	String s= "";
 	s += fm.style("../../css/board.css") + "\n";
 	s +="<script type=\"application/javascript\">\n";
 	s += "var myPid='"  + myPlayerId + "';\n";
-	s +=  "var watchUrl='"  + watchUrl + "';\n";
+	s +=  "var watchUrl='"  + watchUrl + "';\n";	
 	s += "</script>\n";
-	s += "<script type=\"application/javascript\" src=\"../../js/socket1.js\"></script>\n";
+	if (is2pg) {
+	    s += "<script type=\"application/javascript\" src=\"../../js/socket1.js\"></script>\n";
+	}
 	s += "<script type=\"application/javascript\" src=\"../../js/boardDisplay.js\"></script>\n";
 	return s;	
     }
@@ -98,10 +100,13 @@ path = /w2020/game-data/GameService2Html/playerHtml
              u.getFragment())
      .equals(u)
      */
-    private static String makeWatchServerUrl( UriInfo uriInfo, String myPlayerId) {
+    private static String makeWatchServerUrl( UriInfo uriInfo, String myPlayerId ) {
+
+    
 	//UriBuilder ub = uriIndo.getAbsolutePathBuilder();
 	URI u = uriInfo.getBaseUri();
-	
+    
+
 	// From: http://localhost:8080/w2020/game-data/GameService2Html/playerHtml
 	// To: http://localhost:8080/w2020/websocket/watchPlayer
 
@@ -123,11 +128,11 @@ path = /w2020/game-data/GameService2Html/playerHtml
     }
 
     /** Produces the final document, attaching JS snippets to the head and body */
-    private static String withJS(  UriInfo uriInfo, String playerId, String title, String body) {
-	String head = fm.title(title) + makeJS(uriInfo,  playerId);
-        //body += makeEnding();
-	return fm.html2(head, body);	
-    }
+	private static String withJS(  UriInfo uriInfo, String playerId, boolean is2pg, String title, String body) {
+	    String head = fm.title(title) + makeJS(uriInfo,  playerId, is2pg);
+	    //body += makeEnding();
+	    return fm.html2(head, body);	
+	}
 
     
     private static HTMLFmter  fm = new HTMLFmter();
@@ -314,7 +319,9 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	
 	body +=  fm.h4( "Response")+fm.para(  ""+JsonReflect.reflectToJSONObject(w, true));
 
-	return withJS( uriInfo, playerId, title, body);
+	boolean is2pg = epi.getPlayer().is2PG();
+	
+	return withJS( uriInfo, playerId, is2pg, title, body);
     }
 
     
@@ -335,7 +342,9 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	body += fm.hr();
 	body += fm.h4("Server response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true, null, 6));
 
-	return withJS( uriInfo, playerId, title, body);
+	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
+	boolean is2pg = epi.getPlayer().is2PG();
+	return withJS( uriInfo, playerId, is2pg, title, body);
     }
 
 
@@ -373,7 +382,9 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	body += fm.hr();
 	body += fm.h4("Server response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true, null, 6));
 
-	return withJS( uriInfo, playerId, title, body);
+	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);		
+	boolean is2pg = epi.getPlayer().is2PG();
+	return withJS( uriInfo, playerId, is2pg, title, body);
     }
 
     @POST
@@ -400,8 +411,10 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	body += moveForm(playerId, d,  episodeId);
 	body += fm.hr();
 	body += fm.h4("Server response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true, null, 6));
-
-	return withJS( uriInfo, playerId, title, body);
+	
+	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
+	boolean is2pg = epi.getPlayer().is2PG();	
+	return withJS( uriInfo, playerId, is2pg, title, body);
     }
 
     /** Shows the player's history.

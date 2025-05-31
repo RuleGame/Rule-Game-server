@@ -333,6 +333,11 @@ public class EpisodeInfo extends Episode {
     /** An allowance for rounding */
     private static final double eps = 1e-6;
 
+
+    /** Used to handle occasional accidental double-clicks */
+    @Transient
+    private LastCall lastCall = new LastCall();
+    
     /** The main method invoked on a /move web API call.
 	Calls Episode.doMove, and then does various adjustments related to 
 	this episode's role in the experiment plan.  If the player has
@@ -346,7 +351,9 @@ public class EpisodeInfo extends Episode {
 	this episode should be.	
      */
     public ExtendedDisplay doMove(String moverPlayerId, int y, int x, int by, int bx, int _attemptCnt) throws IOException {
-	ExtendedDisplay d = checkWhoseTurn(moverPlayerId);
+	ExtendedDisplay d = lastCall.doMoveCheck(moverPlayerId, y, x, by, bx,  _attemptCnt);	
+	if (d!=null) return d;
+	d = checkWhoseTurn(moverPlayerId);
 	if (d!=null) return d;
 	Display _q = super.doMove(y, x, by, bx, _attemptCnt);
 	Pick move = _q.pick;
@@ -354,11 +361,13 @@ public class EpisodeInfo extends Episode {
 	move.mover = player.getRoleForPlayerId(moverPlayerId);
 	d = processMove(_q, move);
 	return d;
+
     }
 
-
     public ExtendedDisplay doMove2(String moverPlayerId, int pieceId, int bucketId, int _attemptCnt) throws IOException {
-	ExtendedDisplay d = checkWhoseTurn(moverPlayerId);
+	ExtendedDisplay d =  lastCall.doMove2Check(moverPlayerId, pieceId, bucketId,  _attemptCnt);
+	if (d!=null) return d;
+	d = checkWhoseTurn(moverPlayerId);
 	if (d!=null) return d;
 	Display _q = super.doMove2(pieceId,  bucketId, _attemptCnt);
 	if (_q.error) return new ExtendedDisplay(0,_q); // FIXME: would be nice to have the correct mover value
@@ -367,31 +376,35 @@ public class EpisodeInfo extends Episode {
 	move.mover = player.getRoleForPlayerId(moverPlayerId);
 	d = processMove(_q, move);
 	return d;
+
     }
 
     
     /** Like /doMove, but without a destination (because the game piece was not movable,
 	or because the player just dropped in on the board) */
     public ExtendedDisplay doPick(String moverPlayerId, int y, int x, int _attemptCnt) throws IOException {
-	ExtendedDisplay d = checkWhoseTurn(moverPlayerId);
+	ExtendedDisplay d =  lastCall.doPickCheck(moverPlayerId, y, x,  _attemptCnt);
+	if (d!=null) return d;
+	d = checkWhoseTurn(moverPlayerId);
 	if (d!=null) return d;
 	Display _q = super.doPick(y, x, _attemptCnt);
 	Pick pick = _q.pick;
 	if (pick==null) return new ExtendedDisplay(0,_q); // FIXME: would be nice to have the correct mover value
-	pick.mover = player.getRoleForPlayerId(moverPlayerId);
-
+	pick.mover = player.getRoleForPlayerId(moverPlayerId);	
 	d = processMove(_q, pick);
 	return d;
     }
     
     public ExtendedDisplay doPick2(String moverPlayerId,  int pieceId, int _attemptCnt) throws IOException {
-	ExtendedDisplay d = checkWhoseTurn(moverPlayerId);
+	ExtendedDisplay d =  lastCall.doPick2Check(moverPlayerId, pieceId, _attemptCnt);
+	if (d!=null) return d;
+	d = checkWhoseTurn(moverPlayerId);
 	if (d!=null) return d;
 	Display _q = super.doPick2(pieceId, _attemptCnt);
 	Pick pick = _q.pick;
 	if (pick==null) return new ExtendedDisplay(0,_q); // FIXME: would be nice to have the correct mover value
 	pick.mover = player.getRoleForPlayerId(moverPlayerId);
-
+	
 	d = processMove(_q, pick);
 	return d;
     }
@@ -629,7 +642,8 @@ public class EpisodeInfo extends Episode {
 	    botAssist.didHeFollow(move);
 	    botAssist.makeSuggestion(this, q);
 	}
-	
+
+	lastCall.saveDisplay(q);	
 	return q;
     }
 

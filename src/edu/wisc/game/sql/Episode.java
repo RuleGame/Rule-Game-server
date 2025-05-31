@@ -162,7 +162,7 @@ s	    non-existing piece) the value may be different from those of
  	/** (Attempted) destination, in the [0:3] range */
 	public final int bucketNo;
 	public int getBucketNo() { return bucketNo ; }
- 	Move(int _pos, int b) {
+ 	private Move(int _pos, int b) {
 	    super(_pos);
 	    bucketNo = b;
 	}
@@ -179,7 +179,10 @@ s	    non-existing piece) the value may be different from those of
 	}
 
 	public String toString() {
-	    return "MOVE " + pos + " " +new Pos(pos) +	" to B" + bucketNo+", code=" + code;
+	    String s = "MOVE object " + pieceId;
+	    if (pos >= 0) s += " (" + new Pos(pos) +")";
+	    s += " to B" + bucketNo+", code=" + code;
+	    return s;
 	}
 
 
@@ -588,7 +591,7 @@ s	    non-existing piece) the value may be different from those of
 	    if (doneWith) throw  new IllegalArgumentException("Forgot to scroll?");
 	    transcript.add(pick);
 	    attemptCnt++;
-	    //System.out.println("DEBUG A: transcript=" + getTranscript());
+	    System.out.println("DEBUG A: attemptCnt:=" + attemptCnt); //transcript=" + getTranscript());
 	    attemptSpent += (pick instanceof Move) ? 1.0: xgetPickCost();
 
 
@@ -811,7 +814,7 @@ s	    non-existing piece) the value may be different from those of
 	    INVALID_OBJECT_ID = -10,
 	// A /move or /pick call referencing a cell that has multiple pieces
 	    MULTIPLE_OBJECTS_IN_CELL  = -11;
-	    ;
+	    
 
 	/** Used to talk to Gemini */
 	public static String toBasicName(int code) {
@@ -1276,6 +1279,9 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	    pick = _pick;
 	    errmsg = _errmsg;
 	}
+	/** This one is mostly used to report an error, and also to 
+	    create a return structure for a /display call
+	 */
 	public Display(int _code, 	String _errmsg) {
 	    this(_code, null, _errmsg);
 	}
@@ -1296,7 +1302,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     /** Checks for errors in some of the arguments of a /pick or /move call.
 	@return a Display reporting an error, or null if no error has been found
     */
-    private Display inputErrorCheck1(int y, int x, int _attemptCnt) {
+    private Display inputErrorCheck0(int _attemptCnt) {
 	if (isCompleted()) {
 	    return new Display(CODE.NO_GAME, "No game is on right now (cleared="+cleared+", stalemate="+stalemate+", earlyWin="+earlyWin+"). Use NEW to start a new game");
 	}
@@ -1306,24 +1312,55 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	    Logging.info(msg);
 	    return new Display(CODE.ATTEMPT_CNT_MISMATCH, msg);
 	}
-			
+	return null;
+    }
+
+    private Display inputErrorCheck1(int y, int x, int _attemptCnt) {
+	Display errorDisplay = inputErrorCheck0( _attemptCnt);
+	if (errorDisplay != null) return errorDisplay;
 	if (x<1 || x>Board.N) return new Display(CODE.INVALID_ARGUMENTS, "Invalid input: column="+x+" out of range");
 	if (y<1 || y>Board.N) return new Display(CODE.INVALID_ARGUMENTS, "Invalid input: row="+y+" out of range");
 	return null;
     }
 
+    private Display inputErrorCheck2(int pieceId, int _attemptCnt) {
+	Display errorDisplay = inputErrorCheck0( _attemptCnt);
+	if (errorDisplay != null) return errorDisplay;
+	if (pieceId<0) return new Display(CODE.INVALID_ARGUMENTS,  "Invalid pieceId=" + pieceId);
+	return null;
+    }
+
+
     private Pick formPick( int y, int x) {
 	Pos pos = new Pos(x,y);
-	Pick move = new Pick( pos.num());
+	Pick move = new Pick( pos);
 	return move;	
     }
 
-    private Pick formPick2( int pieceId) {
-	int j=findJforId(pieceId);
-	Pick move = new Pick( values.get(j));
-	return move;	
+    /** Forms a Move or Pick, depending on whether bucketId is valid
+	@param bucketId If its negative, it's a pick
+     */
+    private Pick form2( int pieceId, int bucketId) {
+
+	int j = findJforIdZ(pieceId);
+
+	if (j<0) {
+	    // Invalid ID. Form a Move to be recorded in transcript.
+	    // (Needed in Gemini plays)
+	    Pick move =	bucketId<0?
+		new Pick(Pick.Mode.BY_ID, pieceId):
+		new Move(Pick.Mode.BY_ID, pieceId, bucketId);
+	    move.code = CODE.INVALID_OBJECT_ID;
+	    return move;
+	} else {	
+	    Piece p = values.get(j);	    
+	    Pick move = bucketId<0?
+		new Pick(p): new Move(p, bucketId);
+	    return move;
+	}
     }
 
+	    
     
     /** Evaluate a pick attempt */
     public Display doPick(int y, int x, int _attemptCnt) throws IOException {
@@ -1334,50 +1371,29 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	return new Display(code, move, mkDisplayMsg());
     }
 
+    /** Processes a /pick?id=... call.  The call is only entered into the 
+	transcript if the args are valid, or if the error is due to 
+	invalid object id ZZZZ
+     */
     public Display doPick2(int pieceId, int _attemptCnt) throws IOException {
-	Display errorDisplay =inputErrorCheck1(1,1, _attemptCnt);
+	Display errorDisplay =inputErrorCheck2(pieceId, _attemptCnt);
 	if (errorDisplay!=null) return errorDisplay;
-	Pick move = formPick2(pieceId);
-	int code = accept(move);
+	Pick move = form2(pieceId, -1);
+
+	int code = move.code;
+	if (code == CODE.INVALID_ARGUMENTS ||
+	    code == CODE.INVALID_OBJECT_ID	    ) {
+	    // Unlike other "client error" moves, this is a bad pieceId
+	    // case, and is saved in transcript, for Gemini runs
+	    transcript.add(move);
+	    attemptCnt++;
+	    System.out.println("DEBUG B: attemptCnt:=" + attemptCnt); //transcript=" + getTranscript());
+	} else {
+	    code = accept(move);
+	}
 	return new Display(code, move, mkDisplayMsg());
     }
 
-    /** Packs coordinates into a Move or Pick object */
-    private Pick formMove( int y, int x, int by, int bx) {
-	if (bx!=0 && bx!=Board.N+1) throw new IllegalArgumentException("Invalid input: bucket column="+bx+" is not 0 or "+(Board.N+1));
-	if (by!=0 && by!=Board.N+1) throw new IllegalArgumentException("Invalid input: bucket row="+by+" is not 0 or "+(Board.N+1));
-
-	Pos pos = new Pos(x,y), bu =  new Pos(bx, by);
-	int buNo=bu.bucketNo();
-	if (buNo<0 || buNo>=NBU) {
-	    throw new IllegalArgumentException("Invalid bucket coordinates");
-	}
-	Move move = new Move(pos.num(), buNo);
-	return move;
-    }
-
-    private Pick formMove2( int pieceId, int bucketId) {
-	if (bucketId<0 || bucketId >= NBU) throw new IllegalArgumentException("Invalid input: bucket ID=" + bucketId);
-	if (pieceId<0) throw new IllegalArgumentException("Invalid pieceId=" + pieceId);
-
-
-	int j = findJforIdZ(pieceId);
-
-	if (j<0) {
-	    // Invalid ID. Form a Move to be recorded in transcript.
-	    // (Needed in Gemini plays)
-	    Move move = new Move(Pick.Mode.BY_ID, pieceId, bucketId);
-	    move.code = CODE.INVALID_ARGUMENTS;
-	    return move;
-	} else {	
-	    Piece p = values.get(j);
-	    
-	    Move move = new Move(p, bucketId);
-	    return move;
-	}
-    }
-
-	    
     /** Evaluate a move attempt
 	@param x the x-coordinate (1 thru 6) of the game piece the player tries to move
 	@param y the y-coordinate of the game piece the player tries to move
@@ -1388,33 +1404,36 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     public Display doMove(int y, int x, int by, int bx, int _attemptCnt) throws IOException {
 	Display errorDisplay =inputErrorCheck1(y, x, _attemptCnt);
 	if (errorDisplay!=null) return errorDisplay;
-	Move move;
-	try {
-	    move = (Move)formMove(y,x,by,bx);
-	} catch(IllegalArgumentException ex) {
-	    ex.printStackTrace(System.err);
-	    return new Display(CODE.INVALID_ARGUMENTS, ex.getMessage());
+
+	if (bx!=0 && bx!=Board.N+1) return new Display(CODE.INVALID_ARGUMENTS, 
+						       "Invalid input: bucket row="+by+" is not 0 or "+(Board.N+1));
+
+	Pos pos = new Pos(x,y), bu =  new Pos(bx, by);
+	int buNo=bu.bucketNo();
+	if (buNo<0 || buNo>=NBU) {
+	    if (bx!=0 && bx!=Board.N+1) return new Display(CODE.INVALID_ARGUMENTS, "Invalid converted bucket no " + buNo); 
 	}
+	Move move = new Move(pos, bu);
 	int code = accept(move);
 	return new Display(code, move, mkDisplayMsg());
     }
 
 
     public Display doMove2(int pieceId, int bucketId, int _attemptCnt) throws IOException {
-	Display errorDisplay =inputErrorCheck1(1,1, _attemptCnt);
+	Display errorDisplay =inputErrorCheck2(pieceId, _attemptCnt);
 	if (errorDisplay!=null) return errorDisplay;
-	Move move=null;
-	try {
-	    move = (Move)formMove2(pieceId,bucketId);
-	} catch(IllegalArgumentException ex) {
-	    ex.printStackTrace(System.err);
-	    return new Display(move.code, ex.getMessage());
-	}
-	int code;
-	if (move.code == CODE.INVALID_ARGUMENTS) {
-	    code = move.code;
+
+	if (bucketId<0 || bucketId >= NBU)
+	    return new Display(CODE.INVALID_ARGUMENTS, "Invalid input: bucket ID=" + bucketId);
+	
+	Move move= (Move)form2(pieceId,bucketId);
+	int code = move.code;
+	if (code == CODE.INVALID_ARGUMENTS) {
+	    // Unlike other "client error" moves, this is a bad pieceId
+	    // case, and is saved in transcript, for Gemini runs
 	    transcript.add(move);
 	    attemptCnt++;
+	    System.out.println("DEBUG C: attemptCnt:=" + attemptCnt); //transcript=" + getTranscript());
 	} else {
 	    code = accept(move);
 	}
