@@ -490,6 +490,17 @@ public class Board {
     }
     */
 
+    /** Where in the values array do we have a game piece with the specified id?
+	@param id piece ID of the game piece we look for
+	@return matching Piece object, or null if no object with a matching ID can be found.
+    */
+    public Piece findPieceForIdZ(long id) {
+	for(int j=0; j<value.size(); j++) {
+	    Piece p = value.get(j);
+	    if (p.getId()==id) return p;
+	}
+	return null;
+    }
 
     
 }

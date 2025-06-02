@@ -225,6 +225,10 @@ s	    non-existing piece) the value may be different from those of
 	return -1;
     }
     
+    /** Where in the values array do we have a game piece with the specified id?
+	@return array position
+	@throws IllegalArgumentException no object with a matching ID can be found.
+     */
     private int findJforId(long id) {
 	int j = findJforIdZ(id);
 	if (j>=0) return j;

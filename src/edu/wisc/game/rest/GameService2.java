@@ -244,7 +244,9 @@ public class GameService2 {
 	if (playerId!=null && playerId.equals("null")) playerId=null;
 	try {	    
 	    if (pieceId >= 0) { // modern (GS 8)
-		return rv=epi.doPick2(playerId, pieceId, cnt);
+		rv=epi.doPick2(playerId, pieceId, cnt);
+		boardMismatch(rv.getBoard(), x, y, pieceId);
+		return rv;
 	    } else { // legacy (GS 1 thru GS 7)
 		return rv=epi.doPick(playerId, y,x, cnt);
 	    }
@@ -260,6 +262,27 @@ public class GameService2 {
 	}
     }
 
+    /** Used to troubleshoot the incorrect-coord problem in the GUI client (server 8.018) 
+	@return true if the object coord sent by the client don't match the coord stored
+	in the board for the object identified by the sent pieceId
+    */
+    private boolean boardMismatch(Board board, 
+				  int x, 
+				  int y, 
+				  int pieceId) {
+	Piece p = board.findPieceForIdZ(pieceId);
+	if (p==null) {
+	    Logging.error("This call received invalid piece ID");
+	    return false;
+	}
+	if (p.getX()!=x || p.getY()!=y) {
+	    Logging.error("The /pick call sent incorrect coordinates ("+x+","+y+") for piece " + pieceId+"("+p.getX()+","+p.getY()+")");
+	    return true;
+	} else {
+	    Logging.info("The /pick call sent correct coordinates for piece " +pieceId+"("+p.getX()+","+p.getY()+")");
+	}
+	return false;	    	
+    }
     
     private static EpisodeInfo dummyEpisode = new EpisodeInfo();
 
