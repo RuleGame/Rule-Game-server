@@ -52,16 +52,18 @@ import edu.wisc.game.rest.ParaSet.Incentive;
 public class GameService2Html extends GameService2 {
 
     /** JavaScript elements to put inside HEAD */
-    private static String makeJS(UriInfo uriInfo, String myPlayerId) {
+    private static String makeJS(UriInfo uriInfo, String myPlayerId, boolean is2pg) {
 	String watchUrl = makeWatchServerUrl( uriInfo, myPlayerId);
 
 	String s= "";
 	s += fm.style("../../css/board.css") + "\n";
 	s +="<script type=\"application/javascript\">\n";
 	s += "var myPid='"  + myPlayerId + "';\n";
-	s +=  "var watchUrl='"  + watchUrl + "';\n";
+	s +=  "var watchUrl='"  + watchUrl + "';\n";	
 	s += "</script>\n";
-	s += "<script type=\"application/javascript\" src=\"../../js/socket1.js\"></script>\n";
+	if (is2pg) {
+	    s += "<script type=\"application/javascript\" src=\"../../js/socket1.js\"></script>\n";
+	}
 	s += "<script type=\"application/javascript\" src=\"../../js/boardDisplay.js\"></script>\n";
 	return s;	
     }
@@ -98,10 +100,13 @@ path = /w2020/game-data/GameService2Html/playerHtml
              u.getFragment())
      .equals(u)
      */
-    private static String makeWatchServerUrl( UriInfo uriInfo, String myPlayerId) {
+    private static String makeWatchServerUrl( UriInfo uriInfo, String myPlayerId ) {
+
+    
 	//UriBuilder ub = uriIndo.getAbsolutePathBuilder();
 	URI u = uriInfo.getBaseUri();
-	
+    
+
 	// From: http://localhost:8080/w2020/game-data/GameService2Html/playerHtml
 	// To: http://localhost:8080/w2020/websocket/watchPlayer
 
@@ -123,11 +128,11 @@ path = /w2020/game-data/GameService2Html/playerHtml
     }
 
     /** Produces the final document, attaching JS snippets to the head and body */
-    private static String withJS(  UriInfo uriInfo, String playerId, String title, String body) {
-	String head = fm.title(title) + makeJS(uriInfo,  playerId);
-        //body += makeEnding();
-	return fm.html2(head, body);	
-    }
+	private static String withJS(  UriInfo uriInfo, String playerId, boolean is2pg, String title, String body) {
+	    String head = fm.title(title) + makeJS(uriInfo,  playerId, is2pg);
+	    //body += makeEnding();
+	    return fm.html2(head, body);	
+	}
 
     
     private static HTMLFmter  fm = new HTMLFmter();
@@ -147,7 +152,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	PlayerResponse pr = new PlayerResponse( playerId, exp, uid);
 
 	Vector<String> v = new Vector<>();
-	boolean canPlay = false;
+	boolean canPlay = false, timedout = false, abandoned=false;
 
 	v.add("Response: " + fm.para(  ""+JsonReflect.reflectToJSONObject(pr, true)));
 
@@ -165,6 +170,16 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	    v.add(fm.para("Successfully registered new player"));
 	    canPlay = true;
 	    title="Registered player " + playerId;
+	} else if (pr.getCompletionMode()==PlayerInfo.COMPLETION.WALKED_AWAY) {
+	    title="Timed-out player " + playerId;
+	    v.add(fm.para("The game for player " + playerId + " was timed out because of an extended period of inactivity"));
+	    canPlay = false;
+	    timedout = true;
+	} else if (pr.getCompletionMode()==PlayerInfo.COMPLETION.ABANDONED) {
+	    title="Abandoned player " + playerId;
+	    v.add(fm.para("The game for player " + playerId + " was terminated because your partner just walked away"));
+	    canPlay = false;
+	    abandoned = true;
 	} else if (pr.getExperimentPlan().equals(exp)  && !pr.getAlreadyFinished()) {
 	    v.add(fm.para("This player already exists, but it is associated with the same experiment plan, and you can play more episodes"));
 	    canPlay = true;
@@ -175,7 +190,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	    title="Player " + playerId + " already exists";
 	}
 
-	if (pr.getIsTwoPlayerGame()) {
+	if (pr.getIsTwoPlayerGame() && !timedout && !abandoned) {
 	    String s = "This is a two-player-game";
 	    if (pr.getIsCoopGame()) s += " (cooperative)";
 	    else if (pr.getIsAdveGame()) s += " (adversarial)";	    
@@ -279,7 +294,22 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	    PlayerInfo x = PlayerResponse.findPlayerInfoAlreadyCached(playerId);
 	    if (x.getNeedChat()) {
 		body += chatSection();
-	    }	    
+	    }
+
+
+	} else if (w.getCompletionMode()==PlayerInfo.COMPLETION.WALKED_AWAY) {
+	    title="Timed-out player " + playerId;
+	    body += fm.para("The game for player " + playerId + " was timed out because of an extended period of inactivity");
+	    //canPlay = false;
+	    //timedout = true;
+	} else if (w.getCompletionMode()==PlayerInfo.COMPLETION.ABANDONED) {
+	    title="Abandoned player " + playerId;
+	    body += fm.para("The game for player " + playerId + " was terminated because your partner just walked away");
+	    body += fm.para("If this were the GUI client, this page would have a button to send you to the demographics survey page");
+	    //canPlay = false;
+	    //abandoned = true;
+
+	    
 	} else {
 	    //-- The moveForm also includes the chatSection at the end
 	    body += moveForm(playerId, w.getDisplay(),  episodeId);
@@ -289,7 +319,9 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	
 	body +=  fm.h4( "Response")+fm.para(  ""+JsonReflect.reflectToJSONObject(w, true));
 
-	return withJS( uriInfo, playerId, title, body);
+	boolean is2pg = epi.getPlayer().is2PG();
+	
+	return withJS( uriInfo, playerId, is2pg, title, body);
     }
 
     
@@ -310,7 +342,9 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	body += fm.hr();
 	body += fm.h4("Server response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true, null, 6));
 
-	return withJS( uriInfo, playerId, title, body);
+	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
+	boolean is2pg = epi.getPlayer().is2PG();
+	return withJS( uriInfo, playerId, is2pg, title, body);
     }
 
 
@@ -320,16 +354,25 @@ path = /w2020/game-data/GameService2Html/playerHtml
     @Produces(MediaType.TEXT_HTML)
     public String moveHtml(@FormParam("playerId") String playerId,
 			   @FormParam("episode") String episodeId,
-			   @FormParam("x") int x,
-			   @FormParam("y") int y,
-			   @FormParam("bx") int bx,
-			   @FormParam("by") int by,
+			   @DefaultValue("-1") @FormParam("x") int x, 
+			   @DefaultValue("-1") @FormParam("y") int y,
+			   @DefaultValue("-1") @FormParam("bx") int bx,
+			   @DefaultValue("-1") @FormParam("by") int by,
+			   
+			   @DefaultValue("-1") @FormParam("id") int pieceId,
+			   @DefaultValue("-1") @FormParam("bid") int bucketId,
+
 			   @FormParam("cnt") int cnt,
 			   final @Context UriInfo uriInfo){
 			   
-	Episode.Display d=move(playerId, episodeId,x,y,bx,by,cnt);
+	Episode.Display d=move(playerId, episodeId,x,y,bx,by,pieceId, bucketId, cnt);
 	
-	String title= episodeId +" : MOVE " + x + " " +y + " " + bx + " " + by;
+	String title= episodeId +" : MOVE";
+	if (pieceId>=0) {
+	    title += " piece " + pieceId + " to bucket " + bucketId;
+	} else {
+	    title += " " 	+ x + " " +y + " " + bx + " " + by;
+	}
 
 	String body = "";
 	body += fm.para(title);
@@ -339,7 +382,9 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	body += fm.hr();
 	body += fm.h4("Server response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true, null, 6));
 
-	return withJS( uriInfo, playerId, title, body);
+	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);		
+	boolean is2pg = epi.getPlayer().is2PG();
+	return withJS( uriInfo, playerId, is2pg, title, body);
     }
 
     @POST
@@ -348,12 +393,15 @@ path = /w2020/game-data/GameService2Html/playerHtml
     @Produces(MediaType.TEXT_HTML)
     public String pickHtml(@FormParam("playerId") String playerId,
 			   @FormParam("episode") String episodeId,
-			   @FormParam("x") int x,
-			   @FormParam("y") int y,
+
+			   @DefaultValue("-1") @FormParam("x") int x, 
+			   @DefaultValue("-1") @FormParam("y") int y,
+			   @DefaultValue("-1") @FormParam("id") int pieceId,
+
 			   @FormParam("cnt") int cnt,
 			   final @Context UriInfo uriInfo){
 			   
-	Episode.Display d=move(playerId, episodeId,x,y,cnt);
+	Episode.Display d=move(playerId, episodeId,x,y,pieceId,cnt);
 	
 	String title= episodeId +" : PICK " + x + " " +y;
 
@@ -363,8 +411,10 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	body += moveForm(playerId, d,  episodeId);
 	body += fm.hr();
 	body += fm.h4("Server response") + fm.para(  ""+JsonReflect.reflectToJSONObject(d, true, null, 6));
-
-	return withJS( uriInfo, playerId, title, body);
+	
+	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
+	boolean is2pg = epi.getPlayer().is2PG();	
+	return withJS( uriInfo, playerId, is2pg, title, body);
     }
 
     /** Shows the player's history.
@@ -419,9 +469,12 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	    } else {
 		//Vector<String> v= new Vector<>();
 		String s = "";
-		for(int i=0; i<faces.size(); i++) {
-		    String q = faceImg(faces.get(i), facesMine.get(i));
-		    s += q;
+		if (faces==null) s += "NO FACES?";
+		else {
+		    for(int i=0; i<faces.size(); i++) {
+			String q = faceImg(faces.get(i), facesMine.get(i));
+			s += q;
+		    }
 		}
 		body += fm.para(s);
 	    }
@@ -464,8 +517,34 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	EpisodeInfo.ExtendedDisplay d = (EpisodeInfo.ExtendedDisplay)_d;
 	
 	String body = "";
+
 	EpisodeInfo epi = (EpisodeInfo)EpisodeInfo.locateEpisode(episodeId);
 	boolean isAdve = epi.getPlayer().isAdveGame();
+
+
+	String botSays = d.getBotAssistChat();
+	if (botSays!=null) {
+	    Episode.Move proposed = epi.xgetLastProposed();
+	    String s = fm.strong("Bot assistant says: " + botSays );
+	    s += "&nbsp;";
+
+	    if (proposed!=null) {
+		String formA="";
+		formA += fm.hidden("playerId", playerId);
+		formA += fm.hidden("episode", episodeId);
+		formA += fm.hidden("cnt", ""+d.getNumMovesMade());
+		formA += fm.hidden("id", ""+ proposed.getPieceId());
+		formA += fm.hidden("bid", ""+proposed.getBucketNo());
+		formA += fm.wrap("button", "type='submit'", "Follow this suggestion");
+		s += fm.wrap("form", "id=\"followForm\" method='post' action='moveHtml'", formA);
+	    } else {
+		s += " (No info)";
+	    }
+	    
+	    body += fm.para(s);
+
+	    
+	}
 	
 	String s = "Rule " + (d.getDisplaySeriesNo()+1) + ". ";
 	if (d.getDisplaySeriesNo() != d.getSeriesNo()) s += " (internally "+(d.getSeriesNo()+1)+")";
@@ -476,6 +555,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	    s += "" + d.xgetRewardsAndFactorsPerSeriesString();
 	}
 	body += fm.para(s);
+
 	
 	body+= fm.h4("Current position");
 
@@ -483,10 +563,10 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	//-----------
 
 	boolean canMove = (d.getFinishCode()==Episode.FINISH_CODE.NO) && !d.getMustWait();
-	boolean[] isMoveable = epi.positionsOfMoveablePieces();
-	
+	boolean[] isJMoveable = epi.getIsJMoveable();
+		
 	String notation = HtmlDisplay.notation(epi.weShowAllMovables());	
-	String leftSide  =HtmlDisplay.htmlDisplay(epi.getPieces(), epi.getLastMovePos(),  epi.weShowAllMovables(), isMoveable, 40, canMove);
+	String leftSide  =HtmlDisplay.htmlDisplay(epi.getValues(), epi.getLastMove(),  epi.weShowAllMovables(), isJMoveable, 40, canMove);
 
 	String rightSide = notation;
 	//------------
@@ -508,13 +588,13 @@ path = /w2020/game-data/GameService2Html/playerHtml
 		formA += fm.hidden("playerId", playerId);
 		formA += fm.hidden("episode", episodeId);
 		formA += fm.hidden("cnt", ""+d.getNumMovesMade());
-		formA += "Piece (x=" + fm.input2("x",  "id='moveFormX' size='2'") + 
-		    ", y=" + fm.input2("y",  "id='moveFormY' size='2'" ) +  ")" + fm.br();
+		formA += "Piece (id=" + fm.input2("id",  "id='moveFormId' size='3'") + 
+		    ")" + fm.br();
 		
 		String form = formA;
 		// 
-		form += "Bucket (x=" + fm.input2("bx", "id='moveFormBX' size='2'") +
-		    ", y=" + fm.input2("by",  "id='moveFormBY' size='2'")	+")"+   fm.br();
+		form += "Bucket no. " + fm.input2("bid", "id='moveFormBid' size='2'") +
+		    ")"+   fm.br();
 		form += "<input type='submit'>";
 		form = fm.wrap("form", "id=\"moveForm\" method='post' action='moveHtml'", form);
 		form = fm.h3( "Make a move!") +
@@ -536,13 +616,24 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	    rightSide += fm.table("border='1'", fm.rowExtra("valign='top'",cells));
 	    
 	} else {
+	    boolean  abandoned=false;
+	    
 	    rightSide += fm.para("Game over - no move possible. Finish code=" + d.getFinishCode());
 
+	    if (d.getFinishCode()==Episode.FINISH_CODE.ABANDONED) {
+		rightSide += fm.para("(Game over for you because your partner just walked away... If this were the GUI client, you'd be reidirected to the demographics screen right away)");
+		abandoned=true;
+	    } else  if (d.getFinishCode()==Episode.FINISH_CODE.WALKED_AWAY) {
+		rightSide += fm.para("(Game over for you because you have been timed out due to inactivity)");
+		abandoned=true;
+	    }
+
+
 	    
-	    boolean mayNeedGuess =
+	    boolean mayNeedGuess = 
 		d.getIncentive().mastery() ?
 		d.getFinishCode()==Episode.FINISH_CODE.EARLY_WIN:
-		true;
+		!abandoned;
 	
 	    if (mayNeedGuess && !d.getGuessSaved()) {
 		rightSide += fm.h4("Your guess");
@@ -571,7 +662,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
 		form =  fm.wrap("form", "method='post' action='guessHtml'", form);
 		form = fm.para(form);
 		rightSide += form;
-	    } else {
+	    } else if (!abandoned) {
 		rightSide += fm.h3("What will you do next?");
 		PlayerInfo.TransitionMap map = d.getTransitionMap();	    
 		rightSide += transitionTable(epi, playerId, map);

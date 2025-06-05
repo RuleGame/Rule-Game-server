@@ -32,6 +32,7 @@ public  class MwSeries {
     final String exp;
     final String trialListId;
     final int seriesNo;
+    /** In 1PG or adve 2PG the id of the actual player who made the moves. In coop 2PG, the id of Player 0. */
     final String playerId;
     
     /** When a value is put here, it it used instead of the
@@ -94,8 +95,13 @@ public  class MwSeries {
     /** As per PK's messages, 2023-01 */
     double mDagger=0;
     public double getMDagger() { return mDagger; }
-    
-    MwSeries(EpisodeHandle o, Set<String> ignorePrec) {
+
+    /** @param chosenMover If it's -1, the entire transcript is
+	analyzed. (That's the case for 1PG and coop 2PG). In adve 2PG,
+	it is 0 or 1, and indicates which partner's record one extracts
+	from the transcript.
+    */
+    MwSeries(EpisodeHandle o, Set<String> ignorePrec, int chosenMover) {
 	ruleSetName = o.ruleSetName;
 	precedingRules = new Vector<String>();
 	for(String r: o.precedingRules) {
@@ -108,7 +114,12 @@ public  class MwSeries {
 	exp = o.exp;
 	trialListId = o.trialListId;
 	seriesNo = o.seriesNo;
-	playerId = o.playerId;
+	if (chosenMover == 1) {
+	    if (o.neededPartnerPlayerId==null) throw new IllegalArgumentException("Partner player ID is not know for pid="+o.playerId);
+	    playerId = o.neededPartnerPlayerId;
+	} else {
+	    playerId = o.playerId;
+	}
     }
 
     static final String header="#ruleSetName,precedingRules,"+
@@ -133,49 +144,48 @@ public  class MwSeries {
 	@param into Adds the data into this vector.
     */
     public static void readFromFile(File f, Vector<MwSeries> into) throws IOException, IllegalInputException {
-	    if (!f.exists()) throw new IOException("File does not exist: " + f);
-	    if (!f.canRead()) throw new IOException("Cannot read file: " + f);
-	    CsvData csv = new CsvData(f, false, false, null);
-
-	    if (csv.entries.length<2) throw new IOException("No data found in file: " + f);
-	    CsvData.BasicLineEntry header =  (CsvData.BasicLineEntry)csv.header;
-	    //System.out.println("Header=" + header);
-	    //int nCol = header.nCol();
-	    
-	    for(int j=0; j<csv.entries.length; j++) {
-		CsvData.BasicLineEntry line = (CsvData.BasicLineEntry)csv.entries[j];
-		//System.out.println("DEBUG: TL(f=" + f+"), adding para set " + j);
-		into.add(new MwSeries( header, line));
-	    }
+	if (!f.exists()) throw new IOException("File does not exist: " + f);
+	if (!f.canRead()) throw new IOException("Cannot read file: " + f);
+	CsvData csv = new CsvData(f, false, false, null);
+	
+	if (csv.entries.length<2) throw new IOException("No data found in file: " + f);
+	CsvData.BasicLineEntry header =  (CsvData.BasicLineEntry)csv.header;
+	//System.out.println("Header=" + header);
+	//int nCol = header.nCol();
+	
+	for(int j=0; j<csv.entries.length; j++) {
+	    CsvData.BasicLineEntry line = (CsvData.BasicLineEntry)csv.entries[j];
+	    //System.out.println("DEBUG: TL(f=" + f+"), adding para set " + j);
+	    into.add(new MwSeries( header, line));
+	}
     }
 	
     /**  This is basically the inverse of toCsv() */
     MwSeries(CsvData.BasicLineEntry header, CsvData.BasicLineEntry line) throws  IllegalInputException {
 
-	    // header="#ruleSetName,precedingRules,"+
-	    //"exp,trialListId,seriesNo,playerId,learned,total_moves,total_errors,mStar";
-	    
-	    ruleSetName = line.getColByName(header, "ruleSetName", null);
-	    if (ruleSetName==null) throw new  IllegalInputException("No ruleSetName");
-	    String q =  line.getColByName(header, "precedingRules", "");
-	    precedingRules = new Vector<>( Arrays.stream( q.split("[;:]")).filter(e->!e.isEmpty()).collect(Collectors.toList()));
-
-	    //precedingRules = Util.array2vector( q.split("[;:]"));
-
-	    exp = line.getColByName(header, "exp", "");
-	    trialListId =  line.getColByName(header, "trialListId", "");
-	    seriesNo =  Integer.parseInt(line.getColByName(header, "seriesNo", "0"));
-	    playerId =  line.getColByName(header, "playerId", "");
-	    learned =  Boolean.parseBoolean(line.getColByName(header, "learned", "false"));
-	    totalMoves = Integer.parseInt(line.getColByName(header, "total_moves", "0"));
-	    totalErrors = Integer.parseInt(line.getColByName(header, "total_errors", "0"));
-	    mStar = Double.parseDouble(line.getColByName(header, "mStar", "-1"));
-	    if (mStar<0)  throw new  IllegalInputException("No mStar value");
-	    // mDagger is optional in input files. (But it had better
-	    // be there if we want to use it, of course!)	    
-	    mDagger = Double.parseDouble(line.getColByName(header, "mDagger", "NaN"));
-
-
+	// header="#ruleSetName,precedingRules,"+
+	//"exp,trialListId,seriesNo,playerId,learned,total_moves,total_errors,mStar";
+	
+	ruleSetName = line.getColByName(header, "ruleSetName", null);
+	if (ruleSetName==null) throw new  IllegalInputException("No ruleSetName");
+	String q =  line.getColByName(header, "precedingRules", "");
+	precedingRules = new Vector<>( Arrays.stream( q.split("[;:]")).filter(e->!e.isEmpty()).collect(Collectors.toList()));
+	
+	//precedingRules = Util.array2vector( q.split("[;:]"));
+	
+	exp = line.getColByName(header, "exp", "");
+	trialListId =  line.getColByName(header, "trialListId", "");
+	seriesNo =  Integer.parseInt(line.getColByName(header, "seriesNo", "0"));
+	playerId =  line.getColByName(header, "playerId", "");
+	learned =  Boolean.parseBoolean(line.getColByName(header, "learned", "false"));
+	totalMoves = Integer.parseInt(line.getColByName(header, "total_moves", "0"));
+	totalErrors = Integer.parseInt(line.getColByName(header, "total_errors", "0"));
+	mStar = Double.parseDouble(line.getColByName(header, "mStar", "-1"));
+	if (mStar<0)  throw new  IllegalInputException("No mStar value");
+	// mDagger is optional in input files. (But it had better
+	// be there if we want to use it, of course!)	    
+	mDagger = Double.parseDouble(line.getColByName(header, "mDagger", "NaN"));
+	
     }
 
     /** Computes and sets mDagger in every field, as mDagger(P,E)
@@ -187,46 +197,41 @@ public  class MwSeries {
 	P learned the rules neither in E nor in any other experience.
     */
     static void computeMDagger(Vector<MwSeries> v) {
-	    // maps playerId to {sum, count}
-	    HashMap<String,double[]> h = new HashMap<>();
-	    for(MwSeries ser: v) {
-		double[] z = h.get(ser.playerId);
-		if (z==null) h.put(ser.playerId, z=new double[2]);
-		if (ser.learned) {
-		    z[0] += ser.mStar;
-		    z[1] += 1;
-		}
+	// maps playerId to {sum, count}
+	HashMap<String,double[]> h = new HashMap<>();
+	for(MwSeries ser: v) {
+	    double[] z = h.get(ser.playerId);
+	    if (z==null) h.put(ser.playerId, z=new double[2]);
+	    if (ser.learned) {
+		z[0] += ser.mStar;
+		z[1] += 1;
 	    }
-	    for(MwSeries ser: v) {
-		double[] z = h.get(ser.playerId);
-		ser.mDagger = ser.mStar - z[0]/z[1];
-	    }
+	}
+	for(MwSeries ser: v) {
+	    double[] z = h.get(ser.playerId);
+	    ser.mDagger = ser.mStar - z[0]/z[1];
+	}
     }
 
     /** Modifies the precedingRules array, prepending "true." or
 	"false." to each element depending on whether successful
 	learning took place in the corresponding series. This is
 	used in PrecMode.EveryCond mode.
-    */
-    void adjustPreceding(Vector<MwSeries> savedMws) {
-	    for(int j=0; j< precedingRules.size(); j++) {
-		String r = precedingRules.get(j);
-		if (r.startsWith("true.") ||r.startsWith("false.")) continue;
-		MwSeries old = null;
-		// FIXME quadratic cost...
-		for(MwSeries x: savedMws) {
-		    if (x.playerId.equals(playerId) &&
-			x.ruleSetName.equals(r)) {
-			old = x;
-			break;
-		    }
-		}
-		if (old==null) throw new IllegalArgumentException("Cannot find preceding series for p="+playerId+", perhaps because the trial list files have been erased, or the player skipped the series for rule="+r);
-		r = "" + old.learned + "." + r;
 
-		//if (ignorePrec.contains(r)) continue;
-		precedingRules.set(j, r);
-	    }   
+	@param whatILearned Info about this player's learning 
+	success on the rules he's done previously.
+    */
+    void adjustPreceding(HashMap<String,Boolean> whatILearned) {
+	for(int j=0; j< precedingRules.size(); j++) {
+	    String r = precedingRules.get(j);
+	    if (r.startsWith("true.") ||r.startsWith("false.")) continue;
+	    Boolean learned = whatILearned.get(r);
+	    if (learned==null) throw new IllegalArgumentException("Cannot find preceding series for p="+playerId+", perhaps because the trial list files have been erased, or the player skipped the series for rule="+r);
+	    r = "" + learned + "." + r;
+	    
+	    //if (ignorePrec.contains(r)) continue;
+	    precedingRules.set(j, r);
+	}   
     }
     
     

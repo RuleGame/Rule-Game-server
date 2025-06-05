@@ -7,6 +7,8 @@ import java.text.*;
 import edu.wisc.game.util.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.sql.*;
+import edu.wisc.game.tools.EpisodeHandle;
+import edu.wisc.game.tools.AnalyzeTranscripts.TrialListMap;
 
 import edu.wisc.game.sql.Board.Pos;
 import edu.wisc.game.sql.Episode.Pick;
@@ -23,39 +25,28 @@ public class TranscriptManager {
 	
 
     /* Saves all the recorded moves (the transcript of the episode) into a CSV file.
+
        <pre>
        transcripts/pid.transcript.csv
       pid,episodeId,moveNo,y,x,by,bx,code
 </pre>
+
+       @param includeFollow Include the "didFollow" column
     */    
-    public static void saveTranscriptToFile(String pid, String eid, File f,     Vector<Pick> transcript) {
+    public static void saveTranscriptToFile(String pid, String eid, File f,     Vector<Pick> transcript, boolean includeFollow) {
 	synchronized(file_writing_lock) {
 	try {	    
 	    PrintWriter w = new PrintWriter(new	FileWriter(f, true));
-	    if (f.length()==0) w.println("#pid,episodeId,moveNo,timestamp,mover,y,x,by,bx,code");
+	    if (f.length()==0) {
+		String header = "#pid,episodeId,moveNo,timestamp,mover,objectId,y,x,by,bx,code";
+		if (includeFollow) header += ",followed";
+		w.println(header);
+	    }
 	    Vector<String> v = new Vector<>();
 	    int k=0;
 	    for(Pick move: transcript) {
-		v.clear();
-		v.add(pid);
-		v.add(eid);
-		v.add(""+(k++));
-		v.add( Episode.sdf2.format(move.time));
-		v.add(""+move.getMover());
-		Pos q = new Pos(move.pos);
-		v.add(""+q.y);
-		v.add(""+q.x);
-		if (move instanceof Move) { // a real move with a destination
-		    Move m = (Move)move;
-		    Board.Pos b = Board.buckets[m.bucketNo];
-		    v.add(""+b.y);
-		    v.add(""+b.x);
-		} else { // just a pick -- no destination
-		    v.add("");
-		    v.add("");
-		}
-		v.add(""+move.getCode());
-		w.println(String.join(",", v));
+		String s = move2line(pid, eid, k++, move, includeFollow);
+		w.println(s);
 	    }
 	    w.close();
 	} catch(IOException ex) {
@@ -65,21 +56,55 @@ public class TranscriptManager {
 	}  
     }
 
+
+    /** Creates one line of the transcript file */
+    private static String move2line(String pid, String eid, int k, Pick move, boolean includeFollow) {
+	Vector<String> v = new Vector<>();
+	v.add(pid);
+	v.add(eid);
+	v.add(""+k);
+	v.add( Episode.sdf2.format(move.time));
+	v.add(""+move.getMover());
+	v.add(""+ move.getPieceId());
+	Pos q = new Pos(move.pos);
+	v.add(""+q.y);
+	v.add(""+q.x);
+	if (move instanceof Move) { // a real move with a destination
+	    Move m = (Move)move;
+	    Board.Pos b = Board.buckets[m.bucketNo];
+	    v.add(""+b.y);
+	    v.add(""+b.x);
+	} else { // just a pick -- no destination
+	    v.add("");
+	    v.add("");
+	}
+	v.add(""+move.getCode());
+	if (includeFollow) v.add(move.getDidFollow()? "1":"0");
+	return String.join(",", v);	
+    }
+    
+    
     /** Some of the transcript data read back from a file. This is used
 	when we need to read and statistically analyze old transcripts.
      */
     public static class ReadTranscriptData extends Vector<ReadTranscriptData.Entry> {
+
+	final public CsvData.BasicLineEntry header;
+	final boolean hasMover, hasObjectId;
+	
 	/** Stores the content of one line (representing one move/pick
 	    attempt) read back from the transcript file */
 	public static class Entry {
 	    
 	    // thru ver 6.*: "#pid,episodeId,moveNo,timestamp,y,x,by,bx,code"
 	    // from ver 7.*: "#pid,episodeId,moveNo,timestamp,mover,y,x,by,bx,code"
+	    // from ver 9.*: "#pid,episodeId,moveNo,timestamp,mover,objectId,y,x,by,bx,code"
 	    
 	    final public CsvData.BasicLineEntry csv;	    
 	    
 	    final public String pid, eid;
 	    final public int k;
+	    /** YYYYMMDD-hhmmss.sss */
 	    final public String timeString;
 	    /** Pick or move, as the case may be */
 	    final public Pick pick;
@@ -87,11 +112,16 @@ public class TranscriptManager {
 	    final public int code;
 	    final public int mover;
 
+	    /** Parses the timeString value, using the same 
+		format that was used to write it */
+	    public Date timestamp() {
+		ParsePosition pos = new ParsePosition(0);
+		return Episode.sdf2.parse(timeString, pos);
+	    }
 	    
-	    Entry(CsvData.BasicLineEntry e) {
+	    
+	    Entry(CsvData.BasicLineEntry e, boolean hasMover, boolean hasObjectId) {
 		//-- the "mover" column was added in GS 7.0
-		final boolean hasMover = (e.nCol() > 9);
-
 		
 		csv = e;
 		int j=0;
@@ -100,8 +130,10 @@ public class TranscriptManager {
 		k = e.getColInt(j++);
 		timeString = e.getCol(j++);
 		mover = hasMover? e.getColInt(j++) : 0;
+		int objectId = hasObjectId? e.getColInt(j++) : -1;
 		int qy = e.getColInt(j++);
 		int qx = e.getColInt(j++);
+		if (objectId < 0) objectId = BoardManager.substituteObjectId(qx,qy);
 		Integer by = e.getColInt(j++);
 		Integer bx = e.getColInt(j++);
 		boolean isMove =(by!=null);
@@ -110,7 +142,7 @@ public class TranscriptManager {
 		pick = isMove?
 		    new Move(pos, new Pos(bx, by)):
 		    new Pick(pos);
-
+		pick.setPieceId(objectId);
 		
 		code = e.getColInt(j++);
 		pick.setCode( code);
@@ -129,10 +161,28 @@ public class TranscriptManager {
 	    and may drive p0 calculation crazy.
 	 */
 	public ReadTranscriptData(File csvFile) throws IOException,  IllegalInputException {
-	    CsvData csv = new CsvData(csvFile);
+	    CsvData csv = new CsvData(csvFile, false, false, null);
+	    header = csv.header;
+
+
+
+	    // thru ver 6.*: "#pid,episodeId,moveNo,timestamp,y,x,by,bx,code"
+	    // from ver 7.*: "#pid,episodeId,moveNo,timestamp,mover,y,x,by,bx,code"
+	    // from ver 9.*: "#pid,episodeId,moveNo,timestamp,mover,objectId,y,x,by,bx,code"
+
+	    int ja=4;
+	    hasMover = header.getCol(ja).equals("mover");
+	    if (hasMover) 	ja++;
+	    hasObjectId=header.getCol(ja).equals("objectId");
+	    if (hasObjectId)		ja++;
+
+	    if (!header.getCol(ja).equals("y")) {
+		throw new IllegalInputException("Column y not found in " + csvFile);
+	    }
+	    
 	    for(CsvData.LineEntry _e: csv.entries) {
 		CsvData.BasicLineEntry e= (CsvData.BasicLineEntry )_e;
-		Entry z = new Entry(e);
+		Entry z = new Entry(e, hasMover, hasObjectId);
 		// ignore picks at empty cells, as they may drive p0
 		// calculation crazy
 		if (z.code == Episode.CODE.EMPTY_CELL) continue;
@@ -153,5 +203,38 @@ public class TranscriptManager {
 	
     }
 
+
+    /** This method is used as a helper in a unit test for ReplayedEpisode;
+	its purpose is to find rule set names for various episodes
+	without accessing the SQL server.
+	@param  detailedTranscriptsFile A detailed transcript file, from which the rule set names will be obtained
+
+	<pre>
+	% more ./detailed-transcripts/RU-FDCL-basic-auto-20241105-113759-EPVDYK.detailed-transcripts.csv 
+#playerId,trialListId,seriesNo,ruleId,episodeNo,episodeId,moveNo,timestamp,reactionTime,objectType,objectId,y,x,bucketId,by,bx,code,objectCnt
+RU-FDCL-basic-auto-20241105-113759-EPVDYK,basic-07-A,0,FDCL/basic/ordL1,0,20241105-113932-D9DX8Y,0,20241105-113934.266,2.149,RED_SQUARE,0,1,1,,,,7,9
+</pre>
+    */
+    public static HashMap<String,EpisodeHandle> findRuleSetNames(String exp, TrialListMap trialListMap, File detailedTranscriptsFile) throws IOException, IllegalInputException {
+	CsvData csv = new CsvData(detailedTranscriptsFile, false, false, null);
+	//String header = csv.header;
+
+
+	HashMap<String,EpisodeHandle> h = new HashMap<>();
+	for(CsvData.LineEntry _e: csv.entries) {
+	    CsvData.BasicLineEntry e= (CsvData.BasicLineEntry )_e;
+	    /*
+	    String tid = e.getCol(1);
+	    String rid = e.getCol(3);
+	    String eid = e.getCol(4);
+	    h.put(rid,eid);
+	    */
+	    EpisodeHandle eh = new EpisodeHandle(exp, trialListMap, e);
+	    h.put(eh.episodeId, eh);
+	}
+	return h;
+
+    }
+    
     
 }

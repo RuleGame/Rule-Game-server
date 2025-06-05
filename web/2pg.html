@@ -10,15 +10,15 @@ Supporting Two-Player Games in the GOHR Framework
     </h1>
 
     <div align="center"><em>
-	Updated 2025-02-23 for GS 7.004</em>
+	Updated 2025-05-05 for GS 8.011</em>
 	</div>
 
     <p>
       Game Server 7.* supports two types of two-player games (2PG): cooperative and adversarial. This documents describes essential points in which managing 2PG differes from managing single-player games (1PG) (as described in <a href="game-api-2.html">Web API for the use by the Rule Game client - second batch</a>)
     
-      <h2>
-	Experiment preparation
-      </h2>
+      <h2><a name="prep">
+	  Experiment preparation
+	  </a></h2>
 
 
     <p>
@@ -433,6 +433,8 @@ As you can see, this structure (transcript ) is a map. The keys are the position
 <li>"deniedBuckets":[0,1] : this contains the list of bucket into which we know this game piece cannot go. (Because we have learned this from failed moves to those buckets).
 </ul>
 
+<li>In ver 8.003, new field <tt>recentKnowledge2</tt> has been added. It is like  <tt>recentKnowledge</tt>, but the hash map keys are object IDs of game pieces, rather than their positions. The GUI client should swicth from using <tt>recentKnowledge</tt> to using <tt>recentKnowledge2</tt>, in order to be fully compatible with any games that may have "crowded boards" (boards with multiple game pieces per cell).
+
 	</ol>
 
 	<h3>/guess</h3>
@@ -440,6 +442,51 @@ As you can see, this structure (transcript ) is a map. The keys are the position
 	<p>
 	  This call also takes the <tt>playerId=...</tt> parameter now, so that the server will correctly record the guess.
 
+	  <h2><a name="abandon">Walk-aways and their abandoned partners</h2>
+
+	  <h3>New player classes</h3>
+	  <p> In 1PG, we were satisfied with dividing all players into 2 classes: those who have not completed their game yet (and, therefore, can still continue playing, at least theoretically) and those who have (and got a completion code to prove that). To improve the experience of 2PG players, we are introducing, as of GS 8.011, two more classes of players:
+	  <ul>
+	    <li><strong>"Walk-away players".</strong> A 2PG player is considered to have "walked away" if, when it was his turn to make amove, it has failed to make a move during a certain amount of time. (This is set in the <a href="setup/setup-config.html">master config file</a> as <tt>TIMEOUT_2PG = 300</tt>, measured in seconds). After the player has "walked away", we will "release" his partner; therefore, we won't allow a "walk-away" to resume playing anymore.
+
+	      <br>It is also possible for the server to mark a 1PG player as a walk-away, in order to free server resources, but that is done after a much longer interval (e.g. <tt>TIMEOUT_1PG = 36000</tt>, i.e. 10 hrs), since in 1PG we generally won't mind if a player has a lunch and takes a nap before resuming his game.
+
+	    <li><strong>"Abandoned players".</strong> A 2PG player is considered "abandoned" if his partner has "walked away". Once we have marked a player as "abandoned", we can tell him that he no longer needs to wait for his partner's move, but should proceed to the demographics page etc. An abandoned player will get a completion code, and, if he's a Prolific subject, he may get paid.
+	      
+	  </ul>
+
+	  <h3>Internal representation</h3>
+	  <p>Internally, the walk-aways and the abandoned players are marked by the appropriate values of the field <tt>completionMode</tt> in the PlayerInfo table.
+
+	    <p>
+	    The episode during which the "abandonment" is detected is marked by the bit <tt>abandoned</tt>. To be fully interpreted in the 2PG context (i.e. to see who abandoned whom), this bit needs  to be viewed together with the PlayerInfo's completionMode.
+
+	    <h3>How this works in the server</h3>
+
+	    <p>Since ver 8.011, the Game Server runs a so-called "maintenance thread", which wakes up every minute and looks for inactive players. When it finds a 2PG player whose turn is to move, but who has not made a move for several minutes, it will mark that player as a "walk-away", and his partner, as "abandoned". After that, he server will send "READY DIS" messages to both players via their web socket communication lines (provided, of course, those are still open), so that these players' GUI clients will make /display calls, pulling from the server  updated information about these players' status.
+
+	    <h3>Needed client behavior</h3>
+
+	    <p>This is what I would like the GUI client to do:
+
+	<P><strong>(1) On a /move, /pick, or a /display call:</strong>
+	  <p>(a) If the return structure contains the field <tt>finishCode=7</tt>
+	  (<a href="/api/constant-values.html#edu.wisc.game.sql.Episode.FINISH_CODE.ABANDONED">FINISH_CODE.ABANDONED</a>), this indicates that this episode should not be played anymore, beceause the player has been abandoned by his partner. In this case, the GUI client should send the player to the "demographics instructions" page (the one before the actual demographics survey). The player also should be told something like, "Unfortunately, your partner has stoppped playing. Please proceed to the next page, so that you can still receive a partial credit for your work".
+
+	<p>(b) If the  if the return structure contains the field <tt>finishCode=6</tt>
+	  (<a href="/api/constant-values.html#edu.wisc.game.sql.Episode.FINISH_CODE.WALKED_AWAY">FINISH_CODE.WALKED_AWAY</a>), this indicates that this player has been previously deemed a "walk-away", and (if this was a 2PG) his partner has been let go. Now he has decided to return... but it's too late for him to resume playing.	In this case, the GUI client should display a message along the lines, "Your game session has been terminated due to inactivity".
+
+	<p><strong>(2) On a /newEpisode call,</strong> look for the field <tt>completionCode</tt>. If it is present and contains the value 1 (<a href="api/constant-values.html#edu.wisc.game.sql.PlayerInfo.COMPLETION.ABANDONED">COMPLETION.ABANDONED</a>(), handle as per (1)(a) above. If this field is present and contains the value 2 (<a href="api/constant-values.html#edu.wisc.game.sql.PlayerInfo.COMPLETION.WALKED_AWAY">COMPLETION.WALKED_AWAY</a>), handle as per (1)(b) above.
+	  
+
+	<p><strong>(3) /player</strong>. The GUI client should not be hugely concerned with encountering a "walk-away" or an "abandoned" player when making the /player call, because in most participants' sessions that call is made only once, when the person first comes to the site. Nonetheless, it is possible that the person will reload an old starting URL after the game has been abandoned. For this reason, the following processing is advised. Look at the field <tt>completionCode</tt>. If it is present and contains the value 1 (<a href="api/constant-values.html#edu.wisc.game.sql.PlayerInfo.COMPLETION.ABANDONED">COMPLETION.ABANDONED</a>(), handle as per (1)(a) above.
+
+	  If this field is present and contains the value 2 (<a href="api/constant-values.html#edu.wisc.game.sql.PlayerInfo.COMPLETION.WALKED_AWAY">COMPLETION.WALKED_AWAY</a>), handle as per (1)(b) above.
+	  
+	  <h3>Simulating "walking-away"</h3>
+
+	<p>As mentioned above, in the game server, "walk-aways" are detected and appropriately marked by a contnuously running maintenance thread. When testing the "abandonment" support in the GUI client, you don't have to wait for the timeout to happen based on the configuration settings. Instead, you can simulate "walking away" by using the <tt>/abandon</tt> API call. To use it, go to the <a href="game-api-2.html#abandon">/abandon form</a> form, enter the palyerID of the player whom you want to "walk away", and click on "Submit". The server will then mark that player as a walk-away, and his partner (if that's a 2PG) as an abandoned player.
+	  
 	  <h2>Chat between players</h2>
 
 	<p>The GUI client should enable the chat GUI element, consisting from a text entry box and the message exchange display box, if <tt>needChat==true</tt> was receieved in the response of the /player call.
@@ -487,6 +534,12 @@ As you can see, this structure (transcript ) is a map. The keys are the position
 	    
 	  <p>The GUI client, which is writte in TypeScript/React, will of course do this a little bit different; it may choose to open the connection only once, early on (although subsequently it will need to monitor its status, and if it closes, reopen it). When the listener detects a "READY ..." message, the client will simply make an appropriate /newEpisode or /display call, to obtain the data to be processed, much like the current client already does.
 	    
+	    <h2>See also</h2>
+
+	    <ul>
+	      <li><a href="2pg-bot.html">Two-player games (2PG) with a bot</a>. (Since ver. 8.012)
+	    </ul>
+	      
 	    
 
 <h2>Appendix: some data on the M-Turk population</h2>

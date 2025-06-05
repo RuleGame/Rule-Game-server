@@ -83,16 +83,14 @@ public class BoardDisplayService {
 	visual display of the board.
      */
     public static String doBoard(Board board,  int cellWidth) {	    
-	Piece[] pieces= board.asBoardPieces();
-	boolean[] isMoveable = new boolean[Board.N*Board.N+1];	
-	return HtmlDisplay.htmlDisplay(pieces, -1, false, isMoveable, cellWidth, false);
+	boolean[] isJMoveable = new boolean[board.getValue().size()];	
+	return HtmlDisplay.htmlDisplay(board.getValue(), null, false, isJMoveable, cellWidth, false);
     }
 
     /** The ASCII-art alternative */
     public static String doBoardAscii(Board board) {	    
-	Piece[] pieces= board.asBoardPieces();
-	boolean[] isMoveable = new boolean[Board.N*Board.N+1];	
-	return Episode.graphicDisplayAscii(pieces, -1, false, isMoveable, false);
+	boolean[] isJMoveable = new boolean[board.getValue().size()];	
+	return Episode.graphicDisplayAscii(board.getValue(), null, false, isJMoveable, false);
     }
    
     @Path("/displayBoardFile")

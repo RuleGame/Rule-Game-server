@@ -45,7 +45,8 @@ abstract public class GameGenerator {
      */
 
     void next(Game game) {
-	game.setConditions(testing, condRules, positionMask);       
+	game.setConditions(testing, condRules, positionMask);
+	game.setCrowded(crowded);
 	produceCnt++;
     }
 
@@ -125,6 +126,16 @@ abstract public class GameGenerator {
 	initPositionMask();
     }
 
+    /** More info to be added to toString() */
+    public String extraToString() {
+	if (condRules==null) return "";
+	String s = "Extra constraint: testing=" + testing +", rules=" + condRules;
+	if (positionMask!=null) s += ". Position mask=" + positionMask;
+	return s;
+
+    }
+	
+    
     /** Initializes the position mask, as (and if) mandated by the current
 	condRules and the testing flag */
     private void initPositionMask() {
@@ -160,10 +171,15 @@ abstract public class GameGenerator {
 
     }
 
+    /** If true, it is allowed to generate boards with multiple game pieces
+	in a cell. (GS 8.*) */
+    boolean crowded = false;
+    
     /** Sets the constraints if they are specified in the command-line
 	options
 	@param ht contains command-line options */
     public void setConditionsFromHT(ParseConfig ht) throws IOException, IllegalInputException, RuleParseException {
+	crowded = ht.getOption("crowded", false);
 	
 	String condTrain = ht.getOption("condTrain",null);
 	String condTest = ht.getOption("condTest",null);
@@ -187,6 +203,8 @@ abstract public class GameGenerator {
 	@param para Parameter set */
     public void setConditionsFromParaSet(ParaSet para) throws IOException, IllegalInputException, RuleParseException
     {
+	crowded = para.getBoolean("crowded", false);
+	
 	
 	String condTrain = para.getString("condTrain",null);
 	String condTest = para.getString("condTest",null);

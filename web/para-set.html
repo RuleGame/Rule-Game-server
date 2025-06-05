@@ -4,7 +4,7 @@
 <body>
   <h1>Notes on Rule Game Server parameter sets</h1>
 
-    <p align="center"><em>Updated for Ver 7.009,  2025-03-16</em></p>
+    <p align="center"><em>Updated for Ver 8.000,  2025-03-20</em></p>
 
     <p>This document provides additional comments to the summary of the Rule Game Server parameters found in a Google spreadsheet,  <a href="https://docs.google.com/spreadsheets/d/1KoYdi0i_toN29hhPiOVA-teX1jjo6WlJs7wL6Oz0AzM/edit#gid=0">_0.GameParameters</a></a>
     
@@ -56,7 +56,11 @@
 
     <h3>With constraints</h3>
 
-    <p>Since GS 7.009, it is possible to use in trial list files the same constraints as available  in <a href="captive.html#cond">the Captive Game Server</a>. You can use the optional columns named <tt>condTrain</tt> or  <tt>condTest</tt> to require, for example, that all game pieces are located within a particular quadrant of the board, or that every board has at least one piece outside of this quadrant. For an example, see the experiment plan <tt>vm/cond</tt> (trial list file: /opt/w2020/game-data/trial-lists/vm/cond/basic-10-B.csv ). The vaues in these columns are file names relative to the main constraint file directory, /opt/w2020/cond. The extension <tt>.txt</tt> can be omitted.
+  <p>Since GS 7.009, it is possible to use in trial list files the same constraints as available  in <a href="captive.html#cond">the Captive Game Server</a>. You can use the optional columns named <tt>condTrain</tt> or  <tt>condTest</tt> to require, for example, that all game pieces are located within a particular quadrant of the board, or that every board has at least one piece outside of this quadrant. For an example, see the experiment plan <tt>vm/cond</tt> (trial list file: /opt/w2020/game-data/trial-lists/vm/cond/basic-10-B.csv ). The vaues in these columns are file names relative to the main constraint file directory, /opt/w2020/cond. The extension <tt>.txt</tt> can be omitted.
+
+      <h3><a name="crowded">"Crowded boards": allowing multiple game pieces in one cell.  </a></h4>
+
+<p>Historically, all boards in Rule Game have at most one game piece per cell. However, since GS 8.000, boards with multiple game pieces per cell (so called "crowded boards") are allowed as well. You can allow the  random board generator to put multiple pieces into a cell by adding the column named <tt>crowded</tt>, with the value <tt>true</tt>   to the parameter set.
 
 
   <h2><a name="defineBoard">Using prefedined initial boards</a></h2>

@@ -20,7 +20,19 @@ public class RandomGameGenerator extends GameGenerator {
     final int[] nPiecesRange, nShapesRange, nColorsRange;
     final Piece.Shape[] allShapes;// = 	Piece.Shape.legacyShapes;
     final Piece.Color[] allColors;// = 	Piece.Color.legacyColors;
-  
+
+    public static String rangeToString(int [] range) {
+	if (range[0]==range[1]) return "" + range[0];
+	else return "["+range[0]+":"+range[1]+"]";
+    }
+
+    public String toString() {
+	String s = "RandomGameGenerator with nPieces=" + rangeToString(nPiecesRange) + ", nShapes="  + rangeToString(nShapesRange) + ", nColors="  + rangeToString(nColorsRange);
+	s += ". " + extraToString();
+	return s;
+	   
+    }
+
       
     RandomGameGenerator(RandomRG _random, String ruleSetName, int[] _nPiecesRange, int[] _nShapesRange,
 			int[] _nColorsRange,  Piece.Shape[] _allShapes, Piece.Color[] _allColors) throws IOException, RuleParseException {
@@ -109,13 +121,13 @@ public class RandomGameGenerator extends GameGenerator {
 	    else if (ja+1 != argv.length) usage("Too many arguments");
 	    b = argv[ja++];
 	    int rowNo = Integer.parseInt(b);
-	    System.out.println("#DEBUG: tf=" + tf +", rowNo=" + rowNo);
+	    //System.out.println("#DEBUG: tf=" + tf +", rowNo=" + rowNo);
 	    if (rowNo<=0 || rowNo> trialList.size())   throw new IllegalInputException("Invalid row number (" + rowNo+ "). Row numbers should be positive, and should not exceed the size of the trial list ("+trialList.size()+")");
 	    ParaSet para = trialList.elementAt(rowNo-1);
 	    return mkGameGenerator(_random,  para);
 	}
 
-	System.out.println("#DEBUG: rule file=" + f +", nPieceRange=" + b);
+	//System.out.println("#DEBUG: rule file=" + f +", nPieceRange=" + b);
 	    
 	int[] nPiecesRange = range(b);
 	if (nPiecesRange[0] <= 0) throw new IllegalArgumentException("Invalid number of pieces ("+b+"); The number of pieces must be positive");

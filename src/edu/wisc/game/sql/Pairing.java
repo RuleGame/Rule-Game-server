@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 
 import edu.wisc.game.util.*;
+import edu.wisc.game.pseudo.*;
 
 import edu.wisc.game.websocket.WatchPlayer;
 
@@ -55,12 +56,20 @@ public class Pairing {
 	    return false;
 	}
 
-	//PairingQueue q = getPairingQueue(p.getExperimentPlan());
+	if (p.isBotGame()) {    // Create a bot partner
+	    PlayerInfo other = Pseudo.mkBot(p);
+	    p.linkToPartner(other, State.ZERO);
+	    Logging.info("Pairing: paired " + p + " WITH bot " + other);
+	    return false;
+	}  else {
 	
-	PairingQueue q = getPairingQueue(p.getExperimentPlan());
-	//q.register(p);
-	PlayerInfo other = q.tryPairing(p);
-	return (other==null);
+	    //PairingQueue q = getPairingQueue(p.getExperimentPlan());
+	    
+	    PairingQueue q = getPairingQueue(p.getExperimentPlan());
+	    //q.register(p);
+	    PlayerInfo other = q.tryPairing(p);
+	    return (other==null);
+	}
     }
 
     

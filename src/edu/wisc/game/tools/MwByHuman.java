@@ -376,7 +376,9 @@ public class MwByHuman extends AnalyzeTranscripts {
 	//When analyzing a set, ignore preceding rule sets
 	Ignore
     }
-    
+
+    /** Who learned what. (playerId : (ruleSetName: learned)) */
+    HashMap<String, HashMap<String, Boolean>> whoLearnedWhat = new HashMap<>();
 
     /** Saves the data (the summary of a series) for a single (player, ruleSet) pair. The saved data is put into an MwSeries object, which is then appened to savedMws.
 
@@ -427,13 +429,16 @@ public class MwByHuman extends AnalyzeTranscripts {
 	it is 0 or 1, and indicates which partner's record one extracts
 	from the transcript.
      */
-    private 	MwSeries fillMwSeries(Vector<TranscriptManager.ReadTranscriptData.Entry[]> section,
-				      Vector<EpisodeHandle> includedEpisodes,
-				      double[] rValues, int chosenMover)
+    private MwSeries fillMwSeries(Vector<TranscriptManager.ReadTranscriptData.Entry[]> section,
+				  Vector<EpisodeHandle> includedEpisodes,
+				  double[] rValues, int chosenMover)
 	throws  IOException, IllegalInputException,  RuleParseException {
 
+	// this players successes and failures on the rules he's done
 	EpisodeHandle eh = includedEpisodes.firstElement();
-	MwSeries ser = new MwSeries(eh, ignorePrec);
+	MwSeries ser = new MwSeries(eh, ignorePrec, chosenMover);
+	HashMap<String,Boolean> whatILearned = whoLearnedWhat.get(ser.playerId);
+	if (whatILearned == null) whoLearnedWhat.put(ser.playerId, whatILearned = new HashMap<>());
 
 	boolean shouldRecord = (target==null) || eh.ruleSetName.equals(target);
 	shouldRecord = shouldRecord && !(precMode == PrecMode.Naive && ser.precedingRules.size()>0);
@@ -445,7 +450,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	ser.errcnt = 0;
 	ser.mStar = defaultMStar;
 	if (precMode == PrecMode.EveryCond) {
-	    ser.adjustPreceding(savedMws);
+	    ser.adjustPreceding( whatILearned);
 	}
 	// Do recording only after a successful adjustPreceding (if applicable)
 	if (shouldRecord) 		savedMws.add(ser);
@@ -498,7 +503,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 		if (learned) {
 		    ser.learned=true;
 		    ser.mStar = Math.min( ser.errcnt, ser.mStar);
-		}		
+		}
+		whatILearned.put(eh.ruleSetName, learned);
 	    }
 
 	    // Also count any errors that were made after the learning success

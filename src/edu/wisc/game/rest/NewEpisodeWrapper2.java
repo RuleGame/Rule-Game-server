@@ -56,7 +56,11 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	number is incremented beyond the last parameter set number.
      */
     public String getCompletionCode() { return completionCode; }
- 
+
+    private int completionMode;
+    public int getCompletionMode() { return completionMode; }
+
+    
   
     Episode.Display display;
    /** The structure with a lot of information about the current episode,
@@ -67,8 +71,9 @@ public class NewEpisodeWrapper2 extends ResponseBase {
     private void setDisplay(Episode.Display _display) { display = _display; }    
 
     
-    /** Depending on the parameters, creates a new episode or looks up an already existing one that should be
-	continued. Serves the /newEpisode and /mostRecentEpisode API calls.
+    /** Depending on the parameters, creates a new episode or looks up
+	an already existing one that should be continued. Serves the
+	/newEpisode and /mostRecentEpisode API calls.
 
        @param existing If true, look for the most recent existing episode (completed or incomplete); if false, return the recent incomplete expisode or create a new one */
     NewEpisodeWrapper2(String pid, boolean existing, boolean activateBonus, boolean giveUp) {
@@ -95,6 +100,8 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	    PlayerInfo x = PlayerResponse.findPlayerInfo(null, pid);
 	    Logging.info("NewEpisodeWrapper2(pid="+ pid+"): player="+
 			 (x==null? "null" : "" +x+ "\n" + x.report()));
+	    x.setLastActivityTime(new Date());
+
 	    if (x==null) {
 		setError(true);
 		setErrmsg("Player not found: " + pid);
@@ -118,7 +125,6 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 		return;
 	    } 
 		
-
 	    Logging.info("NewEpisodeWrapper2(pid="+ pid+"): partner=" + x.xgetPartner());
 	    
 	    PlayerInfo y = x;
@@ -132,6 +138,7 @@ public class NewEpisodeWrapper2 extends ResponseBase {
     
 	    alreadyFinished = y.alreadyFinished();
 	    completionCode = y.getCompletionCode();
+	    completionMode = y.getCompletionMode();
 	    if (epi==null) {
 		setError(true);
 		String msg = alreadyFinished ?
@@ -146,7 +153,7 @@ public class NewEpisodeWrapper2 extends ResponseBase {
 	    setDisplay(epi.mkDisplay(pid));
 
 	    // Tell the other player that the episode is ready
-	    if (x.is2PG()) {
+	    if (x.is2PG() && !x.isBotGame()) {
 		WatchPlayer.tellHim(x.getPartnerPlayerId(), WatchPlayer.Ready.EPI);
 	    }
 	    

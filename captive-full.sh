@@ -3,13 +3,13 @@
 #---------------------------------------------------------------------
 #   Usage examples:
 #
-#   ./captive-full.sh  /opt/tomcat/game-data/rules/vm/TD-01.txt 6
+#   ./captive-full.sh  /opt/w2020/game-data/rules/vm/TD-01.txt 6
 #
 #   ./captive-full.sh -inputDir /home/vmenkov/my-game-data ~/my-game-data/rules/vm/TD-01.txt 6
 #
-#   ./captive-full.sh   /opt/tomcat/game-data/trial-lists/vmColorTest/trial_1.csv 1
+#   ./captive-full.sh   /opt/w2020/game-data/trial-lists/vmColorTest/trial_1.csv 1
 #
-#   ./captive-full.sh   /opt/tomcat/game-data/trial-lists/vmColorTest/trial_1.csv 1
+#   ./captive-full.sh   /opt/w2020/game-data/trial-lists/vmColorTest/trial_1.csv 1
 #
 #   ./captive-full.sh  -inputDir /home/vmenkov/my-game-data ~/my-game-data/trial-lists/vmColorTest/trial_1.csv 1
 #

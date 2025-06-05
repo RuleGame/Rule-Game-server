@@ -198,7 +198,11 @@ public class Piece  implements Serializable {
     
     public long getId() { return id; }
     @XmlElement 
-    public void setId(long _id) { id = _id; }
+    public void setId(long _id) {
+	id = _id;
+	char c = (char)('A' + id);
+	setLabel("" + c);
+    }
 
     /** Exists on IPB and composite objects; null on S+C objects. */
     private String image;
@@ -266,10 +270,27 @@ public class Piece  implements Serializable {
     @XmlElement 
     public void setY(int _y) { y = _y; }
 
+    public Board.Pos xgetPos() {
+	return new Board.Pos(x,y);  
+    }
+    
     public Integer getDropped() { return dropped; }
     @XmlElement
     public void setDropped(Integer _dropped) { dropped = _dropped; }
 
+
+    /** Used to print a human-readable label next to each piece in GUI client
+	(vs. 8.014+). We use an alphabetic label rather than ID because
+	PK is worrying that an ID will be confused with the sequence number
+	(also shown in the GUI client) */
+
+    String label;
+
+    public String getLabel() { return label; }
+    @XmlElement
+    public void setLabel(String _label) { label = _label; }
+
+    
     static private long maxId = 1;
     
     public Piece(){} 
@@ -301,13 +322,19 @@ public class Piece  implements Serializable {
     }
 
     
-
+    /** This method is oversimplified, because it's
+	normally expected that the ID is unique within
+	a board */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Piece)) return false;
         return id == ((Piece) o).getId();
     }
+
+    /** Compares all properties */
+    //    public boolean fullyEquals(Object o) {...}
+	
  
     @Override
     public int hashCode() {
@@ -327,7 +354,7 @@ public class Piece  implements Serializable {
     public void setBuckets(int[] _buckets) { buckets = _buckets; }
 
     public String toString() {
-	return "["+objectType()+", x="+x+", y="+y+"]";
+	return "[("+id + ") " + objectType()+", x="+x+", y="+y+"]";
     }
 
     /** Converts this Piece, or its ImageObject, to a PropMap object, which stores

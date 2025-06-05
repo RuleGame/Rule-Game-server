@@ -53,7 +53,13 @@ public class Board {
 	    bucket is at (0,0), the corner cell is at (1,1). */
 	public final int x, y;
 
-
+	public boolean equals(Object o) {
+	    if (!(o instanceof Pos)) return false;
+	    Pos p = (Pos)o;
+	    return x==p.x && y==p.y;
+	}
+	    
+	
 	/** Counted by row (left-to-right), rows being arranged bottom-to-top.
 	    In other words, the lexicoraphic order for the (y,x) pairs. The
 	    ordering for cells is 1-based.
@@ -132,8 +138,16 @@ public class Board {
     final static public Pos buckets[] = {
 	new Pos(0, N+1), 	new Pos(N+1, N+1), 
 	new Pos(N+1, 0), 	new Pos(0, 0) };
-	
 
+    /** Which bucket is in this position? */
+    public static int findBucketId(Pos p) {
+	for(int j=0; j<buckets.length; j++) {
+	    if (p.equals(buckets[j])) return j;
+	}
+	return -1;
+    }
+	
+    
     
     @Id 
     @GeneratedValue(strategy=GenerationType.IDENTITY)
@@ -144,7 +158,8 @@ public class Board {
     //@OneToMany(cascade={CascadeType.ALL},        orphanRemoval = true)
     //@JoinColumn(name = "board_id")
 
-
+    
+    /** All the game pieces currently on the board. In certain modes, this array may include removed pieces too, with the "dropped" flag. */
      @OneToMany(
         mappedBy = "board",
         cascade = CascadeType.ALL,
@@ -186,24 +201,14 @@ public class Board {
 	value = new Vector<>();
     }
 
-    //    static public RandomRG random = new RandomRG();
-
-    /** This can be called on startup (from main()) if we want to initialize
-	the random number generator with a specific seed */
-    /*
-//    static public void initRandom(long seed) {
-//	random = new RandomRG(seed);	
-//    }
-    */
-    
     /** The simple constructor, creates a random board with a given number  
      of pieces, using the 4 legacy colors. */
-    public Board(RandomRG random, PositionMask positionMask, int randomCnt) {
+    public Board(RandomRG random, PositionMask positionMask, int randomCnt, boolean crowded) {
 	setName("Random board with " + randomCnt + " pieces");
 	Piece.Shape[] shapes = 	Piece.Shape.legacyShapes;
 	Piece.Color[] colors = 	Piece.Color.legacyColors;
 	if (randomCnt>N*N) throw new IllegalArgumentException("Cannot fit " + randomCnt + " pieces on an "+ N + " square board!");
-	Vector<Integer> w = randomPositions(random,  positionMask, randomCnt);
+	Vector<Integer> w = randomPositions(random,  positionMask, randomCnt, crowded);
 	
 	for(int i=0; i<randomCnt; i++) {
 	    Pos pos = new Pos(w.get(i));
@@ -259,13 +264,13 @@ public class Board {
 	@param allShapes the set from which shapes are drawn
 	@param allColors the set from which colors are drawn
      */
-    public Board(RandomRG random,  PositionMask positionMask, int randomCnt, int nShapes, int nColors, Piece.Shape[] allShapes, Piece.Color[] allColors) {
+    public Board(RandomRG random,  PositionMask positionMask, int randomCnt, int nShapes, int nColors, Piece.Shape[] allShapes, Piece.Color[] allColors, boolean crowded) {
 	setName("Random board with " + randomCnt + " pieces, "+nShapes+" shapes, and " + nColors+" colors");
 	if (randomCnt>N*N) throw new IllegalArgumentException("Cannot fit " + randomCnt + " pieces on an "+ N + " square board!");
 	if (nShapes<0 || nShapes>allShapes.length) throw new IllegalArgumentException("Invalid number of shapes: " + nShapes);
 	if (nColors<0 || nColors>allColors.length) throw new IllegalArgumentException("Invalid number of colors: " + nColors);
 
-	Vector<Integer> w = randomPositions(random,  positionMask, randomCnt);
+	Vector<Integer> w = randomPositions(random,  positionMask, randomCnt, crowded);
 
 	Piece.Shape[] useShapes = new Piece.Shape[randomCnt];
 	Piece.Color[] useColors = new Piece.Color[randomCnt];	
@@ -288,7 +293,6 @@ public class Board {
      */
     public Board(RandomRG random, int randomCnt,
 		  ImageObject.Generator imageGenerator
-		 //String[] allImages
 		 ) {
 	setName("Random board with " + randomCnt + " pieces, drawn from "+ imageGenerator.describeBrief());
 	if (randomCnt>N*N) throw new IllegalArgumentException("Cannot fit " + randomCnt + " pieces on an "+ N + " square board!");
@@ -307,35 +311,33 @@ public class Board {
     }
     
 
-    /** Creates a board object to be sent out (as JSON) to the player's client,
+    /** Creates a Board object to be sent out (as JSON) to the player's client,
 	based on the current state of the episode.
-	@param pieces The pieces still on the board. (An array of N^2 elements,
+	
+	@param pieces The pieces still on the board. (A dense array).
 	with nulls)
 	@param removedPieces If not null, these pieces will also be included
 	into the generated Board object, with the flag dropped=true. This is 
 	what the GUI client wants.
 	@param moveableTo Specifies to which buckets each piece can be moved to.
+	Coordinayed with "pieces"
      */
-    public Board(Piece[] pieces, Piece[] removedPieces, BitSet[] moveableTo) {
-	
-	for(Piece p: pieces) {
-	    if (p!=null) {
-		BitSet bi = (moveableTo!=null)?  moveableTo[ p.pos().num()]:
-		    new BitSet();
-		int[] z = new int[bi.cardinality()];
-		int k=0;
-		for(int i=0; i<bi.length(); i++) {
-		    if (bi.get(i)) z[k++] = i;
-		}
-		p.setBuckets(z);
-		value.add(p);
+    public Board(Vector<Piece> pieces, Vector<Piece> removedPieces, BitSet[] moveableTo) {
+
+	for(int j=0; j < pieces.size(); j++) {
+	    Piece p = pieces.get(j);
+	    BitSet bi = (moveableTo!=null)?  moveableTo[j]:   new BitSet();
+	    int[] z = new int[bi.cardinality()];
+	    int k=0;
+	    for(int i=0; i<bi.length(); i++) {
+		if (bi.get(i)) z[k++] = i;
 	    }
+	    p.setBuckets(z);
+	    value.add(p);
 	}
 	if (removedPieces==null) return;
 	for(Piece p: removedPieces) {
-	    if (p!=null) {
-		value.add(p);
-	    }
+	    value.add(p);
 	}
     }
 
@@ -344,9 +346,13 @@ public class Board {
 	by positionMask
 	@return a vector of n values in the [1..N^2] range
     */
-    private Vector<Integer> randomPositions(RandomRG random,PositionMask positionMask, int n) {
+    private Vector<Integer> randomPositions(RandomRG random,PositionMask positionMask, int n, boolean crowded) {
 	if (positionMask != null && positionMask.allPiecesMustBeHere != null){
-	    Vector<Integer> q  = random.randomSubsetOrdered(positionMask.allPiecesMustBeHere.length, n);
+	    Vector<Integer> q  =
+		crowded?
+		random.randomVector(positionMask.allPiecesMustBeHere.length,n):
+
+		random.randomSubsetOrdered(positionMask.allPiecesMustBeHere.length, n);
 	    //System.out.println("# Selecting at these indexes from 'must': " + Util.joinNonBlank(",", q));
 	    Vector<Integer> w = new Vector();
 	    for(int j: q) {
@@ -355,7 +361,10 @@ public class Board {
 	    //System.out.println("# Selected these positions: " + Util.joinNonBlank(",", w));
 	    return w;
 	} 
-	Vector<Integer> w  = random.randomSubsetOrdered(N*N, n); // [0..N^2-1]
+	Vector<Integer> w  =	    crowded?
+	    random.randomVector(N*N, n):
+	    random.randomSubsetOrdered(N*N, n); // [0..N^2-1]
+	
 	// now bring them to [1..N^2] range
 	for(int j=0; j<w.size(); j++) {
 	    w.set(j, w.get(j)+1);
@@ -375,7 +384,6 @@ public class Board {
 	    ww[j] =pos;
 	    Arrays.sort(ww);
 	    w = Util.array2vector(ww);
-	} else {
 	}
 		   
 	return w;
@@ -471,6 +479,7 @@ public class Board {
 
     /** Creates an array with N*N+1 elements, where the element in position
 	j represents the game piece, if any, in cell No. j. */
+    /*
     public Piece[] toPieceList() {
 	Piece[] pieces = new Piece[N*N + 1];
 	for(Piece p: getValue()) {
@@ -479,7 +488,19 @@ public class Board {
 	}
 	return pieces;
     }
+    */
 
+    /** Where in the values array do we have a game piece with the specified id?
+	@param id piece ID of the game piece we look for
+	@return matching Piece object, or null if no object with a matching ID can be found.
+    */
+    public Piece findPieceForIdZ(long id) {
+	for(int j=0; j<value.size(); j++) {
+	    Piece p = value.get(j);
+	    if (p.getId()==id) return p;
+	}
+	return null;
+    }
 
     
 }

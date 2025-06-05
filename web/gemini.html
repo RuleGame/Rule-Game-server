@@ -1,0 +1,148 @@
+
+<html>
+  <head><title>Gemini</title>
+ <link rel="stylesheet" type="text/css" href="css/rule-game.css"/>
+  </head>  
+  <body>
+    <h1>Making Gemini play the GOHR</h1>
+
+    <div align="center"><em>Updated 2025-04-16 for Game Server ver 8.009</em></div>
+
+    <h2>Architecture</h2>
+
+    <p>The setup that we have for getting Google Gemini to play the Rule Game (aka the GOHR) is, in a way, the inverse of that of the <a href="captive.html">Captive Game Server</a> (CGS). With the CGS, the control resides in the ML (AI) program that wants to solve a GOHR problem; whenever the ML program makes a move, it sends its proposed move as a request to the CGS, and then the CGS applies the move to the current board and returns its decision (accept/deny) in the response. With our Gemini app, the control resides in our app; the app keeps sending requests to the Gemini server at Google, asking it to make its next move. The Gemini's proposed move, hopefully, arrives in the response, and our app then applies it to the board, and prepares to send to Gemini the next request for a move.
+
+      <h2>Gemini models</h2>
+
+    <p>As of the early 2025, Gemini offers a number of "models". We mostly use the model named <tt>gemini-2.0-flash</tt>, but it can be configured to use other models as well (with the command-line option <tt>model=...</tt>).
+
+      <h2>Conversation structure</h2>
+      
+    <p>A Gemini user could easily imaginge that  when a person or an app interacts with the Gemini server, the server somehow keeps track of the entire content f the "conversation",  perhaps by means of creating some kind of a "model"      of the knowledge conveyed to it by the user's input, in a suitable      internal representation,      and expanding and updating that model as more user input comes through.
+
+
+    <p>Somewhat unexpectedly, Gemini documentation
+      (see e.g. <a href="https://ai.google.dev/api/generate-content#v1beta.GenerateContentResponse">Home |
+Gemini API  |
+Models | 
+API Reference |
+Generating content</a>)      implies that nothing like this takes place! The Gemini server is essentially stateless, meaning that when a person or an app interacts with the Gemini server it, the server does not keep track of the user's previous requests, and does not store any "model" of that knowledge.
+
+<p>Instead, if you desire to have a "conversation" with the Gemini bot, you need to supply the entire record of the conversation (what you said -- what the bot said -- what you said -- ... -- what you say now) in each of your HTTP requests! The JSON structure that one sends to the server in the request provides support for "packing" one's conversation into it.
+
+      <p>The GOHR, of course, is built on a dialogue, with the player and the Game Server typically exchanging a request/response pair (in whichever direction) per move. It is possible to literally pack one's dialogue into the Gemini request structure, using the framework provided. But since we are already quite inefficient, the decision was made to normally pack the entire transcript of a series (all episodes played in a single run of our app, on the same rule set) into a single prompt. Certain limited exceptions exist though, and are discussed in appropriate places below.
+
+
+  <h2>Gemini usage quotas</h2>
+
+<p>Since at the moment we are using Gemini as free-tier subscribers, we have to abide by the server's fairly strict <a href="https://ai.google.dev/gemini-api/docs/rate-limits">usage quotas</a>.
+
+<p>
+  The most important quota for us is the max number of requests per minute, which is 15. By sleeping 5 seconds between requeststs, we by and large avoid hitting that limit. As almost everything with the Gemini server, the limits and the way to reacting to the breaching of them are fluid, meaning that you cannot expect the same reaction every time. When the Gemini server decides that the limit is reached, it may respond with a detailed message, indicating how many seconds we should wait before retrying, in order to return to its good graces. Or it may send a more general message, in which case we try to sleep for 1 minute.
+
+  <p>The daily limit (1500 requests per day) fairly tightly restricts the number of problems we can ask Gemini to solve per day, unless we make sure to terminate a session after a fairly small number of episodes or moves.
+
+       
+    <h2>Using the app</h2>
+
+
+    <p>The main script is in <tt>/home/vmenkov/w2020/game/scripts/gemini.sh</tt>. The usage is very similar to that of <a href="captive.html"><tt>captive-full.sh</tt></a>; all the same arguments and options describing the rule set and the board generation are accepted.
+
+      <h3>Options</h3>
+
+      <p>
+      There are a number of additional options you can put on the command line, in the <em>key=value</em> format, as follows:
+
+      <ul>
+
+	<li>keyFile=/opt/w2020/gemini-api-key.txt  -- the location of the file with the Gemini API key
+
+	<li>model=gemini-2.0-flash -- the name of the Gemini model to use
+
+	<li>instructionsFile=/opt/w2020/game-data/gemini/system.txt -- the name of the text file with the "system instructions", which are set to the Gemini server with each request
+	  
+	<li>wait=4000 -- for how long (measured in milliseconds) the client waits between making two requests to the Gemini server. Since most models allow at most 15 queries per minute for free-tier users. The value of 4000 (i.e. 4 sec) is appropriate.
+
+	  <li>max_boards=10 -- the max number of episodes to run with each rule set
+	  <li>max_requests=0 -- the max number of requests the client is allowed to make. (If no retries are ever needed, this is equal to the max total number of moves in all episodes). The default value, 0, means "no limit". If you feel the client sometimes likes to loop making the same request over and over, set this to something like 1000.
+      </ul>
+      
+     <h2>Observations</h2>
+
+   <p>When dealing with a system whose main strength is in generating natural language, one has to be ready to handle sensibly a great variety of situations. We don't intend, after all, to teach our own app to understand under natural language (such as Gemini produces); instead we put the bulk of our effort into getting Gemini to produce output in a formalized structured way that would be easy for our app to understand.
+     
+   <p>As mentioned above, the instructions I provide to Gemini emphasize that what I want to hear from it are descriptions of proposed moves in a standard format, <tt>MOVE objectId bucketId</tt>. On simpler problems, such as color matching, this is more or less what happens; although every once in a while Gemini decides to provide a long disquisition on its motivation and reasoning, its long message still includes the "MOVE ..." substring which our app extracts and uses as the next move. However, in more complicated problems (e.g. "counterclockwise") one can sometimes see Gemini slide into purely verbal descriptions of the move.
+
+     <P>
+     .... use 1 retry with an extra prompt ....
+
+     <p>
+       .... move already removed piece ...
+
+
+... artifact of my reading -- he just talks about reasoning first, mentioning old moves, and then gives the new move at the end! ...
+       
+<p>... "IMMOVABLE" means that the object you have tried to move cannot at present be moved to any bucket, and the object stays on the board. This mean that you should not try to attempt to move this object again until the board has changed in some way (i.e. some other object has been successfully removed).
+
+  <h3>Failing to realize that a piece has been removed already</h3>
+
+<p>This is rare, but has been seen on occasion. Seemingly unprovoked. E.g., in gemini-sm_qcts-03.txt:
+  <pre>
+    During episode 5, you have made so far the following 15 move attempts, with the following results:
+MOVE 8 3 ACCEPT
+MOVE 6 3 DENY
+MOVE 6 0 ACCEPT
+MOVE 5 2 DENY
+MOVE 4 0 DENY
+MOVE 4 0 DENY
+MOVE 4 2 ACCEPT
+<strong>MOVE 5 0 ACCEPT</strong>
+MOVE 0 2 ACCEPT
+MOVE 1 1 ACCEPT
+MOVE 3 1 DENY
+MOVE 3 1 DENY
+MOVE 3 1 DENY
+MOVE 3 0 ACCEPT
+MOVE 2 2 ACCEPT
+YOUR MOVE?
+Response text={Based on the previous episodes, I hypothesize the following:
+
+*   **Bucket 0:** Accepts Squares
+*   **Bucket 1:** Accepts Circles
+*   **Bucket 2:** Accepts Triangles
+*   **Bucket 3:** Accepts Stars
+
+<strong>Therefore, I will now try to move the remaining object, which is a Blue Square with ID 5, to Bucket 0.</strong>
+
+MOVE 5 0
+}
+    </pre>
+
+  So the bot for some reason repeats its earlier successful move, <tt>MOVE 5 0</tt>, even though it's staring right at him in the episode's transcript. I will try to help this problem in ver 8.006, by explicitly showing the current state of the board to the bot after each move.
+
+  <h3>Repeating a wrong move</h3>
+
+This happens both on code 7 (IMMOVABLE) and code 4 (DENY).
+  
+  <pre>
+%    grep At gemini-ordL1-01.txt
+    ...
+At 2025-04-01 11:23:46, Moving piece 0 to bucket 0. Code=7
+At 2025-04-01 11:23:51, Moving piece 0 to bucket 0. Code=7
+At 2025-04-01 11:23:57, Moving piece 0 to bucket 0. Code=7
+At 2025-04-01 11:24:02, Moving piece 0 to bucket 0. Code=7
+At 2025-04-01 11:24:08, Moving piece 0 to bucket 0. Code=7
+    ...
+  </pre>
+
+  (ccw)
+  <pre>
+At 2025-04-01 11:48:43, Moving piece 6 to bucket 0. Code=4
+At 2025-04-01 11:48:49, Moving piece 6 to bucket 0. Code=4
+</pre>
+  
+  This despite my instructions explicitly telling the bot not to repeat a failed move until the board changes.
+
+  
+  </body>
+  </html>

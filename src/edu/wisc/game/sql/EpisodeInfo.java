@@ -10,6 +10,7 @@ import edu.wisc.game.util.*;
 import edu.wisc.game.reflect.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.parser.*;
+import edu.wisc.game.pseudo.Pseudo;
 import edu.wisc.game.rest.ParaSet;
 import edu.wisc.game.rest.ParaSet.Incentive;
 
@@ -53,7 +54,7 @@ public class EpisodeInfo extends Episode {
 
 
     /** Table with all episodes recently played on this server. It is kept to enable quick lookup
-	of episode by id.
+	of episode by id. Episode objects are put into this table upon creation.
 	FIXME: should purge the table occasionally, to save memory */
     public static HashMap<String, EpisodeInfo> globalAllEpisodes = new HashMap<>();
     public static EpisodeInfo locateEpisode(String eid) {
@@ -332,7 +333,12 @@ public class EpisodeInfo extends Episode {
     /** An allowance for rounding */
     private static final double eps = 1e-6;
 
-    /** The main method invoked on a /doMove web API call.
+
+    /** Used to handle occasional accidental double-clicks */
+    @Transient
+    private LastCall lastCall = new LastCall();
+    
+    /** The main method invoked on a /move web API call.
 	Calls Episode.doMove, and then does various adjustments related to 
 	this episode's role in the experiment plan.  If the player has
 	failed to complete a bonus episode on time, this is the place
@@ -345,25 +351,60 @@ public class EpisodeInfo extends Episode {
 	this episode should be.	
      */
     public ExtendedDisplay doMove(String moverPlayerId, int y, int x, int by, int bx, int _attemptCnt) throws IOException {
-	ExtendedDisplay d = checkWhoseTurn(moverPlayerId);
+	ExtendedDisplay d = lastCall.doMoveCheck(moverPlayerId, y, x, by, bx,  _attemptCnt);	
+	if (d!=null) return d;
+	d = checkWhoseTurn(moverPlayerId);
 	if (d!=null) return d;
 	Display _q = super.doMove(y, x, by, bx, _attemptCnt);
-
 	Pick move = _q.pick;
+	if (move==null) return new ExtendedDisplay(0,_q); // FIXME: would be nice to have the correct mover value
 	move.mover = player.getRoleForPlayerId(moverPlayerId);
 	d = processMove(_q, move);
 	return d;
+
     }
 
+    public ExtendedDisplay doMove2(String moverPlayerId, int pieceId, int bucketId, int _attemptCnt) throws IOException {
+	ExtendedDisplay d =  lastCall.doMove2Check(moverPlayerId, pieceId, bucketId,  _attemptCnt);
+	if (d!=null) return d;
+	d = checkWhoseTurn(moverPlayerId);
+	if (d!=null) return d;
+	Display _q = super.doMove2(pieceId,  bucketId, _attemptCnt);
+	if (_q.error) return new ExtendedDisplay(0,_q); // FIXME: would be nice to have the correct mover value
+	Pick move = _q.pick;
+	if (move==null) return new ExtendedDisplay(0,_q); // FIXME: would be nice to have the correct mover value
+	move.mover = player.getRoleForPlayerId(moverPlayerId);
+	d = processMove(_q, move);
+	return d;
+
+    }
+
+    
     /** Like /doMove, but without a destination (because the game piece was not movable,
 	or because the player just dropped in on the board) */
     public ExtendedDisplay doPick(String moverPlayerId, int y, int x, int _attemptCnt) throws IOException {
-	ExtendedDisplay d = checkWhoseTurn(moverPlayerId);
+	ExtendedDisplay d =  lastCall.doPickCheck(moverPlayerId, y, x,  _attemptCnt);
+	if (d!=null) return d;
+	d = checkWhoseTurn(moverPlayerId);
 	if (d!=null) return d;
 	Display _q = super.doPick(y, x, _attemptCnt);
 	Pick pick = _q.pick;
+	if (pick==null) return new ExtendedDisplay(0,_q); // FIXME: would be nice to have the correct mover value
+	pick.mover = player.getRoleForPlayerId(moverPlayerId);	
+	d = processMove(_q, pick);
+	return d;
+    }
+    
+    public ExtendedDisplay doPick2(String moverPlayerId,  int pieceId, int _attemptCnt) throws IOException {
+	ExtendedDisplay d =  lastCall.doPick2Check(moverPlayerId, pieceId, _attemptCnt);
+	if (d!=null) return d;
+	d = checkWhoseTurn(moverPlayerId);
+	if (d!=null) return d;
+	Display _q = super.doPick2(pieceId, _attemptCnt);
+	Pick pick = _q.pick;
+	if (pick==null) return new ExtendedDisplay(0,_q); // FIXME: would be nice to have the correct mover value
 	pick.mover = player.getRoleForPlayerId(moverPlayerId);
-
+	
 	d = processMove(_q, pick);
 	return d;
     }
@@ -404,18 +445,36 @@ public class EpisodeInfo extends Episode {
 	done for the two players, lastStretch1 and lastR1 being used
 	for Player 1.
 
+	<P>Since ver 8.012, this method may also queue a task for the bot partner
+
+	<p>FIXME: a lot more actions probably could be skipped when
+	ignored==true. However, this should matter in real life,
+	since a good client should not allow such moves in the 
+	first place
+
 	@move The just-made pick or move. In 2PG, the move.mover field identifies the player who made the move.
  */
     private ExtendedDisplay processMove(Display _q, Pick move) throws IOException  {
-	WatchPlayer.tellAbout( player.getPlayerId(),
-			     "Made a move: " + move);
-	WatchPlayer.tellAbout( player.getPlayerId(), move);
+	try {
+	    // WatchPlayer.tellAbout( player.getPlayerId(),	    "Made a move: " + move);
+	    // WatchPlayer.tellAbout( player.getPlayerId(), move);
+	} catch(Exception ex) {
+	    Logging.error("Caught exception when sending informational ws message: " + ex);
+	    ex.printStackTrace(System.err);
+	}
 	
 	boolean isMove = (move instanceof Move);
 
+	// The move was not recorded in the transcript[] and faces[]
+	// (probably because it was an EMPTY_CELL or some other client
+	// error). Since we want the mastery stretch ("golden number")
+	// and faces[] to be consistent (and we want any replay to be
+	// consistent too), we ignore this move here too
+	boolean ignored = (transcript.size()==0 || move!=transcript.lastElement());
+	
 	// Variables attemptCnt etc (incremented in Episode.accept())
 	// sum moves of both players; attemptCnt1 etc count those of Player 1
-	if (move.mover==Pairing.State.ONE) {
+	if (move.mover==Pairing.State.ONE && !ignored) {
 	    attemptCnt1++;
 	    attemptSpent1 += (move instanceof Move) ? 1.0: xgetPickCost();
 	    if (move.code==CODE.ACCEPT) {
@@ -438,14 +497,16 @@ public class EpisodeInfo extends Episode {
 	double prevR = lastR[mj];
 
 	if (_q.code==CODE.ACCEPT) {
-	    // for mastery criteria, we count succcessful moves only,
+	    // For the mastery criteria, we count succcessful moves only,
 	    // but ignore successful picks
 	    if (isMove) {
 		lastStretch[mj]++;
 		if (lastR[mj]==0) lastR[mj]=1;
 		lastR[mj] *= move.getRValue();		    
 	    }
-	} else { // a failed move or pick breaks the "mastery stretch"
+	} else if (ignored) {
+	} else {
+	    // a failed move or pick breaks the "mastery stretch"
 	    lastStretch[mj]=0;
 	    lastR[mj] = 0;
 	}
@@ -536,14 +597,53 @@ public class EpisodeInfo extends Episode {
 	// must convert to ExtendedDisplay to get params such as "moves left"
 	ExtendedDisplay q = new ExtendedDisplay(move.mover, _q);
 
-	// tell the mover's partner to update his screen
+	// tell the mover's partner to update his screen;
+	// or if the partner is a bot, tell him to work, if appropriate.
+	// Note that "player" is Player 0, and not necessarily the mover
 	if (player.is2PG()) {
 	    int other = 1-move.mover;
-	    String otherPid = player.getPlayerIdForRole(other);
-	    WatchPlayer.tellHim(otherPid, WatchPlayer.Ready.DIS);
+	    PlayerInfo thisPlayer = player.getPlayerForRole(move.mover);
+	    PlayerInfo otherPlayer = player.getPlayerForRole(other);
+	    //String otherPid = player.getPlayerIdForRole(other);
+	    String thisPid = thisPlayer.getPlayerId();
+	    String otherPid = otherPlayer.getPlayerId();
+
+
+	    Logging.info("Performed move for " + player.getPlayerIdForRole(move.mover)+ "; otherPlayer.amBot=" + otherPlayer.getAmBot() + "; this mover mustWait=" + q.mustWait);
+
+	    
+	    if (thisPlayer.getAmBot()) { // I am a bot 
+		if (!q.mustWait && !isCompleted()) { // and I am given another move
+		    Logging.info("Bot queuing another task for himself=" +thisPid);
+		    Pseudo.addTask(thisPlayer, this, attemptCnt);
+		}
+	    }
+	    
+	    if (otherPlayer.getAmBot()) { // bot partner
+		if (q.mustWait && !isCompleted()) { // and it's bot's turn
+		    Logging.info("Human queuing a task for bot=" + otherPid);
+		    Pseudo.addTask(otherPlayer, this, attemptCnt);
+		}
+
+	    } else {   // human partner; update his screen
+		try {
+		    Logging.info("Sending READY DIS to human " + otherPid);
+		    WatchPlayer.tellHim(otherPid, WatchPlayer.Ready.DIS);
+		} catch(Exception ex) {
+		    Logging.error("Very unfortunately, caught exception when sending a Ready.DIS ws message to "+otherPid+": " + ex);
+		    ex.printStackTrace(System.err);
+		}
+	    }
 	}
 
-		
+
+	if (player.hasBotAssist()) { // Assuming it's 1PG. (FIXME: what if 2PG?)
+	    if (botAssist==null) botAssist=new BotAssist();
+	    botAssist.didHeFollow(move);
+	    botAssist.makeSuggestion(this, q);
+	}
+
+	lastCall.saveDisplay(q);	
 	return q;
     }
 
@@ -582,6 +682,15 @@ public class EpisodeInfo extends Episode {
 	return getCurrentBoard(true);
     }
 
+    /** Computes the "mustWait" flag for the current player */
+    private boolean computeMustWait(int mover) {
+	if (getPlayer().is2PG() && getFinishCode()==FINISH_CODE.NO)  {
+	    int whoMustPlay = whoMustMakeNextMove();
+	    return (whoMustPlay != mover);
+	}
+	return false;
+    }
+
  
 
     /** Provides some extra information related to the episode's
@@ -595,8 +704,8 @@ public class EpisodeInfo extends Episode {
      */
     public class ExtendedDisplay extends Display {
 
-	ExtendedDisplay(int mover, int _code,  String _errmsg) {
-	    this(mover, _code, _errmsg, false);
+	ExtendedDisplay(int mover, int _code, boolean _error, String _errmsg) {
+	    this(mover, _code, _error, _errmsg, false);
 	}
  
 	/** Assembles an ExtendedDisplay structure based on the
@@ -611,8 +720,9 @@ public class EpisodeInfo extends Episode {
 	    @param dummy If true, the returned structure will contain
 	    just the error message and no real data.
 	*/
-	private ExtendedDisplay(int mover, int _code, 	String _errmsg, boolean dummy) {
+	private ExtendedDisplay(int mover, int _code,  boolean _error,	String _errmsg, boolean dummy) {
 	    super(_code, _errmsg);
+	    error = _error;
 	    this.mover = mover;
 	    if (dummy) return;
 	    bonus = EpisodeInfo.this.isBonus();
@@ -622,6 +732,16 @@ public class EpisodeInfo extends Episode {
 	    
 	    if (getPlayer()!=null) {
 		PlayerInfo p = getPlayer();
+		// In 1PG, we don't send RecentKnowledge to the client,
+		// because Paul asked not to show this kind of feedback.
+		// (2025-05-24)
+		if (!p.is2PG()) {
+		    setRecentKnowledge(null);
+		    setRecentKnowledge0(null);
+		}
+	      
+
+		
 		// Whose reward numbers we're pulling?
 		int mj = (p.isAdveGame() && mover==Pairing.State.ONE) ? 1:0;
 		boolean needPartnerReward = p.isAdveGame();
@@ -653,6 +773,8 @@ public class EpisodeInfo extends Episode {
 		rewardRange = para.kantorLupyanRewardRange(d);
 
 		guessSaved =  EpisodeInfo.this.getGuessSavedBy(mover);
+
+		// ZZZ - handle abandoned ones
 		
 		if (getFinishCode()!=FINISH_CODE.NO) {
 		    transitionMap = p.new TransitionMap();
@@ -661,7 +783,6 @@ public class EpisodeInfo extends Episode {
 		incentive2(mj);
 		
 		errmsg += "\nDEBUG\n" + p.report();
-
 
 		if (EpisodeInfo.this.isNotPlayable()) {
 		    String msg = "Sadly, you cannot continue playing, because the server has been restarted since the last episode, and the board has been purged out of the server memory. This problem could perhaps have been prevented if the client had made a /newEpisode call, rather than /display, after the last /mostRecentEpisode.";
@@ -672,24 +793,15 @@ public class EpisodeInfo extends Episode {
 		Vector[] w=p.computeFaces(mover, EpisodeInfo.this);
 		faces = w[0];
 		facesMine = w[1];
-		//		faces =p.computeFaces(mover, EpisodeInfo.this);
-
-
-		if (p.is2PG() && getFinishCode()==FINISH_CODE.NO)  {
-		    int whoMustPlay = whoMustMakeNextMove();
-		    if (whoMustPlay != mover) {
-			mustWait = true;
-		    }
-		}
-		
-		
-		}
+		mustWait = computeMustWait(mover);		
+	    }
 	    //	    Logging.info("Prepared EpisodeInfo.ExtendedDisplay=" +
 	    //		 JsonReflect.reflectToJSONObject(this, true));
 
 	}
 	ExtendedDisplay(int mover, Display d) {
-	    this(mover, d.code, d.errmsg);
+	    this(mover, d.code, d.error, d.errmsg);
+	    //Logging.debug("Extending display from " + d);
 	}
 
 	
@@ -873,7 +985,7 @@ public class EpisodeInfo extends Episode {
 	    lastStretch = EpisodeInfo.this.lastStretch[mj]; 
 	    lastR = EpisodeInfo.this.lastR[mj];
 	    rewardsAndFactorsPerSeries = getPlayer().getRewardsAndFactorsPerSeries(mj);
-	    Logging.info("EpisodeInfo.ED.incentive2(): obtained rewardsAndFactorsPerSeries = " + rewardsAndFactorsPerSeries);
+	    //Logging.info("EpisodeInfo.ED.incentive2(): obtained rewardsAndFactorsPerSeries = " + rewardsAndFactorsPerSeries);
 	    justReachedX2 = EpisodeInfo.this.justReachedX2[mj];
  	    justReachedX4 = EpisodeInfo.this.justReachedX4[mj];
 	    factorAchieved=1;
@@ -884,10 +996,17 @@ public class EpisodeInfo extends Episode {
 	    } // fixme - silly fix for Kevin's report ,2022-01-28
 	    factorPromised =  EpisodeInfo.this.factorPromised[mj];
 	}
-	
+
+
+	/** If there is a bot assist, it can send a message here */
+	String botAssistChat = null;
+	public String getBotAssistChat() { return botAssistChat; }
+        @XmlElement
+        public void setBotAssistChat(String _botAssistChat) { botAssistChat = _botAssistChat; }
+
     }
     
-    /** Builds a display to be sent out over the web UI
+    /** Builds a Dsplay object to be sent out over the web UI on a /display call
 	@param playerId This can be null in 1PG, but in 2PG it must
 	identify the player to whom we are to show the display
      */
@@ -895,11 +1014,24 @@ public class EpisodeInfo extends Episode {
 	int mover = player.getRoleForPlayerId(playerId); // can be -2 in 1PG
 	//	if (mover<0) return new ExtendedDisplay(0, CODE.OUT_OF_TURN, "Player " + playerId + " is not a party to this game at all!");
 
-    	return new ExtendedDisplay(mover, Episode.CODE.JUST_A_DISPLAY, "Display requested");
+   	ExtendedDisplay q= new ExtendedDisplay(mover, Episode.CODE.JUST_A_DISPLAY, false, "Display requested");
+	if (player.isBotGame() && q.mustWait && attemptCnt==0) { // the first move of an episode... and it's not your turn
+	    PlayerInfo player= getPlayer();  // owner of the record
+	    // the partner of the mover
+	    int other = 1-q.mover;
+	    PlayerInfo otherPlayer = player.getPlayerForRole(other);
+	    String otherPid = otherPlayer.getPlayerId();
+	    
+	    if (otherPlayer.getAmBot()) { // bot partner; get him to start playing
+		Logging.info("Human queuing initial task for bot=" + otherPid);
+		Pseudo.addTask(otherPlayer, this, attemptCnt);
+	    }
+	}
+    	return q;
     }
 
     public ExtendedDisplay dummyDisplay(int _code, 	String _errmsg) {
-	return new ExtendedDisplay(0, _code, _errmsg, true);
+	return new ExtendedDisplay(0, _code, false, _errmsg, true);
     }
 
 
@@ -1107,7 +1239,7 @@ public class EpisodeInfo extends Episode {
 	the /move or /display call (after acceptance and recording in the transcript), to decide who'll make the
 	following move.
      */
-    int whoMustMakeNextMove() {
+    public int whoMustMakeNextMove() {
 	if (attemptCnt==0) {
 	    return firstMover;
 	}
@@ -1141,15 +1273,26 @@ public class EpisodeInfo extends Episode {
     private ExtendedDisplay checkWhoseTurn(String playerId) {
 	if (!player.is2PG()) return null;
 
-	if (playerId==null) return  new ExtendedDisplay(0, CODE.OUT_OF_TURN, "playerId not sent in a /move or /pick call. This parameter is mandatory in 2PG");
+	if (playerId==null) return  new ExtendedDisplay(0, CODE.OUT_OF_TURN, true, "playerId was not sent in a /move or /pick call. This parameter is mandatory in 2PG");
 	       
 	int mover = player.getRoleForPlayerId(playerId);
-	if (mover<0) return new ExtendedDisplay(0, CODE.OUT_OF_TURN, "Player " + playerId + " is not a party to this game at all!");
+	if (mover<0) return new ExtendedDisplay(0, CODE.OUT_OF_TURN, true,  "Player " + playerId + " is not a party to this game (episode "+episodeId+") at all!");
+
+	// Which player is associated with the request?
+	PlayerInfo moverPlayer = player.getPlayerForRole( mover );
+	
+	if (moverPlayer.getCompletionMode() == PlayerInfo.COMPLETION.WALKED_AWAY) {
+	    return new ExtendedDisplay(mover, CODE.NO_GAME, true,  "Player " + playerId + " has been timed out");
+	} else if (moverPlayer.getCompletionMode() == PlayerInfo.COMPLETION.ABANDONED) {
+	    return new ExtendedDisplay(mover, CODE.NO_GAME, true,  "Player " + playerId + " has been abandoned by the partner");
+	}
+
+	
 	
 	int whoMustPlay =whoMustMakeNextMove();
 	
 	return  (mover==whoMustPlay)? null:
-	    new ExtendedDisplay(mover, CODE.OUT_OF_TURN, "Player " + playerId + " tried to make a move out of turn");
+	    new ExtendedDisplay(mover, CODE.OUT_OF_TURN, true,  "Player " + playerId + " tried to make a move out of turn");
     }
 
     /** @return the role of the player who made this /move, /pick, or
@@ -1182,6 +1325,29 @@ public class EpisodeInfo extends Episode {
 		setGuessConfidence(confidence);
 	    }
 	}
+    }
+
+    /** Overrides Episode.FinishCode, taking
+	special care of the walk away/abandoned
+	situation. (The episode entry is stored
+	only once, shared by the two players;
+	but the finish code should be returned
+	differently to the two players).
+    */
+    public int getFinishCode() {
+	int fc = super.getFinishCode();
+	if (fc==FINISH_CODE.ABANDONED || fc==FINISH_CODE.WALKED_AWAY  ) {
+	    if (player.getCompletionMode() == PlayerInfo.COMPLETION.WALKED_AWAY) fc = FINISH_CODE.WALKED_AWAY;
+	    else if (player.getCompletionMode() == PlayerInfo.COMPLETION.ABANDONED) fc = FINISH_CODE.ABANDONED;
+	}
+	return fc;
+    }
+       
+    /** In Bot Assist games, the list of all move suggestions made by the bot in this episode */
+    @Transient
+    BotAssist botAssist = null;
+    public Move xgetLastProposed() {
+	return botAssist.proposed;
     }
     
 }

@@ -129,7 +129,7 @@ public class TrialList extends Vector<ParaSet> {
     static public class ExperimentPlanHandle {
 	/** The main directory which contains the plans' trial list file
 	    (which can be modified by a modifier), or null (in the "R:" mode). */
-	final File mainDir;
+	public final File mainDir;
 	/** Normally null; rule set name in "R:" mode */
 	final public String mainRuleSetName;
 	/** Normally null; a File in R: or P: mode */
@@ -146,9 +146,9 @@ public class TrialList extends Vector<ParaSet> {
 	    return new File(base, expMain);
 	}
 
-	ExperimentPlanHandle(String exp)  throws IOException{
+	public ExperimentPlanHandle(String exp)  throws IOException{
 	    String q[] = exp.split(":");
-	    if (q.length==1) {
+	    if (q.length==1) { // traditional static plan
 		mainDir = findDir(exp);
 		mainRuleSetName=null;
 		modifierFile=null;

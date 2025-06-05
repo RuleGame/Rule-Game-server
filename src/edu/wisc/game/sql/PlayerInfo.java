@@ -34,6 +34,10 @@ public class PlayerInfo {
     @Basic
     private Date date; 
 
+    /** The most recent activity. This is mostly used to detect "walk-aways" */
+    // @Transient
+    Date lastActivityTime=null; 
+    
     /** Back link to the user, for JPA's use. It is non-null only for
 	player IDs created via the repeat-user launch pages, or via the
 	Android app.
@@ -53,7 +57,7 @@ public class PlayerInfo {
     public void setPlayerId(String _playerId) { playerId = _playerId; }
 
     @Basic 
-    private String experimentPlan;
+    private String  experimentPlan;
     /** The experiment plan historically was just a directory name, 
 	e.g. "pilot06". Starting from ver. 3.004, dynamic experiment 
 	plans are also supported, in the form P:plan:modifer or
@@ -70,12 +74,26 @@ public class PlayerInfo {
 	initSeries()) took place. For those restored from the
 	database, it is called automatically due to the @PostLoad
 	directive.
+
+	<p>This method looks for "coop." or "adve." prefix in the
+	experiment plan directory name (for a static or dynamic plan)
+	to decide if this is a 2PG of some kind.
     */
     @PostLoad() 
     public void postLoadPart1() {
-	String[] z = experimentPlan.split("/");
-	coopGame = z[z.length-1].startsWith("coop.");
-	adveGame = z[z.length-1].startsWith("adve.");
+	String q = "";
+	try {
+	    q = new TrialList.ExperimentPlanHandle(experimentPlan).mainDir.getName();
+	    Logging.info("postLoadPart1: q=" + q);
+	} catch (IOException ex) {
+	    Logging.error(""+ex);
+	    ex.printStackTrace(System.err);
+	}
+
+	//String[] z = experimentPlan.split("/");
+	//String q  = z[z.length-1];
+	coopGame = q.startsWith("coop.");
+	adveGame = q.startsWith("adve.");
     }
 
     /** Sets some (transient) properties of this object which depend
@@ -93,21 +111,55 @@ public class PlayerInfo {
     */	
     public void postLoad() {
 	postLoadPart1();
+	ParaSet para = getFirstPara(); //-- this can only be done after initSeries() or restoreTransientFields()
 	if (is2PG()) {
-	    ParaSet para = getFirstPara(); //-- this can only be done after initSeries() or restoreTransientFields()
 	    if (para==null) {
 		throw new IllegalArgumentException("Cannot access the player's parameter sets: " + playerId);
 	    }
 	    needChat = para.getBoolean("chat", false);
+
+
+	    botGameName = para.getString("bot", null);
+	    if (botGameName != null) {
+		if (botGameName.equals("pseudo")) {
+		    pseudoHalftime = para.getDouble("pseudo_halftime", false, 10);
+		} else {
+		    throw new IllegalArgumentException("Illegal bot partner name ("+botGameName+") for player " + playerId);
+		}
+	    }
+	    
 	} else {
 	    needChat = false;
+	    botGameName = null;
+	    botGameName = null;
 	}
+
+	//-- Bot Assist is mostly for 1PG 
+	botAssistName = para.getString("bot_assist", null);
+	if (botAssistName != null) {
+	    if (botAssistName.equals("pseudo")) {
+		pseudoHalftime = para.getDouble("pseudo_halftime", false, 10);
+	    } else {
+		throw new IllegalArgumentException("Illegal bot assist name ("+botAssistName+") for player " + playerId);
+	    }
+	}
+	    
+
+
+
 	
     }
 
     /** These are set in setExperimentPlan */
     @Transient
     private boolean coopGame, adveGame, needChat;
+    /** If not null, it means that this a 2PG game with a bot
+	partner, of the specified type */
+    @Transient
+    private String botGameName;
+    /** If not null, there is a bot assistant (8.014+) */
+    @Transient
+    private String botAssistName;
 
     
         /** @return true if the name of the experiment plan indicates that this
@@ -125,6 +177,25 @@ public class PlayerInfo {
     public boolean is2PG() {
 	return coopGame || adveGame;
     }
+    public boolean isBotGame() {
+	return botGameName!=null;
+    }
+    public boolean hasBotAssist() {
+	return botAssistName!=null;
+    }
+
+
+    /** True if this particular player is a bot. (And not just the game involves a bot) */
+    @Basic
+    boolean amBot;
+    public boolean getAmBot() { return amBot; }
+    @XmlElement
+    public void setAmBot(boolean _amBot) { amBot = _amBot; }
+
+    /** This is used in pseudo-AI bots, to indicate how fast it pretends to learn */
+    @Transient
+    public double pseudoHalftime = 4.0;
+    
     /** Do we need a between-player chat element in the GUI? (In 2PG only,
 	based on para.chat of the first para set of this player.  */
     public boolean getNeedChat() { return needChat; }
@@ -142,8 +213,16 @@ public class PlayerInfo {
     public String getTrialListId() { return trialListId; }
     public void setTrialListId(String _trialListId) { trialListId = _trialListId; }
     public Date getDate() { return date; }
-    public void setDate(Date _date) { date = _date; }
+    /** Sets the creation date (and the last activity date). This is 
+	used on initialization */
+    public void setDate(Date _date) {
+	lastActivityTime = date = _date;
+    }
+    public Date getLastActivityTime() { return lastActivityTime; }
+    public void setLastActivityTime(Date _lastActivityTime) { lastActivityTime = _lastActivityTime; }
 
+
+    
     @Basic 
     private String partnerPlayerId;
     /** The playerId value of the partner, if this is a two-player game, and
@@ -152,13 +231,21 @@ public class PlayerInfo {
     public String getPartnerPlayerId() { return partnerPlayerId; }
     public void setPartnerPlayerId(String _partnerPlayerId) { partnerPlayerId = _partnerPlayerId; }
 
-    /** The playerId of player 0 or player 1
+    /** The playerId of player 0 or player 1. This should only be called on a paired player in 2PG.
 	@param mover Whose playerId do you want? 
      */
     String getPlayerIdForRole(int mover) {
-	return mover==Pairing.State.ZERO? getPlayerId(): getPartnerPlayerId();
+	return (pairState==mover)? getPlayerId(): getPartnerPlayerId();
     }
 
+    /** The PlayerInfo of the player with the specified role. This should only be called on a paired player in 2PG. 
+	@param mover Whose PlayerInfo do you want? 
+     */
+    public PlayerInfo getPlayerForRole(int mover) {
+	return (pairState==mover)? this: xgetPartner();
+    }
+    
+    
     /** Is this playerId of player 0 or player 1 in a 2PG?
 	@param pid The playerId of this player, or of its partner
 	@return 0 or 1
@@ -196,7 +283,7 @@ public class PlayerInfo {
 	}
 	return partner;
     }
-    /** Sets links in both directions */
+    /** Sets links in both directions, and saves both objects  */
     public void linkToPartner( PlayerInfo _partner, int myRole) {
 	partner = _partner;
 	setPartnerPlayerId(partner.getPlayerId());
@@ -259,9 +346,12 @@ public class PlayerInfo {
     //    }
 
     public String toString() {
-	return "(PlayerInfo: id=" + id +",  playerId="+ playerId+", pair="+pairState+
+	String s = "(PlayerInfo: id=" + id +",  playerId="+ playerId+", pair="+pairState+
 	    (partnerPlayerId==null? "": ":" + partnerPlayerId) +
-	    ", trialListId=" + trialListId +", date=" + date+")";
+	    ", trialListId=" + trialListId +", date=" + date;
+	if (completionMode != 0) s += ", completionMode="+ completionMode;
+	s += ")";
+	return s;
     }
 
 
@@ -376,9 +466,10 @@ public class PlayerInfo {
     /** Returns true if the current series number is set beyond the possible
 	range, which indicates that it has gone through the last possible
 	increment (and, therefore, the completion code has been set as well).
+	Since ver 8.012, also returns true if the game has been abandoned.
     */
     public boolean alreadyFinished() {
-	return currentSeriesNo>=allSeries.size();
+	return gameAbandoned() || currentSeriesNo>=allSeries.size();
     }
     
     /** Based on the current situation, what is the maximum number
@@ -422,16 +513,27 @@ public class PlayerInfo {
 	return n;
     }
 
-    
+
+    /** The total number of attempts in all episodes of this series.
+	This is used in pseudo-learning. */
+    public int seriesAttemptCnt() {
+	Series ser = getCurrentSeries();	
+	if (ser==null) return 0;
+	int n = 0;
+	for(EpisodeInfo epi: ser.episodes) {
+	    n += epi.getAttemptCnt();
+	}
+	return n;
+    }
     
     
     /** @return true if an "Activate Bonus" button can be displayed, i.e. 
 	the player is eligible to start bonus episodes, but has not done that yet */
     public boolean canActivateBonus() {
 	Series ser = getCurrentSeries();	
+	if (ser==null) return false;
 	if (ser.para.getIncentive()!=ParaSet.Incentive.BONUS) return false;
 	if (inBonus) return false;  // already doing a bonus subseries!
-	if (ser==null) return false;
 	int at = ser.para.getInt("activate_bonus_at");
 	// 0-based index of the episode on which activation will be in
 	// effect, if it happens
@@ -475,7 +577,7 @@ public class PlayerInfo {
 	em.getTransaction().commit();	        
     }
 
-    /** "Gives up" he current series, i.e. immediately switches the
+    /** "Gives up" the current series, i.e. immediately switches the
 	player to the next series (if there is one). */
     public void giveUp(int seriesNo) throws IOException {
 	Logging.info("giveUp(pid="+playerId+", seriesNo=" + seriesNo +"), currentSeriesNo=" +currentSeriesNo);
@@ -487,7 +589,7 @@ public class PlayerInfo {
 	if (seriesNo!=currentSeriesNo) throw new IllegalArgumentException("Cannot give up on series " + seriesNo +", because we presently are on series " + currentSeriesNo);
 	if (seriesNo>=allSeries.size())  throw new IllegalArgumentException("Already finished all "+allSeries.size()+" series");
 	Series ser=getCurrentSeries();
-	if (ser!=null || ser.size()>0) {
+	if (ser!=null && ser.size()>0) {
 	    EpisodeInfo epi = ser.episodes.lastElement();
 	    // give up on the currently active episode, if any
 	    if (!epi.isCompleted()) {
@@ -505,12 +607,90 @@ public class PlayerInfo {
     }
 
 
+    /** This may be invoked by a maintenance thread in 2PG, when it detects
+	that this player has been inactive for a while. (The method should be
+        usable in 1PG too, but it's not a major concern).
+
+	<p>If this is 2PG (i.e. players are listening to web sockets),
+	we send a Ready.DIS message to both players, so that their
+	clients will update their screens
+
+	<p>
+	Note that, inside this method, we "abandon" the episode before 
+	marking the player as "abandoner", because otherwise
+	getCurrenSeries() won't retrieve the episode.
+     */
+    public void abandon() throws IOException {
+
+	// the one who stores the record
+	PlayerInfo y = (pairState==Pairing.State.ONE) ? partner: this;
+	    
+	Logging.info("abandoning by(pid="+playerId+"), currentSeriesNo=" + y.currentSeriesNo);
+
+	// mark the current episode as abandoned, if needed
+	boolean saved = false;
+
+	if (y.currentSeriesNo>=y.allSeries.size())  return; // finished all series already anyway
+	Series ser=y.getCurrentSeries();
+	
+	if (ser!=null && ser.size()>0) {
+	    EpisodeInfo epi = ser.episodes.lastElement();
+	    Logging.info("abandon(playerId): may need to abandon episode=" + epi.getEpisodeId());
+	    // mark the currently active episode, if any, as abandoned
+	    if (!epi.isCompleted()) {
+		epi.abandoned = true;
+		Logging.info("abandon: episodeId=" + epi.getEpisodeId()+", set abandoned=" + epi.abandoned);
+		//Main.persistObjects(epi);
+		// Persists SQL, and write CSV
+		y.ended(epi);
+		saved = true;
+	    }
+	} else if (ser==null) {
+	    Logging.info("abandon: ser=null");
+	} else {
+	    Logging.info("abandon: ser.size=" + ser.size());
+	}
+	
+	setCompletionMode(COMPLETION.WALKED_AWAY); 
+	if (partner!=null) {
+	    Logging.info("abandon("+playerId+"): marking the partner, " + partnerPlayerId + ", as abandoned");
+	    partner.setCompletionMode(COMPLETION.ABANDONED);
+	    partner.setCompletionCode( buildCompletionCode() + "-ab");
+	    partner.saveMe();
+
+	}
+	saveMe();
+
+	if (is2PG() && isBotGame()) {
+	    try {
+		WatchPlayer.tellHim(playerId, WatchPlayer.Ready.DIS);
+	    } catch(Exception ex) {
+		Logging.error("Very unfortunately, caught exception when sending a Ready.DIS ws message to the walk-away player ("+playerId+"): " + ex);
+		ex.printStackTrace(System.err);
+	    }
+	}
+	
+	if (partner!=null && isBotGame()) {
+	    try {
+		WatchPlayer.tellHim(partnerPlayerId, WatchPlayer.Ready.DIS);
+	    } catch(Exception ex) {
+		Logging.error("Somewhat unfortunately, caught exception when sending a Ready.DIS  ws message to the abandoned partner ("+partnerPlayerId+"): " + ex);
+		ex.printStackTrace(System.err);
+	    }
+	}
+	
+	//Logging.info("abandoning completed, now currentSeriesNo=" +currentSeriesNo);
+
+	
+    }
+    
     /** Can a new "regular" (non-bonus) episode be started in the current series? */
     private boolean canHaveAnotherRegularEpisode() {
 	Series ser=getCurrentSeries();
 	if (ser==null) return false;
 	if (ser.seriesHasX4(0) || ser.seriesHasX4(1)) return false;
 	if (inBonus) return false;
+	if (gameAbandoned()) return false;
 	return  ser.size()<ser.para.getMaxBoards();
     } 
 
@@ -521,6 +701,7 @@ public class PlayerInfo {
 	if (ser==null) return false;
 	System.err.println("ser=" + ser+", earned=" +  ser.bonusHasBeenEarned());
 	if (!inBonus || ser.bonusHasBeenEarned()) return false;
+	if (gameAbandoned()) return false;
 	int cnt=0;
 	System.err.println("Have " +  ser.size() + " episodes to look at");
 	for(EpisodeInfo x: ser.episodes) {
@@ -678,6 +859,7 @@ public class PlayerInfo {
 
 	Logging.info("episodeToDo(pid="+playerId+"); cs=" + currentSeriesNo +", finished=" + alreadyFinished());
 
+	if (alreadyFinished()) return null;
 	boolean needSave=false;
 	try {
 	while(currentSeriesNo < allSeries.size()) {	    
@@ -747,7 +929,7 @@ public class PlayerInfo {
 	    if (e==epi) return s;
 	}
 	// This could indicate some problem with the way we use JPA
-	System.err.println("whoseEpisode: detected an episode not stored in the current series structure : " + epi);
+	System.err.println("whoseEpisode: detected an episode not stored in the current series structure : " + epi.episodeId +", series " + epi.seriesNo);
 	return null;
     }
 
@@ -777,6 +959,31 @@ public class PlayerInfo {
     public String getCompletionCode() { return completionCode; }
     public void setCompletionCode(String _completionCode) { completionCode = _completionCode; }
 
+
+    /** Completion modes */
+    static public class COMPLETION {
+	static public final int
+	/** Abandoned by partner */
+	    ABANDONED =1,
+	/** Walked away (thus abandoning the partner in the process) */
+	    WALKED_AWAY = 2;
+    }
+
+    /** This value, if not the default 0, may store additional
+	info about how the player's participation ended.
+	The value is a constant from COMPLETION */
+    private int completionMode;
+    public int getCompletionMode() { return completionMode; }
+    @XmlElement
+    public void setCompletionMode(int _completionMode) { completionMode = _completionMode; }
+
+    public boolean gameAbandoned() {
+	return (completionMode == COMPLETION.ABANDONED ||
+		completionMode == COMPLETION.WALKED_AWAY);
+    }
+
+
+    
     /** Creates a more or less unique string ID for this Episode object */
     private String buildCompletionCode() {
 	String s = playerId + "-" + Episode.sdf.format(new Date()) + "-";
@@ -794,6 +1001,9 @@ public class PlayerInfo {
 	incremented. If the series number reaches the last possible
 	value (the one beyond the range of parameter set numbers), the
 	completion code for this player is set.
+
+	<p>In a 2PG, the partner (Player 1) gets the same completion code as well,
+	so that he will be shown one after his demographics page.
      */
     synchronized private void goToNextSeries() {
 	if (alreadyFinished()) return;
@@ -803,6 +1013,13 @@ public class PlayerInfo {
 
 	if (alreadyFinished() && completionCode ==null) {
 	    completionCode = buildCompletionCode();
+
+	    if (partner!=null) { 
+		partner.completionCode = completionCode;
+		partner.saveMe();
+	    }
+
+	    
 	} 
 	//Main.persistObjects(this);
 	saveMe();
@@ -880,7 +1097,7 @@ public class PlayerInfo {
 		}
 		raw[j] = new int[]{s, f};
 	    }
-	    Logging.info("Created RewardsAndFactorsPerSeries=" + this);
+	    //Logging.info("Created RewardsAndFactorsPerSeries=" + this);
 	}
 
 	public String toString() {
@@ -925,7 +1142,7 @@ public class PlayerInfo {
     
     /** This method is called after an episode completes. It computes
 	the applicable rewards (if the board has been cleared or
-	(since 4.007) stalemared, calls the SQL persist operations,
+	(since 4.007) stalemated, calls the SQL persist operations,
 	writes CSV files, and, if needed, switches the series and
 	subseries.
 
@@ -945,7 +1162,7 @@ public class PlayerInfo {
 	    // do not happen; but if one does, let just finish this series
 	    // to avoid extra annoyance for the player
 	    goToNextSeries();
-	} else if (epi.cleared || epi.earlyWin ||
+	} else if (epi.cleared || epi.earlyWin || epi.abandoned ||
 		   epi.stalemate && epi.stalematesAsClears) {
 	    // For completions, nPiecesStart==doneMoveCnt, but for
 	    // stalemates, we must use the latter
@@ -981,12 +1198,21 @@ public class PlayerInfo {
 	Board b = epi.getCurrentBoard(true);
 	BoardManager.saveToFile(b, playerId, epi.episodeId, f);
 	f =  Files.transcriptsFile(playerId);
-	TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.transcript);
+	TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.transcript, hasBotAssist());
+	if (hasBotAssist()) {
+	    f = Files.botAssistFile(playerId);
+	    TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.botAssist.botAssistTranscript, false);
+	}
 	f =  Files.detailedTranscriptsFile(playerId);
 	epi.saveDetailedTranscriptToFile(f);
-
-	WatchPlayer.tellAbout(playerId, "Ended episode " +epi.getEpisodeId()+
+	Logging.info("PlayerInfo.ended: saved transcripts for (epi=" + epi.getEpisodeId()+"); finishCode =" + epi.finishCode);
+	try {
+	    WatchPlayer.tellAbout(playerId, "Ended episode " +epi.getEpisodeId()+
 			     " with finishCode =" + epi.finishCode);
+	} catch(Exception ex) {
+	    Logging.error("caught exception when sending an info ws message about "+playerId+": " + ex);
+	    ex.printStackTrace(System.err);
+	}
 	
     }
 
@@ -1080,6 +1306,7 @@ public class PlayerInfo {
 	create a new EM and merge this object to the new persistence context.
      */
     public void saveMe() {
+	Logging.info("Saving player " + playerId);
 	Main.saveObject(this);
     }
 
@@ -1131,6 +1358,10 @@ public class PlayerInfo {
 	6.029), this score is only computed in a non-trivial way in
 	games with the incentive plan Incentive.DOUBLING.
 	
+	<p>In 2PG, the record is stored in Player 0' PlayerInfo object,
+	so we refer to it. In oop games, goodness is "joint" for the pair of players,
+	since that's how xfactor etc are computed and stored.
+
 	@return For players in games with the incentive plan
 	Incentive.DOUBLING (or LIKELIHOOD), the value of the score, in the range
 	[0..1], is simply the fraction of all rule sets so far that
@@ -1139,24 +1370,46 @@ public class PlayerInfo {
 	incentive plans, 0 is returned.
     */
     public double goodnessScore() {
-	
 	ParaSet para = getFirstPara();
 	if (para==null) return 0;
 	//hasError("Don't know the players parameter set");
 
 	if ( para.getIncentive()==ParaSet.Incentive.DOUBLING ||
 	     para.getIncentive()==ParaSet.Incentive.LIKELIHOOD) {
-	    int sumFactor = 0;
-	    for(Series ser: allSeries) {
-		if (ser!=null) {
-		    int f = ser.findXFactor(pairState);
-		    if (f>1) sumFactor+=f;
-		}
-	    }
-	    double g=(double)sumFactor / (4 * (double) allSeries.size());
+	    // Whose record do we look at? Only 2PG adve games have separate
+	    // xfactor records
+	    int mj = (isAdveGame() && pairState==Pairing.State.ONE) ? 1: 0;
+	    double g = (pairState==Pairing.State.ONE) ? partner.goodnessScore(mj):
+		goodnessScore(mj);
 	    Logging.info("Goodness(pid="+playerId+")="+g);
 	    return g;
+
 	} else return 0;
+    }
+
+    /** Computes the goodness score literally in this PlayerInfo record,
+	so if it's 2PG, this player must be Player 0 of the pair (because
+	that's where both player's records and XFactors are stored).
+
+	This method must be only called from goodnessScore(), so that the 
+	incentive scheme is already checked.
+
+	@param mj Normally, 0. In adve 2PG, this may be 0 or 1, to refer
+	to a particular player's section of the stored record.
+     */
+    private double goodnessScore(int mj) {	
+	
+	int sumFactor = 0;
+	for(Series ser: allSeries) {
+	    if (ser!=null) {
+		//int f = ser.findXFactor(pairState);
+		int f = ser.findXFactor(mj);
+		if (f>1) sumFactor+=f;
+	    }
+	}
+	double g=(double)sumFactor / (4 * (double) allSeries.size());
+	Logging.info("Goodness(pid="+playerId+", mj="+mj+")="+g);
+	return g;
     } 
 
     /** This is used to keep track of when a player joins the pairing queue */

@@ -3,7 +3,7 @@
   <body>
     <h1>Creating initial boards with a random board generator</h1>
 
-<div align="center"><em>Updated 2025-03-16 for ver 7.009</em></div>
+<div align="center"><em>Updated 2025-03-20 for ver 8.000</em></div>
     
     <p>When <a href="sop-experiment.html">creating an experiment plan</a>, you need to give a thought to where intial boards are coming from.
 
@@ -32,9 +32,9 @@ Here,
   <li>objects-range = the number of game pieces to place on the board (a positive integer), or a range (<em>n<sub>1</sub>:n<sub>2</sub></em>, with 1&le;<em>n<sub>1</sub></em> &le;<em>n<sub>2</sub></em>, e.g. <tt>2:4</tt>)
   <li>shapes-range = the number of different shapes to be used on the board. (A positive integer or a range)
   <li>colors-range = the number of different colors to be used on the board. (A positive integer or a range)
-  <li>shapes-list = unless you want to use the 4 legacy shapes and 4 legacy colors, use this parameter to specify the list from which shapes are to be drawn. Wildcards are allowed. (A single-quoted semicolon-separated list, e.g. <tt>'camel;cat;duck'</tt>, or <tt>'arrows/*;rainbows/*'</tt>).
-  <li>colors-list =  unless you want to use the 4 legacy colors, use this parameter to specify the list from which colors are to be drawn. (A single-quoted semicolon-separated list, e.g. <tt>'red;pink;orange;mauve'</tt>). As with any colors, the colors mentioned here must exist in the color map on your server.
-  <li>options = include <tt>condTrain</tt> or <tt>condTest</tt>, which can be used for position constraints in the same way as in <a href="captive.html#cond">the Captive Game Server</a>
+  <li><tt>shapes-list</tt> :  unless you want to use the 4 legacy shapes and 4 legacy colors, use this parameter to specify the list from which shapes are to be drawn. Wildcards are allowed. (A single-quoted semicolon-separated list, e.g. <tt>'camel;cat;duck'</tt>, or <tt>'arrows/*;rainbows/*'</tt>).
+  <li><tt>colors-list</tt> :  unless you want to use the 4 legacy colors, use this parameter to specify the list from which colors are to be drawn. (A single-quoted semicolon-separated list, e.g. <tt>'red;pink;orange;mauve'</tt>). As with any colors, the colors mentioned here must exist in the color map on your server.
+  <li><tt>options</tt> : these include <tt>condTrain=...</tt> or <tt>condTest=...</tt>, which can be used for position constraints in the same way as in <a href="captive.html#cond">the Captive Game Server</a>. You can also have  <tt>crowded=true</tt> to allow the random board generator to put multiple pieces in the same cell.
 </ul>
 
 <p>

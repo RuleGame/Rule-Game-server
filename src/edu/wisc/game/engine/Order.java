@@ -194,13 +194,14 @@ public class Order extends Vector<Vector<Integer>> {
     }
 
 
-    /** In the present board configuration, which piece(s) would be eligible
-	to be picked right now under this order?
+    /** In the present board configuration, pieces from which cell(s)
+	would be eligible to be picked right now under this order?
+	
 	@param onBoard indicates which of the N*N cells are occupied. 
 	@return a subset of onBoard consisting of the piece(s) "in the head"
 	of this order. (E.g the topmost or rightmost pieces).
     */
-    public BitSet findEligiblePieces(BitSet onBoard) {
+    public BitSet findEligibleCells(BitSet onBoard) {
 	BitSet result = new BitSet();
 	for(Vector<Integer> v: this) {
 	    //Logging.info("#FEP: " + result + " OR (" + Util.joinNonBlank(",", v) + ")");

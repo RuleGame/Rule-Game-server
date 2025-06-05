@@ -7,7 +7,7 @@
 //---------------------------------------------------------
 
 // this function is used whenever one clicks on a game piece
-function selectXY(x,y)	{
+function selectXY_old(x,y)	{
 
     const fx = document.getElementById("moveFormX");
     const fy = document.getElementById("moveFormY");
@@ -15,7 +15,14 @@ function selectXY(x,y)	{
     fy.value=y;
 }
 
-function doBucket(bx,by) {
+function selectPiece(id)	{
+
+    const fid = document.getElementById("moveFormId");
+    fid.value= id;
+}
+
+//-- Deprecated, from GS 7.*
+function doBucket_old(bx,by) {
     const fx = document.getElementById("moveFormX");
     const fy = document.getElementById("moveFormY");
     const gx = document.getElementById("moveFormBX");
@@ -29,4 +36,19 @@ function doBucket(bx,by) {
 	document.getElementById("moveForm").submit();  
     }
 }
- 
+
+//-- For GS 8.0
+function doBucket(bid) {
+    const fid = document.getElementById("moveFormId");
+    const fbid = document.getElementById("moveFormBid");
+
+    fbid.value = bid;
+
+    if (fid.value.trim()=='' || fid.value.trim()=='') {
+	window.alert("No use to click on a bucket before a game piece has been selected!");
+    } else {
+	//window.alert("Will submit");
+	document.getElementById("moveForm").submit();  
+    }
+}
+

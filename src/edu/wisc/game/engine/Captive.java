@@ -17,7 +17,7 @@ import edu.wisc.game.rest.*;
 public class Captive {
 
     /** Produces a single-line or multi-line comment to be used in stdout */
-    static String asComment(String s) {
+    public static String asComment(String s) {
 	String[] v = s.split("\n");
 	for(int i=0; i<v.length; i++) v[i] = "#" + v[i];
 	return String.join("\n", v);			  
@@ -58,7 +58,7 @@ public class Captive {
 	the simplified rule set name (no dir name and no extension)
 	will be put.
     */
-    static GameGenerator buildGameGenerator(ParseConfig ht, String[] argv//,
+    public static GameGenerator buildGameGenerator(ParseConfig ht, String[] argv//,
 					    // Vector<String> simpleRuleSetName
 					    ) throws IOException,  RuleParseException, ReflectiveOperationException, IllegalInputException{
 	GameGenerator gg = buildGameGenerator2(ht, argv);
@@ -130,7 +130,7 @@ public class Captive {
 	line params.
 	@return an MLC results logger object, or null if one is not requested
      */
-    static MlcLog mkLog(ParseConfig ht) {
+    static public MlcLog mkLog(ParseConfig ht) {
 
 	String logFileName=ht.getOption("log", null);
 	boolean append = false;
@@ -171,7 +171,7 @@ public class Captive {
 	
 	ParseConfig ht = new ParseConfig();
 
-	// allows seed=... , colors=..., condTrain=... etc among argv
+	// allows seed=... , colors=..., condTrain=..., crowded=... etc among argv
 	argv = ht.enrichFromArgv(argv);
 
 	//System.out.println("output=" +  ht.getOption("output", null));
@@ -199,7 +199,7 @@ public class Captive {
 		
 	while(true) {
 	    Game game = gg.nextGame();
-	    if (outputMode== OutputMode.FULL) System.out.println(asComment(game.rules.toString()));
+	    //	    if (outputMode== OutputMode.FULL) System.out.println(asComment(game.rules.toString()));
 
 	    Episode epi = new Episode(game, outputMode,
 				      new InputStreamReader(System.in),

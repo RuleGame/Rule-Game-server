@@ -31,14 +31,14 @@ public class BoardConditionsChecker {
 	
     public static boolean boardIsAcceptable(Board board, RuleSet rules, boolean testing) {
 
-	Piece[] pieces = board.toPieceList();
+	Vector<Piece> values = board.getValue();
 	
-	EligibilityForOrders eligibleForEachOrder = new EligibilityForOrders(rules, Episode.onBoard(pieces));
+	EligibilityForOrders eligibleForEachOrder = new EligibilityForOrders(rules, Episode.onBoard(values));
 
 	int acceptedPiecesCnt=0;
-	for(int pos=0; pos<pieces.length; pos++) {
-	    if (pieces[pos]==null) continue;
-	    if (pieceIsAcceptedByHowManyRows(pieces[pos], rules, eligibleForEachOrder)>0) {
+	for(int j=0; j<values.size(); j++) {
+	    Piece piece = values.get(j);
+	    if (pieceIsAcceptedByHowManyRows(piece, rules, eligibleForEachOrder)>0) {
 		acceptedPiecesCnt ++;
 	    }
 	}

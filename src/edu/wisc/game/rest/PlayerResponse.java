@@ -13,6 +13,7 @@ import edu.wisc.game.util.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.reflect.JsonReflect;
 import edu.wisc.game.parser.RuleParseException;
+import edu.wisc.game.threads.*;
 
 
 /** The object returned by the /player call. This is the call that's
@@ -60,7 +61,10 @@ public class PlayerResponse extends ResponseBase {
     
     private String completionCode = null;
     public String getCompletionCode() { return completionCode; }
+    private int completionMode;
+    public int getCompletionMode() { return completionMode; }
 
+    
     /** This is mostly used so that the caller can check if a re-used
 	player is in the right plan */
     private String experimentPlan;
@@ -89,7 +93,7 @@ public class PlayerResponse extends ResponseBase {
 
     static private final Pattern repeatUserPat = Pattern.compile("^RepeatUser-([0-9]+)-");
 
-    PlayerResponse(String pid, String exp, int uid) {
+    public PlayerResponse(String pid, String exp, int uid) {
 	this(pid, exp, uid, false);
     }
 
@@ -106,8 +110,12 @@ public class PlayerResponse extends ResponseBase {
 	@param uid The numeric ID of the repeat user who creates this 
 	playerId for himself. If negative, this parameter is ignored,
 	as this is an M-Turker etc, and not a repeat user.
+	@param debug If true, set this.playerInfo. (This is useful
+	in Pseudo-Learning bot)
     */
-    PlayerResponse(String pid, String exp, int uid, boolean debug) {
+    public PlayerResponse(String pid, String exp, int uid, boolean debug) {
+	// Just a random place to make sure the maintenance thread is running
+	MaintenanceThread.init();
 	exp = regularize(exp);
 	pid = regularize(pid);
 	Date now = new Date();
@@ -156,6 +164,7 @@ public class PlayerResponse extends ResponseBase {
 		    } else {
 			// new player
 			x = new PlayerInfo();
+			if (debug) playerInfo=x;
 			x.setDate(now);
 			x.setPlayerId(pid);
 			
@@ -222,6 +231,7 @@ public class PlayerResponse extends ResponseBase {
 	trialList  = new TrialList(x.getExperimentPlan(), x.getTrialListId());		
 	alreadyFinished = x.alreadyFinished();
 	completionCode = x.getCompletionCode();
+	completionMode = x.getCompletionMode();
 	
 	String msg=null;
 	if (exp!=null  && !x.getExperimentPlan().equals(exp)) {
@@ -245,6 +255,8 @@ public class PlayerResponse extends ResponseBase {
 	"transient" info (such as the transripts of epsiodes)
      */
     private static HashMap<String, PlayerInfo> allPlayers = new HashMap<String, PlayerInfo>();
+
+    public static HashMap<String, PlayerInfo> getAllCachedPlayers() { return allPlayers; }
         
     private static String lock = "lock";
 

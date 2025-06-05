@@ -2,8 +2,7 @@ package edu.wisc.game.tools;
 
 import java.io.*;
 import java.util.*;
-//import java.util.regex.*;
-//import java.text.*;
+
 
 import javax.persistence.*;
 
@@ -13,7 +12,6 @@ import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.saved.*;
 import edu.wisc.game.reflect.*;
-//import edu.wisc.game.parser.RuleParseException;
 import edu.wisc.game.math.*;
 import edu.wisc.game.formatter.*;
 
