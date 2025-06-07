@@ -27,7 +27,9 @@ public class AppContextListener implements ServletContextListener {
     	
     	//String url = ctx.getInitParameter("DBURL");
     	//ctx.setAttribute("DBManager", dbManager);
-    	Logging.info("Context initialized for Application.");
+	String cp = ctx.getContextPath();
+    	Logging.info("Context "+cp+" initialized for Application.");
+	MainConfig.setContextPath(cp);
     }
 
     public void contextDestroyed(ServletContextEvent servletContextEvent) {

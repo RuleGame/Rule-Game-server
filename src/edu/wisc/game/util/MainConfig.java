@@ -50,6 +50,27 @@ public class MainConfig {
     /** The default location of the main config file for this application.
 	Could be overridden with setPath() */
     static private String defaultPath = "/opt/w2020/w2020.conf";
+
+
+    /** This is invoked from the context listener so that the application
+	running in /w2020-dev could use a different config file (if it exists!)
+	than the default w2020.conf
+	@param path E.g. "/w2020" or "/w2020-dev". It could be "" if running as root. */
+    static public void setContextPath(String cp) {
+	if (cp==null|| cp.length()==0) return;
+	if (!cp.startsWith("/")) return;
+	String tryPath = "/opt/w2020" + cp + ".conf";
+	File tryFile = new File(tryPath);
+	if (tryFile.exists()) {
+	    defaultPath = tryPath;
+	    Logging.info("For context="+cp+", set defaultPath=" + defaultPath);
+	} else {
+	    Logging.info("For context="+cp+", did not change the defaultPath, because no such file exists: " + tryPath);
+	}
+    }
+
+
+    
     /** The path in this instance */
     private final String path;
 

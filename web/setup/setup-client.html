@@ -3,7 +3,7 @@
   <body>
 
     <h1>Setup: GUI client</h1>
-<p align="center"><em>Updated 2024-09-07</em></p>
+<p align="center"><em>Updated 2025-06-06</em></p>
 
     <p>If you want to install your own instance of the GUI client (for Option C):
 
@@ -37,11 +37,16 @@
 	<tt>http://myhost.come/w2020</tt> (if your server runs on that host on port 80), or 	<tt>http://localhost:8080/w2020</tt> (if, for testing purposes, you have installed the server on your laptop, and only plan to access it from the web browser running on the same laptop)
 	</tr>
 	  </table>
-	  
+
+	  <p>Additionally, as of June 2025, when compiling on action.rutgers.edu, set
+	    <tt>NODE_OPTIONS</tt> to <tt>--openssl-legacy-provider</tt>. As Aryan explained, this is needed to prevent a security warning.
+
+	  <p>
 	  The way you set environment variables depends on what shell you use; it's usually something like <tt>setenv</tt> in shells such as csh or tcsh, and  <tt>export</tt> in some other shells. For example, when we compile the client on our own server, we may do this:
 	  <pre>
 	    setenv REACT_APP_DEBUG_MODE_ENABLED false
 	    setenv REACT_APP_APP_API_HOST_ORIGIN http://rulegame.wisc.edu/w2020
+	    setenv NODE_OPTIONS "--openssl-legacy-provider"
    	  </pre>
 	<li>
 	  Run <tt>npm install</tt> from the top directory
