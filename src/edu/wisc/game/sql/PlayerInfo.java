@@ -1199,7 +1199,7 @@ public class PlayerInfo {
 	BoardManager.saveToFile(b, playerId, epi.episodeId, f);
 	f =  Files.transcriptsFile(playerId);
 	TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.transcript, hasBotAssist());
-	if (hasBotAssist()) {
+	if (hasBotAssist() && epi.botAssist!=null) {
 	    f = Files.botAssistFile(playerId);
 	    TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.botAssist.botAssistTranscript, false);
 	}
