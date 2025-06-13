@@ -14,7 +14,7 @@
 
       <h2>Gemini models</h2>
 
-    <p>As of the early 2025, Gemini offers a number of "models". We mostly use the model named <tt>gemini-2.0-flash</tt>, but it can be configured to use other models as well (with the command-line option <tt>model=...</tt>).
+    <p>As of the early 2025, Gemini offers a number of "models". We started in March 2025 with the then current model named <tt>gemini-2.0-flash</tt>, but later switched to a somewhat better more recent model, <tt>gemini-2.5-flash-preview-05-20</tt>. Out harness tool can be configured to use other models as well (with the command-line option <tt>model=...</tt>).
 
       <h2>Conversation structure</h2>
       
@@ -86,7 +86,10 @@ Generating content</a>)      implies that nothing like this takes place! The Gem
 
   <h3>Failing to realize that a piece has been removed already</h3>
 
-<p>This is rare, but has been seen on occasion. Seemingly unprovoked. E.g., in gemini-sm_qcts-03.txt:
+<p>This is rare, but has been seen on occasion in Gemini model 2.0. This is reported as code -10 (invlaid object ID) on our side.
+
+<p>
+  Seemingly unprovoked. E.g., in gemini-sm_qcts-03.txt:
   <pre>
     During episode 5, you have made so far the following 15 move attempts, with the following results:
 MOVE 8 3 ACCEPT
@@ -122,7 +125,7 @@ MOVE 5 0
 
   <h3>Repeating a wrong move</h3>
 
-This happens both on code 7 (IMMOVABLE) and code 4 (DENY).
+<p>With the model <tt>gemini-2.0-flash</tt>, this happens both on code 7 (IMMOVABLE) and code 4 (DENY). With Gemini 2.5, I have not seen this problem yet; so all examples below are from 2.0.
   
   <pre>
 %    grep At gemini-ordL1-01.txt
@@ -140,9 +143,204 @@ At 2025-04-01 11:24:08, Moving piece 0 to bucket 0. Code=7
 At 2025-04-01 11:48:43, Moving piece 6 to bucket 0. Code=4
 At 2025-04-01 11:48:49, Moving piece 6 to bucket 0. Code=4
 </pre>
+
+<p>Sometimes this repetition happens just 2-3 times; but sometimes you can see the bot repeating the same failed move 30 times, but then, fortunately, trying something else.
+
+<p>In another twist on the same theme, sometimes Gemini alternates between seveveral failed attempts, cycling between them endlessly:
+  <pre>
+    ...
+At 2025-06-12 01:14:07, Moving piece 3 to bucket 3. Code=4
+At 2025-06-12 01:14:14, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:14:21, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:14:28, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:14:35, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:14:42, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:14:49, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:14:55, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:15:02, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:15:09, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:15:16, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:15:24, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:15:31, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:15:38, Moving piece 1 to bucket 1. Code=4
+At 2025-06-12 01:15:45, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:15:52, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:15:59, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:16:05, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:16:12, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:16:19, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:16:26, Moving piece 1 to bucket 1. Code=4
+At 2025-06-12 01:16:33, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:16:40, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:16:47, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:16:55, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:17:02, Moving piece 1 to bucket 3. Code=4
+At 2025-06-12 01:17:09, Moving piece 1 to bucket 1. Code=4
+At 2025-06-12 01:17:16, Moving piece 1 to bucket 1. Code=4
+At 2025-06-12 01:17:23, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:17:30, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:17:37, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:17:43, Moving piece 1 to bucket 0. Code=4
+At 2025-06-12 01:17:50, Moving piece 1 to bucket 1. Code=4
+At 2025-06-12 01:17:57, Moving piece 1 to bucket 0. Code=4
+...
+</pre>
   
-  This despite my instructions explicitly telling the bot not to repeat a failed move until the board changes.
+<p>
+This despite me  explicitly telling the bot (in the "system instructions") not to repeat a failed move until the board changes.
+
+<p>Will try reminding about it ...
+
+
+  <h2>Gemini on the rule sets from the FDCL/basic suite</h2>
+
+<p>The results for the newer model, <tt>gemini-2.5-flash-preview-05-20</tt> are usually much better than for <tt>gemini-2.0-flash</tt>. For each rule set below, unless two models are explicitly compared, the results are for the newer, better model.
+  
+  
+  <h3>quadNearby</h3>
+
+  <p>
+The older model, <tt>gemini-2.0-flash</tt> bogs down here (not much progress after 600 moves; lots of repetitions of failed moves, and occasionally even grabbing at the already-vacated cell). OTOH, the new model, <tt>gemini-2.5-flash-preview-05-20</tt> is somehow able to solve this <em>without making a single error</em>.
+    
+<quote>
+Based on the successful moves in Episode 1 and the first move in Episode 2, the secret rule appears to be determined solely by the object's position (X, Y) on the board, dividing the board into four 3x3 quadrants, each mapping to a specific bucket. The color and shape of the objects do not seem to play a role.
+
+Here's the rule:
+
+The 6x6 board is divided into four 3x3 quadrants based on the object's (X, Y) coordinates:
+
+  <pre>
+1.  **Top-Left Quadrant (X between 1-3, Y between 4-6):** Objects in this quadrant must be moved to **Bucket 0** (X=0, Y=7).
+    *   *Example from Episode 1:* Object 6 (x=3, y=5) was moved to Bucket 0.
+    *   *Objects currently on board in Episode 2 fitting this:*
+        *   Object 3 (BLACK, TRIANGLE, x=3, y=4) -> Bucket 0
+        *   Object 5 (BLACK, SQUARE, x=1, y=5) -> Bucket 0
+        *   Object 6 (BLACK, SQUARE, x=2, y=5) -> Bucket 0
+
+2.  **Top-Right Quadrant (X between 4-6, Y between 4-6):** Objects in this quadrant must be moved to **Bucket 1** (X=7, Y=7).
+    *   *Examples from Episode 1:* Objects 4 (x=4, y=4), 5 (x=5, y=4), 7 (x=4, y=5), 8 (x=5, y=6) were moved to Bucket 1.
+    *   *Objects currently on board in Episode 2 fitting this:*
+        *   Object 4 (BLACK, CIRCLE, x=5, y=4) -> Bucket 1
+        *   Object 7 (BLACK, SQUARE, x=4, y=5) -> Bucket 1
+        *   Object 8 (BLUE, CIRCLE, x=5, y=5) -> Bucket 1
+
+3.  **Bottom-Right Quadrant (X between 4-6, Y between 1-3):** Objects in this quadrant must be moved to **Bucket 2** (X=7, Y=0).
+    *   *Examples from Episode 1:* Objects 0 (x=4, y=2), 2 (x=4, y=3), 3 (x=5, y=3) were moved to Bucket 2.
+    *   *Objects currently on board in Episode 2 fitting this:*
+        *   Object 2 (BLUE, CIRCLE, x=5, y=3) -> Bucket 2
+
+4.  **Bottom-Left Quadrant (X between 1-3, Y between 1-3):** Objects in this quadrant must be moved to **Bucket 3** (X=0, Y=0).
+    *   *Example from Episode 1:* Object 1 (x=2, y=3) was moved to Bucket 3.
+    *   *Example from Episode 2 (your successful move):* Object 0 (x=1, y=1) was moved to Bucket 3.
+    *   *Objects currently on board in Episode 2 fitting this:*
+        *   Object 1 (YELLOW, TRIANGLE, x=2, y=3) -> Bucket 3
+</pre>
+  
+In summary, the secret rule is to determine which of the four 3x3 coordinate quadrants an object occupies and then move it to the specific bucket associated with that quadrant.
+</quote>
+
+Or, in another run:
+<quote>
+The secret rule appears to be based on the proximity of the object to the bucket corners, using the Manhattan distance.
+
+Here is my understanding of the rule:
+
+1.  **Calculate Manhattan Distance:** For any object at `(X, Y)` on the board, calculate its Manhattan distance to each of the four bucket corner coordinates:
+<pre>
+    *   **Bucket 0 (X=0, Y=7):** Distance = `|X - 0| + |Y - 7|`
+    *   **Bucket 1 (X=7, Y=7):** Distance = `|X - 7| + |Y - 7|`
+    *   **Bucket 2 (X=7, Y=0):** Distance = `|X - 7| + |Y - 0|`
+    *   **Bucket 3 (X=0, Y=0):** Distance = `|X - 0| + |Y - 0|`
+</pre>
+
+2.  **Determine the Target Bucket:** An object can only be moved to the bucket (or buckets, in case of a tie) that has the *minimum* Manhattan distance from the object's current position.
+
+All moves made so far in Episode 1 and the first move in Episode 2 are consistent with this rule. There is no indication that the rule depends on object properties (color, shape) or the history of previous successful moves.
+</quote>
+
+
+<P>The termination ("mastery") criterion in all runs was 10 correct moves in a row.
+
+  <h3>quadMixed1</h3>
+
+<p>While the old model bogs down here, the newer model reached the mastery criterion in 36 moves. The reasoning was explaineds as follows:
+
+  <pre>
+ The secret rule determines which bucket an object can be placed into based solely on its position (X,Y coordinates) on the board. The board is conceptually divided into four quadrants using the midpoints of the X and Y ranges (X=3.5 and Y=3.5).
+
+Here's the detailed rule:
+
+1.  **Board Quadrants Definition:**
+    *   **Top-Left Quadrant (TL):** Cells where `X <= 3` AND `Y >= 4`
+    *   **Top-Right Quadrant (TR):** Cells where `X >= 4` AND `Y >= 4`
+    *   **Bottom-Right Quadrant (BR):** Cells where `X >= 4` AND `Y <= 3`
+    *   **Bottom-Left Quadrant (BL):** Cells where `X <= 3` AND `Y <= 3`
+
+2.  **Bucket Mapping Rule:**
+    *   If an object is in the **Top-Left Quadrant (TL)**, it must be moved to **Bucket 1**. (Bucket 1 is located at X=7, Y=7, corresponding to the Top-Right corner).
+    *   If an object is in the **Top-Right Quadrant (TR)**, it must be moved to **Bucket 3**. (Bucket 3 is located at X=0, Y=0, corresponding to the Bottom-Left corner).
+    *   If an object is in the **Bottom-Right Quadrant (BR)**, it must be moved to **Bucket 2**. (Bucket 2 is located at X=7, Y=0, corresponding to the Bottom-Right corner).
+    *   If an object is in the **Bottom-Left Quadrant (BL)**, it must be moved to **Bucket 0**. (Bucket 0 is located at X=0, Y=7, corresponding to the Top-Left corner).
+
+In summary:
+*   Objects in the **Bottom-Right** quadrant go to the **Bottom-Right** bucket (Bucket 2).
+*   All other objects are moved to the *diagonally opposite* bucket relative to their quadrant, if we consider bucket positions as corresponding to board corners:
+    *   Top-Left quadrant -> Top-Right bucket (Bucket 1)
+    *   Top-Right quadrant -> Bottom-Left bucket (Bucket 3)
+    *   Bottom-Left quadrant -> Top-Left bucket (Bucket 0)
+
+This rule has successfully explained all ACCEPT and DENY outcomes in Episode 1, Episode 2, and the current moves in Episode 3. There have been no IMMOVABLE responses, indicating that all objects are always movable to their designated bucket.
+</pre>
+    
+  
+  <h3>sm_qcts (shape match)</h3>
+
+  With Gemini 2.0, mastery was demonstrated after ca. 200 move attempts. The explanation has a model more or less consistent with reality, e.g.
+  <quote><pre>
+Based on these observations, here's my hypothesis:
+*   **Bucket 0:** Accepts `SQUARE` or `BLACK`
+*   **Bucket 1:** Accepts `CIRCLE` or `RED`
+*   **Bucket 2:** Accepts `TRIANGLE` or `BLUE`
+*   **Bucket 3:** Accepts `STAR` or `YELLOW`
+</pre>
+  </quote>
+
+  <h3>ordL1 (reading order)</h3>
+
+  <p>
+  Gemini 2.5 solved this in 26 moves.
+
+  <pre>
+Here's my understanding of the secret rule based on the observed episodes:
+
+The game has two main rules that dictate moves:
+1.  **Which object can be moved (Movability Rule):** Only one specific object is "movable" at any given time. If you attempt to move any other object, it will be "IMMOVABLE".
+    *   The movable object is determined by its position (X, Y) on the board.
+    *   It must have the **highest Y-coordinate** (i.e., be in the highest row) among all objects currently on the board.
+    *   If there are multiple objects in that highest row, it must be the one with the **lowest X-coordinate** (i.e., the leftmost object in that row).
+    *   This implies a "top-down, then left-to-right" priority for object removal. Objects in lower Y-coordinates (or to the right in the same Y-coordinate) become movable only after all objects above/to their left are removed.
+
+2.  **To which bucket it must be moved (Bucket Assignment Rule):** Once an object is identified as movable, the correct bucket it must be placed into depends solely on its position (X, Y). If you choose the wrong bucket, the response will be "DENY".
+
+    *   **If the object's Y-coordinate is 4 or greater (Y >= 4):**
+        *   It must be moved to **Bucket 0** (the bucket located at X=0, Y=7). This applies to all objects in rows 4, 5, and 6.
+
+    *   **If the object's Y-coordinate is 3 or less (Y <= 3):**
+        *   **If the object's X-coordinate is 3 or less (X <= 3):**
+            *   It must be moved to **Bucket 3** (the bucket located at X=0, Y=0). This applies to objects in rows 1, 2, or 3, and columns 1, 2, or 3.
+        *   **If the object's X-coordinate is greater than 3 (X > 3):**
+            *   It must be moved to **Bucket 2** (the bucket located at X=7, Y=0). This applies to objects in rows 1, 2, or 3, and columns 4, 5, or 6.
+
+The object's color, shape, or ID, as well as the previous successful move, do not seem to influence which object can be moved or to which bucket it goes.
+
+**Summary in simplified terms:**
+*   Always clear the board from top to bottom, and within each row, from left to right.
+*   Objects in the top half (rows 4, 5, 6) go to the top-left bucket (Bucket 0).
+*   Objects in the bottom half (rows 1, 2, 3) go to either the bottom-left bucket (Bucket 3) if they are in the left half (columns 1, 2, 3), or the bottom-right bucket (Bucket 2) if they are in the right half (columns 4, 5, 6).
+
+I will now proceed with the next move based on this rule.}
+</pre>
 
   
-  </body>
-  </html>
+</body>
+</html>

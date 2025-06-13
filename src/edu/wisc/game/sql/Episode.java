@@ -185,8 +185,9 @@ s	    non-existing piece) the value may be different from those of
 	    return s;
 	}
 
-
-	boolean sameMove(Pick pick) {
+	/** Do the two moves describe the same operation
+	    (in terms of the piece ID and bucket ID)? */
+	public boolean sameMove(Pick pick) {
 	    if (!(pick instanceof Move)) return false;
 	    Move move = (Move) pick;
 	    return pickedSamePiece(move) && bucketNo==move.bucketNo;
@@ -299,6 +300,10 @@ s	    non-existing piece) the value may be different from those of
     boolean earlyWin = false;
     boolean abandoned = false;
 
+    @Transient
+    public boolean getCleared() { return cleared; }
+
+    
     /** Which row of rules do we look at now? (0-based) */
     @Transient
     protected int ruleLineNo = 0;
@@ -814,7 +819,8 @@ s	    non-existing piece) the value may be different from those of
 	    JUST_A_DISPLAY = -8,
 	// A /pick or /move call made by a wrong player in a 2PG
 	    OUT_OF_TURN = -9,
-	// No game piece with specified ID exists
+	// No game piece with specified ID exists. (This happens, for
+	// example, when Gemini tries to grab an already-removed game piece).
 	    INVALID_OBJECT_ID = -10,
 	// A /move or /pick call referencing a cell that has multiple pieces
 	    MULTIPLE_OBJECTS_IN_CELL  = -11;

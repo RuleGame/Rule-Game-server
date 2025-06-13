@@ -11,7 +11,6 @@ import jakarta.json.*;
 import edu.wisc.game.util.*;
 import edu.wisc.game.reflect.*;
 import edu.wisc.game.sql.*;
-//import edu.wisc.game.parser.*;
 import edu.wisc.game.sql.Episode.OutputMode;
 import edu.wisc.game.sql.Episode.CODE;
 import edu.wisc.game.sql.Episode.Pick;
@@ -48,6 +47,10 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	return sqlDf.format(new Date());
     }
 	   
+    int failedRepeatsCnt = 0;
+    int failedRepeatsCurrentStreak = 0;
+    int failedRepeatsLongestStreak = 0;
+    
     
     //    int sentCnt = 0;
     
@@ -68,7 +71,9 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
    </pre>
     */  
 
-  
+
+    /** Sends a request to the Gemini bot, and extracts the main (text) part
+	of the response from the received JSON structure. */
     private String doOneRequest(GeminiRequest gr) throws MalformedURLException, IOException, ProtocolException, ClassCastException
     {
 	readApiKey();
@@ -96,8 +101,13 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	    try(OutputStream os = con.getOutputStream()) {
 		byte[] input = jsonInputString.getBytes("utf-8");
 		os.write(input, 0, input.length);			
+	    } catch( javax.net.ssl.SSLHandshakeException ex) {
+		System.out.println("Caught exception when writing to connection: "+ ex);
+		int waitSec = 60;
+		System.out.println("Waiting for " + waitSec + " seconds to retry after an exception");
+		waitABit(waitSec * 1000);
+		continue;
 	    }
-	    
 	    
 	    code = con.getResponseCode();
 	    InputStream is;
@@ -122,7 +132,11 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 		JsonReader jsonReader = Json.createReader(br);
 		responseJo = jsonReader.readObject();
 		jsonReader.close();
-	    }		
+	    }
+	    Date now = new Date();
+	    long msecUsed = now.getTime() - lastRequestTime.getTime();
+
+	    System.out.println("Request took " + msecUsed + " msec");
 	    if (code==200) break;
 
 	    System.out.println("At "+	reqt()+", SERVER RESPONSE: " + responseJo.toString());
@@ -131,6 +145,15 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 		int waitSec = error429(responseJo);
 		System.out.println("Waiting for " + waitSec + " seconds to retry, as told by the server");
 		waitABit(waitSec * 1000);
+	    } else if (code==503) {
+	// Error: HTTP response code = 503
+	// SERVER RESPONSE: {"error":{"code":503,"message":"The model is overloaded. Please try again later.","status":"UNAVAILABLE"}}
+
+		int waitSec = 60;
+		System.out.println("Waiting for " + waitSec + " seconds to retry, as a wild guess");
+		waitABit(waitSec * 1000);
+
+
 	    } else {
 		throw new IllegalArgumentException("Don't know what to do with server error code " + code +"; terminating");
 	    }
@@ -141,6 +164,8 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	if (code != 200) {
 	    throw new IllegalArgumentException("Retry count exceeded? Terminating");
 	}
+
+
 	
 	if (responseJo==null) throw new IllegalArgumentException("Has not read anything");
 
@@ -207,7 +232,8 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     }
 
     static final Pattern secPat = Pattern.compile("([0-9]+)s");
-    
+
+    /** Just a test: creates a request with system instruction */
     static GeminiRequest makeRequest1() {
 	GeminiRequest gr = new GeminiRequest();
 	gr.addInstruction("Please answer in German, if you can");	
@@ -333,6 +359,17 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	    
 	}
 
+
+	if (won) { // Ask the bot how he did it
+	    GeminiRequest gr = history.makeRequestHow();
+	    String line = history.doOneRequest(gr);
+	    System.out.println("Response text={" + line.trim() + "}");
+	}
+
+	System.out.println("In this session of "+history.totalAttemptCnt+" move attempts, there were "+
+			   history.failedRepeatsCnt + " redundant repeated bad moves; the longest streak included " + history.failedRepeatsLongestStreak + " redundant repeats.");
+
+	
 	} finally {
 	    if (log!=null) log.close();
 	}
@@ -387,29 +424,24 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     GeminiPlayer() { super(); }
 
 
+    static GeminiRequest makeRequestAskHow() {
+	GeminiRequest gr = new GeminiRequest();
+	gr.addInstruction(instructions);
+	//gr.addUserText("How do you use borax?");
+	return gr;
+    }
+
+    /** If this flag is true, we don't print the full text of 
+	every request into the log, to save space */
+    static boolean logsBrief = true;
+    
     /** Creates a request object based on the current state of this
 	GeminiPlayer, i.e. all episodes that have been completed, and
 	the one still in progress */
     GeminiRequest makeRequest() throws IOException {
-	GeminiRequest gr = new GeminiRequest();
-	    
+	GeminiRequest gr = new GeminiRequest();	    
 	gr.addInstruction(instructions);
-
-	Vector<String> v = new Vector<>();
-	
-	if (size()==0) throw new IllegalArgumentException("No episode exists yet. What to ask?");
-	//	EpisodeHistory ehi = lastElement();
-	//Episode epi = ehi.epi;
-	if (lastElement().epi.isCompleted())  throw new IllegalArgumentException("Last episode already completed. What to ask?");
-
-	if (size()>1) {
-	    // describe all previous episodes.
-	    int n=size()-1; v.add("You have completed " + n + " episodes so far. "+(n>1?"Their":"Its") + " summary follows.");
-	}
-	for(int j=0; j<size(); j++) {
-	    v.addAll( episodeText(j));
-	}
-
+	Vector<String> v = describeHistory();
 	v.add("YOUR MOVE?");
 	String text = Util.joinNonBlank("\n", v);
 	System.out.println("===========================================\n"+
@@ -418,9 +450,57 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	return gr;
     }
 
+    /** Produces a request to be sent at the end of the session, if the bot
+	has demonstrated its mastery of the rules. */
+    GeminiRequest makeRequestHow() throws IOException {
+	GeminiRequest gr = new GeminiRequest();	    
+	gr.addInstruction(instructions);
+	Vector<String> v = describeHistory();
+	v.add("You have played pretty well recently. Could you now EXPLAIN your understanding of the secret rule?");
+	String text = Util.joinNonBlank("\n", v);
+	System.out.println("===========================================\n"+
+			   "The text part of the request:\n" + text);
+	gr.addUserText(text);
+	return gr;
+    }
+
+
+    private Vector<String> describeHistory() {
+	Vector<String> v = new Vector<>();
+	
+	if (size()==0) throw new IllegalArgumentException("No episode exists yet. What to ask?");
+	//	EpisodeHistory ehi = lastElement();
+	//Episode epi = ehi.epi;
+	if (lastElement().epi.isCompleted())  throw new IllegalArgumentException("Last episode already completed. What to ask?");
+
+	if (size()>1) {
+	    // A rare case of mastery demonstrated on the last piece
+	    // of the board
+	    boolean lastIsClearedToo = lastElement().epi.getCleared();	    
+
+	    // describe all previous episodes.
+	    int n= lastIsClearedToo?  size() : size()-1;
+
+	    if (n==1) {
+		v.add("You have completed " + n + " episode so far. Its summary follows.");
+	    } else {
+		v.add("You have completed " + n + " episodes so far. Their summary follow.");
+	    }
+	}
+	for(int j=0; j<size(); j++) {
+	    v.addAll( episodeText(j));
+	}
+	return v;
+    }
 
     
-    /** Creates lines describing an episode, to go into a request. */
+    /** Creates lines describing an episode, to go into a request.
+	The language is a bit different for the older (completed)
+	episodes and the current (incomplete) episode. (E.g. past vs.
+	present tense, etc).
+	@param j The epsiode's sequential (0-based) number in the 
+	series. In the output, the number is converted to 1-based though.
+     */
     private Vector<String> episodeText(int j) {
 	Vector<String> v = new Vector<>();
 	boolean isLast = (j==size()-1);
@@ -429,17 +509,33 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	Vector<Pick> moves = ehi.epi.getTranscript();
 
 	
-	if (j==size()-1) {
-	    v.add("You are playing Episode "+(j+1)+" now.");
-	}
-	
-	v.add("Episode " + (j+1)  + " had the following initial board: " +
-	      ehi.initialBoardAsString());
+	// All episodes other than the last are expected to have the board
+	// cleared. The last one usually has the board not cleared yet,
+	// except in a rare "corner case" when the player had displayed mastery
+	// (made 10th successful move in a row) exactly at the point of
+	// removing the last piece from the board.	
+	boolean cleared = ehi.epi.getCleared();
 	int n = moves.size();
 
-	if (ehi.epi.isCompleted()) {
+	if (j==size()-1) {
+	    if (cleared) {
+		v.add("You have just completed Episode "+(j+1)+".");
+	    } else {
+		v.add("You are playing Episode "+(j+1)+" now.");
+	    }
+	}
+
+	
+	v.add("Episode " + (j+1)  +
+	      (cleared? " had" : " has") +	      
+	      " the following initial board: " +
+	      ehi.initialBoardAsString());
+
+	if (cleared) {
 	    v.add("During episode "+(j+1)+", you cleared the board by making " +
 		  n + " move attempts. They are shown below, along with their results.");
+	} else if (n==0) {
+	    v.add("You are about to make your first move now");
 	} else {
 	
 	    v.add("During episode "+(j+1)+", you "+
@@ -486,6 +582,10 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
     */
     int requestCnt = 0;
 
+    /** Total number of attempted moves the bot has made in all episodes */
+    int totalAttemptCnt = 0;
+
+
     
     /** Plays the last (latest) episode of this GeminiPlayer, until it ends.
 
@@ -523,7 +623,7 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 		String line = doOneRequest(gr);
 		requestCnt ++;
 		tryCnt++;
-		System.out.println("Response text={" + line + "}");
+		System.out.println("Response text={" + line.trim() + "}");
 		w = parseResponse(line);
 		if (w!=null) break;
 		if (tryCnt>=2) {
@@ -535,6 +635,8 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 		System.out.println("At "+reqt()+", received an incomprehensible response, and am trying to ask again");
 		waitABit(wait);
 	    }
+
+	    totalAttemptCnt++;
 	    int id = w[0];
 	    int bid = w[1];
 
@@ -558,6 +660,22 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 	    } else { // a failed move or pick breaks the "mastery stretch"
 		lastStretch=0;
 		lastR = 0;
+
+		Vector<Pick> moves = epi.getTranscript();
+		int n = moves.size();
+		if (n>1 &&
+		    ((Move)moves.get(n-1)).sameMove(moves.get(n-2))) {
+		    // The bot has just repeated the last move attempt,
+		    // despite its failure
+		
+		    failedRepeatsCnt++;
+		    failedRepeatsCurrentStreak++;
+		    if (failedRepeatsCurrentStreak>failedRepeatsLongestStreak) {
+			failedRepeatsLongestStreak = failedRepeatsCurrentStreak;
+		    }
+		}
+
+		
 	    }
 
 	    String stats = "Transcript has "+epi.getTranscript().size()+" moves. Board pop="+epi.getValues().size()+". lastStretch=" + lastStretch + ", lastR=" + lastR;
