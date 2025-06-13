@@ -511,13 +511,30 @@ public class EpisodeInfo extends Episode {
 	    lastR[mj] = 0;
 	}
 
-	if (xgetIncentive()==Incentive.DOUBLING) {
-	    final int x2=para.getInt("x2_after"), x4=para.getInt("x4_after");
+
+	
+	if (xgetIncentive()==Incentive.DOUBLING ||
+	    xgetIncentive()==Incentive.LIKELIHOOD) {
+	    
+
+	    boolean mastery2 = false, mastery4 = false;
+	    String s = "";
+	    if (xgetIncentive()==Incentive.DOUBLING) {
+		final int x2=para.getInt("x2_after"), x4=para.getInt("x4_after");
+		mastery4 = (lastStretch[mj]>=x4);
+		mastery2 = (lastStretch[mj]>=x2);
+	    } else if (xgetIncentive()==Incentive.LIKELIHOOD) {
+		final double x2=para.getInt("x2_likelihood"), x4=para.getInt("x4_likelihood");
+		mastery4 = (lastR[mj] >=x4);
+		mastery2 = (lastR[mj] >=x4);
+		s = ", as lastR=" + lastR[mj] + " for x2="+x2+", x4="+x4;
+	    }
+
 
 	    PlayerInfo.Series ser =  mySeries();
 	    int f = ser.findXFactor(mj); 
 
-	    if (f < 4 && factorPromised[mj] < 4 && lastStretch[mj]>=x4) {
+	    if (f < 4 && factorPromised[mj] < 4 && mastery4) {
 		factorPromised[mj] = 4;
 		justReachedX4[mj]=true;
 
@@ -528,43 +545,19 @@ public class EpisodeInfo extends Episode {
 		// In this edge case, the win isn't really "early".
 
 		earlyWin = true;
-	    } else if (f<2 && factorPromised[mj] < 2 && lastStretch[mj]>=x2) {
+		Logging.info("Setting factorPromised["+mj+"]=" + factorPromised[mj] + " and earlyWin=" + earlyWin + s);
+	    } else if (f<2 && factorPromised[mj] < 2 && mastery2) {
 		factorPromised[mj] = 2;
 		justReachedX2[mj]=true;
+		Logging.info("Setting factorPromised["+mj+"]=" + factorPromised[mj] + s);
+	    } else {
+		Logging.info("Keeping factorPromised["+mj+"]=" + factorPromised[mj] + s);
 	    }
 	   
 	    if (cleared || earlyWin ||
 		stalematesAsClears && stalemate) {  
 		if (xFactor[mj]<factorPromised[mj]) xFactor[mj] = factorPromised[mj];
 	    }
-
-	}
-
-	if (xgetIncentive()==Incentive.LIKELIHOOD) {
-	    final double x2=para.getInt("x2_likelihood"), x4=para.getInt("x4_likelihood");
-
-	    PlayerInfo.Series ser =  mySeries();
-	    int f = ser.findXFactor(mj);
-
-	    if (f < 4 && factorPromised[mj] < 4 && lastR[mj] >=x4) {
-		factorPromised[mj] = 4;
-		justReachedX4[mj]=true;
-		if (!cleared) earlyWin = true;
-		Logging.info("Setting factorPromised["+mj+"]=" + factorPromised[mj]);
-	    } else if (f <2 && factorPromised[mj] < 2 && lastR[mj] >=x2) {
-		factorPromised[mj] = 2;
-		
-		justReachedX2[mj]=true;
-		Logging.info("Setting factorPromised["+mj+"]=" + factorPromised[mj]);
-	    } else {
-		Logging.info("Keeping factorPromised["+mj+"]=" + factorPromised[mj] +", as lastR=" + lastR[mj] + " for x2="+x2+", x4="+x4);
-	    }
-	   
-	    if (cleared || earlyWin ||
-		stalematesAsClears && stalemate) {
-		if (xFactor[mj]<factorPromised[mj]) xFactor[mj]=factorPromised[mj];
-	    }
-
 	}
 
 	

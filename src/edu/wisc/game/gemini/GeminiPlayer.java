@@ -120,23 +120,25 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	    }
 	    InputStreamReader isr = new InputStreamReader(is, "utf-8");
 	    
+	    responseJo = null;
 	    try(BufferedReader br = new BufferedReader(isr)) {
-		/*
-		  StringBuilder response = new StringBuilder();
-		  String responseLine = null;
-		  while ((responseLine = br.readLine()) != null) {
-		  response.append(responseLine.trim());
-		  }
-		*/
-		
 		JsonReader jsonReader = Json.createReader(br);
 		responseJo = jsonReader.readObject();
 		jsonReader.close();
+	    } catch( jakarta.json.stream.JsonParsingException ex) {
+		System.out.println("Exception when reading response: " + ex);
 	    }
+	    
 	    Date now = new Date();
 	    long msecUsed = now.getTime() - lastRequestTime.getTime();
 
 	    System.out.println("Request took " + msecUsed + " msec");
+	    if (responseJo == null) {
+		int waitSec = 60;
+		System.out.println("Waiting for " + waitSec + " seconds to retry after a failed read");
+		waitABit(waitSec * 1000);
+		continue;
+	    }
 	    if (code==200) break;
 
 	    System.out.println("At "+	reqt()+", SERVER RESPONSE: " + responseJo.toString());
@@ -169,9 +171,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	
 	if (responseJo==null) throw new IllegalArgumentException("Has not read anything");
 
-	
-
-	
+		
 	JsonArray candidatesJa = responseJo.getJsonArray("candidates");
 	if (candidatesJa.size()!=1)  throw new IllegalArgumentException("Expected to find 1 candidate, found " + candidatesJa.size() + ". RESPONSE=\n" + responseJo);
 	JsonObject contentJo = candidatesJa.getJsonObject(0).getJsonObject("content");

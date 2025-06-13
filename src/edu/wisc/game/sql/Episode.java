@@ -1134,12 +1134,16 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	return String.join("\n", w);
     }
 
+    /** Since ver 8.020, it is "EARLY_WIN" (and not just normal "FINISH") even if the mastery 
+	was achieved on the very last move of an episode, and the board was cleared.
+    */
     int getFinishCode() {
-	 return cleared? FINISH_CODE.FINISH :
+	 return
+	     earlyWin? FINISH_CODE.EARLY_WIN :
+	     cleared? FINISH_CODE.FINISH :
 	     stalemate? FINISH_CODE.STALEMATE :
 	     givenUp?  FINISH_CODE.GIVEN_UP :
 	     lost?  FINISH_CODE.LOST :
-	     earlyWin? FINISH_CODE.EARLY_WIN :
 	     abandoned?  FINISH_CODE.ABANDONED :
 	     FINISH_CODE.NO;
     }
@@ -1182,7 +1186,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
     /** The current version of the application */
-    public static final String version = "8.019";
+    public static final String version = "8.020";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }
