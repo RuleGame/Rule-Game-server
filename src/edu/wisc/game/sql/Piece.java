@@ -200,8 +200,10 @@ public class Piece  implements Serializable {
     @XmlElement 
     public void setId(long _id) {
 	id = _id;
-	char c = (char)('A' + id);
-	setLabel("" + c);
+	if (id >=0) {
+	    char c = (char)('A' + id);
+	    setLabel("" + c);
+	}
     }
 
     /** Exists on IPB and composite objects; null on S+C objects. */
@@ -279,10 +281,11 @@ public class Piece  implements Serializable {
     public void setDropped(Integer _dropped) { dropped = _dropped; }
 
 
-    /** Used to print a human-readable label next to each piece in GUI client
-	(vs. 8.014+). We use an alphabetic label rather than ID because
-	PK is worrying that an ID will be confused with the sequence number
-	(also shown in the GUI client) */
+    /** Used to print a human-readable label next to each piece in GUI
+	client (vs. 8.014+) in Bot Assist games. We display an alphabetic
+	label rather than ID because PK is worrying that an ID will be
+	confused with the sequence number (also shown in the GUI
+	client) */
 
     String label;
 

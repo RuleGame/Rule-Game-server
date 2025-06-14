@@ -2,7 +2,6 @@ package edu.wisc.game.sql;
 
 import java.io.*;
 import java.util.*;
-//import java.text.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.parser.*;
@@ -117,7 +116,7 @@ public class Game {
 	to find a satisfactory board, even though some such boards exist.
      
      */
-    Board giveBoard() {
+    Board giveBoard(boolean needLabels) {
 
 	final int M = 1000;
 
@@ -134,6 +133,9 @@ public class Game {
 
 	    if (condRules == null ||
 		BoardConditionsChecker.boardIsAcceptable(b,condRules,testing)) {
+
+		if (!needLabels) b.dropLabels();
+		
 		return b;
 	    }
 	}

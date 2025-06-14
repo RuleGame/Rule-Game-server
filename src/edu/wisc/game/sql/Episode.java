@@ -752,10 +752,13 @@ s	    non-existing piece) the value may be different from those of
 	@param _out Will be null in the web app.
     */
     public Episode(Game game, OutputMode _outputMode, Reader _in, PrintWriter _out) {
-	this( game,  _outputMode,  _in,  _out, null);	
+	this( game,  _outputMode,  _in,  _out, null, false);	
     }
 
-    protected Episode(Game game, OutputMode _outputMode, Reader _in, PrintWriter _out, String _episodeId ) {
+    /** @param _episodeId  This is non-null when we create a ReplayedEpisode, and want it to have the authentic original episodeId
+	
+     */
+    protected Episode(Game game, OutputMode _outputMode, Reader _in, PrintWriter _out, String _episodeId, boolean needLabels) {
 	startTime = new Date();    
 	in = _in;
 	out = _out;
@@ -763,7 +766,7 @@ s	    non-existing piece) the value may be different from those of
 	episodeId = (_episodeId==null)?  buildId():    _episodeId;
     
 	rules = game.rules;
-	Board b =  game.giveBoard();
+	Board b =  game.giveBoard(needLabels);
 
 	nPiecesStart = b.getValue().size();
 	values = new Vector<>();

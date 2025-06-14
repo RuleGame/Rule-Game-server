@@ -54,10 +54,11 @@ public class BoardManager {
 	<P>Since GS 8.0, every game piece needs an ID. Previously,
 	unfortunately, those weren't saved; so when reading old
 	(pre-GS-8.0) board files, this method assigns to each object a
-	"substitute ID", which just happens to be equal to its position
-	number. (When transcripts are read in, substutute IDs are assigned
-	in the same way, so everything matches. Now, the old detailed transcripts
-	do have true IDs in them, but we aren't using them).
+	"substitute ID", which just happens to be equal to its
+	position number. (When transcripts are read in, substutute IDs
+	are assigned in the same way, so everything matches. Now, the
+	old detailed transcripts do have true IDs in them, but we
+	aren't using them).
 	
 	<p>When reading a board, this method checks for duplicates (based
 	on the real or substutute ID) and drops them. Such duplicates

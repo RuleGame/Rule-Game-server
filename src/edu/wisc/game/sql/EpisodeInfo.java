@@ -264,7 +264,8 @@ public class EpisodeInfo extends Episode {
     }
 
     public EpisodeInfo(Game game, ParaSet _para) {
-	super(game, Episode.OutputMode.BRIEF, null, null);
+	// FIXME: needLabels = f(para)
+	super(game, Episode.OutputMode.BRIEF, null, null, null, true);
 	para = _para;
 	clearingThreshold = (para!=null && xgetIncentive()==Incentive.BONUS)?
 	    para.getClearingThreshold(): 1.0;

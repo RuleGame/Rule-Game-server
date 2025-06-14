@@ -221,6 +221,15 @@ public class Board {
 	}
     }
 
+
+    /** Removes labels from pieces, so that they won't be sent over
+	the wire. (Labels are only neededs in Bot Assist games;
+	so sending them e.g. to Gemini is a waste of billable token
+	count) */
+    void dropLabels() {
+	for(Piece p: value) p.setLabel(null);
+    }
+    
     /** Fills the array results[] with random values from allProps[], ensuring that results will contain exactly nProp distinct values. 
 	@param nProp If 0 is given, each object is assigned properties independently from the entire available range; so the resulting scheme may have any number of distinct properties. If non-zero is given, this will be the exact number of distinct values in the resulting scheme.
      */

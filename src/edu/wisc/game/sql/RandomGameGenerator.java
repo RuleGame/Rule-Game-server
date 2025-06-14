@@ -11,7 +11,6 @@ import edu.wisc.game.engine.*;
 import edu.wisc.game.rest.ParaSet;
 import edu.wisc.game.rest.TrialList;
 
-
 /** This class generates random games (with the same rule set and
     randomly created initial boards) based on the provided parameter
     range specifications */
@@ -166,6 +165,9 @@ public class RandomGameGenerator extends GameGenerator {
     /** Creates a bunch of random boards, from which one can later select
 	those matching some additional criteria, and use them in an experiment 
 	plan with predefined boards.
+
+	<p>FIXME: if you plan to create games for bot assist games, you can
+	add an option for needLabels
      */
     public static void main(String[] argv) throws IOException,  RuleParseException, ReflectiveOperationException, IllegalInputException{ 
 
@@ -194,7 +196,7 @@ public class RandomGameGenerator extends GameGenerator {
 	for(int j=0; j<nb; j++) {
 	    File f = new File(dir, fmt.format(j) +".json");
 	    Game g =gg.nextGame();
-	    Board b = g.giveBoard();
+	    Board b = g.giveBoard(false);
 		//new Board(random, g.randomObjCnt, g.nShapes, g.nColors, g.allShapes, g.allColors);
 	    PrintWriter w=new PrintWriter(new FileWriter(f));
 	    String s = JsonReflect.reflectToJSONObject(b, true).toString();

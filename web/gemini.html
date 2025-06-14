@@ -341,6 +341,85 @@ The object's color, shape, or ID, as well as the previous successful move, do no
 I will now proceed with the next move based on this rule.}
 </pre>
 
+  <h3>allOfColOrd_BRKY</h3>
+
+  ( Colors in order. All blue before any red, etc.)
+
+  <P> Solved in 51 moves. The complicated explanation contains some unnecessary extraneous rules, with the correct (and sufficient) core rule:
+    <quote>
+    <code> ...
+Objects must be cleared from the board in a strict sequence of colors: **BLUE -> RED -> BLACK -> YELLOW** ...
+      </code>
+    </quote>
+  
+  <h3>allOfColOrd_KRBY</h3>
+  (Similar)
+
+  
+  Demonstrated "mastery" (10 good moves in a row) after   47 moves. However, still has not worked out a good idea of the rules by that point. 
+
+  <quote>
+    Okay, I've analyzed the past episodes and the current state to try and figure out the secret rule. This has been quite a challenge, as some patterns appear and then contradict themselves across episodes. However, I have a working hypothesis that covers most of the observed behavior. ...
+  </quote>
+  That follows by a very complicated theory (overfitting indeed!) which starts with a position-based approach (4 quarters) combined with other things, among which are colors too:
+  <quote><ul>
+      
+      Color-based Priority within Active Quadrant (This part is still being refined):
+      <ul>
+    <li>   Objects with `BLACK` or `BLUE` colors (let's call them "Primary Colors") generally have priority.
+    <li>   Objects with `RED` or `YELLOW` colors (let's call them "Secondary Colors") are sometimes `IMMOVABLE` even when they are in the `current_active_quadrant`. This specific condition is where my understanding is still incomplete, as it seems to vary slightly between episodes.      
+      </ul>
+  </quote>
+
+  <p>The bot is fully cognizant of the limitations of the current approach, so if it were told to play longer -- say up to 20 good moves in a row, or up to some kind of R-value (Bayesian) threshold -- it probably would discover the real rule.
+  
+<h3>allOfShaOrd_csqt</h3>
+
+(Incomplete - network error after 95 moves; can be continued)
+
+<h3>allOfShaOrd_qcts</h3>
+
+Found
+40 moves
+
+<h3>buckets_2130</h3>
+
+Found
+26 moves
+
+
+<h3>cm_KRBY</h3>
+
+Found
+31 moves
+
+
+<h3>cm_RBKY_cw_0123</h3>
+
+Found
+80 moves
+
+<h3>col1Ord_BRKY</h3>
+
+(Ran out of quota after 108 moves, will restart tomorrow)
+
+<h3>col1OrdBuck_BRKY0213</h3>
+
+
+
+<h3>colOrdL1_BRKY</h3>
+<h3>cw_0123</h3>
+<h3>ordL1_Nearby</h3>
+
+<h3>ordRevOfL1_Nearby</h3>
+<h3>ordRevOfL1_Remotest</h3>
+<h3>ordRevOfL1</h3>
+<h3>sha1OrdBuck_qcts0213</h3>
+
+<h3>sha1Ord_csqt</h3>
+<h3>shaOrdL1_csqt</h3>
+
+  
   
 </body>
 </html>

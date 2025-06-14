@@ -50,7 +50,7 @@ public class ReplayedEpisode extends Episode {
     */
     public ReplayedEpisode(String _episodeId, ParaSet _para, Game game,
 			   RandomPlayer _randomPlayerModel   ) {
-	super(game, Episode.OutputMode.BRIEF, null, null, _episodeId);
+	super(game, Episode.OutputMode.BRIEF, null, null, _episodeId, false);
 	randomPlayerModel  = _randomPlayerModel;
 	para = _para;
 	if (game.initialBoard==null) {
