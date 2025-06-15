@@ -6,7 +6,7 @@
   <body>
     <h1>Making Gemini play the GOHR</h1>
 
-    <div align="center"><em>Updated 2025-04-16 for Game Server ver 8.009</em></div>
+    <div align="center"><em>Updated 2025-06-15 for Game Server ver 8.020</em></div>
 
     <h2>Architecture</h2>
 
@@ -14,7 +14,12 @@
 
       <h2>Gemini models</h2>
 
-    <p>As of the early 2025, Gemini offers a number of "models". We started in March 2025 with the then current model named <tt>gemini-2.0-flash</tt>, but later switched to a somewhat better more recent model, <tt>gemini-2.5-flash-preview-05-20</tt>. Out harness tool can be configured to use other models as well (with the command-line option <tt>model=...</tt>).
+    <p>As of the early 2025, Gemini offers a number of "models". We started in March 2025 with the then current model named <tt>gemini-2.0-flash</tt>, which produced very disappointing results.
+
+    <p>Later we switched to a more recent model, <tt>gemini-2.5-flash-preview-05-20</tt>, which Google bills as a <a href="https://ai.google.dev/gemini-api/docs/thinking">model with thinking support</a>. It produces much better results, also works much more slowly.
+
+    <p>
+      Out harness tool can be configured to use other models as well (with the command-line option <tt>model=...</tt>).
 
       <h2>Conversation structure</h2>
       
@@ -32,17 +37,25 @@ Generating content</a>)      implies that nothing like this takes place! The Gem
 
       <p>The GOHR, of course, is built on a dialogue, with the player and the Game Server typically exchanging a request/response pair (in whichever direction) per move. It is possible to literally pack one's dialogue into the Gemini request structure, using the framework provided. But since we are already quite inefficient, the decision was made to normally pack the entire transcript of a series (all episodes played in a single run of our app, on the same rule set) into a single prompt. Certain limited exceptions exist though, and are discussed in appropriate places below.
 
+	<h3>Asking Gemini about this</h3>
+	<p>If asked, Gemini will tell all of this to you itself:
+	<a href="https://g.co/gemini/share/a08eb7c33222">session transcript</a>
 
-  <h2>Gemini usage quotas</h2>
+	<p>
+	If you want to spare yourself reading our long and verbose conversation, here are a few salient points:
 
-<p>Since at the moment we are using Gemini as free-tier subscribers, we have to abide by the server's fairly strict <a href="https://ai.google.dev/gemini-api/docs/rate-limits">usage quotas</a>.
+	<p>
+1) If you communicate with Gemini using the plain HTTP API, then yes, you have to explicitly include the same system instructions in each API call. If you use the Python API or Node.js API, then, on the surface level, it gives you the concept of a session, so you put your system instructions into the higher-level API only once. But what the higher-level API does behind the scenes is simply "prepending this instruction to the conversation history for you in subsequent sendMessage() calls." So in reality the system instructions are still sent over the wire on every API call, exactly the same way as with the plain HTTP API.
 
 <p>
-  The most important quota for us is the max number of requests per minute, which is 15. By sleeping 5 seconds between requeststs, we by and large avoid hitting that limit. As almost everything with the Gemini server, the limits and the way to reacting to the breaching of them are fluid, meaning that you cannot expect the same reaction every time. When the Gemini server decides that the limit is reached, it may respond with a detailed message, indicating how many seconds we should wait before retrying, in order to return to its good graces. Or it may send a more general message, in which case we try to sleep for 1 minute.
+2) If I use the cached content API, then of course I send the introductory text (the meta-rules, or content of previous episodes) over the wire only once. But internally,  "in terms of the [Gemini] model's core understanding and generation, the behavior should be largely identical" to what happens if no caching has been used.
 
-  <p>The daily limit (1500 requests per day) fairly tightly restricts the number of problems we can ask Gemini to solve per day, unless we make sure to terminate a session after a fairly small number of episodes or moves.
+<p>
+3) I asked how the cached content is actually handled: is it stored simply as plain text to be parsed again and again, as some kind of parsed-text structure, or in a more sophisticated way? The answer was, quite a bit of pre-processing is done, so that the cached text's tokens "are then converted into numerical vector embeddings. These embeddings are high-dimensional mathematical representations that capture the semantic meaning of the tokens and their relationships within the context. This is the crucial step where the "text" is transformed into something the neural network can directly work with." Additionally, something called the Key-Value (KV) cache for Gemini's "attention mechanism" is filled.
 
-       
+<p>
+So this is quite a bit of data processing work, and caching is helpful with reducing the overall  amount  of work in a long session. But again, it appears what happens is that caching simply eliminates the duplication of some work; the results of the work would be roughly the same with and without caching.
+
     <h2>Using the app</h2>
 
 
@@ -67,8 +80,11 @@ Generating content</a>)      implies that nothing like this takes place! The Gem
 	  <li>max_requests=0 -- the max number of requests the client is allowed to make. (If no retries are ever needed, this is equal to the max total number of moves in all episodes). The default value, 0, means "no limit". If you feel the client sometimes likes to loop making the same request over and over, set this to something like 1000.
       </ul>
       
-     <h2>Observations</h2>
+     <h2>Observations - Gemini 2.0</h2>
 
+      <p><strong>This section was written when working with Gemini 2.0 Flash; unless otherwise indicated, everything here is only applied to Gemini 2.0. The problems described in it don't seem to appear to the same extent in Gemini 2.5 Flash; so this section is mostly irrelevant now.</strong>
+	  
+     <strike>
    <p>When dealing with a system whose main strength is in generating natural language, one has to be ready to handle sensibly a great variety of situations. We don't intend, after all, to teach our own app to understand under natural language (such as Gemini produces); instead we put the bulk of our effort into getting Gemini to produce output in a formalized structured way that would be easy for our app to understand.
      
    <p>As mentioned above, the instructions I provide to Gemini emphasize that what I want to hear from it are descriptions of proposed moves in a standard format, <tt>MOVE objectId bucketId</tt>. On simpler problems, such as color matching, this is more or less what happens; although every once in a while Gemini decides to provide a long disquisition on its motivation and reasoning, its long message still includes the "MOVE ..." substring which our app extracts and uses as the next move. However, in more complicated problems (e.g. "counterclockwise") one can sometimes see Gemini slide into purely verbal descriptions of the move.
@@ -122,10 +138,11 @@ MOVE 5 0
     </pre>
 
   So the bot for some reason repeats its earlier successful move, <tt>MOVE 5 0</tt>, even though it's staring right at him in the episode's transcript. I will try to help this problem in ver 8.006, by explicitly showing the current state of the board to the bot after each move.
-
+</strike>
+  
   <h3>Repeating a wrong move</h3>
 
-<p>With the model <tt>gemini-2.0-flash</tt>, this happens both on code 7 (IMMOVABLE) and code 4 (DENY). With Gemini 2.5, I have not seen this problem yet; so all examples below are from 2.0.
+<p>With the model <tt>gemini-2.0-flash</tt>, this happens both on code 7 (IMMOVABLE) and code 4 (DENY). With Gemini 2.5 Flash, this is much less common; unless otherwise indicated, all examples below are from 2.0.
   
   <pre>
 %    grep At gemini-ordL1-01.txt
@@ -189,12 +206,58 @@ At 2025-06-12 01:17:57, Moving piece 1 to bucket 0. Code=4
 <p>
 This despite me  explicitly telling the bot (in the "system instructions") not to repeat a failed move until the board changes.
 
+<p><Strong>With Gemini 2.5 Flash</strong>, this was so far only seen in a particularly difficult problem (which Gemini 2.5 wasn't able to solve in 300+ moves).
+  <pre>
+%    grep Movin gemini-colOrdL1_BRKY-250614-1520.txt
+At 2025-06-14 23:41:48, Moving piece 8 to bucket 1. Code=0<strong>
+At 2025-06-14 23:43:35, Moving piece 0 to bucket 2. Code=7
+At 2025-06-14 23:45:55, Moving piece 1 to bucket 3. Code=7
+At 2025-06-14 23:48:10, Moving piece 3 to bucket 1. Code=7
+At 2025-06-14 23:49:41, Moving piece 0 to bucket 2. Code=7
+At 2025-06-14 23:50:54, Moving piece 0 to bucket 2. Code=7
+At 2025-06-14 23:52:29, Moving piece 3 to bucket 1. Code=7
+At 2025-06-14 23:55:23, Moving piece 0 to bucket 2. Code=7
+</strong>
+At 2025-06-14 23:56:49, Moving piece 4 to bucket 1. Code=0
+   </pre>
+In the above example, the sequence of 7 invalid moves (code 7 means IMMOVABLE) includes only 3 unique movements
+  
 <p>Will try reminding about it ...
 
+     <h2>Timing and quotas</h2>
 
-  <h2>Gemini on the rule sets from the FDCL/basic suite</h2>
 
-<p>The results for the newer model, <tt>gemini-2.5-flash-preview-05-20</tt> are usually much better than for <tt>gemini-2.0-flash</tt>. For each rule set below, unless two models are explicitly compared, the results are for the newer, better model.
+<p>Since at the moment (April-June 2025) we are using Gemini as free-tier subscribers, we have to abide by the server's fairly strict <a href="https://ai.google.dev/gemini-api/docs/rate-limits">usage quotas</a>.
+       
+<h3>Gemini 2.0 Flash</h3>
+     
+<p>Gemini 2.0 was pretty fast, so the main limiting factor was the free-tier quota, 15 moves per minute.
+By  sleeping 5 seconds between requeststs, we by and large avoid hitting that limit.   The daily quota for the free-tier users is 1500 requsts per day, which can be easily reached if you don't use let the bot to stupidly repeat the same bad move forever. This is why I usually limited Gemini 2.0 runs to, say, 600 requests.
+
+
+  <p>
+As almost everything with the Gemini server, the limits and the way to reacting to the breaching of them are fluid, meaning that you cannot expect the same reaction every time. When the Gemini server decides that the limit is reached, it may respond with a detailed message, indicating how many seconds we should wait before retrying, in order to return to its good graces. Or it may send a more general message, in which case we try to sleep for 1 minute.
+
+  <h3>Gemini 2.5 Flash</h3>
+	<p>In contrast, requests with Gemini 2.5 took a much longer time (typically, in the 30-120 sec, with the time per request usually slightly increasing as the game progresses), at least for a free-tier user. Thus the quota limits (10 request per minute, and 250,000 tokens per minute) are pretty much irrelevant. The daily limit, 500 requests per day, still can be achieved after a few hours of working.
+
+		    
+     
+  <h2><a name="FDCL">Gemini results on the rule sets from the FDCL/basic suite</a></h2>
+
+<p>The results for the newer model, <tt>gemini-2.5-flash-preview-05-20</tt> are usually much better than for <tt>gemini-2.0-flash</tt>, which rarely accomplishes anything of note. For each rule set below, unless two models are explicitly compared, the results are for the newer, better model.
+
+<p>In general, it seems that Gemini 2.5 Flash achieves Paul's suggested "mastery criterion" (10 successful move attempts in a row) on most of the rule sets from the FDCL/basic suite that we have tried. It does it fairly quickly, typically in under 100 moves (half a dozen episodes or so), and sometimes much faster than that. (Of course, since a Gemini 2.5 response takes up to 1-2 minutes to obtain, at least for free tier subscribers, we are still talking about the clock time on the order of an hour or several hours per problem).
+
+<p>When we end the run after the "mastery criterion" has been achieved, we explcitly ask the Gemini bot what it thinks the hidden rule set is, and it gives us a detailed explanation. Gemini 2.5 Flash being quite "talkative", it also fairly often volunteers an exlpanation of its current idea of the hidden rule, its confidence in this, and the hypothesi/es it plans to check.
+
+<p><strong>The quality of the picture of the rule set that the Gemini bot has its mind at the point of reaching 10 good moves is highly variable</strong>.
+<ul>
+  <li>In some simpler cases, it's pretty much what the designers of the FDCL/basic suite had in mind.
+  <li>In some others, it's basically the intended rule with some extraneous stuff of no real importance added on it. (E.g. the "discovered" rule has the correct description of what game pieces can be picked, but more restrictive rules on what bucket they can be put into).
+  <li>In yet others, the "discovered" rule set would probably explain all (or almost all) moves in the already-played episodes, but absolutely won't be correct for all possible boards. (E.g. the realy rule is color-based, but it's just so happened that a position-based rule would be correct for all presented boards). I think it's quite likely that having the bot play longer (say until 20 good moves in a row, or until some Bayesian mastery criterion is reached) will result in a more correct guess of the rule set.
+</ul>
+
   
   
   <h3>quadNearby</h3>
@@ -202,7 +265,7 @@ This despite me  explicitly telling the bot (in the "system instructions") not t
   <p>
 The older model, <tt>gemini-2.0-flash</tt> bogs down here (not much progress after 600 moves; lots of repetitions of failed moves, and occasionally even grabbing at the already-vacated cell). OTOH, the new model, <tt>gemini-2.5-flash-preview-05-20</tt> is somehow able to solve this <em>without making a single error</em>.
     
-<quote>
+<blockquote>
 Based on the successful moves in Episode 1 and the first move in Episode 2, the secret rule appears to be determined solely by the object's position (X, Y) on the board, dividing the board into four 3x3 quadrants, each mapping to a specific bucket. The color and shape of the objects do not seem to play a role.
 
 Here's the rule:
@@ -236,11 +299,11 @@ The 6x6 board is divided into four 3x3 quadrants based on the object's (X, Y) co
         *   Object 1 (YELLOW, TRIANGLE, x=2, y=3) -> Bucket 3
 </pre>
   
-In summary, the secret rule is to determine which of the four 3x3 coordinate quadrants an object occupies and then move it to the specific bucket associated with that quadrant.
-</quote>
+In summary, the secret rule is to determine which of the four 3x3 coordinate quadrants an object occupies and then move it to the specific b>ucket associated with that quadrant.
+</blockquote>
 
 Or, in another run:
-<quote>
+<blockquote>
 The secret rule appears to be based on the proximity of the object to the bucket corners, using the Manhattan distance.
 
 Here is my understanding of the rule:
@@ -256,7 +319,7 @@ Here is my understanding of the rule:
 2.  **Determine the Target Bucket:** An object can only be moved to the bucket (or buckets, in case of a tie) that has the *minimum* Manhattan distance from the object's current position.
 
 All moves made so far in Episode 1 and the first move in Episode 2 are consistent with this rule. There is no indication that the rule depends on object properties (color, shape) or the history of previous successful moves.
-</quote>
+</blockquote>
 
 
 <P>The termination ("mastery") criterion in all runs was 10 correct moves in a row.
@@ -296,14 +359,14 @@ This rule has successfully explained all ACCEPT and DENY outcomes in Episode 1, 
   <h3>sm_qcts (shape match)</h3>
 
   With Gemini 2.0, mastery was demonstrated after ca. 200 move attempts. The explanation has a model more or less consistent with reality, e.g.
-  <quote><pre>
+  <blockquote><pre>
 Based on these observations, here's my hypothesis:
 *   **Bucket 0:** Accepts `SQUARE` or `BLACK`
 *   **Bucket 1:** Accepts `CIRCLE` or `RED`
 *   **Bucket 2:** Accepts `TRIANGLE` or `BLUE`
 *   **Bucket 3:** Accepts `STAR` or `YELLOW`
 </pre>
-  </quote>
+  </blockquote>
 
   <h3>ordL1 (reading order)</h3>
 
@@ -346,11 +409,11 @@ I will now proceed with the next move based on this rule.}
   ( Colors in order. All blue before any red, etc.)
 
   <P> Solved in 51 moves. The complicated explanation contains some unnecessary extraneous rules, with the correct (and sufficient) core rule:
-    <quote>
+    <blockquote>
     <code> ...
 Objects must be cleared from the board in a strict sequence of colors: **BLUE -> RED -> BLACK -> YELLOW** ...
       </code>
-    </quote>
+    </blockquote>
   
   <h3>allOfColOrd_KRBY</h3>
   (Similar)
@@ -358,18 +421,18 @@ Objects must be cleared from the board in a strict sequence of colors: **BLUE ->
   
   Demonstrated "mastery" (10 good moves in a row) after   47 moves. However, still has not worked out a good idea of the rules by that point. 
 
-  <quote>
+  <blockquote>
     Okay, I've analyzed the past episodes and the current state to try and figure out the secret rule. This has been quite a challenge, as some patterns appear and then contradict themselves across episodes. However, I have a working hypothesis that covers most of the observed behavior. ...
-  </quote>
+  </blockquote>
   That follows by a very complicated theory (overfitting indeed!) which starts with a position-based approach (4 quarters) combined with other things, among which are colors too:
-  <quote><ul>
+  <blockquote><ul>
       
       Color-based Priority within Active Quadrant (This part is still being refined):
       <ul>
     <li>   Objects with `BLACK` or `BLUE` colors (let's call them "Primary Colors") generally have priority.
     <li>   Objects with `RED` or `YELLOW` colors (let's call them "Secondary Colors") are sometimes `IMMOVABLE` even when they are in the `current_active_quadrant`. This specific condition is where my understanding is still incomplete, as it seems to vary slightly between episodes.      
       </ul>
-  </quote>
+  </blockquote>
 
   <p>The bot is fully cognizant of the limitations of the current approach, so if it were told to play longer -- say up to 20 good moves in a row, or up to some kind of R-value (Bayesian) threshold -- it probably would discover the real rule.
   
@@ -379,39 +442,126 @@ Objects must be cleared from the board in a strict sequence of colors: **BLUE ->
 
 <h3>allOfShaOrd_qcts</h3>
 
-Found
-40 moves
+Achieved the mastery criterion (10 good moves) after 40 moves, but the explanation is entirely wrong (some weird position-based algo). Should try more moves...
+
 
 <h3>buckets_2130</h3>
 
-Found
-26 moves
+Found the correct rule in 26 moves:
+
+<blockquote><pre>
+    ...
+       More formally:
+    *   If `N % 4 == 0` (i.e., the 1st, 5th, 9th, etc., successful move), the object must go to **Bucket 2**.
+    *   If `N % 4 == 1` (i.e., the 2nd, 6th, 10th, etc., successful move), the object must go to **Bucket 1**.
+    *   If `N % 4 == 2` (i.e., the 3rd, 7th, 11th, etc., successful move), the object must go to **Bucket 3**.
+    *   If `N % 4 == 3` (i.e., the 4th, 8th, 12th, etc., successful move), the object must go to **Bucket 0**.
+</pre></blockquote>
+
 
 
 <h3>cm_KRBY</h3>
 
-Found
-31 moves
+Found the correct rule (color matching) after 31 moves.
 
 
 <h3>cm_RBKY_cw_0123</h3>
 
-Found
-80 moves
+(Need to pick colors in order, and use the designated bucket for each one)
+
+Found essentially the correct rule (with some extraneous additions) in 80 moves.
+
+<pre> ...
+**Rule 1: Bucket Destination (Color-based)**
+This rule determines which bucket an object can be placed into. It is solely based on the object's **color**:
+*   **RED** objects must be placed into **Bucket 0** (X=0, Y=7, Top-Left).
+*   **BLUE** objects must be placed into **Bucket 1** (X=7, Y=7, Top-Right).
+*   **BLACK** objects must be placed into **Bucket 2** (X=7, Y=0, Bottom-Right).
+*   **YELLOW** objects must be placed into **Bucket 3** (X=0, Y=0, Bottom-Left).
+
+  *Explanation:*
+
+  * If you attempt to move an object to a bucket that does not match
+  its color, you will receive a "DENY" response.
+
+  * All successful "ACCEPT" moves observed across all episodes
+  strictly adhere to this color-to-bucket mapping.
+
+**Rule 2: Object Availability (Movability Sequence)**
+
+  This rule determines *which* object is currently movable on the
+  board. All other objects will yield an "IMMOVABLE" response if you
+  try to move them.
+
+  1.  **First Move of an Episode**: The very first object that can be
+  moved in any episode is always the **RED object with the lowest ID**
+  among all RED objects currently on the board.
+  
+  2.  **Subsequent Moves**: After an object is successfully moved to a
+  specific bucket (let's call it `Bucket N`), the next object(s) that
+  become movable are determined by a cyclical sequence of buckets:
+  
+    *   If the previous object was placed in **Bucket 0** (RED), then the next movable object(s) will be **BLUE** objects.
+    *   If the previous object was placed in **Bucket 1** (BLUE), then the next movable object(s) will be **BLACK** objects.
+    *   If the previous object was placed in **Bucket 2** (BLACK), then the next movable object(s) will be **YELLOW** objects.
+    *   If the previous object was placed in **Bucket 3** (YELLOW), then the next movable object(s) will be **RED** objects.
+
+     * **Skipping Colors**: If there are no objects of the target color
+  (e.g., no BLUE objects left when Bucket 0 was the last target), the
+  rule cycles to the next color in the sequence until an available
+  object is found (e.g., after Bucket 0, if no BLUE objects, try
+  BLACK, then YELLOW, then RED again).
+
+  3.  **Specific Object Selection (within a color group)**: If there
+  are multiple objects of the designated "next movable" color on the
+  board, only *one specific object* among them is made movable by the
+  game at that moment. The exact criteria for selecting this specific
+  object (e.g., based on X/Y coordinates, shape, or a specific ID
+  ordering other than lowest ID) are not fully apparent from the
+  provided logs, as there were inconsistent patterns (sometimes lowest
+  ID, sometimes not). However, the "IMMOVABLE" response indicates that
+  an object is not the designated one.
+</pre>
+
 
 <h3>col1Ord_BRKY</h3>
 
 (Ran out of quota after 108 moves, will restart tomorrow)
 
 <h3>col1OrdBuck_BRKY0213</h3>
+<pre>
+1 (color:blue, bucket:0)
+1 (color:red, bucket:2)
+1 (color:black, bucket:1)
+1 (color:yellow, bucket:3)
+</pre>
 
+The bot reached the mastery criterion (10 good moves) after 104 moves, but admits that it only knows the rules partially: it knows which color goes to which buckets, but is not sure in which order the pieces need to be picked; wants to continue experimenting.
 
 
 <h3>colOrdL1_BRKY</h3>
+
+Failed to solve. I interrupted the job after 291 moves, when the bot
+seemed to had long been stuck in some wrong concept of the rules,
+mostly based on postion (quadrants).  Also, this was a fairly rare case
+of Gemini 2.5 repeating failed moves several times.
+
 <h3>cw_0123</h3>
+
+
+Solved in 15 moves. Described the rules well.
+
+
 <h3>ordL1_Nearby</h3>
 
+Fully solved in 15 moves.
+
+
 <h3>ordRevOfL1_Nearby</h3>
+
+
+... ran out of quota after 66 moves ... to be continued
+
 <h3>ordRevOfL1_Remotest</h3>
 <h3>ordRevOfL1</h3>
 <h3>sha1OrdBuck_qcts0213</h3>
@@ -420,6 +570,54 @@ Found
 <h3>shaOrdL1_csqt</h3>
 
   
+<h2><a name="cost">Cost estimates</a></h2>
+
+<p>
+If we switch to a <a href="https://ai.google.dev/gemini-api/docs/pricing">paid tier</a>, how much would playing a game cost?
+
+<p>For Gemini 2.5 flash model (thinking ones) Google quotes the price of $0.15 per million input tokens, and $3.50 per million output tokens.
+
+<p> A token, more or less, is a word or a punctuation mark. For a medium-difficulty rule set, where the mastery criterion was achieved at 80 moves, and an essentially correct rule was discovered, the stats for the log file look like this: 
+<pre>  
+~/w2020/gemini_logs-3/victory> grep -c Moving  gemini-cm_RBKY_cw_0123-250613-0953.txt | more
+80
+~/w2020/gemini_logs-3/victory> wc  gemini-cm_RBKY_cw_0123-250613-0953.txt 
+  8397  62689 554826 gemini-cm_RBKY_cw_0123-250613-0953.txt
+</pre>
+
+<p>This log consists mostly of the texts of requests and responses. We can separate responses as follows:
+<pre>
+  perl -pe 's/\n/ /sg' gemini-cm_RBKY_cw_0123-250613-0953.txt > a.tmp
+  perl -pe 's/.*?Response text=\{(.+?)\}/$1\n/g' a.tmp > b.tmp
+
+~/w2020/gemini_logs-3/victory>  wc b.tmp 
+    81  28682 175880 b.tmp
+</pre>
+
+<p>So the rough estimate is that in this session the responses included  28682 words, and requests, the rest, i.e. ca. 34,000 words. Assuming 1.5 tokens per word, that will give us ca. 42,000 tokens in the responses and 51,000 in the requests, for the total cost estimate of
+  <div align="center">
+  51*0.001 * 0.15 + 42*0.001 * 3.50 = <strong>$0.15</strong>
+  </div>
+  for playing that game.
+
+<p>As the large number of tokens indicates, thinking models such as Gemini 2.5 Flash are quite talkative, and in response to many requests they explain their reasoning even without me asking them. The cost probably can be reduced quite a bit by explicitly telling the bot NOT to provide any reasoning unless asked.
+
+<p>Google tells us that <blockquote><a href="https://ai.google.dev/gemini-api/docs/caching?lang=rest">Implicit caching is enabled on Gemini 2.5 models by default. If a request contains content that is a cache hit, we automatically pass the cost savings back to you.</blockquote>
+
+ <p>Google also advertises its "Gemini 2.5 Pro Previw" model, which supposedly "excels at coding and complex reasoning tasks". It's priced significantly higher; with that model, playing the same game as above would cost approximately
+  <div align="center">
+  51*0.001 * 2.50 + 42*0.001 * 15 = <strong>$0.75</strong>.
+  </div>
+
+ <p>The cost of a game depends, of course, on how many moves it involved. It's fair to assume that the number of input tokens grows quadratically, and that of output tokens linearly with the number of moves. So if we had a similar game with 800 moves instead of 80, the cost estimate would be
+  <div align="center">
+  51*100*0.001 * 0.15 + 42*10*0.001 * 3.50 = <strong>$2.20</strong> 
+  </div>
+for Gemini 2.5 Flash, and   
+  <div align="center">
+  51*100*0.001 * 2.50 + 42*10*0.001 * 15 = <strong>$19</strong>.
+  </div>
+for Gemini 2.5 Pro. 
   
 </body>
 </html>
