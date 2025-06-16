@@ -6,7 +6,7 @@
   <body>
     <h1>Making Gemini play the GOHR</h1>
 
-    <div align="center"><em>Updated 2025-06-15 for Game Server ver 8.020</em></div>
+    <div align="center"><em>Updated 2025-06-16 for Game Server ver 8.020 and <tt>gemini-2.5-flash-preview-05-20</tt></em></div>
 
     <h2>Architecture</h2>
 
@@ -258,8 +258,13 @@ As almost everything with the Gemini server, the limits and the way to reacting 
   <li>In yet others, the "discovered" rule set would probably explain all (or almost all) moves in the already-played episodes, but absolutely won't be correct for all possible boards. (E.g. the realy rule is color-based, but it's just so happened that a position-based rule would be correct for all presented boards). I think it's quite likely that having the bot play longer (say until 20 good moves in a row, or until some Bayesian mastery criterion is reached) will result in a more correct guess of the rule set.
 </ul>
 
-  
-  
+<p>
+A few cases where I couldn't get Gemini to reach the 10-good-moves mastery criteria after 200+ moves included 
+shaOrdL1_csqt and colOrdL1_BRKY: the two rule sets with the <tt>postpos:</tt> predicate.
+This is the kind of rules that weren't available in the original Rule Game; the support for them 
+(the <tt>postpos:</tt> predicate) was introduced in early 2025, when Paul proposed to include this kind of rules into the FDCL/basic suite. These are fairly difficult for humans too, since they combine two concepts (color and position) in a somewhat complicated way: the player should not just go for a red piece (or a square) in the topmost row, but should first think of all red pieces (or all squares), then isolate the top row of that set, and then pick the leftmost red piece (or the leftmost square). 
+
+
   <h3>quadNearby</h3>
 
   <p>
@@ -541,6 +546,14 @@ The bot reached the mastery criterion (10 good moves) after 104 moves, but admit
 
 <h3>colOrdL1_BRKY</h3>
 
+<pre>
+1 (color:blue, postpos:L1)
+1 (color:red, postpos:L1)
+1 (color:black, postpos:L1)
+1 (color:yellow, postpos:L1)
+</pre>
+
+
 Failed to solve. I interrupted the job after 291 moves, when the bot
 seemed to had long been stuck in some wrong concept of the rules,
 mostly based on postion (quadrants).  Also, this was a fairly rare case
@@ -554,7 +567,7 @@ Solved in 15 moves. Described the rules well.
 
 <h3>ordL1_Nearby</h3>
 
-Fully solved in 15 moves.
+Fully solved in 15 moves. 
 
 
 <h3>ordRevOfL1_Nearby</h3>
@@ -563,13 +576,59 @@ Fully solved in 15 moves.
 ... ran out of quota after 66 moves ... to be continued
 
 <h3>ordRevOfL1_Remotest</h3>
+
+<pre>
+Order RevOfL1=[6,5,4,3,2,1, 12,11,10,9,8,7, 18,17,16,15,14,13, 24,23,22,21,20,19, 30,29,28,27,26,25, 36,35,34,33,32,31]
+(pos:RevOfL1, bucket:Remotest)
+</pre>
+
+Achieved the 10-good-moves mastery criterion after 158 moves, but the discovered rule is not correct. The bot figured out early on that a piece can only be put to the most remote bucket, and which piece must be picked first. The rules for subsequent pickings make little sense though.
+
+
 <h3>ordRevOfL1</h3>
+
+
+Solved in 30 moves. Discovered the correct pick rule (reverse of L1), with a spurious restrictions on destination buckets (it thinks one must use the nearby bucket). The spurious restriction seems to be based on positive evidence (yes of course you can use that bucket), without any negative evidence:
+<blockquote>
+*   **Bucket Selection (DENY/ACCEPT):**<br>
+    *   Across both Episode 1 and Episode 2, every successful move ("ACCEPT") consistently placed the object into the bucket corresponding to its quadrant as defined above. There were no "DENY" responses in the provided logs, but the consistent "ACCEPT" pattern strongly suggests this quadrant-based mapping for bucket selection.
+</blockquote>
+
+
 <h3>sha1OrdBuck_qcts0213</h3>
+<pre>
+1 (shape:square, bucket:0)
+1 (shape:circle, bucket:2)
+1 (shape:triangle, bucket:1)
+1 (shape:star, bucket:3)
+</pre>
+
+Correctly solved in 172 moves. Good description of the rules.
 
 <h3>sha1Ord_csqt</h3>
+<pre>
+1 (shape:circle)
+1 (shape:star)
+1 (shape:square)
+1 (shape:triangle)
+</pre>
+
+The mastery criterion is met after 87 moves, but the hypothesized rules are entirely wrong. (The bot knows that it needs to start an episode with a circle, but then has a complicated position-based rule, which has nothing to do with the true secret rule.) 
+
+
 <h3>shaOrdL1_csqt</h3>
 
-  
+<pre>
+1 (shape:circle, postpos:L1)
+1 (shape:star, postpos:L1)
+1 (shape:square, postpos:L1)
+1 (shape:triangle, postpos:L1)
+</pre>
+
+
+Lots of repeats of a bad move; likely won't solve it. I interrupted it after 200 move attempts.
+
+
 <h2><a name="cost">Cost estimates</a></h2>
 
 <p>
