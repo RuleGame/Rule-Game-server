@@ -22,6 +22,9 @@ import edu.wisc.game.engine.*;
 
 public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 
+    /** Should we admonish the Gemini bot if it makes redundant moves? */
+    static boolean remind = true;
+    
    static private void usage() {
 	usage(null);
     }
@@ -32,7 +35,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	System.err.println("  java [options]  edu.wisc.game.gemini.GeminiPlayer game-rule-file.txt npieces [nshapes ncolors]");
 	System.err.println("  java [options]  edu.wisc.game.gemini.GeminiPlayer trial-list-file.csv rowNumber");
 	System.err.println("  java [options]  edu.wisc.game.gemini.GeminiPlayer R:rule-file.txt:modifier-file.csv");
-	System.err.println("Each of 'npieces', 'nshapes', and 'ncolors' is either 'n' (for a single value) or 'n1:n2' (for a range). '0' means 'any'");
+	System.err.println("Each of 'npieces', 'nshapes', and 'ncolors' is eitheвr 'n' (for a single value) or 'n1:n2' (for a range). '0' means 'any'");
 	if (msg!=null) 	System.err.println(msg + "\n");
 	System.exit(1);
     }
@@ -399,6 +402,8 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     static class EpisodeHistory {
 	final Episode epi;
 	final Board initialBoard;
+	/** Info about any unnecessarily repeated move attempts in this episode */
+	Repeats repeats = new Repeats();
 	EpisodeHistory(Episode _epi) {
 	    epi = _epi;
 	    initialBoard = epi.getCurrentBoard(false);
@@ -482,7 +487,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	    int n= lastIsClearedToo?  size() : size()-1;
 
 	    if (n==1) {
-		v.add("You have completed " + n + " episode so far. Its summary follows.");
+		v.add("You have completed 1 episode so far. Its summary follows.");
 	    } else {
 		v.add("You have completed " + n + " episodes so far. Their summary follow.");
 	    }
@@ -537,13 +542,13 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	} else if (n==0) {
 	    v.add("You are about to make your first move now");
 	} else {
-	
+	    
 	    v.add("During episode "+(j+1)+", you "+
 		  (isLast ? "have made so far ": "made ") +
-		  (n>0?       "the following ":"")+
-		  n + 	      " move attempt" + (n>1? "s":"") +
-		  (n>0?       ", with the following results:": "."));
+		  "the following "+ n + " move attempt" + (n>1? "s":"") +
+		  ", with the following results:");
 	}
+	boolean redundant = false;
 	for(int k=0; k<n; k++) {
 	    if (!(moves.get(k) instanceof Move))  throw new IllegalArgumentException("Unexpected entry in the transcript (j=" + j+", k=" + k+", The bot is only supposed to make moves, not picks!");
 	    Move move = (Move)moves.get(k);
@@ -556,11 +561,30 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 	    int code = move.getCode();
 
 	    
-	    String s = "MOVE " + move.getPieceId() + " " + move.getBucketNo() + " "+
+	    String s = "MOVE " + move.getPieceId() +" "+ move.getBucketNo()+" "+
 		CODE.toBasicName(code);
+
+	    redundant = ehi.repeats.redundant.get(k);
+	    if (remind) {
+		if (redundant) {
+		    s += " -- redundant!";
+		}
+	    }
+	    
 	    v.add(s);
 	    
 	}
+
+
+	if (remind && ehi.repeats.totalRepeats()>0) {
+	    String  s= "The episode includes " + ehi.repeats.totalRepeats()
+		+ " redundant moves";
+	    if (redundant) s += ", including the last one";
+	    s += ". You really should not make such redundant move attempts, since they give you no new information. Remember that the as long as the board state has not changed, the response to the repeated move won't change either!";
+		System.out.println(s);
+	}
+    
+    
 	if (isLast && n>0) {
 	    // Showing the current board to the bot, because, at least very
 	    // occasional, the bot seems to "forget" that some pieces have been
@@ -653,6 +677,9 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 		return false;
 	    }
 	    
+	    Vector<Pick> moves = epi.getTranscript();
+	    final int n = moves.size();
+	    
 	    if (code==CODE.ACCEPT) { // add to the "mastery stretch"
 		lastStretch++;
 		if (lastR==0) lastR=1;
@@ -661,26 +688,33 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 		lastStretch=0;
 		lastR = 0;
 
-		Vector<Pick> moves = epi.getTranscript();
-		int n = moves.size();
 		if (n>1 &&
 		    ((Move)moves.get(n-1)).sameMove(moves.get(n-2))) {
 		    // The bot has just repeated the last move attempt,
 		    // despite its failure
-		
+
+		    // ZZZ
 		    failedRepeatsCnt++;
 		    failedRepeatsCurrentStreak++;
 		    if (failedRepeatsCurrentStreak>failedRepeatsLongestStreak) {
 			failedRepeatsLongestStreak = failedRepeatsCurrentStreak;
 		    }
-		}
-
-		
+		}		
 	    }
 
+	    boolean redundant = ehi.repeats.add((Move)moves.get(n-1), code);
+	    
 	    String stats = "Transcript has "+epi.getTranscript().size()+" moves. Board pop="+epi.getValues().size()+". lastStretch=" + lastStretch + ", lastR=" + lastR;
 	    
 	    System.out.println(stats);
+
+	    if (remind && ehi.repeats.totalRepeats()>0) {
+		stats = "The episode includes " + ehi.repeats.totalRepeats()
+		    + " redundant moves";
+		if (redundant) stats += ", including the last one.";
+		System.out.println(stats);
+	    }
+
 
 	    if (lastStretch>10 || lastR > 1e6) {
 		System.out.println("Victory: mastery demonstrated! " + stats);
