@@ -187,20 +187,26 @@ public final class ParseConfig extends Hashtable<String,Object> {
 	 * Gets the requested double value from the hash table or from the Java system property aName.
 	 */
 	public double getOptionDouble(String aName, double aDefault) {
-		double value = aDefault;
-		Object obj = get(aName);
-		if (obj != null) {
-			if (obj instanceof Number)
-				value = ((Number) obj).doubleValue();
-			else {
-				String msg = "Property `" + aName + "', value='"+obj+"', read from the config file " + "is not a number! Ignored.";
-				System.err.println(msg);
-			}
+	    return  getOptionDoubleObject(aName, new Double(aDefault)).doubleValue();
+	}
+    
+	public Double getOptionDoubleObject(String aName, Double aDefault) {
+	    Double value = aDefault;
+	    Object obj = get(aName);
+	    if (obj != null) {
+		if (obj instanceof Double)
+		    value = (Double)obj;
+		if (obj instanceof Number)
+		    value = new Double( ((Number) obj).doubleValue());
+		else {
+		    String msg = "Property `" + aName + "', value='"+obj+"', read from the config file " + "is not a number! Ignored.";
+		    System.err.println(msg);
 		}
-		String property = getPropertySafe(prefix + aName);
-		if (property != null)
-			value = Double.parseDouble(property);
-		return value;
+	    }
+	    String property = getPropertySafe(prefix + aName);
+	    if (property != null)
+		value = Double.valueOf(property);
+	    return value;
 	}
 
 	/**

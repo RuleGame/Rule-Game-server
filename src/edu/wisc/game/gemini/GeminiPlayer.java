@@ -75,6 +75,9 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     */  
 
 
+    boolean isFirstRequest = true;
+    boolean isFirstResponse = true;
+    
     /** Sends a request to the Gemini bot, and extracts the main (text) part
 	of the response from the received JSON structure. */
     private String doOneRequest(GeminiRequest gr) throws MalformedURLException, IOException, ProtocolException, ClassCastException
@@ -87,7 +90,11 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	URL url = new URL(u);
 
 	JsonObject jo = JsonReflect.reflectToJSONObject(gr, false, null, 10);
-	//System.out.println("SENDING: " + jo.toString());
+
+	if (isFirstRequest) {
+	    System.out.println("SENDING FIRST REQUEST: " + jo.toString());
+	    isFirstRequest = false;
+	}
 	String jsonInputString =  jo.toString();
 
 	int retryCnt=0;
@@ -114,7 +121,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	    
 	    code = con.getResponseCode();
 	    InputStream is;
-	    
+
 	    if (code != 200) {
 		System.out.println("Error: HTTP response code = " + code);
 		is = con.getErrorStream();
@@ -142,6 +149,13 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 		waitABit(waitSec * 1000);
 		continue;
 	    }
+
+	    if (isFirstResponse) {
+		System.out.println("At "+	reqt()+", FIRST SERVER RESPONSE: " + responseJo.toString());
+		isFirstResponse = false;
+	    }
+	    
+
 	    if (code==200) break;
 
 	    System.out.println("At "+	reqt()+", SERVER RESPONSE: " + responseJo.toString());
@@ -179,6 +193,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	if (candidatesJa.size()!=1)  throw new IllegalArgumentException("Expected to find 1 candidate, found " + candidatesJa.size() + ". RESPONSE=\n" + responseJo);
 	JsonObject contentJo = candidatesJa.getJsonObject(0).getJsonObject("content");
 	JsonArray partsJa = contentJo.getJsonArray("parts");
+	if (partsJa==null)  throw new IllegalArgumentException("No 'parts' found. RESPONSE=\n" + responseJo);	
 	if (partsJa.size()!=1)  throw new IllegalArgumentException("Expected to find 1 part, found " + partsJa.size() + ". RESPONSE=\n" + responseJo);	
 	String text = partsJa.getJsonObject(0).getString("text");
 	return text;
@@ -249,6 +264,9 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     
     
     static String instructionsFile = null;
+    /** null means "let the model use its default value" */
+    static Double temperature = null;
+    
     static String keyFile = "/opt/w2020/gemini-api-key.txt";
     static String gemini_api_key = null;
     static String model = "gemini-2.0-flash";
@@ -270,10 +288,6 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     public static void main(String[] argv) throws Exception {
 
 	
-	File f =  (instructionsFile==null)? new File( Files.geminiDir(), "system.txt"):
-	    new File(instructionsFile);
-	instructions = Util.readTextFile( f);
-
 	Files.allowCachingAllRules(true); // for greater efficiency
 	
 	// The captive server does not need the master conf file in /opt/w2020
@@ -284,7 +298,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	
 	ParseConfig ht = new ParseConfig();
 
-	// allows seed=... , colors=..., condTrain=..., crowded=... etc among argv
+	// allows seed=... , colors=..., condTrain=..., crowded=... etc among argv. Some of them are passed on to the buildGameGenerator method
 	argv = ht.enrichFromArgv(argv);
 
 	model = ht.getOption("model", model);
@@ -293,7 +307,15 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	keyFile = ht.getOption("keyFile", keyFile);
 	instructionsFile = ht.getOption("instructionsFile", instructionsFile);
 	max_requests  = ht.getOption("max_requests", max_requests);
-		
+	temperature = ht.getOptionDoubleObject("temperature", null);
+
+
+	File f =  (instructionsFile==null)? new File( Files.geminiDir(), "system.txt"):
+	    new File(instructionsFile);
+	instructions = Util.readTextFile( f);
+
+
+	
 	System.out.println("At " + now() +", starting playing with Gemini. Game Server ver. "+ Episode.getVersion());
 	System.out.println("Gemini model=" + model);
 	//System.out.println("output=" +  ht.getOption("output", null));
@@ -326,6 +348,11 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	GeminiPlayer history = new GeminiPlayer();
 
 	System.out.println("Instructions are: " + instructions);
+	if (temperature==null) {
+	    System.out.println("Using the model's default temperature");
+	} else {
+	    System.out.println("Temperature=" + temperature);
+	}
 	boolean won = false;
 	
 	try {
@@ -432,6 +459,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     static GeminiRequest makeRequestAskHow() {
 	GeminiRequest gr = new GeminiRequest();
 	gr.addInstruction(instructions);
+	gr.addTemperature(temperature);
 	//gr.addUserText("How do you use borax?");
 	return gr;
     }
@@ -446,6 +474,8 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     GeminiRequest makeRequest() throws IOException {
 	GeminiRequest gr = new GeminiRequest();	    
 	gr.addInstruction(instructions);
+	gr.addTemperature(temperature);
+
 	Vector<String> v = describeHistory();
 	v.add("YOUR MOVE?");
 	String text = Util.joinNonBlank("\n", v);
@@ -581,7 +611,7 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 		+ " redundant moves";
 	    if (redundant) s += ", including the last one";
 	    s += ". You really should not make such redundant move attempts, since they give you no new information. Remember that the as long as the board state has not changed, the response to the repeated move won't change either!";
-		System.out.println(s);
+	    v.add(s);
 	}
     
     

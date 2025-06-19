@@ -37,6 +37,17 @@ public class GeminiRequest {
 	Vector<ElementPart> parts = new Vector<>();
 	public Vector<ElementPart> getParts() { return parts;}
     }
+
+    ConfigElement generationConfig = null;
+    public ConfigElement getGenerationConfig() {
+	return generationConfig;
+    }
+    public static class ConfigElement {
+	Double temperature = null;
+	public Double getTemperature() { return temperature;}
+    }
+
+
     
     Vector<ContentElement> contents = new Vector<>();
     public Vector<ContentElement> getContents()  { return contents; }
@@ -77,5 +88,16 @@ public class GeminiRequest {
 	system_instruction.parts.add( new ElementPart(msg));
  
     }
+
+    void addTemperature(Double temp) {
+	if (temp==null) return;
+	if (generationConfig == null) generationConfig = new ConfigElement();
+	generationConfig.temperature = temp;
+
+	//System.out.println("Set temp=" + temp +"\nThis request=" + 
+	//		   JsonReflect.reflectToJSONObject(this, false, null, 10));
+	
+    }
+
     
 }

@@ -363,7 +363,7 @@ This rule has successfully explained all ACCEPT and DENY outcomes in Episode 1, 
   
   <h3>sm_qcts (shape match)</h3>
 
-  With Gemini 2.0, mastery was demonstrated after ca. 200 move attempts. The explanation has a model more or less consistent with reality, e.g.
+  This is one of the very few rules where even with Gemini 2.0, mastery was demonstrated after ca. 200 move attempts. The explanation has a model more or less consistent with reality, e.g.
   <blockquote><pre>
 Based on these observations, here's my hypothesis:
 *   **Bucket 0:** Accepts `SQUARE` or `BLACK`
@@ -372,6 +372,13 @@ Based on these observations, here's my hypothesis:
 *   **Bucket 3:** Accepts `STAR` or `YELLOW`
 </pre>
   </blockquote>
+
+  With Gemini 2.5 Flash, the bot solved the game in 23 move attempts. The rule description given by the bot was super-overtrained, but apparently mostly correct.
+
+  <pre>
+
+    </pre>
+  
 
   <h3>ordL1 (reading order)</h3>
 
@@ -627,6 +634,13 @@ The mastery criterion is met after 87 moves, but the hypothesized rules are enti
 
 
 Lots of repeats of a bad move; likely won't solve it. I interrupted it after 200 move attempts.
+
+<h3></h3>
+action w2020/gemini-2.5-flash-logs> more  /opt/w2020/game-data/rules/pk/shapeVcolor.txt
+# to see whether naive pplayers are more likely to find shape or color match. 
+(shape:square,bucket:0) (shape:circle,bucket:1) (shape:triangle,bucket:2) (shape:star,bucket:3)  (color:red,bucket:0) (color:yellow,bucket:1) (color:green,bucket:2) (color:blue,bucket:3)
+
+
 
 
 <h2><a name="cost">Cost estimates</a></h2>
