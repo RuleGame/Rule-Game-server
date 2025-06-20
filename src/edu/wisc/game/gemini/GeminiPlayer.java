@@ -24,6 +24,14 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 
     /** Should we admonish the Gemini bot if it makes redundant moves? */
     static boolean remind = true;
+
+    /** Various token count statistics, summed over all server responses
+	in this session */
+    static int sumPromptTokenCount,
+	sumCandidatesTokenCount,
+	sumTotalTokenCount,
+	sumThoughtsTokenCount;
+
     
    static private void usage() {
 	usage(null);
@@ -79,7 +87,17 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     boolean isFirstResponse = true;
     
     /** Sends a request to the Gemini bot, and extracts the main (text) part
-	of the response from the received JSON structure. */
+	of the response from the received JSON structure. 
+
+<pre>
+ FIRST SERVER RESPONSE:
+ {"candidates":    [{"content":{"parts":[{"text":"MOVE 0 3"}],"role":"model"},"finishReason":"STOP","index":0}],
+  "usageMetadata":{"promptTokenCount":1139,"candidatesTokenCount":5,"totalTokenCount":4438,"promptTokensDetails":[{"modality":"TEXT","tokenCount":1139}],"thoughtsTokenCount":3294},
+   "modelVersion":"models/gemini-2.5-flash-preview-05-20",
+   "responseId":"GW1UaKCbDo2OjMcPipaA8Qc"}
+</pre>
+
+*/
     private String doOneRequest(GeminiRequest gr) throws MalformedURLException, IOException, ProtocolException, ClassCastException
     {
 	readApiKey();
@@ -196,6 +214,20 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	if (partsJa==null)  throw new IllegalArgumentException("No 'parts' found. RESPONSE=\n" + responseJo);	
 	if (partsJa.size()!=1)  throw new IllegalArgumentException("Expected to find 1 part, found " + partsJa.size() + ". RESPONSE=\n" + responseJo);	
 	String text = partsJa.getJsonObject(0).getString("text");
+
+
+	//  "usageMetadata":{"promptTokenCount":1139,"candidatesTokenCount":5,"totalTokenCount":4438,"promptTokensDetails":[{"modality":"TEXT","tokenCount":1139}],"thoughtsTokenCount":3294},
+	JsonObject umdJo =responseJo.getJsonObject("usageMetadata");
+	System.out.println("usageMetadata: " + umdJo);
+	int promptTokenCount = umdJo.getJsonNumber("promptTokenCount").intValue();
+	sumPromptTokenCount += promptTokenCount;
+	int candidatesTokenCount= umdJo.getJsonNumber("candidatesTokenCount").intValue();
+	sumCandidatesTokenCount += candidatesTokenCount;
+	int totalTokenCount = umdJo.getJsonNumber("totalTokenCount").intValue();
+	sumTotalTokenCount += totalTokenCount;
+	int thoughtsTokenCount = umdJo.getJsonNumber("thoughtsTokenCount").intValue();
+	sumThoughtsTokenCount += thoughtsTokenCount;
+	
 	return text;
 	/*
 	"candidates":[
@@ -281,6 +313,10 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	gemini_api_key = s;
     }
 
+    static NumberFormat dollarFmt = new DecimalFormat("0.00");
+						      
+
+    
     /** Modeled on Captive.java
 	model=gemini-2.0-flash
 	wait=4000  (wait time between requests in msec)
@@ -395,12 +431,26 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	    String line = history.doOneRequest(gr);
 	    System.out.println("Response text={" + line.trim() + "}");
 	}
-
-	System.out.println("In this session of "+history.totalAttemptCnt+" move attempts, there were "+
-			   history.failedRepeatsCnt + " redundant repeated bad moves; the longest streak included " + history.failedRepeatsLongestStreak + " redundant repeats.");
-
-	
 	} finally {
+
+	    System.out.println("In this session of "+history.totalAttemptCnt+" move attempts, there were "+
+			       history.failedRepeatsCnt + " redundant repeated bad moves in streaks; the longest streak included " + history.failedRepeatsLongestStreak + " redundant repeats.");
+	    
+
+	    System.out.println("Recorded costs over this session:" +
+			       " sum(promptTokenCount)="+ sumPromptTokenCount +
+			       " sum(CandidatesTokenCount)="+sumCandidatesTokenCount +
+			       " sum(ThoughtsTokenCount)="+sumThoughtsTokenCount +
+			       " sum(TotalTokenCount)="+sumTotalTokenCount);
+
+	    // https://ai.google.dev/gemini-api/docs/pricing
+	    // $0.30 per million input tokens,
+	    // $2.50 per mln output and thinking tokens
+	    int in = sumPromptTokenCount, out = sumTotalTokenCount - in;
+	    
+	    double cost =  (0.30 * in + 2.50 * out)*1e-6;
+	    System.out.println("G2.5F cost estimate: $" + dollarFmt.format(cost));
+	    
 	    if (log!=null) log.close();
 	}
   
@@ -455,11 +505,13 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 
     GeminiPlayer() { super(); }
 
-
+    static Integer maxToken = 200000;
+    
     static GeminiRequest makeRequestAskHow() {
 	GeminiRequest gr = new GeminiRequest();
 	gr.addInstruction(instructions);
 	gr.addTemperature(temperature);
+	gr.addMaxOutputTokens(maxToken);
 	//gr.addUserText("How do you use borax?");
 	return gr;
     }
@@ -475,7 +527,8 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	GeminiRequest gr = new GeminiRequest();	    
 	gr.addInstruction(instructions);
 	gr.addTemperature(temperature);
-
+	gr.addMaxOutputTokens(maxToken);
+	
 	Vector<String> v = describeHistory();
 	v.add("YOUR MOVE?");
 	String text = Util.joinNonBlank("\n", v);

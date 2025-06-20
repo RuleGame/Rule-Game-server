@@ -691,6 +691,24 @@ for Gemini 2.5 Flash, and
   51*100*0.001 * 2.50 + 42*10*0.001 * 15 = <strong>$19</strong>.
   </div>
 for Gemini 2.5 Pro. 
+
+  <h3>And the thinking costs money too...</h3>
+
+  <p>
+  Addendum 2025-06-19: I just realized that with the thinking models the pricing is based not only on the visible output tokens but also on the invisible "thought tokens"; those are priced <a href="https://ai.google.dev/gemini-api/docs/thinking">same as output tokens</a>.
+
+  <p>
+    Those thinking tokens run up quite quickly: on some runs with temperature=0 I had the "totalTokenCount" (the sum of output token count and thought token count) exceed 67K even before the targetStreak=10 was reached.  So if we have 100 moves needed to solve a problem, with 50k total per move, that's 5 million total tokens; priced at $2.50/million (in G2.5 Flash), that would cost <strong>$12.50</strong> per  problem; with G2.5 Pro (at $10/million), that would be $50 per problem.
+
+    <!--
+ FIRST SERVER RESPONSE:
+ {"candidates":    [{"content":{"parts":[{"text":"MOVE 0 3"}],"role":"model"},"finishReason":"STOP","index":0}],
+  "usageMetadata":{"promptTokenCount":1139,"candidatesTokenCount":5,"totalTokenCount":4438,"promptTokensDetails":[{"modality":"TEXT","tokenCount":1139}],"thoughtsTokenCount":3294},
+   "modelVersion":"models/gemini-2.5-flash-preview-05-20",
+   "responseId":"GW1UaKCbDo2OjMcPipaA8Qc"}
+
+-->
+
   
 </body>
 </html>

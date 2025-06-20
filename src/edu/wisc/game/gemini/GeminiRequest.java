@@ -45,6 +45,8 @@ public class GeminiRequest {
     public static class ConfigElement {
 	Double temperature = null;
 	public Double getTemperature() { return temperature;}
+	Integer maxOutputTokens=null;
+	public Integer getMaxOutputTokens() { return maxOutputTokens; }  
     }
 
 
@@ -98,6 +100,11 @@ public class GeminiRequest {
 	//		   JsonReflect.reflectToJSONObject(this, false, null, 10));
 	
     }
-
+    
+    void addMaxOutputTokens(Integer m) {
+	if (m==null) return;
+	if (generationConfig == null) generationConfig = new ConfigElement();
+	generationConfig.maxOutputTokens = m;
+    }
     
 }
