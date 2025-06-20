@@ -118,7 +118,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	int retryCnt=0;
 	JsonObject responseJo = null;
 	int code=0;
-	for(; retryCnt < 3; retryCnt++) {
+	for(; retryCnt < 4; retryCnt++) {
 	    lastRequestTime  = new Date();
 	    HttpURLConnection con = (HttpURLConnection)url.openConnection();
 	    con.setRequestMethod("POST");
@@ -186,7 +186,13 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	// Error: HTTP response code = 503
 	// SERVER RESPONSE: {"error":{"code":503,"message":"The model is overloaded. Please try again later.","status":"UNAVAILABLE"}}
 
+		// This error often repeats even after 1-2 min, so let's have
+		// longer periods: 1, 2, 4, 8 min.
+		
+
 		int waitSec = 60;
+		for(int i=0; i<retryCnt; i++) waitSec*=2;
+
 		System.out.println("Waiting for " + waitSec + " seconds to retry, as a wild guess");
 		waitABit(waitSec * 1000);
 
