@@ -304,6 +304,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
     static String instructionsFile = null;
     /** null means "let the model use its default value" */
     static Double temperature = null;
+    static Integer thinkingBudget = 8192;
     
     static String keyFile = "/opt/w2020/gemini-api-key.txt";
     static String gemini_api_key = null;
@@ -349,7 +350,8 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	keyFile = ht.getOption("keyFile", keyFile);
 	instructionsFile = ht.getOption("instructionsFile", instructionsFile);
 	max_requests  = ht.getOption("max_requests", max_requests);
-	temperature = ht.getOptionDoubleObject("temperature", null);
+	temperature = ht.getOptionDoubleObject("temperature", temperature);
+	thinkingBudget = ht.getOptionInteger("thinkingBudget", thinkingBudget);
 
 
 	File f =  (instructionsFile==null)? new File( Files.geminiDir(), "system.txt"):
@@ -395,6 +397,10 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	} else {
 	    System.out.println("Temperature=" + temperature);
 	}
+
+	System.out.println("ThinkingBudget=" +
+			   (thinkingBudget==null? "default": ""+thinkingBudget));
+
 	boolean won = false;
 	
 	try {
