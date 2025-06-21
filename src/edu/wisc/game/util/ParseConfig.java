@@ -209,6 +209,24 @@ public final class ParseConfig extends Hashtable<String,Object> {
 	    return value;
 	}
 
+    public Integer getOptionIntegerObject(String aName, Integer aDefault) {
+	Integer value = aDefault;
+	Object obj = get(aName);
+	if (obj != null) {
+	    if (obj instanceof Integer)
+		value = (Integer)obj;
+	    if (obj instanceof Number)
+		value = new Integer( ((Number) obj).intValue());
+	    else {
+		String msg = "Property `" + aName + "', value='"+obj+"', read from the config file " + "is not a number! Ignored.";
+		System.err.println(msg);
+	    }
+	}
+	String property = getPropertySafe(prefix + aName);
+	if (property != null)   value = Integer.valueOf(property);
+	return value;
+    }
+
 	/**
 	 * Gets the requested integer value from the hash table or from the Java system property aName.
 	 */

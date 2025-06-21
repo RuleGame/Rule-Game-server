@@ -351,7 +351,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	instructionsFile = ht.getOption("instructionsFile", instructionsFile);
 	max_requests  = ht.getOption("max_requests", max_requests);
 	temperature = ht.getOptionDoubleObject("temperature", temperature);
-	thinkingBudget = ht.getOptionInteger("thinkingBudget", thinkingBudget);
+	thinkingBudget = ht.getOptionIntegerObject("thinkingBudget", thinkingBudget);
 
 
 	File f =  (instructionsFile==null)? new File( Files.geminiDir(), "system.txt"):
@@ -524,7 +524,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	gr.addInstruction(instructions);
 	gr.addTemperature(temperature);
 	gr.addMaxOutputTokens(maxToken);
-	gr.addThinkingBudget(8192);
+	gr.addThinkingBudget(thinkingBudget);
 	//gr.addUserText("How do you use borax?");
 	return gr;
     }
