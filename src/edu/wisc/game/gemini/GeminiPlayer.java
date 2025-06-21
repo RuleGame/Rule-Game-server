@@ -97,6 +97,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
    "responseId":"GW1UaKCbDo2OjMcPipaA8Qc"}
 </pre>
 
+
 */
     private String doOneRequest(GeminiRequest gr) throws MalformedURLException, IOException, ProtocolException, ClassCastException
     {
@@ -116,9 +117,21 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	String jsonInputString =  jo.toString();
 
 	int retryCnt=0;
-	JsonObject responseJo = null;
+	JsonObject responseJo = null;       
 	int code=0;
+	int budgetDivider = 1;
 	for(; retryCnt < 4; retryCnt++) {
+
+	    // Have to re-create the request with a lower budget
+	    if (budgetDivider>1) {
+		int tb = thinkingBudget/budgetDivider;
+		System.out.println("Reducing thinkingBudget to " + tb);
+		gr.addThinkingBudget( tb);
+		jo = JsonReflect.reflectToJSONObject(gr, false, null, 10);
+		jsonInputString =  jo.toString();
+	    }
+
+	    
 	    lastRequestTime  = new Date();
 	    HttpURLConnection con = (HttpURLConnection)url.openConnection();
 	    con.setRequestMethod("POST");
@@ -172,13 +185,16 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 		System.out.println("At "+	reqt()+", FIRST SERVER RESPONSE: " + responseJo.toString());
 		isFirstResponse = false;
 	    }
-	    
 
-	    if (code==200) break;
+	    boolean hitMax =  (code==200) && hitMaxTokens(responseJo);
+	    if (code==200 && !hitMax) 	break;
 
 	    System.out.println("At "+	reqt()+", SERVER RESPONSE: " + responseJo.toString());
 
-	    if (code==429) {
+	    if (hitMax) {
+		budgetDivider *= 2;
+		System.out.println("Hit MAX_TOKENS; raised budgetDivider to " + budgetDivider);
+	    } else if (code==429) {
 		int waitSec = error429(responseJo);
 		System.out.println("Waiting for " + waitSec + " seconds to retry, as told by the server");
 		waitABit(waitSec * 1000);
@@ -215,6 +231,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 		
 	JsonArray candidatesJa = responseJo.getJsonArray("candidates");
 	if (candidatesJa.size()!=1)  throw new IllegalArgumentException("Expected to find 1 candidate, found " + candidatesJa.size() + ". RESPONSE=\n" + responseJo);
+	
 	JsonObject contentJo = candidatesJa.getJsonObject(0).getJsonObject("content");
 	JsonArray partsJa = contentJo.getJsonArray("parts");
 	if (partsJa==null)  throw new IllegalArgumentException("No 'parts' found. RESPONSE=\n" + responseJo);	
@@ -244,9 +261,28 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 "usageMetadata": ...
 	*/	
 	
-	}
+    }
 
-	
+    /** Sometimes, a code-200 response may look like this:
+
+<pre>
+{ "candidates":[{"content":{"role":"model"},"finishReason":"MAX_TOKENS","index":0}],
+  "usageMetadata":{"promptTokenCount":1360,"totalTokenCount":66895,"promptTokensDetails":[{"modality":"TEXT","tokenCount":1360}],"thoughtsTokenCount":65535},
+  "modelVersion":"models/gemini-2.5-flash-preview-05-20",
+  "responseId":"y3lUaNivFu6q1MkPvduf2Ag"}
+</pre>
+
+This usually only happens with temperature=0, when Gemini thinks especially hard. When that happens, we'll try to reduce the thinking budget...
+
+     */
+    private boolean hitMaxTokens(JsonObject responseJo) {
+	JsonArray candidatesJa = responseJo.getJsonArray("candidates");
+	if (candidatesJa.size()!=1)  throw new IllegalArgumentException("Expected to find 1 candidate, found " + candidatesJa.size() + ". RESPONSE=\n" + responseJo);
+
+	String finishReason = candidatesJa.getJsonObject(0).getString("finishReason");	
+	return finishReason!=null && finishReason.equals("MAX_TOKENS");
+    }
+
 
     /* Extracts the recommended retry time from the error response of the Gemini
        server.
@@ -541,7 +577,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	gr.addInstruction(instructions);
 	gr.addTemperature(temperature);
 	gr.addMaxOutputTokens(maxToken);
-	gr.addThinkingBudget(8192);
+	gr.addThinkingBudget(thinkingBudget);
 	Vector<String> v = describeHistory();
 	v.add("YOUR MOVE?");
 	String text = Util.joinNonBlank("\n", v);
