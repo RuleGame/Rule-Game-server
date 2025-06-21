@@ -46,10 +46,16 @@ public class GeminiRequest {
 	Double temperature = null;
 	public Double getTemperature() { return temperature;}
 	Integer maxOutputTokens=null;
-	public Integer getMaxOutputTokens() { return maxOutputTokens; }  
+	public Integer getMaxOutputTokens() { return maxOutputTokens; }
+	ThinkingConfigElement thinkingConfig = null;
+	public ThinkingConfigElement getThinkingConfig() { return thinkingConfig; }
+
     }
 
-
+    public static class ThinkingConfigElement {
+	int thinkingBudget;
+	public int getThinkingBudget() { return thinkingBudget; }
+    }
     
     Vector<ContentElement> contents = new Vector<>();
     public Vector<ContentElement> getContents()  { return contents; }
@@ -105,6 +111,13 @@ public class GeminiRequest {
 	if (m==null) return;
 	if (generationConfig == null) generationConfig = new ConfigElement();
 	generationConfig.maxOutputTokens = m;
+    }
+
+    void addThinkingBudget(Integer x) {
+	if (x==null) return;
+	if (generationConfig == null) generationConfig = new ConfigElement();
+	generationConfig.thinkingConfig = new ThinkingConfigElement();
+	generationConfig.thinkingConfig.thinkingBudget = x;
     }
     
 }

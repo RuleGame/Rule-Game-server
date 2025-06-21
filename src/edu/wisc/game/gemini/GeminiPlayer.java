@@ -518,6 +518,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	gr.addInstruction(instructions);
 	gr.addTemperature(temperature);
 	gr.addMaxOutputTokens(maxToken);
+	gr.addThinkingBudget(8192);
 	//gr.addUserText("How do you use borax?");
 	return gr;
     }
@@ -534,7 +535,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	gr.addInstruction(instructions);
 	gr.addTemperature(temperature);
 	gr.addMaxOutputTokens(maxToken);
-	
+	gr.addThinkingBudget(8192);
 	Vector<String> v = describeHistory();
 	v.add("YOUR MOVE?");
 	String text = Util.joinNonBlank("\n", v);
