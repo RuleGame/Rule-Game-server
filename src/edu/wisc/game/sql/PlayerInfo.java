@@ -134,19 +134,6 @@ public class PlayerInfo {
 	    botGameName = null;
 	}
 
-	//-- Bot Assist is mostly for 1PG 
-	botAssistName = para.getString("bot_assist", null);
-	if (botAssistName != null) {
-	    if (botAssistName.equals("pseudo")) {
-		pseudoHalftime = para.getDouble("pseudo_halftime", false, 10);
-	    } else {
-		throw new IllegalArgumentException("Illegal bot assist name ("+botAssistName+") for player " + playerId);
-	    }
-	}
-	    
-
-
-
 	
     }
 
@@ -157,10 +144,6 @@ public class PlayerInfo {
 	partner, of the specified type */
     @Transient
     private String botGameName;
-    /** If not null, there is a bot assistant (8.014+) */
-    @Transient
-    private String botAssistName;
-
     
         /** @return true if the name of the experiment plan indicates that this
 	is a cooperative two-player game */
@@ -180,10 +163,6 @@ public class PlayerInfo {
     public boolean isBotGame() {
 	return botGameName!=null;
     }
-    public boolean hasBotAssist() {
-	return botAssistName!=null;
-    }
-
 
     /** True if this particular player is a bot. (And not just the game involves a bot) */
     @Basic
@@ -364,8 +343,16 @@ public class PlayerInfo {
 	    series, forming a super-series. (It may continue further 
 	    beyond, if the next series also has cont==true, and so on).
 	*/
-	final boolean cont;
+	final boolean 	cont;
 	final GameGenerator gg;
+
+	/** If not null, there is a bot assistant (8.014+) */
+	//@Transient
+	private String botAssistName;
+	public boolean hasBotAssist() {
+	    return botAssistName!=null;
+	}
+
 	public Vector<EpisodeInfo> episodes = new Vector<>();
 	int size() { return episodes.size(); }
 	
@@ -373,6 +360,18 @@ public class PlayerInfo {
 	    para = _para;
 	    cont = para.getBoolean("continue", Boolean.FALSE);
 	    gg = GameGenerator.mkGameGenerator(Episode.random, para);
+
+	    //-- Bot Assist is mostly used in 1PG 
+	    botAssistName = para.getString("bot_assist", null);
+	    if (botAssistName != null) {
+		if (botAssistName.equals("pseudo")) {
+		    pseudoHalftime = para.getDouble("pseudo_halftime", false, 10);
+		} else {
+		    throw new IllegalArgumentException("Illegal bot assist name ("+botAssistName+") for player " + playerId);
+		}
+	    }
+	   
+
 	}
 
 	boolean canGiveUp() {
@@ -1198,8 +1197,8 @@ public class PlayerInfo {
 	Board b = epi.getCurrentBoard(true);
 	BoardManager.saveToFile(b, playerId, epi.episodeId, f);
 	f =  Files.transcriptsFile(playerId);
-	TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.transcript, hasBotAssist());
-	if (hasBotAssist() && epi.botAssist!=null) {
+	TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.transcript, epi.botAssist!=null);
+	if ( epi.botAssist!=null) {
 	    f = Files.botAssistFile(playerId);
 	    TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.botAssist.botAssistTranscript, false);
 	}

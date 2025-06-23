@@ -774,6 +774,25 @@ s	    non-existing piece) the value may be different from those of
 	doPrep();	
     }
 
+    /** Special-purpose constructor, used for replaying episodes from Gemini logs */
+    public Episode(RuleSet _rules, Board b, OutputMode _outputMode, Reader _in, PrintWriter _out) {
+	startTime = new Date();    
+	in = _in;
+	out = _out;
+	outputMode = _outputMode;
+	episodeId = buildId();
+    
+	rules = _rules;
+
+	nPiecesStart = b.getValue().size();
+	values = new Vector<>();
+	for(Piece p: b.getValue()) values.add(p);
+	doPrep();	
+    }
+
+
+
+    
     /** Return codes for the /move and /display API web API calls,
 	and for the MOVE command in the captive game server.
      */

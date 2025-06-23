@@ -631,7 +631,7 @@ public class EpisodeInfo extends Episode {
 	}
 
 
-	if (player.hasBotAssist()) { // Assuming it's 1PG. (FIXME: what if 2PG?)
+	if (mySeries().hasBotAssist()) { // Assuming it's 1PG. (FIXME: what if 2PG?)
 	    if (botAssist==null) botAssist=new BotAssist();
 	    botAssist.didHeFollow(move);
 	    botAssist.makeSuggestion(this, q);

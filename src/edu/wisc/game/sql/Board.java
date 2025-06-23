@@ -226,7 +226,7 @@ public class Board {
 	the wire. (Labels are only neededs in Bot Assist games;
 	so sending them e.g. to Gemini is a waste of billable token
 	count) */
-    void dropLabels() {
+    public void dropLabels() {
 	for(Piece p: value) p.setLabel(null);
     }
     

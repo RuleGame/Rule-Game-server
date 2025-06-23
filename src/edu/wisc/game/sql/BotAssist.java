@@ -11,18 +11,19 @@ import edu.wisc.game.rest.ParaSet;
 import edu.wisc.game.sql.Episode.Pick;
 import edu.wisc.game.sql.Episode.Move;
 
-/** Data structures used in Bot Assist games */
+/** Data structures used for the Bot Assist functionality for a
+    particular episode in Bot Assist games */
 class BotAssist {
     
 /** In Bot Assist games, the list of all move suggestions made by the bot in this episode */
-    //@Transient
+
+    /** The bot's proposed moves during this episode */
     Vector<Pick> botAssistTranscript = new Vector<>();
-    //@Transient
     public Vector<Pick> getBotAssistTranscript() { return botAssistTranscript; }
 
-    /** In BotAssist, this is stored to make it easier for the subsequent move
-	attempts to find out whether it follows the suggestion */
-    //@Transient
+    /** The most recent proposed move. This is stored to make it
+	easier for the subsequent move attempts to find out whether it
+	follows the suggestion */
     Move proposed = null;
 
     /** Checks whether the specified move followed the previous suggestion,
@@ -32,7 +33,9 @@ class BotAssist {
 	if (proposed==null) return;
 	if (proposed.sameMove(move)) move.setDidFollow(true);
     }
-    
+
+    /** Proposes one more move, adds it to the bot assist transcript,
+	and stores it in "proposed". */
     void makeSuggestion(EpisodeInfo epi, EpisodeInfo.ExtendedDisplay q) throws IOException {
 	Pseudo task = new Pseudo(epi.getPlayer(), epi, epi.getAttemptCnt());
 	proposed = task.proposeMove();

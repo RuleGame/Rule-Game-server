@@ -20,7 +20,7 @@ import edu.wisc.game.engine.*;
 
 
 
-public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
+public class GeminiPlayer  extends Vector<EpisodeHistory> {
 
     /** Should we admonish the Gemini bot if it makes redundant moves? */
     static boolean remind = true;
@@ -235,8 +235,12 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	JsonObject contentJo = candidatesJa.getJsonObject(0).getJsonObject("content");
 	JsonArray partsJa = contentJo.getJsonArray("parts");
 	if (partsJa==null)  throw new IllegalArgumentException("No 'parts' found. RESPONSE=\n" + responseJo);	
-	if (partsJa.size()!=1)  throw new IllegalArgumentException("Expected to find 1 part, found " + partsJa.size() + ". RESPONSE=\n" + responseJo);	
-	String text = partsJa.getJsonObject(0).getString("text");
+	if (partsJa.size()<1)  throw new IllegalArgumentException("Expected to find 1 part, found " + partsJa.size() + ". RESPONSE=\n" + responseJo);
+	Vector<String> v = new Vector<>();
+	for(int j=0; j<partsJa.size(); j++)  {
+	    v.add( partsJa.getJsonObject(j).getString("text"));
+	}
+	String text = Util.joinNonBlank("\n", v);
 
 
 	//  "usageMetadata":{"promptTokenCount":1139,"candidatesTokenCount":5,"totalTokenCount":4438,"promptTokensDetails":[{"modality":"TEXT","tokenCount":1139}],"thoughtsTokenCount":3294},
@@ -262,7 +266,7 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
 	*/	
 	
     }
-
+    
     /** Sometimes, a code-200 response may look like this:
 
 <pre>
@@ -271,10 +275,12 @@ public class GeminiPlayer  extends Vector<GeminiPlayer.EpisodeHistory> {
   "modelVersion":"models/gemini-2.5-flash-preview-05-20",
   "responseId":"y3lUaNivFu6q1MkPvduf2Ag"}
 </pre>
+    */
 
+
+  /*
 This usually only happens with temperature=0, when Gemini thinks especially hard. When that happens, we'll try to reduce the thinking budget...
-
-     */
+    */
     private boolean hitMaxTokens(JsonObject responseJo) {
 	JsonArray candidatesJa = responseJo.getJsonArray("candidates");
 	if (candidatesJa.size()!=1)  throw new IllegalArgumentException("Expected to find 1 candidate, found " + candidatesJa.size() + ". RESPONSE=\n" + responseJo);
@@ -389,11 +395,14 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	temperature = ht.getOptionDoubleObject("temperature", temperature);
 	thinkingBudget = ht.getOptionIntegerObject("thinkingBudget", thinkingBudget);
 
-
 	File f =  (instructionsFile==null)? new File( Files.geminiDir(), "system.txt"):
 	    new File(instructionsFile);
 	instructions = Util.readTextFile( f);
 
+	
+	String resumeFileName = ht.getOption("resume", null);
+	File resumeFrom = null;
+	if (resumeFileName!=null) resumeFrom  = new File( resumeFileName);
 
 	
 	System.out.println("At " + now() +", starting playing with Gemini. Game Server ver. "+ Episode.getVersion());
@@ -438,6 +447,14 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 			   (thinkingBudget==null? "default": ""+thinkingBudget));
 
 	boolean won = false;
+
+	if (resumeFrom != null) {
+	    System.out.println("Resuming from old log file " + resumeFrom);
+	    history.readLogBack(outputMode, gg, resumeFrom);
+	}
+
+
+
 	
 	try {
 	    
@@ -450,8 +467,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	    Episode epi = new Episode(game, outputMode,
 				      new InputStreamReader(System.in),
 				      new PrintWriter(System.out, true));
-
-
+	
 	    EpisodeHistory his = new EpisodeHistory(epi);
 	    history.add(his);
 
@@ -501,8 +517,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	    
 	    if (log!=null) log.close();
 	}
-  
-
+    
 	//---------
 
 	System.exit(0);
@@ -518,39 +533,8 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	gr.addInstruction(instructions);
 	*/
     }
-
     
-
-    
-    /** What you need to know about an episode when sending that info to
-	Gemini */
-    static class EpisodeHistory {
-	final Episode epi;
-	final Board initialBoard;
-	/** Info about any unnecessarily repeated move attempts in this episode */
-	Repeats repeats = new Repeats();
-	EpisodeHistory(Episode _epi) {
-	    epi = _epi;
-	    initialBoard = epi.getCurrentBoard(false);
-	}
-	static HashSet<String> excludableNames =
-	    Util.array2set("buckets", 
-			   "dropped",
-			   "0.id");
-	
-	static String boardAsString(Board b) {
-	    JsonObject jo = JsonReflect.reflectToJSONObject(b, true,  excludableNames);
-	    return jo.toString();
-	}
-	String initialBoardAsString() {
-	    return boardAsString(initialBoard);
-	}
-	String currentBoardAsString() {
-	    return boardAsString(epi.getCurrentBoard(false));
-	}
-    }
-
-
+   
     GeminiPlayer() { super(); }
 
     static Integer maxToken = 200000;
@@ -602,6 +586,8 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
     }
 
 
+    /** Produces a text describing the entire history of the session, to
+	be sent to the Gemini bot with the request */
     private Vector<String> describeHistory() {
 	Vector<String> v = new Vector<>();
 	
@@ -630,7 +616,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	return v;
     }
 
-    
+
     /** Creates lines describing an episode, to go into a request.
 	The language is a bit different for the older (completed)
 	episodes and the current (incomplete) episode. (E.g. past vs.
@@ -763,11 +749,14 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 "modelVersion": "gemini-2.0-flash"}
 </pre>
 
+Very occasionally, the "parts" array has multiple elements, each one havng a "text" in it. 
+
 @return true on victory (mastery demonstrated), false otherwise
      */
+
     boolean playingLoop()  throws IOException {
 
-	EpisodeHistory ehi = lastElement();
+        EpisodeHistory ehi = lastElement();
 	Episode epi = ehi.epi;
 	while( !epi.isCompleted()){
 	    GeminiRequest gr = makeRequest();
@@ -792,7 +781,25 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 		waitABit(wait);
 	    }
 
-	    totalAttemptCnt++;
+	    Boolean b = digestMove(w);
+	    if (b!=null) return b;
+	    
+	    waitABit(wait); // 5 sec wait before the next request, to keep Gemini happy
+	    
+	}
+  
+	System.out.println("Episode ended. transcript has "+epi.getTranscript().size()+" moves. Board pop="+epi.getValues().size()+". lastStretch=" + lastStretch + ", lastR=" + lastR);
+	    
+	return false;
+  }
+
+/** @return null if the episode needs to continue; a boolean value, to be 
+    returned by playingLoop(), is the episodes ends now */
+private Boolean digestMove(int[] w) throws IOException {
+        EpisodeHistory ehi = lastElement();
+	Episode epi = ehi.epi;
+
+	totalAttemptCnt++;
 	    int id = w[0];
 	    int bid = w[1];
 
@@ -858,21 +865,14 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 		System.out.println("Request limit (" + max_requests+") reached");
 		return false;
 	    }
-	    
-	    waitABit(wait); // 5 sec wait before the next request, to keep Gemini happy
-	    
-	}
-
-	System.out.println("Episode ended. transcript has "+epi.getTranscript().size()+" moves. Board pop="+epi.getValues().size()+". lastStretch=" + lastStretch + ", lastR=" + lastR);
-	    
-	return false;
-    }
+	    return null;
+   }
 
     /** Parses the text returned from Gemini, looking for the last "MOVE id bid" pattern
 	(thus skipping any preliminary discussion, quoting from the session's history,
 	which Gemini sometimes includes before its proposed move).
 	@return {id, bid} or null
-     */
+    */
     int[] parseResponse(String line) {
 	Matcher m = movePat.matcher(line);
 	int [] result = null;
@@ -884,10 +884,7 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 	}
 	return result;
     }
-      
-
-
-    
+          
     /** Out model is gemini-2.0-flash, which allows 15 RPM in the free tier.
     https://ai.google.dev/gemini-api/docs/rate-limits
     */
@@ -899,8 +896,88 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
             e.printStackTrace();
         }
     }
+
+
+
+    /** Reading log back, for restoring a history.
+	The text starts after 
+	"The text part of the request:",
+	and ends with 
+	"YOUR MOVE?"
+
+    */
+    static Vector<String> extractLastRequest(File f) throws FileNotFoundException, IOException {
+	
+	LineNumberReader r = new LineNumberReader(new FileReader(f));
+	String s = null;
+	Vector<String> v = new Vector<>();
+	Vector<String> lastFoundText = null;
+	boolean inside = false;
+	int requestCnt=0;
+	while((s = r.readLine())!=null) {
+	    if (s.startsWith(	"The text part of the request:")) {
+		v.clear();
+		inside = true;
+	    }
+	    if (inside) {
+		if (s.startsWith("YOUR MOVE")) {
+		    inside = false;
+		    lastFoundText = new Vector<>();
+		    lastFoundText.addAll(v);
+		    v.clear();
+		    requestCnt++;
+		} else {		    
+		    v.add(s);
+		}
+	    }	    
+	}
+	System.out.println("Found " + requestCnt + " requests in the log. The last one has " + lastFoundText.size() + "  lines");
+	return lastFoundText;
+    }
+
     
-    // {"text": "MOVE 0 0\n"
-  
-   
+    private static final Pattern boardPat = Pattern.compile("^Episode ([0-9]+) .*?(\\{.*\\})");
+    //	movePat("^(MOVE [0-9]+ [0-9]+)");
+		
+
+    /** Fills this GeminiPlayer with the recorded history from a file */
+    private void readLogBack(OutputMode outputMode,
+			    GameGenerator gg, File f) throws IOException,
+							     ReflectiveOperationException {
+	Vector<String> v = extractLastRequest(f);
+	int eNo = 0;
+	for(String line: v) {
+	    // "Episode 1 had the following initial board: {"value":...}"
+	    Matcher m = boardPat.matcher(line);
+	    if (m.find()) {
+		int j = Integer.parseInt(m.group(1));
+		String boardText = m.group(2);
+		if (j==eNo+1) eNo++;
+		else throw new IllegalArgumentException("Episode number out of order: " + j);
+		System.out.println("Found board text=" + boardText);
+		Board board = Board.readBoardFromString(boardText);
+		board.dropLabels();
+		Episode epi = new Episode(gg.getRules(), board, outputMode,
+					  new InputStreamReader(System.in),
+					  new PrintWriter(System.out, true));
+
+		EpisodeHistory his = new EpisodeHistory(epi);
+		/* history.*/add(his);
+
+
+		continue;
+
+	    }
+	    int[] w = parseResponse(line);
+	    if (w!=null) {
+		digestMove(w);
+		// ZZZ
+	    }
+		
+	    
+	}
+	
+    }
+	
+    
 }
