@@ -10,10 +10,10 @@ Bot Assist
     </h1>
 
     <div align="center"><em>
-	Updated 2025-05-21 for GS 8.014</em>
+	Updated 2025-06-23 for GS 8.022</em>
 	</div>
 
-    <p>This is document provides an overview of the "Bot Assist" feature, which ay be introduced in GS ver. 8.014.
+    <p>This is document provides an overview of the "Bot Assist" feature, which ay be introduced in GS ver. 8.014. Originally, the entire trial list had to either have bot assist or not, but since ver 8.022, we have parameter-set-level granularity.
 
       <h2>Overview</h2>
 
@@ -34,7 +34,10 @@ Bot Assist
 	The only bot included in GS 8.014 is <tt>pseudo</tt>, which stands for "pseudo learning".
 	
 <p>Additionally, the trial list file may include columns containing the necessary parameter values for the bot in question. The one   column that the
-  bot <tt>pseudo</tt> uses is named <tt>pseudo_halftime</tt>; it contains an integer value that specifies how fast the bot pretends to learn. These parameters also have the same syntax and semantics as those for the partner bot in 2PG.
+  bot <tt>pseudo</tt> uses is named <tt>pseudo_halftime</tt>; it contains an integer value that specifies how fast the bot pretends to learn. (The exact meaning of it is the "half-life" of the exponential "decay" of the error rate. That is, when the bot starts with the rule set, its error rate is such as one would expect for a bot making random moves; after  <tt>pseudo_halftime</tt>, the error rate is only 1/2 of its initial value, and so on).
+
+  <P>
+  These parameters also have the same syntax and semantics as those for the partner bot in 2PG.
 
 <p>For an example, see the plan
   <tt>vm/colorVshape-bot-assist</tt>.
@@ -58,7 +61,13 @@ Bot Assist
 2) The experiment plan you can use for testing is vm/colorVshape-bot-assist. It's a normal 1PG plan, but it computes, after each /move or /pick, a "suggestion by bot", which is sent to the player as part of the /move or /pick return structure; the client can then show that suggestion to the player in the chat box.
 
 <p>
-3) The GUI client may want to find out, at the very beginning of the game, that it's a "bot assist" game, so that it can choose to display the chat panel (which normally is not needed in 1PG games). To do that, the client shall look at the return value of the very first /newEpisode call; inside that value, there is a "para" structure; if that structure has a field named "bot_assist" with a non-null value, you now you're in a bot assiste game. For example (quoting from catalina.out):
+  3) [Note: this section has been updated for ver 8.022]
+
+  
+  The GUI client may want to find out,
+  <strike>  at the very beginning of the game, that it's a "bot assist" game,</strike>
+when it starts playing each series of the session (i.e., each new parameter set with a new rule set) whether that parameter set includes a "bot assist" feature,
+  so that it can choose to display the chat panel (which normally is not needed in 1PG games). To do that, the client shall look at the return value of the first /newEpisode call of each session; inside that value, there is a "para" structure; if that structure has a field named "bot_assist" with a non-null value, you now you're in a bot assiste game. For example (quoting from catalina.out):
 
 <br>
 <tt>
@@ -87,9 +96,10 @@ playerId":"vm-2025-05-18-b","alreadyFinished":false,"completionMode":0,
 "isCoopGame":false,"isAdveGame":false,"needChat":false,"error":false,"errmsg":"Debug:\n(PlayerInfo:
  id=1503,  playerId=vm-2025-05-18-b, pair=0, trialListId=colorVshape, date=Tue May 20 02:03:53 EDT 2025)\n*M*[S0]\n[S1]\n[S2]\nid=1503, curSer=0 b=false, R=$0"}
 </tt>
+</strike>
 
 <p>
-In any event, once the client learns that the game to be played is a bot assist game, it should enable the screen to display the chat panel. Since there seems to be no reason why the human player may say anything useful to the bot (my bots are dumb and don't understand any words anyway), I would suggest that unlike in a coop 2PG game, this chat panel should not allow the user to enter any text. (Maybe there should be no entry box at all, to avoid distracting the player).
+In any event, once the client learns that the series to be played is a bot assist game, it should enable the screen to display the chat panel. Since there seems to be no reason why the human player may say anything useful to the bot (my bots are dumb and don't understand any words anyway), I would suggest that unlike in a coop 2PG game, this chat panel should not allow the user to enter any text. (Maybe there should be no entry box at all, to avoid distracting the player).
 
 <p>
 4) The buckets are numbered clockwise, 0 1 2 3, starting with the top left one. In a bot assist game, some kind of labels indicating that numbering, should be shown at or near the buckets.
@@ -122,13 +132,59 @@ In any event, once the client learns that the game to be played is a bot assist 
   <p>For details on how this bot works, please see the section on
     <a href="2pg-bot.html#pseudo">the pseudo-learning bot</a> in the document on the 2PG with a bot partner.
 
-    <h2><a name="transcript">Recording suggestions</a></h2>
+    <h2><a name="transcript">Recording bot's suggestions</a></h2>
 
   <p>When a game with bot assist is played, the game server, in addition to recording the player's moves in the transcript file, also records the bot's suggestions in the bot assist suggestions file. These files are located in the directory <tt>bot-assist</tt> under the main saved data directory (typically,
     <tt>/opt/w2020/saved</tt>), and have names such as
     <tt><em>player-id</em>.bot-assist.csv</tt>
 
     <p>The file format of bot assiste suggestions files is identical to that of the transcript files, describing the proposed move in terms of the game piece ID and the destination bucket ID. Since both the entries in the game's transcript file and those in the bot assist file contain time stamps, it should be possible for an analysis script to match the two, and to figure which bot suggestion was offered before which move of the player.
+
+<p>Note that if in a particular trial list only some parameter sets involve bot assist, the bot assist transcript will be shorter than the main game transcript, because the former will only have sections for the episodes played with bot assist.
+      
+<p>Additionally, when at least one parameter set in the trial list has a bot assist feature, the main game transcript file will have an additional column named "followed". In those episodes where bot assist was active, this column will contain 1 or 0, depending on whether the player's move followed the bot's suggestion or not. If some parameter sets in the trial list did not have bot assist, this column will be empty for the moves made when playing that para set.
+
+</pre>  
+bixi-Latitude-E5420:/opt/w2020/saved/transcripts> more vm-2025-06-23-b.transcripts.csv 
+#pid,episodeId,moveNo,timestamp,mover,objectId,y,x,by,bx,code,followed
+vm-2025-06-23-b,20250623-235052-9L4794,0,20250623-235347.867,0,5,6,4,7,7,4,
+vm-2025-06-23-b,20250623-235052-9L4794,1,20250623-235350.440,0,5,6,4,,,0,
+vm-2025-06-23-b,20250623-235052-9L4794,2,20250623-235352.555,0,5,6,4,7,0,0,
+vm-2025-06-23-b,20250623-235052-9L4794,3,20250623-235355.439,0,4,5,6,7,7,4,
+vm-2025-06-23-b,20250623-235052-9L4794,4,20250623-235358.072,0,3,3,6,7,7,0,
+vm-2025-06-23-b,20250623-235052-9L4794,5,20250623-235406.218,0,4,5,6,0,7,4,
+vm-2025-06-23-b,20250623-235052-9L4794,6,20250623-235408.877,0,4,5,6,7,0,0,
+vm-2025-06-23-b,20250623-235052-9L4794,7,20250623-235414.255,0,1,1,5,0,7,0,
+vm-2025-06-23-b,20250623-235052-9L4794,8,20250623-235417.574,0,0,1,2,0,0,0,
+vm-2025-06-23-b,20250623-235052-9L4794,9,20250623-235424.960,0,2,3,2,7,7,0,
+vm-2025-06-23-b,20250623-235428-V2CRGY,0,20250623-235432.319,0,5,5,4,7,7,0,
+vm-2025-06-23-b,20250623-235428-V2CRGY,1,20250623-235435.015,0,1,3,4,7,7,0,
+vm-2025-06-23-b,20250623-235428-V2CRGY,2,20250623-235438.005,0,4,5,1,7,7,0,
+vm-2025-06-23-b,20250623-235428-V2CRGY,3,20250623-235441.488,0,3,4,6,0,7,0,
+vm-2025-06-23-b,20250623-235428-V2CRGY,4,20250623-235444.621,0,2,4,3,0,7,0,
+vm-2025-06-23-b,20250623-235428-V2CRGY,5,20250623-235448.059,0,0,2,2,0,7,0,
+<strong>vm-2025-06-23-b,20250623-235451-6ZW7I7,0,20250623-235456.199,0,4,4,2,7,0,0,0
+vm-2025-06-23-b,20250623-235451-6ZW7I7,1,20250623-235458.245,0,5,5,5,7,7,0,0
+vm-2025-06-23-b,20250623-235451-6ZW7I7,2,20250623-235500.349,0,3,3,6,0,7,0,0
+vm-2025-06-23-b,20250623-235451-6ZW7I7,3,20250623-235502.617,0,2,2,6,,,0,0
+vm-2025-06-23-b,20250623-235451-6ZW7I7,4,20250623-235506.848,0,0,1,1,0,0,0,0
+vm-2025-06-23-b,20250623-235451-6ZW7I7,5,20250623-235510.909,0,1,2,3,,,0,0
+vm-2025-06-23-b,20250623-235451-6ZW7I7,6,20250623-235516.362,0,1,2,3,7,0,0,0
+vm-2025-06-23-b,20250623-235451-6ZW7I7,7,20250623-235519.691,0,2,2,6,7,7,0,0
+vm-2025-06-23-b,20250623-235522-CLFANT,0,20250623-235524.977,0,0,1,2,0,0,0,0
+vm-2025-06-23-b,20250623-235522-CLFANT,1,20250623-235527.554,0,2,5,2,7,0,0,0
+vm-2025-06-23-b,20250623-235522-CLFANT,2,20250623-235530.451,0,3,5,3,7,7,0,0
+</strong>vm-2025-06-23-b,20250623-235537-ZP2QZ2,0,20250623-235540.405,0,2,5,2,7,0,0,
+vm-2025-06-23-b,20250623-235537-ZP2QZ2,1,20250623-235543.160,0,0,2,1,0,0,0,
+vm-2025-06-23-b,20250623-235537-ZP2QZ2,2,20250623-235545.303,0,1,2,6,0,7,0,
+vm-2025-06-23-b,20250623-235537-ZP2QZ2,3,20250623-235548.196,0,3,5,3,7,7,0,
+vm-2025-06-23-b,20250623-235537-ZP2QZ2,4,20250623-235550.693,0,4,6,3,7,0,0,
+vm-2025-06-23-b,20250623-235553-ZOWIQ7,0,20250623-235556.246,0,0,3,6,0,7,0,
+vm-2025-06-23-b,20250623-235553-ZOWIQ7,1,20250623-235558.367,0,3,6,6,7,7,0,
+vm-2025-06-23-b,20250623-235553-ZOWIQ7,2,20250623-235600.790,0,2,6,5,7,0,0,
+vm-2025-06-23-b,20250623-235553-ZOWIQ7,3,20250623-235603.691,0,1,5,6,0,0,0,
+</pre>
   
+      
   </body>
 </html>

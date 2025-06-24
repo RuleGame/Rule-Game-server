@@ -450,7 +450,15 @@ public class PlayerInfo {
  	
     }
 
-
+    /** Does any of the para sets in this player's trial list
+	has the bot assist feature? */
+    public boolean anySeriesHasBotAssist() {
+	for(Series ser: allSeries) {
+	    if (ser.hasBotAssist()) return true;
+	}
+	return false;
+    }
+    
     public Series getSeries(int k) {
 	return allSeries.get(k);
     }
@@ -1197,10 +1205,10 @@ public class PlayerInfo {
 	Board b = epi.getCurrentBoard(true);
 	BoardManager.saveToFile(b, playerId, epi.episodeId, f);
 	f =  Files.transcriptsFile(playerId);
-	TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.transcript, epi.botAssist!=null);
+	TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.transcript, anySeriesHasBotAssist(), epi.botAssist!=null);
 	if ( epi.botAssist!=null) {
 	    f = Files.botAssistFile(playerId);
-	    TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.botAssist.botAssistTranscript, false);
+	    TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.botAssist.botAssistTranscript, false, false);
 	}
 	f =  Files.detailedTranscriptsFile(playerId);
 	epi.saveDetailedTranscriptToFile(f);
