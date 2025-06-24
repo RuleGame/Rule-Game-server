@@ -906,14 +906,14 @@ private Boolean digestMove(int[] w) throws IOException {
 	"YOUR MOVE?"
 
     */
-    static Vector<String> extractLastRequest(File f) throws FileNotFoundException, IOException {
+    private Vector<String> extractLastRequest(File f) throws FileNotFoundException, IOException {
 	
 	LineNumberReader r = new LineNumberReader(new FileReader(f));
 	String s = null;
 	Vector<String> v = new Vector<>();
 	Vector<String> lastFoundText = null;
 	boolean inside = false;
-	int requestCnt=0;
+	//int requestCnt=0;
 	while((s = r.readLine())!=null) {
 	    if (s.startsWith(	"The text part of the request:")) {
 		v.clear();
