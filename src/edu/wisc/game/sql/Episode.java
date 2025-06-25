@@ -600,7 +600,7 @@ s	    non-existing piece) the value may be different from those of
 	    if (doneWith) throw  new IllegalArgumentException("Forgot to scroll?");
 	    transcript.add(pick);
 	    attemptCnt++;
-	    System.out.println("DEBUG A: attemptCnt:=" + attemptCnt); //transcript=" + getTranscript());
+	    //System.out.println("DEBUG A: attemptCnt:=" + attemptCnt); //transcript=" + getTranscript());
 	    attemptSpent += (pick instanceof Move) ? 1.0: xgetPickCost();
 
 

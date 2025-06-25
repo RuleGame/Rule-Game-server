@@ -346,7 +346,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
     static String instructionsFile = null;
     /** null means "let the model use its default value" */
     static Double temperature = null;
-    static Integer thinkingBudget = 8192;
+    static Integer thinkingBudget = null;
     
     static String keyFile = "/opt/w2020/gemini-api-key.txt";
     static String gemini_api_key = null;
@@ -393,7 +393,9 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	instructionsFile = ht.getOption("instructionsFile", instructionsFile);
 	max_requests  = ht.getOption("max_requests", max_requests);
 	temperature = ht.getOptionDoubleObject("temperature", temperature);
-	thinkingBudget = ht.getOptionIntegerObject("thinkingBudget", thinkingBudget);
+	thinkingBudget = ht.getOptionIntegerObject("thinkingBudget",
+						   temperature==null? 8192: null);
+
 
 	File f =  (instructionsFile==null)? new File( Files.geminiDir(), "system.txt"):
 	    new File(instructionsFile);
@@ -832,7 +834,6 @@ private Boolean digestMove(int[] w) throws IOException {
 		    // The bot has just repeated the last move attempt,
 		    // despite its failure
 
-		    // ZZZ
 		    failedRepeatsCnt++;
 		    failedRepeatsCurrentStreak++;
 		    if (failedRepeatsCurrentStreak>failedRepeatsLongestStreak) {
