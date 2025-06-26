@@ -393,8 +393,9 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	instructionsFile = ht.getOption("instructionsFile", instructionsFile);
 	max_requests  = ht.getOption("max_requests", max_requests);
 	temperature = ht.getOptionDoubleObject("temperature", temperature);
+	boolean tZero = (temperature!=null && temperature.doubleValue()==0);
 	thinkingBudget = ht.getOptionIntegerObject("thinkingBudget",
-						   temperature==null? 8192: null);
+						   tZero ? 8192: null);
 
 
 	File f =  (instructionsFile==null)? new File( Files.geminiDir(), "system.txt"):
