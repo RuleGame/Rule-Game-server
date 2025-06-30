@@ -50,6 +50,8 @@ class Repeats {
     void reset() {
 	recent.clear();
     }
+
+    boolean lastAddResult = false;
     
     boolean add(Move move, int code) {
 
@@ -70,7 +72,7 @@ class Repeats {
 	    }
 	}
 	redundant.add(r);
-	return r;
+	return lastAddResult = r;
 
     }
 

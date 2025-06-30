@@ -8,9 +8,6 @@ import jakarta.json.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.reflect.*;
-//import edu.wisc.game.sql.*;
-//import edu.wisc.game.parser.*;
-//import edu.wisc.game.sql.Episode.OutputMode;
 import edu.wisc.game.rest.*;
 import edu.wisc.game.engine.*;
 
@@ -45,6 +42,8 @@ public class GeminiRequest {
     public static class ConfigElement {
 	Double temperature = null;
 	public Double getTemperature() { return temperature;}
+	Integer candidateCount=null;
+	public Integer getCandidateCount() { return candidateCount; }
 	Integer maxOutputTokens=null;
 	public Integer getMaxOutputTokens() { return maxOutputTokens; }
 	ThinkingConfigElement thinkingConfig = null;
@@ -111,6 +110,12 @@ public class GeminiRequest {
 	if (m==null) return;
 	if (generationConfig == null) generationConfig = new ConfigElement();
 	generationConfig.maxOutputTokens = m;
+    }
+
+    void addCandidateCount(Integer m) {
+	if (m==null) return;
+	if (generationConfig == null) generationConfig = new ConfigElement();
+	generationConfig.candidateCount = m;
     }
 
     void addThinkingBudget(Integer x) {

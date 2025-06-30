@@ -1208,7 +1208,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
     /** The current version of the application */
-    public static final String version = "8.022";
+    public static final String version = "8.023";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }
@@ -1455,7 +1455,8 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
 
-    public Display doMove2(int pieceId, int bucketId, int _attemptCnt) throws IOException {
+    public Display doMove2(int pieceId, int bucketId, int _attemptCnt)// throws IOException
+    {
 	Display errorDisplay =inputErrorCheck2(pieceId, _attemptCnt);
 	if (errorDisplay!=null) return errorDisplay;
 
