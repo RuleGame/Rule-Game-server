@@ -385,7 +385,14 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
     }
 
     static NumberFormat dollarFmt = new DecimalFormat("0.00");
-						          
+
+    /** @param  _targetStreak this is how many consecutive error-free moves the player must make (e.g. 10) in order to demonstrate successful learning. If 0 or negative, this criterion is turned off
+	@param _targetR the product of R values of a series of consecutive moves should be at least this high) in order to demonstrate successful learning. If 0 or negative, this criterion is turned off
+    */   
+    private static int targetStreak=10;
+    private static double targetR=0;
+ 
+    
     /** Modeled on Captive.java
 	model=gemini-2.0-flash
 	wait=4000  (wait time between requests in msec)
@@ -411,6 +418,9 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	keyFile = ht.getOption("keyFile", keyFile);
 	instructionsFile = ht.getOption("instructionsFile", instructionsFile);
 	max_requests  = ht.getOption("max_requests", max_requests);
+	targetStreak = ht.getOption("targetStreak", targetStreak);
+	targetR = ht.getOptionDouble("targetR", targetR);
+	
 	temperature = ht.getOptionDoubleObject("temperature", temperature);
 	boolean tZero = (temperature!=null && temperature.doubleValue()==0);
 	thinkingBudget = ht.getOptionIntegerObject("thinkingBudget",
@@ -1004,9 +1014,12 @@ private Boolean digestMove(int[] w)// throws IOException
 	    }
 
 
+	    boolean won = false;
+	    if (targetStreak>0 & lastStretch>=targetStreak) won = true;
+	    if (targetR>0 & lastR>=targetR) won = true;
+	    
 
-
-	    if (lastStretch>10 || lastR > 1e6) {
+	    if (won) {
 		System.out.println("Victory: mastery demonstrated! " + stats);
 		return true;
 	    }
