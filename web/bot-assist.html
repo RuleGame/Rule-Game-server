@@ -10,7 +10,7 @@ Bot Assist
     </h1>
 
     <div align="center"><em>
-	Updated 2025-06-23 for GS 8.022</em>
+	Updated 2025-07-03 for GS 8.022</em>
 	</div>
 
     <p>This is document provides an overview of the "Bot Assist" feature, which ay be introduced in GS ver. 8.014. Originally, the entire trial list had to either have bot assist or not, but since ver 8.022, we have parameter-set-level granularity.
@@ -33,14 +33,40 @@ Bot Assist
 	<p>
 	The only bot included in GS 8.014 is <tt>pseudo</tt>, which stands for "pseudo learning".
 	
-<p>Additionally, the trial list file may include columns containing the necessary parameter values for the bot in question. The one   column that the
-  bot <tt>pseudo</tt> uses is named <tt>pseudo_halftime</tt>; it contains an integer value that specifies how fast the bot pretends to learn. (The exact meaning of it is the "half-life" of the exponential "decay" of the error rate. That is, when the bot starts with the rule set, its error rate is such as one would expect for a bot making random moves; after  <tt>pseudo_halftime</tt>, the error rate is only 1/2 of its initial value, and so on).
+	<p>Additionally, the trial list file may include columns containing the necessary parameter values for the bot in question. See the "Bot algo parameters" secton below.
 
-  <P>
-  These parameters also have the same syntax and semantics as those for the partner bot in 2PG.
+	<P> These parameters also have the same syntax and semantics as those for the partner bot in 2PG.
 
-<p>For an example, see the plan
+	<p>For an example, see the plan
   <tt>vm/colorVshape-bot-assist</tt>.
+
+	  <h2>Bot algo parameters</h2>
+
+	<p>
+	  The one   column that the  bot <tt>pseudo</tt> uses is named <tt>pseudo_halftime</tt>; it contains an integer value that specifies how fast the bot pretends to learn. That is, at every step the bot can elect to either choose a perfectly random move (which may or may not be good), or choose some guaranteed good move (picking it from the set of all possible good moves). The probability of the first election is decaying exponetially; thus, when the bot starts with the rule set, it will choose a move randomly;  after  <tt>pseudo_halftime</tt> moves it's fifty-fifty chance whether the bot will choose your move from the set of all (good or bad) possible move attempts, or from the set of all possible good moves. 
+
+	<p>Mathematically, let Q be the exponentially decaying value with the initial value 1 and the specified  half-life time h:Q = 2^{-t/h) = exp( - t*log(2)/h).	  Then, at step t, we will make this choice:<ul>
+	    <li>
+	      with probability Q, we will carry out a truly random selection of a move, and will return that move.
+	    <li> with probabiliy 1-Q, we will select a guaranteed good move.
+	  </ul>
+
+	  <p>
+	    Or, in other words, if for a random player the probability of a good move is p(t), then the probability of a good move by the bot is
+	    <div align="center">
+p = (1-Q)+ Q*p(t) = 1 - Q *(1-p(t)).
+	    </div>
+	    
+<p>
+  As to the "confidence" value printed by the bot, it is the same as p above, and is computed as follows:
+  	    <div align="center">
+	      p(t) = goodCnt/allCnt,
+	      </DIV>
+	    where goodCnt is the number of possible good moves and allCnt is the number of all moves (good or bad) that can be chosen.
+	    <div align="center">
+	    confidence = 1 - Q * (1-p(t))
+</P>
+  
 
   <h3>Using a dynamic plan</h3>
 

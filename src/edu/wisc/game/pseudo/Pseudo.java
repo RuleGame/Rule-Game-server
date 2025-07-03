@@ -2,22 +2,14 @@ package edu.wisc.game.pseudo;
 
 import java.io.*;
 import java.util.*;
-//import javax.persistence.*;
-
-//import org.apache.openjpa.persistence.jdbc.*;
-
-//import jakarta.xml.bind.annotation.XmlElement; 
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.sql.Episode.Move;
 import edu.wisc.game.sql.EpisodeInfo.ExtendedDisplay;
 import edu.wisc.game.rest.ParaSet;
-//import edu.wisc.game.rest.TrialList;
 import edu.wisc.game.rest.Files;
 import edu.wisc.game.rest.PlayerResponse;
-//import edu.wisc.game.engine.RuleSet;
-//import edu.wisc.game.engine.AllRuleSets;
 import edu.wisc.game.saved.*;
 
 import edu.wisc.game.websocket.WatchPlayer;
