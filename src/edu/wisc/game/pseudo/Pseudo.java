@@ -107,6 +107,8 @@ public class Pseudo {
 	int k =  Episode.random.nextInt( Episode.NBU);
 	int t = owner.seriesAttemptCnt(); // the sum for all episodes in the series
 
+	// An exponential-decay with the initial value 1 and the specified
+	// half-life time
 	double ex =
 	    (halftime <= 0)? 0:
 	    (halftime == Double.POSITIVE_INFINITY) ? 1:

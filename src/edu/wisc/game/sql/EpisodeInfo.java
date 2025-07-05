@@ -527,7 +527,7 @@ public class EpisodeInfo extends Episode {
 	    } else if (xgetIncentive()==Incentive.LIKELIHOOD) {
 		final double x2=para.getInt("x2_likelihood"), x4=para.getInt("x4_likelihood");
 		mastery4 = (lastR[mj] >=x4);
-		mastery2 = (lastR[mj] >=x4);
+		mastery2 = (lastR[mj] >=x2);
 		s = ", as lastR=" + lastR[mj] + " for x2="+x2+", x4="+x4;
 	    }
 
