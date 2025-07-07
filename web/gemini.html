@@ -584,12 +584,12 @@ Solved in 15 moves. Described the rules well.
 
 <h3>ordL1_Nearby</h3>
 
-Fully solved in 15 moves. 
+Fully solved in 15 moves. (25 good moves follow as well).
 
 
 <h3>ordRevOfL1_Nearby</h3>
 
-Fully solved in 95 move attempts. Good explanation given ("snake scan" :-)
+Fully solved in 95 move attempts. Good explanation given ("snake scan" :-). (25 good moves soon follow as well).
 
 
 <h3>ordRevOfL1_Remotest</h3>
@@ -721,6 +721,53 @@ for Gemini 2.5 Pro.
 
 <H2><a name="prep">Gemini queries with "prepared episodes"</a></h2>
 
+
+<P>The results are in /home/vmenkov/gemini/prepared-10
+
+<ul>
+  <li>A: good explanation
+  <li>A-: good explanation, with some extraneous restrictions that don't hurt
+  <li>B+: mostly correct, only a small part erroneous
+  <li>B: partially correct
+  <li>C+: incorrect, buy at least with some right ideas
+  <li>C: incorrect (e.g. proposing a position-based theory for a color- or shape-based rul)
+</ul>
+
+
+<table>
+<tr><td>allOfColOrd_BRKY<td><td>C<td><td>position-based theory
+<tr><td>allOfColOrd_KRBY<td><td>B+<td><td>guessed KBRY instead of KRBY
+<tr><td>allOfShaOrd_csqt<td><td>C+<td><td>position-based theory, but knows that can start with a circle
+<tr><td>allOfShaOrd_qcts<td><td>C+<td><td>knows to start with a square
+<tr><td>buckets_2130<td><td>A<td>
+<tr><td>ccw<td><td>A<td>
+<tr><td>cm_KRBY<td><td>A<td>
+<tr><td>cm_RBKY<td><td>A<td>
+<tr><td>cm_RBKY_cw_0123<td><td>A<td>
+<tr><td>col1Ord_BRKY<td><td>C<td><td>Talks about target buckets
+<tr><td>col1OrdBuck_BRKY0213<td><td>B<td>
+<tr><td>col1OrdBuck_BRKY3120<td><td>B+<td>
+<tr><td>col1Ord_KRBY<td><td>C <td>
+<tr><td>colOrdL1_BRKY<td><td>C<td>
+<tr><td>colOrdL1_KBYR<td><td>C<td>
+<tr><td>cw_0123<td><td>A<td>
+<tr><td>cw<td><td><td>
+<tr><td>ordL1<td><td><td>
+<tr><td>ordL1_Nearby<td><td><td>
+<tr><td>ordRevOfL1<td><td><td>
+<tr><td>ordRevOfL1_Nearby<td><td><td>
+<tr><td>ordRevOfL1_Remotest<td><td><td>
+<tr><td>quadMixed1<td><td><td>
+<tr><td>quadNearby<td><td><td>
+<tr><td>sha1OrdBuck_qcts0213<td><td><td>
+<tr><td>sha1OrdBuck_tqsc0213<td><td><td>
+<tr><td>sha1Ord_csqt<td><td><td>
+<tr><td>sha1Ord_qcts<td><td><td>
+<tr><td>shaOrdL1_csqt<td><td><td>
+<tr><td>shaOrdL1_qcts<td><td><td>
+<tr><td>sm_csqt<td><td><td>
+<tr><td>sm_qcts<td><td><td>
+</table>
     
 </body>
 </html>

@@ -126,7 +126,8 @@ public class GeminiPlayer  extends Vector<EpisodeHistory> {
 
 	    // Have to re-create the request with a lower budget
 	    if (budgetDivider>1) {
-		int tb = thinkingBudget/budgetDivider;
+		int t0 =  (thinkingBudget==null)? 8192:thinkingBudget;
+		int tb = t0/budgetDivider;
 		System.out.println("Reducing thinkingBudget to " + tb);
 		gr.addThinkingBudget( tb);
 		jo = JsonReflect.reflectToJSONObject(gr, false, null, 10);
