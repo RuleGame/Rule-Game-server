@@ -21,7 +21,6 @@ public class Pseudo {
     /** Episode in which the move is to be made */
     EpisodeInfo epi;
     int expectedAttemptCnt;
-    //    ExtendedDisplay d;
     
     /** Creates a bot player. Modeled, to some extent on PlayerResponse.
 	@param p The live partner with whom this bot will eventually play
@@ -64,8 +63,118 @@ public class Pseudo {
      */
     public double confidence = 0;
 
+    /** Randomly picks one game piece from a non-empty vector of them */
+    //    private static Piece pickPiece(Vector<Piece> v) {
+    //	piece = v.get(  Episode.random.nextInt( v.size()));
+    //}
+
+    /** Creates an array listing buckets not in bu[] */
+    int[] otherBuckets(int[] bu) {
+	int [] x = new int[ Episode.NBU - bu.length];
+	int k = 0;
+	for(int j=0; j<Episode.NBU; j++) {
+	    boolean hasJ = false;
+	    for(int a: bu) {
+		hasJ = (j==a);
+		if (hasJ) break;
+	    }
+	    if (!hasJ) x[k++] = j;
+	}
+	return x;
+    }
+
+    
     /** Pseudo-randomly proposes a move, without actually executing it */
     public Move proposeMove() throws IOException {
+	if (expectedAttemptCnt < epi.getAttemptCnt()) {
+	    Logging.info("Pseudo: skipping apparently duplicate request " + this);
+	    return null;
+	}
+
+	if (epi.getFinishCode()!=Episode.FINISH_CODE.NO) {
+	    Logging.info("Pseudo: episode already completed, fc=" + epi.getFinishCode());
+	    return null;
+	}
+	
+	// Player 0, who owns the episodes
+	PlayerInfo owner = p.getPlayerForRole(Pairing.State.ZERO);
+	
+	double	halftime = p.pseudoHalftime;
+	int t = owner.seriesAttemptCnt(); // the sum for all episodes in the series
+
+	// The probability of offering a bad move (if bad moves are
+	// possible at all): an exponential-decay function with the
+	// initial value 0.75 (or as specified in the para set) and
+	// the specified half-life time
+	double Q =
+	    (halftime <= 0)? 0:
+	    p.pseudoInitErrorRate * 
+	    (halftime == Double.POSITIVE_INFINITY ? 1:
+	     Math.exp( -t/halftime*log2));
+	
+	Board b =  epi.getCurrentBoard(true);
+	boolean show = epi.weShowAllMovables();
+
+	// All pieces on the board that don't have a cross on them
+	Vector<Piece> pieces = new Vector<>();
+	// can be moved to at least 1 bucket
+	Vector<Piece> movablePieces = new Vector<>();
+	// either can be moved to some, but not all, buckets;
+	// cannot be moved anywhere, but are not visibly marked with a cross,
+	// because the "fixed" mode is not on   
+	Vector<Piece> worsePieces = new Vector<>();
+
+	int allCnt=0, goodCnt=0;
+	for(Piece piece: b.getValue()) {
+	    if (piece.getDropped()!=null) continue;
+	    int n = piece.getBuckets().length;
+	    goodCnt += n;
+	    
+	    if (n>0) {
+		movablePieces.add(piece);
+		if (n<Episode.NBU) worsePieces.add(piece);
+	    } else if (!show) {
+		worsePieces.add(piece);
+	    }
+	    
+	    if (!show || n>0) {
+		pieces.add(piece);
+		allCnt += Episode.NBU;
+	    }
+	}
+
+	// Do we want to return a good move?
+	boolean doGood = (worsePieces.size()==0) ||
+	    (Episode.random.nextDouble() >= Q);
+
+	Piece piece;
+	int k;
+	
+	if (doGood) { // propose a good move
+	    piece = Episode.random.pickFrom(movablePieces);
+	    int[] bu = piece.getBuckets();
+	    k = Episode.random.pickFrom(bu);
+	} else { // propose a bad move
+	    piece = Episode.random.pickFrom(worsePieces);
+	    int[] bu = piece.getBuckets();
+	    if (bu.length==0) {
+		k =  Episode.random.nextInt( Episode.NBU);
+	    } else {		
+		int[] obu = otherBuckets(bu);
+		k = Episode.random.pickFrom(obu);
+	    }
+	}
+
+	Move answer = new Move(piece, k);
+		
+	/** "Confidence" estimates for the message to the player */
+	confidence = 1 - Q;
+	
+	return answer;
+    }
+
+    
+    public Move old_proposeMove() throws IOException {
 	if (expectedAttemptCnt < epi.getAttemptCnt()) {
 	    Logging.info("Pseudo: skipping apparently duplicate request " + this);
 	    return null;

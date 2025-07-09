@@ -122,7 +122,7 @@ public class PlayerInfo {
 	    botGameName = para.getString("bot", null);
 	    if (botGameName != null) {
 		if (botGameName.equals("pseudo")) {
-		    pseudoHalftime = para.getDouble("pseudo_halftime", false, 10);
+		    readPseudoParams(para);
 		} else {
 		    throw new IllegalArgumentException("Illegal bot partner name ("+botGameName+") for player " + playerId);
 		}
@@ -173,7 +173,17 @@ public class PlayerInfo {
 
     /** This is used in pseudo-AI bots, to indicate how fast it pretends to learn */
     @Transient
-    public double pseudoHalftime = 4.0;
+    public double pseudoHalftime = 8.0;
+    @Transient
+    public double pseudoInitErrorRate = 0.75;
+
+    /** Reads the pseudo learning params, for bot assist or bot player, from
+	the para set */
+    private void readPseudoParams(ParaSet para) {
+	pseudoHalftime = para.getDouble("pseudo_halftime", true, 8.0);
+	pseudoInitErrorRate =para.getDouble("pseudo_init_error_rate", true, 0.75);
+    }
+
     
     /** Do we need a between-player chat element in the GUI? (In 2PG only,
 	based on para.chat of the first para set of this player.  */
@@ -365,7 +375,7 @@ public class PlayerInfo {
 	    botAssistName = para.getString("bot_assist", null);
 	    if (botAssistName != null) {
 		if (botAssistName.equals("pseudo")) {
-		    pseudoHalftime = para.getDouble("pseudo_halftime", false, 10);
+		    readPseudoParams(para);
 		} else {
 		    throw new IllegalArgumentException("Illegal bot assist name ("+botAssistName+") for player " + playerId);
 		}

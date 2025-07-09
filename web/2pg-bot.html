@@ -10,7 +10,7 @@ Two-Player Games with a bot player
     </h1>
 
     <div align="center"><em>
-	Updated 2025-05-15 for GS 8.013</em>
+	Updated 2025-07-09 for GS 8.025</em>
 	</div>
 
     <p>Since GS ver. 8.012, two-player games with a bot (AI) player are supported. This framework pairs a human player with a bot player; from the human player's point of view it looks very much like a normal <a href="2ph.html">two-player game (2PG)</a>
@@ -50,8 +50,13 @@ This is exactly the same name pattern as used for 2PGs with two human players.
 
 <p>This bot does not have much of real AI in it. It merely pretends to learn, as in reality it cheats, since it "knows" the rule set from the start.
 
+<p>As of ver. 8.025, the pseudo learning bot uses the same algorithm as the one used in bot assist games. For details of the algorithm and its parameters, see 
+  <a href="bot-assist.html#botAlgo">Bot Assist: Bot algo parameters</a>.
+  
+  <strike>
 <p>This bot works as follows: if the bot makes the first move on some rule set, hen it picks any move attempt (trying to move any game piece to any bucket) with an equal probability; so the attempt will likely fail, depending on how many pieces are movable, and to how many buckets. For each subsequent attempted move, the bot decreases the probability of being wrong; the decrease is exponential, so that after the two players have made in total  <tt>pseudo_halftime</tt> move attempts on a give rule set, the probability of the bot's move being incorrect is 1/2 of what that probability was for the first move.
-
+  </strike>
+  
 <p>This means that eventually (after the players have made several times as many move attempts as  <tt>pseudo_halftime</tt>), the pseudo-learning bot will rarely make mistakes any more. As a result, if you're playing an adversarial game (where a player is allowed to keep making moves, as long as they are successful), the bot, once allowed to make a move, will likely clear the entire board without allowing the human player to make even a single move. If you're playing a coop gsame, then, when the bot is making no more mistakes, achieving a team win will be entirely up to the human player.
 
 

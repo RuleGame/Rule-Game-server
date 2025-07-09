@@ -85,6 +85,21 @@ public class RandomRG extends Random {
 	return w[ nextInt(w.length)];
     }
 
-    
+    /** Randomly picks one element of the vector
+	@param v a non-empty Vector
+    */
+    public <T> T pickFrom(Vector<T> v) {
+	if (v.size()==0) throw new IllegalArgumentException("Cannot pick an element from an empty vector");
+	return v.get(  nextInt( v.size()));
+    }
+
+    /** Randomly picks one element of the array 
+	@param v a non-empty array
+    */
+    public int pickFrom(int[]  v) {
+	if (v.length==0) throw new IllegalArgumentException("Cannot pick an element from an empty array");
+	return v[ nextInt( v.length)];
+    }
+   
 }
     

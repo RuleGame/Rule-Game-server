@@ -721,22 +721,29 @@ for Gemini 2.5 Pro.
 
 <H2><a name="prep">Gemini queries with "prepared episodes"</a></h2>
 
+<P>I carried out a series of runs where Gemini was shown 10 prepared episodes fpr each rule and ask to deduce the rule, and another series with 100 episodes perrule.
 
-<P>The results are in /home/vmenkov/gemini/prepared-10
+<p>The runs were conducted with the default temperature.  In each run, I asked Gemini to provide 3 candidate responses. (Gemini being non-deterministic, it can always come up with multiple answers, if asked). However, why the 3 responses could be very different textually, I usually won't see much difference between their degree of correctness.
+  
+  <P>The results are in /home/vmenkov/gemini/prepared-10 and /home/vmenkov/gemini/prepared-100
+
+    
+<p>The grading key:    
 
 <ul>
   <li>A: good explanation
   <li>A-: good explanation, with some extraneous restrictions that don't hurt
   <li>B+: mostly correct, only a small part erroneous
   <li>B: partially correct
-  <li>C+: incorrect, buy at least with some right ideas
+  <li>C+: incorrect, but at least with some right ideas
   <li>C: incorrect (e.g. proposing a position-based theory for a color- or shape-based rul)
 </ul>
 
 
-<table>
-<tr><td>allOfColOrd_BRKY<td><td>C<td><td>position-based theory
-<tr><td>allOfColOrd_KRBY<td><td>B+<td><td>guessed KBRY instead of KRBY
+<table border="1">
+  <TR><td>Rule set<td> <td>prep 10 <td>prep 100 <td>Notes
+<tr><td>allOfColOrd_BRKY<td><td>C<td>C<td>position-based theory
+<tr><td>allOfColOrd_KRBY<td><td>B+<td>C,C+,C<td>guessed KBRY instead of KRBY
 <tr><td>allOfShaOrd_csqt<td><td>C+<td><td>position-based theory, but knows that can start with a circle
 <tr><td>allOfShaOrd_qcts<td><td>C+<td><td>knows to start with a square
 <tr><td>buckets_2130<td><td>A<td>
@@ -751,22 +758,22 @@ for Gemini 2.5 Pro.
 <tr><td>colOrdL1_BRKY<td><td>C<td>
 <tr><td>colOrdL1_KBYR<td><td>C<td>
 <tr><td>cw_0123<td><td>A<td>
-<tr><td>cw<td><td><td>
-<tr><td>ordL1<td><td><td>
-<tr><td>ordL1_Nearby<td><td><td>
-<tr><td>ordRevOfL1<td><td><td>
-<tr><td>ordRevOfL1_Nearby<td><td><td>
-<tr><td>ordRevOfL1_Remotest<td><td><td>
-<tr><td>quadMixed1<td><td><td>
-<tr><td>quadNearby<td><td><td>
-<tr><td>sha1OrdBuck_qcts0213<td><td><td>
-<tr><td>sha1OrdBuck_tqsc0213<td><td><td>
-<tr><td>sha1Ord_csqt<td><td><td>
-<tr><td>sha1Ord_qcts<td><td><td>
-<tr><td>shaOrdL1_csqt<td><td><td>
-<tr><td>shaOrdL1_qcts<td><td><td>
-<tr><td>sm_csqt<td><td><td>
-<tr><td>sm_qcts<td><td><td>
+<tr><td>cw<td><td>A<td>
+<tr><td>ordL1<td><td>A-<td><td>Describes the correct L1 rule, but in terms of "likelihood", rather than certainty
+<tr><td>ordL1_Nearby<td><td>C+,B-<td>
+<tr><td>ordRevOfL1<td><td>C<td>
+<tr><td>ordRevOfL1_Nearby<td><td>C+<td><td>Figures the bucket assignment, but not the RevOfL1 order
+<tr><td>ordRevOfL1_Remotest<td><td>C+<td>Deduces statistical bucket-based rules, rather than position-based, but they are better than chance, because bucket and position correlate
+<tr><td>quadMixed1<td><td>A<td>
+<tr><td>quadNearby<td><td>A<td>
+<tr><td>sha1OrdBuck_qcts0213<td><td>A<td>
+<tr><td>sha1OrdBuck_tqsc0213<td><td>B+<td><td>Claimed slightly more permissive rules than the real ones, and dismissed contradicting facts as "anomalies"
+<tr><td>sha1Ord_csqt<td><td>C<td>
+<tr><td>sha1Ord_qcts<td><td>C<td>
+<tr><td>shaOrdL1_csqt<td><td>C<td>
+<tr><td>shaOrdL1_qcts<td><td>C,B,C<td><td>One candidate figured the order of shapes, but not the position restriction
+<tr><td>sm_csqt<td><td>A<td>
+<tr><td>sm_qcts<td><td>A<td>
 </table>
     
 </body>

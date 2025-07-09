@@ -40,12 +40,43 @@ Bot Assist
 	<p>For an example, see the plan
   <tt>vm/colorVshape-bot-assist</tt>.
 
-	  <h2>Bot algo parameters</h2>
+	  <h2><a name="botAlgo">Bot algo parameters</a></h2>
 
+	  As of ver. 8.025, the bot <tt>pseudo</tt> uses two columns in the parameter set, both optional:
+
+	  <ul>
+	    <li><tt>pseudo_halftime</tt> (default=8.0): a non-negative real value that specifies how fast the bot pretends to learn, i.e. how fast the simulated error declines. The value <tt>Infinity</tt> is allowed; it is interpreted as positive infinity, i.e. the bot never learning (the error rate never declining from its initial value).
+
+	    <li><tt>pseudo_init_error_rate</tt> (default=0.75): the initial error rate (
+	  </ul>
+
+	<p>At every step the bot computes the simulated error rate
+	  <div align="center">
+	    Q = Q<sub>0</sub> 2<sup>-t/h</sup> =
+	     Q<sub>0</sub>  exp( - t*log(2)/h),
+	  </div>
+where t is the number of previouis steps (the player's move attempts), <em>h</em> is <tt>pseudo_halftime</tt>, and Q<sub>0</sub> is <tt>pseudo_init_error_rate</tt>.
+	  
+	<p>Normally, the bot then will propose a bad move with probability Q, and a good move with probability 1-Q. An exception, of course, is a board state when all possible moves are good; in this case, by necessity, a good move will proposed.
+
+	<p>Note that with the above formula the bot at some points may have a <em>higher</em> simulated error rate than a random player. For example, consider the rule set
+	  <pre>
+	    (count:1, bucket:[0,1])
+	    (count:1, bucket:[2,3])
+	  </pre>
+	  where the player need to put game pieces, alternatingly, into an upper bucket (0 or 1) or into a lower bucket (2 or 3). In this game, a random player's error rate will always be 0.5; but pseudo-learning bot starting with a sufficiently high Q<sub>0</sub> will have a higher simulated error rate during its first several proposed moves.
+
+	<p>Note also that the same two parameters are used for configuring the bot partner / bot opponent in two-player games pairing a human and a bot.
+
+	  
+	  <strike>
+
+	  <h3>Older algorithm (used before ver 8.025)</h3>
 	<p>
 	  The one   column that the  bot <tt>pseudo</tt> uses is named <tt>pseudo_halftime</tt>; it contains an integer value that specifies how fast the bot pretends to learn. That is, at every step the bot can elect to either choose a perfectly random move (which may or may not be good), or choose some guaranteed good move (picking it from the set of all possible good moves). The probability of the first election is decaying exponetially; thus, when the bot starts with the rule set, it will choose a move randomly;  after  <tt>pseudo_halftime</tt> moves it's fifty-fifty chance whether the bot will choose your move from the set of all (good or bad) possible move attempts, or from the set of all possible good moves. 
 
-	<p>Mathematically, let Q be the exponentially decaying value with the initial value 1 and the specified  half-life time h:Q = 2^{-t/h) = exp( - t*log(2)/h).	  Then, at step t, we will make this choice:<ul>
+	<p>Mathematically, let Q be the exponentially decaying value with the initial value 1 and the specified  half-life time h:
+	  Q = 2^{-t/h) = exp( - t*log(2)/h).	  Then, at step t, we will make this choice:<ul>
 	    <li>
 	      with probability Q, we will carry out a truly random selection of a move, and will return that move.
 	    <li> with probabiliy 1-Q, we will select a guaranteed good move.
@@ -67,7 +98,9 @@ p = (1-Q)+ Q*p(t) = 1 - Q *(1-p(t)).
 	      confidence = 1 - Q * (1-p(t))
 	      </div>
 </P>
-  
+	  </strike>
+
+
 
   <h3>Using a dynamic plan</h3>
 
