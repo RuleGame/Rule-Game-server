@@ -68,7 +68,7 @@ public class Pseudo {
     //	piece = v.get(  Episode.random.nextInt( v.size()));
     //}
 
-    /** Creates an array listing buckets not in bu[] */
+    /** Creates an array listing the buckets that are not in bu[] */
     int[] otherBuckets(int[] bu) {
 	int [] x = new int[ Episode.NBU - bu.length];
 	int k = 0;
@@ -83,6 +83,10 @@ public class Pseudo {
 	return x;
     }
 
+
+    /** Used to reduce the chance of successive calls producing the same
+	bad suggestion, which will make the player wonder how dumb the bot is */
+    private Move lastProposedBadMove = null;
     
     /** Pseudo-randomly proposes a move, without actually executing it */
     public Move proposeMove() throws IOException {
@@ -147,26 +151,27 @@ public class Pseudo {
 	boolean doGood = (worsePieces.size()==0) ||
 	    (Episode.random.nextDouble() >= Q);
 
-	Piece piece;
-	int k;
+	Move answer = null;
 	
 	if (doGood) { // propose a good move
-	    piece = Episode.random.pickFrom(movablePieces);
+	    Piece piece = Episode.random.pickFrom(movablePieces);
 	    int[] bu = piece.getBuckets();
-	    k = Episode.random.pickFrom(bu);
+	    int k = Episode.random.pickFrom(bu);
+	    answer = new Move(piece, k);
 	} else { // propose a bad move
-	    piece = Episode.random.pickFrom(worsePieces);
-	    int[] bu = piece.getBuckets();
-	    if (bu.length==0) {
-		k =  Episode.random.nextInt( Episode.NBU);
-	    } else {		
-		int[] obu = otherBuckets(bu);
-		k = Episode.random.pickFrom(obu);
-	    }
+	    int retry = 0;
+	    do {
+		Piece piece = Episode.random.pickFrom(worsePieces);
+		int[] bu = piece.getBuckets();
+		int k = (bu.length==0) ? 
+		    Episode.random.nextInt( Episode.NBU):
+		    Episode.random.pickFrom(otherBuckets(bu));		
+		answer = new Move(piece, k);
+	    } while( answer.sameMove(lastProposedBadMove) && retry++ < 3);
+	    lastProposedBadMove = answer;
 	}
 
-	Move answer = new Move(piece, k);
-		
+
 	/** "Confidence" estimates for the message to the player */
 	confidence = 1 - Q;
 	

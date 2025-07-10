@@ -188,6 +188,7 @@ s	    non-existing piece) the value may be different from those of
 	/** Do the two moves describe the same operation
 	    (in terms of the piece ID and bucket ID)? */
 	public boolean sameMove(Pick pick) {
+	    if (pick==null) return false;
 	    if (!(pick instanceof Move)) return false;
 	    Move move = (Move) pick;
 	    return pickedSamePiece(move) && bucketNo==move.bucketNo;
