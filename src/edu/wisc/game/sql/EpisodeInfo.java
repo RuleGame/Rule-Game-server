@@ -631,7 +631,10 @@ public class EpisodeInfo extends Episode {
 	}
 
 
-	if (mySeries().hasBotAssist()) { // Assuming it's 1PG. (FIXME: what if 2PG?)
+	// Bot assist is not used after successful picks, since they may add
+	// little new info
+	if (mySeries().hasBotAssist() &&
+	    (isMove || move.code != CODE.ACCEPT)) { // Assuming it's 1PG. (FIXME: what if 2PG?)
 	    if (botAssist==null) botAssist=new BotAssist();
 	    botAssist.didHeFollow(move);
 	    botAssist.makeSuggestion(this, q);

@@ -542,6 +542,17 @@ public class PlayerInfo {
 	}
 	return n;
     }
+
+    /** This is used for pseudo-learning bot in bot assist */
+    public int seriesAttemptCntExcludingSuccessfulPicks() {
+	Series ser = getCurrentSeries();	
+	if (ser==null) return 0;
+	int n = 0;
+	for(EpisodeInfo epi: ser.episodes) {
+	    n += epi.getAttemptCntExcludingSuccessfulPicks();
+	}
+	return n;
+    }
     
     
     /** @return true if an "Activate Bonus" button can be displayed, i.e. 

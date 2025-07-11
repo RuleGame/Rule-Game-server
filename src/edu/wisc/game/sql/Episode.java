@@ -799,7 +799,9 @@ s	    non-existing piece) the value may be different from those of
      */
     public static class CODE {
 	public static final int
-	/** move accepted and processed */
+	/** Move accepted and processed. This is recorded for 
+	    a successful move or successful pick.
+	 */
 	    ACCEPT = 0,
 	/** Move rejected, and no other move is possible
 	    (stalemate). This means that the rule set is bad, and we
@@ -1209,7 +1211,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
     /** The current version of the application */
-    public static final String version = "8.025";
+    public static final String version = "8.026";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }
@@ -1679,6 +1681,18 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	}
 	return max;
 	
+    }
+
+    /** Only counts failed and successful moves, and failed picks,
+	but not successful picks. Used for pseudo learning in bot assist. */
+    int getAttemptCntExcludingSuccessfulPicks() {
+
+	int n = 0;
+	for(Pick pick: transcript) {
+	    if (pick instanceof Move ||
+		pick.code != CODE.ACCEPT) n++;
+	}
+	return n;
     }
 
     

@@ -104,8 +104,8 @@ public class Pseudo {
 	PlayerInfo owner = p.getPlayerForRole(Pairing.State.ZERO);
 	
 	double	halftime = p.pseudoHalftime;
-	int t = owner.seriesAttemptCnt(); // the sum for all episodes in the series
-
+	// the sum for all episodes in the series
+	int t = owner.seriesAttemptCntExcludingSuccessfulPicks(); 
 	// The probability of offering a bad move (if bad moves are
 	// possible at all): an exponential-decay function with the
 	// initial value 0.75 (or as specified in the para set) and

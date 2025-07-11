@@ -35,7 +35,11 @@ class BotAssist {
     }
 
     /** Proposes one more move, adds it to the bot assist transcript,
-	and stores it in "proposed". */
+	and stores it in "proposed". 
+
+	@param q The chat message to be included in the current server
+	response will be added to this structure.
+    */
     void makeSuggestion(EpisodeInfo epi, EpisodeInfo.ExtendedDisplay q) throws IOException {
 	Pseudo task = new Pseudo(epi.getPlayer(), epi, epi.getAttemptCnt());
 	proposed = task.proposeMove();
