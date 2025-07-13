@@ -1211,7 +1211,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
     /** The current version of the application */
-    public static final String version = "8.026";
+    public static final String version = "8.027";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }

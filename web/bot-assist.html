@@ -55,7 +55,7 @@ Bot Assist
 	    Q = Q<sub>0</sub> 2<sup>-t/h</sup> =
 	     Q<sub>0</sub>  exp( - t*log(2)/h),
 	  </div>
-where t is the number of previouis steps (the player's move attempts), <em>h</em> is <tt>pseudo_halftime</tt>, and Q<sub>0</sub> is <tt>pseudo_init_error_rate</tt>.
+where t is the number of previous steps (the player's move attempts, excluding successful picks), <em>h</em> is <tt>pseudo_halftime</tt>, and Q<sub>0</sub> is <tt>pseudo_init_error_rate</tt>.
 	  
 	<p>Normally, the bot then will propose a bad move with probability Q, and a good move with probability 1-Q. An exception, of course, is a board state when all possible moves are good; in this case, by necessity, a good move will proposed.
 

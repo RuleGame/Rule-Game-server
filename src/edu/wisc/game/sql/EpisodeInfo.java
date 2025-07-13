@@ -1024,8 +1024,24 @@ public class EpisodeInfo extends Episode {
 		Pseudo.addTask(otherPlayer, this, attemptCnt);
 	    }
 	}
+
+	if (mySeries().hasBotAssist() &&  attemptCnt==0) { // the first move of an episode with bot assist
+
+	    int k = q.getEpisodeNo();
+	    String chat = (k==0)?
+		"Starting the first episode of a new rule (Rule no. " + (seriesNo+1)+" . Please make your first move!":
+		"Starting episode no. " + k + " of Rule no. " + (seriesNo+1)+" . Please make your first move!";
+
+	    q.setBotAssistChat(chat);
+	}
+
+
+	
     	return q;
     }
+
+ 
+
 
     public ExtendedDisplay dummyDisplay(int _code, 	String _errmsg) {
 	return new ExtendedDisplay(0, _code, false, _errmsg, true);
