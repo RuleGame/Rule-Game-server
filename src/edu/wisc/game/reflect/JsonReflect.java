@@ -10,6 +10,17 @@ import edu.wisc.game.util.Logging;
 /** Tools for exporting Java objects as JSON structures */
 public class JsonReflect {
 
+    /** A specific class may implement this interface, in order to have its own,
+	fancier, way to convert to a builder */
+    public interface HasBuilderAugment {
+	//JsonObjectBuilder toObjectBuilder();
+	/** This method is called by JsonReflect after the standard conversion
+	    to a builder has been carried out, in order to allow this object
+	    to add some extra fields to the builder */
+	public void augmentBuilder(JsonObjectBuilder ob);
+    }
+
+
     private int maxLevel = 3;
     //    private int maxLevel = 30;
 
@@ -117,9 +128,12 @@ public class JsonReflect {
 	excludableNames = _excludableNames;
     }
     
-    /** Converts a Java object to a JSON object, to the extent possible */
+    /** Converts a Java object to a JSON object, to the extent possible. The Java object may have
+	an augmentBuilder method, which can add something to it.
+     */
     public JsonObjectBuilder reflectToJSON(Object o) {
-	return reflectToJSON(o, 0);
+	JsonObjectBuilder ob = reflectToJSON(o, 0);
+	return ob;
     }
     
     
@@ -167,7 +181,12 @@ public class JsonReflect {
 		Logging.error(ex.getMessage());		
 	    }
 	}
-	    
+
+	if (o instanceof HasBuilderAugment) {
+	    ((HasBuilderAugment)o).augmentBuilder(objectBuilder);
+	}
+
+	
 	return objectBuilder;
     }
 
@@ -280,6 +299,12 @@ public class JsonReflect {
     public static JsonObject reflectToJSONObject(Object o, boolean skipNulls, HashSet<String> excludableNames) {
 	JsonReflect r = new JsonReflect(skipNulls, excludableNames);
 	return r.reflectToJSON(o, 0).build();
+    }
+
+    public static JsonObjectBuilder reflectToJSONObjectBuilder(Object o, boolean skipNulls, HashSet<String> excludableNames, int _maxLevel) {
+	JsonReflect r = new JsonReflect(skipNulls, excludableNames);
+	r.setMaxLevel(_maxLevel);
+	return r.reflectToJSON(o, 0);
     }
 
     public static JsonObject reflectToJSONObject(Object o, boolean skipNulls, HashSet<String> excludableNames, int _maxLevel) {

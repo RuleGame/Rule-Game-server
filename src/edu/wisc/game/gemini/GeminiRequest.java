@@ -39,7 +39,7 @@ public class GeminiRequest {
     public ConfigElement getGenerationConfig() {
 	return generationConfig;
     }
-    public static class ConfigElement {
+    public static class ConfigElement implements JsonReflect.HasBuilderAugment {
 	Double temperature = null;
 	public Double getTemperature() { return temperature;}
 	Integer candidateCount=null;
@@ -47,8 +47,26 @@ public class GeminiRequest {
 	Integer maxOutputTokens=null;
 	public Integer getMaxOutputTokens() { return maxOutputTokens; }
 	ThinkingConfigElement thinkingConfig = null;
-	public ThinkingConfigElement getThinkingConfig() { return thinkingConfig; }
+	public ThinkingConfigElement getThinkingConfig() { return thinkingConfig; } 
 
+	String responseMimeType = "application/json";
+	public String getResponseMimeType() {    return responseMimeType; }
+  
+	
+
+	//	JsonObject responseSchemaJo
+	
+	/** This method is called by JsonReflect after the standard conversion
+	    to a builder has been carried out, in order to allow this object
+	    to add some extra fields to the builder */
+	public void augmentBuilder(JsonObjectBuilder ob){
+	    System.out.println("augmentBuilder() called");
+	    boolean needResponseSchema = true;
+	    if (needResponseSchema) {
+		ob.add( "responseSchema", ResponseSchemaUtil.mkResponseSchema());
+	    }
+	}
+	
     }
 
     public static class ThinkingConfigElement {
@@ -124,5 +142,22 @@ public class GeminiRequest {
 	generationConfig.thinkingConfig = new ThinkingConfigElement();
 	generationConfig.thinkingConfig.thinkingBudget = x;
     }
+    
+    /** Attaches the responseSchema (supplied as a JsonObject) to a request
+	that's supplied as a JsonObject as well
+	@param jo Find generationConfig under it, and put responseSchema into 
+	that */
+    /*
+    static void addResponseSchema(JsonObject jo, JsonObject responseSchema) {
+	JsonObject gc = jo.getJsonObject("generationConfig");
+	if (gc==null) throw new IllegalArgumentException("Cannot add a response to this object, because it has no generationConfig: " + jo);
+	gc.
+	
+	if (jsonText==null) return;
+	if (generationConfig == null) generationConfig = new ConfigElement();
+    }
+    */
+	
+
     
 }

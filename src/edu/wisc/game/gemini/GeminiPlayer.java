@@ -110,11 +110,22 @@ public class GeminiPlayer  extends Vector<EpisodeHistory> {
 	
 	URL url = new URL(u);
 
-	JsonObject jo = JsonReflect.reflectToJSONObject(gr, false, null, 10);
+	//	JsonObject jo = JsonReflect.reflectToJSONObject(gr, false, null, 10);
+	JsonObjectBuilder jb = JsonReflect.reflectToJSONObjectBuilder(gr, true, null, 10);
+	JsonObject jo = jb.build();
 
+	/*
+	JsonObject responseSchemaJo = null;
+	if (responseSchemaJo != null) {
+	    JsonObjectBuilder rsjb = JsonReflect.reflectToJSONObjectBuilder(responseSchemaJo, false, null, 10);
+	    
+	}
+	*/
+	
 	if (isFirstRequest) {
 	    System.out.println("SENDING FIRST REQUEST: " + jo.toString());
 	    isFirstRequest = false;
+	    
 	}
 	String jsonInputString =  jo.toString();
 
@@ -187,6 +198,7 @@ public class GeminiPlayer  extends Vector<EpisodeHistory> {
 	    if (isFirstResponse) {
 		System.out.println("At "+	reqt()+", FIRST SERVER RESPONSE: " + responseJo.toString());
 		isFirstResponse = false;
+		//System.exit(0);
 	    }
 
 	    boolean hitMax =  (code==200) && hitMaxTokens(responseJo);
@@ -356,6 +368,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
 
     static String instructions=null;
+    //    static String responseSchema=null;
     
     
     static String instructionsFile = null;
@@ -371,7 +384,10 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
     static int max_boards=10;
     static int max_requests=0;
 
+    /** In a prepared-episode run, how many completed episodes are shown to the bot to learn? (AKA the training set) */
     static int prepared_episodes = 0;
+    /** In a prepared-episode run, how many initial boards episodes are shown to the bot to solve? (AKA the test set) */
+    static int future_episodes = 0;
     static boolean bob = false;
     enum PrepareMode {
 	random, orderly;
@@ -387,12 +403,13 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
     static NumberFormat dollarFmt = new DecimalFormat("0.00");
 
-    /** @param  _targetStreak this is how many consecutive error-free moves the player must make (e.g. 10) in order to demonstrate successful learning. If 0 or negative, this criterion is turned off
+   /** @param  _targetStreak this is how many consecutive error-free moves the player must make (e.g. 10) in order to demonstrate successful learning. If 0 or negative, this criterion is turned off
 	@param _targetR the product of R values of a series of consecutive moves should be at least this high) in order to demonstrate successful learning. If 0 or negative, this criterion is turned off
     */   
     private static int targetStreak=10;
     private static double targetR=0;
- 
+    private static OutputMode outputMode =  OutputMode.FULL; 
+    private static MlcLog log=null;
     
     /** Modeled on Captive.java
 	model=gemini-2.0-flash
@@ -429,6 +446,8 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	candidateCount  = ht.getOptionIntegerObject("candidateCount", candidateCount);
 
 	prepared_episodes = ht.getOption("prepared_episodes", prepared_episodes);
+	if (prepared_episodes >0) future_episodes = ht.getOption("future_episodes", 5);
+	
 	prepareMode = ht.getOptionEnum(PrepareMode.class, "prepareMode", PrepareMode.random);	    
 	bob = (prepared_episodes>0);
 
@@ -445,13 +464,13 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	System.out.println("At " + now() +", starting playing with Gemini. Game Server ver. "+ Episode.getVersion());
 	System.out.println("Gemini model=" + model);
 	//System.out.println("output=" +  ht.getOption("output", null));
-	OutputMode outputMode = ht.getOptionEnum(OutputMode.class, "output", OutputMode.FULL);
+	outputMode = ht.getOptionEnum(OutputMode.class, "output", outputMode);
 
 	String inputDir=ht.getOption("inputDir", null);
 	//System.out.println("#inputDir=" + inputDir);
 	if (inputDir!=null) Files.setInputDir(inputDir);
 
-	MlcLog log=Captive.mkLog(ht);		      
+	log=Captive.mkLog(ht);		      
 
 	GameGenerator gg=null;
 	try {
@@ -487,31 +506,23 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
 	boolean won = false;
 
-	/// ZZZ
 	if (prepared_episodes>0) {
 	    long seed = ht.getOptionLong("seed", 0L);
 	    final RandomRG random= (seed != 0L)? new RandomRG(seed): new RandomRG();
 
 	    for(int i=0; i<prepared_episodes; i++) {
 		System.out.println("Generating prepared episode " + i);
-		history.addPreparedEpisode(outputMode, gg, random);
+		history.addPreparedEpisode(gg, random);
 	    }
 
 	    //System.exit(0);
 	    
-	    // Add one empty episode, for the bot to solve
-	    Game game = gg.nextGame();
-	    Episode epi = new Episode(game, outputMode,
-				  new InputStreamReader(System.in),
-				  new PrintWriter(System.out, true));
-	
-	    EpisodeHistory his = new EpisodeHistory(epi);
-	    history.add(his);
+	    // Add a few empty episode, for the bot to solve
 
-	
-
+	    GeminiPlayer future = new GeminiPlayer();
+	    future.addFutureBoards(gg);
 	    
-	    history.askAboutPreparedEpisodes();
+	    history.askAboutPreparedEpisodes(future);
 	    System.out.println(history.costReport());
 	    if (log!=null) log.close();
 
@@ -523,7 +534,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	
 	if (resumeFrom != null) {
 	    System.out.println("Resuming from old log file " + resumeFrom);
-	    history.readLogBack(outputMode, gg, resumeFrom);
+	    history.readLogBack( gg, resumeFrom);
 	}
 
 
@@ -591,6 +602,23 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	gr.addInstruction(instructions);
 	*/
     }
+
+
+    /** Adds a few future boards to this GeminiPlayer object */
+void addFutureBoards(GameGenerator gg) {
+
+    for(int j=0; j<future_episodes; j++) {
+    
+	Game game = gg.nextGame();
+	Episode epi = new Episode(game, outputMode,
+				  new InputStreamReader(System.in),
+				  new PrintWriter(System.out, true));
+    
+	EpisodeHistory his = new EpisodeHistory(epi);
+	add(his);
+    }
+}
+
 
     private String costReport() {
 	Vector<String> v = new Vector<>();
@@ -666,7 +694,13 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	return gr;
     }
 
-    GeminiRequest makeRequestPrepared() throws IOException {
+    //ZZZ
+
+/** Makes a request describing prepared episodes (stored in this
+    player) and future episodes.
+    @param future The initial boards for the future episodes.
+ */
+    private GeminiRequest makeRequestPrepared(GeminiPlayer future) throws IOException {
 	GeminiRequest gr = new GeminiRequest();	    
 	gr.addInstruction(instructions);
 	gr.addTemperature(temperature);
@@ -674,9 +708,12 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	gr.addThinkingBudget(thinkingBudget);
 	gr.addCandidateCount(candidateCount);
 	Vector<String> v = describeHistory(true);
-	v.add("Please tell me what you think the secret rules are.");
-	v.add("Additionally, based on your idea of the secret rules, please propose 9 move attempts that are most likely to clear the board in the current episode");
+	v.add("Please tell me what you think the hidden rules are.");
+	v.add("Finally, based on your idea of the hidden rules, please propose, for each of the following " + future.size() +  " future episodes, a sequence of move attempts that are most likely to clear the board in that episode");
 
+	v.addAll(future.describeFutureEpisodes());
+
+	
 	String text = Util.joinNonBlank("\n", v);
 	System.out.println("===========================================\n"+
 			   "The text part of the request:\n" + text);
@@ -716,6 +753,22 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	}
 	for(int j=0; j<size(); j++) {
 	    v.addAll( episodeText(j));
+	}
+	return v;
+    }
+
+    /** Describes the boards for the bot to solve. Used in
+	prepared-episodes runs
+     */
+    private Vector<String> describeFutureEpisodes() {
+	Vector<String> v = new Vector<>();
+	
+	if (size()==0) throw new IllegalArgumentException("No episode exists yet. What to ask?");
+
+	for(int j=0; j<size(); j++) {
+	    v.add( "The initial board for future episode No. " + (j+1)+ ":");
+	    EpisodeHistory ehi = get(j);
+	    v.add( ehi.initialBoardAsString());
 	}
 	return v;
     }
@@ -786,7 +839,6 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 where "id" is the ID of the object that you attempted to move, "bucketId" is the ID of the bucket into which you wanted to place it, and "response" is whatever response I have given to that move. The response is one word, which can be one of the following: ACCEPT, NOT_MOVABLE, DENY, INVALID.
 	    */
 	    int code = move.getCode();
-
 	    
 	    String s = "MOVE " + move.getPieceId() +" "+ move.getBucketNo()+" "+
 		CODE.toBasicName(code);
@@ -868,6 +920,7 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 
         EpisodeHistory ehi = lastElement();
 	Episode epi = ehi.epi;
+	
 	while( !epi.isCompleted()){
 	    GeminiRequest gr = makeRequest();
 
@@ -912,81 +965,115 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
   }
 
 
-/** Used for a one-shot request, asking to analyze prepared episodes 
-ZZZ
+/** Creates and sends a one-shot request, asking to analyze prepared episodes and solve future boards; then processes the response.
+    @param future the boards for future episodes (to be solved)
 */
-    void askAboutPreparedEpisodes() throws IOException {
+void askAboutPreparedEpisodes(GeminiPlayer future) throws IOException,  ReflectiveOperationException {
 
-
-	GeminiRequest gr = makeRequestPrepared();
+	GeminiRequest gr = makeRequestPrepared(future);
 	String lines[] = doOneRequest(gr);
 	for(int j=0; j<lines.length; j++) {
 	    if (lines.length>0) System.out.println("Candidate " + j+ " of " + lines.length);
-	    String line = lines[j];
-
-	    System.out.println("Response text={" + line.trim() + "}");
-	    MoveLine[] r = parseResponse(line);
-	    System.out.println("Found " + r.length + " moves in the response");
-	    for(int i=0; i<r.length; i++) {
-		int [] w = r[i].asPair();	    
-		Boolean q = digestMove(w);
-	    }
+	    log.run=j;
+	    future.digestProposedMoves(lines[j]);
 	}
-    }
+}
+
+/** Handles one candidate with proposed moves in it. This is called on the 
+"future" object  */
+private void digestProposedMoves(String line)  throws ReflectiveOperationException {
+	    System.out.println("Response text={" + line.trim() + "}");
+
+	    MoveLine[][] r =  PreparedEpisodesResponse.parseResponse(line);
+	    if (r==null) { // field not supplied
+		return;
+	    }
+	               
+	    System.out.println("Found " + r.length + " proposed solutions in the response, for "+size() + " future boards");
+	    if (r.length != size()) throw new IllegalArgumentException("Future board count mismatch");
+
+	    int nc=0, nGoodMoves=0, nAttempts=0;
+	    
+	    for(int j=0; j<r.length; j++) {
+ 
+		Episode epi = get(j).epi;
+		epi.reset();
+		int n = epi.getNPiecesStart();
+		if (n!=r[j].length) {
+		    System.err.println("Warning: the number of returned moves (" + r[j].length +  ") is different from the board population ("+n+")");
+		}
+		
+		for(int i=0; i<r[j].length; i++) {
+		    int [] w = r[j][i].asPair();
+		    int code = digestMoveBasic(get(j), w);
+		    nAttempts ++;
+		    if (code == Episode.CODE.ACCEPT) nGoodMoves ++;
+		}	   
+	    
+		System.out.println("Future board "+j+ " of "+r.length+": Result of proposed moves: cleared=" + epi.getCleared() + ", good moves count=" + epi.getDoneMoveCnt() + "/" + r[j].length);
+		if ( epi.getCleared() ) nc++;
+
+		log.logEpisode(epi, j);
+
+		
+	    }
+
+	    System.out.println("Overall, cleared boards: " + nc + "/" + r.length +", good moves: " + nGoodMoves + "/" + nAttempts);
+	}
+
 
 
 /** @return null if the episode needs to continue; a boolean value, to be 
     returned by playingLoop(), is the episodes ends now */
-private int digestMoveBasic(int[] w) //throws IOException
+private int digestMoveBasic(EpisodeHistory ehi, int[] w) //throws IOException
 {
-        EpisodeHistory ehi = lastElement();
-	Episode epi = ehi.epi;
+    Episode epi = ehi.epi;
+    totalAttemptCnt++;
+    int id = w[0];
+    int bid = w[1];
+    
+    Episode.Display q = epi.doMove2(id, bid,  epi.getTranscript().size());
+    int code = q.getCode();
+    System.out.println("At "+	reqt()+", Moving piece " + id + " to bucket " + bid + ". Code=" + code);
+    //System.out.println("DEBUG B: transcript=" + epi.getTranscript());
 
-	totalAttemptCnt++;
-	    int id = w[0];
-	    int bid = w[1];
-
-	    Episode.Display q = epi.doMove2(id, bid,  epi.getTranscript().size());
-	    //if (outputMode!=OutputMode.BRIEF) out.println(displayJson());
-	    //if (outputMode==OutputMode.FULL) out.println(graphicDisplay());
-	    int code = q.getCode();
-	    System.out.println("At "+	reqt()+", Moving piece " + id + " to bucket " + bid + ". Code=" + code);
-	    //System.out.println("DEBUG B: transcript=" + epi.getTranscript());
-
-
-	    if (code==CODE.ATTEMPT_CNT_MISMATCH) {
-		System.out.println("I have ended up with an attempt count mismatch somehow. My logic bug probably. Terminating");
-		System.exit(1);
-		//return false;
-	    }
+    if (code==CODE.ATTEMPT_CNT_MISMATCH) {
+	System.out.println("I have ended up with an attempt count mismatch somehow. My logic bug probably. Terminating");
+	System.exit(1);
+	//return false;
+    }
 	    
-	    Vector<Pick> moves = epi.getTranscript();
-	    final int n = moves.size();
+    Vector<Pick> moves = epi.getTranscript();
+    final int n = moves.size();
 	    
-	    if (code==CODE.ACCEPT) { // add to the "mastery stretch"
-		lastStretch++;
-		if (lastR==0) lastR=1;
-		lastR *= epi.getLastMove().getRValue();		    
-	    } else { // a failed move or pick breaks the "mastery stretch"
-		lastStretch=0;
-		lastR = 0;
-
-		if (n>1 &&
-		    ((Move)moves.get(n-1)).sameMove(moves.get(n-2))) {
-		    // The bot has just repeated the last move attempt,
-		    // despite its failure
-
-		    failedRepeatsCnt++;
-		    failedRepeatsCurrentStreak++;
-		    if (failedRepeatsCurrentStreak>failedRepeatsLongestStreak) {
-			failedRepeatsLongestStreak = failedRepeatsCurrentStreak;
-		    }
-		}		
+    if (code==CODE.ACCEPT) { // add to the "mastery stretch"
+	lastStretch++;
+	if (lastR==0) lastR=1;
+	lastR *= epi.getLastMove().getRValue();		    
+    } else { // a failed move or pick breaks the "mastery stretch"
+	lastStretch=0;
+	lastR = 0;
+	
+	if (n>1 &&
+	    ((Move)moves.get(n-1)).sameMove(moves.get(n-2))) {
+	    // The bot has just repeated the last move attempt,
+	    // despite its failure
+	    
+	    failedRepeatsCnt++;
+	    failedRepeatsCurrentStreak++;
+	    if (failedRepeatsCurrentStreak>failedRepeatsLongestStreak) {
+		failedRepeatsLongestStreak = failedRepeatsCurrentStreak;
 	    }
+	}		
+    }
 
-    	    boolean redundant = ehi.repeats.add((Move)moves.get(n-1), code);
-
-	    return code;
+    if (n>0) {
+	// Normally, n is positive, but if the first move was invalid
+	// (code=-10), then it wasn't added to moves[]	
+	boolean redundant = ehi.repeats.add((Move)moves.get(n-1), code);
+    }
+    
+    return code;
 }
 
 /** @return null if the episode needs to continue; a boolean value, to be 
@@ -997,7 +1084,7 @@ private Boolean digestMove(int[] w)// throws IOException
     EpisodeHistory ehi = lastElement();
     Episode epi = ehi.epi;
 
-    int code = digestMoveBasic(w);
+    int code = digestMoveBasic(ehi, w);
 	
     Vector<Pick> moves = epi.getTranscript();
     final int n = moves.size();
@@ -1119,9 +1206,8 @@ MoveLine[] parseResponse(String line) {
 		
 
     /** Fills this GeminiPlayer with the recorded history from a file */
-    private void readLogBack(OutputMode outputMode,
-			    GameGenerator gg, File f) throws IOException,
-							     ReflectiveOperationException {
+    private void readLogBack(GameGenerator gg, File f) throws IOException,
+							      ReflectiveOperationException {
 	Vector<String> v = extractLastRequest(f);
 	int eNo = 0;
 	for(String line: v) {
@@ -1149,7 +1235,6 @@ MoveLine[] parseResponse(String line) {
 	    MoveLine[] w = parseResponse(line);
 	    if (w.length>0) {
 		digestMove(w[0].asPair());
-		// ZZZ
 	    }
 		
 	    
@@ -1159,8 +1244,7 @@ MoveLine[] parseResponse(String line) {
 
     /** Creates an episode of (e.g.) random moves and adds them to the history
      */
-    void addPreparedEpisode(OutputMode outputMode,
-			    GameGenerator gg,
+    void addPreparedEpisode(GameGenerator gg,
 			    RandomRG random
 			    ) //throws IOException,
 					 {
@@ -1202,12 +1286,12 @@ MoveLine[] parseResponse(String line) {
 		int k = random.nextInt(allowedBuckets.length);
 		int bucketNo = allowedBuckets[k];
 		int[] w = {(int)p.getId(), bucketNo};
-		int code = digestMoveBasic(w);
+		int code = digestMoveBasic(his, w);
 		//if (code == CODE.ACCEPT) continue;
 	    } else 	    if (prepareMode==PrepareMode.orderly) {
 		for(int bucketNo: allowedBuckets) {
 		    int[] w = {(int)p.getId(), bucketNo};
-		    int code = digestMoveBasic(w);
+		    int code = digestMoveBasic(his, w);
 		    if (code == CODE.ACCEPT) break;		    
 		}
 	    } else throw new IllegalArgumentException("Wrong mode: " + prepareMode);

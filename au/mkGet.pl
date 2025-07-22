@@ -32,7 +32,8 @@ while(defined($s=<>)) {
 
     my @q = split( /\s+/, $s);
     while (scalar(@q)>1) {
-	if ($q[0] eq "private")	{ shift @q;  }
+	if ($q[0] eq "private" ||
+	    $q[0] eq "public")	{ shift @q;  }
 	elsif ($q[0] eq "final")	{ shift @q;  }
 	else { last; }
     }

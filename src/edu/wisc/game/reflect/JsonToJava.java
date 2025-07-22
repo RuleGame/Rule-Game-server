@@ -206,7 +206,12 @@ public class JsonToJava {
 		    if (e.s==null) {
 			throw new ReflectiveOperationException("JSON object has a field for which the Java object has no setter method: " + e.name);
 		    }
-		    e.s.invoke( z, w);
+		    try {
+			e.s.invoke( z, w);
+		    } catch( IllegalAccessException ex) {
+			System.err.println("Setting failed for " + e.name);
+			throw ex;
+		    }
 		}
 	    }	    
 	} else if (val instanceof JsonArray) {

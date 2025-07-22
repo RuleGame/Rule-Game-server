@@ -284,6 +284,8 @@ s	    non-existing piece) the value may be different from those of
 	computed as (nPiecesStart - doneMoveCnt).
      */
     int doneMoveCnt=0;
+    public int getDoneMoveCnt() { return doneMoveCnt; }
+
     /** The count of successful picks (not moves) so far */
     int successfulPickCnt=0;
     /** The list of all move/pick attempts (successful or not) done so far
@@ -292,7 +294,29 @@ s	    non-existing piece) the value may be different from those of
     Vector<Pick> transcript = new Vector<>();
     @Transient
     public Vector<Pick> getTranscript() { return transcript; }
-    
+
+    /** This is used in Gemini app, when the same Episode object
+	is replayed from scratch with a different sequence of move attempts.
+    */
+    public void reset() {	
+	attemptCnt=0;
+	attemptSpent=0;	
+	doneMoveCnt=0;
+	transcript.setSize(0);
+	stalemate = false;
+	cleared = false;
+	givenUp = false;
+	lost = false;
+	earlyWin = false;
+	abandoned = false;
+	ruleLineNo = 0;
+	ruleLine = null;
+
+	values.addAll(removedValues);
+	removedValues.clear();
+	doPrep();
+    }
+	
     /** Set when appropriate at the end of the episode */
     boolean stalemate = false;
     boolean cleared = false;
@@ -316,7 +340,7 @@ s	    non-existing piece) the value may be different from those of
     private EpisodeMemory memory = new EpisodeMemory();
     
     /** Will return true if this is, apparently, an episode restored
-	from SQL server, and cannot be played anymore because the boad
+	from SQL server, and cannot be played anymore because the board
 	position and the egine state (ruleLine) is not persisted. This
 	is a rare event; it may only become an issue if an episode for
 	some reason became persisted before it was finished (this is
@@ -1211,7 +1235,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
     /** The current version of the application */
-    public static final String version = "8.027";
+    public static final String version = "8.028";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }
