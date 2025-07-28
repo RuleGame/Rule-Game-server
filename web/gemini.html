@@ -775,6 +775,89 @@ for Gemini 2.5 Pro.
 <tr><td>sm_csqt<td><td>A<td>
 <tr><td>sm_qcts<td><td>A<td>
 </table>
-    
+
+<p>
+  Training on a smaller number of episodes. For each rule set, the same RG seed (seed=1) is used in all runs; therefore, the set of 3 episodes provided e.g. in the prepared-a-3 run is the same as the one provided in the prepared-b-3 run, and a subset of the set provided in the prepared-a-5 and prepared-b-5 runs.
+
+  <table border=1>
+<tr><td><th colspan=2>Instr. with examples <th colspan=5>Instructions w/o examples </tr>
+<tr><td>Directory <td>prepared-5-a <td>prepared-10-a <td>prepared-1-b <td>prepared-2-b <td>prepared-3-b <td>prepared-5-b <td>prepared-10-b </tr>
+<tr><td>Number of prepared episodes<td>5 <td>10 <td>1 <td>2 <td>3 <td>5 <td>10 
+<tr><th align=left>allOfColOrd_BRKY<td>15 <td>0 <td>2 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>allOfColOrd_KRBY<td>5 <td>13 <td>3 <td>1 <td>1 <td>0 <td>0 </tr>
+<tr><th align=left>allOfShaOrd_csqt<td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>allOfShaOrd_qcts<td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>buckets_2130<td>15 <td>10 <td>15 <td>10 <td>10 <td>10 <td>15 </tr>
+<tr><th align=left>ccw<td>5 <td>15 <td>15 <td>15 <td>15 <td>10 <td>15 </tr>
+<tr><th align=left>cm_KRBY<td>15 <td>10 <td>10 <td>15 <td>10 <td>10 <td>9 </tr>
+<tr><th align=left>cm_RBKY<td>15 <td>15 <td>10 <td>15 <td>10 <td>7 <td>15 </tr>
+<tr><th align=left>cm_RBKY_cw_0123<td>3 <td>0 <td>0 <td>0 <td>1 <td>1 <td>0 </tr>
+<tr><th align=left>col1OrdBuck_BRKY0213<td>1 <td>0 <td>1 <td>0 <td>1 <td>0 <td>0 </tr>
+<tr><th align=left>col1OrdBuck_BRKY3120<td>1 <td>0 <td>0 <td>0 <td>2 <td>0 <td>0 </tr>
+<tr><th align=left>col1Ord_BRKY<td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>col1Ord_KRBY<td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>colOrdL1_BRKY<td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>colOrdL1_KBYR<td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>cw<td>15 <td>15 <td>15 <td>15 <td>15 <td>15 <td>10 </tr>
+<tr><th align=left>cw_0123<td>15 <td>15 <td>15 <td>10 <td>2 <td>12 <td>10 </tr>
+<tr><th align=left>ordL1<td>0 <td>1 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>ordL1_Nearby<td>0 <td>0 <td>0 <td>0 <td>5 <td>0 <td>5 </tr>
+<tr><th align=left>ordRevOfL1<td>2 <td>1 <td>0 <td>2 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>ordRevOfL1_Nearby<td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>ordRevOfL1_Remotest<td>0 <td>0 <td>0 <td>5 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>quadMixed1<td>10 <td>0 <td>10 <td>15 <td>15 <td>10 <td>10 </tr>
+<tr><th align=left>quadNearby<td>10 <td>15 <td>15 <td>15 <td>11 <td>9 <td>14 </tr>
+<tr><th align=left>sha1OrdBuck_qcts0213<td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>sha1OrdBuck_tqsc0213<td>0 <td>0 <td>0 <td>0 <td>0 <td>1 <td>0 </tr>
+<tr><th align=left>sha1Ord_csqt<td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>sha1Ord_qcts<td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>shaOrdL1_csqt<td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>shaOrdL1_qcts<td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>sm_csqt<td>10 <td>8 <td>0 <td>15 <td>2 <td>10 <td>0 </tr>
+<tr><th align=left>sm_qcts<td>10 <td>10 <td>5 <td>15 <td>15 <td>5 <td>4 </tr>
+</table>
+
+<p>To ward off Paul's suggestion that the bot perhaps may somehow "transfer learning between runs", we also had a series of experiments where a different RG seed was used for each run. It showed no quantitive difference from the above.
+
+<table border=1>
+<tr><td><th colspan=4>Instructions w/o examples </tr>
+<tr><td>Directory <td>prepared-1-b <td>prepared-2-b <td>prepared-3-b <td>prepared-5-b </tr>
+<tr><td>Number of prepared episodes<td>1 <td>2 <td>3 <td>5 
+<tr><th align=left>allOfColOrd_BRKY<td>3 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>allOfColOrd_KRBY<td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>allOfShaOrd_csqt<td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>allOfShaOrd_qcts<td>0 <td>0 <td>3 <td>4 </tr>
+<tr><th align=left>buckets_2130<td>10 <td>10 <td>14 <td>15 </tr>
+<tr><th align=left>ccw<td>15 <td>15 <td>15 <td>15 </tr>
+<tr><th align=left>cm_KRBY<td>10 <td>15 <td>14 <td>10 </tr>
+<tr><th align=left>cm_RBKY<td>15 <td>9 <td>13 <td>15 </tr>
+<tr><th align=left>cm_RBKY_cw_0123<td>0 <td>0 <td>4 <td>0 </tr>
+<tr><th align=left>col1OrdBuck_BRKY0213<td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>col1OrdBuck_BRKY3120<td>1 <td>0 <td>0 <td>2 </tr>
+<tr><th align=left>col1Ord_BRKY<td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>col1Ord_KRBY<td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>colOrdL1_BRKY<td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>colOrdL1_KBYR<td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>cw<td>15 <td>15 <td>15 <td>15 </tr>
+<tr><th align=left>cw_0123<td>15 <td>15 <td>15 <td>15 </tr>
+<tr><th align=left>ordL1<td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>ordL1_Nearby<td>4 <td>0 <td>5 <td>0 </tr>
+<tr><th align=left>ordRevOfL1<td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>ordRevOfL1_Nearby<td>0 <td>8 <td>0 <td>0 </tr>
+<tr><th align=left>ordRevOfL1_Remotest<td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>quadMixed1<td>5 <td>10 <td>11 <td>11 </tr>
+<tr><th align=left>quadNearby<td>15 <td>15 <td>15 <td>15 </tr>
+<tr><th align=left>sha1OrdBuck_qcts0213<td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>sha1OrdBuck_tqsc0213<td>1 <td>1 <td>0 <td>0 </tr>
+<tr><th align=left>sha1Ord_csqt<td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>sha1Ord_qcts<td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>shaOrdL1_csqt<td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>shaOrdL1_qcts<td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>sm_csqt<td>0 <td>11 <td>15 <td>15 </tr>
+<tr><th align=left>sm_qcts<td>10 <td>10 <td>12 <td>10 </tr>
+</table>
+
+
+
 </body>
 </html>

@@ -483,9 +483,10 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
 
 	System.out.println("Game generator=" + gg);
-	System.out.println("Rule set=" + gg.getRules().getFile());
-
-	
+	File ruleFile = gg.getRules().getFile();
+	System.out.println("Rule set=" + ruleFile);
+	System.out.println("Rule text={\n" +Util.readTextFile(ruleFile) +"\n}");
+		
 	int gameCnt=0;
 
 	if (log!=null) log.open();
