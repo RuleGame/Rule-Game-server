@@ -10,20 +10,30 @@
 
     <h2>Architecture</h2>
 
-    <p>The setup that we have for getting Google Gemini to play the Rule Game (aka the GOHR) is, in a way, the inverse of that of the <a href="captive.html">Captive Game Server</a> (CGS). With the CGS, the control resides in the ML (AI) program that wants to solve a GOHR problem; whenever the ML program makes a move, it sends its proposed move as a request to the CGS, and then the CGS applies the move to the current board and returns its decision (accept/deny) in the response. With our Gemini app, the control resides in our app; the app keeps sending requests to the Gemini server at Google, asking it to make its next move. The Gemini's proposed move, hopefully, arrives in the response, and our app then applies it to the board, and prepares to send to Gemini the next request for a move.
+	  <p>As of July 31, 2025, the GOHR Gemini harness supports 2 modes: the "play" mode and the "prepared episodes" mode.</p>
+	 <p>In the play mode, the Gemini bot makes moves one by one, receiving the feedback from our side. Occasionally, we ask the bot to describe its mental model of the rules; or sometimes it volunteers to do so.
+
+		 <p>
+		  In the prepared-episodes mode, we create a number of completed episodes (e.g. with random moves, eventually clearing each board), and send their transcripts to Gemini asking the bot to provide its idea of the rules, and based on that idea, tell us how it would clear several new ("future") boards shown to it (by sending to us a sequence of proposed moves). We then analyze Gemini's proposed sequences of moves to see if they would indeed clear the board.
+		  
+	  </p>
+
+    <p>While the setup used in the prepared episodes mode is obvious (one request, one response), the arrangements used in the play mode require a more detailed description. 
+	    
+	    The setup that we use in the play mode in order to get Google Gemini to play the Rule Game (aka the GOHR) is, in a way, the inverse of that of the <a href="captive.html">Captive Game Server</a> (CGS). With the CGS, the control resides in the ML (AI) program that wants to solve a GOHR problem; whenever the ML program makes a move, it sends its proposed move as a request to the CGS, and then the CGS applies the move to the current board and returns its decision (accept/deny) in the response. With our Gemini app, the control resides in our app; the app keeps sending requests to the Gemini server at Google, asking it to make its next move. The Gemini's proposed move, hopefully, arrives in the response, and our app then applies it to the board, and prepares to send to Gemini the next request for a move.
 
       <h2>Gemini models</h2>
 
     <p>As of the early 2025, Gemini offers a number of "models". We started in March 2025 with the then current model named <tt>gemini-2.0-flash</tt>, which produced very disappointing results.
 
-    <p>Later we switched to a more recent model, <tt>gemini-2.5-flash-preview-05-20</tt>, which Google bills as a <a href="https://ai.google.dev/gemini-api/docs/thinking">model with thinking support</a>. It produces much better results, also works much more slowly.
+    <p>Later we switched to a more recent model, <tt>gemini-2.5-flash-preview-05-20</tt>, which Google bills as a <a href="https://ai.google.dev/gemini-api/docs/thinking">model with thinking support</a>. It produces much better results, although it works much more slowly.
 
     <p>
       Out harness tool can be configured to use other models as well (with the command-line option <tt>model=...</tt>).
 
-      <h2>Conversation structure</h2>
+      <h2>Conversation structure in the play mode</h2>
       
-    <p>A Gemini user could easily imaginge that  when a person or an app interacts with the Gemini server, the server somehow keeps track of the entire content f the "conversation",  perhaps by means of creating some kind of a "model"      of the knowledge conveyed to it by the user's input, in a suitable      internal representation,      and expanding and updating that model as more user input comes through.
+    <p>A Gemini user could easily imaginge that  when a person or an app interacts with the Gemini server, the server somehow keeps track of the entire content of the "conversation",  perhaps by means of creating some kind of a "model"      of the knowledge conveyed to it by the user's input, in a suitable      internal representation,      and expanding and updating that model as more user input comes through.
 
 
     <p>Somewhat unexpectedly, Gemini documentation
@@ -74,10 +84,14 @@ So this is quite a bit of data processing work, and caching is helpful with redu
 
 	<li>instructionsFile=/opt/w2020/game-data/gemini/system.txt -- the name of the text file with the "system instructions", which are set to the Gemini server with each request
 	  
-	<li>wait=4000 -- for how long (measured in milliseconds) the client waits between making two requests to the Gemini server. Since most models allow at most 15 queries per minute for free-tier users. The value of 4000 (i.e. 4 sec) is appropriate.
+	<li>wait=4000 -- for how long (measured in milliseconds) the client waits between making two requests to the Gemini server (in the play mode only). Since most models allow at most 15 queries per minute for free-tier users. The value of 4000 (i.e. 4 sec) is appropriate. 
 
-	  <li>max_boards=10 -- the max number of episodes to run with each rule set
-	  <li>max_requests=0 -- the max number of requests the client is allowed to make. (If no retries are ever needed, this is equal to the max total number of moves in all episodes). The default value, 0, means "no limit". If you feel the client sometimes likes to loop making the same request over and over, set this to something like 1000.
+	  <li>max_boards=10 -- the max number of episodes to run with each rule set (in the play mode only).
+		  
+	  <li>max_requests=0 -- the max number of requests the client is allowed to make. (If no retries are ever needed, this is equal to the max total number of moves in all episodes). The default value, 0, means "no limit". If you feel the client sometimes likes to loop making the same request over and over, set this to something like 200 or 1000.
+
+		  <li>prepared_episodes=5  — this option activates the prepared episodes mode, indicating how many of them to include into the request.
+		  </li>
       </ul>
       
      <h2>Observations - Gemini 2.0</h2>
