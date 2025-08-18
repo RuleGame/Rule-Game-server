@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 #-- !/usr/bin/python3
 
@@ -12,7 +12,7 @@
 
 
 import subprocess, sys, re, random, json
-import gameLoop
+import gameLoopGemini2
 
 #game='game-data/rules/rules-01.txt'
 game=sys.argv[1]
@@ -30,7 +30,13 @@ sys.stdout.write("Rule file=" + game +", #pieces=" + nPieces+"\n")
 proc=subprocess.Popen( ['java', '-Doutput=STANDARD', 'edu.wisc.game.engine.Captive', game, nPieces], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
 #sys.stdout.write(proc.stdout.read())
+rule = ''
+test = False
 
-gameLoop.mainLoop(proc.stdout, proc.stdin)
+rule = gameLoopGemini2.mainLoop(proc.stdout, proc.stdin, test, rule, 2)
 
-    
+proc=subprocess.Popen( ['java', '-Doutput=STANDARD', 'edu.wisc.game.engine.Captive', game, nPieces], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+test = True
+result = gameLoopGemini2.mainLoop(proc.stdout, proc.stdin, test, rule)
+
