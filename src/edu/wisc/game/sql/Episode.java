@@ -1,4 +1,4 @@
-package edu.wisc.game.sql;
+ package edu.wisc.game.sql;
 
 import java.io.*;
 import java.util.*;
@@ -910,7 +910,7 @@ s	    non-existing piece) the value may be different from those of
 	    may only happen in some GUI versions. */
 	    GIVEN_UP =3,
 	/** This was a bonus round which has been terminated by the 
-	    system because the player has failed to complete it within the 
+ 	    system because the player has failed to complete it within the 
 	    required number of steps */
 	    LOST = 4,
 	/** The server decided that the player is so good that 
@@ -1235,7 +1235,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
     /** The current version of the application */
-    public static final String version = "8.028";
+    public static final String version = "8.029";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }
