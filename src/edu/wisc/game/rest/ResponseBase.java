@@ -51,10 +51,14 @@ public class ResponseBase {
     }
 
     /** Regularizes an input parameter, trimming leading/trailing white space
-	and converting a blank string to null */
+	and converting a blank string to null.
+	Since ver 8.030, we also trim the trailing slashes, since it has
+	turned out lately that one sometimes comes in with the exp=... !
+ */
     static String regularize(String x) {
 	if (x==null) return null;
 	x = x.trim();
+	while (x.endsWith("/")) { x = x.substring(0, x.length()-1); }
 	if (x.equals("") || x.equals("null")) return null;
 	return x;
     }
