@@ -12,7 +12,7 @@
 
 
 import subprocess, sys, re, random, json
-import gameLoopGemini2
+import gameLoopGeminiHypothesisMove
 
 #game='game-data/rules/rules-01.txt'
 game=sys.argv[1]
@@ -33,10 +33,10 @@ proc=subprocess.Popen( ['java', '-Doutput=STANDARD', 'edu.wisc.game.engine.Capti
 rule = ''
 test = False
 
-rule = gameLoopGemini2.mainLoop(proc.stdout, proc.stdin, test, rule, 2)
+rule = gameLoopGeminiHypothesisMove.mainLoop(proc.stdout, proc.stdin, test, rule, 2)
 
 proc=subprocess.Popen( ['java', '-Doutput=STANDARD', 'edu.wisc.game.engine.Captive', game, nPieces], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
 test = True
-result = gameLoopGemini2.mainLoop(proc.stdout, proc.stdin, test, rule)
+result = gameLoopGeminiHypothesisMove.mainLoop(proc.stdout, proc.stdin, test, rule)
 

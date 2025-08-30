@@ -1,23 +1,44 @@
 #----------------------------------------------------------------------
 # gameLoopGemini.py
-# Maintains hypotheses (max 3), uses Bayesian updates from cited move UIDs.
+# Maintains hypotheses (max 3 shown in UI), sends a filtered set (top-K + relative-high)
+# Uses Bayesian updates from cited move UIDs, merges duplicate hypotheses.
 #----------------------------------------------------------------------
 
-# This gameloop is in BETA and may not work as intended.
+# This gameloop is derived from your previous code and adjusted to:
+# - Send top-K hypotheses that meet a minimum confidence to the move LLM
+# - Also include hypotheses whose confidence >= REL_CONF_THRESHOLD * max_conf (and >= MIN_CONF)
+# - Merge duplicate hypothesis descriptions
+# - Preserve Bayesian update logic and move UID evidence flow
+#
+# Save as gameLoopGemini.py
+#----------------------------------------------------------------------
+
 import subprocess, sys, re, random, json
 from google import genai
 from dotenv import load_dotenv
 import os
+import hashlib
+import unicodedata
+import time
+import threading
+
+# Rate-limit globals for Gemini calls: cap ~10 calls / minute -> min interval 6.0s
+_GEMINI_LAST_CALL = 0.0
+_GEMINI_LOCK = threading.Lock()
+_GEMINI_MIN_INTERVAL = 6.0  # seconds between rate-limited calls (60 / 10 = 6)
+_GEMINI_MAX_RETRIES = 3
 #----------------------------------------------------------------------
 load_dotenv()
 
 # ---------------- Config ----------------
-MAX_HYPOTHESES = 3
-MIN_CONF = 0.03
-ALPHA0 = 1.0
-BETA0 = 1.0
-MAX_DELTA = 0.15
-WEIGHT_UNOBSERVED = 0.05
+MAX_HYPOTHESES = 3          # keep stored/pruned hypotheses to this many overall
+TOP_K_FOR_MOVES = 10        # how many hypotheses to send to move-suggester (subject to MIN_CONF)
+MIN_CONF = 0.03             # minimum confidence to consider (prune below this)
+ALPHA0 = 1.0                # prior alpha for bayesian
+BETA0 = 1.0                 # prior beta for bayesian
+MAX_DELTA = 0.15            # per-step cap on confidence change
+WEIGHT_UNOBSERVED = 0.05    # how to count cited but not-yet-observed move ids
+REL_CONF_THRESHOLD = 0.5    # also include hyps with conf >= REL_CONF_THRESHOLD * max_conf (and >= MIN_CONF)
 
 # ---------------- Prompts ----------------
 SYSTEM_PROMPT_A = """
@@ -26,10 +47,10 @@ SYSTEM_PROMPT_A = """
 # Your task is to figure out the rule by making moves and observing their results while hypothesizing about the rule.
 # Note on hypotheses:
 1. You will be provided with a set of hypotheses about the rule that you yourself have generated.
-1. The system you are working with will discard hypotheses that are not strongly supported by the moves you make.
-2. 
+2. The system will discard hypotheses that are not strongly supported by the moves you cite.
+3. Hypotheses should be plausible, general, and applicable to other similar boards.
 Input you will receive: a JSON of current hypotheses (id, description, confidence optional),
-the most recent move UID list and their results, the board pieces, bucket state, immovable pieces and move history.
+the most recent move UID and its result, the board pieces, bucket state, immovable pieces and move history.
 
 Return EXACTLY one JSON object with keys:
 {
@@ -37,9 +58,8 @@ Return EXACTLY one JSON object with keys:
     {
       "id": "H1",
       "description": "candidate description",
-      "support_ids": ["M3","M7"],        # move UIDs that the hypothesis claims support it
-      "contradict_ids": ["M2"],         # move UIDs that the hypothesis claims contradict it
-      "confidence_note": "note if no constradiction exists",
+      "support_ids": ["M3","M7"],
+      "contradict_ids": ["M2"],
       "note": "optional short note"
     },
     ...
@@ -49,15 +69,15 @@ Return EXACTLY one JSON object with keys:
 }
 
 Rules:
-- Do NOT include a confidence field. The system will compute confidences automatically from cited move UIDs.
-- For evidence, cite move UIDs (format 'M<number>'). The code only trusts those explicit UIDs.
+- Do NOT include a confidence field. The system computes confidences automatically.
+- For evidence, cite move UIDs (format 'M<number>'). The system only trusts those explicit UIDs.
 - piece_id must exist on the current board (or -1 only if board is empty).
-- bucket_id must be 0,1,2,3.
+- bucket_id must be 0,1,2,3. The coordinates for buckets are (x,y) positions:
+  - Bucket 0: (0,7)
+  - Bucket 1: (7,7)
+  - Bucket 2: (7,0)
+  - Bucket 3: (0,0)
 - Return only the JSON object (no extra text).
--
-
-
-
 """
 
 SYSTEM_PROMPT_B = """
@@ -84,12 +104,14 @@ def readLine(inx):
 
 def extract_json_blob(text):
     txt = text.strip()
+    # Accept fenced json blocks
     if txt.startswith("```"):
         parts = txt.split("```")
         for p in parts:
             p = p.strip()
             if p.startswith("{") and p.endswith("}"):
                 return p
+    # Otherwise find first {...}
     if "{" in txt and "}" in txt:
         first = txt.find("{"); last = txt.rfind("}")
         if first != -1 and last != -1 and last > first:
@@ -97,13 +119,55 @@ def extract_json_blob(text):
     return txt
 
 def call_gemini(client, conversation):
+    """
+    Rate-limited call to Gemini. Ensures at least _GEMINI_MIN_INTERVAL seconds between calls.
+    Retries a few times on quota-like errors (exponential backoff).
+    Returns the model response text on success, raises exception on failure.
+    """
+    global _GEMINI_LAST_CALL, _GEMINI_LOCK, _GEMINI_MIN_INTERVAL, _GEMINI_MAX_RETRIES
+
+    # build full prompt text
     full_prompt = ""
     for msg in conversation:
-        role = msg["role"]
+        role = msg.get("role", "")
         content = msg.get("content", msg.get("observation", ""))
         full_prompt += f"{role.upper()}:\n{content}\n\n"
-    response = client.models.generate_content(model="gemini-2.5-flash", contents = full_prompt)
-    return response.text
+
+    attempt = 0
+    backoff = 1.0
+
+    while True:
+        attempt += 1
+        # enforce minimal interval
+        with _GEMINI_LOCK:
+            now = time.time()
+            elapsed = now - _GEMINI_LAST_CALL
+            if elapsed < _GEMINI_MIN_INTERVAL:
+                to_sleep = _GEMINI_MIN_INTERVAL - elapsed
+                sys.stdout.write(f"[rate-limit] sleeping {to_sleep:.2f}s to respect 10/min limit\n")
+                time.sleep(to_sleep)
+
+        try:
+            response = client.models.generate_content(model="gemini-2.5-flash", contents=full_prompt)
+            # record time of successful call
+            with _GEMINI_LOCK:
+                _GEMINI_LAST_CALL = time.time()
+            return response.text
+
+        except Exception as e:
+            # Detect quota/rate errors from exception text (best-effort)
+            msg = str(e).lower()
+            is_quota = ("resource_exhausted" in msg) or ("quota" in msg) or ("429" in msg) or ("rate" in msg)
+            if is_quota and attempt <= _GEMINI_MAX_RETRIES:
+                sleep_time = backoff + random.random() * 0.5
+                sys.stdout.write(f"[call_gemini] quota/rate error detected (attempt {attempt}/{_GEMINI_MAX_RETRIES}). "
+                                 f"Sleeping {sleep_time:.1f}s and retrying...\n")
+                time.sleep(sleep_time)
+                backoff = min(backoff * 2.0, 60.0)
+                continue
+            # non-retryable or retries exhausted: raise so caller can handle fallback
+            sys.stdout.write(f"[call_gemini] error (attempt {attempt}) - giving up: {e}\n")
+            raise
 
 # ---------------- Move mapping ----------------
 def mapMove(val, id, b):
@@ -123,19 +187,114 @@ def mapMove(val, id, b):
         raise ValueError(f"Invalid bucket {b}")
     return [y, x, by, bx]
 
+# ---------------- Text normalization & dedupe ----------------
+def normalize_text(s: str) -> str:
+    """Normalize hypothesis description for duplicate detection."""
+    if not s:
+        return ""
+    s = unicodedata.normalize("NFKD", s)
+    s = s.lower()
+    s = re.sub(r"[^\w]+", " ", s)
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
+def dedupe_hypotheses(hypotheses):
+    """
+    Merge duplicate hypotheses by normalized description.
+    Keeps highest confidence; merges support/contradict/evidence lists and notes.
+    """
+    seen = {}
+    for h in hypotheses:
+        desc = h.get("description", "")
+        key = normalize_text(desc)
+        if not key:
+            key = hashlib.md5((desc or "").encode()).hexdigest()
+        existing = seen.get(key)
+        if not existing:
+            item = {
+                "id": h.get("id"),
+                "description": desc,
+                "support_ids": list(dict.fromkeys(h.get("support_ids", []) or [])),
+                "contradict_ids": list(dict.fromkeys(h.get("contradict_ids", []) or [])),
+                "evidence": list(h.get("evidence", []) or []),
+                "evidence_note": h.get("evidence_note", "") or "",
+                "note": h.get("note", "") or "",
+                "confidence": float(h.get("confidence", 0.0)) if "confidence" in h else None
+            }
+            seen[key] = item
+        else:
+            ex = existing
+            for fid in (h.get("support_ids", []) or []):
+                if fid not in ex["support_ids"]:
+                    ex["support_ids"].append(fid)
+            for fid in (h.get("contradict_ids", []) or []):
+                if fid not in ex["contradict_ids"]:
+                    ex["contradict_ids"].append(fid)
+            for e in (h.get("evidence", []) or []):
+                if e not in ex["evidence"]:
+                    ex["evidence"].append(e)
+            if h.get("evidence_note"):
+                ex["evidence_note"] = (ex["evidence_note"] + " | " + h["evidence_note"]).strip()
+            if h.get("note"):
+                ex["note"] = (ex["note"] + " | " + h["note"]).strip()
+            if h.get("confidence") is not None:
+                ex_conf = ex.get("confidence")
+                if ex_conf is None or float(h["confidence"]) > float(ex_conf):
+                    ex["confidence"] = float(h["confidence"])
+    # Assign clean IDs if missing
+    result = []
+    for i, item in enumerate(seen.values(), start=1):
+        if not item.get("id"):
+            item["id"] = f"MH{i}"
+        result.append(item)
+    return result
+
+# ---------------- Selection for move-suggester ----------------
+def select_hypotheses_for_moves(hypotheses, k=TOP_K_FOR_MOVES, rel_threshold=REL_CONF_THRESHOLD, min_conf=MIN_CONF):
+    """
+    Select hypotheses to send to the move-suggester:
+      - Consider only hypotheses with confidence >= min_conf
+      - Return up to top-k by confidence among those (no extra relative-threshold inclusion)
+      - Deduplicate descriptions
+    """
+    if not hypotheses:
+        return []
+    # ensure confidence exists (default to 0)
+    for h in hypotheses:
+        if "confidence" not in h or h["confidence"] is None:
+            h["confidence"] = 0.0
+    # filter by min_conf
+    eligible = [h for h in hypotheses if h.get("confidence", 0.0) >= min_conf]
+    if not eligible:
+        return []
+    sorted_all = sorted(eligible, key=lambda x: x.get("confidence", 0.0), reverse=True)
+    top_k = sorted_all[:k]
+    # dedupe similar descriptions and return sorted by confidence
+    sel = dedupe_hypotheses(top_k)
+    sel = sorted(sel, key=lambda x: x.get("confidence", 0.0), reverse=True)
+    return sel
+
 # ---------------- Prompt builder (no rule) ----------------
-def build_prompt_no_rule(hypotheses, last_move_uid, last_result, val, bucket_state, immovable_pieces, move_history):
-    hyps_to_send = sorted(hypotheses, key=lambda h: h.get("confidence", 0.0), reverse=True)[:MAX_HYPOTHESES]
-    pieces_info = [f"id:{p['id']} shape:{p['shape']} color:{p['color']} x:{p['x']} y:{p['y']}" for p in val]
+def build_prompt_no_rule(hypotheses, last_move_uid, last_result, val, bucket_state, immovable_pieces, move_history, top_k_for_moves=None):
+    """
+    Build the conversation prompt for the move-suggester.
+    If top_k_for_moves provided, selection is done via select_hypotheses_for_moves(...).
+    """
+    if top_k_for_moves:
+        hyps_to_send = select_hypotheses_for_moves(hypotheses, k=top_k_for_moves)
+    else:
+        hyps_to_send = sorted(hypotheses, key=lambda h: h.get("confidence", 0.0), reverse=True)[:MAX_HYPOTHESES]
+
+    pieces_info = [f"id:{p['id']} shape:{p.get('shape','?')} color:{p.get('color','?')} x:{p.get('x','?')} y:{p.get('y','?')}" for p in val]
     board_state = " | ".join(pieces_info)
-    bucket_summary = "; ".join(f"Bucket {b}: [{', '.join(bucket_state[b])}]" if bucket_state and bucket_state.get(b) else f"Bucket {b}: [empty]" for b in range(4))
+    bucket_summary = "; ".join(f"Bucket {b}: [{', '.join(bucket_state.get(b,[]))}]" if bucket_state and bucket_state.get(b) else f"Bucket {b}: [empty]" for b in range(4))
     mh_lines = []
     for uid, info in move_history.items():
         mh_lines.append(f"{uid}: {info.get('move','')} -> {info.get('result','')}")
     hyp_text = json.dumps(hyps_to_send, ensure_ascii=False)
     return [
         {"role":"system", "content": SYSTEM_PROMPT_A},
-        {"role":"user", "content": "Hypotheses (top 3): " + hyp_text},
+        {"role":"user", "content": "Hypotheses (selected): " + hyp_text},
         {"role":"user", "content": f"Last_move_uid: {last_move_uid if last_move_uid else 'None'}"},
         {"role":"user", "content": f"Last_result: {last_result if last_result else 'N/A'}"},
         {"role":"user", "content": "Immovable pieces: " + (", ".join(str(x) for x in sorted(list(immovable_pieces))) if immovable_pieces else "None")},
@@ -175,7 +334,7 @@ def compute_support_contradiction_from_ids(hyp, move_history):
             if obs == "accepted":
                 contradict += 1.0
             else:
-                # model claimed contradiction but observed != accepted -> do not add strong contradiction
+                # model claimed contradiction but observed != accepted -> limited contradiction
                 contradict += 0.0
         else:
             contradict += WEIGHT_UNOBSERVED
@@ -192,7 +351,7 @@ def bayesian_confidence(alpha0, beta0, support, contradict):
 def update_prompt(conversation, val, code, bucket_state):
     pieces_info = []
     for piece in val:
-        piece_info = f"Piece ID: {piece['id']}, Shape: {piece['shape']}, Color: {piece['color']}, Position: ( x: {piece['x']}, y: {piece['y']})"
+        piece_info = f"Piece ID: {piece['id']}, Shape: {piece.get('shape','?')}, Color: {piece.get('color','?')}, Position: ( x: {piece.get('x','?')}, y: {piece.get('y','?')})"
         pieces_info.append(piece_info)
     board_state = f"Board state: {pieces_info}"
     if code==4:
@@ -226,7 +385,7 @@ def mainLoop(inx, outx, test, rule, episodes=1):
             return final_hyps
 
 def severalEpisodes(inx, outx, N):
-    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY_mc"))
+    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY_hc"))
     hypotheses = []
     for j in range(0, N):
         sys.stdout.write(f"Starting episode {j+1}/{N}\n")
@@ -236,7 +395,7 @@ def severalEpisodes(inx, outx, N):
     return hypotheses
 
 def mainLoopA(inx, outx, ask_final_rule=True, initial_hypotheses=None):
-    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY_hc"))
     bucket_state = {0: [], 1: [], 2: [], 3: []}
     immovable_pieces = set()
     move_counter = 0
@@ -332,8 +491,8 @@ def mainLoopA(inx, outx, ask_final_rule=True, initial_hypotheses=None):
             sys.stdout.write(f"Stalemate after {t} steps.\n")
             return hypotheses
 
-        # Build prompt (top 3 hypotheses only)
-        prompt_msgs = build_prompt_no_rule(hypotheses, last_move_uid, last_result, val, bucket_state, immovable_pieces, move_history)
+        # Build prompt (selected hyps) - send top_k_for_moves set
+        prompt_msgs = build_prompt_no_rule(hypotheses, last_move_uid, last_result, val, bucket_state, immovable_pieces, move_history, top_k_for_moves=TOP_K_FOR_MOVES)
         gem_raw = call_gemini(client, prompt_msgs)
         sys.stdout.write("Gemini raw response:\n" + gem_raw + "\n")
         blob = extract_json_blob(gem_raw)
@@ -386,7 +545,7 @@ def mainLoopA(inx, outx, ask_final_rule=True, initial_hypotheses=None):
             prev_val = val
             continue
 
-        # Normalize model hypotheses (DO NOT read model-provided confidence)
+        # Normalize model hypotheses (DO NOT use model-provided confidence)
         model_hyps = parsed.get("hypotheses", []) or []
         normalized = []
         for i, h in enumerate(model_hyps):
@@ -431,7 +590,10 @@ def mainLoopA(inx, outx, ask_final_rule=True, initial_hypotheses=None):
             if pid not in model_map:
                 updated_hyps.append(ph)
 
-        # prune and cap
+        # dedupe merged list globally (merge duplicates with normalized descriptions)
+        updated_hyps = dedupe_hypotheses(updated_hyps)
+
+        # prune and cap (sort by newly computed confidence)
         updated_hyps = sorted(updated_hyps, key=lambda x: x.get("confidence", 0.0), reverse=True)
         updated_hyps = [h for h in updated_hyps if h.get("confidence", 0.0) >= MIN_CONF]
         updated_hyps = updated_hyps[:MAX_HYPOTHESES]
@@ -475,7 +637,7 @@ def mainLoopA(inx, outx, ask_final_rule=True, initial_hypotheses=None):
 
 # ---------------- mainLoopB (JSON thinking + moves) ----------------
 def mainLoopB(inx,outx, rule):
-    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY_hc"))
     statusLine = readLine(inx)
     if not statusLine:
         sys.stdout.write("No status line at start of mainLoopB.\n"); return 0

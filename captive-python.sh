@@ -5,9 +5,9 @@ set sc=`dirname $0`
 set h=`(cd $sc; pwd)`
 source "$h/scripts/set-var-captive.sh"
 
-$sc/python/clientGemini.py $sc/game-data/rules/MLC/BMK/counterClockwise.txt 9
+$sc/python/clientGemini.py $sc/game-data/rules/MLC/BMK/colOrd_nearby.txt 9
 
 
 
-# 9 pieces 2 traiining episodes 3 test episodes
+# 9 pieces 2 training episodes 3 test episodes
 
