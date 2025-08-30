@@ -6,7 +6,7 @@
 
 <h1>Processing human players' transcripts for Mann-Whitney comparison</h1>
 
-<div align="center"><em>Updated 2024-12-03, for Game Server 6.048</em></div>
+<div align="center"><em>Updated 2025-08-28, for Game Server 8.029</em></div>
 
 <p>This document describes the functionality of the script <tt>scripts/analyze-transcripts-mwh.sh</tt>, which is designed to analyze human players' transcripts in order to compare rule sets with respect to their ease/difficulty for the human players' population. The underlying Java class is <tt>edu.wisc.game.tools.MwByHuman</tt>
 
@@ -138,9 +138,18 @@ ep/1_2_color_4m,,ep/rule_ambiguity/ambiguity4,ambiguity4_6,0,A10G8U9316K46H,fals
     <li>learned - "true" or "false" depending on whether the player has "demonstrated learning" in that series (i.e. managed either to make the prescribed number [targetStreak] of consecutive error free moves, or to reach the prescribed "unlikelihood factor" [targetR], as the case may be)
     <li>total_moves - the total number of move and pick attempts in all episodes of the series
     <li>total_errors - the total number of failed move and pick attempts in the series
-    <li>mStar - the number of errors (i.e. failed move and pick attempts) the player has made in this series before he "demonstrated learning", or the <em>defaultMStar</em> value (which can be <tt>infinity</tt>) if the learning was not demonstrated (or if it took more than <em>defaultMStar</em> errors to achieve learning).
+    <li>mStar - the number of move/pick attempts (i.e. successful and failed move and pick attempts) the player has made in this series before he "demonstrated learning", or the <em>defaultMStar</em> value (which can be <tt>infinity</tt>) if the learning was not demonstrated (or if it took more than <em>defaultMStar</em> move/pick attempts to achieve learning). (More precisely, this includes all move/pick attemps made from the beginning of the series until the beginnig of the "winning sequence" (the final sequence of successful moves and picks, which demonstrated learning), plus one. Thus a player who nevere made a single error in a given series -- thus, demonstrated learning right away -- will have mStar=1). (This definition is used since ver 8.029, August 2025).
+    <li>[Prior to ver. 8.029] <strike>mStar - the number of errors (i.e. failed move and pick attempts) the player has made in this series before he "demonstrated learning", or the <em>defaultMStar</em> value (which can be <tt>infinity</tt>) if the learning was not demonstrated (or if it took more than <em>defaultMStar</em> errors to achieve learning).</strike>
       <li>mDagger(P,E) = mStar(P,E) - Avg(mStar(P,*)), where the everaging is over all experiences where player P successfully learned the rule. If P learned no rules at all, then mDagger is reported as <tt>NaN</tt> for all experiences of that player.
   </ul>
+
+  <h4>Two-player games</h4>
+
+<p>In cooperative two-player games, we treat the two participants as a single entity (a team), and all values, such as mStar, are computed for the sequence of all moves (which includes the moves of both players).
+
+<p>In adversatial games, each participant's record is treated separately, and each one is computed his own mStar as appropriate.
+
+
   
     <h3>(3) M-W computations with imported mStar data</h3>
   

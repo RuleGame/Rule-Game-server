@@ -6,7 +6,7 @@
   <body>
     <h1>Captive Game Server</h1>
 
-    <div align="center"><em>Updated 2025-03-20 for Game Server ver 8.000</em></div>
+    <div align="center"><em>Updated 2025-08-15 for Game Server ver 8.000</em></div>
     
     <h2>Test the Rule Game</h2>
 
@@ -701,9 +701,13 @@ In a game with  <a href="object-properties.html">Image-and-property-based object
       <p>Response: one line, displaying the current board in the JSON format, in the same format as in the NEW command.</p>
 
 <p>
+  <pre><a name="move"><strong>MOVE piece_id bucket_id</strong></a></pre>
+or  
   <pre><a name="move"><strong>MOVE row col B_row B_col</strong></a></pre>
 
-      This command attempts picks the piece located at (row,col), and to move it to the bucket at (B_row, B_col). The values for the first two coordinates can be in the range [1..6]; the values for each of the last two coordinates must be 0 or 7.
+  This command attempts to pick the game piece with the specified ID, and to move it to the bucket with the specified bucket_ID (in the range 0 through 3). There is also a legacy format, where you specify the game piece by its
+coordinates (row,col), and the bucket by its location at (B_row, B_col).
+In this legacy format, the values for the first two coordinates can be in the range [1..6]; the values for each of the last two coordinates must be 0 or 7.
       
       <p>Response: two lines (in the standard mode) or one line (in the brief mode). The first line contains 3 numbers, as follows:
 <pre>

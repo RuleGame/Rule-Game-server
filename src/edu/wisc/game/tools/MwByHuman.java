@@ -358,7 +358,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    
 	    result.append( fm.para("In the tables below, 'learning' means demonstrating the ability " + Util.joinNonBlank(" or ", v)));
 
-	    result.append( fm.para("mStar is the number of errors the player make until he 'learns' by the above definition. Those who have not learned, or take more than "+fm.tt(""+defaultMStar)+" errors to learn, are assigned mStar="+defaultMStar));
+	    result.append( fm.para("mStar is the number of move/pick attempts the player makes until he 'learns' by the above definition. Those who have not learned, or take more than "+fm.tt(""+defaultMStar)+" move/pick attempts to learn, are assigned mStar="+defaultMStar));
 	    result.append( fm.para("M-W matrix is computed based on " + (useMDagger? "mDagger" : "mStar")));
 	}
 	    
@@ -391,7 +391,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	
 	@param section A vector of arrays, each array representing the recorded
 	moves for one episode. In its entirety, <tt>section</tt> describes all episodes
-	in the series. Before returning, this method clears this array.
+	in the series (i.e., for one rule set). Before returning, this method clears this array.
 	@param includedEpisodes All non-empty episodes played by this player in this rule set. This array must be aligned with section[]. Before returning, this method clears this array.
     */
   
@@ -423,6 +423,8 @@ public class MwByHuman extends AnalyzeTranscripts {
     /** Creates an MwSeries object for a (player,rule set)
 	interaction, and adds it to savedMws, if appropriate.
 
+	@param section All transcript data for one series of episodes
+	(i.e. one rule set), split into subsections (one per episode)
 
         @param chosenMover If it's -1, the entire transcript is
 	analyzed. (That's the case for 1PG and coop 2PG). In adve 2PG,
@@ -446,6 +448,11 @@ public class MwByHuman extends AnalyzeTranscripts {
 	int je =0;
 	int streak=0;
 	double lastR = 0;
+
+	//-- all attempts from the beginning until "mastery demonstrated"
+	int attempts1=0;
+	//-- attempts that are parts of the most recent success streak (including successful moves and successful picks)
+	int attempts2=0;
 
 	ser.errcnt = 0;
 	ser.mStar = defaultMStar;
@@ -477,6 +484,13 @@ public class MwByHuman extends AnalyzeTranscripts {
 
 		boolean wrongPlayer= (chosenMover>0) && (e.mover!=chosenMover);
 		if (wrongPlayer) continue;
+
+		attempts1++;
+		if (e.code==CODE.ACCEPT) {
+		    attempts2++;
+		} else {
+		    attempts2=0;
+		}
 		
 		if (e.code==CODE.ACCEPT) {
 		    if (e.pick instanceof Episode.Move) {
@@ -502,7 +516,10 @@ public class MwByHuman extends AnalyzeTranscripts {
 		
 		if (learned) {
 		    ser.learned=true;
-		    ser.mStar = Math.min( ser.errcnt, ser.mStar);
+		    //-- This was in effect through ver 8.028. After that, we switched to
+		    //-- counting all move attempts, rather than errors
+		    // ser.mStar = Math.min( ser.errcnt, ser.mStar);
+		    ser.mStar = Math.min( attempts1 - attempts2 + 1, ser.mStar);
 		}
 		whatILearned.put(eh.ruleSetName, learned);
 	    }

@@ -6,9 +6,9 @@
   <body>
     <h1>Making Gemini play the GOHR</h1>
 
-    <div align="center"><em>Updated 2025-07-14 for Game Server ver 8.020 and <tt>gemini-2.5-flash-preview-05-20</tt></em></div>
+    <div align="center"><em>Updated 2025-08-25 for Game Server ver 8.020 and <tt>gemini-2.5-flash-preview-05-20</tt></em></div>
 
-    <h2>Architecture</h2>
+    <h2><a name="arch">Architecture</a></h2>
 
 	  <p>As of July 31, 2025, the GOHR Gemini harness supports 2 modes: the "play" mode and the "prepared episodes" mode.</p>
 	 <p>In the play mode, the Gemini bot makes moves one by one, receiving the feedback from our side. Occasionally, we ask the bot to describe its mental model of the rules; or sometimes it volunteers to do so.
@@ -735,7 +735,8 @@ for Gemini 2.5 Pro.
 
 <H2><a name="prep">Gemini queries with "prepared episodes"</a></h2>
 
-<P>I carried out a series of runs where Gemini was shown 10 prepared episodes fpr each rule and ask to deduce the rule, and another series with 100 episodes perrule.
+<P>I carried out a series of runs where the Gemini bot was shown 10 <a href="#arch">prepared episodes</a>
+ for each rule and ask to deduce the rule. In another series, the bot was shown 100 prepared episodes per rule.
 
 <p>The runs were conducted with the default temperature.  In each run, I asked Gemini to provide 3 candidate responses. (Gemini being non-deterministic, it can always come up with multiple answers, if asked). However, why the 3 responses could be very different textually, I usually won't see much difference between their degree of correctness. In those cases when the responses were substantially different, I listed the individual grades, seaprated by commas.
   
@@ -791,10 +792,25 @@ for Gemini 2.5 Pro.
 </table>
 
 <p>
-  Training on a smaller number of episodes. For each rule set, the same RG seed (seed=1) is used in all runs; therefore, the set of 3 episodes provided e.g. in the prepared-a-3 run is the same as the one provided in the prepared-b-3 run, and a subset of the set provided in the prepared-a-5 and prepared-b-5 runs.
+<strong>Training on a smaller number of episodes.</strong>
+This experiment was organized as follows: in each run, the bot was shown a number of completed
+<a href="#arch">prepared episodes</a>
+(1, 2, 3, 5, or 10) played with some hidden rule, asked to guess that rule, and to provide, for 5 additional initial boards, with <em>N</em> objects each (N=9), a plan to clear that board in N moves (i.e. without making any errors in that "future episode"). The bot was asked to provide 3 response candidates; thus, in each run we had up to 15 proposed solutions (up to 3 for each initial board) to look and evaluate. (Sometimes, of course, the number was smaller than 15, because the bot sometimes fails to provide everything what's asked of it). The table below contains, for each run, the number of fully correct proposed solutions among these 5*3 = 15 future episodes.
+
+<p>Two types of system instruction were provided: the basic ones (series <strong>b</strong>) and expanded ones, which explicitly described a number of sample rule sets (series <strong>a</strong>). The files are, respectively, in 
+/opt/w2020/game-data/gemini/system-prepared-03.txt and system-prepared-02.txt:
+<pre>
+action game-data/gemini> pwd
+/opt/w2020/game-data/gemini
+action game-data/gemini> dir system-prepared-0?.txt
+-rw-rw-r-- 1 tomcat tomcat 6006 Jul 22 02:05 system-prepared-02.txt
+-rw-rw-r-- 1 tomcat tomcat 4713 Jul 22 11:32 system-prepared-03.txt
+</pre>
+<p>
+ For each rule set, the same RG seed (seed=1) is used in all runs; therefore, the set of 3 episodes shown to the bot e.g. in the prepared-a-3 run is the same as the one shown in the prepared-b-3 run, and a subset of the set shown in the prepared-a-5 and prepared-b-5 runs.
 
   <table border=1>
-<tr><td><th colspan=2>Instr. with examples <th colspan=5>Instructions w/o examples </tr>
+<tr><td><th colspan=2>(a) Instr. with examples <th colspan=5> (b) Instructions without examples </tr>
 <tr><td>Directory <td>prepared-5-a <td>prepared-10-a <td>prepared-1-b <td>prepared-2-b <td>prepared-3-b <td>prepared-5-b <td>prepared-10-b </tr>
 <tr><td>Number of prepared episodes<td>5 <td>10 <td>1 <td>2 <td>3 <td>5 <td>10 
 <tr><th align=left>allOfColOrd_BRKY<td>15 <td>0 <td>2 <td>0 <td>0 <td>0 <td>0 </tr>
@@ -831,10 +847,10 @@ for Gemini 2.5 Pro.
 <tr><th align=left>sm_qcts<td>10 <td>10 <td>5 <td>15 <td>15 <td>5 <td>4 </tr>
 </table>
 
-<p>To ward off Paul's suggestion that the bot perhaps may somehow "transfer learning between runs", we also had a series of experiments where a different RG seed was used for each run. It showed no quantitive difference from the above.
+<p>To ward off Paul's suggestion that the bot perhaps may somehow "transfer learning between runs", we also had a series of experiments where a different RG seed was used for each run. (Otherwise, the experiments were organized the same way as those described in the previous table). It showed no quantitive difference from the above.
 
 <table border=1>
-<tr><td><th colspan=4>Instructions w/o examples </tr>
+<tr><td><th colspan=4>(b) Instructions w/o examples </tr>
 <tr><td>Directory <td>prepared-1-b <td>prepared-2-b <td>prepared-3-b <td>prepared-5-b </tr>
 <tr><td>Number of prepared episodes<td>1 <td>2 <td>3 <td>5 
 <tr><th align=left>allOfColOrd_BRKY<td>3 <td>0 <td>0 <td>0 </tr>
