@@ -6,7 +6,7 @@
 
 <h1>Processing human players' transcripts for Mann-Whitney comparison</h1>
 
-<div align="center"><em>Updated 2025-08-28, for Game Server 8.029</em></div>
+<div align="center"><em>Updated 2025-09-08, for Game Server 8.029</em></div>
 
 <p>This document describes the functionality of the script <tt>scripts/analyze-transcripts-mwh.sh</tt>, which is designed to analyze human players' transcripts in order to compare rule sets with respect to their ease/difficulty for the human players' population. The underlying Java class is <tt>edu.wisc.game.tools.MwByHuman</tt>
 
@@ -169,8 +169,8 @@ ep/1_2_color_4m,,ep/rule_ambiguity/ambiguity4,ambiguity4_6,0,A10G8U9316K46H,fals
 <p>If you want to compute the M-W matrix based on mDagger instead of mStar (using the -mDagger option), then of course the mDagger column also should be present. In this case the computation will ignore all entries where the value is NaN (or absent).
 
 <p>You can import multiple CSV files; if you do that, the name of each one must be preceeded by its own <tt>-import</tt> command. (<tt>-import a.csv -import -b.csv -import c.csv ...</tt>). This is convenient if difference CSV files have different number of columns, so that you cannot just merge them together into a single file with the UNIX <tt>cat</tt> command.
-  
-   <h3> Examples</h3>
+
+   <h2> Examples</h2>
 
   <p>1. Full-cycle analysis on the data from several experiment plans:
   <pre>scripts/analyze-transcripts-mwh.sh ep/rule_ambiguity/ambiguity1 ep/rule_ambiguity/ambiguity2 ep/rule_ambiguity/ambiguity3 ep/rule_ambiguity/ambiguity4
@@ -191,7 +191,38 @@ ep/1_2_color_4m,,ep/rule_ambiguity/ambiguity4,ambiguity4_6,0,A10G8U9316K46H,fals
     <p>4. Full-cycle analysis on all plans under "ep/", using m_dagger instead of m_star for the M-W computation. Save the matrices in CSV files in directory <tt>tmp/mdagger</tt>. Aditionally, save the output of the first stage (the data for all (P,E) pairs) to <tt>tmp-mdagger.csv</tt>.
     
     <pre>analyze-transcripts-mwh.sh -plan 'ep/%' -csvOut tmp/mdagger -mDagger -export tmp-mdagger.csv</pre>
+
+  <h2>Auxiliary scripts</h2>
+  <h4>Separating experiences based on bot assist: mwh-add-bot-to-rule.pl</h4>
   
+This script can be used to modify an mStar export file produced by
+analyze-transcripts-mwh.sh, adding the
+<a href="../bot-assist.html">"bot assist"</a> info to the
+ name of each rule set. This will allow the subsequent analysis
+ to distinguish the experiences of human players who played a certain
+ rule with bot assist from that of the players who playes the same
+ rule without bot assist.
+
+<p>
+  Example:
+  <pre>
+  /home/vmenkov/w2020/game/scripts/analyze-transcripts-mwh.sh -precMode Every -export every.csv Bot_4
+  /home/vmenkov/w2020/game/scripts/analyze-transcripts-mwh.sh -precMode EveryCond -export everyCond.csv Bot_4
+  /home/vmenkov/w2020/game/scripts/mwh-add-bot-to-rule.pl every.csv Bot_4
+  /home/vmenkov/w2020/game/scripts/mwh-add-bot-to-rule.pl everyCond.csv Bot_4
+  </pre>
+  then use every.out.csv in subsequent analysis
+
+  <p>
+ One can also include multiple experiment names on the script's command line, if
+ they are all involved in the data set under study, e.g.
+ <pre>
+   /home/vmenkov/w2020/game/scripts/mwh-add-bot-to-rule.pl every.csv Bot_1 Bot_2 Bot_4  vm/some_other_plan
+   </pre>
+Note that wildcards (either shell '*' or SQL '%') are not allowed.
+  
+
+    
 <h2>See also</h2>
 
     <ul>

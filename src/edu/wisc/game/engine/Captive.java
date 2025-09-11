@@ -207,6 +207,21 @@ public class Captive {
   
 	    boolean z = epi.playGame(gg,gameCnt+1);
 	    if (log!=null) log.logEpisode(epi, gameCnt);
+
+
+	    //-- transcript
+	    if (false) {
+		//zzz
+		TranscriptManger.ExtraTranscriptInfo extra = new  TranscriptManger.ExtraTranscriptInfo();
+		extra.playerId = log.nickname;
+		extra.trialListId = x.getTrialListId();
+		extra.seriesNo = 0;
+		extra.ruleId = ser.para.getRuleSetName();
+		extra.episodeNo = gameCnt;
+	    }
+  
+
+	    
 	    if (!z) break;
 	    gameCnt++;
 	}

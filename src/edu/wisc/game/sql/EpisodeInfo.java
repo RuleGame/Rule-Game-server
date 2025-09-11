@@ -115,8 +115,8 @@ public class EpisodeInfo extends Episode {
 
     private int displaySeriesNo;
  
-    
-    private PlayerInfo.Series mySeries() {
+    /** To which Series does this Episode belong? */
+    public PlayerInfo.Series mySeries() {
 	return  getPlayer().getSeries(getSeriesNo());
     }
 
@@ -1049,7 +1049,7 @@ public class EpisodeInfo extends Episode {
 
 
 
-   void saveDetailedTranscriptToFile(File f) {
+   void old_saveDetailedTranscriptToFile(File f) {
 
        final String[] keys = 
 	   { "playerId",

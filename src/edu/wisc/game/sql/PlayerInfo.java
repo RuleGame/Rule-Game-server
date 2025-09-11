@@ -348,7 +348,7 @@ public class PlayerInfo {
 	has as many Series objects as there are lines in that player's trial list.
      */
     public class Series {
-	final ParaSet para;
+	final public ParaSet para;
 	/** This is true when this series "continues" into the next
 	    series, forming a super-series. (It may continue further 
 	    beyond, if the next series also has cont==true, and so on).
@@ -1232,7 +1232,8 @@ public class PlayerInfo {
 	    TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.botAssist.botAssistTranscript, false, false);
 	}
 	f =  Files.detailedTranscriptsFile(playerId);
-	epi.saveDetailedTranscriptToFile(f);
+	//epi.saveDetailedTranscriptToFile(f);
+	TranscriptManager.saveDetailedTranscriptToFile(epi, null, f);
 	Logging.info("PlayerInfo.ended: saved transcripts for (epi=" + epi.getEpisodeId()+"); finishCode =" + epi.finishCode);
 	try {
 	    WatchPlayer.tellAbout(playerId, "Ended episode " +epi.getEpisodeId()+

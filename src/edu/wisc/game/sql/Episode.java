@@ -115,7 +115,7 @@ s	    non-existing piece) the value may be different from those of
 	/** This method should only be used if the Pick object 
 	    has been created by a constructor that takes a Piece
 	    argument; otherwise, null may be returned */
-	Piece getPiece() {
+	public Piece getPiece() {
 	    return piece;
 	}
 	Piece piece =  null;
