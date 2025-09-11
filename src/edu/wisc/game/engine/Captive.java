@@ -11,6 +11,7 @@ import edu.wisc.game.sql.*;
 import edu.wisc.game.parser.*;
 import edu.wisc.game.sql.Episode.OutputMode;
 import edu.wisc.game.rest.*;
+import edu.wisc.game.saved.TranscriptManager;
 
 
 /** The main class for the Captive Game Server */
@@ -153,7 +154,7 @@ public class Captive {
 	return log;
 
     }
-
+ 
 
 
     /** A complete CGS session. Creates a game generator, creates a
@@ -212,7 +213,7 @@ public class Captive {
 	    //-- transcript
 	    if (false) {
 		//zzz
-		TranscriptManger.ExtraTranscriptInfo extra = new  TranscriptManger.ExtraTranscriptInfo();
+		TranscriptManager.ExtraTranscriptInfo extra = new  TranscriptManager.ExtraTranscriptInfo();
 		extra.playerId = log.nickname;
 		extra.trialListId = x.getTrialListId();
 		extra.seriesNo = 0;
