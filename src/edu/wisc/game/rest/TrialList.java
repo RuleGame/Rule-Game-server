@@ -25,6 +25,7 @@ public class TrialList extends Vector<ParaSet> {
     @XmlElement
     public void setErrmsg(String _errmsg) { errmsg = _errmsg; }
 
+    /** The path to the file from which the trial list has been read */
     public String getPath() { return path; }
     @XmlElement
     public void setPath(String _path) { path = _path; }
@@ -146,6 +147,7 @@ public class TrialList extends Vector<ParaSet> {
 	    return new File(base, expMain);
 	}
 
+	/** @param An experiment name plan (static or dynamic of any type) */
 	public ExperimentPlanHandle(String exp)  throws IOException{
 	    String q[] = exp.split(":");
 	    if (q.length==1) { // traditional static plan

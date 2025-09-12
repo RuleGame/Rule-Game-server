@@ -1047,9 +1047,8 @@ public class EpisodeInfo extends Episode {
 	return new ExtendedDisplay(0, _code, false, _errmsg, true);
     }
 
-
-
-   void old_saveDetailedTranscriptToFile(File f) {
+    /** Obsoleted: replaced by a method in saved.TranscriptManager */
+    void old_saveDetailedTranscriptToFile(File f) {
 
        final String[] keys = 
 	   { "playerId",

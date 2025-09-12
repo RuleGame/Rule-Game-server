@@ -95,7 +95,7 @@ class GameSocketServerThread extends Thread {
 		    argv = ht.enrichFromArgv(argv);
 		    GameGenerator gg;
 		    try {
-			gg = Captive.buildGameGenerator(ht, argv);
+			gg = Captive.buildGameGenerator(ht, argv).gg;
 		    } catch(Exception ex) {
 			respond(out, Episode.CODE.INVALID_RULES, "Exception: " + ex.getMessage());
 			return;		

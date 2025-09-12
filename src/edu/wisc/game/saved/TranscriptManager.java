@@ -75,11 +75,11 @@ episodeNo, -- same as in log files (sequentially numbered within run or within s
 	the CGS just has an Episode, not an EpisodeInfo, the missing
 	info has to be supplied separately.
      */
-    public class ExtraTranscriptInfo {
+    static public class ExtraTranscriptInfo {
 	public String playerId, trialListId, ruleId;
 	public int seriesNo, episodeNo;
 
-	ExtraTranscriptInfo() {}
+	public ExtraTranscriptInfo() {}
 	ExtraTranscriptInfo(EpisodeInfo ei) {
 	    PlayerInfo x =  ei.getPlayer();
 	    playerId = x.getPlayerId();
@@ -91,11 +91,18 @@ episodeNo, -- same as in log files (sequentially numbered within run or within s
 	}
     }
 
-    /**
-       @param extra If epi is an Episode, rather than EpisodeInfo, this structure should
-       contain missing values.
+    /** Appends the transcript of an episode to a file.
+       @param epi The episode whose transcript is to be written out
+       @param extra If epi is an Episode, rather than EpisodeInfo, his
+       structure should contain missing values. If epi is an
+       EpisodeInfo, this argument is ignored (and thus can be null).
+       @param f File to which the episode's transcript will be
+       appended. The file should not be currently opened, because this
+       method will open it, write the data, and then close the file.
+       If the file is empty, this method will start with writing out
+       the header.
      */
-    void saveDetailedTranscriptToFile(Episode epi, ExtraTranscriptInfo extra, File f) {
+    public static void saveDetailedTranscriptToFile(Episode epi, ExtraTranscriptInfo extra, File f) {
 
        final String[] keys = 
 	   { "playerId",
@@ -165,7 +172,10 @@ episodeNo, -- same as in log files (sequentially numbered within run or within s
 	   if (move instanceof Move && move.getCode()==CODE.ACCEPT) 	   objectCnt--;
 	   h.put("objectCnt",objectCnt);
 	   Vector<String> v = new Vector<>();
-	   for(String key: keys) v.add("" + h.get(key));
+	   for(String key: keys) {
+	       Object o = h.get(key);
+	       v.add(o==null? "": "" + h.get(key));
+	   }
 	   lines.add(String.join(",", v));
        }
           

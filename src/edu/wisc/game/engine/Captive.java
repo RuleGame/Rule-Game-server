@@ -50,6 +50,16 @@ public class Captive {
 	}
     }*/
 
+    /** A wrapper used for a method to return a GameGenerator 
+	along with some auxiliary info (which may be needed 
+	later for transcript recording).
+     */	
+    public static class GGWrapper {
+	public GameGenerator gg;
+	String trialListId=null;
+	int seriesNo=0;
+    }
+    
     /** Creates a GameGenerator based on the parameters found in the command
 	line 
 	@param argv The argv array (from the command line or the GAME
@@ -59,19 +69,20 @@ public class Captive {
 	the simplified rule set name (no dir name and no extension)
 	will be put.
     */
-    public static GameGenerator buildGameGenerator(ParseConfig ht, String[] argv//,
+    public static GGWrapper buildGameGenerator(ParseConfig ht, String[] argv//,
 					    // Vector<String> simpleRuleSetName
 					    ) throws IOException,  RuleParseException, ReflectiveOperationException, IllegalInputException{
-	GameGenerator gg = buildGameGenerator2(ht, argv);
-	gg.setConditionsFromHT(ht);
-	return gg;
+	GGWrapper ggw = buildGameGenerator2(ht, argv);
+	ggw.gg.setConditionsFromHT(ht);
+	return ggw;
     }
 
     /** The inner part of the above */
-    private static GameGenerator buildGameGenerator2(ParseConfig ht, String[] argv//,
+    private static GGWrapper buildGameGenerator2(ParseConfig ht, String[] argv//,
 					    // Vector<String> simpleRuleSetName
 					    ) throws IOException,  RuleParseException, ReflectiveOperationException, IllegalInputException{
 
+	GGWrapper ggw = new GGWrapper();
 	
 	long seed = ht.getOptionLong("seed", 0L);
 	final RandomRG random= (seed != 0L)? new RandomRG(seed): new RandomRG();
@@ -81,13 +92,14 @@ public class Captive {
 	String fname = argv[ja++];
 	boolean isR = fname.startsWith("R:"); // R:ruleSet:modifier
 
-	if (isR) {
+	if (isR) { // fname="R:ruleSetName:modifier"
 	    //ExperimentPlanHandle eph = new TrialList.ExperimentPlanHandle(exp);
 	    //String r = eph.mainRuleSetName.replaceAll(".*/", "").replaceAll("\\.txt$", "");
 	    //simpleRuleSetName.add(r);
 	    TrialList trialList = new TrialList(fname, null);
 	    ParaSet para = trialList.elementAt(0);
-	    return  GameGenerator.mkGameGenerator(random, para);
+	    ggw.gg = GameGenerator.mkGameGenerator(random, para);
+	    return ggw;
 	}
 
 	
@@ -103,7 +115,11 @@ public class Captive {
 
 		// argv[ja:...] can contain either  (trialListFile, rowNo), or (nPieceRanges, ...)
  
-		return RandomGameGenerator.buildFromArgv(random, null, ht, argv, ja-1);
+	    ggw.gg = RandomGameGenerator.buildFromArgv(random, null, ht, argv, ja-1);
+	    ggw.trialListId = f.getName().replaceAll("\\.csv$", "");
+	    int rowNo = Integer.parseInt(argv[ja]);	     // 1-based
+	    ggw.seriesNo = rowNo-1; // 0-based
+	    return ggw;
 
 	}
 
@@ -111,12 +127,14 @@ public class Captive {
 	if (b.indexOf(".")>=0) { // Rule file + initial board file
 	    File bf = new File(b);
 	    Board board = Board.readBoard(bf);
-	    return new TrivialGameGenerator(random, new Game(AllRuleSets.read(f), board));
+	    ggw.gg = new TrivialGameGenerator(random, new Game(AllRuleSets.read(f), board));
+	    return ggw;
 	} else { // Rule file + numeric params
 	    try {
 		// argv[ja:...] can contain either  (trialListFile, rowNo), or (nPieceRanges, ...)
  
-		return RandomGameGenerator.buildFromArgv(random, f, ht, argv, ja-1);
+		ggw.gg = RandomGameGenerator.buildFromArgv(random, f, ht, argv, ja-1);
+		return ggw;
 	    } catch(IllegalArgumentException ex) {
 		throw ex;
 		//usage(ex.getMessage());
@@ -184,12 +202,21 @@ public class Captive {
 
 	MlcLog log=mkLog(ht);		      
 
+	File transcriptFile = null;
+	String transcriptFileName=ht.getOption("transcript", null);
+	if (transcriptFileName!=null) {
+	    if (log==null) usage("Cannot use 'transcript=...' without 'log=...'");			       
+	    transcriptFile = new File(transcriptFileName);
+	}
+	
+	GGWrapper ggw=null;
 	GameGenerator gg=null;
 	try {
-	    gg = buildGameGenerator(ht, argv);
+	    ggw = buildGameGenerator(ht, argv);
 	} catch(Exception ex) {
 	    usage("Cannot create game generator. Problem: " + ex.getMessage());
 	}
+	gg = ggw.gg;
 	        	
 	if (log!=null) log.rule_name = gg.getRules().file.getName().replaceAll("\\.txt$", "");
 
@@ -211,14 +238,17 @@ public class Captive {
 
 
 	    //-- transcript
-	    if (false) {
+	    if (transcriptFile != null) {
 		//zzz
 		TranscriptManager.ExtraTranscriptInfo extra = new  TranscriptManager.ExtraTranscriptInfo();
 		extra.playerId = log.nickname;
-		extra.trialListId = x.getTrialListId();
-		extra.seriesNo = 0;
-		extra.ruleId = ser.para.getRuleSetName();
+		extra.trialListId = ggw.trialListId;
+		extra.seriesNo = ggw.seriesNo;
+		extra.ruleId = log.rule_name;
 		extra.episodeNo = gameCnt;
+
+		TranscriptManager.saveDetailedTranscriptToFile(epi, extra, transcriptFile);
+		//transcriptFile.flush();
 	    }
   
 

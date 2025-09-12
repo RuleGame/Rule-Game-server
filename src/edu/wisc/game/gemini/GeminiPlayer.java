@@ -474,7 +474,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
 	GameGenerator gg=null;
 	try {
-	    gg = Captive.buildGameGenerator(ht, argv);
+	    gg = Captive.buildGameGenerator(ht, argv).gg;
 	} catch(Exception ex) {
 	    usage("Cannot create game generator. Problem: " + ex.getMessage());
 	}
