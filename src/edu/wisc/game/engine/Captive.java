@@ -203,9 +203,9 @@ public class Captive {
 	MlcLog log=mkLog(ht);		      
 
 	File transcriptFile = null;
-	String transcriptFileName=ht.getOption("transcript", null);
+	String transcriptFileName=ht.getOption("detailedTranscript", null);
 	if (transcriptFileName!=null) {
-	    if (log==null) usage("Cannot use 'transcript=...' without 'log=...'");			       
+	    if (log==null) usage("Cannot use 'detailedTranscript=...' without 'log=...'");			       
 	    transcriptFile = new File(transcriptFileName);
 	}
 	

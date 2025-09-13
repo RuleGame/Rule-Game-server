@@ -476,6 +476,60 @@ JohnDoe,colOrd_nearby,1,1,9,9,1.0,1
 JohnDoe,colOrd_nearby,1,2,9,2,0.5,0
 </pre>
 
+
+<h3><a name="detailed">Generating a detailed transcript</a></h3>
+
+<p>Since ver. 8.031, it is possible to request the CGS to generate a detailed transcript of all episodes, describing each move in the same way human players' moves are described in the <a href="data.html#detailed">detailed transcripts</a> saved by the web-based Game Server. This is requested with the option <tt>detailedTranscript=<em>file_name</em></tt>. Due to some silly technical reasons, this option can only be used if the option <tt>log=<em>log_file_name</em></tt> is used as well. 
+
+<P>The transcript data are always <em>appended</em> to a detailed transcript file. So if you want the recording to start from scratch, make sure to remove the old file of the same name!
+
+<p>Sample usage:
+<pre>
+rm transcript.csv
+captive-full.sh /opt/w2020/game-data/trial-lists/FDCL/basic/basic-01-A.csv 1 log=log.csv log.nickname=vm log.run=0 detailedTranscript=transcript.csv
+</pre>
+The generated detailed transcript file may look like this:
+<pre>
+#playerId,trialListId,seriesNo,ruleId,episodeNo,episodeId,moveNo,timestamp,mover,reactionTime,objectType,objectId,y,x,bucketId,by,bx,code,objectCnt
+vm,basic-01-A,0,cm_RBKY,0,20250912-011156-RHVMVO,0,20250912-011205.697,0,9.112,BLUE_SQUARE,0,2,4,1,7,7,0,8
+vm,basic-01-A,0,cm_RBKY,0,20250912-011156-RHVMVO,1,20250912-011211.632,0,5.935,BLACK_SQUARE,1,2,5,2,0,7,0,7
+vm,basic-01-A,0,cm_RBKY,0,20250912-011156-RHVMVO,2,20250912-011215.624,0,3.992,RED_STAR,2,3,5,0,7,0,0,6
+vm,basic-01-A,0,cm_RBKY,0,20250912-011156-RHVMVO,3,20250912-011218.504,0,2.88,YELLOW_CIRCLE,3,4,3,3,0,0,0,5
+vm,basic-01-A,0,cm_RBKY,0,20250912-011156-RHVMVO,4,20250912-011222.112,0,3.608,RED_CIRCLE,4,4,4,0,7,0,0,4
+vm,basic-01-A,0,cm_RBKY,0,20250912-011156-RHVMVO,5,20250912-011225.880,0,3.768,BLUE_TRIANGLE,5,5,3,1,7,7,0,3
+vm,basic-01-A,0,cm_RBKY,0,20250912-011156-RHVMVO,6,20250912-011229.456,0,3.576,BLACK_SQUARE,6,6,2,2,0,7,0,2
+vm,basic-01-A,0,cm_RBKY,0,20250912-011156-RHVMVO,7,20250912-011233.168,0,3.712,BLUE_CIRCLE,7,6,3,1,7,7,0,1
+vm,basic-01-A,0,cm_RBKY,0,20250912-011156-RHVMVO,8,20250912-011236.096,0,2.928,RED_CIRCLE,8,6,4,0,7,0,0,0
+vm,basic-01-A,0,cm_RBKY,1,20250912-011249-6IYZOT,0,20250912-011436.489,0,106.659,BLACK_SQUARE,7,4,4,2,0,7,0,8
+vm,basic-01-A,0,cm_RBKY,1,20250912-011249-6IYZOT,1,20250912-011444.986,0,8.497,BLACK_STAR,8,5,6,2,0,7,0,7
+vm,basic-01-A,0,cm_RBKY,1,20250912-011249-6IYZOT,2,20250912-011456.650,0,11.664,RED_SQUARE,0,1,3,0,7,0,0,6
+... ... ...
+</pre>
+While the semantics of most fields in this detailed transcript is as close to that of the corresponding fields in the detailed transcripts of human players, some require additional explanation. Those are the fields that are important in our human players' framework, but don't apply well to the realities of an ML program playing with the CGS. Specifically:
+<ul>
+<li>playerId -- the CGS puts here the same value that appears in the "nickname" field of CGS logs (supplied in the log.nickname option)
+<li>trialListId -- in those runs when the CGS is given the name of a trial list file as an argument, that name is printed (without extenstion). Otherwise, blank.
+<li>seriesNo --  in those runs when the CGS is given the name of a trial list file and a (1-based) row number as an argument, the CGS prints the (0-based) row number; otherwise, 0. (The conversion from 1-based to 0-based is for compatibility with the human players' transcripts).
+<li>ruleId -- in those runs when the CGS is actually given the name of a trial list file and a row number as an argument, the rule name comes from the parameter set in the trial list file. In other runs, that can be inferred from the rule set file name supplied as a command line argument. In the latter case, though, the CGS just uses the file name without the full path relative to the game-data/rules directory (e.g. just "ccw" rather than "FDCL/basic/ccw"), because the full name may not always be provided anyway.
+<li>episodeNo -- same as in log files (sequentially numbered within the file (or within the run, if you reuse the log file for multiple runs), starting from 0
+</ul>
+
+<p>Another usage example:
+  <pre>
+rm transcript.csv  
+captive-full.sh /opt/w2020/game-data/rules/FDCL/basic/ccw.txt 3 log=log.csv log.nickname=vm log.run=0 detaieldTranscript=transcript.csv
+  </pre>
+The detailed transcript:  
+  <pre>
+#playerId,trialListId,seriesNo,ruleId,episodeNo,episodeId,moveNo,timestamp,mover,reactionTime,objectType,objectId,y,x,bucketId,by,bx,code,objectCnt
+vm,,0,ccw,0,20250913-011405-2FGIDD,0,20250913-011426.892,0,21.263,RED_TRIANGLE,0,1,6,1,7,7,0,2
+vm,,0,ccw,0,20250913-011405-2FGIDD,1,20250913-011432.874,0,5.982,RED_STAR,2,4,6,0,7,0,0,1
+vm,,0,ccw,0,20250913-011405-2FGIDD,2,20250913-011438.402,0,5.528,YELLOW_TRIANGLE,1,4,5,3,0,0,0,0
+vm,,0,ccw,1,20250913-011443-F0RAVC,0,20250913-011450.768,0,7.119,YELLOW_CIRCLE,2,5,6,1,7,7,0,2
+vm,,0,ccw,1,20250913-011443-F0RAVC,1,20250913-011457.912,0,7.144,BLUE_TRIANGLE,1,3,6,0,7,0,0,1
+vm,,0,ccw,1,20250913-011443-F0RAVC,2,20250913-011504.170,0,6.258,RED_CIRCLE,0,2,6,3,0,0,0,0
+...  ...
+  </pre>
   
 <h2>Your Machine Learning application talking to the CGS</h2>
 
