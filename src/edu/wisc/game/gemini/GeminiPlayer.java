@@ -702,7 +702,9 @@ void addFutureBoards(GameGenerator gg) {
     @param future The initial boards for the future episodes.
  */
     private GeminiRequest makeRequestPrepared(GeminiPlayer future) throws IOException {
-	GeminiRequest gr = new GeminiRequest();	    
+	GeminiRequest gr = new GeminiRequest();
+	gr.setNeedResponseSchema(true); // ask for structured response
+	
 	gr.addInstruction(instructions);
 	gr.addTemperature(temperature);
 	gr.addMaxOutputTokens(maxToken);

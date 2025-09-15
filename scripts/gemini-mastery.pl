@@ -53,11 +53,10 @@ foreach my $target (@targets) {
 		last;
 	    }
 	}
-	if (defined $mStar) {
-	    print "mStar($rule,$target)=$mStar\n";
-	    my $key = "$rule.$target";
-	    $h{$key} = $mStar;
-	}
+	(defined $mStar) or $mStar = "Infinity";
+	print "mStar($rule,$target)=$mStar\n";
+	my $key = "$rule.$target";
+	$h{$key} = $mStar;
 
 	
     }
