@@ -17,7 +17,7 @@ import edu.wisc.game.sql.Episode.Pick;
 import edu.wisc.game.sql.Episode.Move;
 import edu.wisc.game.rest.*;
 import edu.wisc.game.engine.*;
-
+import edu.wisc.game.saved.TranscriptManager;
 
 
 public class GeminiPlayer  extends Vector<EpisodeHistory> {
@@ -41,7 +41,7 @@ public class GeminiPlayer  extends Vector<EpisodeHistory> {
 	System.err.println("Usage:\n");
 	System.err.println("  java [options]  edu.wisc.game.gemini.GeminiPlayer game-rule-file.txt board-file.json");
 	System.err.println("  java [options]  edu.wisc.game.gemini.GeminiPlayer game-rule-file.txt npieces [nshapes ncolors]");
-	System.err.println("  java [options]  edu.wisc.game.gemini.GeminiPlayer trial-list-file.csv rowNumber");
+	System.err.println("  java [options]  edu.wisc.game.gemini.GeminiPlayer uildtrial-list-file.csv rowNumber");
 	System.err.println("  java [options]  edu.wisc.game.gemini.GeminiPlayer R:rule-file.txt:modifier-file.csv");
 	System.err.println("Each of 'npieces', 'nshapes', and 'ncolors' is eitheвr 'n' (for a single value) or 'n1:n2' (for a range). '0' means 'any'");
 	if (msg!=null) 	System.err.println(msg + "\n");
@@ -410,6 +410,11 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
     private static double targetR=0;
     private static OutputMode outputMode =  OutputMode.FULL; 
     private static MlcLog log=null;
+
+    /** If not null, the detailed transcript is written here */
+    private File transcriptFile = null;
+    private Captive.GGWrapper ggw=null;
+
     
     /** Modeled on Captive.java
 	model=gemini-2.0-flash
@@ -471,10 +476,12 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	if (inputDir!=null) Files.setInputDir(inputDir);
 
 	log=Captive.mkLog(ht);		      
+	GeminiPlayer history = new GeminiPlayer();
 
 	GameGenerator gg=null;
 	try {
-	    gg = Captive.buildGameGenerator(ht, argv).gg;
+	    history.ggw = Captive.buildGameGenerator(ht, argv);
+	    gg = history.ggw.gg;
 	} catch(Exception ex) {
 	    usage("Cannot create game generator. Problem: " + ex.getMessage());
 	}
@@ -491,9 +498,15 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
 	if (log!=null) log.open();
 
-	GeminiPlayer history = new GeminiPlayer();
+	String transcriptFileName=ht.getOption("detailedTranscript", null);
+	if (transcriptFileName!=null) {
+	    //if (log==null) usage("Cannot use 'detailedTranscript=...' without 'log=...'");			       
+	    history.transcriptFile = new File(transcriptFileName);
+	}
+
 
 	
+
 
 	System.out.println("Instructions are: {\n" + instructions +  "\n}");
 	if (temperature==null) {
@@ -985,44 +998,44 @@ void askAboutPreparedEpisodes(GeminiPlayer future) throws IOException,  Reflecti
 /** Handles one candidate with proposed moves in it. This is called on the 
 "future" object  */
 private void digestProposedMoves(String line)  throws ReflectiveOperationException {
-	    System.out.println("Response text={" + line.trim() + "}");
+    System.out.println("Response text={" + line.trim() + "}");
 
-	    MoveLine[][] r =  PreparedEpisodesResponse.parseResponse(line);
-	    if (r==null) { // field not supplied
-		return;
-	    }
-	               
-	    System.out.println("Found " + r.length + " proposed solutions in the response, for "+size() + " future boards");
-	    if (r.length != size()) throw new IllegalArgumentException("Future board count mismatch");
-
-	    int nc=0, nGoodMoves=0, nAttempts=0;
-	    
-	    for(int j=0; j<r.length; j++) {
- 
-		Episode epi = get(j).epi;
-		epi.reset();
-		int n = epi.getNPiecesStart();
-		if (n!=r[j].length) {
-		    System.err.println("Warning: the number of returned moves (" + r[j].length +  ") is different from the board population ("+n+")");
-		}
-		
-		for(int i=0; i<r[j].length; i++) {
-		    int [] w = r[j][i].asPair();
-		    int code = digestMoveBasic(get(j), w);
-		    nAttempts ++;
-		    if (code == Episode.CODE.ACCEPT) nGoodMoves ++;
-		}	   
-	    
-		System.out.println("Future board "+j+ " of "+r.length+": Result of proposed moves: cleared=" + epi.getCleared() + ", good moves count=" + epi.getDoneMoveCnt() + "/" + r[j].length);
-		if ( epi.getCleared() ) nc++;
-
-		log.logEpisode(epi, j);
-
-		
-	    }
-
-	    System.out.println("Overall, cleared boards: " + nc + "/" + r.length +", good moves: " + nGoodMoves + "/" + nAttempts);
+    MoveLine[][] r =  PreparedEpisodesResponse.parseResponse(line);
+    if (r==null) { // field not supplied
+	return;
+    }
+    
+    System.out.println("Found " + r.length + " proposed solutions in the response, for "+size() + " future boards");
+    if (r.length != size()) throw new IllegalArgumentException("Future board count mismatch");
+    
+    int nc=0, nGoodMoves=0, nAttempts=0;
+    
+    for(int j=0; j<r.length; j++) {
+	
+	Episode epi = get(j).epi;
+	epi.reset();
+	int n = epi.getNPiecesStart();
+	if (n!=r[j].length) {
+	    System.err.println("Warning: the number of returned moves (" + r[j].length +  ") is different from the board population ("+n+")");
 	}
+	
+	for(int i=0; i<r[j].length; i++) {
+	    int [] w = r[j][i].asPair();
+	    int code = digestMoveBasic(get(j), w);
+	    nAttempts ++;
+	    if (code == Episode.CODE.ACCEPT) nGoodMoves ++;
+	}	   
+	    
+	System.out.println("Future board "+j+ " of "+r.length+": Result of proposed moves: cleared=" + epi.getCleared() + ", good moves count=" + epi.getDoneMoveCnt() + "/" + r[j].length);
+	if ( epi.getCleared() ) nc++;
+	
+	log.logEpisode(epi, j);
+	
+		
+    }
+    
+    System.out.println("Overall, cleared boards: " + nc + "/" + r.length +", good moves: " + nGoodMoves + "/" + nAttempts);
+}
 
 
 
@@ -1088,41 +1101,57 @@ private Boolean digestMove(int[] w)// throws IOException
     Episode epi = ehi.epi;
 
     int code = digestMoveBasic(ehi, w);
-	
+
+    //-- transcript
+    if (transcriptFile != null) {
+	TranscriptManager.ExtraTranscriptInfo extra = new  TranscriptManager.ExtraTranscriptInfo();
+	extra.playerId = model;
+	// zzzz
+	extra.trialListId = ggw.trialListId;
+	extra.seriesNo = ggw.seriesNo;
+	/* 
+	extra.ruleId = log.rule_name;
+	extra.episodeNo = gameCnt;
+	*/
+	TranscriptManager.saveDetailedTranscriptToFile(epi, extra, transcriptFile);
+    }
+	   
+
+    
     Vector<Pick> moves = epi.getTranscript();
     final int n = moves.size();
 
-    	    boolean redundant = ehi.repeats.lastAddResult;
+    boolean redundant = ehi.repeats.lastAddResult;
 	    
-	    String stats = "Transcript has "+epi.getTranscript().size()+" moves. Board pop="+epi.getValues().size()+". lastStretch=" + lastStretch + ", lastR=" + lastR;
-	    
-	    System.out.println(stats);
-
-	    if (remind && ehi.repeats.totalRepeats()>0) {
-		stats = "The episode includes " + ehi.repeats.totalRepeats()
-		    + " redundant moves";
-		if (redundant) stats += ", including the last one.";
-		System.out.println(stats);
-	    }
-
-
-	    boolean won = false;
-	    if (targetStreak>0 & lastStretch>=targetStreak) won = true;
-	    if (targetR>0 & lastR>=targetR) won = true;
-	    
-
-	    if (won) {
-		System.out.println("Victory: mastery demonstrated! " + stats);
-		return true;
-	    }
+    String stats = "Transcript has "+epi.getTranscript().size()+" moves. Board pop="+epi.getValues().size()+". lastStretch=" + lastStretch + ", lastR=" + lastR;
+    
+    System.out.println(stats);
+    
+    if (remind && ehi.repeats.totalRepeats()>0) {
+	stats = "The episode includes " + ehi.repeats.totalRepeats()
+	    + " redundant moves";
+	if (redundant) stats += ", including the last one.";
+	System.out.println(stats);
+    }
 
 
-	    if (max_requests > 0 && requestCnt >= max_requests) {
-		System.out.println("Request limit (" + max_requests+") reached");
-		return false;
-	    }
-	    return null;
-   }
+    boolean won = false;
+    if (targetStreak>0 & lastStretch>=targetStreak) won = true;
+    if (targetR>0 & lastR>=targetR) won = true;
+    
+
+    if (won) {
+	System.out.println("Victory: mastery demonstrated! " + stats);
+	return true;
+    }
+    
+
+    if (max_requests > 0 && requestCnt >= max_requests) {
+	System.out.println("Request limit (" + max_requests+") reached");
+	return false;
+    }
+    return null;
+}
 
 static class MoveLine {
     final int pieceId, bucketNo;

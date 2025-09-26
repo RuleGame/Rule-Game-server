@@ -56,8 +56,8 @@ public class Captive {
      */	
     public static class GGWrapper {
 	public GameGenerator gg;
-	String trialListId=null;
-	int seriesNo=0;
+	public String trialListId=null;
+	public int seriesNo=0;
     }
     
     /** Creates a GameGenerator based on the parameters found in the command
@@ -239,7 +239,6 @@ public class Captive {
 
 	    //-- transcript
 	    if (transcriptFile != null) {
-		//zzz
 		TranscriptManager.ExtraTranscriptInfo extra = new  TranscriptManager.ExtraTranscriptInfo();
 		extra.playerId = log.nickname;
 		extra.trialListId = ggw.trialListId;
@@ -248,7 +247,6 @@ public class Captive {
 		extra.episodeNo = gameCnt;
 
 		TranscriptManager.saveDetailedTranscriptToFile(epi, extra, transcriptFile);
-		//transcriptFile.flush();
 	    }
   
 

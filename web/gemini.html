@@ -257,9 +257,9 @@ As almost everything with the Gemini server, the limits and the way to reacting 
 
 		    
      
-  <h2><a name="FDCL">Gemini results on the rule sets from the FDCL/basic suite</a></h2>
+  <h2><a name="FDCL">Gemini results (Play mode) on the rule sets from the FDCL/basic suite</a></h2>
 
-<p>The results for the newer model, <tt>gemini-2.5-flash-preview-05-20</tt> are usually much better than for <tt>gemini-2.0-flash</tt>, which rarely accomplishes anything of note. For each rule set below, unless two models are explicitly compared, the results are for the newer, better model.
+<p>The play-mode results for the newer model, <tt>gemini-2.5-flash-preview-05-20</tt> are usually much better than for <tt>gemini-2.0-flash</tt>, which rarely accomplishes anything of note. For each rule set below, unless two models are explicitly compared, the results are for the newer, better model.
 
 <p>In general, it seems that Gemini 2.5 Flash achieves Paul's suggested "mastery criterion" (10 successful move attempts in a row) on most of the rule sets from the FDCL/basic suite that we have tried. It does it fairly quickly, typically in under 100 moves (half a dozen episodes or so), and sometimes much faster than that. (Of course, since a Gemini 2.5 response takes up to 1-2 minutes to obtain, at least for free tier subscribers, we are still talking about the clock time on the order of an hour or several hours per problem).
 
@@ -809,7 +809,7 @@ action game-data/gemini> dir system-prepared-0?.txt
 <p>
  For each rule set, the same RG seed (seed=1) is used in all runs; therefore, the set of 3 episodes shown to the bot e.g. in the prepared-a-3 run is the same as the one shown in the prepared-b-3 run, and a subset of the set shown in the prepared-a-5 and prepared-b-5 runs.
 
-<p>For comparison, the table also contains the <em>m<sub>*</sub></em> ("moves to mastery") numbers from the play-mode experiments, for those rule sets where a play-mode experiment was conducted and a level of "mastery" (10 error-free moves) was displayed.
+<p>For comparison, the table also contains the <em>m<sub>*</sub></em> ("moves to mastery") numbers from the play-mode experiments, for those rule sets where a play-mode experiment was conducted and a level of "mastery" (10 error-free moves) was displayed. The value "Infinity" is used when the play was interrupted, without displaying "mastery", after a large number of moves (typically, at least 300).
  
 <table border=1>
 <tr><th>Rule set<th colspan=1>Play-mode runs:<br>m<sub>*</sub> (moves until mastery)<th colspan=7>Prepared-episodes runs:<br>Good future episodes (out of 15)</tr>
@@ -827,11 +827,11 @@ action game-data/gemini> dir system-prepared-0?.txt
 <tr><th align=left>cm_RBKY_cw_0123<td>71<td>3 <td>0 <td>0 <td>0 <td>1 <td>1 <td>0 </tr>
 <tr><th align=left>col1OrdBuck_BRKY0213<td>95<td>1 <td>0 <td>1 <td>0 <td>1 <td>0 <td>0 </tr>
 <tr><th align=left>col1OrdBuck_BRKY3120<td><td>1 <td>0 <td>0 <td>0 <td>2 <td>0 <td>0 </tr>
-<tr><th align=left>col1Ord_BRKY<td><td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>col1Ord_BRKY<td>Infinity <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
 <tr><th align=left>col1Ord_KRBY<td><td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
-<tr><th align=left>colOrdL1_BRKY<td><td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>colOrdL1_BRKY<td>Infinity<td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
 <tr><th align=left>colOrdL1_KBYR<td><td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
-<tr><th align=left>cw<td><td>15 <td>15 <td>15 <td>15 <td>15 <td>15 <td>10 </tr>
+<tr><th align=left>cw<td>37 <td>15 <td>15 <td>15 <td>15 <td>15 <td>15 <td>10 </tr>
 <tr><th align=left>cw_0123<td>6<td>15 <td>15 <td>15 <td>10 <td>2 <td>12 <td>10 </tr>
 <tr><th align=left>ordL1<td>16<td>0 <td>1 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
 <tr><th align=left>ordL1_Nearby<td>6<td>0 <td>0 <td>0 <td>0 <td>5 <td>0 <td>5 </tr>
@@ -844,13 +844,14 @@ action game-data/gemini> dir system-prepared-0?.txt
 <tr><th align=left>sha1OrdBuck_tqsc0213<td><td>0 <td>0 <td>0 <td>0 <td>0 <td>1 <td>0 </tr>
 <tr><th align=left>sha1Ord_csqt<td>77<td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
 <tr><th align=left>sha1Ord_qcts<td><td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
-<tr><th align=left>shaOrdL1_csqt<td><td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>shaOrdL1_csqt<td>Infinity <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
 <tr><th align=left>shaOrdL1_qcts<td><td>0 <td>0 <td>0 <td>0 <td>0 <td>0 <td>0 </tr>
 <tr><th align=left>sm_csqt<td><td>10 <td>8 <td>0 <td>15 <td>2 <td>10 <td>0 </tr>
 <tr><th align=left>sm_qcts<td>14<td>10 <td>10 <td>5 <td>15 <td>15 <td>5 <td>4 </tr>
 </table>
 
 
+<P>For the data from this table broken down into groups see the <a href="gemini-table-groups.html">group breakdown table</a>
    
 <p>To ward off Paul's suggestion that the bot perhaps may somehow "transfer learning between runs", we also had a series of experiments where a different RG seed was used for each run. (Otherwise, the experiments were organized the same way as those described in the previous table). It showed no quantitive difference from the above.
 
