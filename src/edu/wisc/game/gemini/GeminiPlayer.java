@@ -578,6 +578,9 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 		    log.logEpisode(epi, gameCnt);
 		    System.out.println("Logged episode " + (gameCnt+1) );
 		}
+
+		history.saveDetailedTranscript();
+		
 	    }
 
 	    if (max_requests > 0 && history.requestCnt >= max_requests) {
@@ -617,6 +620,25 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	*/
     }
 
+    /** If transcripting is requested, saves the detailed transcript of the most recent episode.
+	Should be called at the end of each episode */
+    // zzz
+    private void saveDetailedTranscript() {
+	if (transcriptFile != null) {
+
+	    EpisodeHistory ehi = lastElement();
+	    Episode epi = ehi.epi;
+
+	    
+	    TranscriptManager.ExtraTranscriptInfo extra = new  TranscriptManager.ExtraTranscriptInfo();
+	    extra.playerId = model;
+	    extra.trialListId = ggw.trialListId;
+	    extra.seriesNo = ggw.seriesNo; 
+	    extra.ruleId = log.rule_name;
+	    extra.episodeNo = size()-1;
+	    TranscriptManager.saveDetailedTranscriptToFile(epi, extra, transcriptFile);
+	}
+    }
 
     /** Adds a few future boards to this GeminiPlayer object */
 void addFutureBoards(GameGenerator gg) {
@@ -1100,20 +1122,6 @@ private Boolean digestMove(int[] w)// throws IOException
 
     int code = digestMoveBasic(ehi, w);
 
-    //-- transcript
-    if (transcriptFile != null) {
-	TranscriptManager.ExtraTranscriptInfo extra = new  TranscriptManager.ExtraTranscriptInfo();
-	extra.playerId = model;
-	// zzzz
-	extra.trialListId = ggw.trialListId;
-	extra.seriesNo = ggw.seriesNo; 
-	extra.ruleId = log.rule_name;
-	extra.episodeNo = size()-1;
-	TranscriptManager.saveDetailedTranscriptToFile(epi, extra, transcriptFile);
-    }
-	   
-
-    
     Vector<Pick> moves = epi.getTranscript();
     final int n = moves.size();
 
