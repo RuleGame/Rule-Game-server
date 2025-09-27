@@ -708,8 +708,6 @@ void addFutureBoards(GameGenerator gg) {
 	return gr;
     }
 
-    //ZZZ
-
 /** Makes a request describing prepared episodes (stored in this
     player) and future episodes.
     @param future The initial boards for the future episodes.
@@ -1108,11 +1106,9 @@ private Boolean digestMove(int[] w)// throws IOException
 	extra.playerId = model;
 	// zzzz
 	extra.trialListId = ggw.trialListId;
-	extra.seriesNo = ggw.seriesNo;
-	/* 
+	extra.seriesNo = ggw.seriesNo; 
 	extra.ruleId = log.rule_name;
-	extra.episodeNo = gameCnt;
-	*/
+	extra.episodeNo = size()-1;
 	TranscriptManager.saveDetailedTranscriptToFile(epi, extra, transcriptFile);
     }
 	   
