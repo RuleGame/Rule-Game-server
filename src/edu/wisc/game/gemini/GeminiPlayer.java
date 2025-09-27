@@ -889,7 +889,7 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
     }
 
     //    final Pattern movePat = Pattern.compile("\\bMOVE\\s+([0-9]+)\\s+([0-9]+)");
-    final Pattern movePat = Pattern.compile("^MOVE\\s+([0-9]+)\\s+([0-9]+)",
+    final Pattern movePat = Pattern.compile("^MOVE\\s+([0-9]+)\\s+([0-9]+)\\s*$",
 					    Pattern.MULTILINE);
     int lastStretch;
     double lastR;
