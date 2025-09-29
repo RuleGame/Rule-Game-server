@@ -629,6 +629,8 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	    EpisodeHistory ehi = lastElement();
 	    Episode epi = ehi.epi;
 
+	    System.out.println("Writing transcript for episode no. " + size());
+	    
 	    
 	    TranscriptManager.ExtraTranscriptInfo extra = new  TranscriptManager.ExtraTranscriptInfo();
 	    extra.playerId = model;
