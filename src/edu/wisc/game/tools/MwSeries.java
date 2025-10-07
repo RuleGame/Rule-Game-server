@@ -6,7 +6,6 @@ import java.util.stream.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.rest.*;
-//import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.saved.*;
 
@@ -233,6 +232,11 @@ public  class MwSeries {
 	    precedingRules.set(j, r);
 	}   
     }
-    
+
+    /** Clears the precedingRules array. This is used in MWH when precMode=ignore
+     */
+    void stripPreceding() {
+	precedingRules.setSize(0);
+    }
     
 }

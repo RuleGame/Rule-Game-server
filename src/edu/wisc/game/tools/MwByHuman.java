@@ -458,6 +458,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 	ser.mStar = defaultMStar;
 	if (precMode == PrecMode.EveryCond) {
 	    ser.adjustPreceding( whatILearned);
+	} else if (precMode == PrecMode.Ignore) {
+	    ser.stripPreceding();
 	}
 	// Do recording only after a successful adjustPreceding (if applicable)
 	if (shouldRecord) 		savedMws.add(ser);

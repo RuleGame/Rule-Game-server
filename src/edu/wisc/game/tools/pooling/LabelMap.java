@@ -10,7 +10,7 @@ import edu.wisc.game.util.*;
 
     <p>
     The underlying HashMap may map "some_foo" to "F"; the method map1()
-    will map "true.some_foo" to "F", and "false.some_foo" to "F". The method
+    will map "true.some_foo" to "F", and "false.some_foo" to "f". The method
     mapCond() may map "true.some_foo:false.other_bar" to "Fb".
   
 */
