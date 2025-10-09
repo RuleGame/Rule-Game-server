@@ -221,7 +221,7 @@ public class PlayerInfo {
     public void setPartnerPlayerId(String _partnerPlayerId) { partnerPlayerId = _partnerPlayerId; }
 
     /** The playerId of player 0 or player 1. This should only be called on a paired player in 2PG.
-	@param mover Whose playerId do you want? 
+	@param mover Whose playerId do you want? Legal values are 0 and 1.
      */
     String getPlayerIdForRole(int mover) {
 	return (pairState==mover)? getPlayerId(): getPartnerPlayerId();
@@ -356,13 +356,23 @@ public class PlayerInfo {
 	final boolean 	cont;
 	final GameGenerator gg;
 
-	/** If not null, there is a bot assistant (8.014+) */
+	/** If not null, there is a bot assistant (8.014+) 
+	 */
 	//@Transient
-	private String botAssistName;
+	final private String botAssistName;
 	public boolean hasBotAssist() {
 	    return botAssistName!=null;
 	}
+	/** Does the specified player (Player 0 or Player 1) has bot assist?
+	 */
+	public boolean hasBotAssist(int mover) {
+	    return hasBotAssist() && mover<botAssistPlayers;
+	}
 
+
+	/** How many players have bot assist? The default is of course 1, but in 2PG the value 2 is allowed as well */
+	final int botAssistPlayers; 
+	
 	public Vector<EpisodeInfo> episodes = new Vector<>();
 	int size() { return episodes.size(); }
 	
@@ -379,8 +389,12 @@ public class PlayerInfo {
 		} else {
 		    throw new IllegalArgumentException("Illegal bot assist name ("+botAssistName+") for player " + playerId);
 		}
+		botAssistPlayers = para.getInt("bot_assist_players", true, 1);
+		if (botAssistPlayers<1 || botAssistPlayers>2) throw new IllegalArgumentException("Illegal value for botAssistPlayers="+ botAssistPlayers);
+
+	    } else {
+		botAssistPlayers = 0;
 	    }
-	   
 
 	}
 
@@ -1226,10 +1240,14 @@ public class PlayerInfo {
 	Board b = epi.getCurrentBoard(true);
 	BoardManager.saveToFile(b, playerId, epi.episodeId, f);
 	f =  Files.transcriptsFile(playerId);
+	// Save the bot assist transcript separately for each player who is
+	// provided with bot assist
 	TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.transcript, anySeriesHasBotAssist(), epi.botAssist!=null);
-	if ( epi.botAssist!=null) {
-	    f = Files.botAssistFile(playerId);
-	    TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.botAssist.botAssistTranscript, false, false);
+	for(int mover=0; mover<epi.mySeries().botAssistPlayers; mover++) {
+	    if ( epi.botAssist[mover]!=null) {
+		f = Files.botAssistFile(playerId, mover);
+		TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.botAssist[mover].botAssistTranscript, false, false);
+	    }
 	}
 	f =  Files.detailedTranscriptsFile(playerId);
 	//epi.saveDetailedTranscriptToFile(f);

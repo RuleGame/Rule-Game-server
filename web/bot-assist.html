@@ -68,9 +68,17 @@ where t is the number of previous steps (the player's move attempts, excluding s
 
 	<p>Note also that the same two parameters are used for configuring the bot partner / bot opponent in two-player games pairing a human and a bot.
 
+
+	  <h3>2PG</h3>
+
+	  How many players are assisted?
+	  bot_assist_players  1 or 2
+	  
 	  
 	  <strike>
 
+	   
+	   
 	  <h3>Older algorithm (used before ver 8.025)</h3>
 	<p>
 	  The one   column that the  bot <tt>pseudo</tt> uses is named <tt>pseudo_halftime</tt>; it contains an integer value that specifies how fast the bot pretends to learn. That is, at every step the bot can elect to either choose a perfectly random move (which may or may not be good), or choose some guaranteed good move (picking it from the set of all possible good moves). The probability of the first election is decaying exponetially; thus, when the bot starts with the rule set, it will choose a move randomly;  after  <tt>pseudo_halftime</tt> moves it's fifty-fifty chance whether the bot will choose your move from the set of all (good or bad) possible move attempts, or from the set of all possible good moves. 

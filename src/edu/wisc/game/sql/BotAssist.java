@@ -27,7 +27,9 @@ class BotAssist {
     Move proposed = null;
 
     /** Checks whether the specified move followed the previous suggestion,
-	and if so, sets the didFollow bit in the Move object */
+	and if so, sets the didFollow bit in the Move object.
+	@param move The object in which the "didFollow" flag is to be set if appropriate.
+    */
     void didHeFollow(Pick move) {
 	if (!(move instanceof Move)) return;
 	if (proposed==null) return;
@@ -35,10 +37,12 @@ class BotAssist {
     }
 
     /** Proposes one more move, adds it to the bot assist transcript,
-	and stores it in "proposed". 
+	and stores it in "proposed". Creates a human-readable chat
+	message to be sent to the player, and saves it in
+	the ExtendedDisplay structure passed to this method.
 
-	@param q The chat message to be included in the current server
-	response will be added to this structure.
+	@param q The structure to which the chat message to be included in the current server
+	response is to be added.
     */
     void makeSuggestion(EpisodeInfo epi, EpisodeInfo.ExtendedDisplay q) throws IOException {
 	Pseudo task = new Pseudo(epi.getPlayer(), epi, epi.getAttemptCnt());

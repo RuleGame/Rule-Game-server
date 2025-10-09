@@ -6,7 +6,7 @@
 
 <h1>Processing human players' transcripts for Mann-Whitney comparison</h1>
 
-<div align="center"><em>Updated 2025-09-08, for Game Server 8.029</em></div>
+<div align="center"><em>Updated 2025-10-07, for Game Server 8.034</em></div>
 
 <p>This document describes the functionality of the script <tt>scripts/analyze-transcripts-mwh.sh</tt>, which is designed to analyze human players' transcripts in order to compare rule sets with respect to their ease/difficulty for the human players' population. The underlying Java class is <tt>edu.wisc.game.tools.MwByHuman</tt>
 
@@ -133,7 +133,7 @@ ep/1_2_color_4m,,ep/rule_ambiguity/ambiguity4,ambiguity4_6,0,A10G8U9316K46H,fals
 <p>In the output file, each line (after the header line) corresponds to 1 series, i.e. the series of episodes played by one player against one rule set. The meaning of the columns is as follows:
   <ul>
     <li>ruleSetName - the rule set being played
-    <li>precedingRules - the semicolon-separated list of rule sets, if any, this player played before encountering this rule set
+    <li>precedingRules - the semicolon-separated list of rule sets, if any, this player played before encountering this rule set. This column is empty with <tt>precMode=Naive</tt> (since only series with preceding ones are included) or  with <tt>precMode=Ignore</tt> (since preceding rules are ignored in this mode)
     <li>exp,trialListId,seriesNo - the experiment plan, and the trial list within that plan, and the sequential number (0-based) of the rule set in the trial list
     <li>learned - "true" or "false" depending on whether the player has "demonstrated learning" in that series (i.e. managed either to make the prescribed number [targetStreak] of consecutive error free moves, or to reach the prescribed "unlikelihood factor" [targetR], as the case may be)
     <li>total_moves - the total number of move and pick attempts in all episodes of the series

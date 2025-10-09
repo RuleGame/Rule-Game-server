@@ -22,6 +22,10 @@ import jakarta.xml.bind.annotation.XmlElement;
     information related to it being played as part of an
     experiment. That includes support for creating an Episode based on
     a parameter set, and for managing earned reward amount.
+
+    <p>In 2PG, a single EpisodeInfo object is shared for both players;
+    /move calls come with the indication of who made them
+    (the "mover").
  */
 @Entity  
 @Access(AccessType.FIELD)
@@ -42,6 +46,12 @@ public class EpisodeInfo extends Episode {
 	
      */
     int attemptCnt1=0;
+
+    /** How many move attempts has a particular player made in this episode? */
+    private int getAttemptCnt(int mover) {
+	return mover==0? attemptCnt - attemptCnt1 : attemptCnt1;
+    }
+    
     /** The total cost of all attempts (move and pick) done so far by Player 1 (in 2PG only)
 	including successful and unsuccessful ones. If cost_pick!=1,
 	this value may be different from attemptCnt. */
@@ -90,7 +100,7 @@ public class EpisodeInfo extends Episode {
 	is assigned for every episode that has been completed (board
 	cleared), and perhaps (depending on the stalematesAsClears
 	flag) also for stalemated episodes. */
-    int rewardMain[] = new int[2];//ZZZZ
+    int rewardMain[] = new int[2];
     @Access(AccessType.PROPERTY)
     public int getRewardMain() { return rewardMain[0]; }
     public void setRewardMain(int x) { rewardMain[0]=x; }
@@ -345,7 +355,7 @@ public class EpisodeInfo extends Episode {
 	failed to complete a bonus episode on time, this is the place
 	that sets the "lost" flag.
 
-	@param playerId null in single-player games; playerId in 2PG
+	@param playerId null in single-player games; the  playerId of the player making this move in 2PG
 
 	@param _attemptCnt According to the client, this is how many /move or /pick
 	calls it has made before this call; so this is how long the transcript of
@@ -634,10 +644,10 @@ public class EpisodeInfo extends Episode {
 	// Bot assist is not used after successful picks, since they may add
 	// little new info
 	if (mySeries().hasBotAssist() &&
-	    (isMove || move.code != CODE.ACCEPT)) { // Assuming it's 1PG. (FIXME: what if 2PG?)
-	    if (botAssist==null) botAssist=new BotAssist();
-	    botAssist.didHeFollow(move);
-	    botAssist.makeSuggestion(this, q);
+	    (isMove || move.code != CODE.ACCEPT)) { 
+	    if (botAssist[move.mover]==null) botAssist[move.mover]=new BotAssist();
+	    botAssist[move.mover].didHeFollow(move);
+	    botAssist[move.mover].makeSuggestion(this, q);
 	}
 
 	lastCall.saveDisplay(q);	
@@ -1025,7 +1035,13 @@ public class EpisodeInfo extends Episode {
 	    }
 	}
 
-	if (mySeries().hasBotAssist() &&  attemptCnt==0) { // the first move of an episode with bot assist
+
+	if (mySeries().hasBotAssist(mover) && getAttemptCnt(q.mover)==0 &&
+	    !q.mustWait) {
+	    // This is the /display call before the first move (of
+	    // this player) of an episode with bot assist. No
+	    // suggestions are made yet, so let's just send an inspirational
+	    // message
 
 	    int k = q.getEpisodeNo();
 	    String chat = (k==0)?
@@ -1355,11 +1371,11 @@ public class EpisodeInfo extends Episode {
 	return fc;
     }
        
-    /** In Bot Assist games, the list of all move suggestions made by the bot in this episode */
+    /** In Bot Assist games, the list of all move suggestions made by the bot in this episode. There may be 2 bots if it's a 2PG with each player having bot assist. */
     @Transient
-    BotAssist botAssist = null;
-    public Move xgetLastProposed() {
-	return botAssist.proposed;
+    BotAssist[] botAssist = new BotAssist[2];
+    public Move xgetLastProposed(int mover) {
+	return botAssist[mover].proposed;
     }
     
 }
