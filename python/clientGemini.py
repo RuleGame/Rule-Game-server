@@ -11,25 +11,26 @@
 #----------------------------------------------------------------------
 
 
-import subprocess, sys, re, random, json
+#!/usr/bin/python3
+
+import subprocess, sys, re, random, json, os
 import gameLoopGeminiHypothesisMove
 
-#game='game-data/rules/rules-01.txt'
-game=sys.argv[1]
-
-# nPieces = '5'
-
-#-- this is a string, not a number!
+game = sys.argv[1]
 nPieces = sys.argv[2]
+
+# Extract rule name from path (e.g., "rules-01" from "game-data/rules/rules-01.txt")
+rule_name = os.path.splitext(os.path.basename(game))[0]
 
 sys.stdout.write("Rule file=" + game +", #pieces=" + nPieces+"\n")
 
+# Set log filename BEFORE calling mainLoop
+gameLoopGeminiHypothesisMove.setup_logging(rule_name, nPieces)
 
 #----------------------------------------------------------------------
 #-- Spawn a CGS as a child process
 proc=subprocess.Popen( ['java', '-Doutput=STANDARD', 'edu.wisc.game.engine.Captive', game, nPieces], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
-#sys.stdout.write(proc.stdout.read())
 rule = ''
 test = False
 

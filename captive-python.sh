@@ -5,7 +5,7 @@ set sc=`dirname $0`
 set h=`(cd $sc; pwd)`
 source "$h/scripts/set-var-captive.sh"
 
-$sc/python/clientGemini.py $sc/game-data/rules/MLC/BMK/colOrd_nearby.txt 9
+$sc/python/clientGemini.py $sc/game-data/rules/basic/col1OrdBuck_BRKY0213.txt 9
 
 
 
