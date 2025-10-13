@@ -10,7 +10,7 @@ Bot Assist
     </h1>
 
     <div align="center"><em>
-	Updated 2025-07-03 for GS 8.025</em>
+	Updated 2025-10-12 for GS 8.035</em>
 	</div>
 
     <p>This is document provides an overview of the "Bot Assist" feature, which was introduced in GS ver. 8.014. Originally, the entire trial list had to either have bot assist or not, but since ver 8.022, we have parameter-set-level granularity.
@@ -19,7 +19,7 @@ Bot Assist
 
     <p>The Bot Assist functionality is intended to work as follows. After each move (succesful or unsuccessful) by the player, the "bot" of some kind will provide him with a suggestion of what would be the next move to try. The suggestion can be delivered to the player via a "chat box", similar to that used in 2PG coop games.
 
-      <p>The Bot Assist feature is primarily designed for traditional single-player games (2PG); however, it would not be difficult to also offer it to one or both players in two-player games (2PG).
+    <p>The Bot Assist feature is primarily designed for traditional single-player games (2PG); however, it is available in      two-player games (2PG) as well.
       
       <h2><a name="prep">
 	  Experiment preparation
@@ -69,12 +69,15 @@ where t is the number of previous steps (the player's move attempts, excluding s
 	<p>Note also that the same two parameters are used for configuring the bot partner / bot opponent in two-player games pairing a human and a bot.
 
 
-	  <h3>2PG</h3>
+	  <h3>In two-player games (2PG)</h3>
 
-	  How many players are assisted?
-	  bot_assist_players  1 or 2
+<p>Since ver 8.035, Bot Assist is available in adversarial and cooperative 2PGs (A2PG and C2PG) as well. 
 	  
+<p>For an example of a 2PG experiment plan that offers Bot Assist to the players, see the plan <tt>vm/adve.colorVshape-bot-assist</tt>. In this plan, an additional column, named <tt>bot_assist_players</tt> exists. Its value may be either  1 or 2, indicating whether only one player (Player 0) will get Bot Assist or both will.
 	  
+<p>When both players receive Bot Assist service, two separate and independent Bot Assist instances are created, one for each player. At present, both of them use the same algorithm with the same parameters, but in the future it may be possible to add additional config parameters so that the two players will receive different kinds of assistance.
+
+  
 	  <strike>
 
 	   
@@ -204,7 +207,8 @@ In any event, once the client learns that the series to be played is a bot assis
 
   <p>When a game with bot assist is played, the game server, in addition to recording the player's moves in the transcript file, also records the bot's suggestions in the bot assist suggestions file. These files are located in the directory <tt>bot-assist</tt> under the main saved data directory (typically,
     <tt>/opt/w2020/saved</tt>), and have names such as
-    <tt><em>player-id</em>.bot-assist.csv</tt>
+    <tt><em>player-id</em>.0.bot-assist.csv</tt>
+    <tt><em>player-id</em>.1.bot-assist.csv</tt>. The suffix "0" or "1" indicates which player (Player 0 or Player 1) received suggestions. In a 2PG, of course, the suffix is always 0.
 
     <p>The file format of bot assiste suggestions files is identical to that of the transcript files, describing the proposed move in terms of the game piece ID and the destination bucket ID. Since both the entries in the game's transcript file and those in the bot assist file contain time stamps, it should be possible for an analysis script to match the two, and to figure which bot suggestion was offered before which move of the player.
 
