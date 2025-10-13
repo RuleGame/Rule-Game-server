@@ -364,6 +364,7 @@ public class PlayerInfo {
 	    return botAssistName!=null;
 	}
 	/** Does the specified player (Player 0 or Player 1) has bot assist?
+	    @param mover 0 or 1
 	 */
 	public boolean hasBotAssist(int mover) {
 	    return hasBotAssist() && mover<botAssistPlayers;
@@ -395,6 +396,7 @@ public class PlayerInfo {
 	    } else {
 		botAssistPlayers = 0;
 	    }
+	    Logging.info("DEBUG: Created new series for p=" + getPlayerId() +"; botAssistName=" + botAssistName +", botAssistPlayers="+ botAssistPlayers);
 
 	}
 
@@ -649,7 +651,7 @@ public class PlayerInfo {
     }
 
 
-    /** This may be invoked by a maintenance thread in 2PG, when it detects
+    /** This may be invoked by a MaintenanceThread in 2PG, when it detects
 	that this player has been inactive for a while. (The method should be
         usable in 1PG too, but it's not a major concern).
 
@@ -703,7 +705,7 @@ public class PlayerInfo {
 	}
 	saveMe();
 
-	if (is2PG() && isBotGame()) {
+	if (is2PG() && !isBotGame()) {
 	    try {
 		WatchPlayer.tellHim(playerId, WatchPlayer.Ready.DIS);
 	    } catch(Exception ex) {
@@ -712,7 +714,7 @@ public class PlayerInfo {
 	    }
 	}
 	
-	if (partner!=null && isBotGame()) {
+	if (partner!=null && !isBotGame()) {
 	    try {
 		WatchPlayer.tellHim(partnerPlayerId, WatchPlayer.Ready.DIS);
 	    } catch(Exception ex) {

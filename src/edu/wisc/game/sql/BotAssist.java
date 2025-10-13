@@ -36,18 +36,24 @@ class BotAssist {
 	if (proposed.sameMove(move)) move.setDidFollow(true);
     }
 
+    /** The last chat message generate by this assistant */
+    private String chat=null;
+    String getChat() { return chat; }
+
+    
     /** Proposes one more move, adds it to the bot assist transcript,
 	and stores it in "proposed". Creates a human-readable chat
 	message to be sent to the player, and saves it in
 	the ExtendedDisplay structure passed to this method.
 
-	@param q The structure to which the chat message to be included in the current server
+	//@param q The structure to which the chat message to be included in the current server
 	response is to be added.
     */
-    void makeSuggestion(EpisodeInfo epi, EpisodeInfo.ExtendedDisplay q) throws IOException {
+    String makeSuggestion(EpisodeInfo epi)//, EpisodeInfo.ExtendedDisplay q)
+	throws IOException {
 	Pseudo task = new Pseudo(epi.getPlayer(), epi, epi.getAttemptCnt());
 	proposed = task.proposeMove();
-	String chat = null;
+	chat = null;
 	if (proposed==null) {
 	    chat = null; //"Bot has no idea";
 	    Logging.info("BotAssist: no suggestion");
@@ -58,7 +64,8 @@ class BotAssist {
 	    chat += ". I am "+pc+"% confident in this move";
 	    Logging.info("BotAssist: " + chat);
 	}
-	q.setBotAssistChat(chat);
+	return chat;
+	//q.setBotAssistChat(chat);
     }
     
 }

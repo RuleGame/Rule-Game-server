@@ -641,13 +641,15 @@ public class EpisodeInfo extends Episode {
 	}
 
 
-	// Bot assist is not used after successful picks, since they may add
-	// little new info
-	if (mySeries().hasBotAssist() &&
+	// Use bot assist, if this player is configured for it. (Note
+	// though that Bot assist is not used after successful picks,
+	// since they may add little new info)
+	if (mySeries().hasBotAssist(move.mover) &&
 	    (isMove || move.code != CODE.ACCEPT)) { 
 	    if (botAssist[move.mover]==null) botAssist[move.mover]=new BotAssist();
 	    botAssist[move.mover].didHeFollow(move);
-	    botAssist[move.mover].makeSuggestion(this, q);
+	    String chat = botAssist[move.mover].makeSuggestion(this);
+	    q.setBotAssistChat(chat);
 	}
 
 	lastCall.saveDisplay(q);	
@@ -812,13 +814,13 @@ public class EpisodeInfo extends Episode {
 	}
 
 	
-	private int mover;
+	final private int mover;
 	/** What is the role of the player in the episode? In 1PG it's
 	    always 0; in 2PG, it's 0 for player 0 of the pair (the one
 	    who owns all episodes), and 1 for player 1 */
 	public int getMover() { return mover; }
-	@XmlElement
-	public void setMover(int _mover) { mover = _mover; }
+	//@XmlElement
+	//public void setMover(int _mover) { mover = _mover; }
 
 	
 	private boolean mustWait;
@@ -1018,6 +1020,7 @@ public class EpisodeInfo extends Episode {
 	identify the player to whom we are to show the display
      */
     public ExtendedDisplay mkDisplay(String playerId) {
+	// zzz
 	int mover = player.getRoleForPlayerId(playerId); // can be -2 in 1PG
 	//	if (mover<0) return new ExtendedDisplay(0, CODE.OUT_OF_TURN, "Player " + playerId + " is not a party to this game at all!");
 
@@ -1036,19 +1039,30 @@ public class EpisodeInfo extends Episode {
 	}
 
 
-	if (mySeries().hasBotAssist(mover) && getAttemptCnt(q.mover)==0 &&
-	    !q.mustWait) {
-	    // This is the /display call before the first move (of
-	    // this player) of an episode with bot assist. No
-	    // suggestions are made yet, so let's just send an inspirational
-	    // message
 
-	    int k = q.getEpisodeNo();
-	    String chat = (k==0)?
-		"Starting the first episode of a new rule (Rule no. " + (seriesNo+1)+" . Please make your first move!":
-		"Starting episode no. " + k + " of Rule no. " + (seriesNo+1)+" . Please make your first move!";
+	Logging.info("DEBUG: mySeries().hasBotAssist("+mover+
+		     ")=" + mySeries().hasBotAssist(mover));
+	if (mySeries().hasBotAssist(mover)) {
+	    if (getAttemptCnt(q.mover)==0 && !q.mustWait) {
+		// This is the /display call before the first move (of
+		// this player) of an episode with bot assist. No
+		// suggestions are made yet, so let's just send an inspirational
+		// message
 
-	    q.setBotAssistChat(chat);
+		int k = q.getEpisodeNo();
+		String chat = (k==0)?
+		    "Starting the first episode of a new rule (Rule no. " + (seriesNo+1)+" . Please make your first move!":
+		    "Starting episode no. " + k + " of Rule no. " + (seriesNo+1)+" . Please make your first move!";
+		
+		q.setBotAssistChat(chat);
+	    } else if (!q.mustWait) {
+		// 		
+		String chat = botAssist[q.mover].getChat();
+		if (chat!=null) chat = "Reminding of my suggestion: " + chat;
+		q.setBotAssistChat(chat);
+
+	    }
+		      
 	}
 
 
