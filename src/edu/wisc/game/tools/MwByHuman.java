@@ -18,19 +18,20 @@ import edu.wisc.game.math.*;
 import edu.wisc.game.formatter.*;
 
 import edu.wisc.game.sql.Episode.CODE;
+import edu.wisc.game.tools.MwSeries.MoveInfo;
 
 /** Ranking rule sets by the ease of learning by human players. As
  * requested by PK, 2022-12-22.
  */
 public class MwByHuman extends AnalyzeTranscripts {
 
-    private final MwByHuman.PrecMode precMode;
+    protected final PrecMode precMode;
 
     /** The set of rule names which, if they appear in the preceding-rules
 	list, are ignored. (Introduced in ver. 6.014, after PK's request (2023-06-01): "One issue that I may not have mentioned is whether to "ignore a particular predecessor." I decided to do that for the pk/noRule rule (after checking that it did not seem to affect performance by the F* measure).  In other words, when it was a predecessor I represented it by no character at all."
     */
-    private static Set<String> ignorePrec = new HashSet<>();
-    private static int ignorePrecCnt=0;
+    protected static Set<String> ignorePrec = new HashSet<>();
+    protected static int ignorePrecCnt=0;
     static void incrementIgnorePrecCnt() {
 	ignorePrecCnt++;
     }
@@ -38,15 +39,15 @@ public class MwByHuman extends AnalyzeTranscripts {
     /** Info about each episode gets added here */
     public Vector<MwSeries> savedMws = new Vector<>();
 
-    private final int targetStreak;
-    private final double targetR;
+    protected final int targetStreak;
+    protected final double targetR;
     /** It is double rather than int so that Infinity could be represented */
-    private final double  defaultMStar;
+    protected final double  defaultMStar;
 
     /** @param  _targetStreak this is how many consecutive error-free moves the player must make (e.g. 10) in order to demonstrate successful learning. If 0 or negative, this criterion is turned off
 	@param _targetR the product of R values of a series of consecutive moves should be at least this high) in order to demonstrate successful learning. If 0 or negative, this criterion is turned off
      */
-    public MwByHuman(MwByHuman.PrecMode _precMode, int _targetStreak, double _targetR, double _defaultMStar,Fmter _fm    ) {
+    public MwByHuman(PrecMode _precMode, int _targetStreak, double _targetR, double _defaultMStar, Fmter _fm) {
 	super( null, null);	
 	quiet = true;
 	precMode = _precMode;
@@ -68,9 +69,14 @@ public class MwByHuman extends AnalyzeTranscripts {
 
     /** If non-null, restrict to experiences that have this rule set
 	as the "main" one (with various preceding sets) */
-    private static String target=null;
-    
-  public static void main(String[] argv) throws Exception {
+    protected static String target=null;
+
+    /** This structure contains various parameters that come
+	from parsing the command line. This is moved into a separate
+	class so that different utilities can use this class to parse
+	their command line arguments.
+    */
+    static class RunParams {
 
 	ArgType argType = ArgType.PLAN;
 	boolean fromFile = false;
@@ -84,6 +90,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 	double targetR = 0;
 	double defaultMStar=300;
 	PrecMode precMode = PrecMode.Naive;
+	CurveMode curveMode = null; //CurveMode.E;
+	CurveArgMode curveArgMode = null; //CurveMode.M;
 	boolean useMDagger = false;
 	File csvOutDir = null;
 	
@@ -93,6 +101,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 
 	String config = null;
 	
+	RunParams(String[] argv) throws IOException, IllegalInputException {
 	for(int j=0; j<argv.length; j++) {
 	    String a = argv[j];
 
@@ -124,6 +133,12 @@ public class MwByHuman extends AnalyzeTranscripts {
 		defaultMStar = Double.parseDouble( argv[++j] );
 	    } else if (j+1< argv.length && a.equals("-precMode")) {
 		precMode = Enum.valueOf(MwByHuman.PrecMode.class, argv[++j]);
+	    } else if (j+1< argv.length && a.equals("-curveMode")) {
+		String s = argv[++j];
+		String []ss = s.split(":");
+		if (ss.length!=2) usage("Expected -curveMode=yChoice:xChoice");
+		curveMode = Enum.valueOf(MwByHuman.CurveMode.class, ss[0]);
+		curveArgMode = Enum.valueOf(MwByHuman.CurveArgMode.class, ss[1]);
 	    } else if (j+1< argv.length && a.equals("-csvOut")) {
 		csvOutDir = new File(argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-target")) {
@@ -146,8 +161,6 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    }
 
 	}
-
-
 	//System.out.println("ARGV: targetStreak=" + targetStreak+", targetR="+targetR );
 	if (targetStreak<=0 && targetR <=0) {
 	    targetStreak = 10;
@@ -157,13 +170,6 @@ public class MwByHuman extends AnalyzeTranscripts {
 	if (config!=null) {
 	    // Instead of the master conf file in /opt/w2020, use the customized one
 	    MainConfig.setPath(config);
-
-	    // Set the input directory as per the config file
-	    //	    String inputDir = MainConfig.getString("FILES_SAVED", null);
-	    //if (inputDir != null) {
-	    //	if (!(new File(inputDir)).isDirectory()) usage("Not a directory: " + inputDir);
-	    //Files.setSavedDir(inputDir);
-	    //}
 	}
 
 	if (exportTo!=null && importFrom.size()>0) {
@@ -174,42 +180,50 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    usage("If you use the -import option, you should not specify experiment plans!");
 	}
 
-	Fmter plainFm = new Fmter();
-	MwByHuman processor = new MwByHuman(precMode, targetStreak, targetR, defaultMStar, plainFm);
 
+
+	}
+
+	MwByHuman mkProcessor() {
+	    Fmter plainFm = new Fmter();
+	    return new MwByHuman(precMode, targetStreak, targetR, defaultMStar, plainFm);
+	}
+	
+    }
+
+    
+    public static void main(String[] argv) throws Exception {
+	RunParams p = new RunParams(argv);
+	MwByHuman processor = p.mkProcessor();
 	try {
-	    if (importFrom.size()==0) {
+	    if (p.importFrom.size()==0) {
 	    // Extract the data from the transcript, and put them into savedMws
-		processor.processStage1(plans, pids, nicknames, uids);
+		processor.processStage1(p.plans, p.pids, p.nicknames, p.uids);
 		
-		if (exportTo!=null) {
-		    File gsum=new File(exportTo);
+		if (p.exportTo!=null) {
+		    File gsum=new File(p.exportTo);
 		    processor.exportSavedMws(gsum);
 		}
 	    } else {
-		processor.savedMws.clear();
-		
-		for(String from: importFrom) {
+		processor.savedMws.clear();		
+		for(String from: p.importFrom) {
 		    File g = new File(from);
 		    MwSeries.readFromFile(g, processor.savedMws);
 		    //System.out.println("DEBUG: Has read " + processor.savedMws.size() + " data lines");
 		}		
 	    }
-
 	    // M-W test on the data from savedMws
-	    processor.processStage2( importFrom.size()>0, useMDagger, csvOutDir);
-	    
+	    processor.processStage2( p.importFrom.size()>0, p.useMDagger, p.csvOutDir);	    
 	} finally {
 	    String text = processor.getReport();
 	    System.out.println(text);
 	}
-
-  }
+    }
 
 
     /** The printable report. Various parts of processStage1 and Stage2
 	add lines to it */
-    private StringBuffer result = new StringBuffer();
+    protected StringBuffer result = new StringBuffer();
     public String getReport() { return result.toString(); }
 
 
@@ -258,14 +272,15 @@ public class MwByHuman extends AnalyzeTranscripts {
         return sw.toString();
     }
 
-    private Fmter fm=new Fmter();
+    protected Fmter fm=new Fmter();
     public void setFm(Fmter _fm) { fm = _fm; }
 
 
     /** The Stage 1 processing involves scanning the transcripts
 	for the players associated with the relevant experiment
 	plan, and computing the required statistics for
-	all (player,ruleSet) pairs involved.
+	all (player,ruleSet) pairs involved. The data are then 
+	added to savedMws (via a callback to saveAnyData()).
      */
     public void processStage1(Vector<String> plans,
 			      Vector<String> pids,
@@ -285,6 +300,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    Vector<EpisodeHandle> v = ph.get(playerId);
 	    try {
 		// This puts the data for (player,rule) pairs into savedMws
+		// (via a callback to saveAnyData()).
 		analyzePlayerRecord(playerId, v);
 
 	    } catch(Exception ex) {
@@ -377,6 +393,23 @@ public class MwByHuman extends AnalyzeTranscripts {
 	Ignore
     }
 
+    public enum CurveMode {
+	// Raw error count, Sum_m(e_m)
+	E,
+	// Error count normalized error prob, Sum_m(e_m)/Sum_m(1-p0(m))
+	AAI,
+	// AAI * m
+	AAIB
+    }
+
+    public enum CurveArgMode {
+	// count of move attempts
+	M,
+	// count of removed pieces
+	Q
+    }
+
+    
     /** Who learned what. (playerId : (ruleSetName: learned)) */
     HashMap<String, HashMap<String, Boolean>> whoLearnedWhat = new HashMap<>();
 
@@ -403,16 +436,16 @@ public class MwByHuman extends AnalyzeTranscripts {
 
 	EpisodeHandle eh = includedEpisodes.firstElement();
 	Vector<Board> boardHistory = null;
-	double rValues[] = computeP0andR(section, eh.para, eh.ruleSetName, boardHistory).rValues;
+	P0andR p0andR =  computeP0andR(section, eh.para, eh.ruleSetName, boardHistory);
 
 	if (eh.neededPartnerPlayerId != null) {
 	    System.out.println("For " +eh.playerId + ", also make partner entry for " + eh.neededPartnerPlayerId);
 	    MwSeries[] ser={
-		fillMwSeries(section, includedEpisodes, rValues, 0),
-		fillMwSeries(section, includedEpisodes, rValues, 1)};
+		fillMwSeries(section, includedEpisodes, p0andR, 0, false),
+		fillMwSeries(section, includedEpisodes, p0andR, 1, false)};
 	} else {
 	    System.out.println("For " +eh.playerId + ", no partner needed");
-	    MwSeries ser = fillMwSeries(section, includedEpisodes, rValues, -1);
+	    MwSeries ser = fillMwSeries(section, includedEpisodes, p0andR, -1, false);
 	}
 
 	section.clear();
@@ -427,18 +460,23 @@ public class MwByHuman extends AnalyzeTranscripts {
 	(i.e. one rule set), split into subsections (one per episode)
 
         @param chosenMover If it's -1, the entire transcript is
-	analyzed. (That's the case for 1PG and coop 2PG). In adve 2PG,
-	it is 0 or 1, and indicates which partner's record one extracts
+	analyzed. (That's the case for 1PG and C2PG). In A2PG, it is 0
+	or 1, and indicates which partner's record we want to extract
 	from the transcript.
      */
-    private MwSeries fillMwSeries(Vector<TranscriptManager.ReadTranscriptData.Entry[]> section,
-				  Vector<EpisodeHandle> includedEpisodes,
-				  double[] rValues, int chosenMover)
+    protected MwSeries fillMwSeries(Vector<TranscriptManager.ReadTranscriptData.Entry[]> section,
+				    Vector<EpisodeHandle> includedEpisodes,
+				    P0andR p0andR, int chosenMover,
+				    boolean needCurves)
 	throws  IOException, IllegalInputException,  RuleParseException {
 
+	double rValues[] = p0andR.rValues;
+	double p0[] = p0andR.p0;
+	
 	// this players successes and failures on the rules he's done
 	EpisodeHandle eh = includedEpisodes.firstElement();
 	MwSeries ser = new MwSeries(eh, ignorePrec, chosenMover);
+
 	HashMap<String,Boolean> whatILearned = whoLearnedWhat.get(ser.playerId);
 	if (whatILearned == null) whoLearnedWhat.put(ser.playerId, whatILearned = new HashMap<>());
 
@@ -466,6 +504,12 @@ public class MwByHuman extends AnalyzeTranscripts {
 
 	if (debug) System.out.println("Scoring");
 
+	int m =  Util.sumLen(section);
+	//	if (needCurves) ser.moveInfo = new MoveInfo[m];
+	Vector<MoveInfo> vmi = new Vector<>();
+
+	
+	/// zzzz
 	int k=0;
 	for(TranscriptManager.ReadTranscriptData.Entry[] subsection: section) {
 	    eh = includedEpisodes.get(je ++);
@@ -482,11 +526,18 @@ public class MwByHuman extends AnalyzeTranscripts {
 		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
 		if (!eh.episodeId.equals(e.eid)) throw new IllegalArgumentException("Array mismatch");
 
-		double r = rValues[k++];
+		double r = rValues[j];
+
 
 		boolean wrongPlayer= (chosenMover>0) && (e.mover!=chosenMover);
 		if (wrongPlayer) continue;
 
+
+		if (needCurves) {
+		    MoveInfo mi = new MoveInfo(e.code==CODE.ACCEPT, p0[j]);
+		    vmi.add(mi);
+		}
+		    
 		attempts1++;
 		if (e.code==CODE.ACCEPT) {
 		    attempts2++;
@@ -530,6 +581,14 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    for(; j<subsection.length; j++) {
 		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
 		if (!eh.episodeId.equals(e.eid)) throw new IllegalArgumentException("Array mismatch");
+
+		boolean wrongPlayer= (chosenMover>0) && (e.mover!=chosenMover);
+		if (wrongPlayer) continue;
+
+		if (needCurves) {
+		    MoveInfo mi = new MoveInfo(e.code==CODE.ACCEPT, p0[j]);
+		    vmi.add(mi);
+		}
 		
 		if (e.code!=CODE.ACCEPT) {
 		    ser.totalErrors ++;
@@ -537,6 +596,10 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    }
 	    
 	    ser.totalMoves += subsection.length;
+	}
+
+	if (needCurves) {
+	    ser.moveInfo = vmi.toArray(new MoveInfo[0]);
 	}
 	return ser;
     }

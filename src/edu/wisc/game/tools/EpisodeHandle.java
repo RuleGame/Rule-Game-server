@@ -24,8 +24,9 @@ public class EpisodeHandle {
     final public String episodeId;
     /** The player who played the episode (in 1PG), or Player 0 (in 2PG) */
     final String playerId;
-    /** The partner's (Player 1's) playerId in adversarial 2PG, where we need to separate the two players'
-	moves; null otherwise */
+    /** The partner's (Player 1's) playerId in adversarial 2PG, where
+	we need to separate the two players' moves; null otherwise
+	(i.e. in 1PG or C2PG) */
     final String neededPartnerPlayerId;
     final boolean useImages;
     final public ParaSet para;

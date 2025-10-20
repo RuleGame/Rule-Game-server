@@ -704,7 +704,7 @@ public class AnalyzeTranscripts {
 	    for(int j=0; j<subsection.length; j++) {
 		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
 
-		//System.out.println("j=" + j);
+ 		//System.out.println("j=" + j);
 		//System.out.println(rep.graphicDisplay());
 
 		if (boardHistory!=null) {		

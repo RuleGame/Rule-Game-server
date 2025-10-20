@@ -70,8 +70,9 @@ public  class MwSeries {
     /** The number of errors until the first "winning streak" has been
 	achieved, or in the entire series (if no winning streak) */
     int errcnt=0;
-    /** The number of errors until the first  "winning streak" has been
-	achieved, or the large default number otherwise */
+    /** The number of move attempts until the beginning of the first
+	"winning streak" has been achieved, or the large default
+	number otherwise. */
     double mStar=0;
     /** Total failed attempt (including those after the "achievement of learning") */
     int totalErrors=0;
@@ -136,7 +137,11 @@ public  class MwSeries {
 			   ""+getTotalErrors(),
 			   ""+mStar,
 			   ""+mDagger};
-	    return ImportCSV.escape(v);
+	    String s = ImportCSV.escape(v);
+	    if (moveInfo!=null) {
+		s += "," + Util.joinNonBlank(";", moveInfo);
+	    }
+	    return s;
     }
 
     /** Reads a CSV file with MwSeries entries.
@@ -238,5 +243,25 @@ public  class MwSeries {
     void stripPreceding() {
 	precedingRules.setSize(0);
     }
+
+
+    /** Various things that may be used to draw curves */
+    static class MoveInfo {
+	boolean success;
+	double p0;
+	MoveInfo(boolean _success,	double _p0) {
+	    success = _success;
+	    p0 = _p0;
+	}
+	public String toString() {
+	    return  "" + (success? 1:0) +  ":" + p0;
+	}
+    }
+    /** Besides the aggregate information that MwSeries contains, this
+	also has per-move data used to draw curves. This is null in the
+	MWH tool, but non-null in the BuildCurve tool
+    */
+    MoveInfo[] moveInfo = null;
+
     
 }
