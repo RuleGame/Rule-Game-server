@@ -6,21 +6,22 @@ import java.util.*;
 //import java.text.*;
 
 /** Auxiliary methods for files and directories */
-public class Util {
+public class FileUtil {
 
     /** Creates index.html in the specified directory, and all subdirectories */
-    static public void mkIndexes(File dir) {
+    static public void mkIndexes(File dir) throws IOException {
 	File[] files = dir.listFiles();
 	Vector<File> subdirs = new Vector<>();
 	Vector<String> v = new  Vector<>(), v2 = new  Vector<>();
 	v.add("<p>Content of " + dir);
 	v.add("<ul>");
 	for(File f: files) {
-	    if (f.isDirectory() && !f.startsWith(".")) {
+	    String name = f.getName();
+	    if (f.isDirectory() && !name.startsWith(".")) {
 		subdirs.add(f);
-		v.add("<li><a href=\"" + f.getName() + "\">");
-	    } else if (f.isFile() && !f.equals("index.html")) {
-		v2.add("<li><a href=\"" + f.getName() + "\">");
+		v.add("<li><a href=\"" + name + "\">");
+	    } else if (f.isFile() && !name.equals("index.html")) {
+		v2.add("<li><a href=\"" + name + "\">");
 	    }
 	}
 	v.addAll(v2);
