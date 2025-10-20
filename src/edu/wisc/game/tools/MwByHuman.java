@@ -338,7 +338,15 @@ public class MwByHuman extends AnalyzeTranscripts {
      */
     public void exportSavedMws(File gsum) throws IOException {
 	PrintWriter wsum = new PrintWriter(new FileWriter(gsum, false));
-	wsum.println( MwSeries.header);
+	String h = MwSeries.header;
+	boolean hasMi = false;
+	for(MwSeries ser: savedMws) {
+	    if (ser.moveInfo!=null) hasMi=true;
+	}
+	if (hasMi) h += ",moveInfo";				
+
+	
+	wsum.println(h);
 	
 	for(MwSeries ser: savedMws) {
 	    wsum.println(ser.toCsv());

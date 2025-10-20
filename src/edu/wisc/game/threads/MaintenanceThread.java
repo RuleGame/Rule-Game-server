@@ -141,9 +141,16 @@ public class MaintenanceThread extends Thread {
 		
 
 	    } catch(Exception ex) {
+
+
+		StringWriter sw = new StringWriter();		
+		ex.printStackTrace(new PrintWriter(sw));
+
+		
 		//error = true;
 		//errmsg = ex.getMessage();
 		Logging.error("Exception for Maintenance thread " + getName() + ": " + ex);
+		Logging.error("Trace: " + sw);
 		ex.printStackTrace(System.out);
 	    } finally {
 	    } 

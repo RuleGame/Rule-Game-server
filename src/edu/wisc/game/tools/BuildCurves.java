@@ -204,7 +204,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		}		
 	    }
 	    // M-W test on the data from savedMws
-	    //processor.processStage2( p.importFrom.size()>0, p.useMDagger, p.csvOutDir);
+	    processor.processStage2( p.importFrom.size()>0, p.useMDagger, p.csvOutDir);
 
 
 	    processor.printCurveData();
@@ -219,7 +219,14 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	}
     }
 
-    /** Generates plots and writes them to SVG files */
+    /** Generates plots for all "experiences" and all requested
+	plottting modes, and writes them to SVG files.
+
+	After that, creates index.html in each directory, so that the
+	whole thing can be uploaded to a web server and navigated in a
+	browser
+
+	*/
     void doCurves() throws IOException {
 
 	File d = new File("out");
@@ -242,6 +249,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		}
 	    }
 	}
+	FileUtil.mkIndexes(d);
     }
 
     

@@ -189,6 +189,13 @@ public  class MwSeries {
 	// mDagger is optional in input files. (But it had better
 	// be there if we want to use it, of course!)	    
 	mDagger = Double.parseDouble(line.getColByName(header, "mDagger", "NaN"));
+
+	String mi = line.getColByName(header, "moveInfo", null);
+	if (mi!=null) {
+	    String[] v = mi.split(";");
+	    moveInfo = new MoveInfo[v.length];
+	    for(int j=0; j<v.length; j++) moveInfo[j] = new MoveInfo(v[j]);
+	}
 	
     }
 
@@ -252,6 +259,12 @@ public  class MwSeries {
 	MoveInfo(boolean _success,	double _p0) {
 	    success = _success;
 	    p0 = _p0;
+	}
+	/** @param s "success:p0", e.g. "1:0.33" */
+	MoveInfo(String s) {
+	    String [] v = s.split(":");
+	    success = (v[0]=="1");
+	    p0 = Double.parseDouble(v[1]);
 	}
 	public String toString() {
 	    return  "" + (success? 1:0) +  ":" + p0;
