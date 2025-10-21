@@ -77,7 +77,9 @@ public  class MwSeries {
     /** Total failed attempt (including those after the "achievement of learning") */
     int totalErrors=0;
     public int getTotalErrors() { return totalErrors; }
-    /** Total move and pick attempts (successful and unsuccessful) */
+    /** Total move and pick attempts (successful and unsuccessful).
+	Since ver 8.036: excludes successful picks (as useless for our analyses)
+     */
     int totalMoves=0;
     public int getTotalMoves() { return totalMoves; }
     

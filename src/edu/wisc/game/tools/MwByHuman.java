@@ -516,12 +516,12 @@ public class MwByHuman extends AnalyzeTranscripts {
 	} else if (precMode == PrecMode.Ignore) {
 	    ser.stripPreceding();
 	}
-	// Do recording only after a successful adjustPreceding (if applicable)
-	if (shouldRecord) 		savedMws.add(ser);
 
 	if (debug) System.out.println("Scoring");
 
-	int m =  Util.sumLen(section);
+	ser.totalMoves = 0;
+	
+	//int m =  Util.sumLen(section);
 	//	if (needCurves) ser.moveInfo = new MoveInfo[m];
 	Vector<MoveInfo> vmi = new Vector<>();
 
@@ -553,6 +553,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 		if (!(e.pick instanceof Move) && e.code==CODE.ACCEPT) continue;
 
 		
+		ser.totalMoves++;
 		if (needCurves) {
 		    MoveInfo mi = new MoveInfo(e.code==CODE.ACCEPT, p0[j]);
 		    vmi.add(mi);
@@ -607,6 +608,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 		//-- as of ver. 8.036 skip successful picks, since they would confuse plots
 		if (!(e.pick instanceof Move) && e.code==CODE.ACCEPT) continue;
 
+		ser.totalMoves++;
 		if (needCurves) {
 		    MoveInfo mi = new MoveInfo(e.code==CODE.ACCEPT, p0[j]);
 		    vmi.add(mi);
@@ -617,12 +619,21 @@ public class MwByHuman extends AnalyzeTranscripts {
 		}
 	    }
 	    
-	    ser.totalMoves += subsection.length;
+	    //	    ser.totalMoves += subsection.length;
 	}
 
 	if (needCurves) {
 	    ser.moveInfo = vmi.toArray(new MoveInfo[0]);
 	}
+
+	// since ver 8.036, ignore empty series (which may occur in 2PG when one
+	// player has not had a chance to play; or even in 1PG, when somebody
+	// was just doing successful picks without any moves)
+	if (ser.totalMoves==0) shouldRecord = false;
+	// Do recording only after a successful adjustPreceding (if applicable)
+	if (shouldRecord) 		savedMws.add(ser);
+
+
 	return ser;
     }
     
