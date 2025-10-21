@@ -263,7 +263,7 @@ public  class MwSeries {
 	/** @param s "success:p0", e.g. "1:0.33" */
 	MoveInfo(String s) {
 	    String [] v = s.split(":");
-	    success = (v[0]=="1");
+	    success = (v[0].equals("1"));
 	    p0 = Double.parseDouble(v[1]);
 	}
 	public String toString() {

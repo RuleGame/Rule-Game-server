@@ -89,7 +89,9 @@ public class BuildCurves extends MwByHuman {
 	result.append( mwc.doCompare("humans", null, allComp, fm, csvOut));
     }
 
-    /** (Being rewritten for BuildCurves)
+    /** (Being rewritten for BuildCurves. Note that in MoveInfo data, successful
+	picks are excluded from the record, as they are generally ignorable
+	in the relevant analyses).
 
 <p>
 Saves the data (the summary of a series) for a single (player, ruleSet) pair. The saved data is put into an MwSeries object, which is then appened to savedMws.
@@ -260,6 +262,10 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
     
     private HashMap<String, OneKey>  doPlots(CurveMode mode, CurveArgMode argMode) {
 
+	int H=600;
+	int W=600;
+	int maxX = (argMode==CurveArgMode.Q)? roundUp(findMaxQ()):  (int)defaultMStar;
+	
 	HashMap<String, OneKey> h = new HashMap<>();
 	for(MwSeries ser: savedMws) {
 	    String key = ser.getKey(precMode);
@@ -272,31 +278,39 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	for(String key: h.keySet()) {
 	    OneKey z = h.get(key);
 	    //MwSeries[] ss = new MwSeries[z.size()];
-	    int W=(int)defaultMStar;
-	    int H=400;
 	    Curve[] curves = new Curve[z.size()];
 	    int k = 0;
 	    for(MwSeries ser: z) {
 		curves[k++] = mkCurve(ser, mode, argMode);
 	    }
-	    z.plot = mkPlotSvg(W,H,curves);
+	    z.plot = mkPlotSvg(W,H, maxX, curves);
 	}
 
 	return h;
     }
 
 
-    
+    private int findMaxQ() {
+	int n = 0;
+	for(MwSeries ser: savedMws) {
+	    int q = findMaxQ(ser);
+	    if (q>n) n = q;
+	}
+	return n;
+    }
+
+    /** How many pieces were removed in this series? */
+    private int findMaxQ(MwSeries ser) {
+	int n=0;
+	for(MoveInfo mi: ser.moveInfo) {
+	    if (mi.success)	n++;
+	}
+	return n;
+    }
 
     private Curve mkCurve(MwSeries ser, CurveMode mode, CurveArgMode argMode) {
 
-	int n = ser.moveInfo.length;
-	if (argMode ==  CurveArgMode.Q) {
-	    n=0;
-	    for(MoveInfo mi: ser.moveInfo) {
-		if (mi.success)	n++;
-	    }
-	}
+	int n = (argMode ==  CurveArgMode.Q)? findMaxQ(ser):  ser.moveInfo.length;
 	
 	double [] yy = new double[n+1];
 	yy[0] = 0;
@@ -322,7 +336,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    } else if (argMode ==  CurveArgMode.Q) {
 		if (q>lastQ) yy[j++] = y;
 		lastQ = q;
-	    } 	    else throw new IllegalArgumentException("curveArgMode=" + argMode);
+	    } else throw new IllegalArgumentException("curveArgMode=" + argMode);
 	}
 	if (j!= n+1)  {
 	    System.out.println("ERROR here: " + ser.toCsv());
@@ -339,7 +353,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 
 
    /** Produces a SVG element for one of the curves */
-    private String mkPlotSvg(int W, int H,  Curve[] curves) {
+    private String mkPlotSvg(int W, int H, double maxX, Curve[] curves) {
 	if (curves.length==0) return "No data have been collected";
 
 	double maxY=0;
@@ -347,9 +361,10 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    double m = curve.getMaxY();
 	    maxY = (m>maxY)? m: maxY;
 	}
-	
-	double yFactor = -H/maxY; // getMaxY();
 
+	double yFactor = -H/maxY; // getMaxY();
+	double xFactor = W/maxX;
+	
 	/*
 	
 	GroupAggregateWrapper.AvgCurve cu=getCurves().get(i);
@@ -360,14 +375,16 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	*/
 	
 	String s="";
+	int width = W+50;
+	int height = H+40;
 	s += "<svg   xmlns=\"http://www.w3.org/2000/svg\" width=\"" +
-	    (W+50) + "\" height=\"" + (H+40) +
+	    width + "\" height=\"" + height +
 	    "\" viewBox=\"-20 -20 " + (W+50) + " " + (H+40)+"\"> \n";
 
 	s += "<rect width=\""+ W+ "\" height=\"" + H + "\" " +
 	    "style=\"fill:rgb(240,240,240);stroke-width:1;stroke:rgb(0,0,0)\"/>\n"; 
 	for(int m: ticPoints(W)) {
-	    int x = m, y=H+15;
+	    double x = m*xFactor, y=H+15;
 	    s += "<text x=\"" +(x-10) + "\" y=\"" +y + "\" fill=\"black\">" +
 		m + "</text>\n";
 	    s += "<line x1=\""+x+"\" y1=\""+H+"\" x2=\""+x+"\" y2=\"0\" stroke=\"black\" stroke-dasharray=\"4\"/> \n";
@@ -375,7 +392,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 
 
 	for(int m: ticPoints((int)maxY)) {
-	    int x = 0, y= (int)( (maxY-m)*H/maxY);
+	    double x = 0, y= (int)( (maxY-m)*H/maxY);
 	    s += "<text x=\"" +(x-20) + "\" y=\"" +y + "\" fill=\"black\">" +
 		m + "</text>\n";
 	    s += "<line x1=\"0\" y1=\""+y+"\" x2=\""+W+"\" y2=\""+y+"\" stroke=\"black\" stroke-dasharray=\"4\"/> \n";
@@ -385,7 +402,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 
 	for(Curve cu: curves) {
 	
-	    s += cu.mkSvgPathElement(0,H,yFactor, "green",1);
+	    s += cu.mkSvgPathElement(0,H,xFactor, yFactor, "green",1);
 	    s += "\n";
 	}
 
@@ -412,8 +429,19 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
     }
 
 
+    /** Compute a round number (with just one non-zero digit) that's
+	greater or equal to x
+    */
+    static int roundUp(int x) {
+	int m=1;
+	while(m*10 < x)  m*=10;	    
+	int j=1;
+	while(j<10 && j*m<x) j++;
+	return m*j;
+    }
+    
     /** Tic points */
-    Integer[] ticPoints(int W) {
+    static Integer[] ticPoints(int W) {
 	int m = 1;
 	while(m*10<W) {
 	    m *= 10;

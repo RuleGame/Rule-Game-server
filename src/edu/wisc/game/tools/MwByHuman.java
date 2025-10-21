@@ -17,6 +17,7 @@ import edu.wisc.game.parser.RuleParseException;
 import edu.wisc.game.math.*;
 import edu.wisc.game.formatter.*;
 
+import edu.wisc.game.sql.Episode.Move;
 import edu.wisc.game.sql.Episode.CODE;
 import edu.wisc.game.tools.MwSeries.MoveInfo;
 
@@ -464,6 +465,7 @@ public class MwByHuman extends AnalyzeTranscripts {
     /** Creates an MwSeries object for a (player,rule set)
 	interaction, and adds it to savedMws, if appropriate.
 
+
 	@param section All transcript data for one series of episodes
 	(i.e. one rule set), split into subsections (one per episode)
 
@@ -471,6 +473,13 @@ public class MwByHuman extends AnalyzeTranscripts {
 	analyzed. (That's the case for 1PG and C2PG). In A2PG, it is 0
 	or 1, and indicates which partner's record we want to extract
 	from the transcript.
+
+	@param needCurves If true, save move-by-move data in
+	moveInfo. (That's only needed in BuildCurves.) Note that in
+	MoveInfo data, successful picks are excluded from the record,
+	as they are generally ignorable in the relevant analyses.
+
+
      */
     protected MwSeries fillMwSeries(Vector<TranscriptManager.ReadTranscriptData.Entry[]> section,
 				    Vector<EpisodeHandle> includedEpisodes,
@@ -540,7 +549,10 @@ public class MwByHuman extends AnalyzeTranscripts {
 		boolean wrongPlayer= (chosenMover>0) && (e.mover!=chosenMover);
 		if (wrongPlayer) continue;
 
+		//-- as of ver. 8.036 skip successful picks, since they would confuse plots
+		if (!(e.pick instanceof Move) && e.code==CODE.ACCEPT) continue;
 
+		
 		if (needCurves) {
 		    MoveInfo mi = new MoveInfo(e.code==CODE.ACCEPT, p0[j]);
 		    vmi.add(mi);
@@ -592,6 +604,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 
 		boolean wrongPlayer= (chosenMover>0) && (e.mover!=chosenMover);
 		if (wrongPlayer) continue;
+		//-- as of ver. 8.036 skip successful picks, since they would confuse plots
+		if (!(e.pick instanceof Move) && e.code==CODE.ACCEPT) continue;
 
 		if (needCurves) {
 		    MoveInfo mi = new MoveInfo(e.code==CODE.ACCEPT, p0[j]);

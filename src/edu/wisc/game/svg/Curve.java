@@ -28,10 +28,10 @@ public class Curve {
 	@return Just the value of the "d" attibute of a PATH tag such
 	as   <path d="M0 100 L10 100 L20 110 L30 140 L40 190 L50 260 L60 350 L70 260 L80 190" stroke="green" stroke-width="5"  fill="none" />
     */
-    public String mkSvgPath(int x0, int y0, double yFactor) {
+    private String mkSvgPath(int x0, int y0, double xFactor, double yFactor) {
 	Vector<String> v = new Vector<>();
 	for(int i=0; i<y.length; i++) {
-	    String s = (i==0? "M":"L") + (x0+i)+ " " + (y0+yFactor*y[i]);
+	    String s = (i==0? "M":"L") + (x0+xFactor*i)+ " " + (y0+yFactor*y[i]);
 	    v.add(s);
 	}
 	return String.join(" " , v);
@@ -48,10 +48,15 @@ public class Curve {
 	return mkSvgPathElement(0, boxHeight, yFactor, color, strokWidth);
     }
 	
-    public String mkSvgPathElement(int x0, int y0, double yFactor, String color, int strokWidth) {	
-	return "<path d=\"" +mkSvgPath(x0, y0,yFactor) + "\" " +
+    public String mkSvgPathElement(int x0, int y0, double xFactor, double yFactor,
+				   String color, int strokWidth) {
+	return "<path d=\"" +mkSvgPath(x0, y0, xFactor, yFactor) + "\" " +
 	    "stroke=\""+color+"\" stroke-width=\""+strokWidth+"\"  "+
 	    "fill=\"none\" />";
+	
+    }
+    public String mkSvgPathElement(int x0, int y0, double yFactor, String color, int strokWidth) {	
+	return  mkSvgPathElement(x0, y0, 1.0, yFactor, color, strokWidth);
     }
 
     
