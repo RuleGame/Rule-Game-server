@@ -42,7 +42,7 @@ public class BuildCurves extends MwByHuman {
 		       CurveMode _curveMode,
 		       CurveArgMode _curveArgMode,
 		       MedianMode _medianMode,
-		       int _targetStreak, double _targetR, double _defaultMStar,Fmter _fm    ) {
+		       int _targetStreak, double _targetR, double _defaultMStar, Fmter _fm) {
 	super( _precMode, _targetStreak, _targetR, _defaultMStar, _fm);
 	curveMode =  _curveMode;
 	curveArgMode =  _curveArgMode;
@@ -56,40 +56,6 @@ public class BuildCurves extends MwByHuman {
 	System.err.println("For usage, see tools/build-curves.html\n\n");
 	if (msg!=null) 	System.err.println(msg + "\n");
 	System.exit(1);
-    }
-
-    /** Now, the MW Test, using this.savedMws computed in
-	stage1. Generates a report that's attached to this.results.
-	@param precMode Controls how the series are assigned to "distinct experiences".
-	@param fromFile Indicates that the m* data have come from an extrernal
-	file, and are not internally computed.
-     */
-    public void processStage2(boolean fromFile, boolean useMDagger, File csvOutDir )    {
-	if (error) return;
-
-	File[] csvOut = MannWhitneyComparison.expandCsvOutDir(csvOutDir);
-	
-	MannWhitneyComparison.Mode mode = MannWhitneyComparison.Mode.CMP_RULES_HUMAN;
-	MannWhitneyComparison mwc = new MannWhitneyComparison(mode);
-
-	MwSeries[] a = savedMws.toArray(new MwSeries[0]);
-	Comparandum[][] allComp = Comparandum.mkHumanComparanda(a,  precMode, useMDagger);	
-	//System.out.println("DEBUG: Human comparanda: "+allComp[0].length+" learned, "+allComp[1].length+" unlearned, ");
-	
-	if (fromFile) {
-	    result.append( fm.para("Processing data from an imported CSV file"));
-	} else {
-	    Vector<String> v = new Vector<>();
-	    if (targetStreak>0) v.add("to make "+fm.tt(""+targetStreak)+" consecutive moves with no errors");
-	    if (targetR>0) v.add("to make a series of successful consecutive moves with the product of R values at or above "+fm.tt(""+targetR));
-	    
-	    result.append( fm.para("In the tables below, 'learning' means demonstrating the ability " + Util.joinNonBlank(" or ", v)));
-
-	    result.append( fm.para("mStar is the number of move/pick attempts the player makes until he 'learns' by the above definition. Those who have not learned, or take more than "+fm.tt(""+defaultMStar)+" move/pick attempts to learn, are assigned mStar="+defaultMStar));
-	    result.append( fm.para("M-W matrix is computed based on " + (useMDagger? "mDagger" : "mStar")));
-	}
-	    
-	result.append( mwc.doCompare("humans", null, allComp, fm, csvOut));
     }
 
     /** (Being rewritten for BuildCurves. Note that in MoveInfo data, successful
@@ -208,9 +174,6 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		    System.out.println("DEBUG: Has read " + processor.savedMws.size() + " data lines");
 		}		
 	    }
-	    // M-W test on the data from savedMws
-	    //processor.processStage2( p.importFrom.size()>0, p.useMDagger, p.csvOutDir);
-
 
 	    //processor.printCurveData();
 
@@ -248,7 +211,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		File dm = new File(d, mode.toString() + "_" + argMode);
 		for(String key: h.keySet()) {
 		    OneKey z = h.get(key);
-		    File f = new File(dm, key + ".svg");
+		    File f = new File(dm, simplifyKey(key) + ".svg");
 		    f.getParentFile().mkdirs();
 		    Util.writeTextFile(f, z.plot);
 		}
@@ -256,6 +219,19 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	}
 	FileUtil.mkIndexes(d);
     }
+
+    /** Replaces "dir/r1:dir/r2:dir/r3" with "dir/r1.r2.r3", in otder to 
+	be able to create a more manageable file name */
+    private static String simplifyKey(String key) {
+	String v[] = key.split(":");
+	if (v.length<2) return key;
+	// remove the dir part from all segments other than the very first one
+	for(int j=1; j<v.length; j++) {
+	    v[j] = v[j].replaceFirst(".*/", "");
+	}
+	return String.join(".", v);
+    }
+
 
     
     /** The data for one key */
@@ -273,7 +249,10 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	for(MwSeries ser: savedMws) {
 	    String key = ser.getKey(precMode);
 	    OneKey z = h.get(key);
-	    if (z==null) h.put(key, z=new OneKey());
+	    if (z==null) {
+		System.out.println("DEBUG: key(" + precMode+")=" + key);
+		h.put(key, z=new OneKey());
+	    }
 	    z.add(ser);
 	}
 	String[] results = new String[h.size()];
