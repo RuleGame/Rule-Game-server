@@ -17,11 +17,14 @@ public class FileUtil {
 	v.add("<ul>");
 	for(File f: files) {
 	    String name = f.getName();
+
+	    String li = "<li><a href=\"" + name + "\">" + name + "</a>";
+	    
 	    if (f.isDirectory() && !name.startsWith(".")) {
 		subdirs.add(f);
-		v.add("<li><a href=\"" + name + "\">");
+		v.add(li);
 	    } else if (f.isFile() && !name.equals("index.html")) {
-		v2.add("<li><a href=\"" + name + "\">");
+		v2.add(li);
 	    }
 	}
 	v.addAll(v2);

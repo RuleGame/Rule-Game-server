@@ -401,6 +401,14 @@ The Java programming language guarantees that the operands of operators appear t
 	return len;
     }
 
+    public static double median(Vector<Double> v) {
+	Double[] a = v.toArray(new Double[0]);
+	Arrays.sort(a);
+	int n = a.length;
+	return (n%2 == 0) ? 0.5*(a[n/2-1] + a[n/2]) : a[n/2];
+    }
+
+    
 
     
 

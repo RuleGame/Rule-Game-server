@@ -93,6 +93,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	PrecMode precMode = PrecMode.Naive;
 	CurveMode curveMode = null; //CurveMode.E;
 	CurveArgMode curveArgMode = null; //CurveMode.M;
+	MedianMode medianMode = MedianMode.Real;
 	boolean useMDagger = false;
 	File csvOutDir = null;
 	
@@ -140,6 +141,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 		if (ss.length!=2) usage("Expected -curveMode=yChoice:xChoice");
 		curveMode = Enum.valueOf(MwByHuman.CurveMode.class, ss[0]);
 		curveArgMode = Enum.valueOf(MwByHuman.CurveArgMode.class, ss[1]);
+	    } else if (j+1< argv.length && a.equals("-median")) {
+		medianMode = Enum.valueOf(MwByHuman.MedianMode.class, argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-csvOut")) {
 		csvOutDir = new File(argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-target")) {
@@ -418,6 +421,12 @@ public class MwByHuman extends AnalyzeTranscripts {
 	Q
     }
 
+    public enum MedianMode {
+	// For each x, find the median of the set of all actually measured y_j(x)
+	Real,
+	// For each x, find the median of the set of all actually measured or extrapolated y_j(x)
+	Extra
+    }
     
     /** Who learned what. (playerId : (ruleSetName: learned)) */
     HashMap<String, HashMap<String, Boolean>> whoLearnedWhat = new HashMap<>();
