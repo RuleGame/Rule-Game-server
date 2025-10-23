@@ -222,7 +222,8 @@ public class EpisodeInfo extends Episode {
 	that triggered x2 (but did not trigger x4) for the series has the value of 2 stored
 	here, and the episode that triggered x4 has 4 stored here. 
 	The default value for this field (stored in all other episodes)
-	is 0.
+	is 0. (This is an array of 2 elements, so that in a A2PG both 
+	players individual results are stored).
      */
     //int xFactor;
     int xFactor[] = new int[2] ;

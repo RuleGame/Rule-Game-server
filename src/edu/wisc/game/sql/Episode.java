@@ -592,7 +592,7 @@ s	    non-existing piece) the value may be different from those of
 	private void callComputeR(Pick pick) {
 	    int j =  findJ(pick);
 	    boolean movable = isJMoveable[j];
-	    if (!movable) {  // immovable piece
+	    if (!movable) {  // immovable piece, thus failed pick
 		pick.setRValue(0);
 	    } else if (!(pick instanceof Move)) {  // accepted pick
 		// accepted picks don't affect the cumulative R, so just use 1

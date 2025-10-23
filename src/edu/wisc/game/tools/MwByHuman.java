@@ -510,9 +510,10 @@ public class MwByHuman extends AnalyzeTranscripts {
 	shouldRecord = shouldRecord && !(precMode == PrecMode.Naive && ser.precedingRules.size()>0);
 	
 	int je =0;
-	int streak=0;
-	double lastR = 0;
-
+	int streak=0, maxStreak=0;
+	double lastR = 0, maxR=0;
+	
+	
 	//-- all attempts from the beginning until "mastery demonstrated"
 	int attempts1=0;
 	//-- attempts that are parts of the most recent success streak (including successful moves and successful picks)
@@ -534,11 +535,19 @@ public class MwByHuman extends AnalyzeTranscripts {
 	//	if (needCurves) ser.moveInfo = new MoveInfo[m];
 	Vector<MoveInfo> vmi = new Vector<>();
 
+	// Is this episode part of a series in which a
+	// learning-criterion incentive plan is in use?
+	// If yes, then this is reflected in each Episode's xFactor 
+	boolean mastery = includedEpisodes.get(0).para.getIncentive().mastery();
+    
 	
-	/// zzzz
 	int k=0;
+	int xFactor=0; // will be updated from the last episode
 	for(TranscriptManager.ReadTranscriptData.Entry[] subsection: section) {
 	    eh = includedEpisodes.get(je ++);
+
+	    int xNew =  eh.xFactor[chosenMover<0? 0: chosenMover];
+	    if (xNew > xFactor) xFactor=xNew;
 
 	    if (!ser.ruleSetName.equals(eh.ruleSetName)) {
 		throw new IllegalArgumentException("Rule set name changed in the middle of a series");
@@ -580,6 +589,10 @@ public class MwByHuman extends AnalyzeTranscripts {
 			streak++;
 			if (lastR==0) lastR=1;
 			lastR *= r;
+			if (streak > maxStreak) maxStreak = streak;
+			if (lastR > maxR) maxR = lastR;
+
+			
 			if (debug) System.out.println("["+j+"] R*" + r + "=" +lastR);
 		    } else {
 			if (debug) System.out.println("["+j+"] successful pick");
@@ -643,7 +656,27 @@ public class MwByHuman extends AnalyzeTranscripts {
 	if (shouldRecord) 		savedMws.add(ser);
 
 
+	if (mastery)  checkMasteryMatch(ser, eh, xFactor, maxStreak, maxR);
 	return ser;
     }
-    
+
+    /** Check whether the "learning" bit we have set matches the mastery 
+	criterion (xFactor==4 on the last episode of the series). */
+    private void checkMasteryMatch(MwSeries ser, EpisodeHandle eh, int xFactor,
+				   int maxStreak, double maxR) {
+
+	String s ="MASTERY("+eh.playerId+
+	    ":" + eh.trialListId + ":" +  eh.seriesNo +
+	    ":rule=" + eh.ruleSetName +")";
+	String z = "xFactor=" + xFactor + "; streak=" + maxStreak+", r=" + maxR;
+
+	if (ser.learned) {
+	    if (xFactor==4) s += ": match - both learned: " + z;
+	    else s += ": mismatch: orig not learned, replay learned: " + z;
+	} else {
+	    if (xFactor==4) s += ": mismatch: orig learned, replay not learned: " + z;
+	    else s += ": match - none learned: " + z;
+	}
+	System.out.println(s);
+    }
 }

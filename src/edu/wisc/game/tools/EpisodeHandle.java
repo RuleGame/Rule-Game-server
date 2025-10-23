@@ -24,12 +24,15 @@ public class EpisodeHandle {
     final public String episodeId;
     /** The player who played the episode (in 1PG), or Player 0 (in 2PG) */
     final String playerId;
-    /** The partner's (Player 1's) playerId in adversarial 2PG, where
-	we need to separate the two players' moves; null otherwise
-	(i.e. in 1PG or C2PG) */
+    /** The partner's (Player 1's) playerId in A2PG, where we need to
+	separate the two players' moves; null otherwise (i.e. in 1PG or C2PG) */
     final String neededPartnerPlayerId;
     final boolean useImages;
     final public ParaSet para;
+
+    final int xFactor[];
+ 
+
     public String toString() {return episodeId;}
 
 
@@ -53,6 +56,8 @@ public class EpisodeHandle {
 	for(int j=0; j<seriesNo; j++) {
 	    precedingRules.add( t.get(j).getRuleSetName());
 	}
+
+	xFactor =  new int[] {  e.getXFactor(),  e.getXFactor1() };
     }
 
     /*
@@ -64,7 +69,7 @@ public class EpisodeHandle {
     */
 
     /** Creates a somewhat incomplete EisodeHandle object based on a line of data from
-	detailed transcript. This is used in unit testing without access to SQL server
+	detailed transcript. This should only be used in unit testing without access to SQL server
 
 	@param e A line from the detailed transcript:
 		<pre>
@@ -98,6 +103,9 @@ RU-FDCL-basic-auto-20241105-113759-EPVDYK,basic-07-A,0,FDCL/basic/ordL1,0,202411
 	//for(int j=0; j<seriesNo; j++) {
 	//  precedingRules.add( t.get(j).getRuleSetName());
 	//}
-    } 
+	xFactor = null; // unknown
+    }
+
+    
 }
 

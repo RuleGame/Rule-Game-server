@@ -456,7 +456,7 @@ public class PlayerInfo {
 	/** Scans the episodes of the series to see if the xFactor has
 	    been set for this series. Only appliable to series with 
 	    DOUBLING (or LIKELIHOOD) incentive scheme.
-	    @param mj Which player's record do we look at? (1PG or coop 2PG only have 0; adve 2PG has 0 and 1)
+	    @param mj Which player's record do we look at? (1PG or C2PG only have 0; A2PG has 0 and 1)
 	    @return 1,2, or 4.
 	 */
 	int findXFactor(int mj) {

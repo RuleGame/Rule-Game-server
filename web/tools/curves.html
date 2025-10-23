@@ -1,0 +1,27 @@
+
+<html>
+  <head><title>Cumulative curves</title>
+  </head>
+<body>
+
+<h1>Cumulative curves</h1>
+
+<div align="center"><em>Updated 2025-10-22, for Game Server 8.036</em></div>
+
+<p>The script <tt>analyze-transcripts-curves.sh</tt> draws cumulative error curves for human players sharing a particular experience. It pulls the data for a group of players from the data store (the SQL database and transcript files) and produces SVG images displaying the individual players' cumulative errors curves and their median curve.
+
+<p>This script is to be used in much the same way as <a href="analyze-transcripts-mwh.html">analyze-transcripts-mwh.sh</a>. It takes the same arguments related to choosing the players (e.g. by specifying an experiment plan or supplying a list of players) and identifying distinct experiences (-precMode) as that script.
+
+<p>
+Support for the -export and -import options has the same form as well, although the exported CSV file now has an additional column, containing the summary of the each series' transcript (in terms of the sequence of "e{j]:p0[j]" pairs for all moves in the series).
+
+  Additionally, several options related to drawing curves can be provided.
+
+  <h2>Specifying the curve plotting modes</h2>
+  
+<p>The option <tt>-curveMode <em>yVar.xVar</em> specifies what you actully want to plot.
+
+  
+
+       </body>
+</html>
