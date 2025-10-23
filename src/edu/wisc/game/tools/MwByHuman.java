@@ -592,6 +592,10 @@ public class MwByHuman extends AnalyzeTranscripts {
 			if (streak > maxStreak) maxStreak = streak;
 			if (lastR > maxR) maxR = lastR;
 
+
+			System.out.println("DEBUG: " + e.eid + "["+j+"], R *=" +r+ "=" + lastR);
+					  
+
 			
 			if (debug) System.out.println("["+j+"] R*" + r + "=" +lastR);
 		    } else {
@@ -600,7 +604,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 		} else {
 		    streak = 0;
 		    lastR = 0;
-		    if (debug) System.out.println("["+j+"] R=" + lastR);
+		    //if (debug)
+		    System.out.println("DEBUG["+j+"] R=" + lastR);
 		    ser.errcnt ++;
 		    ser.totalErrors++;
 		}
