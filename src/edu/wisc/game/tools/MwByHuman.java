@@ -545,7 +545,6 @@ public class MwByHuman extends AnalyzeTranscripts {
 	int xFactor=0; // will be updated from the last episode
 	for(TranscriptManager.ReadTranscriptData.Entry[] subsection: section) {
 	    eh = includedEpisodes.get(je ++);
-	    double r = rValues[k++];
 
 	    int xNew =  eh.xFactor[chosenMover<0? 0: chosenMover];
 	    if (xNew > xFactor) xFactor=xNew;
@@ -561,6 +560,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    for(; j<subsection.length && !ser.learned; j++) {
 		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
 		if (!eh.episodeId.equals(e.eid)) throw new IllegalArgumentException("Array mismatch");
+		double r = rValues[k++];
 
 
 
