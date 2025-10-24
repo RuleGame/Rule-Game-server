@@ -39,9 +39,13 @@ Support for the -export and -import options has the same form as well, although 
 
 <p>An advantage of using Q instead of M as the variable on the horizontal axis is that in a game where most players clear all boards presented to them (i.e. no incentive scheme, and no "give up" option), all curves will end at roughly the same value of Q, so a median would be much better defined than it would in a plot where the variable being plotted is plotted with respect to M.
 
-  <p><strong>You don't need to specify the  <tt>-curveMode</tt> option. If it isn't specified, the tool will plot the curves for all supported <em>yVar.xVar</em> combinations, placing each family of plots in an appropriately named subdirectory of the <tt>out</tt> directory. E.g. the plots of AAI vs. Q will be in the subdirectory <tt>AAI_Q</tt>
+  <p><strong>You don't need to specify the  <tt>-curveMode</tt> option. If it isn't specified, the tool will plot the curves for all supported <em>yVar.xVar</em> combinations, placing each family of plots in an appropriately named subdirectory of the <tt>out</tt> directory. E.g. the plots of AAI vs. Q will be in the subdirectory <tt>AAI_Q</tt></strong>
   
+    <h2>Output</h2>
 
+    <p>The tool creates directory <tt>out</tt>; in it, subdirectories corresponding to display modes (<tt>E_M</tt> etc). Within each of them, plots are written as individual SVG files, each file name corresponding to the identifier of the "experience" reflected therein. SDepedning on the -precMode, that may be just the name of the rule set, or a combination of strings including the preceding rule sets. In the latter case, the components of the file names are separated by dots (because using semicolons would not be appropriate in file names).
+
+    
       <h2>Identifying learners. Extrapolating</h2>
 
       <p>The plotting tool uses the same criterion as the MWH tool (-targetR or -targetStreak) to identify "learners", i.e. players who  appear to have "mastered the rules" and have demonstrated this mastery by making a sequence of correct moves. The two options (-targetR or -targetStreak) correspond to Paul's two incentive schemes (LIKELIHOOD or DOUBLING, respectively); if the data you analyze have come from an experiment in which one of these two incentive schemes was employed, you may want to use the corresponding option, with the appropriate value (as per the experiment's parameter sets), so that the tool's identification of the players are learners or non-learners matched the identification of them as such made in real time by the Game Server.
@@ -61,6 +65,40 @@ Support for the -export and -import options has the same form as well, although 
   
   <p>You probably only want to use the <tt>-median Extra</tt>  mode when you're working with a data set that includes only learners, i.e. one where all curves are extrapolated. Otherwise, you'll see that the median curve changes in an "unnatural" way once the "non-learners'" curves end and only extrapolated "learners'" curves remain.
 	    
-  
+<h2>Example</h2>
+
+<p>This example can be fined in the script <tt>/home/vmenkov/curves/curves-ignore.sh</tt>
+
+<pre>
+#!/bin/csh
+
+rm -rf out
+
+#-- Extract all records for players who played plan "FDCL/basic". Save them to a CSV file, and also produce the default set of curves
+/home/vmenkov/w2020/game/scripts/analyze-transcripts-curves.sh -precMode Ignore -targetR 1000000 -export all-ignore.csv FDCL/basic > tmp.log
+mv out out-all-ignore
+
+#--select players who have "learned"
+head -1 all-ignore.csv > learned-ignore.csv
+awk -F ',' '$7 == "true"' all-ignore.csv >> learned-ignore.csv
+
+#--draw curves for learners, 
+/home/vmenkov/w2020/game/scripts/analyze-transcripts-curves.sh -precMode Ignore -import learned-ignore.csv -median Extra > tmp-2.log
+mv out out-learned-ignore
+
+#-- list the directories with SVG files
+du out-all-ignore
+du out-learned-ignore
+</pre>
+
+<p>
+I have copied the output directories (for all players, and for learners only) to
+http://action.rutgers.edu/tmp/out-learned-ignore/
+http://action.rutgers.edu/tmp/out-all-ignore/
+
+<p>See also curves-every.sh in the same directory. It's output has been copied to
+http://action.rutgers.edu/tmp/out-learned-every/
+http://action.rutgers.edu/tmp/out-all-every/
+
        </body>
 </html>
