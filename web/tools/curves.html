@@ -19,9 +19,48 @@ Support for the -export and -import options has the same form as well, although 
 
   <h2>Specifying the curve plotting modes</h2>
   
-<p>The option <tt>-curveMode <em>yVar.xVar</em> specifies what you actully want to plot.
+<p>The option <tt>-curveMode <em>yVar.xVar</em></tt> specifies what you actully want to plot. The possible values are as follows.
 
+
+  <p>In all formulas, <em>m</em> is the move count (more precisely, the number of successful and failed moves and failed picks) since the beginning of the series. (Successful picks are entirely ignored, as if we deem them to be merely "slips of the fingers", or actions of a player who does not understand what he needs to do). <em>q</em> is the number of game pieces removed so far in the series, i.e. the number of successful moves.
+
+<p> <em>yVar</em> specifies the variable plotted on the vertical axis. The possible values are:
+  <ul>
+    <li><tt>E</tt> -- Raw error count, Sum_m(e_m). One would expect E(m) for a random player to increase roughly linearly with <em>m</em>, and for successful learner, to stabilize at some value (the total number of errors the player makes before he fully learns the rules).
+    <li><tt>AAI</tt> -- Error count normalized error prob, Sum_m(e_m)/Sum_m(1-p0(m)).  One would expect AAI(m) for a random player to stabilize around a certain constant,  and for successful learner, to decrease as const/m.
+    <li><tt>AAIB</tt> --  AAI * m. One would expect E(m) for a random player to increase roughly linearly with <em>m</em>, and for successful learner, to stabilize at some value (the total number of errors the player makes before he fully learns the rules).
+  </ul>
+
+<p> <em>xVar</em> specifies the variable plotted on the horizontal axis. The possible values are:
+  <ul>
+    <li><tt>M</tt> -- <em>m</em>,  the move count (more precisely, the number of successful and failed moves and failed picks) since the beginning of the series.
+    <li><tt>Q</tt> -- <em>q</em>,  the number of game pieces removed by the player since the beginning of the series. (This is also equal to the number of successful moves).     
+  </ul>
+
+<p>An advantage of using Q instead of M as the variable on the horizontal axis is that in a game where most players clear all boards presented to them (i.e. no incentive scheme, and no "give up" option), all curves will end at roughly the same value of Q, so a median would be much better defined than it would in a plot where the variable being plotted is plotted with respect to M.
+
+  <p><strong>You don't need to specify the  <tt>-curveMode</tt> option. If it isn't specified, the tool will plot the curves for all supported <em>yVar.xVar</em> combinations, placing each family of plots in an appropriately named subdirectory of the <tt>out</tt> directory. E.g. the plots of AAI vs. Q will be in the subdirectory <tt>AAI_Q</tt>
   
 
+      <h2>Identifying learners. Extrapolating</h2>
+
+      <p>The plotting tool uses the same criterion as the MWH tool (-targetR or -targetStreak) to identify "learners", i.e. players who  appear to have "mastered the rules" and have demonstrated this mastery by making a sequence of correct moves. The two options (-targetR or -targetStreak) correspond to Paul's two incentive schemes (LIKELIHOOD or DOUBLING, respectively); if the data you analyze have come from an experiment in which one of these two incentive schemes was employed, you may want to use the corresponding option, with the appropriate value (as per the experiment's parameter sets), so that the tool's identification of the players are learners or non-learners matched the identification of them as such made in real time by the Game Server.
+
+      <p>In E and AAIB plots, the curves for the identified "learners" can be easily identified, because on the graph the curve is extrapolated, by a dotted horizontal line, beyond the point where the player stopped playing. (The dotted line shows how the curve would hypothetically continued if the player kept playing, without making any more errors).  In the AAI plots, there is no extrapolations, because I did not bother drawing hyperboles (for AAIB(m)=const/m).
+
+  <h2>Specifying the median plotting mode</h2>
+
+  <ul>
+    <li><tt>-median Real</tt> -- the default mode. For every segment <em>[m,m+1]</em>(or <em>[q,q+1]</em>, as the case may be), the median curve is drawn as the median of the actually recorded values of the plotted value at m amd m+1 (or q and q+1).
+
+    <li><tt>-median Extra</tt> -- For every segment <em>[m,m+1]</em>(or <em>[q,q+1]</em>, as the case may be), the median curve is drawn as the median of the actually recorded or extrapolated values of the plotted value at m amd m+1 (or q and q+1). (Extrapolated values only exist for extrapolated curves, i.e. those for "learners").
+
+  </ul>
+
+<p>The median curve so constructed typically has discontinuities at the points where some of the participating players' curves end. (For example, if we records of 10 players up to m=30, but of only 9 players at m=31, then the median curve will likely have a discontinuity at m=30, since to the left of that point the median is constructed as the median of 10 functions, and to the right of that point, as the median of 9 functions).
+  
+  <p>You probably only want to use the <tt>-median Extra</tt>  mode when you're working with a data set that includes only learners, i.e. one where all curves are extrapolated. Otherwise, you'll see that the median curve changes in an "unnatural" way once the "non-learners'" curves end and only extrapolated "learners'" curves remain.
+	    
+  
        </body>
 </html>

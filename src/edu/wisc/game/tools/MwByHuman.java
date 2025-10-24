@@ -593,19 +593,14 @@ public class MwByHuman extends AnalyzeTranscripts {
 			if (lastR > maxR) maxR = lastR;
 
 
-			System.out.println("DEBUG: " + e.eid + "["+j+"], R *=" +r+ "=" + lastR);
-					  
-
-			
-			if (debug) System.out.println("["+j+"] R*" + r + "=" +lastR);
+			if (debug) System.out.println("DEBUG: " + e.eid + "["+j+"], R *=" +r+ "=" + lastR);
 		    } else {
 			if (debug) System.out.println("["+j+"] successful pick");
 		    }
 		} else {
 		    streak = 0;
 		    lastR = 0;
-		    //if (debug)
-		    System.out.println("DEBUG["+j+"] R=" + lastR);
+		    if (debug)  System.out.println("DEBUG["+j+"] R=" + lastR);
 		    ser.errcnt ++;
 		    ser.totalErrors++;
 		}
@@ -676,12 +671,12 @@ public class MwByHuman extends AnalyzeTranscripts {
 	String z = "xFactor=" + xFactor + "; streak=" + maxStreak+", r=" + maxR;
 
 	if (ser.learned) {
-	    if (xFactor==4) s += ": match - both learned: " + z;
+	    if (xFactor==4) s=null; //s += ": match - both learned: " + z;
 	    else s += ": mismatch: orig not learned, replay learned: " + z;
 	} else {
 	    if (xFactor==4) s += ": mismatch: orig learned, replay not learned: " + z;
-	    else s += ": match - none learned: " + z;
+	    else s=null; //s += ": match - none learned: " + z;
 	}
-	System.out.println(s);
+	if (s!=null) 	System.out.println(s);
     }
 }
