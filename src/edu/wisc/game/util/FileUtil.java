@@ -2,8 +2,6 @@ package edu.wisc.game.util;
 
 import java.io.*;
 import java.util.*;
-//import java.util.regex.*;
-//import java.text.*;
 
 /** Auxiliary methods for files and directories */
 public class FileUtil {

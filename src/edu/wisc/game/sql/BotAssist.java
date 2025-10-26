@@ -36,21 +36,18 @@ class BotAssist {
 	if (proposed.sameMove(move)) move.setDidFollow(true);
     }
 
-    /** The last chat message generate by this assistant */
+    /** The last chat message generate by this assistant. It is updated every time a new suggestion is generated. */
     private String chat=null;
     String getChat() { return chat; }
 
     
     /** Proposes one more move, adds it to the bot assist transcript,
 	and stores it in "proposed". Creates a human-readable chat
-	message to be sent to the player, and saves it in
-	the ExtendedDisplay structure passed to this method.
+	message to be sent to the player, saves it in this.chat, and returns it
 
-	//@param q The structure to which the chat message to be included in the current server
-	response is to be added.
+	@return the new suggestion text that can be sent to the player
     */
-    String makeSuggestion(EpisodeInfo epi)//, EpisodeInfo.ExtendedDisplay q)
-	throws IOException {
+    String makeSuggestion(EpisodeInfo epi)	throws IOException {
 	Pseudo task = new Pseudo(epi.getPlayer(), epi, epi.getAttemptCnt());
 	proposed = task.proposeMove();
 	chat = null;
@@ -65,7 +62,6 @@ class BotAssist {
 	    Logging.info("BotAssist: " + chat);
 	}
 	return chat;
-	//q.setBotAssistChat(chat);
     }
     
 }

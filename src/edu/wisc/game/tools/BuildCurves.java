@@ -352,50 +352,39 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	double yFactor = -H/maxY; // getMaxY();
 	double xFactor = W/maxX;
 	
-	/*
-	
-	GroupAggregateWrapper.AvgCurve cu=getCurves().get(i);
-	
-	Curve medianCu =  getMedianCurves().get(i);
-	Curve medianCumulCu =  getMedianCumulCurves().get(i);
-	Curve avgCumulCu =  getAvgCumulCurves().get(i);
-	*/
-	
-	String s="";
 	int width = W+50;
 	int height = H+40;
-	s += "<svg   xmlns=\"http://www.w3.org/2000/svg\" width=\"" +
-	    width + "\" height=\"" + height +
-	    "\" viewBox=\"-20 -20 " + (W+50) + " " + (H+40)+"\"> \n";
 
-	s += "<rect width=\""+ W+ "\" height=\"" + H + "\" " +
-	    "style=\"fill:rgb(240,240,240);stroke-width:1;stroke:rgb(0,0,0)\"/>\n"; 
+	Vector<String> v = new Vector<>();
+	v.add( "<svg   xmlns=\"http://www.w3.org/2000/svg\" width=\"" +
+	       width + "\" height=\"" + height +
+	       "\" viewBox=\"-20 -20 " + (W+50) + " " + (H+40)+"\">");
+
+	v.add( "<rect width=\""+ W+ "\" height=\"" + H + "\" " +
+	       "style=\"fill:rgb(240,240,240);stroke-width:1;stroke:rgb(0,0,0)\"/>"); 
 	for(int m: ticPoints((int)maxX)) {
 	    double x = m*xFactor, y=H+15;
-	    s += "<text x=\"" +(x-10) + "\" y=\"" +y + "\" fill=\"black\">" +
-		m + "</text>\n";
-	    s += "<line x1=\""+x+"\" y1=\""+H+"\" x2=\""+x+"\" y2=\"0\" stroke=\"black\" stroke-dasharray=\"3 5\"/> \n";
+	    v.add("<text x=\"" +(x-10) + "\" y=\"" +y + "\" fill=\"black\">" +
+		  m + "</text>");
+	    v.add("<line x1=\""+x+"\" y1=\""+H+"\" x2=\""+x+"\" y2=\"0\" stroke=\"black\" stroke-dasharray=\"3 5\"/>");
 	}
 
 
 	for(int m: ticPoints((int)maxY)) {
 	    double x = 0, y= (int)( (maxY-m)*H/maxY);
-	    s += "<text x=\"" +(x-20) + "\" y=\"" +y + "\" fill=\"black\">" +
-		m + "</text>\n";
-	    s += "<line x1=\"0\" y1=\""+y+"\" x2=\""+W+"\" y2=\""+y+"\" stroke=\"black\" stroke-dasharray=\"3 5\"/> \n";
+	    v.add("<text x=\"" +(x-20) + "\" y=\"" +y + "\" fill=\"black\">" +
+		  m + "</text>");
+	    v.add("<line x1=\"0\" y1=\""+y+"\" x2=\""+W+"\" y2=\""+y+"\" stroke=\"black\" stroke-dasharray=\"3 5\"/>");
 	}
 
+	v.add( Curve.mkShading(curves, 0,H, xFactor, yFactor, medianMode==MedianMode.Extra));
 	
-
 	for(Curve cu: curves) {
-	
-	    s += cu.mkSvgPathElement(0,H,xFactor, yFactor, "green",1);
-	    s += "\n";
+	    
+	    v.add( cu.mkSvgPathElement(0,H,xFactor, yFactor, "green",1));
 	}
 
-	s += Curve.mkMedianSvgPathElement(curves, 0,H,xFactor, yFactor, "red",3, medianMode==MedianMode.Extra);
-	s += "\n";
-
+	v.add( Curve.mkMedianSvgPathElement(curves, 0,H,xFactor, yFactor, "red",3, medianMode==MedianMode.Extra));
 
 	
 	/*
@@ -416,8 +405,8 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	}
 	*/
 	
-	s += "</svg>\n";
-	return s;
+	v.add( "</svg>");
+	return Util.joinNonBlank("\n", v);
     }
 
 

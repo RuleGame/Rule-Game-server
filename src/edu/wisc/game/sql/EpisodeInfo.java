@@ -650,6 +650,10 @@ public class EpisodeInfo extends Episode {
 	    if (botAssist[move.mover]==null) botAssist[move.mover]=new BotAssist();
 	    botAssist[move.mover].didHeFollow(move);
 	    String chat = botAssist[move.mover].makeSuggestion(this);
+
+	    if (q.mustWait) {
+		if (chat!=null) chat = "[Note: it's not your turn yet] " + chat;
+	    }
 	    q.setBotAssistChat(chat);
 	}
 
@@ -1043,8 +1047,8 @@ public class EpisodeInfo extends Episode {
 
 	Logging.info("DEBUG: mySeries().hasBotAssist("+mover+
 		     ")=" + mySeries().hasBotAssist(mover));
-	if (mySeries().hasBotAssist(mover)) {
-	    if (getAttemptCnt(q.mover)==0 && !q.mustWait) {
+	if (mySeries().hasBotAssist(mover) && !q.mustWait) {
+	    if (getAttemptCnt(q.mover)==0) {
 		// This is the /display call before the first move (of
 		// this player) of an episode with bot assist. No
 		// suggestions are made yet, so let's just send an inspirational
@@ -1056,10 +1060,9 @@ public class EpisodeInfo extends Episode {
 		    "Starting episode no. " + k + " of Rule no. " + (seriesNo+1)+" . Please make your first move!";
 		
 		q.setBotAssistChat(chat);
-	    } else if (!q.mustWait) {
-		// 		
+	    } else  {
 		String chat = botAssist[q.mover].getChat();
-		if (chat!=null) chat = "Reminding of my suggestion: " + chat;
+		// if (chat!=null) chat = "Reminding of my suggestion: " + chat;
 		q.setBotAssistChat(chat);
 
 	    }

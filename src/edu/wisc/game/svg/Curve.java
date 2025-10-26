@@ -134,7 +134,50 @@ public class Curve {
 	return String.join(" " , v);
     }
 
+
     
+    public static String mkShading(Curve[] curves, int x0, int y0, double xFactor, double yFactor, boolean useExtra) {
+	Vector<String> w = new Vector<>();
+	for(int x=1; ; x++) {
+	    Vector<Double> ya=new Vector<>(), yb=new Vector<>();
+	    for(Curve c: curves) {
+		boolean extra = useExtra && c.extraX!=null && x<=c.extraX;
+		if (x<c.y.length) {
+		    ya.add( c.y[x-1]);
+		    yb.add( c.y[x]);
+		} else if (extra) {
+		    ya.add( c.getLastY());
+		    yb.add( c.getLastY());
+		}
+	    }
+	    if (ya.size()<5) break;
+	    Double[] a = ya.toArray(new Double[0]);
+	    Arrays.sort(a);
+	    Double[] b = yb.toArray(new Double[0]);
+	    Arrays.sort(b);
+
+
+	    
+	    int j0 = (a.length+2)/5;
+	    int j1 = a.length-1-j0;
+	    double[] low = {a[j0], b[j0]}, 
+		high = {a[j1], b[j1]};	       
+	    
+	    String[] v = {
+		"M" + (x0+xFactor*(x-1))+ " " + (y0+yFactor* low[0]),
+		"L" + (x0+xFactor*x)+ " " + (y0+yFactor* low[1]),
+		"L" + (x0+xFactor*x)+ " " + (y0+yFactor* high[1]),
+		"L" + (x0+xFactor*(x-1))+ " " + (y0+yFactor* high[0])};
+	    
+	    String q = Util.joinNonBlank(" " , v);
+	    String color = "lightgrey";
+	    String s = "<path d=\"" +q + "\" " +		
+	    "stroke=\""+color+"\" stroke-width=\""+1+"\"  "+
+	    "fill=\"" + color + "\" />";
+	    w.add(s);	    
+	}
+	return String.join("\n" , w);	
+    }
     
 }
 
