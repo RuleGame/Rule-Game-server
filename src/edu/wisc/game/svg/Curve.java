@@ -135,7 +135,31 @@ public class Curve {
     }
 
 
-    
+    /** The confidence interva calculations as per 
+https://www.statology.org/confidence-interval-for-median/
+<pre>
+     We can use the following formula to calculate the upper and lower bounds of a confidence interval for a population median:
+
+j: nq  –  z * sqrt( nq(1-q))
+k: nq  +  z * sqrt(nq(1-q))
+
+where:
+
+n: The sample size
+q: The quantile of interest. For a median, we will use q = 0.5.
+z: The z-critical value
+We round j and k up to the next integer. The resulting confidence interval is between the jth and kth observations in the ordered sample data.
+
+z=1.96 for the 95% confidence interval
+</pre>
+
+I subtract 0.5 from j and k, in order to have a symmetric interval centered
+on  n/2 - 0.5 (the zero-based indexes ranging from 0 to n-1)
+
+<p> Or see the ref here:
+https://www-users.york.ac.uk/~mb55/intro/cicent.htm
+
+    */
     public static String mkShading(Curve[] curves, int x0, int y0, double xFactor, double yFactor, boolean useExtra) {
 	Vector<String> w = new Vector<>();
 	for(int x=1; ; x++) {
@@ -157,11 +181,13 @@ public class Curve {
 	    Arrays.sort(b);
 
 
-	    
-	    int j0 = (a.length+2)/5;
-	    int j1 = a.length-1-j0;
-	    double[] low = {a[j0], b[j0]}, 
-		high = {a[j1], b[j1]};	       
+	    final int n = a.length;
+	    final double z = 1.96;
+	    //j: nq
+	    double r = z * Math.sqrt( n * 0.25);		
+	    int j0 =  (int) Math.round((n-1)*0.5 - r);
+	    int j1 =  (int) Math.round((n-1)*0.5 + r);
+	    double[] low = {a[j0], b[j0]}, high = {a[j1], b[j1]};	       
 	    
 	    String[] v = {
 		"M" + (x0+xFactor*(x-1))+ " " + (y0+yFactor* low[0]),
