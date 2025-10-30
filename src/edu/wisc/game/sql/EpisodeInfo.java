@@ -430,7 +430,7 @@ public class EpisodeInfo extends Episode {
     
     /** The common part of doMove and doPick: after a move or pick has
 	been completed, see how it affects the current state of the
-	episode.  
+	episode.
 
 	<p>
 	This method takes care of the issues related to the incentive scheme.
@@ -498,11 +498,8 @@ public class EpisodeInfo extends Episode {
 	    }
 	}
 	
-
 	// Should stretch and R be counted as Player 1's separate numbers?
-	//boolean forP1 = (player.isAdveGame() && move.mover==Pairing.State.ONE);
 	int mj = (player.isAdveGame() && move.mover==Pairing.State.ONE) ? 1: 0;
-
 
 	justReachedX2[mj]=justReachedX4[mj]=false;
 
@@ -522,13 +519,10 @@ public class EpisodeInfo extends Episode {
 	    lastStretch[mj]=0;
 	    lastR[mj] = 0;
 	}
-
-
 	
 	if (xgetIncentive()==Incentive.DOUBLING ||
 	    xgetIncentive()==Incentive.LIKELIHOOD) {
 	    
-
 	    boolean mastery2 = false, mastery4 = false;
 	    String s = "";
 	    if (xgetIncentive()==Incentive.DOUBLING) {
@@ -541,7 +535,6 @@ public class EpisodeInfo extends Episode {
 		mastery2 = (lastR[mj] >=x2);
 		s = ", as lastR=" + lastR[mj] + " for x2="+x2+", x4="+x4;
 	    }
-
 
 	    PlayerInfo.Series ser =  mySeries();
 	    int f = ser.findXFactor(mj); 
@@ -571,7 +564,6 @@ public class EpisodeInfo extends Episode {
 		if (xFactor[mj]<factorPromised[mj]) xFactor[mj] = factorPromised[mj];
 	    }
 	}
-
 	
 	if (bonus) {
 	    if (isCompleted()) {
@@ -613,9 +605,7 @@ public class EpisodeInfo extends Episode {
 	    String thisPid = thisPlayer.getPlayerId();
 	    String otherPid = otherPlayer.getPlayerId();
 
-
 	    Logging.info("Performed move for " + player.getPlayerIdForRole(move.mover)+ "; otherPlayer.amBot=" + otherPlayer.getAmBot() + "; this mover mustWait=" + q.mustWait);
-
 	    
 	    if (thisPlayer.getAmBot()) { // I am a bot 
 		if (!q.mustWait && !isCompleted()) { // and I am given another move
@@ -652,7 +642,7 @@ public class EpisodeInfo extends Episode {
 	    String chat = botAssist[move.mover].makeSuggestion(this);
 
 	    if (q.mustWait) {
-		if (chat!=null) chat = "[Note: it's not your turn yet] " + chat;
+		if (chat!=null) chat = "[Not your turn yet] " + chat;
 	    }
 	    q.setBotAssistChat(chat);
 	}
@@ -1012,12 +1002,19 @@ public class EpisodeInfo extends Episode {
 	}
 
 
-	/** If there is a bot assist, it can send a message here */
+	/** If there is an assist bot, the bot can send a message here */
 	String botAssistChat = null;
 	public String getBotAssistChat() { return botAssistChat; }
         @XmlElement
         public void setBotAssistChat(String _botAssistChat) { botAssistChat = _botAssistChat; }
 
+	/** The server can set this to true to ask the GUI client to
+	    remove any previous bot assist message(s) from the screen */
+	boolean clearBotAssistChat = false;
+	public boolean getClearBotAssistChat() { return clearBotAssistChat; }
+	@XmlElement
+	public void setClearBotAssistChat(boolean _clearBotAssistChat) { clearBotAssistChat = _clearBotAssistChat; }
+	
     }
     
     /** Builds a Dsplay object to be sent out over the web UI on a /display call
@@ -1047,34 +1044,41 @@ public class EpisodeInfo extends Episode {
 
 	Logging.info("DEBUG: mySeries().hasBotAssist("+mover+
 		     ")=" + mySeries().hasBotAssist(mover));
-	if (mySeries().hasBotAssist(mover) && !q.mustWait) {
-	    if (getAttemptCnt(q.mover)==0) {
-		// This is the /display call before the first move (of
-		// this player) of an episode with bot assist. No
-		// suggestions are made yet, so let's just send an inspirational
-		// message
-
-		int k = q.getEpisodeNo();
-		String chat = (k==0)?
-		    "Starting the first episode of a new rule (Rule no. " + (seriesNo+1)+" . Please make your first move!":
-		    "Starting episode no. " + k + " of Rule no. " + (seriesNo+1)+" . Please make your first move!";
-		
-		q.setBotAssistChat(chat);
-	    } else  {
-		String chat = botAssist[q.mover].getChat();
-		// if (chat!=null) chat = "Reminding of my suggestion: " + chat;
-		q.setBotAssistChat(chat);
-
-	    }
-		      
-	}
-
-
-	
+	supplyChatMessage(q, mover);
     	return q;
     }
 
- 
+    /** Checks if this game has bot assist, and send a chat bot message
+	when appropriate */
+    // zzz
+    private void supplyChatMessage(ExtendedDisplay q, int mover) {
+	if (!mySeries().hasBotAssist(mover)) return;
+	
+	if (q.mustWait) { // clear any chat message, if there is one
+	    q.setClearBotAssistChat(true);
+	} else if (getAttemptCnt(q.mover)==0) {
+	    // This is the /display call before the first move (of
+	    // this player) of an episode with bot assist. No
+	    // suggestions are made yet, so let's just send an inspirational
+	    // message
+	    
+	    int k = q.getEpisodeNo();
+	    String chat = (k==0)?
+		"Starting the first episode of a new rule (Rule no. " + (seriesNo+1)+" . Please make your first move!":
+		"Starting episode no. " + k + " of Rule no. " + (seriesNo+1)+" . Please make your first move!";
+	    
+	    q.setBotAssistChat(chat);
+	} else  {
+	    String chat = botAssist[q.mover].getChat();
+	    // if (chat!=null) chat = "Reminding of my suggestion: " + chat;
+	    if (chat!=null) {
+		q.setBotAssistChat(chat);
+	    } else {
+		q.setClearBotAssistChat(true);
+	    }
+	}		      
+	
+    }
 
 
     public ExtendedDisplay dummyDisplay(int _code, 	String _errmsg) {
