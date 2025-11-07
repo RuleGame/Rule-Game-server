@@ -6,7 +6,7 @@
 
 <h1>Cumulative curves</h1>
 
-<div align="center"><em>Updated 2025-10-22, for Game Server 8.036</em></div>
+<div align="center"><em>Updated 2025-10-30, for Game Server 8.036</em></div>
 
 <p>The script <tt>analyze-transcripts-curves.sh</tt> draws cumulative error curves for human players sharing a particular experience. It pulls the data for a group of players from the data store (the SQL database and transcript files) and produces SVG images displaying the individual players' cumulative errors curves and their median curve.
 
@@ -26,24 +26,28 @@ Support for the -export and -import options has the same form as well, although 
 
 <p> <em>yVar</em> specifies the variable plotted on the vertical axis. The possible values are:
   <ul>
-    <li><tt>E</tt> -- Raw error count, Sum_m(e_m). One would expect E(m) for a random player to increase roughly linearly with <em>m</em>, and for successful learner, to stabilize at some value (the total number of errors the player makes before he fully learns the rules).
+    <li><tt>W</tt> -- Raw error count, W(M)=Sum_m(e_m). One would expect E(m) for a random player to increase roughly linearly with <em>m</em>, and for successful learner, to stabilize at some value (the total number of errors the player makes before he fully learns the rules).
     <li><tt>AAI</tt> -- Error count normalized error prob, Sum_m(e_m)/Sum_m(1-p0(m)).  One would expect AAI(m) for a random player to stabilize around a certain constant,  and for successful learner, to decrease as const/m.
     <li><tt>AAIB</tt> --  AAI * m. One would expect E(m) for a random player to increase roughly linearly with <em>m</em>, and for successful learner, to stabilize at some value (the total number of errors the player makes before he fully learns the rules).
+    <li><tt>ALL</tt> -- produce multiple plots, one for each of the above modes
   </ul>
 
 <p> <em>xVar</em> specifies the variable plotted on the horizontal axis. The possible values are:
   <ul>
     <li><tt>M</tt> -- <em>m</em>,  the move count (more precisely, the number of successful and failed moves and failed picks) since the beginning of the series.
-    <li><tt>Q</tt> -- <em>q</em>,  the number of game pieces removed by the player since the beginning of the series. (This is also equal to the number of successful moves).     
+    <li><tt>C</tt> -- <em>c</em>,  the number of game pieces removed by the player since the beginning of the series. (This is also equal to the number of successful moves).
+    <li><tt>ALL</tt> -- produce multiple plots, one for each of the above modes
   </ul>
 
-<p>An advantage of using Q instead of M as the variable on the horizontal axis is that in a game where most players clear all boards presented to them (i.e. no incentive scheme, and no "give up" option), all curves will end at roughly the same value of Q, so a median would be much better defined than it would in a plot where the variable being plotted is plotted with respect to M.
+<p><strong>The default value of curveMode is AAIB.C, meaning plotting AAIB as a function of C.</strong></p>
+  
+<p>An advantage of using C instead of M as the variable on the horizontal axis is that in a game where most players clear all boards presented to them (i.e. no incentive scheme, and no "give up" option), all curves will end at roughly the same value of C, so a median would be much better defined than it would in a plot where the variable being plotted is plotted with respect to M.
 
-  <p><strong>You don't need to specify the  <tt>-curveMode</tt> option. If it isn't specified, the tool will plot the curves for all supported <em>yVar.xVar</em> combinations, placing each family of plots in an appropriately named subdirectory of the <tt>out</tt> directory. E.g. the plots of AAI vs. Q will be in the subdirectory <tt>AAI_Q</tt></strong>
+<p>If  <tt>-curveMode</tt> has been specified as <tt>ALL.ALL</tt> (or just as <tt>all</tt>, for short), the tool will plot the curves for all supported <em>yVar.xVar</em> combinations, placing each family of plots in an appropriately named subdirectory of the <tt>out</tt> directory. E.g. the plots of AAI vs. C will be in the subdirectory <tt>AAI_C</tt>.
   
     <h2>Output</h2>
 
-    <p>The tool creates directory <tt>out</tt>; in it, subdirectories corresponding to display modes (<tt>E_M</tt> etc). Within each of them, plots are written as individual SVG files, each file name corresponding to the identifier of the "experience" reflected therein. SDepedning on the -precMode, that may be just the name of the rule set, or a combination of strings including the preceding rule sets. In the latter case, the components of the file names are separated by dots (because using semicolons would not be appropriate in file names).
+    <p>The tool creates directory <tt>out</tt>; in it, subdirectories corresponding to display modes (<tt>W_M</tt> etc). Within each of them, plots are written as individual SVG files, each file name corresponding to the identifier of the "experience" reflected therein. SDepedning on the -precMode, that may be just the name of the rule set, or a combination of strings including the preceding rule sets. In the latter case, the components of the file names are separated by dots (because using semicolons would not be appropriate in file names).
 
     
       <h2>Identifying learners. Extrapolating</h2>

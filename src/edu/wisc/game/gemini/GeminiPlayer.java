@@ -636,7 +636,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	    extra.playerId = model;
 	    extra.trialListId = ggw.trialListId;
 	    extra.seriesNo = ggw.seriesNo; 
-	    extra.ruleId = log.rule_name;
+	    extra.ruleSetName = log.rule_name;
 	    extra.episodeNo = size()-1;
 	    TranscriptManager.saveDetailedTranscriptToFile(epi, extra, transcriptFile);
 	}

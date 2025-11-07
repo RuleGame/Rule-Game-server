@@ -57,6 +57,12 @@ public  class MwSeries {
 	}
     }
 
+    /** Converts a key produced with any PrecMode to the key that
+	would be produced with PrecMode.Ignore */
+    public static String keyToIgnoreKey(String key) {
+	return key.replaceAll(".*:", "");
+    }
+    
     /** Used for EveryCond; only lists the preceding,
 	and does not include the target */
     public String getLightKey() {
@@ -107,7 +113,7 @@ public  class MwSeries {
 	ruleSetName = o.ruleSetName;
 	precedingRules = new Vector<String>();
 	for(String r: o.precedingRules) {
-	    if (ignorePrec.contains(r)) {
+	    if (ignorePrec!=null && ignorePrec.contains(r)) {
 		MwByHuman.incrementIgnorePrecCnt();
 		continue;
 	    }

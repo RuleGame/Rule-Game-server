@@ -11,8 +11,17 @@ public class Curve {
     final double[] y;
     /** If non-null, the curve is extrapolated beyond its end point
 	as a horizontal line, up to the specified X value
-     */
+    */
     Double  extraX=null;
+
+    /** 
+	Controls how the main section and the extrapolated section (if
+	any) of this curve are drawn. A null element means "skip", ""
+	means solid line */
+    String[] dash = {"", "2"};
+    public String[] getDash() { return dash; }
+    public void setDash(String[] _dash) { dash = _dash; }
+
     //    Curve(int N) {
     //y = new double[N+1];
     //}
@@ -40,26 +49,32 @@ public class Curve {
 	The first point will be M x0 y0; after that, between two
 	adjacent points,  dx = 1, dy *= yFactor. 
 	@param yFactor Usually, negative
+	@param If not null, the "deterministic jitter", in the screen y coordinate
 	@return Just the value of the "d" attibute of a PATH tag such
 	as   <path d="M0 100 L10 100 L20 110 L30 140 L40 190 L50 260 L60 350 L70 260 L80 190" stroke="green" stroke-width="5"  fill="none" />
     */
-    private String mkSvgPath(int x0, int y0, double xFactor, double yFactor) {
+    private String mkSvgPath(int x0, int y0, double xFactor, double yFactor, int [] offset) {
 	Vector<String> v = new Vector<>();
 	for(int i=0; i<y.length; i++) {
-	    String s = (i==0? "M":"L") + (x0+xFactor*i)+ " " + (y0+yFactor*y[i]);
+	    double sy = y0+yFactor*y[i];
+	    if (offset!=null) sy -= offset[i];
+	    String s = (i==0? "M":"L") + (x0+xFactor*i)+ " " + sy;
 	    v.add(s);
 	}
 	return String.join(" " , v);
     }
 
     /** The extrapolated part, or null */
-    private String mkExtraSvgPath(int x0, int y0, double xFactor, double yFactor) {
+    private String mkExtraSvgPath(int x0, int y0, double xFactor, double yFactor, int [] offset) {
 	if (extraX==null) return null;
 	Vector<String> v = new Vector<>();
 	int i=y.length-1; 
-	String s =  "M" + (x0+xFactor*i)+ " " + (y0+yFactor*y[i]);
+	double sy = y0+yFactor*y[i];
+	if (offset!=null) sy -= offset[i];
+
+	String s =  "M" + (x0+xFactor*i)+ " " + sy;
 	v.add(s);
-	s =  "L" + (x0+xFactor*extraX)+ " " + (y0+yFactor*y[i]);
+	s =  "L" + (x0+xFactor*extraX)+ " " + sy;
 	v.add(s);
 	return String.join(" " , v);
     }
@@ -77,27 +92,56 @@ public class Curve {
 	
     public String mkSvgPathElement(int x0, int y0, double xFactor, double yFactor,
 				   String color, int strokWidth) {
-	String s = "<path d=\"" +mkSvgPath(x0, y0, xFactor, yFactor) + "\" " +
-	    "stroke=\""+color+"\" stroke-width=\""+strokWidth+"\"  "+
-	    "fill=\"none\" />";
+	//	final String dash[] =  {"", "2"};
+	return mkSvgPathElement2(x0, y0, xFactor, yFactor,
+				 color, strokWidth, null);
+    }
 
-	String extraPath = mkExtraSvgPath(x0, y0, xFactor, yFactor);
-	if (extraPath != null) s +=  "\n"+
-				   "<path d=\"" + extraPath + "\" " +
-				   "stroke=\""+color+"\" stroke-width=\""+strokWidth+"\"  "+
-				   "stroke-dasharray=\"2\" " +
-				   "fill=\"none\" />";
-	
-	return s;
+    /**
+       @param noo if non-null, used to provide "deterministic jitter"
+       of overlapping horizontal segments 
+	    
+    */
+    public String mkSvgPathElement2(int x0, int y0, double xFactor, double yFactor,
+				    String color, int strokWidth, NoOverlap noo) {
+
+	Vector<String> v = new Vector<>();
+	int[] offset = (noo==null)? new int[y.length] :   noo.add(this);
+
+	for(int j=0; j<2; j++) {
+
+	    if (dash[j]==null) continue;
+	    
+	    String p = (j==0)?
+		mkSvgPath(x0, y0, xFactor, yFactor, offset):
+		mkExtraSvgPath(x0, y0, xFactor, yFactor, offset);
+
+	    //System.out.println("p("+j+")=" +p);
+	    
+	    if (p==null) continue;
+	    
+	    String s = "<path d=\"" +p + "\" " +
+		"stroke=\""+color+"\" stroke-width=\""+strokWidth+"\"  ";
+	    if (!dash[j].equals("")) s += "stroke-dasharray=\""+dash[j]+"\" ";
+	    s += " fill=\"none\" />";
+
+	    //System.out.println("s("+j+")=" +s);
+	    v.add(s);
+	}
+	    
+	return String.join("\n", v);
 	
     }
 
     /** @param useExtra If true, include the extrapolated sections of curves into the analysis */
     public static String mkMedianSvgPathElement(Curve[] curves, int x0, int y0, double xFactor, double yFactor,
-						String color, int strokWidth, boolean useExtra) {
-	return "<path d=\"" +mkMedianSvgPath(curves, x0, y0, xFactor, yFactor, useExtra) + "\" " +
-	    "stroke=\""+color+"\" stroke-width=\""+strokWidth+"\"  "+
-	    "fill=\"none\" />";
+						String color, int strokWidth, String dash,
+						boolean useExtra) {
+	String s = "<path d=\"" +mkMedianSvgPath(curves, x0, y0, xFactor, yFactor, useExtra) + "\" " +
+	    "stroke=\""+color+"\" stroke-width=\""+strokWidth+"\"  ";
+	if (dash!=null && !dash.equals(""))  s += "stroke-dasharray=\""+dash+"\" ";
+	s += "fill=\"none\" />";
+	return s;
 	
     }
 
@@ -203,6 +247,21 @@ https://www-users.york.ac.uk/~mb55/intro/cicent.htm
 	    w.add(s);	    
 	}
 	return String.join("\n" , w);	
+    }
+
+
+    /** 
+     */
+    static public String mkSvgNoOverlap( Curve[] curves,
+				  int x0, int y0, double xFactor, double yFactor,
+				  String color, int strokWidth) {
+
+	NoOverlap noo = new NoOverlap();
+	Vector<String> v = new Vector<>();
+	for(Curve cu: curves) {	    
+	    v.add( cu.mkSvgPathElement2(x0,y0,xFactor, yFactor, color, strokWidth, noo));
+	}
+	return String.join("\n", v);
     }
     
 }

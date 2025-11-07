@@ -76,7 +76,7 @@ episodeNo, -- same as in log files (sequentially numbered within run or within s
 	info has to be supplied separately.
      */
     static public class ExtraTranscriptInfo {
-	public String playerId, trialListId, ruleId;
+	public String playerId, trialListId, ruleSetName;
 	public int seriesNo, episodeNo;
 
 	public ExtraTranscriptInfo() {}
@@ -86,14 +86,14 @@ episodeNo, -- same as in log files (sequentially numbered within run or within s
 	    trialListId = x.getTrialListId();
 	    seriesNo = ei.getSeriesNo();
 	    PlayerInfo.Series ser = ei.mySeries();
-	    ruleId = ser.para.getRuleSetName();
+	    ruleSetName = ser.para.getRuleSetName();
 	    episodeNo = ser.episodes.indexOf(ei);
 	}
     }
 
     /** Appends the transcript of an episode to a file.
        @param epi The episode whose transcript is to be written out
-       @param extra If epi is an Episode, rather than EpisodeInfo, his
+       @param extra If epi is an Episode, rather than EpisodeInfo, this
        structure should contain missing values. If epi is an
        EpisodeInfo, this argument is ignored (and thus can be null).
        @param f File to which the episode's transcript will be
@@ -137,7 +137,7 @@ episodeNo, -- same as in log files (sequentially numbered within run or within s
 	   h.put( "playerId", extra.playerId);
 	   h.put( "trialListId", extra.trialListId);
 	   h.put( "seriesNo", extra.seriesNo);
-	   h.put( "ruleId", extra.ruleId);
+	   h.put( "ruleId", extra.ruleSetName);
 	   h.put( "episodeNo", extra.episodeNo);
 	   h.put( "episodeId", epi.getEpisodeId());	   
 	   h.put( "moveNo", moveNo++);
@@ -261,8 +261,22 @@ episodeNo, -- same as in log files (sequentially numbered within run or within s
 		ParsePosition pos = new ParsePosition(0);
 		return Episode.sdf2.parse(timeString, pos);
 	    }
+
+	   
+	    /** Used when creating an Entry in a simulated episode
+		with a random player */
+	    public Entry(EpisodeHandle eh, int moveNo, Pick _pick)  {
+		csv = null;
+		pid = eh.playerId;
+		eid = eh.episodeId;
+		timeString = "";
+		pick = _pick;
+		code = pick.getCode();
+		mover = pick.getMover();
+		k = moveNo;
+	    }
 	    
-	    
+	    /** Used when an Entry has been read from a transcript file */
 	    Entry(CsvData.BasicLineEntry e, boolean hasMover, boolean hasObjectId) {
 		//-- the "mover" column was added in GS 7.0
 		
@@ -296,6 +310,13 @@ episodeNo, -- same as in log files (sequentially numbered within run or within s
 		return (o instanceof Entry) &&
 		    csv.equals(((Entry)o).csv);
 	    }
+
+	    /** Is this entry a "successful pick" (a likelly slip-of-the-finger
+		actions, when the player picks a moveable piece and then
+		drops it on the board)? */
+	    public boolean isSuccessfulPick() {
+	    	return  !(pick instanceof Move) && code==Episode.CODE.ACCEPT;
+	    }
 	    
 	}
 	/** Reads in the entire content of a transcript file for a player.
@@ -306,7 +327,10 @@ episodeNo, -- same as in log files (sequentially numbered within run or within s
 	public ReadTranscriptData(File csvFile) throws IOException,  IllegalInputException {
 	    CsvData csv = new CsvData(csvFile, false, false, null);
 	    header = csv.header;
-
+	    if (csv.entries.length==0) { // no data lines, and maybe no header either
+		hasMover = 	    hasObjectId=false;
+		return;
+	    }
 
 
 	    // thru ver 6.*: "#pid,episodeId,moveNo,timestamp,y,x,by,bx,code"

@@ -44,6 +44,7 @@ public class MwByHuman extends AnalyzeTranscripts {
     protected final double targetR;
     /** It is double rather than int so that Infinity could be represented */
     protected final double  defaultMStar;
+    protected final MakeMwSeries makeMwSeries;
 
     /** @param  _targetStreak this is how many consecutive error-free moves the player must make (e.g. 10) in order to demonstrate successful learning. If 0 or negative, this criterion is turned off
 	@param _targetR the product of R values of a series of consecutive moves should be at least this high) in order to demonstrate successful learning. If 0 or negative, this criterion is turned off
@@ -55,7 +56,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 	targetStreak = _targetStreak;
 	targetR = _targetR;
 	defaultMStar = _defaultMStar;
-	fm = _fm; 
+	fm = _fm;
+	makeMwSeries = new MakeMwSeries(target,  _precMode,  _targetStreak,  _targetR, _defaultMStar);
     }
 
 
@@ -91,8 +93,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 	double targetR = 0;
 	double defaultMStar=300;
 	PrecMode precMode = PrecMode.Naive;
-	CurveMode curveMode = null; //CurveMode.E;
-	CurveArgMode curveArgMode = null; //CurveMode.M;
+	CurveMode curveMode = CurveMode.AAIB;
+	CurveArgMode curveArgMode = CurveArgMode.C;
 	MedianMode medianMode = MedianMode.Real;
 	boolean useMDagger = false;
 	File csvOutDir = null;
@@ -137,10 +139,15 @@ public class MwByHuman extends AnalyzeTranscripts {
 		precMode = Enum.valueOf(MwByHuman.PrecMode.class, argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-curveMode")) {
 		String s = argv[++j];
-		String []ss = s.split(":");
-		if (ss.length!=2) usage("Expected -curveMode=yChoice:xChoice");
-		curveMode = Enum.valueOf(MwByHuman.CurveMode.class, ss[0]);
-		curveArgMode = Enum.valueOf(MwByHuman.CurveArgMode.class, ss[1]);
+		if (s.equals("all")) {
+		    curveMode = CurveMode.ALL;
+		    curveArgMode = CurveArgMode.ALL;
+		} else {
+		    String [] ss = s.split(":");
+		    if (ss.length!=2) usage("Expected '-curveMode yChoice:xChoice', or '-curveMode all'");
+		    curveMode = Enum.valueOf(MwByHuman.CurveMode.class, ss[0]);
+		    curveArgMode = Enum.valueOf(MwByHuman.CurveArgMode.class, ss[1]);
+		}
 	    } else if (j+1< argv.length && a.equals("-median")) {
 		medianMode = Enum.valueOf(MwByHuman.MedianMode.class, argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-csvOut")) {
@@ -170,6 +177,11 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    targetStreak = 10;
 	}
 
+	//if (curveMode==null) {
+	//    curveMode = CurveMode.AAIB;
+	//    curveArgMode = CurveArgMode.C;
+	//}
+	
 	//System.out.println("Adjusted: targetStreak=" + targetStreak+", targetR="+targetR );	
 	if (config!=null) {
 	    // Instead of the master conf file in /opt/w2020, use the customized one
@@ -206,7 +218,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 		
 		if (p.exportTo!=null) {
 		    File gsum=new File(p.exportTo);
-		    processor.exportSavedMws(gsum);
+		    exportMws(gsum, processor.savedMws);
 		}
 	    } else {
 		processor.savedMws.clear();		
@@ -340,19 +352,18 @@ public class MwByHuman extends AnalyzeTranscripts {
     /** Exports the data generated in Stage1
 	@param gsum File to write
      */
-    public void exportSavedMws(File gsum) throws IOException {
+    protected static void exportMws(File gsum, Vector<MwSeries> saved) throws IOException {
 	PrintWriter wsum = new PrintWriter(new FileWriter(gsum, false));
 	String h = MwSeries.header;
 	boolean hasMi = false;
-	for(MwSeries ser: savedMws) {
+	for(MwSeries ser: saved) {
 	    if (ser.moveInfo!=null) hasMi=true;
 	}
 	if (hasMi) h += ",moveInfo";				
-
 	
 	wsum.println(h);
 	
-	for(MwSeries ser: savedMws) {
+	for(MwSeries ser: saved) {
 	    wsum.println(ser.toCsv());
 	}
 
@@ -406,8 +417,9 @@ public class MwByHuman extends AnalyzeTranscripts {
     }
 
     public enum CurveMode {
-	// Raw error count, Sum_m(e_m)
-	E,
+	ALL,
+	// Raw error count, Sum_m(e_m) (formerly E)
+	W,
 	// Error count normalized error prob, Sum_m(e_m)/Sum_m(1-p0(m))
 	AAI,
 	// AAI * m
@@ -415,10 +427,11 @@ public class MwByHuman extends AnalyzeTranscripts {
     }
 
     public enum CurveArgMode {
+	ALL,
 	// count of move attempts
 	M,
-	// count of removed pieces
-	Q
+	// count of removed pieces (formerly Q)
+	C
     }
 
     public enum MedianMode {
@@ -428,8 +441,6 @@ public class MwByHuman extends AnalyzeTranscripts {
 	Extra
     }
     
-    /** Who learned what. (playerId : (ruleSetName: learned)) */
-    HashMap<String, HashMap<String, Boolean>> whoLearnedWhat = new HashMap<>();
 
     /** Saves the data (the summary of a series) for a single (player, ruleSet) pair. The saved data is put into an MwSeries object, which is then appened to savedMws.
 
@@ -458,225 +469,18 @@ public class MwByHuman extends AnalyzeTranscripts {
 
 	if (eh.neededPartnerPlayerId != null) {
 	    System.out.println("For " +eh.playerId + ", also make partner entry for " + eh.neededPartnerPlayerId);
-	    MwSeries[] ser={
-		fillMwSeries(section, includedEpisodes, p0andR, 0, false),
-		fillMwSeries(section, includedEpisodes, p0andR, 1, false)};
+	    for(int j=0; j<2; j++) {
+		MwSeries ser = makeMwSeries.mkMwSeries(section, includedEpisodes, p0andR, j, false);
+		if (ser!=null) savedMws.add(ser);
+	    }
 	} else {
 	    System.out.println("For " +eh.playerId + ", no partner needed");
-	    MwSeries ser = fillMwSeries(section, includedEpisodes, p0andR, -1, false);
+	    MwSeries ser = makeMwSeries.mkMwSeries(section, includedEpisodes, p0andR, -1, false);
+	    if (ser!=null) savedMws.add(ser);
 	}
-
+	
 	section.clear();
 	includedEpisodes.clear();
     }
-
-
-    /** Creates an MwSeries object for a (player,rule set)
-	interaction, and adds it to savedMws, if appropriate.
-
-
-	@param section All transcript data for one series of episodes
-	(i.e. one rule set), split into subsections (one per episode)
-
-        @param chosenMover If it's -1, the entire transcript is
-	analyzed. (That's the case for 1PG and C2PG). In A2PG, it is 0
-	or 1, and indicates which partner's record we want to extract
-	from the transcript.
-
-	@param needCurves If true, save move-by-move data in
-	moveInfo. (That's only needed in BuildCurves.) Note that in
-	MoveInfo data, successful picks are excluded from the record,
-	as they are generally ignorable in the relevant analyses.
-
-
-     */
-    protected MwSeries fillMwSeries(Vector<TranscriptManager.ReadTranscriptData.Entry[]> section,
-				    Vector<EpisodeHandle> includedEpisodes,
-				    P0andR p0andR, int chosenMover,
-				    boolean needCurves)
-	throws  IOException, IllegalInputException,  RuleParseException {
-
-	double rValues[] = p0andR.rValues;
-	double p0[] = p0andR.p0;
-	
-	// this players successes and failures on the rules he's done
-	EpisodeHandle eh = includedEpisodes.firstElement();
-	MwSeries ser = new MwSeries(eh, ignorePrec, chosenMover);
-
-	HashMap<String,Boolean> whatILearned = whoLearnedWhat.get(ser.playerId);
-	if (whatILearned == null) whoLearnedWhat.put(ser.playerId, whatILearned = new HashMap<>());
-
-	boolean shouldRecord = (target==null) || eh.ruleSetName.equals(target);
-	shouldRecord = shouldRecord && !(precMode == PrecMode.Naive && ser.precedingRules.size()>0);
-	
-	int je =0;
-	int streak=0, maxStreak=0;
-	double lastR = 0, maxR=0;
-	
-	
-	//-- all attempts from the beginning until "mastery demonstrated"
-	int attempts1=0;
-	//-- attempts that are parts of the most recent success streak (including successful moves and successful picks)
-	int attempts2=0;
-
-	ser.errcnt = 0;
-	ser.mStar = defaultMStar;
-	if (precMode == PrecMode.EveryCond) {
-	    ser.adjustPreceding( whatILearned);
-	} else if (precMode == PrecMode.Ignore) {
-	    ser.stripPreceding();
-	}
-
-	if (debug) System.out.println("Scoring");
-
-	ser.totalMoves = 0;
-	
-	//int m =  Util.sumLen(section);
-	//	if (needCurves) ser.moveInfo = new MoveInfo[m];
-	Vector<MoveInfo> vmi = new Vector<>();
-
-	// Is this episode part of a series in which a
-	// learning-criterion incentive plan is in use?
-	// If yes, then this is reflected in each Episode's xFactor 
-	boolean mastery = includedEpisodes.get(0).para.getIncentive().mastery();
-    
-	
-	int k=0;
-	int xFactor=0; // will be updated from the last episode
-	for(TranscriptManager.ReadTranscriptData.Entry[] subsection: section) {
-	    eh = includedEpisodes.get(je ++);
-
-	    int xNew =  eh.xFactor[chosenMover<0? 0: chosenMover];
-	    if (xNew > xFactor) xFactor=xNew;
-
-	    if (!ser.ruleSetName.equals(eh.ruleSetName)) {
-		throw new IllegalArgumentException("Rule set name changed in the middle of a series");
-	    }
-
-	    // We will skip the rest of transcript for the rule set (i.e. this
-	    // series) if the player has already demonstrated his
-	    // mastery of this rule set
-	    int j=0;
-	    for(; j<subsection.length && !ser.learned; j++) {
-		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
-		if (!eh.episodeId.equals(e.eid)) throw new IllegalArgumentException("Array mismatch");
-		double r = rValues[k++];
-
-
-
-		boolean wrongPlayer= (chosenMover>0) && (e.mover!=chosenMover);
-		if (wrongPlayer) continue;
-
-		//-- as of ver. 8.036 skip successful picks, since they would confuse plots
-		if (!(e.pick instanceof Move) && e.code==CODE.ACCEPT) continue;
-
-		
-		ser.totalMoves++;
-		if (needCurves) {
-		    MoveInfo mi = new MoveInfo(e.code==CODE.ACCEPT, p0[j]);
-		    vmi.add(mi);
-		}
-		    
-		attempts1++;
-		if (e.code==CODE.ACCEPT) {
-		    attempts2++;
-		} else {
-		    attempts2=0;
-		}
-		
-		if (e.code==CODE.ACCEPT) {
-		    if (e.pick instanceof Episode.Move) {
-			streak++;
-			if (lastR==0) lastR=1;
-			lastR *= r;
-			if (streak > maxStreak) maxStreak = streak;
-			if (lastR > maxR) maxR = lastR;
-
-
-			if (debug) System.out.println("DEBUG: " + e.eid + "["+j+"], R *=" +r+ "=" + lastR);
-		    } else {
-			if (debug) System.out.println("["+j+"] successful pick");
-		    }
-		} else {
-		    streak = 0;
-		    lastR = 0;
-		    if (debug)  System.out.println("DEBUG["+j+"] R=" + lastR);
-		    ser.errcnt ++;
-		    ser.totalErrors++;
-		}
-
-
-		boolean learned =
-		    (targetStreak>0 && streak>=targetStreak) ||
-		    (targetR>0 && lastR>=targetR);
-		
-		if (learned) {
-		    ser.learned=true;
-		    //-- This was in effect through ver 8.028. After that, we switched to
-		    //-- counting all move attempts, rather than errors
-		    // ser.mStar = Math.min( ser.errcnt, ser.mStar);
-		    ser.mStar = Math.min( attempts1 - attempts2 + 1, ser.mStar);
-		}
-		whatILearned.put(eh.ruleSetName, learned);
-	    }
-
-	    // Also count any errors that were made after the learning success
-	    for(; j<subsection.length; j++) {
-		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
-		if (!eh.episodeId.equals(e.eid)) throw new IllegalArgumentException("Array mismatch");
-
-		boolean wrongPlayer= (chosenMover>0) && (e.mover!=chosenMover);
-		if (wrongPlayer) continue;
-		//-- as of ver. 8.036 skip successful picks, since they would confuse plots
-		if (!(e.pick instanceof Move) && e.code==CODE.ACCEPT) continue;
-
-		ser.totalMoves++;
-		if (needCurves) {
-		    MoveInfo mi = new MoveInfo(e.code==CODE.ACCEPT, p0[j]);
-		    vmi.add(mi);
-		}
-		
-		if (e.code!=CODE.ACCEPT) {
-		    ser.totalErrors ++;
-		}
-	    }
-	    
-	    //	    ser.totalMoves += subsection.length;
-	}
-
-	if (needCurves) {
-	    ser.moveInfo = vmi.toArray(new MoveInfo[0]);
-	}
-
-	// since ver 8.036, ignore empty series (which may occur in 2PG when one
-	// player has not had a chance to play; or even in 1PG, when somebody
-	// was just doing successful picks without any moves)
-	if (ser.totalMoves==0) shouldRecord = false;
-	// Do recording only after a successful adjustPreceding (if applicable)
-	if (shouldRecord) 		savedMws.add(ser);
-
-
-	if (mastery)  checkMasteryMatch(ser, eh, xFactor, maxStreak, maxR);
-	return ser;
-    }
-
-    /** Check whether the "learning" bit we have set matches the mastery 
-	criterion (xFactor==4 on the last episode of the series). */
-    private void checkMasteryMatch(MwSeries ser, EpisodeHandle eh, int xFactor,
-				   int maxStreak, double maxR) {
-
-	String s ="MASTERY("+eh.playerId+
-	    ":" + eh.trialListId + ":" +  eh.seriesNo +
-	    ":rule=" + eh.ruleSetName +")";
-	String z = "xFactor=" + xFactor + "; streak=" + maxStreak+", r=" + maxR;
-
-	if (ser.learned) {
-	    if (xFactor==4) s=null; //s += ": match - both learned: " + z;
-	    else s += ": mismatch: orig not learned, replay learned: " + z;
-	} else {
-	    if (xFactor==4) s += ": mismatch: orig learned, replay not learned: " + z;
-	    else s=null; //s += ": match - none learned: " + z;
-	}
-	if (s!=null) 	System.out.println(s);
-    }
 }
+

@@ -1,5 +1,5 @@
 package edu.wisc.game.tools;
-
+ 
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
@@ -31,7 +31,11 @@ public class BuildCurves extends MwByHuman {
     protected final CurveMode curveMode;
     protected final CurveArgMode curveArgMode;
     protected final MedianMode medianMode;
-	
+
+    /** Used in processing random player runs */
+    private final MakeMwSeries randomMakeMwSeries;
+
+    
     /** Info about each episode gets added here */
     //    public Vector<MwSeries> savedMws = new Vector<>();
 
@@ -47,6 +51,7 @@ public class BuildCurves extends MwByHuman {
 	curveMode =  _curveMode;
 	curveArgMode =  _curveArgMode;
 	medianMode = _medianMode;
+	randomMakeMwSeries = new MakeMwSeries(target,  PrecMode.Ignore,  300,  1e9, _defaultMStar);
     }
 
     static private void usage() {
@@ -57,6 +62,11 @@ public class BuildCurves extends MwByHuman {
 	if (msg!=null) 	System.err.println(msg + "\n");
 	System.exit(1);
     }
+
+
+    static boolean doRandom = true;
+    Vector<MwSeries> randomMws = new Vector<>();
+
 
     /** (Being rewritten for BuildCurves. Note that in MoveInfo data, successful
 	picks are excluded from the record, as they are generally ignorable
@@ -90,14 +100,29 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 
 	if (eh.neededPartnerPlayerId != null) {
 	    System.out.println("For " +eh.playerId + ", also make partner entry for " + eh.neededPartnerPlayerId);
-	    MwSeries[] ser={
-		fillMwSeries(section, includedEpisodes, p0andR, 0, true),
-		fillMwSeries(section, includedEpisodes, p0andR, 1, true)};
+	    for(int j=0; j<2; j++) {
+		MwSeries ser= makeMwSeries.mkMwSeries(section, includedEpisodes, p0andR, j, true);
+		if (ser!=null) savedMws.add(ser);
+	    }
 	} else {
 	    System.out.println("For " +eh.playerId + ", no partner needed");
-	    MwSeries ser = fillMwSeries(section, includedEpisodes, p0andR, -1, true);
+	    MwSeries ser =  makeMwSeries.mkMwSeries(section, includedEpisodes, p0andR, -1, true);
+	    if (ser!=null) savedMws.add(ser);
 	}
 
+
+	if (doRandom) { // zzz play a few random episodes with the same board
+	    try {
+	    Vector<MwSeries> sers =
+		RandomPlay.randomSaveAnyData(section,
+					     includedEpisodes,
+					     -1,
+					     randomPlayerModel,
+					     randomMakeMwSeries);
+	    randomMws.addAll(sers);
+	    } catch(CloneNotSupportedException ex) {}
+	}
+	
 	section.clear();
 	includedEpisodes.clear();
     }
@@ -163,16 +188,28 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		processor.processStage1(p.plans, p.pids, p.nicknames, p.uids);
 		
 		if (p.exportTo!=null) {
-		    File gsum=new File(p.exportTo);
-		    processor.exportSavedMws(gsum);
+		    File gsum=new File(p.exportTo);		    
+		    exportMws(gsum, processor.savedMws);
+		    if (doRandom) {
+			gsum=new File( randomMwsFileName(p.exportTo));
+			exportMws(gsum, processor.randomMws);		
+		    }
+		    
 		}
 	    } else {
 		processor.savedMws.clear();		
+		processor.randomMws.clear();
 		for(String from: p.importFrom) {
 		    File g = new File(from);
 		    MwSeries.readFromFile(g, processor.savedMws);
-		    System.out.println("DEBUG: Has read " + processor.savedMws.size() + " data lines");
-		}		
+		    System.out.println("DEBUG: Has read " + processor.savedMws.size() + " MWS data lines");
+		    
+		    if (doRandom) {
+			g=new File(randomMwsFileName(from));
+			MwSeries.readFromFile(g ,processor.randomMws);
+			System.out.println("DEBUG: Has read " + processor.randomMws.size() + " random MWS data lines");
+		    }		    
+		}
 	    }
 
 	    //processor.printCurveData();
@@ -185,6 +222,13 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    String text = processor.getReport();
 	    System.out.println(text);
 	}
+    }
+
+    private static String randomMwsFileName(String fname) {
+	String f1 = fname.replaceAll("\\.csv$", ".random.csv");
+	if (f1.equals(fname)) throw new IllegalArgumentException("Cannot convert file name: "+fname);
+	return f1;
+		
     }
 
     /** Generates plots for all "experiences" and all requested
@@ -200,13 +244,18 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	File d = new File("out");
 	CurveMode[] modes = {curveMode};
 	CurveArgMode[] argModes = {curveArgMode};
-	if (curveMode==null) {
+	if (curveMode==CurveMode.ALL) {
 	    modes=CurveMode.class.getEnumConstants();
+	}
+
+	if (curveArgMode==CurveArgMode.ALL) {
 	    argModes=CurveArgMode.class.getEnumConstants();
 	}
 	
 	for(CurveArgMode argMode: argModes) {
+	    if (argMode==CurveArgMode.ALL) continue;
 	    for(CurveMode mode: modes) {
+		if (mode==CurveMode.ALL) continue;
 		HashMap<String, OneKey>  h = doPlots(mode, argMode);
 		File dm = new File(d, mode.toString() + "_" + argMode);
 		for(String key: h.keySet()) {
@@ -220,7 +269,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	FileUtil.mkIndexes(d);
     }
 
-    /** Replaces "dir/r1:dir/r2:dir/r3" with "dir/r1.r2.r3", in otder to 
+    /** Replaces "dir/r1:dir/r2:dir/r3" with "dir/r1.r2.r3", in order to 
 	be able to create a more manageable file name */
     private static String simplifyKey(String key) {
 	String v[] = key.split(":");
@@ -243,41 +292,69 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 
 	int H=600;
 	int W=600;
-	int maxX = (argMode==CurveArgMode.Q)? roundUp(findMaxQ()):  (int)defaultMStar;
+	int maxX = (argMode==CurveArgMode.C)? roundUp(findMaxC()):  (int)defaultMStar;
 	
-	HashMap<String, OneKey> h = new HashMap<>();
+	HashMap<String, OneKey> h = new HashMap<>(), hr = new HashMap<>();
 	for(MwSeries ser: savedMws) {
 	    String key = ser.getKey(precMode);
 	    OneKey z = h.get(key);
 	    if (z==null) {
-		System.out.println("DEBUG: key(" + precMode+")=" + key);
+		//		System.out.println("DEBUG: key(" + precMode+")=" + key);
 		h.put(key, z=new OneKey());
 	    }
 	    z.add(ser);
 	}
+
+	if (doRandom) {
+	    for(MwSeries ser: randomMws) {
+		String key = ser.getKey(PrecMode.Ignore);
+		OneKey z = hr.get(key);
+		if (z==null) {
+		    //  System.out.println("DEBUG: key(" + precMode+")=" + key);
+		    hr.put(key, z=new OneKey());
+		}
+		z.add(ser);
+	    }	    
+	}
+
+
+	
 	String[] results = new String[h.size()];
 	int j=0;
 	for(String key: h.keySet()) {
 	    OneKey z = h.get(key);
 	    //MwSeries[] ss = new MwSeries[z.size()];
-	    Curve[] curves = new Curve[z.size()];
+	    Curve[] curves = new Curve[z.size()], randomCurves=new Curve[0];
+
+
 	    int k = 0;
 	    for(MwSeries ser: z) {
 		curves[k++] = mkCurve(ser, mode, argMode, maxX);
 	    }
-	    z.plot = mkPlotSvg(W,H, maxX, curves);
+
+	    if (doRandom) {
+		OneKey w = hr.get( MwSeries.keyToIgnoreKey(key));
+		randomCurves = new Curve[w.size()];
+		k  = 0;
+		for(MwSeries ser: w) {
+		    randomCurves[k++] = mkCurve(ser, mode, argMode, maxX);
+		}		
+	    }
+
+	   
+	    z.plot = mkPlotSvg(W,H, maxX, curves, randomCurves);
 	}
 
 	return h;
     }
 
 
-    private int findMaxQ() {
+    private int findMaxC() {
 	int n = 0;
 	for(MwSeries ser: savedMws) {
-	    int q = findMaxQ(ser);
+	    int q = findMaxC(ser);
 	    if (q>n) {
-		System.out.println("maxQ( " + ser.getKey(precMode) + " )=" + q);
+		System.out.println("maxC( " + ser.getKey(precMode) + " )=" + q);
 		n = q;
 	    }
 	}
@@ -285,7 +362,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
     }
 
     /** How many pieces were removed in this series? */
-    private int findMaxQ(MwSeries ser) {
+    private int findMaxC(MwSeries ser) {
 	int n=0;
 	for(MoveInfo mi: ser.moveInfo) {
 	    if (mi.success)	n++;
@@ -293,9 +370,16 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	return n;
     }
 
+    /** Paul's suggestion on dash arrays (2025-10-28):
+	<ul>
+	<li>dotted lines, all the way along, for people who don't meet the criterion
+
+	<li>dashed before, and solid after the (m*,w*) point for people who do meet the criterion. Actually, since we are plotting GOOD moves, not ALL moves, I should not call it m*.  Better is to call the axis something like c - for correct moves, And the criterion point becomes (c".w*). 
+	</ul>
+    */
     private Curve mkCurve(MwSeries ser, CurveMode mode, CurveArgMode argMode, double maxX) {
 
-	int n = (argMode ==  CurveArgMode.Q)? findMaxQ(ser):  ser.moveInfo.length;
+	int n = (argMode ==  CurveArgMode.C)? findMaxC(ser):  ser.moveInfo.length;
 	
 	double [] yy = new double[n+1];
 	yy[0] = 0;
@@ -311,14 +395,14 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    double aai = (sumZP==0)? 0: sumE/sumZP;
 
 	    double y;
-	    if (mode==CurveMode.E) 	    y = sumE;
+	    if (mode==CurveMode.W) 	    y = sumE;
 	    else if (mode==CurveMode.AAI) 	    y = aai;
 	    else if (mode==CurveMode.AAIB) 	    y = aai * (m+1);
 	    else throw new IllegalArgumentException("curveMode=" + mode);
 
 	    if (argMode ==  CurveArgMode.M) {	    
 		yy[j++] = y;
-	    } else if (argMode ==  CurveArgMode.Q) {
+	    } else if (argMode ==  CurveArgMode.C) {
 		if (q>lastQ) yy[j++] = y;
 		lastQ = q;
 	    } else throw new IllegalArgumentException("curveArgMode=" + argMode);
@@ -330,30 +414,39 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    //System.exit(1);
 	    throw new IllegalArgumentException("yy[] size mismatch for mode=" + mode + ":" + argMode+": expect " + (n+1) +", found " + j);
 	}
-	Double extraX = (mode==CurveMode.E || mode==CurveMode.AAIB) && ser.getLearned()? maxX: null;
-	return new Curve(yy, extraX);
+	Double extraX = (mode==CurveMode.W || mode==CurveMode.AAIB) && ser.getLearned()? maxX: null;
+	Curve c =  new Curve(yy, extraX);
+	String [] dash = ser.learned? new String[] {"2", ""}:	new String[] {"1", null};
+	c.setDash(dash);
+	return c;
     }
     
     //    double maxY;
     //    public double getMaxY() { return maxY;}
 
 
-   /** Produces a SVG element for one of the curves */
-    private String mkPlotSvg(int W, int H, double maxX, Curve[] curves) {
+   /** Produces a SVG element for a bundle of curves, plus their median etc.
+       @param randomCurves If not empty, also plot the median of these curves
+    */
+    private String mkPlotSvg(int W, int H, double maxX, Curve[] curves, Curve[] randomCurves) {
 	if (curves.length==0) return "No data have been collected";
 
 	double maxY=0;
 	for(Curve curve: curves) {
-	    double m = curve.getMaxY();
-	    maxY = (m>maxY)? m: maxY;
+	    maxY = Math.max(maxY, curve.getMaxY());
 	}
+	for(Curve curve: randomCurves) {
+	    maxY = Math.max(maxY, curve.getMaxY());
+	}
+
+		
 	maxY +=2; // give some blank space above the highest curve
 	
 	double yFactor = -H/maxY; // getMaxY();
 	double xFactor = W/maxX;
 	
-	int width = W+50;
-	int height = H+40;
+	int width = W+70;
+	int height = H+60;
 
 	Vector<String> v = new Vector<>();
 	v.add( "<svg   xmlns=\"http://www.w3.org/2000/svg\" width=\"" +
@@ -378,14 +471,19 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	}
 
 	v.add( Curve.mkShading(curves, 0,H, xFactor, yFactor, medianMode==MedianMode.Extra));
+
 	
-	for(Curve cu: curves) {
-	    
-	    v.add( cu.mkSvgPathElement(0,H,xFactor, yFactor, "green",1));
+	//for(Curve cu: curves) {	    
+	//    v.add( cu.mkSvgPathElement(0,H,xFactor, yFactor, "green",1));
+	//}
+
+	v.add( Curve.mkSvgNoOverlap(curves, 0, H, xFactor, yFactor, "green",1));
+	
+	v.add( Curve.mkMedianSvgPathElement(curves, 0,H,xFactor, yFactor, "red",3, null, medianMode==MedianMode.Extra));
+
+	if (randomCurves.length>0) {
+	    v.add( Curve.mkMedianSvgPathElement(randomCurves, 0,H,xFactor, yFactor, "blue",2, "2", medianMode==MedianMode.Extra));
 	}
-
-	v.add( Curve.mkMedianSvgPathElement(curves, 0,H,xFactor, yFactor, "red",3, medianMode==MedianMode.Extra));
-
 	
 	/*
 	if (haveCumulative()) { 
@@ -406,7 +504,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	*/
 	
 	v.add( "</svg>");
-	return Util.joinNonBlank("\n", v);
+	return String.join("\n", v);
     }
 
 

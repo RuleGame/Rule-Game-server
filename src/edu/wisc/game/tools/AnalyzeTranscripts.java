@@ -61,7 +61,7 @@ public class AnalyzeTranscripts {
     /** Do we need to print out the board position after p0? */
     private static boolean needBoards=false;
     /** How should be compute p0? (Using which baseline random player model?) */
-    private static ReplayedEpisode.RandomPlayer randomPlayerModel=//null;
+    protected static ReplayedEpisode.RandomPlayer randomPlayerModel=//null;
 	ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;	
 
 
@@ -576,7 +576,7 @@ public class AnalyzeTranscripts {
 	    for(TranscriptManager.ReadTranscriptData.Entry e: subsection) {
 		if (!eh.episodeId.equals(e.eid)) throw new IllegalArgumentException("Array mismatch");
 		
-		w.print(rid+","+e.pid+","+eh.exp+","+eh.trialListId+","+eh.seriesNo+","+eh.orderInSeries+","+e.eid);
+		w.print(rid+","+e.pid+","+eh.exp+","+eh.trialListId+","+eh.seriesNo+","+eh.episodeNo+","+e.eid);
 		for(int j=2; j<e.csv.nCol(); j++) {
 		    w.print(","+ImportCSV.escape(e.csv.getCol(j)));
 		}
@@ -665,7 +665,17 @@ public class AnalyzeTranscripts {
 	    p0 = new double[n];
 	    rValues = new double[n];
 	}
+	public P0andR(Vector<Double> _p0, Vector<Double> r) {
+	    this( _p0.size());
+	    if (r.size() != p0.length) throw new IllegalArgumentException();
+	    int k=0;
+	    for(double x: _p0) p0[k++] = x;
+	    k=0;
+	    for(double x: r) rValues[k++] = x;		       
+	}
+   
     }
+    
     
     /** Reconstructs and replays the historical episodes in one
 	series, computing p0 for every pick or move attempt.
@@ -712,7 +722,8 @@ public class AnalyzeTranscripts {
 		    boardHistory.add(b);
 		}
 
-		double p =rep.computeP0(e.pick, e.code);	    
+
+		double p =rep.computeP0(e.pick, e.isSuccessfulPick());	    
 		result.p0[k] = p;
 	    
 		//-- replay the move/pick attempt 

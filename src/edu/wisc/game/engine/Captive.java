@@ -243,7 +243,7 @@ public class Captive {
 		extra.playerId = log.nickname;
 		extra.trialListId = ggw.trialListId;
 		extra.seriesNo = ggw.seriesNo;
-		extra.ruleId = log.rule_name;
+		extra.ruleSetName = log.rule_name;
 		extra.episodeNo = gameCnt;
 
 		TranscriptManager.saveDetailedTranscriptToFile(epi, extra, transcriptFile);

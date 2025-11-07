@@ -140,6 +140,7 @@ s	    non-existing piece) the value may be different from those of
 	 */
 	int mover=0;
 	public int getMover() { return mover; }
+	public void setMover(int _mover) {  mover = _mover; }
 
 	/** Did the other Pick pick the same game piece? */
 	boolean pickedSamePiece(Pick pick) {
@@ -409,10 +410,12 @@ s	    non-existing piece) the value may be different from those of
 
 	/** Computes the probability that a random pick by a frugal player
 	    (one who does not repeat a failed pick) would be successful.
-	    @param knownFailedPicks The number of distinct pieces that the 
-	    player has already tried to pick (and failed) from this board.
-	    This reduces the denominator (= the number of still-not-tested
-	    pieces). 
+
+	    @param knownFailedPicks The number of distinct pieces that
+	    the player realizes he has already tried to pick (and
+	    failed) from this board.  (This may be non-zero for MCP,
+	    but always 0 for a competely random player).  This reduces
+	    the denominator (= the number of still-not-tested pieces).
 
 	    This method should not be called on episodes where movable
 	    pieces are shown to the player, since a frugal player won't
@@ -433,8 +436,18 @@ s	    non-existing piece) the value may be different from those of
 	}
 
 	 
-	/**  Computes the probability that a random move by a MCP1
-	     player would be successful */
+	/**  Computes the probability that a random move (by a MCP1
+	     player, or a completely random player) would be
+	     successful.
+
+	     @param knownFailedPicks The number of distinct (piece,
+	     destination) pairs that the model player, in accordance
+	     with his mental ability, realizes are currently not
+	     allowed.  (This may be non-zero for MCP, but always 0 for
+	     a competely random player).  This reduces the denominator
+	     (= the number of still-not-tested pieces).
+	    
+	*/
   	double computeP0ForMoves(int knownFailedMoves) {
 	    int countMoves=0, countAllowedMoves=0;
 	    for(int j=0; j<values.size(); j++) {
@@ -730,6 +743,9 @@ s	    non-existing piece) the value may be different from those of
     /** with milliseconds */
     public static final DateFormat sdf2 = new SimpleDateFormat("yyyyMMdd-HHmmss.SSS");
 
+    /** Note: this is only used for some auxiliary puprposes, such as
+	random name generation, not for the board generation (for
+	which a RG is stored in the Game object) */
     public static final RandomRG random = new RandomRG();
     
     /** Creates a word made out of random letters and digits */
