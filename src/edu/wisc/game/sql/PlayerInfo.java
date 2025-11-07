@@ -1,4 +1,4 @@
-package edu.wisc.game.sql;
+ package edu.wisc.game.sql;
 
 import java.io.*;
 import java.util.*;
@@ -81,19 +81,21 @@ public class PlayerInfo {
     */
     @PostLoad() 
     public void postLoadPart1() {
-	String q = "";
 	try {
-	    q = new TrialList.ExperimentPlanHandle(experimentPlan).mainDir.getName();
-	    Logging.info("postLoadPart1: q=" + q);
+	    File mainDir = new TrialList.ExperimentPlanHandle(experimentPlan).mainDir;
+	    if (mainDir==null) { // an R:-type plan, which cannot be 2PG
+		coopGame = 	adveGame = false;
+	    } else {	    
+		String q = "";
+		q = mainDir.getName();
+		Logging.info("postLoadPart1: q=" + q);
+		coopGame = q.startsWith("coop.");
+		adveGame = q.startsWith("adve.");
+	    }
 	} catch (IOException ex) {
 	    Logging.error(""+ex);
 	    ex.printStackTrace(System.err);
 	}
-
-	//String[] z = experimentPlan.split("/");
-	//String q  = z[z.length-1];
-	coopGame = q.startsWith("coop.");
-	adveGame = q.startsWith("adve.");
     }
 
     /** Sets some (transient) properties of this object which depend
