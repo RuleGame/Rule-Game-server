@@ -20,6 +20,7 @@ import edu.wisc.game.formatter.*;
 import edu.wisc.game.sql.Episode.Move;
 import edu.wisc.game.sql.Episode.CODE;
 import edu.wisc.game.tools.MwSeries.MoveInfo;
+import edu.wisc.game.sql.ReplayedEpisode.RandomPlayer;
 
 /** Ranking rule sets by the ease of learning by human players. As
  * requested by PK, 2022-12-22.
@@ -48,9 +49,12 @@ public class MwByHuman extends AnalyzeTranscripts {
 
     /** @param  _targetStreak this is how many consecutive error-free moves the player must make (e.g. 10) in order to demonstrate successful learning. If 0 or negative, this criterion is turned off
 	@param _targetR the product of R values of a series of consecutive moves should be at least this high) in order to demonstrate successful learning. If 0 or negative, this criterion is turned off
+	@param _randomPlayerModel This is only needed in BuildCurves, to control the creation of random players 
      */
-    public MwByHuman(PrecMode _precMode, int _targetStreak, double _targetR, double _defaultMStar, Fmter _fm) {
-	super( null, null);	
+    public MwByHuman(PrecMode _precMode, int _targetStreak, double _targetR, double _defaultMStar,
+		     RandomPlayer _randomPlayerModel,
+		     Fmter _fm) {
+	super( null, null, _randomPlayerModel);	
 	quiet = true;
 	precMode = _precMode;
 	targetStreak = _targetStreak;
@@ -81,6 +85,8 @@ public class MwByHuman extends AnalyzeTranscripts {
     */
     static class RunParams {
 
+	RandomPlayer randomPlayerModel;
+	
 	ArgType argType = ArgType.PLAN;
 	boolean fromFile = false;
 	
@@ -123,6 +129,15 @@ public class MwByHuman extends AnalyzeTranscripts {
 		debug=true;
 	    } else if (a.equals("-mDagger")) {
 		useMDagger = true;
+	    } else if (j+1< argv.length && a.equals("-p0")) {
+		String mode =  argv[++j];
+		if (mode.equals("random")) {
+		    randomPlayerModel = ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;
+		} else if  (mode.equals("mcp1")) {
+		    randomPlayerModel = ReplayedEpisode.RandomPlayer.MCP1;
+		} else {
+		    throw new IllegalArgumentException("Invalid model name: " + mode);
+		}
 	    } else if (j+1< argv.length && a.equals("-config")) {
 		config = argv[++j];
 	    } else if (j+1< argv.length && a.equals("-export")) {
@@ -202,7 +217,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 
 	MwByHuman mkProcessor() {
 	    Fmter plainFm = new Fmter();
-	    return new MwByHuman(precMode, targetStreak, targetR, defaultMStar, plainFm);
+	    return new MwByHuman(precMode, targetStreak, targetR, defaultMStar,
+				 randomPlayerModel, plainFm);
 	}
 	
     }

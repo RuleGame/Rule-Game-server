@@ -21,7 +21,8 @@ import edu.wisc.game.engine.*;
 import edu.wisc.game.saved.*;
 import edu.wisc.game.reflect.*;
 import edu.wisc.game.parser.RuleParseException;
-
+import edu.wisc.game.sql.ReplayedEpisode.RandomPlayer;
+	
 /** Methods for the statistical analysis of game transcripts.
     For documentation, including usage, see analyze-transcripts.html
  */
@@ -61,8 +62,7 @@ public class AnalyzeTranscripts {
     /** Do we need to print out the board position after p0? */
     private static boolean needBoards=false;
     /** How should be compute p0? (Using which baseline random player model?) */
-    protected static ReplayedEpisode.RandomPlayer randomPlayerModel=//null;
-	ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;	
+    protected RandomPlayer randomPlayerModel=RandomPlayer.COMPLETELY_RANDOM;	
 
 
     /** Do we want to fit the learning curve for the Y(t) vector? This
@@ -79,11 +79,29 @@ public class AnalyzeTranscripts {
     
     static boolean weWantPredecessorEnvironment  = false;
 
-
+    /** Sets the randomPlayerModel.
+	@param mode comes from the command line
+     */
+    /*
+    protected void initRandomPlayerModel(String mode) {
+	if (mode.equals("random")) {
+	    randomPlayerModel = ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;
+	} else if  (mode.equals("mcp1")) {
+	    randomPlayerModel = ReplayedEpisode.RandomPlayer.MCP1;
+	} else {
+	    usage("Invalid model name: " + mode);
+	}
+    }
+    */	  
     /** The main() method processes the command line arguments, allowing a large variety of ways to specify
 	the set of players whose data are to be analyzed.
      */
     public static void main(String[] argv) throws Exception {
+
+	//protected static
+	ReplayedEpisode.RandomPlayer randomPlayerModel=//null;
+	ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;	
+
 
 	String outDir = "tmp";
 
@@ -244,7 +262,7 @@ public class AnalyzeTranscripts {
 	for(String playerId: ph.keySet()) {
 	    Vector<EpisodeHandle> v = ph.get(playerId);
 	    try {
-		AnalyzeTranscripts atr = new AnalyzeTranscripts(base, wsum);
+		AnalyzeTranscripts atr = new AnalyzeTranscripts(base, wsum, randomPlayerModel);
 		atr.analyzePlayerRecord(playerId, v);
 	    } catch(Exception ex) {
 		System.err.println("ERROR: Cannot process data for player=" +playerId+" due to missing data. The problem is as follows:");
@@ -526,9 +544,11 @@ public class AnalyzeTranscripts {
 	written
 	@param _wsum If non-null, the summary file will go there
     */
-    AnalyzeTranscripts( File _base, PrintWriter _wsum) {
+    AnalyzeTranscripts( File _base, PrintWriter _wsum,
+			RandomPlayer _randomPlayerModel) {
 	base = _base;
 	wsum = _wsum;
+	randomPlayerModel = _randomPlayerModel;
     }
 
     final private File base;

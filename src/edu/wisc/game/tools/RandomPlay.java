@@ -20,17 +20,18 @@ import edu.wisc.game.tools.MwByHuman.PrecMode;
      
 class RandomPlay {
 
+    /** Just used to create random player names */
     static int randomCnt = 0;
     
- //XXXcomputeP0andR(Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections, ParaSet para, String ruleSetName)
-    
+    /** Has random players play epsiodes with the rules and intiial boards as in includedEpisodes0
+     */
     protected static Vector<MwSeries>
-	randomSaveAnyData(Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections,
-			  Vector<EpisodeHandle> includedEpisodes0,
-			  int chosenMover,
-			  ReplayedEpisode.RandomPlayer randomPlayerModel,
-			  MakeMwSeries makeMwSeries
-			  )
+	randomPlay(Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections,
+		   Vector<EpisodeHandle> includedEpisodes0,
+		   int chosenMover,
+		   ReplayedEpisode.RandomPlayer randomPlayerModel,
+		   MakeMwSeries makeMwSeries
+		   )
 	throws  IOException, IllegalInputException,  RuleParseException,  CloneNotSupportedException {
 
 	final int N = 3;

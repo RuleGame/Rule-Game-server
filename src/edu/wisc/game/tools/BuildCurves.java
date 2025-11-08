@@ -20,6 +20,7 @@ import edu.wisc.game.svg.Curve;
 
 import edu.wisc.game.sql.Episode.CODE;
 import edu.wisc.game.tools.MwSeries.MoveInfo;
+import edu.wisc.game.sql.ReplayedEpisode.RandomPlayer;
 
 
 
@@ -42,12 +43,13 @@ public class BuildCurves extends MwByHuman {
     /** @param  _targetStreak this is how many consecutive error-free moves the player must make (e.g. 10) in order to demonstrate successful learning. If 0 or negative, this criterion is turned off
 	@param _targetR the product of R values of a series of consecutive moves should be at least this high) in order to demonstrate successful learning. If 0 or negative, this criterion is turned off
      */
-    public BuildCurves(PrecMode _precMode,
+    public BuildCurves(RandomPlayer _randomPlayerModel,
+		       PrecMode _precMode,
 		       CurveMode _curveMode,
 		       CurveArgMode _curveArgMode,
 		       MedianMode _medianMode,
 		       int _targetStreak, double _targetR, double _defaultMStar, Fmter _fm) {
-	super( _precMode, _targetStreak, _targetR, _defaultMStar, _fm);
+	super( _precMode, _targetStreak, _targetR, _defaultMStar, _randomPlayerModel, _fm);
 	curveMode =  _curveMode;
 	curveArgMode =  _curveArgMode;
 	medianMode = _medianMode;
@@ -114,11 +116,11 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	if (doRandom) { // zzz play a few random episodes with the same board
 	    try {
 	    Vector<MwSeries> sers =
-		RandomPlay.randomSaveAnyData(section,
-					     includedEpisodes,
-					     -1,
-					     randomPlayerModel,
-					     randomMakeMwSeries);
+		RandomPlay.randomPlay(section,
+				      includedEpisodes,
+				      -1,
+				      randomPlayerModel,
+				      randomMakeMwSeries);
 	    randomMws.addAll(sers);
 	    } catch(CloneNotSupportedException ex) {}
 	}
@@ -179,7 +181,8 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	RunParams p = new RunParams(argv);
 	//MwByHuman processor = p.mkProcessor();
 	Fmter plainFm = new Fmter();
-	BuildCurves processor = new BuildCurves(p.precMode, p.curveMode, p.curveArgMode, p.medianMode,
+	BuildCurves processor = new BuildCurves(p.randomPlayerModel,
+						p.precMode, p.curveMode, p.curveArgMode, p.medianMode,
 						p.targetStreak, p.targetR, p.defaultMStar, plainFm);
 	
 	try {
