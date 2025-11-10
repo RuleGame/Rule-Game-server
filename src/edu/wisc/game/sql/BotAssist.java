@@ -27,23 +27,30 @@ class BotAssist {
     Move proposed = null;
 
     /** Checks whether the specified move followed the previous suggestion,
-	and if so, sets the didFollow bit in the Move object */
+	and if so, sets the didFollow bit in the Move object.
+	@param move The object in which the "didFollow" flag is to be set if appropriate.
+    */
     void didHeFollow(Pick move) {
 	if (!(move instanceof Move)) return;
 	if (proposed==null) return;
 	if (proposed.sameMove(move)) move.setDidFollow(true);
     }
 
-    /** Proposes one more move, adds it to the bot assist transcript,
-	and stores it in "proposed". 
+    /** The last chat message generate by this assistant. It is updated every time a new suggestion is generated. */
+    private String chat=null;
+    String getChat() { return chat; }
 
-	@param q The chat message to be included in the current server
-	response will be added to this structure.
+    
+    /** Proposes one more move, adds it to the bot assist transcript,
+	and stores it in "proposed". Creates a human-readable chat
+	message to be sent to the player, saves it in this.chat, and returns it
+
+	@return the new suggestion text that can be sent to the player
     */
-    void makeSuggestion(EpisodeInfo epi, EpisodeInfo.ExtendedDisplay q) throws IOException {
+    String makeSuggestion(EpisodeInfo epi)	throws IOException {
 	Pseudo task = new Pseudo(epi.getPlayer(), epi, epi.getAttemptCnt());
 	proposed = task.proposeMove();
-	String chat = null;
+	chat = null;
 	if (proposed==null) {
 	    chat = null; //"Bot has no idea";
 	    Logging.info("BotAssist: no suggestion");
@@ -54,7 +61,7 @@ class BotAssist {
 	    chat += ". I am "+pc+"% confident in this move";
 	    Logging.info("BotAssist: " + chat);
 	}
-	q.setBotAssistChat(chat);
+	return chat;
     }
     
 }

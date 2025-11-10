@@ -7,28 +7,45 @@ import edu.wisc.game.util.*;
 import edu.wisc.game.rest.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.tools.AnalyzeTranscripts.TrialListMap;
+import edu.wisc.game.saved.TranscriptManager;
+
+//	public String playerId, trialListId,
+//	public int seriesNo,
+
+// +	    episodeNo;	    ruleId;
+
+
 
 /** An auxiliary structure containing an episode's metadata. (Most of
     them come from the episode's EpisodeInfo structure, completed with
     the context info from the relevant TrialList and PlayerInfo). It
     is used to keep track of who and when played which episodes.
+
+    <p>This class is Cloneable; this feature is used when we have
+    random players retroactively playing the same initial board as a
+    real episode.
 */
-public class EpisodeHandle {
-    final public String ruleSetName;
+public class EpisodeHandle extends TranscriptManager.ExtraTranscriptInfo  implements Cloneable {
+    //final public String ruleSetName;
     /** Which other rules preceded this rule in the trial list? (This is just copied from the trial list) */
     final Vector<String> precedingRules;
     final String exp;
-    final public String trialListId;
-    final int seriesNo;
-    final int orderInSeries;
+    //    final public String trialListId;
+    //final int seriesNo;
+    /** Order in series */
+    final int episodeNo;
     final public String episodeId;
     /** The player who played the episode (in 1PG), or Player 0 (in 2PG) */
-    final String playerId;
-    /** The partner's (Player 1's) playerId in adversarial 2PG, where we need to separate the two players'
-	moves; null otherwise */
+    //    String playerId;
+    /** The partner's (Player 1's) playerId in A2PG, where we need to
+	separate the two players' moves; null otherwise (i.e. in 1PG or C2PG) */
     final String neededPartnerPlayerId;
     final boolean useImages;
     final public ParaSet para;
+
+    final int xFactor[];
+ 
+
     public String toString() {return episodeId;}
 
 
@@ -36,13 +53,13 @@ public class EpisodeHandle {
 		  String _playerId, String _neededPartnerPlayerId,
 		  EpisodeInfo e, int _orderInSeries) {
 	episodeId = e.getEpisodeId();
+	episodeNo = _orderInSeries;
 	
 	playerId = _playerId;
 	neededPartnerPlayerId = _neededPartnerPlayerId;
 	exp = _exp;
 	trialListId = _trialListId;
 	seriesNo= e.getSeriesNo();
-	orderInSeries =  _orderInSeries;
 	para = t.get(seriesNo);
 	ruleSetName = para.getRuleSetName();
 	useImages = (para.imageGenerator!=null);
@@ -52,6 +69,8 @@ public class EpisodeHandle {
 	for(int j=0; j<seriesNo; j++) {
 	    precedingRules.add( t.get(j).getRuleSetName());
 	}
+
+	xFactor =  new int[] {  e.getXFactor(),  e.getXFactor1() };
     }
 
     /*
@@ -63,7 +82,7 @@ public class EpisodeHandle {
     */
 
     /** Creates a somewhat incomplete EisodeHandle object based on a line of data from
-	detailed transcript. This is used in unit testing without access to SQL server
+	detailed transcript. This should only be used in unit testing without access to SQL server
 
 	@param e A line from the detailed transcript:
 		<pre>
@@ -80,14 +99,14 @@ RU-FDCL-basic-auto-20241105-113759-EPVDYK,basic-07-A,0,FDCL/basic/ordL1,0,202411
 	trialListId = 	e.getCol(j++);
 	seriesNo= e.getColInt(j++);
 	ruleSetName = e.getCol(j++);
-	int episodeNo = e.getColInt(j++);
+	episodeNo = e.getColInt(j++);
 	episodeId = 	e.getCol(j++);
 
 	neededPartnerPlayerId = null; // incorrect - FIXME
 
 	TrialList t = trialListMap.get( trialListId);
-
-	orderInSeries =  0; // incorrect - FIXME
+	
+	//episodeNo =  0; // incorrect - FIXME
 	para = t.get(seriesNo);
 
 	useImages = false; // incorrect - FIXME
@@ -97,6 +116,12 @@ RU-FDCL-basic-auto-20241105-113759-EPVDYK,basic-07-A,0,FDCL/basic/ordL1,0,202411
 	//for(int j=0; j<seriesNo; j++) {
 	//  precedingRules.add( t.get(j).getRuleSetName());
 	//}
-    } 
-}
+	xFactor = null; // unknown
+    }
+    
+    protected EpisodeHandle clone() throws CloneNotSupportedException{
+	return (EpisodeHandle)super.clone();
+    }
+    
+} 
 

@@ -13,6 +13,7 @@ import edu.wisc.game.tools.AnalyzeTranscripts.TrialListMap;
 import edu.wisc.game.sql.Board.Pos;
 import edu.wisc.game.sql.Episode.Pick;
 import edu.wisc.game.sql.Episode.Move;
+import edu.wisc.game.sql.Episode.CODE;
 
 
 /** An auxiliary class for writing and reading transcript files. It is used
@@ -60,6 +61,140 @@ public class TranscriptManager {
 	}	    
 	}  
     }
+    
+    /*
+    playerId -- I can put here the same value that appears in the "nickname" field of CGS logs (supplied in the log.nickname option)
+trialListId -- in those runs when the CGS is actually given the name of a trial list file as an argument, I can print that; otherwise, blank
+seriesNo --  in those runs when the CGS is actually given the name of a trial list file and a row number as an argument, I can print the row number; otherwise, blank. (Christo, would you prefer 0?)
+ruleId -- in those runs when the CGS is actually given the name of a trial list file and a row number as an argument, the rule name comes from the parameter set in the trial list file. In other runs, that can be inferred from the rule-set-file command line argument; however, I probably will just use the file name without the full path relative to the game-data/rules directory (e.g. just "ccw" rather than "FDCL/basic/ccw"), because the full name may not always be provided anyway. (Christo, Let me know if this is a problem!)
+episodeNo, -- same as in log files (sequentially numbered within run or within series, as applicable, starting from 0)
+    */
+
+    /** This is used when the CGS wants to create a transcript similar
+	to one the game server would create for a human player. Since
+	the CGS just has an Episode, not an EpisodeInfo, the missing
+	info has to be supplied separately.
+     */
+    static public class ExtraTranscriptInfo {
+	public String playerId, trialListId, ruleSetName;
+	public int seriesNo, episodeNo;
+
+	public ExtraTranscriptInfo() {}
+	ExtraTranscriptInfo(EpisodeInfo ei) {
+	    PlayerInfo x =  ei.getPlayer();
+	    playerId = x.getPlayerId();
+	    trialListId = x.getTrialListId();
+	    seriesNo = ei.getSeriesNo();
+	    PlayerInfo.Series ser = ei.mySeries();
+	    ruleSetName = ser.para.getRuleSetName();
+	    episodeNo = ser.episodes.indexOf(ei);
+	}
+    }
+
+    /** Appends the transcript of an episode to a file.
+       @param epi The episode whose transcript is to be written out
+       @param extra If epi is an Episode, rather than EpisodeInfo, this
+       structure should contain missing values. If epi is an
+       EpisodeInfo, this argument is ignored (and thus can be null).
+       @param f File to which the episode's transcript will be
+       appended. The file should not be currently opened, because this
+       method will open it, write the data, and then close the file.
+       If the file is empty, this method will start with writing out
+       the header.
+     */
+    public static void saveDetailedTranscriptToFile(Episode epi, ExtraTranscriptInfo extra, File f) {
+
+       final String[] keys = 
+	   { "playerId",
+	     "trialListId",  // string "trial_1"
+	     "seriesNo",  // 0-based
+	     "ruleId", // "TD-5"
+	     "episodeNo", // position of the episode in the series, 0-based
+	     "episodeId",
+	     "moveNo", // 0-based number of the move in the transcript
+	     "timestamp", // YYYYMMDD-hhmmss.sss
+	     "mover", // who made the move? 0 or 1. (Since ver 7.001)
+	     "reactionTime", // (* diff ; also use e.startTime)
+	     "objectType", // "yellow_circle" in GS 1&2; image.png for image-based objects in GS 3
+	     "objectId", // Typically 0-based index within the episode's object list
+	     "y", "x",
+	     "bucketId", // 0 thru 3
+	     "by", "bx",
+	     "code", 
+	     "objectCnt", // how many pieces are left on the board after this move
+	   };
+
+       HashMap<String, Object> h = new HashMap<>();
+
+       if (epi instanceof EpisodeInfo) extra = new ExtraTranscriptInfo((EpisodeInfo) epi);        
+
+       int moveNo=0;
+       Date prevTime = epi.getStartTime();
+       int objectCnt = epi.getNPiecesStart();
+       Vector<String> lines=new  Vector<String>();
+       for(Pick move: epi.getTranscript()) {
+	   h.clear();
+	   h.put( "playerId", extra.playerId);
+	   h.put( "trialListId", extra.trialListId);
+	   h.put( "seriesNo", extra.seriesNo);
+	   h.put( "ruleId", extra.ruleSetName);
+	   h.put( "episodeNo", extra.episodeNo);
+	   h.put( "episodeId", epi.getEpisodeId());	   
+	   h.put( "moveNo", moveNo++);
+	   h.put( "timestamp", 	Episode.sdf2.format(move.time));
+	   h.put( "mover", ""+move.getMover());
+	   long msec = move.time.getTime() - prevTime.getTime();
+	   h.put(  "reactionTime", "" + (double)msec/1000.0);
+	   prevTime = move.time;
+	   // can be null if the player tried to move a non-existent piece,
+	   // which the GUI normally prohibits
+	   Piece piece = move.getPiece(); 
+	   h.put("objectType", (piece==null? "": piece.objectType()));
+	   h.put("objectId",  (piece==null? "": piece.getId()));
+	   Board.Pos q = new Board.Pos(move.getPos());
+	   h.put("y", q.y);
+	   h.put("x", q.x);
+
+	   if (move instanceof Move) { // a real move with a destination
+	       Move m = (Move)move;
+	       h.put("bucketId", m.bucketNo);	   
+	       Board.Pos b = Board.buckets[m.bucketNo];
+	       h.put("by", b.y);
+	       h.put("bx", b.x);	       
+	   } else { // just a pick -- no destination
+	       h.put("bucketId", "");
+	       h.put("by", "");
+	       h.put("bx", "");	       
+	   }
+
+	   
+	   h.put("code",move.getCode());
+	   if (move instanceof Move && move.getCode()==CODE.ACCEPT) 	   objectCnt--;
+	   h.put("objectCnt",objectCnt);
+	   Vector<String> v = new Vector<>();
+	   for(String key: keys) {
+	       Object o = h.get(key);
+	       v.add(o==null? "": "" + h.get(key));
+	   }
+	   lines.add(String.join(",", v));
+       }
+          
+       
+       synchronized(file_writing_lock) {
+	   try {	    
+	       PrintWriter w = new PrintWriter(new	FileWriter(f, true));
+	       if (f.length()==0) w.println("#" + String.join(",", keys));
+	       for(String line: lines) {
+		   w.println(line);
+	       }
+	       w.close();
+	   } catch(IOException ex) {
+	       System.err.println("Error writing the transcript: " + ex);
+	       ex.printStackTrace(System.err);
+	   }	    
+       }
+   }
+
 
 
     /** Creates one line of the transcript file */
@@ -126,8 +261,22 @@ public class TranscriptManager {
 		ParsePosition pos = new ParsePosition(0);
 		return Episode.sdf2.parse(timeString, pos);
 	    }
+
+	   
+	    /** Used when creating an Entry in a simulated episode
+		with a random player */
+	    public Entry(EpisodeHandle eh, int moveNo, Pick _pick)  {
+		csv = null;
+		pid = eh.playerId;
+		eid = eh.episodeId;
+		timeString = "";
+		pick = _pick;
+		code = pick.getCode();
+		mover = pick.getMover();
+		k = moveNo;
+	    }
 	    
-	    
+	    /** Used when an Entry has been read from a transcript file */
 	    Entry(CsvData.BasicLineEntry e, boolean hasMover, boolean hasObjectId) {
 		//-- the "mover" column was added in GS 7.0
 		
@@ -161,6 +310,13 @@ public class TranscriptManager {
 		return (o instanceof Entry) &&
 		    csv.equals(((Entry)o).csv);
 	    }
+
+	    /** Is this entry a "successful pick" (a likelly slip-of-the-finger
+		actions, when the player picks a moveable piece and then
+		drops it on the board)? */
+	    public boolean isSuccessfulPick() {
+	    	return  !(pick instanceof Move) && code==Episode.CODE.ACCEPT;
+	    }
 	    
 	}
 	/** Reads in the entire content of a transcript file for a player.
@@ -171,7 +327,10 @@ public class TranscriptManager {
 	public ReadTranscriptData(File csvFile) throws IOException,  IllegalInputException {
 	    CsvData csv = new CsvData(csvFile, false, false, null);
 	    header = csv.header;
-
+	    if (csv.entries.length==0) { // no data lines, and maybe no header either
+		hasMover = 	    hasObjectId=false;
+		return;
+	    }
 
 
 	    // thru ver 6.*: "#pid,episodeId,moveNo,timestamp,y,x,by,bx,code"

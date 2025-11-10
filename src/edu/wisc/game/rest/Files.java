@@ -143,14 +143,16 @@ public class Files {
     }
 
 
-     public static File botAssistFile(String playerId) throws IOException {
-	 return botAssistFile(playerId,false); 
+    public static File botAssistFile(String playerId, int mover) throws IOException {
+	return botAssistFile(playerId, mover, false); 
     }
 
-    public static File botAssistFile(String playerId, boolean readOnly) throws IOException {
+    /** @param mover 0 or 1, depending on which player's bot assist
+	transcript we're saving */
+    public static File botAssistFile(String playerId, int mover, boolean readOnly) throws IOException {
 	File d = savedSubDir( Saved.BOT_ASSIST);
 	if (!readOnly) testWriteDir(d);
-	return new File(d, playerId + ".bot-assist.csv");
+	return new File(d, playerId + ".bot-assist."+mover+".csv");
     }
 
     

@@ -6,7 +6,6 @@ import java.util.stream.*;
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.rest.*;
-//import edu.wisc.game.sql.*;
 import edu.wisc.game.engine.*;
 import edu.wisc.game.saved.*;
 
@@ -58,6 +57,12 @@ public  class MwSeries {
 	}
     }
 
+    /** Converts a key produced with any PrecMode to the key that
+	would be produced with PrecMode.Ignore */
+    public static String keyToIgnoreKey(String key) {
+	return key.replaceAll(".*:", "");
+    }
+    
     /** Used for EveryCond; only lists the preceding,
 	and does not include the target */
     public String getLightKey() {
@@ -71,13 +76,16 @@ public  class MwSeries {
     /** The number of errors until the first "winning streak" has been
 	achieved, or in the entire series (if no winning streak) */
     int errcnt=0;
-    /** The number of errors until the first  "winning streak" has been
-	achieved, or the large default number otherwise */
+    /** The number of move attempts until the beginning of the first
+	"winning streak" has been achieved, or the large default
+	number otherwise. */
     double mStar=0;
     /** Total failed attempt (including those after the "achievement of learning") */
     int totalErrors=0;
     public int getTotalErrors() { return totalErrors; }
-    /** Total move and pick attempts (successful and unsuccessful) */
+    /** Total move and pick attempts (successful and unsuccessful).
+	Since ver 8.036: excludes successful picks (as useless for our analyses)
+     */
     int totalMoves=0;
     public int getTotalMoves() { return totalMoves; }
     
@@ -105,7 +113,7 @@ public  class MwSeries {
 	ruleSetName = o.ruleSetName;
 	precedingRules = new Vector<String>();
 	for(String r: o.precedingRules) {
-	    if (ignorePrec.contains(r)) {
+	    if (ignorePrec!=null && ignorePrec.contains(r)) {
 		MwByHuman.incrementIgnorePrecCnt();
 		continue;
 	    }
@@ -137,7 +145,11 @@ public  class MwSeries {
 			   ""+getTotalErrors(),
 			   ""+mStar,
 			   ""+mDagger};
-	    return ImportCSV.escape(v);
+	    String s = ImportCSV.escape(v);
+	    if (moveInfo!=null) {
+		s += "," + Util.joinNonBlank(";", moveInfo);
+	    }
+	    return s;
     }
 
     /** Reads a CSV file with MwSeries entries.
@@ -185,6 +197,13 @@ public  class MwSeries {
 	// mDagger is optional in input files. (But it had better
 	// be there if we want to use it, of course!)	    
 	mDagger = Double.parseDouble(line.getColByName(header, "mDagger", "NaN"));
+
+	String mi = line.getColByName(header, "moveInfo", null);
+	if (mi!=null) {
+	    String[] v = mi.split(";");
+	    moveInfo = new MoveInfo[v.length];
+	    for(int j=0; j<v.length; j++) moveInfo[j] = new MoveInfo(v[j]);
+	}
 	
     }
 
@@ -233,6 +252,37 @@ public  class MwSeries {
 	    precedingRules.set(j, r);
 	}   
     }
-    
+
+    /** Clears the precedingRules array. This is used in MWH when precMode=ignore
+     */
+    void stripPreceding() {
+	precedingRules.setSize(0);
+    }
+
+
+    /** Various things that may be used to draw curves */
+    static class MoveInfo {
+	boolean success;
+	double p0;
+	MoveInfo(boolean _success,	double _p0) {
+	    success = _success;
+	    p0 = _p0;
+	}
+	/** @param s "success:p0", e.g. "1:0.33" */
+	MoveInfo(String s) {
+	    String [] v = s.split(":");
+	    success = (v[0].equals("1"));
+	    p0 = Double.parseDouble(v[1]);
+	}
+	public String toString() {
+	    return  "" + (success? 1:0) +  ":" + p0;
+	}
+    }
+    /** Besides the aggregate information that MwSeries contains, this
+	also has per-move data used to draw curves. This is null in the
+	MWH tool, but non-null in the BuildCurve tool
+    */
+    MoveInfo[] moveInfo = null;
+
     
 }

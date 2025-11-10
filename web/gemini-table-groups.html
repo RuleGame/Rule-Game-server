@@ -1,0 +1,82 @@
+<html>
+  <h1>Gemini performance on FDCL/basic, broken down into groups</h1>
+  <body>
+
+    <P>What this table contains:
+
+      <p>
+Play mode – mStar = the number of move attempts until “mastery was demonstrated” (the bot makes 10 correct moves in a row). The smaller the number is, the faster the system learns. “Infinity” means that the run had to be interrupted (usually after ca. 300 move attempts) before such “mastery” could be demonstrated 
+
+<p>
+Prepared-episodes mode: for how many future boards, out of 15, the bot could propose an error-free clearing plan. (15 = perfect result, 0 = never a success). 
+    
+<table border=1>
+<tr><th>Rule set<th colspan=1>Play-mode runs:<br>m<sub>*</sub> (moves until mastery)<th colspan=5>Prepared-episodes runs:<br>Good future episodes (out of 15)</tr>
+<tr><td><th colspan=1><th colspan=5>Instructions w/o examples </tr>
+<tr><td>Directory <td><td>prepared-1-b <td>prepared-2-b <td>prepared-3-b <td>prepared-5-b <td>prepared-10-b </tr>
+<tr><td>Number of prepared episodes<th colspan=1><td>1 <td>2 <td>3 <td>5 <td>10 </tr>
+
+<tr><th colspan=7>Group 1: all pieces are movable. Static bucket assignment </tr>
+
+<tr><th align=left>cm_KRBY<td>22<td>10 <td>15 <td>10 <td>10 <td>9 </tr>
+<tr><th align=left>cm_RBKY<td>20<td>10 <td>15 <td>10 <td>7 <td>15 </tr>
+<tr><th align=left>quadMixed1<td>27<td>10 <td>15 <td>15 <td>10 <td>10 </tr>
+<tr><th align=left>quadNearby<td>1<td>15 <td>15 <td>11 <td>9 <td>14 </tr>
+<tr><th align=left>sm_csqt<td>10 <td>0 <td>15 <td>2 <td>10 <td>0 </tr>
+<tr><th align=left>sm_qcts<td>14<td>5 <td>15 <td>15 <td>5 <td>4 </tr>
+
+<tr><th colspan=7>Group 2: all pieces are movable. Bucket determined by some sequence independent of game piece</tr>
+<tr><th align=left>buckets_2130<td>17<td>15 <td>10 <td>10 <td>10 <td>15 </tr>
+<tr><th align=left>ccw<td>60 <td>15 <td>15 <td>15 <td>10 <td>15 </tr>
+<tr><th align=left>cw<td>37<td>15 <td>15 <td>15 <td>15 <td>10 </tr>
+<tr><th align=left>cw_0123<td>6<td>15 <td>10 <td>2 <td>12 <td>10 </tr>
+
+
+<tr><th colspan=7>Group 3: only some pieces are movable, according to some rule. Bucket does not matter</tr>
+<tr><th align=left>allOfColOrd_BRKY<td>39<td>2 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>allOfColOrd_KRBY<td>37<td>3 <td>1 <td>1 <td>0 <td>0 </tr>
+<tr><th align=left>allOfShaOrd_csqt<td>105<td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>allOfShaOrd_qcts<td>30<td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>col1Ord_BRKY<td>Infinity<td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>col1Ord_KRBY<td><td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>colOrdL1_BRKY<td>Infinity<td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>colOrdL1_KBYR<td><td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>ordL1<td>16<td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>ordRevOfL1<td>20<td>0 <td>2 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>sha1Ord_csqt<td>77<td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>sha1Ord_qcts<td><td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>shaOrdL1_csqt<td>Infinity<td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>shaOrdL1_qcts<td><td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+
+<tr><th colspan=7>Group 4: only some pieces are movable, according to some rule. Static bucket assignment</tr>
+<tr><th align=left>cm_RBKY_cw_0123<td>71<td>0 <td>0 <td>1 <td>1 <td>0 </tr>
+<tr><th align=left>col1OrdBuck_BRKY0213<td>95<td>1 <td>0 <td>1 <td>0 <td>0 </tr>
+<tr><th align=left>col1OrdBuck_BRKY3120<td><td>0 <td>0 <td>2 <td>0 <td>0 </tr>
+<tr><th align=left>ordL1_Nearby<td>6<td>0 <td>0 <td>5 <td>0 <td>5 </tr>
+<tr><th align=left>ordRevOfL1_Nearby<td>86<td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>ordRevOfL1_Remotest<td>148<td>0 <td>5 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>sha1OrdBuck_qcts0213<td>163<td>0 <td>0 <td>0 <td>0 <td>0 </tr>
+<tr><th align=left>sha1OrdBuck_tqsc0213<td><td>0 <td>0 <td>0 <td>1 <td>0 </tr>
+
+</table>
+
+<p>
+Performance observations:   
+
+<ul>
+
+  <li> Group 1: Gemini performs very well in both modes on “static” problems, where all game pieces are movable, and the destination buckets for game pieces are determined by a static map of some kind (which may be based on the game pieces’ properties and/or location, such as color match, shape match, or quadrant match). 
+
+  <li>
+ Group 2: Ditto for the Rules where all pieces are movable, while the destination is determined by some sequence that does not depend on the piece. (E.g. clockwise/counter-clockwise).  
+
+ <li>
+   Group 3: Only some pieces are movable, picked by some rule. The destination does not matter (e.g. ordL1). Here, Gemini in prepared-episodes mode fails, but the play mode often succeeds! 
+
+   <li>
+   Group 4:   Only some pieces are movable, picked by some rule.  The destination is determined by a static assignment rule (ordL1_Nearby). 
+
+  
+
+  </body>
+  </html>

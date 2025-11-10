@@ -1,4 +1,4 @@
-package edu.wisc.game.sql;
+ package edu.wisc.game.sql;
 
 import java.io.*;
 import java.util.*;
@@ -81,19 +81,21 @@ public class PlayerInfo {
     */
     @PostLoad() 
     public void postLoadPart1() {
-	String q = "";
 	try {
-	    q = new TrialList.ExperimentPlanHandle(experimentPlan).mainDir.getName();
-	    Logging.info("postLoadPart1: q=" + q);
+	    File mainDir = new TrialList.ExperimentPlanHandle(experimentPlan).mainDir;
+	    if (mainDir==null) { // an R:-type plan, which cannot be 2PG
+		coopGame = 	adveGame = false;
+	    } else {	    
+		String q = "";
+		q = mainDir.getName();
+		Logging.info("postLoadPart1: q=" + q);
+		coopGame = q.startsWith("coop.");
+		adveGame = q.startsWith("adve.");
+	    }
 	} catch (IOException ex) {
 	    Logging.error(""+ex);
 	    ex.printStackTrace(System.err);
 	}
-
-	//String[] z = experimentPlan.split("/");
-	//String q  = z[z.length-1];
-	coopGame = q.startsWith("coop.");
-	adveGame = q.startsWith("adve.");
     }
 
     /** Sets some (transient) properties of this object which depend
@@ -221,7 +223,7 @@ public class PlayerInfo {
     public void setPartnerPlayerId(String _partnerPlayerId) { partnerPlayerId = _partnerPlayerId; }
 
     /** The playerId of player 0 or player 1. This should only be called on a paired player in 2PG.
-	@param mover Whose playerId do you want? 
+	@param mover Whose playerId do you want? Legal values are 0 and 1.
      */
     String getPlayerIdForRole(int mover) {
 	return (pairState==mover)? getPlayerId(): getPartnerPlayerId();
@@ -348,7 +350,7 @@ public class PlayerInfo {
 	has as many Series objects as there are lines in that player's trial list.
      */
     public class Series {
-	final ParaSet para;
+	final public ParaSet para;
 	/** This is true when this series "continues" into the next
 	    series, forming a super-series. (It may continue further 
 	    beyond, if the next series also has cont==true, and so on).
@@ -356,13 +358,24 @@ public class PlayerInfo {
 	final boolean 	cont;
 	final GameGenerator gg;
 
-	/** If not null, there is a bot assistant (8.014+) */
+	/** If not null, there is a bot assistant (8.014+) 
+	 */
 	//@Transient
-	private String botAssistName;
+	final private String botAssistName;
 	public boolean hasBotAssist() {
 	    return botAssistName!=null;
 	}
+	/** Does the specified player (Player 0 or Player 1) has bot assist?
+	    @param mover 0 or 1
+	 */
+	public boolean hasBotAssist(int mover) {
+	    return hasBotAssist() && mover<botAssistPlayers;
+	}
 
+
+	/** How many players have bot assist? The default is of course 1, but in 2PG the value 2 is allowed as well */
+	final int botAssistPlayers; 
+	
 	public Vector<EpisodeInfo> episodes = new Vector<>();
 	int size() { return episodes.size(); }
 	
@@ -379,8 +392,13 @@ public class PlayerInfo {
 		} else {
 		    throw new IllegalArgumentException("Illegal bot assist name ("+botAssistName+") for player " + playerId);
 		}
+		botAssistPlayers = para.getInt("bot_assist_players", true, 1);
+		if (botAssistPlayers<1 || botAssistPlayers>2) throw new IllegalArgumentException("Illegal value for botAssistPlayers="+ botAssistPlayers);
+
+	    } else {
+		botAssistPlayers = 0;
 	    }
-	   
+	    Logging.info("DEBUG: Created new series for p=" + getPlayerId() +"; botAssistName=" + botAssistName +", botAssistPlayers="+ botAssistPlayers);
 
 	}
 
@@ -440,7 +458,7 @@ public class PlayerInfo {
 	/** Scans the episodes of the series to see if the xFactor has
 	    been set for this series. Only appliable to series with 
 	    DOUBLING (or LIKELIHOOD) incentive scheme.
-	    @param mj Which player's record do we look at? (1PG or coop 2PG only have 0; adve 2PG has 0 and 1)
+	    @param mj Which player's record do we look at? (1PG or C2PG only have 0; A2PG has 0 and 1)
 	    @return 1,2, or 4.
 	 */
 	int findXFactor(int mj) {
@@ -635,7 +653,7 @@ public class PlayerInfo {
     }
 
 
-    /** This may be invoked by a maintenance thread in 2PG, when it detects
+    /** This may be invoked by a MaintenanceThread in 2PG, when it detects
 	that this player has been inactive for a while. (The method should be
         usable in 1PG too, but it's not a major concern).
 
@@ -689,7 +707,7 @@ public class PlayerInfo {
 	}
 	saveMe();
 
-	if (is2PG() && isBotGame()) {
+	if (is2PG() && !isBotGame()) {
 	    try {
 		WatchPlayer.tellHim(playerId, WatchPlayer.Ready.DIS);
 	    } catch(Exception ex) {
@@ -698,7 +716,7 @@ public class PlayerInfo {
 	    }
 	}
 	
-	if (partner!=null && isBotGame()) {
+	if (partner!=null && !isBotGame()) {
 	    try {
 		WatchPlayer.tellHim(partnerPlayerId, WatchPlayer.Ready.DIS);
 	    } catch(Exception ex) {
@@ -1226,13 +1244,18 @@ public class PlayerInfo {
 	Board b = epi.getCurrentBoard(true);
 	BoardManager.saveToFile(b, playerId, epi.episodeId, f);
 	f =  Files.transcriptsFile(playerId);
+	// Save the bot assist transcript separately for each player who is
+	// provided with bot assist
 	TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.transcript, anySeriesHasBotAssist(), epi.botAssist!=null);
-	if ( epi.botAssist!=null) {
-	    f = Files.botAssistFile(playerId);
-	    TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.botAssist.botAssistTranscript, false, false);
+	for(int mover=0; mover<epi.mySeries().botAssistPlayers; mover++) {
+	    if ( epi.botAssist[mover]!=null) {
+		f = Files.botAssistFile(playerId, mover);
+		TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.botAssist[mover].botAssistTranscript, false, false);
+	    }
 	}
 	f =  Files.detailedTranscriptsFile(playerId);
-	epi.saveDetailedTranscriptToFile(f);
+	//epi.saveDetailedTranscriptToFile(f);
+	TranscriptManager.saveDetailedTranscriptToFile(epi, null, f);
 	Logging.info("PlayerInfo.ended: saved transcripts for (epi=" + epi.getEpisodeId()+"); finishCode =" + epi.finishCode);
 	try {
 	    WatchPlayer.tellAbout(playerId, "Ended episode " +epi.getEpisodeId()+

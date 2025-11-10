@@ -1,0 +1,108 @@
+
+<html>
+  <head><title>Cumulative curves</title>
+  </head>
+<body>
+
+<h1>Cumulative curves</h1>
+
+<div align="center"><em>Updated 2025-10-30, for Game Server 8.036</em></div>
+
+<p>The script <tt>analyze-transcripts-curves.sh</tt> draws cumulative error curves for human players sharing a particular experience. It pulls the data for a group of players from the data store (the SQL database and transcript files) and produces SVG images displaying the individual players' cumulative errors curves and their median curve.
+
+<p>This script is to be used in much the same way as <a href="analyze-transcripts-mwh.html">analyze-transcripts-mwh.sh</a>. It takes the same arguments related to choosing the players (e.g. by specifying an experiment plan or supplying a list of players) and identifying distinct experiences (-precMode) as that script.
+
+<p>
+Support for the -export and -import options has the same form as well, although the exported CSV file now has an additional column, containing the summary of the each series' transcript (in terms of the sequence of "e{j]:p0[j]" pairs for all moves in the series).
+
+  Additionally, several options related to drawing curves can be provided.
+
+  <h2>Specifying the curve plotting modes</h2>
+  
+<p>The option <tt>-curveMode <em>yVar.xVar</em></tt> specifies what you actully want to plot. The possible values are as follows.
+
+
+  <p>In all formulas, <em>m</em> is the move count (more precisely, the number of successful and failed moves and failed picks) since the beginning of the series. (Successful picks are entirely ignored, as if we deem them to be merely "slips of the fingers", or actions of a player who does not understand what he needs to do). <em>q</em> is the number of game pieces removed so far in the series, i.e. the number of successful moves.
+
+<p> <em>yVar</em> specifies the variable plotted on the vertical axis. The possible values are:
+  <ul>
+    <li><tt>W</tt> -- Raw error count, W(M)=Sum_m(e_m). One would expect E(m) for a random player to increase roughly linearly with <em>m</em>, and for successful learner, to stabilize at some value (the total number of errors the player makes before he fully learns the rules).
+    <li><tt>AAI</tt> -- Error count normalized error prob, Sum_m(e_m)/Sum_m(1-p0(m)).  One would expect AAI(m) for a random player to stabilize around a certain constant,  and for successful learner, to decrease as const/m.
+    <li><tt>AAIB</tt> --  AAI * m. One would expect E(m) for a random player to increase roughly linearly with <em>m</em>, and for successful learner, to stabilize at some value (the total number of errors the player makes before he fully learns the rules).
+    <li><tt>ALL</tt> -- produce multiple plots, one for each of the above modes
+  </ul>
+
+<p> <em>xVar</em> specifies the variable plotted on the horizontal axis. The possible values are:
+  <ul>
+    <li><tt>M</tt> -- <em>m</em>,  the move count (more precisely, the number of successful and failed moves and failed picks) since the beginning of the series.
+    <li><tt>C</tt> -- <em>c</em>,  the number of game pieces removed by the player since the beginning of the series. (This is also equal to the number of successful moves).
+    <li><tt>ALL</tt> -- produce multiple plots, one for each of the above modes
+  </ul>
+
+<p><strong>The default value of curveMode is AAIB.C, meaning plotting AAIB as a function of C.</strong></p>
+  
+<p>An advantage of using C instead of M as the variable on the horizontal axis is that in a game where most players clear all boards presented to them (i.e. no incentive scheme, and no "give up" option), all curves will end at roughly the same value of C, so a median would be much better defined than it would in a plot where the variable being plotted is plotted with respect to M.
+
+<p>If  <tt>-curveMode</tt> has been specified as <tt>ALL.ALL</tt> (or just as <tt>all</tt>, for short), the tool will plot the curves for all supported <em>yVar.xVar</em> combinations, placing each family of plots in an appropriately named subdirectory of the <tt>out</tt> directory. E.g. the plots of AAI vs. C will be in the subdirectory <tt>AAI_C</tt>.
+  
+    <h2>Output</h2>
+
+    <p>The tool creates directory <tt>out</tt>; in it, subdirectories corresponding to display modes (<tt>W_M</tt> etc). Within each of them, plots are written as individual SVG files, each file name corresponding to the identifier of the "experience" reflected therein. SDepedning on the -precMode, that may be just the name of the rule set, or a combination of strings including the preceding rule sets. In the latter case, the components of the file names are separated by dots (because using semicolons would not be appropriate in file names).
+
+    
+      <h2>Identifying learners. Extrapolating</h2>
+
+      <p>The plotting tool uses the same criterion as the MWH tool (-targetR or -targetStreak) to identify "learners", i.e. players who  appear to have "mastered the rules" and have demonstrated this mastery by making a sequence of correct moves. The two options (-targetR or -targetStreak) correspond to Paul's two incentive schemes (LIKELIHOOD or DOUBLING, respectively); if the data you analyze have come from an experiment in which one of these two incentive schemes was employed, you may want to use the corresponding option, with the appropriate value (as per the experiment's parameter sets), so that the tool's identification of the players are learners or non-learners matched the identification of them as such made in real time by the Game Server.
+
+      <p>In E and AAIB plots, the curves for the identified "learners" can be easily identified, because on the graph the curve is extrapolated, by a dotted horizontal line, beyond the point where the player stopped playing. (The dotted line shows how the curve would hypothetically continued if the player kept playing, without making any more errors).  In the AAI plots, there is no extrapolations, because I did not bother drawing hyperboles (for AAIB(m)=const/m).
+
+  <h2>Specifying the median plotting mode</h2>
+
+  <ul>
+    <li><tt>-median Real</tt> -- the default mode. For every segment <em>[m,m+1]</em>(or <em>[q,q+1]</em>, as the case may be), the median curve is drawn as the median of the actually recorded values of the plotted value at m amd m+1 (or q and q+1).
+
+    <li><tt>-median Extra</tt> -- For every segment <em>[m,m+1]</em>(or <em>[q,q+1]</em>, as the case may be), the median curve is drawn as the median of the actually recorded or extrapolated values of the plotted value at m amd m+1 (or q and q+1). (Extrapolated values only exist for extrapolated curves, i.e. those for "learners").
+
+  </ul>
+
+<p>The median curve so constructed typically has discontinuities at the points where some of the participating players' curves end. (For example, if we records of 10 players up to m=30, but of only 9 players at m=31, then the median curve will likely have a discontinuity at m=30, since to the left of that point the median is constructed as the median of 10 functions, and to the right of that point, as the median of 9 functions).
+  
+  <p>You probably only want to use the <tt>-median Extra</tt>  mode when you're working with a data set that includes only learners, i.e. one where all curves are extrapolated. Otherwise, you'll see that the median curve changes in an "unnatural" way once the "non-learners'" curves end and only extrapolated "learners'" curves remain.
+	    
+<h2>Example</h2>
+
+<p>This example can be fined in the script <tt>/home/vmenkov/curves/curves-ignore.sh</tt>
+
+<pre>
+#!/bin/csh
+
+rm -rf out
+
+#-- Extract all records for players who played plan "FDCL/basic". Save them to a CSV file, and also produce the default set of curves
+/home/vmenkov/w2020/game/scripts/analyze-transcripts-curves.sh -precMode Ignore -targetR 1000000 -export all-ignore.csv FDCL/basic > tmp.log
+mv out out-all-ignore
+
+#--select players who have "learned"
+head -1 all-ignore.csv > learned-ignore.csv
+awk -F ',' '$7 == "true"' all-ignore.csv >> learned-ignore.csv
+
+#--draw curves for learners, 
+/home/vmenkov/w2020/game/scripts/analyze-transcripts-curves.sh -precMode Ignore -import learned-ignore.csv -median Extra > tmp-2.log
+mv out out-learned-ignore
+
+#-- list the directories with SVG files
+du out-all-ignore
+du out-learned-ignore
+</pre>
+
+<p>
+I have copied the output directories (for all players, and for learners only) to
+http://action.rutgers.edu/tmp/out-learned-ignore/
+http://action.rutgers.edu/tmp/out-all-ignore/
+
+<p>See also curves-every.sh in the same directory. It's output has been copied to
+http://action.rutgers.edu/tmp/out-learned-every/
+http://action.rutgers.edu/tmp/out-all-every/
+
+       </body>
+</html>

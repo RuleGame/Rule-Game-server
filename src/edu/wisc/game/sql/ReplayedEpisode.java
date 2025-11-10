@@ -21,13 +21,20 @@ import edu.wisc.game.tools.AnalyzeTranscripts.P0andR;
 */
 public class ReplayedEpisode extends Episode {
 
-
     static boolean debug = true;
     
     /** The possible random player models.
      */
     public enum RandomPlayer {
-	COMPLETELY_RANDOM, MCP1 
+	COMPLETELY_RANDOM, MCP1;
+
+	public static RandomPlayer valueOf1(String mode) {
+	    if (mode.equals("random")) {
+		return COMPLETELY_RANDOM;
+	    }
+	    return valueOf( mode.toUpperCase());
+	}
+	
     };
     
 
@@ -52,6 +59,8 @@ public class ReplayedEpisode extends Episode {
 			   RandomPlayer _randomPlayerModel   ) {
 	super(game, Episode.OutputMode.BRIEF, null, null, _episodeId, false);
 	randomPlayerModel  = _randomPlayerModel;
+	if (randomPlayerModel  == null) throw new IllegalArgumentException("randomPlayerModel not specified when creating ReplayedEpisode");
+
 	para = _para;
 	if (game.initialBoard==null) {
 	    throw new IllegalArgumentException("Cannot replay a game without knowing the initial board!");
@@ -71,10 +80,18 @@ public class ReplayedEpisode extends Episode {
 	return b;
    }
 
-    /** Computes the probability of success for a random pick or random
-	move made by a frugal player. A call to this method should precede
-	a call to accept().
+    /** Computes the probability of success for a random pick or
+	random move made by the player modeled by
+	this.randomPlayerModel (such as a frugal player (MCP1), or a
+	completely random one). A call to this method should precede a
+	call to accept().
 
+	<p>This method uses this.failedPicks, which is set in this.accept()
+	depending on this.randomPlayerModel. (For MCP1, it contains some 
+	knowledge; for a random player, it's empty).
+	
+
+	<p>
 	As of 2021-09-18, the approach is that "P0 for a pick" is only
 	used for successful picks (i.e. when there is incontrovertible
 	evidence that the player wanted to do a pick). For failed
@@ -89,30 +106,34 @@ public class ReplayedEpisode extends Episode {
 	The nextMove.code field is not set yet, because it will only be 
 	set during an actual replay (the Episode.accept() call).
 
-	@param code The historical acceptance code for this attempt,
-	as read from the transcript
+	@param successfulPick True if this was a "successful pick",
+	based on the historical acceptance code for this attempt, as
+	read from the transcript
     */
-    public double computeP0( Pick nextMove, int code) {
+    public double computeP0( Pick nextMove, boolean successfulPick) {
     
-	int knownFailedPicks = failedPicks.cardinality();
+	if (successfulPick) {
+	    int knownFailedPicks = failedPicks.cardinality();
+	    return  ruleLine.computeP0ForPicks(knownFailedPicks);
+	} else {
+	    int knownFailedMoves = 	countKnownFailedMoves();
+	    return ruleLine.computeP0ForMoves(knownFailedMoves);
+	}
+    }
+
+    int countKnownFailedMoves() {
 	int knownFailedMoves = 0;	
 	for(BitSet b : failedMoves)  {	    
 	    if (b!=null) knownFailedMoves += b.cardinality();
 	}
-
-	boolean successfulPick = !(nextMove instanceof Move) && code==CODE.ACCEPT;
-	//System.out.println("RE.computeP0(" +nextMove+"); code="+code+", successfulPick=" + successfulPick);
-
-	
-	return  successfulPick?
-	    ruleLine.computeP0ForPicks(knownFailedPicks):
-	    ruleLine.computeP0ForMoves(knownFailedMoves);
-
+	return knownFailedMoves;	
     }
 
-    /** In addition to the normal "accept" stuff, either erases or
-	augments the player's knowledge of the current board's
-	properties. (Depending on whether the board has changed or not).
+    /** In addition to the normal "accept" stuff, this method may
+	eithe erases or augments the player's knowledge of the current
+	board's properties. (Depending on whether the board has
+	changed or not). This "knowledge accumulation" may or may not
+	be done depending on the current random player model.
      */
     public int accept(Pick pick) {
 	int code = super.accept(pick);
@@ -120,7 +141,7 @@ public class ReplayedEpisode extends Episode {
 	if (randomPlayerModel==RandomPlayer.COMPLETELY_RANDOM) {
 	    // No knowledge kept!
 	} else if (randomPlayerModel==RandomPlayer.MCP1) {
-
+	    // MCP player accumulates knowledge
 	
 	if (code==CODE.ACCEPT) {
 	    if (pick instanceof Move) {	    
@@ -136,7 +157,7 @@ public class ReplayedEpisode extends Episode {
 	    // The player's knowledge has increased
 	    int j = findJ(pick);
 	    
-	    if (pick instanceof Move) {
+	    if (pick instanceof Move) {  // failed move
 		// In the show-movables mode, only movable pieces are taken into account.
 		// Ideally, this conditional is not even needed, since in the show-movables
 		// mode the GUI client should not even allow the client to attempt moving
@@ -319,7 +340,7 @@ public class ReplayedEpisode extends Episode {
 		    boardHistory.add(b);
 		}
 
-		double p =rep.computeP0(e.pick, e.code);	    
+		double p =rep.computeP0(e.pick, false);	    
 		result.p0[k] = p;
 	    
 		//-- replay the move/pick attempt 
@@ -348,6 +369,40 @@ public class ReplayedEpisode extends Episode {
 	}
 
     }
+
+    /** Lists all (piece, destinations) pairs that a random player may try.
+     */
+    private Vector<Pick> allMovesToTry() {
+	Vector<Pick> w = new Vector<>();
+
+	for(int j=0; j<getValues().size(); j++) {
+	    boolean moveable = ruleLine.isJMoveable[j];
+	    if (weShowAllMovables() && !moveable) continue;
+	    if (failedPicks.get(j)) continue;
+	    BitSet fm = (j<failedMoves.size()? failedMoves.get(j): null);
+	    for(int b=0; b<NBU; b++) {
+		if (fm!=null && fm.get(b)) continue;
+		Piece p = getValues().get(j);
+		Pick move = new Move(p, b);
+		w.add(move);
+	    }
+	}
+	return w;	
+    }
+
+
+    /** Generates a Move or Pick that a UI could send if the player
+	were a random player described by this.randomPlayerMode.
+	FIXME: using Episode.random, instead of a run-specific 
+	random number generator.
+    */
+    public Pick generateRandomMove() {
+	Vector<Pick> w = allMovesToTry();
+	return w.get( random.nextInt(w.size()));
+    }
+
+    
+
     
     
 }

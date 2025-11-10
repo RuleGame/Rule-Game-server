@@ -30,6 +30,17 @@ public class GeminiRequest {
     InstructionElement system_instruction = null;
     public InstructionElement getSystem_instruction() { return system_instruction; }
 
+    /** Call this if you want structured response.
+	FIXME: Should also explain what structure we're looking for.
+	Prepared-episodes mode is different from play mode.
+    */
+    void setNeedResponseSchema(boolean _needResponseSchema) {
+	if (generationConfig == null) generationConfig = new ConfigElement();
+	generationConfig.needResponseSchema = _needResponseSchema;
+    }
+
+
+
     public static class InstructionElement {
 	Vector<ElementPart> parts = new Vector<>();
 	public Vector<ElementPart> getParts() { return parts;}
@@ -49,8 +60,16 @@ public class GeminiRequest {
 	ThinkingConfigElement thinkingConfig = null;
 	public ThinkingConfigElement getThinkingConfig() { return thinkingConfig; } 
 
-	String responseMimeType = "application/json";
-	public String getResponseMimeType() {    return responseMimeType; }
+	/** This flag should be set if we want this request to ask the
+	    Gemini bot for a structured response (rather than plain text)
+	*/
+	boolean needResponseSchema = false;
+
+	//String responseMimeType = "application/json";
+	/** Do we want JSON or plain text back? */
+	public String getResponseMimeType() {
+	    return needResponseSchema?"application/json": "text/plain";
+	}
   
 	
 
@@ -61,7 +80,7 @@ public class GeminiRequest {
 	    to add some extra fields to the builder */
 	public void augmentBuilder(JsonObjectBuilder ob){
 	    System.out.println("augmentBuilder() called");
-	    boolean needResponseSchema = true;
+
 	    if (needResponseSchema) {
 		ob.add( "responseSchema", ResponseSchemaUtil.mkResponseSchema());
 	    }

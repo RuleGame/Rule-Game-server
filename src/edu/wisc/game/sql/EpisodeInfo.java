@@ -22,6 +22,10 @@ import jakarta.xml.bind.annotation.XmlElement;
     information related to it being played as part of an
     experiment. That includes support for creating an Episode based on
     a parameter set, and for managing earned reward amount.
+
+    <p>In 2PG, a single EpisodeInfo object is shared for both players;
+    /move calls come with the indication of who made them
+    (the "mover").
  */
 @Entity  
 @Access(AccessType.FIELD)
@@ -42,6 +46,12 @@ public class EpisodeInfo extends Episode {
 	
      */
     int attemptCnt1=0;
+
+    /** How many move attempts has a particular player made in this episode? */
+    private int getAttemptCnt(int mover) {
+	return mover==0? attemptCnt - attemptCnt1 : attemptCnt1;
+    }
+    
     /** The total cost of all attempts (move and pick) done so far by Player 1 (in 2PG only)
 	including successful and unsuccessful ones. If cost_pick!=1,
 	this value may be different from attemptCnt. */
@@ -90,7 +100,7 @@ public class EpisodeInfo extends Episode {
 	is assigned for every episode that has been completed (board
 	cleared), and perhaps (depending on the stalematesAsClears
 	flag) also for stalemated episodes. */
-    int rewardMain[] = new int[2];//ZZZZ
+    int rewardMain[] = new int[2];
     @Access(AccessType.PROPERTY)
     public int getRewardMain() { return rewardMain[0]; }
     public void setRewardMain(int x) { rewardMain[0]=x; }
@@ -115,8 +125,8 @@ public class EpisodeInfo extends Episode {
 
     private int displaySeriesNo;
  
-    
-    private PlayerInfo.Series mySeries() {
+    /** To which Series does this Episode belong? */
+    public PlayerInfo.Series mySeries() {
 	return  getPlayer().getSeries(getSeriesNo());
     }
 
@@ -212,7 +222,8 @@ public class EpisodeInfo extends Episode {
 	that triggered x2 (but did not trigger x4) for the series has the value of 2 stored
 	here, and the episode that triggered x4 has 4 stored here. 
 	The default value for this field (stored in all other episodes)
-	is 0.
+	is 0. (This is an array of 2 elements, so that in a A2PG both 
+	players individual results are stored).
      */
     //int xFactor;
     int xFactor[] = new int[2] ;
@@ -345,7 +356,7 @@ public class EpisodeInfo extends Episode {
 	failed to complete a bonus episode on time, this is the place
 	that sets the "lost" flag.
 
-	@param playerId null in single-player games; playerId in 2PG
+	@param playerId null in single-player games; the  playerId of the player making this move in 2PG
 
 	@param _attemptCnt According to the client, this is how many /move or /pick
 	calls it has made before this call; so this is how long the transcript of
@@ -419,7 +430,7 @@ public class EpisodeInfo extends Episode {
     
     /** The common part of doMove and doPick: after a move or pick has
 	been completed, see how it affects the current state of the
-	episode.  
+	episode.
 
 	<p>
 	This method takes care of the issues related to the incentive scheme.
@@ -487,11 +498,8 @@ public class EpisodeInfo extends Episode {
 	    }
 	}
 	
-
 	// Should stretch and R be counted as Player 1's separate numbers?
-	//boolean forP1 = (player.isAdveGame() && move.mover==Pairing.State.ONE);
 	int mj = (player.isAdveGame() && move.mover==Pairing.State.ONE) ? 1: 0;
-
 
 	justReachedX2[mj]=justReachedX4[mj]=false;
 
@@ -511,13 +519,10 @@ public class EpisodeInfo extends Episode {
 	    lastStretch[mj]=0;
 	    lastR[mj] = 0;
 	}
-
-
 	
 	if (xgetIncentive()==Incentive.DOUBLING ||
 	    xgetIncentive()==Incentive.LIKELIHOOD) {
 	    
-
 	    boolean mastery2 = false, mastery4 = false;
 	    String s = "";
 	    if (xgetIncentive()==Incentive.DOUBLING) {
@@ -530,7 +535,6 @@ public class EpisodeInfo extends Episode {
 		mastery2 = (lastR[mj] >=x2);
 		s = ", as lastR=" + lastR[mj] + " for x2="+x2+", x4="+x4;
 	    }
-
 
 	    PlayerInfo.Series ser =  mySeries();
 	    int f = ser.findXFactor(mj); 
@@ -560,7 +564,6 @@ public class EpisodeInfo extends Episode {
 		if (xFactor[mj]<factorPromised[mj]) xFactor[mj] = factorPromised[mj];
 	    }
 	}
-
 	
 	if (bonus) {
 	    if (isCompleted()) {
@@ -602,9 +605,7 @@ public class EpisodeInfo extends Episode {
 	    String thisPid = thisPlayer.getPlayerId();
 	    String otherPid = otherPlayer.getPlayerId();
 
-
 	    Logging.info("Performed move for " + player.getPlayerIdForRole(move.mover)+ "; otherPlayer.amBot=" + otherPlayer.getAmBot() + "; this mover mustWait=" + q.mustWait);
-
 	    
 	    if (thisPlayer.getAmBot()) { // I am a bot 
 		if (!q.mustWait && !isCompleted()) { // and I am given another move
@@ -631,13 +632,19 @@ public class EpisodeInfo extends Episode {
 	}
 
 
-	// Bot assist is not used after successful picks, since they may add
-	// little new info
-	if (mySeries().hasBotAssist() &&
-	    (isMove || move.code != CODE.ACCEPT)) { // Assuming it's 1PG. (FIXME: what if 2PG?)
-	    if (botAssist==null) botAssist=new BotAssist();
-	    botAssist.didHeFollow(move);
-	    botAssist.makeSuggestion(this, q);
+	// Use bot assist, if this player is configured for it. (Note
+	// though that Bot assist is not used after successful picks,
+	// since they may add little new info)
+	if (mySeries().hasBotAssist(move.mover) &&
+	    (isMove || move.code != CODE.ACCEPT)) { 
+	    if (botAssist[move.mover]==null) botAssist[move.mover]=new BotAssist();
+	    botAssist[move.mover].didHeFollow(move);
+	    String chat = botAssist[move.mover].makeSuggestion(this);
+
+	    if (q.mustWait) {
+		if (chat!=null) chat = "[Not your turn yet] " + chat;
+	    }
+	    q.setBotAssistChat(chat);
 	}
 
 	lastCall.saveDisplay(q);	
@@ -802,13 +809,13 @@ public class EpisodeInfo extends Episode {
 	}
 
 	
-	private int mover;
+	final private int mover;
 	/** What is the role of the player in the episode? In 1PG it's
 	    always 0; in 2PG, it's 0 for player 0 of the pair (the one
 	    who owns all episodes), and 1 for player 1 */
 	public int getMover() { return mover; }
-	@XmlElement
-	public void setMover(int _mover) { mover = _mover; }
+	//@XmlElement
+	//public void setMover(int _mover) { mover = _mover; }
 
 	
 	private boolean mustWait;
@@ -995,12 +1002,19 @@ public class EpisodeInfo extends Episode {
 	}
 
 
-	/** If there is a bot assist, it can send a message here */
+	/** If there is an assist bot, the bot can send a message here */
 	String botAssistChat = null;
 	public String getBotAssistChat() { return botAssistChat; }
         @XmlElement
         public void setBotAssistChat(String _botAssistChat) { botAssistChat = _botAssistChat; }
 
+	/** The server can set this to true to ask the GUI client to
+	    remove any previous bot assist message(s) from the screen */
+	boolean clearBotAssistChat = false;
+	public boolean getClearBotAssistChat() { return clearBotAssistChat; }
+	@XmlElement
+	public void setClearBotAssistChat(boolean _clearBotAssistChat) { clearBotAssistChat = _clearBotAssistChat; }
+	
     }
     
     /** Builds a Dsplay object to be sent out over the web UI on a /display call
@@ -1008,6 +1022,7 @@ public class EpisodeInfo extends Episode {
 	identify the player to whom we are to show the display
      */
     public ExtendedDisplay mkDisplay(String playerId) {
+	// zzz
 	int mover = player.getRoleForPlayerId(playerId); // can be -2 in 1PG
 	//	if (mover<0) return new ExtendedDisplay(0, CODE.OUT_OF_TURN, "Player " + playerId + " is not a party to this game at all!");
 
@@ -1025,31 +1040,53 @@ public class EpisodeInfo extends Episode {
 	    }
 	}
 
-	if (mySeries().hasBotAssist() &&  attemptCnt==0) { // the first move of an episode with bot assist
 
+
+	Logging.info("DEBUG: mySeries().hasBotAssist("+mover+
+		     ")=" + mySeries().hasBotAssist(mover));
+	supplyChatMessage(q, mover);
+    	return q;
+    }
+
+    /** Checks if this game has bot assist, and send a chat bot message
+	when appropriate */
+    // zzz
+    private void supplyChatMessage(ExtendedDisplay q, int mover) {
+	if (!mySeries().hasBotAssist(mover)) return;
+	
+	if (q.mustWait) { // clear any chat message, if there is one
+	    q.setClearBotAssistChat(true);
+	} else if (getAttemptCnt(q.mover)==0) {
+	    // This is the /display call before the first move (of
+	    // this player) of an episode with bot assist. No
+	    // suggestions are made yet, so let's just send an inspirational
+	    // message
+	    
 	    int k = q.getEpisodeNo();
 	    String chat = (k==0)?
 		"Starting the first episode of a new rule (Rule no. " + (seriesNo+1)+" . Please make your first move!":
 		"Starting episode no. " + k + " of Rule no. " + (seriesNo+1)+" . Please make your first move!";
-
+	    
 	    q.setBotAssistChat(chat);
-	}
-
-
+	} else  {
+	    String chat = botAssist[q.mover].getChat();
+	    // if (chat!=null) chat = "Reminding of my suggestion: " + chat;
+	    if (chat!=null) {
+		q.setBotAssistChat(chat);
+	    } else {
+		q.setClearBotAssistChat(true);
+	    }
+	}		      
 	
-    	return q;
     }
-
- 
 
 
     public ExtendedDisplay dummyDisplay(int _code, 	String _errmsg) {
 	return new ExtendedDisplay(0, _code, false, _errmsg, true);
     }
 
-
-
-   void saveDetailedTranscriptToFile(File f) {
+    /** Obsoleted: replaced by a method in saved.TranscriptManager */
+    void old_saveDetailedTranscriptToFile(File f) {
 
        final String[] keys = 
 	   { "playerId",
@@ -1356,11 +1393,11 @@ public class EpisodeInfo extends Episode {
 	return fc;
     }
        
-    /** In Bot Assist games, the list of all move suggestions made by the bot in this episode */
+    /** In Bot Assist games, the list of all move suggestions made by the bot in this episode. There may be 2 bots if it's a 2PG with each player having bot assist. */
     @Transient
-    BotAssist botAssist = null;
-    public Move xgetLastProposed() {
-	return botAssist.proposed;
+    BotAssist[] botAssist = new BotAssist[2];
+    public Move xgetLastProposed(int mover) {
+	return botAssist[mover].proposed;
     }
     
 }

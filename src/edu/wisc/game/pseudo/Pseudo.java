@@ -14,6 +14,8 @@ import edu.wisc.game.saved.*;
 
 import edu.wisc.game.websocket.WatchPlayer;
 
+/** Support for a Pseudo-learning bot playing as a partner with, or against, a human
+    player in a 2PG */
 public class Pseudo {
 
     /** The bot player (who is not necessarily Player 0, the one who stores the episode!) */

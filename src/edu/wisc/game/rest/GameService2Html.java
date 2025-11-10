@@ -515,6 +515,7 @@ path = /w2020/game-data/GameService2Html/playerHtml
 	}
     
 	EpisodeInfo.ExtendedDisplay d = (EpisodeInfo.ExtendedDisplay)_d;
+	int myRole = d.getMover();
 	
 	String body = "";
 
@@ -524,7 +525,8 @@ path = /w2020/game-data/GameService2Html/playerHtml
 
 	String botSays = d.getBotAssistChat();
 	if (botSays!=null) {
-	    Episode.Move proposed = epi.xgetLastProposed();
+	    // zzz
+	    Episode.Move proposed = epi.xgetLastProposed(myRole);
 	    String s = fm.strong("Bot assistant says: " + botSays );
 	    s += "&nbsp;";
 

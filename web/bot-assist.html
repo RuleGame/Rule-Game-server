@@ -10,16 +10,16 @@ Bot Assist
     </h1>
 
     <div align="center"><em>
-	Updated 2025-07-03 for GS 8.022</em>
+	Updated 2025-10-12 for GS 8.035</em>
 	</div>
 
-    <p>This is document provides an overview of the "Bot Assist" feature, which ay be introduced in GS ver. 8.014. Originally, the entire trial list had to either have bot assist or not, but since ver 8.022, we have parameter-set-level granularity.
+    <p>This is document provides an overview of the "Bot Assist" feature, which was introduced in GS ver. 8.014. Originally, the entire trial list had to either have bot assist or not, but since ver 8.022, we have parameter-set-level granularity.
 
       <h2>Overview</h2>
 
     <p>The Bot Assist functionality is intended to work as follows. After each move (succesful or unsuccessful) by the player, the "bot" of some kind will provide him with a suggestion of what would be the next move to try. The suggestion can be delivered to the player via a "chat box", similar to that used in 2PG coop games.
 
-      <p>The Bot Assist feature is primarily designed for traditional single-player games (2PG); however, it would not be difficult to also offer it to one or both players in two-player games (2PG).
+    <p>The Bot Assist feature is primarily designed for traditional single-player games (2PG); however, it is available in      two-player games (2PG) as well.
       
       <h2><a name="prep">
 	  Experiment preparation
@@ -68,9 +68,20 @@ where t is the number of previous steps (the player's move attempts, excluding s
 
 	<p>Note also that the same two parameters are used for configuring the bot partner / bot opponent in two-player games pairing a human and a bot.
 
+
+	  <h3>In two-player games (2PG)</h3>
+
+<p>Since ver 8.035, Bot Assist is available in adversarial and cooperative 2PGs (A2PG and C2PG) as well. 
 	  
+<p>For an example of a 2PG experiment plan that offers Bot Assist to the players, see the plan <tt>vm/adve.colorVshape-bot-assist</tt>. In this plan, an additional column, named <tt>bot_assist_players</tt> exists. Its value may be either  1 or 2, indicating whether only one player (Player 0) will get Bot Assist or both will.
+	  
+<p>When both players receive Bot Assist service, two separate and independent Bot Assist instances are created, one for each player. At present, both of them use the same algorithm with the same parameters, but in the future it may be possible to add additional config parameters so that the two players will receive different kinds of assistance.
+
+  
 	  <strike>
 
+	   
+	   
 	  <h3>Older algorithm (used before ver 8.025)</h3>
 	<p>
 	  The one   column that the  bot <tt>pseudo</tt> uses is named <tt>pseudo_halftime</tt>; it contains an integer value that specifies how fast the bot pretends to learn. That is, at every step the bot can elect to either choose a perfectly random move (which may or may not be good), or choose some guaranteed good move (picking it from the set of all possible good moves). The probability of the first election is decaying exponetially; thus, when the bot starts with the rule set, it will choose a move randomly;  after  <tt>pseudo_halftime</tt> moves it's fifty-fifty chance whether the bot will choose your move from the set of all (good or bad) possible move attempts, or from the set of all possible good moves. 
@@ -104,7 +115,7 @@ p = (1-Q)+ Q*p(t) = 1 - Q *(1-p(t)).
 
   <h3>Using a dynamic plan</h3>
 
-<p>You can take any 1PG experiment plan  (your "base plan"), you can also use it for a play with bot assist. To do that:  go to the <a href="front-end-form.jsp">launch form</a>, scroll down to Form 2, and enter a <a href="concepts.html#sd">P:-type dynamic plan name</a> which will include the name of your "base plan" and the name of a modifier. For example, if your base plan is   <tt>FDCL/basic</tt>, and you want to use the modifier <tt>bot-assist/pseudo-10</tt> (whose file is in <tt>/opt/w2020/game-data/modifiers/bot-assist/pseudo-10.csv</tt>, you will enter 
+<p>You can take any 1PG experiment plan  (your "base plan") and use it for a play with bot assist. To do that:  go to the <a href="front-end-form.jsp">launch form</a>, scroll down to Form 2, and enter a <a href="concepts.html#sd">P:-type dynamic plan name</a> which will include the name of your "base plan" and the name of a modifier. For example, if your base plan is   <tt>FDCL/basic</tt>, and you want to use the modifier <tt>bot-assist/pseudo-10</tt> (whose file is in <tt>/opt/w2020/game-data/modifiers/bot-assist/pseudo-10.csv</tt>, you will enter 
   <strong><tt>P:FDCL/basic:bot-assist/pseudo-10</tt></strong> in the plan name box.
 
 <p>The way P:-type dynamic plan works, the columns from the modifier file (which, in this case, specify the bot type and parameters) are virtually pasted at the end of all lines of the base plan's trial list files, thus adding the bot assist feature to your base plan.
@@ -139,7 +150,7 @@ when it starts playing each series of the session (i.e., each new parameter set 
 </tt>
 
 <p>
-I reckon you may feel that the first /newEpisode is a tad to late to learn about the peculiarities of the game. In that case, you can pull that info from the response of the /player call as well, since it includes all parameter sets too. You can just look at the first one. For example:
+I reckon you may feel that the first /newEpisode call is a tad too late to learn about the peculiarities of the game. In that case, you can pull that info from the response of the /player call as well, since it includes all parameter sets too. You can just look at the first one. For example:
 
 <br>
 <tt>
@@ -196,7 +207,8 @@ In any event, once the client learns that the series to be played is a bot assis
 
   <p>When a game with bot assist is played, the game server, in addition to recording the player's moves in the transcript file, also records the bot's suggestions in the bot assist suggestions file. These files are located in the directory <tt>bot-assist</tt> under the main saved data directory (typically,
     <tt>/opt/w2020/saved</tt>), and have names such as
-    <tt><em>player-id</em>.bot-assist.csv</tt>
+    <tt><em>player-id</em>.0.bot-assist.csv</tt>
+    <tt><em>player-id</em>.1.bot-assist.csv</tt>. The suffix "0" or "1" indicates which player (Player 0 or Player 1) received suggestions. In a 2PG, of course, the suffix is always 0.
 
     <p>The file format of bot assiste suggestions files is identical to that of the transcript files, describing the proposed move in terms of the game piece ID and the destination bucket ID. Since both the entries in the game's transcript file and those in the bot assist file contain time stamps, it should be possible for an analysis script to match the two, and to figure which bot suggestion was offered before which move of the player.
 

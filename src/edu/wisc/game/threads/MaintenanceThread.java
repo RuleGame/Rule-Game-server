@@ -3,17 +3,11 @@ package edu.wisc.game.threads;
 import java.io.*;
 import java.util.*;
 import java.text.*;
-//import javax.persistence.*;
-
-//import org.apache.openjpa.persistence.jdbc.*;
-
-//import jakarta.xml.bind.annotation.XmlElement; 
 
 import edu.wisc.game.util.*;
 import edu.wisc.game.sql.*;
 import edu.wisc.game.pseudo.Pseudo;
 import edu.wisc.game.rest.PlayerResponse;
-
 
 /** This thread performs maintenance functions, such as marking 
     episodes as "abandoned"
@@ -147,9 +141,16 @@ public class MaintenanceThread extends Thread {
 		
 
 	    } catch(Exception ex) {
+
+
+		StringWriter sw = new StringWriter();		
+		ex.printStackTrace(new PrintWriter(sw));
+
+		
 		//error = true;
 		//errmsg = ex.getMessage();
 		Logging.error("Exception for Maintenance thread " + getName() + ": " + ex);
+		Logging.error("Trace: " + sw);
 		ex.printStackTrace(System.out);
 	    } finally {
 	    } 

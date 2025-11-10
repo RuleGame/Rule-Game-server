@@ -114,7 +114,11 @@ New (thru ver 7.*):
 	    CsvData.BasicLineEntry e= (CsvData.BasicLineEntry )_e;
 	    //Entry z = new Entry(e);
 	    String episodeId = e.getCol(ja++);
-	    boolean useImages =  useImagesTable!=null &&  useImagesTable.get(episodeId);
+	    boolean useImages = false;
+	    if (useImagesTable!=null) {
+		Boolean q = useImagesTable.get(episodeId);
+		if (q!=null)  useImages=q;
+	    }
 
 	    if (!episodeId.equals(lastEid)) {
 		if (b!=null) {

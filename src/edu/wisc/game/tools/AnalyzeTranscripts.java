@@ -21,7 +21,8 @@ import edu.wisc.game.engine.*;
 import edu.wisc.game.saved.*;
 import edu.wisc.game.reflect.*;
 import edu.wisc.game.parser.RuleParseException;
-
+import edu.wisc.game.sql.ReplayedEpisode.RandomPlayer;
+	
 /** Methods for the statistical analysis of game transcripts.
     For documentation, including usage, see analyze-transcripts.html
  */
@@ -61,8 +62,7 @@ public class AnalyzeTranscripts {
     /** Do we need to print out the board position after p0? */
     private static boolean needBoards=false;
     /** How should be compute p0? (Using which baseline random player model?) */
-    private static ReplayedEpisode.RandomPlayer randomPlayerModel=//null;
-	ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;	
+    protected RandomPlayer randomPlayerModel=RandomPlayer.COMPLETELY_RANDOM;	
 
 
     /** Do we want to fit the learning curve for the Y(t) vector? This
@@ -79,11 +79,15 @@ public class AnalyzeTranscripts {
     
     static boolean weWantPredecessorEnvironment  = false;
 
-
     /** The main() method processes the command line arguments, allowing a large variety of ways to specify
 	the set of players whose data are to be analyzed.
      */
     public static void main(String[] argv) throws Exception {
+
+	//protected static
+	ReplayedEpisode.RandomPlayer randomPlayerModel=//null;
+	ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;	
+
 
 	String outDir = "tmp";
 
@@ -128,13 +132,7 @@ public class AnalyzeTranscripts {
 		    mode = argv[j];
 		}
 		needP0=true;		
-		if (mode.equals("random")) {
-		    randomPlayerModel = ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;
-		} else if  (mode.equals("mcp1")) {
-		    randomPlayerModel = ReplayedEpisode.RandomPlayer.MCP1;
-		} else {
-		    usage("Invalid model name: " + mode);
-		}
+		randomPlayerModel = ReplayedEpisode.RandomPlayer.valueOf1(mode);
 	    } else if  (a.equals("-jf")) {
 		jf = true;
 	    } else if  (a.equals("-boards")) {
@@ -244,7 +242,7 @@ public class AnalyzeTranscripts {
 	for(String playerId: ph.keySet()) {
 	    Vector<EpisodeHandle> v = ph.get(playerId);
 	    try {
-		AnalyzeTranscripts atr = new AnalyzeTranscripts(base, wsum);
+		AnalyzeTranscripts atr = new AnalyzeTranscripts(base, wsum, randomPlayerModel);
 		atr.analyzePlayerRecord(playerId, v);
 	    } catch(Exception ex) {
 		System.err.println("ERROR: Cannot process data for player=" +playerId+" due to missing data. The problem is as follows:");
@@ -526,9 +524,11 @@ public class AnalyzeTranscripts {
 	written
 	@param _wsum If non-null, the summary file will go there
     */
-    AnalyzeTranscripts( File _base, PrintWriter _wsum) {
+    AnalyzeTranscripts( File _base, PrintWriter _wsum,
+			RandomPlayer _randomPlayerModel) {
 	base = _base;
 	wsum = _wsum;
+	randomPlayerModel = _randomPlayerModel;
     }
 
     final private File base;
@@ -576,7 +576,7 @@ public class AnalyzeTranscripts {
 	    for(TranscriptManager.ReadTranscriptData.Entry e: subsection) {
 		if (!eh.episodeId.equals(e.eid)) throw new IllegalArgumentException("Array mismatch");
 		
-		w.print(rid+","+e.pid+","+eh.exp+","+eh.trialListId+","+eh.seriesNo+","+eh.orderInSeries+","+e.eid);
+		w.print(rid+","+e.pid+","+eh.exp+","+eh.trialListId+","+eh.seriesNo+","+eh.episodeNo+","+e.eid);
 		for(int j=2; j<e.csv.nCol(); j++) {
 		    w.print(","+ImportCSV.escape(e.csv.getCol(j)));
 		}
@@ -665,15 +665,25 @@ public class AnalyzeTranscripts {
 	    p0 = new double[n];
 	    rValues = new double[n];
 	}
+	public P0andR(Vector<Double> _p0, Vector<Double> r) {
+	    this( _p0.size());
+	    if (r.size() != p0.length) throw new IllegalArgumentException();
+	    int k=0;
+	    for(double x: _p0) p0[k++] = x;
+	    k=0;
+	    for(double x: r) rValues[k++] = x;		       
+	}
+   
     }
     
-    /** Reconstructs and replays the historical episode, computing p0 for
-	every pick or move attempt.
+    
+    /** Reconstructs and replays the historical episodes in one
+	series, computing p0 for every pick or move attempt.
 	
 	@param subsections A (preprocessed) transcript by a player, which covers an entire series of  episodes.
 	@param para The parameter set that was in effect for this series.
 	@param boardHistory An output parameter. If not null, we will save the board before each move to that vector. The number of entries put into this vector will be equal to the number of values put into the return value (p0)
-	@return An array containing p0 values for each move.
+	@return An array containing p0 values for each move or pick attempt  in all episodes of the series.
 
      */
     protected P0andR computeP0andR(Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections, ParaSet para, String ruleSetName,
@@ -704,7 +714,7 @@ public class AnalyzeTranscripts {
 	    for(int j=0; j<subsection.length; j++) {
 		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
 
-		//System.out.println("j=" + j);
+ 		//System.out.println("j=" + j);
 		//System.out.println(rep.graphicDisplay());
 
 		if (boardHistory!=null) {		
@@ -712,7 +722,8 @@ public class AnalyzeTranscripts {
 		    boardHistory.add(b);
 		}
 
-		double p =rep.computeP0(e.pick, e.code);	    
+
+		double p =rep.computeP0(e.pick, e.isSuccessfulPick());	    
 		result.p0[k] = p;
 	    
 		//-- replay the move/pick attempt 
