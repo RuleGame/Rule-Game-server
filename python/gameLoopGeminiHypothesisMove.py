@@ -65,29 +65,28 @@ PRE_HYP_MOVES = 5
 MOVES_HYP_GEN_CONTEXT_SIZE = 10   # how many recent moves to provide as context to hypothesis generator
 MOVES_MOVE_GEN_CONTEXT_SIZE = 5  # how many recent moves to provide to move generator
 CONTRADICT_MULTIPLIER = 4.0  # Make each contradiction worth 4x a support
-SUPPORT_MULTIPLIER = 2.0  # Each support is worth 2x
+SUPPORT_MULTIPLIER = 0.5  # Each support is worth 2x
 GEM_KEY = "GEMINI_API_KEY"
-
+CORE_THRESHOLD = 0.9
+MOVE_LIMIT = 50  # Max number of moves before exiting
 
 # ---------------- System Prompts ----------------
 SYSTEM_PROMPT_HYP_GEN = """
 # Help me play a game. It involves moving pieces on a board into one of four buckets, following a hidden rule which can be static or dynamic. 
 # The board has pieces, each with an id, shape, color, and (x,y) position. Each piece can be cleared by moving it into one of the four buckets.
-# Your task is to help generate candidate hypotheses about the hidden rule by inspecting the board, recent moves, and observed move results.
+# Your task is to help hypothesize about the hidden rule by inspecting the recent moves, bucket states and existing hypotheses.
 
 Input you will receive:
 - A JSON list of current/top hypotheses (id + description + optional computed confidence).  
 - Hypothesis history from previously cleared board with their confidences.
-- The most recent 10 moves and their results.
+- The moves from the last successful move to the latest successful move.
 - The board pieces (id,shape,color,x,y).
 - Bucket state and coordinates.
-- Discovered immovable pieces.
+- Discovered current immovable pieces.
 
 Limits & format:
 - Return EXACTLY one JSON object (no extra text) with the key `new_hypotheses` whose value is a list of hypothesis objects. Further on generating hypothese can be found below.
 - Use unique IDs for the new hypotheses, e.g., `NH1`, `NH2`, ...
-- If uncertain, return: `{"new_hypotheses": []}` rather than inventing evidence.
-- The system will re-validate any cited UIDs; do not cite UIDs not present in the provided recent moves.
 - Return unique hypotheses only (no duplicates of existing ones or among new ones).
 
 Each hypothesis object schema (required):
@@ -96,18 +95,16 @@ Each hypothesis object schema (required):
   "description": "verbose rule",
   "support_ids": ["M3","M7"],          # list of UIDs from supplied recent moves that support this hypothesis (may be [])
   "contradict_ids": ["M2"],            # list of UIDs from supplied recent moves that contradict it (may be [])
-  "thinking": "1-2 sentence explanation why these UIDs support/contradict"  
+  "thinking": "explanation why these UIDs support/contradict"  
 }
 
 # Note on generating and understanding hypotheses: 
-# 1. Use the existing hypotheses to understand what is working and what is not based on their confidence levels. 
-# 2. Out of the hypotheses that you receive the ones with high confidence are mostly true so experiment around them. Build on them to find the hidden rule.
-# 3. Always look at the recent move history and bucket states to find patterns that can lead to new hypotheses.
-# 4. Bucket states tell you what has worked
-# 5. Always generalize and hypothesize about rules that will help clear all the pieces on the board.
+- Analyze the recent moves, bucket states, immovable pieces, and existing hypotheses to identify patterns.
+- Based on this analysis , generate new hypotheses that extend or refine the current understanding of the hidden rule.
+- Speculate on what the hidden rule might be to clear all pieces from the board, considering static and dynamic aspects.
+- Bucket states indicate which pieces have been successfully cleared into each bucket so far.
 
 Rules:
-- Do NOT include a confidence field. The system computes confidences automatically.
 - For evidence, cite move UIDs (format 'M<number>'). The system only trusts those explicit UIDs.
 - piece_id must exist on the current board (or -1 only if board is empty).
 - bucket_id must be 0,1,2,3. The coordinates for buckets are (x,y) positions:
@@ -139,38 +136,43 @@ Rules:
 - A move "supports" the hypothesis if the outcome of that move (accepted/denied/immovable)
   is consistent evidence *for* the hypothesis as stated.
 - A move "contradicts" if its outcome is evidence *against* the hypothesis.
-- Check for contradictions carefully because they have a stronger impact on the validity of the hypothesis.
-- A move neither supports nor contradicts if it's irrelevant to the hypothesis. So check that carefully.
-- If a move involves an immovable piece, it cannot support or contradict a hypothesis about moving pieces.
+- If a  move does not directly support or contradict a hypothesis, it is considered irrelevant and should be ignored.
+- If a move involves an immovable piece, it cannot support or contradict a hypothesis without an immovability clause.
 - Only list UIDs that were supplied in the moves list.
 
 """
 
 SYSTEM_PROMPT_MOVE = """
-You will receive:
-- Up to {k} candidate hypotheses (id + description) that may explain the hidden rule.
-- Board snapshot (pieces with id, shape, color, x, y).
-- Bucket state & immovable pieces & brief move history.
+You have {k} ranked hypotheses. Your ONLY jobs:
+1. Pick one hypothesis
+2. Pick ANY piece that hasn't been tried recently
+3. Pick ANY valid bucket
 
-Task:
-- Return exactly one move to test one of the hypotheses.
-- Don't move immovable pieces as they cannot be moved to any bucket.
-- Don't repeat moves that haven't worked recently. 
+DO NOT analyze which move "tests" the hypothesis best.
+DO NOT reason about what the rule might be.
+Just make a simple, valid move.
 
-Return EXACTLY one JSON object with:
+Return: {"move": {"piece_id": X, "bucket_id": Y}, "selected_hypothesis": "H1"}
+
+"""
+SYSTEM_PROMPT_SUMMARY = """
+You are a pattern summarizer. You will receive moves from one success to the next success.
+
+Your task: Create a SHORT (2-3 sentence) episodic memory capturing:
+1. Any patterns you see
+2. What worked / what didn't
+3. Any notable observations 
+
+Return EXACTLY:
 {
-  "move": {"piece_id": <int>, "bucket_id": <0|1|2|3>},
-  "thinking": "optional short text about why you chose the move (may reference hypothesis ids)."
+  "summary": "concise 2-3 sentence description",
+  "move_range": "M15-M23",
+  "key_observations": ["observation 1", "observation 2"]
 }
 
-Rules:
-- piece_id must be present on the current board.
-- bucket_id must be 0,1,2,3.
-- Return only the JSON object, no extra text.
-- You can "randomly" choose any hypothesis to test. 
-- Don't be biased by confidence scores
+Be specific about patterns (shapes, colors, positions, buckets, sequences).
+Focus on INSIGHTS, not just listing moves.
 """
-
 
 SYSTEM_PROMPT_B = """
 Help me clear a board game. You will be provided:
@@ -334,31 +336,16 @@ def map_result_label(result_text):
 def compute_support_contradiction_from_ids(hyp, move_history):
     support = 0.0
     contradict = 0.0
-
-
-    s_ids = hyp.get("support_ids", []) or []
-    c_ids = hyp.get("contradict_ids", []) or []
-    
-    for uid in s_ids:
-        info = move_history.get(uid)
-        if info:
-            obs = map_result_label(info.get("result",""))
-            if obs == "accepted":
-                support += SUPPORT_MULTIPLIER
-            else:
-                contradict += CONTRADICT_MULTIPLIER  # Heavy penalty
+    for uid in (hyp.get("support_ids") or []):
+        if uid in move_history:
+            support += SUPPORT_MULTIPLIER
         else:
             support += WEIGHT_UNOBSERVED
-            
-    for uid in c_ids:
-        info = move_history.get(uid)
-        if info:
-            obs = map_result_label(info.get("result",""))
-            if obs == "accepted":
-                contradict += CONTRADICT_MULTIPLIER  # Heavy penalty
+    for uid in (hyp.get("contradict_ids") or []):
+        if uid in move_history:
+            contradict += CONTRADICT_MULTIPLIER
         else:
             contradict += WEIGHT_UNOBSERVED
-            
     return support, contradict
 
 def bayesian_confidence(alpha0, beta0, support, contradict):
@@ -420,10 +407,12 @@ If no duplicates or narrow rules are found, return:
         sys.stdout.write(f"[dedup] error: {e}. Skipping dedup.\n")
         return []
 
-def build_prompt_for_hyp_gen(current_hypotheses, val, bucket_state, immovable_pieces, recent_moves, hyp_history):
+def build_prompt_for_hyp_gen(current_hypotheses, val, bucket_state, immovable_pieces, recent_moves, episodic_summaries, hyp_history, core_patterns=None):
     """
-    Build messages to call the hypothesis-generator LLM (SYSTEM_PROMPT_HYP_GEN).
-    We provide current top hypotheses (id+description), board, bucket state, immovable pieces, recent moves
+    Build messages to call the hypothesis-generator LLM.
+    
+    NEW: core_patterns is a list of dicts {description, confidence} for hypotheses we're very confident about (0.75+).
+    These are presented as "facts" about the rule to constrain the search space.
     """
     hyps_simple = [{"id": h.get("id"), "description": h.get("description","")} for h in (current_hypotheses or [])]
     hyp_text = json.dumps(hyps_simple, ensure_ascii=False)
@@ -437,19 +426,41 @@ def build_prompt_for_hyp_gen(current_hypotheses, val, bucket_state, immovable_pi
     immovable_text = ", ".join(str(x) for x in sorted(list(immovable_pieces))) if immovable_pieces else "None"
 
     recent_moves_text = "\n".join(recent_moves) if recent_moves else "None"
+    summaries_text = "No episodic memory available."
+    core_text = "No core patterns identified."
 
+    if episodic_summaries:
+        summaries_text = "EPISODIC MEMORY (previous success windows):\n"
+        for i, summary in enumerate(episodic_summaries[-10:]):  # Last 10 summaries to avoid overflow
+            summaries_text += f"\n{i+1}. {summary['move_range']}: {summary['summary']}"
+            if summary.get('key_observations'):
+                summaries_text += f"\n   Observations: {', '.join(summary['key_observations'])}"
+
+    
 
     msgs = [
         {"role":"system", "content": SYSTEM_PROMPT_HYP_GEN},
         {"role":"user", "content": "Top hypotheses (id+description): " + hyp_text},
         {"role":"user", "content": "Hypothesis history from previously cleared board: " + json.dumps(hyp_history, ensure_ascii=False)},
+    ]
+    msgs.append({"role": "user", "content": summaries_text})
+    
+    if core_patterns:
+        core_text = "\n".join([
+            f"- {p.get('description')} (confidence: {p.get('confidence', 0.0):.2f})"
+            for p in core_patterns
+        ])
+    msgs.append({"role":"user", "content": "CORE PATTERNS (parts of the rule we're confident about):\n" + core_text + "\n\nUse these as facts. Now find: refinements, exceptions, dynamic changes, or edge cases around these patterns."})
+    
+    msgs.extend([
         {"role":"user", "content": "Board: " + board_state},
         {"role":"user", "content": "Bucket state: " + bucket_summary},
+        {"role": "user", "content": f"CURRENT WINDOW (detailed, moves since last success):\n" + "\n".join(recent_moves)},
         {"role":"user", "content": "Discovered current immovable pieces: " + immovable_text},
-        {"role":"user", "content": f"Recent {MOVES_HYP_GEN_CONTEXT_SIZE} moves:\n" + recent_moves_text},
-        {"role":"user", "content": f"Return only NEW hypotheses that are not duplicates of the Top hypotheses provided. Max {MAX_HYPOTHESES_TO_RETURN} new hypotheses allowed."}
-    ]
+        {"role":"user", "content": f"Generate NEW hypotheses considering both episodic memory and current window. Max {MAX_HYPOTHESES_TO_RETURN} new hypotheses allowed."}
+    ])
     return msgs
+
 
 def build_prompt_for_evidence(hyp_desc, candidate_uids, move_history):
     """
@@ -463,7 +474,12 @@ def build_prompt_for_evidence(hyp_desc, candidate_uids, move_history):
         if isinstance(info, dict):
             mv = info.get("move","")
             res = info.get("result","pending")
-            moves_text_lines.append(f"{uid}: {mv} -> {res}")
+            # ADD THIS: include piece details
+            shape = info.get("shape", "?")
+            color = info.get("color", "?")
+            x = info.get("x", "?")
+            y = info.get("y", "?")
+            moves_text_lines.append(f"{uid}: {mv} -> {res} (shape:{shape} color:{color} x:{x} y:{y})")
         else:
             moves_text_lines.append(f"{uid}: {str(info)}")
     msgs = [
@@ -474,7 +490,7 @@ def build_prompt_for_evidence(hyp_desc, candidate_uids, move_history):
     ]
     return msgs
 
-def build_prompt_for_move_gen(top_hypotheses, val, bucket_state, immovable_pieces, move_history):
+def build_prompt_for_move_gen(top_hypotheses, val, bucket_state, immovable_pieces, move_history, last_successful_move_uid=None):
     """
     Build messages to ask the move-generation LLM. top_hypotheses is list of dicts with id & description.
     We'll include the top hypothesis descriptions (no confidences).
@@ -494,20 +510,38 @@ def build_prompt_for_move_gen(top_hypotheses, val, bucket_state, immovable_piece
         {"role":"user", "content": "Board: " + board_text},
         {"role":"user", "content": "Bucket state: " + bucket_summary},
         {"role":"user", "content": "Immovable pieces: " + immovable_text}
-
     ]
+    
+    
     recent_move_lines = []
-    for uid, info in list(move_history.items())[-MOVES_MOVE_GEN_CONTEXT_SIZE:]:
-        mv = info.get("move", "")
-        res = info.get("result", "pending")
-        shape = info.get("shape","?")
-        color = info.get("color","?")
-        x = info.get("x","?")
-        y = info.get("y","?")
-        recent_move_lines.append(f"{uid}: {mv} -> {res} (shape:{shape} color:{color} x:{x} y:{y} )")
-    msgs.append({"role":"user", "content": "Recent move history (brief): " + ("\n".join(recent_move_lines) if recent_move_lines else "None")})
-    return msgs
+    all_uids = list(move_history.keys())
+    
+    if last_successful_move_uid is None:
+        # No successful moves yet - send last N moves
+        recent_uids = all_uids
+    else:
+        # Get moves from last successful move onwards
+        try:
+            last_success_idx = all_uids.index(last_successful_move_uid)
+            recent_uids = all_uids[last_success_idx:]
+        except ValueError:
+            # Fallback if UID not found
+            recent_uids = all_uids
+    
+    for uid in recent_uids:
 
+        info = move_history.get(uid)
+        if info:
+            mv = info.get("move", "")
+            res = info.get("result", "pending")
+            shape = info.get("shape","?")
+            color = info.get("color","?")
+            x = info.get("x","?")
+            y = info.get("y","?")
+            recent_move_lines.append(f"{uid}: {mv} -> {res} , Properties: (shape:{shape} color:{color} x:{x} y:{y})")
+    
+    msgs.append({"role":"user", "content": "Recent move history (since last success): " + ("\n".join(recent_move_lines) if recent_move_lines else "None")})
+    return msgs
 # ---------------- LLM call wrappers (with validation) ----------------
 def _parse_and_validate_json(raw_text, expected_key, reprompt_instruction=None):
     """
@@ -523,14 +557,53 @@ def _parse_and_validate_json(raw_text, expected_key, reprompt_instruction=None):
         return None, f"Parsed JSON missing expected key '{expected_key}'. Parsed keys: {list(parsed.keys()) if isinstance(parsed, dict) else type(parsed)}"
     return parsed, None
 
+
+# --------------------Summary generation -----------------------
+def call_summary_agent(client, move_window_uids, move_history, previous_successful_uid, current_successful_uid):
+    """
+    Generate episodic summary for the window between two successes.
+    """
+    # Build move descriptions
+    move_lines = []
+    for uid in move_window_uids:
+        info = move_history.get(uid)
+        if info:
+            mv = info.get("move", "")
+            res = info.get("result", "pending")
+            shape = info.get("shape", "?")
+            color = info.get("color", "?")
+            x = info.get("x", "?")
+            y = info.get("y", "?")
+            move_lines.append(f"{uid}: {mv} -> {res} (shape:{shape} color:{color} x:{x} y:{y})")
+    
+    move_range = f"{move_window_uids[0]}-{move_window_uids[-1]}" if move_window_uids else "empty"
+    
+    msgs = [
+        {"role": "system", "content": SYSTEM_PROMPT_SUMMARY},
+        {"role": "user", "content": f"Moves from {previous_successful_uid or 'start'} to {current_successful_uid}:\n" + "\n".join(move_lines)},
+        {"role": "user", "content": "Generate a concise summary focusing on patterns and insights."}
+    ]
+    
+    raw = safe_call_gemini(client, msgs, fallback_response='{"summary": "No clear patterns", "move_range": "' + move_range + '", "key_observations": []}')
+    parsed, err = _parse_and_validate_json(raw, expected_key="summary")
+    
+    if err:
+        sys.stdout.write(f"[summary] parse error: {err}. Using fallback.\n")
+        return {
+            "summary": f"Tested {len(move_window_uids)} moves in range {move_range}",
+            "move_range": move_range,
+            "key_observations": []
+        }
+    
+    return parsed
 # ---------------- Hypothesis-gen & evidence extraction ----------------
-def call_hypothesis_generator(client, current_hypotheses, val, bucket_state, immovable_pieces, recent_moves, hyp_history):
+def call_hypothesis_generator(client, current_hypotheses, val, bucket_state, immovable_pieces, recent_moves, episodic_summaries, hyp_history, core_patterns=None):
     """
     Calls hypothesis-generator LLM to request NEW hypotheses.
     Returns list of normalized new hypothesis dicts:
       {id, description, support_ids (list), contradict_ids (list)}
     """
-    msgs = build_prompt_for_hyp_gen(current_hypotheses, val, bucket_state, immovable_pieces, recent_moves, hyp_history)
+    msgs = build_prompt_for_hyp_gen(current_hypotheses, val, bucket_state, immovable_pieces, recent_moves, episodic_summaries, hyp_history, core_patterns=core_patterns)
     raw = safe_call_gemini(client, msgs, fallback_response='{"new_hypotheses": []}')
     sys.stdout.write("[hyp-gen] raw reply:\n" + raw + "\n")
     parsed, err = _parse_and_validate_json(raw, expected_key="new_hypotheses")
@@ -663,21 +736,22 @@ def mainLoopA(inx, outx, ask_final_rule=True, initial_hypotheses=None):
     move_history = {}    # mapping uid -> {"move": "pid bid", "result": "...", "piece_id":pid, "shape":shape, "color":color, "x":x, "y":y, "bucket_id":bid}
     hypotheses = []      # active pool: dicts {id, description, confidence, support_ids, contradict_ids, evidence}
     hyp_history = []
-
+    core_patterns = []
+    episodic_summaries = []
+    previous_successful_move_uid = None
+    current_successful_move_uid = None
+    move_gen_context_uid = None
+    need_hyp_gen = False  
+    
     # Print all config parameters
     sys.stdout.write(f"Config: MAX_ACTIVE_HYPS={MAX_ACTIVE_HYPS}\n")
     sys.stdout.write(f"Config: ALPHA0={ALPHA0}, BETA0={BETA0}\n")
     sys.stdout.write(f"Config: SUPPORT_MULTIPLIER={SUPPORT_MULTIPLIER}, CONTRADICT_MULTIPLIER={CONTRADICT_MULTIPLIER}, WEIGHT_UNOBSERVED={WEIGHT_UNOBSERVED}\n")
     sys.stdout.write(f"Config: TOP_K_FOR_MOVE_MODEL={TOP_K_FOR_MOVE_MODEL}, MAX_HYPOTHESES_TO_RETURN={MAX_HYPOTHESES_TO_RETURN}\n")
-    sys.stdout.write(f"Config: PRE_HYP_MOVES={PRE_HYP_MOVES}, MOVES_HYP_GEN_CONTEXT_SIZE={MOVES_HYP_GEN_CONTEXT_SIZE}\n")
+    sys.stdout.write(f"Config: MOVES_HYP_GEN_CONTEXT_SIZE={MOVES_HYP_GEN_CONTEXT_SIZE}\n")
     sys.stdout.write(f"Config: MOVES_MOVE_GEN_CONTEXT_SIZE={MOVES_MOVE_GEN_CONTEXT_SIZE}\n")
-    # evidence window size
     sys.stdout.write(f"Config: EVIDENCE_WINDOW_SIZE={EVIDENCE_WINDOW_SIZE}\n")
-    sys.stdout.write(f"Config: ALPHA0={ALPHA0}, BETA0={BETA0}\n")
-
-    # print all of the above are constants defined at the top of the file
-    # print all config constants defined at the top of the file
-
+    sys.stdout.write(f"Config: CORE_THRESHOLD={CORE_THRESHOLD}\n")
     
     # initialize with prior hypotheses if provided (carry over confidence & evidence)
     if initial_hypotheses:
@@ -689,10 +763,6 @@ def mainLoopA(inx, outx, ask_final_rule=True, initial_hypotheses=None):
       
         hypotheses = sorted(hypotheses, key=lambda x: x.get("confidence", 0.0), reverse=True)[:MAX_ACTIVE_HYPS]
     prev_val = None
-
-    # NEW: track how many moves we've made since the last hypothesis generation / confidence recalculation
-    moves_since_last_hyp = 0
-    recent_uids = []
 
     while True:
         statusLine = readLine(inx)
@@ -727,9 +797,10 @@ def mainLoopA(inx, outx, ask_final_rule=True, initial_hypotheses=None):
                 move_history[last_move_uid] = {"move": last_move or "", "result": result_text, "piece_id": None, "bucket_id": None, "step": t}
             last_result = result_text
 
-            # if accepted -> update bucket_state and clear immovable set
+            # if accepted -> update bucket_state, clear immovable set, and trigger hyp-gen
             if code == 0:
                 try:
+                    current_successful_move_uid = last_move_uid
                     pid = move_history[last_move_uid]["piece_id"]
                     bid = move_history[last_move_uid]["bucket_id"]
                     moved_piece = None
@@ -742,10 +813,17 @@ def mainLoopA(inx, outx, ask_final_rule=True, initial_hypotheses=None):
                         shape = moved_piece.get("shape","?")
                         x = moved_piece.get("x","?")
                         y = moved_piece.get("y","?")
-                        bucket_state[bid].append(f"{pid}: {color} {shape} @({x},{y})")
+                        # add move number to the bucket state
+                        bucket_state[bid].append(f" Move number: {t} Piece : {pid}: {color} {shape} @({x},{y})")
                 except Exception:
                     pass
                 immovable_pieces.clear()
+                
+                
+                
+                need_hyp_gen = True
+                sys.stdout.write(f"[main] Move {last_move_uid} successful - will regenerate hypotheses\n")
+                
             # if immovable, mark piece
             if code == 7:
                 try:
@@ -764,24 +842,67 @@ def mainLoopA(inx, outx, ask_final_rule=True, initial_hypotheses=None):
             sys.stdout.write(f"Stalemate after {t} steps.\n")
             return hypotheses
 
-        # limit to 30 moves
-        if t >= 30:
-            sys.stdout.write(f"Reached max 30 moves, exiting.\n")
+        # limit to MOVE_LIMIT moves
+        if t >= MOVE_LIMIT:
+            sys.stdout.write(f"Reached max {MOVE_LIMIT} moves, exiting.\n")
             return hypotheses
+            
         # ---------------- Decide whether to run hypothesis-generation & recalculation ----------------
-        # Run hyp-gen if:
-        #  - there are currently NO hypotheses (force generation), OR
-        #  - we've done at least PRE_HYP_MOVES moves since last hypothesis generation
-        need_hyp_gen = (not hypotheses) or (moves_since_last_hyp >= PRE_HYP_MOVES)
+        # Run hyp-gen after every successful move OR if we have no hypotheses yet
+        if len(hypotheses) == 0:
+            need_hyp_gen = True
+            sys.stdout.write("[main] No hypotheses yet - forcing hypothesis generation\n")
 
         if need_hyp_gen:
-            # ---------------- Hypothesis generation step ----------------
-            # Get last MOVES_HYP_GEN_CONTEXT_SIZE moves for hypothesis generation context
+
+            # ============================================================
+            # STEP 1: Calculate the move window to use for this cycle
+            # ============================================================
+            all_uids = list(move_history.keys())
+            
+            if previous_successful_move_uid is None:
+                # First success - use all moves up to and including current success
+                start_idx = 0
+            else:
+                # Get moves AFTER previous success, up to and including current success
+                try:
+                    prev_idx = all_uids.index(previous_successful_move_uid)
+                    start_idx = prev_idx + 1
+                except ValueError:
+                    start_idx = 0
+            
+            # Find current success in the list
+            try:
+                current_idx = all_uids.index(current_successful_move_uid)
+                evidence_window_uids = all_uids[start_idx:current_idx + 1]
+            except ValueError:
+                evidence_window_uids = all_uids[start_idx:]
+            
+            sys.stdout.write(f"[main] Using move window from {previous_successful_move_uid or 'start'} to {current_successful_move_uid}: {len(evidence_window_uids)} moves\n")
+            
+            # ============================================================
+            # STEP 1.5: Generate summary for this success window
+            # ============================================================
+            if current_successful_move_uid and evidence_window_uids:
+                sys.stdout.write(f"[summary] Generating episodic summary for window {evidence_window_uids[0]}-{evidence_window_uids[-1]}\n")
+                
+                summary = call_summary_agent(
+                    client,
+                    evidence_window_uids,
+                    move_history,
+                    previous_successful_move_uid,
+                    current_successful_move_uid
+                )
+                
+                episodic_summaries.append(summary)
+                sys.stdout.write(f"[summary] Added summary #{len(episodic_summaries)}: {summary['summary']}\n")
+
+            # ============================================================
+            # STEP 2: Generate hypothesis using this move window
+            # ============================================================
             recent_move_strings = []
-            recent_uids_for_hyp = list(move_history.keys())[-MOVES_HYP_GEN_CONTEXT_SIZE:] if len(move_history) >= MOVES_HYP_GEN_CONTEXT_SIZE else list(move_history.keys())
-            for uid in recent_uids_for_hyp:
+            for uid in evidence_window_uids:
                 info = move_history.get(uid)
-                # get other details of the piece moved
                 if isinstance(info, dict):
                     mv = info.get("move","")
                     shape = info.get("shape","?")
@@ -789,13 +910,15 @@ def mainLoopA(inx, outx, ask_final_rule=True, initial_hypotheses=None):
                     x = info.get("x","?")
                     y = info.get("y","?")
                     res = info.get("result","pending")
-                    recent_move_strings.append(f"{uid }: {mv} -> {res} (shape:{shape} color:{color} x:{x} y:{y} )")
-
-            # Ask model for NEW hypotheses using recent moves 
-            new_hyps = call_hypothesis_generator(client, hypotheses, val, bucket_state, immovable_pieces, recent_move_strings, hyp_history)
+                    recent_move_strings.append(f"{uid}: {mv} -> {res} , properties: (shape:{shape} color:{color} x:{x} y:{y})")
+            
+            sys.stdout.write(f"[main] Generating hypotheses with {len(recent_move_strings)} moves\n")
+            
+            # Ask model for NEW hypotheses
+            new_hyps = call_hypothesis_generator(client, hypotheses, val, bucket_state, immovable_pieces, recent_move_strings, episodic_summaries, hyp_history, core_patterns)
             sys.stdout.write(f"[main] got {len(new_hyps)} new hypotheses from model\n")
 
-            # Merge new hypotheses into active candidate pool (deduplicate by normalized description)
+            # Merge new hypotheses into active pool
             def normalize_desc(s): return " ".join(str(s).lower().strip().split())
             existing_descs = { normalize_desc(h["description"]): h for h in hypotheses }
             for nh in new_hyps:
@@ -803,62 +926,61 @@ def mainLoopA(inx, outx, ask_final_rule=True, initial_hypotheses=None):
                 if dnorm in existing_descs:
                     sys.stdout.write("[main] skipping new hyp duplicate vs existing: " + nh["description"] + "\n")
                     continue
-                # create active hyp record with placeholder confidence (prior)
+                # Create active hyp record
                 hypotheses.append({
                     "id": nh.get("id"),
                     "description": nh.get("description"),
                     "confidence": ALPHA0/(ALPHA0+BETA0),
-                    "support_ids": [],      # we will fill from evidence extraction
+                    "support_ids": [],
                     "contradict_ids": [],
                     "evidence": []
                 })
 
-            # if len(hypotheses) > 1:
-            #     remove_ids = call_duplicate_checker(client, hypotheses)
-            #     if remove_ids:
-            #         hypotheses = [h for h in hypotheses if h.get("id") not in remove_ids]
-            #         sys.stdout.write(f"[main] removed {len(remove_ids)} duplicate hypotheses\n")
+            # ============================================================
+            # STEP 3: Evidence extraction using SAME move window for ALL hypotheses
+            # ============================================================
+            sys.stdout.write(f"[evidence] Extracting evidence from {len(evidence_window_uids)} moves for {len(hypotheses)} hypotheses\n")
             
-
-            # ---------------- Evidence extraction (N^2 optimized) ----------------
-            # For new hypotheses: we check ALL past moves (costly but only for new ones)
-            # For existing hypotheses: only check the latest move (if any), to update incrementally.
-            # Implementation detail: identify which are new this turn by whether support_ids empty.
-            all_uids = list(move_history.keys())
-
-            # We will call evidence-extractor per hypothesis (but with smaller UID lists for old hyps)
-            for hyp in list(hypotheses):  # iterate over a copy
-                # if hypothesis already has evidence populated, treat it as 'old' and only check latest move
-                need_all = (not hyp.get("support_ids") and not hyp.get("contradict_ids"))  # fresh hypothesis
+            for hyp in list(hypotheses):
+                # Check if this hypothesis is NEW (no evidence yet) or OLD (has prior evidence)
+                is_new_hyp = (not hyp.get("support_ids") and not hyp.get("contradict_ids"))
                 
-                if need_all:
-                    # NEW HYPOTHESIS: Process all moves in batches of EVIDENCE_WINDOW_SIZE
-                    all_support_ids = []
-                    all_contradict_ids = []
+                # if is_new_hyp:
+                #     sys.stdout.write(f"[evidence] NEW hypothesis '{hyp['description'][:50]}...' - processing {len(evidence_window_uids)} moves\n")
+                # else:
+                #     sys.stdout.write(f"[evidence] OLD hypothesis '{hyp['description'][:50]}...' - adding {len(evidence_window_uids)} new moves to existing evidence\n")
+                
+                # Process the evidence window in batches (to avoid token limits)
+                all_support_ids = []
+                all_contradict_ids = []
+                
+                for i in range(0, len(evidence_window_uids), EVIDENCE_WINDOW_SIZE):
+                    batch_uids = evidence_window_uids[i:i + EVIDENCE_WINDOW_SIZE]
+                    if not batch_uids:
+                        continue
                     
-                    # Process moves in batches
-                    for i in range(0, len(all_uids), EVIDENCE_WINDOW_SIZE):
-                        batch_uids = all_uids[i:i + EVIDENCE_WINDOW_SIZE]
-                        if not batch_uids:
-                            continue
-                        
-                        s_ids, c_ids = call_evidence_extractor(client, hyp["description"], batch_uids, move_history)
-                        all_support_ids.extend(s_ids)
-                        all_contradict_ids.extend(c_ids)
-                    
-                    # Remove duplicates and assign
-                    hyp["support_ids"] = list(set(all_support_ids))
-                    hyp["contradict_ids"] = list(set(all_contradict_ids))
-                    
+                    s_ids, c_ids = call_evidence_extractor(client, hyp["description"], batch_uids, move_history)
+                    all_support_ids.extend(s_ids)
+                    all_contradict_ids.extend(c_ids)
+                
+                # Remove duplicates
+                all_support_ids = list(set(all_support_ids))
+                all_contradict_ids = list(set(all_contradict_ids))
+                
+                if is_new_hyp:
+                    # New hypothesis - set evidence directly
+                    hyp["support_ids"] = all_support_ids
+                    hyp["contradict_ids"] = all_contradict_ids
                 else:
-                    # EXISTING HYPOTHESIS: Only check recent moves
-                    candidate_uids = all_uids[-EVIDENCE_WINDOW_SIZE:]
-                    if candidate_uids:
-                        s_ids, c_ids = call_evidence_extractor(client, hyp["description"], candidate_uids, move_history)
-                        # Append new evidence
-                        hyp["support_ids"] = list(set(hyp["support_ids"] + s_ids))
-                        hyp["contradict_ids"] = list(set(hyp["contradict_ids"] + c_ids))
-            # ---------------- Bayesian update of confidences ----------------
+                    # Old hypothesis - append to existing evidence (accumulate across cycles)
+                    hyp["support_ids"] = list(set(hyp["support_ids"] + all_support_ids))
+                    hyp["contradict_ids"] = list(set(hyp["contradict_ids"] + all_contradict_ids))
+                
+                sys.stdout.write(f"[evidence]   Result: {len(hyp['support_ids'])} support, {len(hyp['contradict_ids'])} contradict\n")
+            
+            # ============================================================
+            # STEP 4: Bayesian update of confidences
+            # ============================================================
             updated_hyps = []
             prior_conf_default = ALPHA0 / (ALPHA0 + BETA0)
             for h in hypotheses:
@@ -877,9 +999,13 @@ def mainLoopA(inx, outx, ask_final_rule=True, initial_hypotheses=None):
                 h.setdefault("evidence", []).append(f"auto:+{support:.2f}-:{contradict:.2f} => {conf_new:.3f}")
                 updated_hyps.append(h)
 
-            # carry forward & prune duplicates by normalized description
-            # deduplicate (keep highest confidence among duplicates)
-            # This final sequence is GOOD - keep it as is:
+            # ============================================================
+            # STEP 5: Deduplication & pruning
+            # ============================================================
+            sys.stdout.write(f"[main] hypotheses before dedup: {len(updated_hyps)}\n")
+            for h in updated_hyps:
+                sys.stdout.write(f" - {h['description']} (conf: {h.get('confidence', 0.0):.3f})\n")
+            
             dedup = {}
             for h in sorted(updated_hyps, key=lambda x: x.get("confidence",0.0), reverse=True):
                 dnorm = normalize_desc(h["description"])
@@ -889,26 +1015,44 @@ def mainLoopA(inx, outx, ask_final_rule=True, initial_hypotheses=None):
             hypotheses = list(dedup.values())
             hypotheses = sorted(hypotheses, key=lambda x: x.get("confidence",0.0), reverse=True)[:MAX_ACTIVE_HYPS]
             hypotheses = [h for h in hypotheses if h.get("confidence",0.0) >= MIN_CONF]
+            
+            sys.stdout.write(f"[main] hypotheses after dedup & pruning: {len(hypotheses)}\n")
+            for h in hypotheses:
+                sys.stdout.write(f" - {h['description']} (conf: {h.get('confidence', 0.0):.3f})\n") 
 
+            # Extract core patterns (high confidence = locked facts)
+            new_cores = [h for h in hypotheses if h.get("confidence", 0.0) >= CORE_THRESHOLD]
+            existing_core_descs = {" ".join(p['description'].lower().split()) for p in core_patterns}
+            for h in new_cores:
+                h_norm = " ".join(h['description'].lower().split())
+                if h_norm not in existing_core_descs:
+                    core_patterns.append({
+                        "description": h["description"],
+                        "confidence": h.get("confidence", 0.0)
+                    })
+                    sys.stdout.write(f"[core] locked pattern: {h['description']} (conf: {h.get('confidence', 0.0):.2f})\n")
+            # Keep most recent ~3 core patterns to avoid token overflow
+            core_patterns = core_patterns[-3:]
             sys.stdout.write(f"[main] active hypotheses count: {len(hypotheses)}\n")
 
-            # reset moves_since_last_hyp because we just generated/updated hypotheses
-            moves_since_last_hyp = 0
-            recent_uids = [] 
-
+            # ============================================================
+            # STEP 6: Update pointers for next cycle
+            # ============================================================
+            move_gen_context_uid = previous_successful_move_uid
+            previous_successful_move_uid = current_successful_move_uid
+            current_successful_move_uid = None
+            need_hyp_gen = False
         else:
             # We are skipping hypothesis-generation / evidence extraction this loop.
-            # Just report current active hypotheses count for debugging.
-            sys.stdout.write(f"[main] skipping hyp-gen; moves_since_last_hyp={moves_since_last_hyp}; active hypotheses={len(hypotheses)}\n")
+            sys.stdout.write(f"[main] skipping hyp-gen; no successful move since last generation; active hypotheses={len(hypotheses)}\n")
 
         # ---------------- Move generation step ----------------
         # Send top-K hypotheses (descriptions only) to move model and request a move
         top_for_move = hypotheses[:TOP_K_FOR_MOVE_MODEL]
-        # print top_for_move being sent
         sys.stdout.write(f"[move-gen] sending top hypotheses:\n")
         for h in top_for_move:
             sys.stdout.write(f" - {h['description']} (conf: {h.get('confidence', 0.0):.3f})\n")
-        msgs = build_prompt_for_move_gen(top_for_move, val, bucket_state, immovable_pieces, move_history)
+        msgs = build_prompt_for_move_gen(top_for_move, val, bucket_state, immovable_pieces, move_history, move_gen_context_uid)
         raw_move_resp = safe_call_gemini(client, msgs, fallback_response='{"move": {"piece_id": -1, "bucket_id": 0}}')
         sys.stdout.write("[move-gen] raw response:\n" + raw_move_resp + "\n")
         parsed_move, err = _parse_and_validate_json(raw_move_resp, expected_key="move")
@@ -969,7 +1113,6 @@ def mainLoopA(inx, outx, ask_final_rule=True, initial_hypotheses=None):
         move_counter += 1
         uid = f"M{move_counter}"
         move_history[uid] = {"move": f"{piece_id} {bucket_id}", "result": "pending", "piece_id": piece_id, "shape": shape, "color": color, "x": x, "y": y, "bucket_id": bucket_id}
-        recent_uids.append(uid)
         last_move = f"{piece_id} {bucket_id}"
         last_move_uid = uid
 
@@ -984,15 +1127,6 @@ def mainLoopA(inx, outx, ask_final_rule=True, initial_hypotheses=None):
 
         prev_val = val
 
-        # update moves_since_last_hyp:
-        # if we performed hypothesis generation & recalculation this loop, we reset earlier to 0,
-        # but since we've just made a move we should set it to 1 (we have one move after that hyp-gen).
-        if need_hyp_gen:
-            moves_since_last_hyp = 1
-        else:
-            moves_since_last_hyp += 1
-
-        # loop continues to read response for this move at top of loop
 
 # ---------------- mainLoopB: clear-board using rule text (keeps thinking area separate) ----------------
 def mainLoopB(inx,outx, hyps):
@@ -1077,4 +1211,4 @@ def mainLoopB(inx,outx, hyps):
     sys.stdout.write(f"Success rate: {float(successful_moves/total_pieces) if total_pieces>0 else 0.0}\n")
     return float(successful_moves/total_pieces) if total_pieces>0 else 0.0
 
-# ---------------- End of file ---------------- 
+# ---------------- End of file ----------------
