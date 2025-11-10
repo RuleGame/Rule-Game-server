@@ -79,20 +79,6 @@ public class AnalyzeTranscripts {
     
     static boolean weWantPredecessorEnvironment  = false;
 
-    /** Sets the randomPlayerModel.
-	@param mode comes from the command line
-     */
-    /*
-    protected void initRandomPlayerModel(String mode) {
-	if (mode.equals("random")) {
-	    randomPlayerModel = ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;
-	} else if  (mode.equals("mcp1")) {
-	    randomPlayerModel = ReplayedEpisode.RandomPlayer.MCP1;
-	} else {
-	    usage("Invalid model name: " + mode);
-	}
-    }
-    */	  
     /** The main() method processes the command line arguments, allowing a large variety of ways to specify
 	the set of players whose data are to be analyzed.
      */
@@ -146,13 +132,7 @@ public class AnalyzeTranscripts {
 		    mode = argv[j];
 		}
 		needP0=true;		
-		if (mode.equals("random")) {
-		    randomPlayerModel = ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;
-		} else if  (mode.equals("mcp1")) {
-		    randomPlayerModel = ReplayedEpisode.RandomPlayer.MCP1;
-		} else {
-		    usage("Invalid model name: " + mode);
-		}
+		randomPlayerModel = ReplayedEpisode.RandomPlayer.valueOf1(mode);
 	    } else if  (a.equals("-jf")) {
 		jf = true;
 	    } else if  (a.equals("-boards")) {

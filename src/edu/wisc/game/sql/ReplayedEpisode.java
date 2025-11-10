@@ -26,7 +26,15 @@ public class ReplayedEpisode extends Episode {
     /** The possible random player models.
      */
     public enum RandomPlayer {
-	COMPLETELY_RANDOM, MCP1 
+	COMPLETELY_RANDOM, MCP1;
+
+	public static RandomPlayer valueOf1(String mode) {
+	    if (mode.equals("random")) {
+		return COMPLETELY_RANDOM;
+	    }
+	    return valueOf( mode.toUpperCase());
+	}
+	
     };
     
 

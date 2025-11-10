@@ -130,14 +130,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    } else if (a.equals("-mDagger")) {
 		useMDagger = true;
 	    } else if (j+1< argv.length && a.equals("-p0")) {
-		String mode =  argv[++j];
-		if (mode.equals("random")) {
-		    randomPlayerModel = ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;
-		} else if  (mode.equals("mcp1")) {
-		    randomPlayerModel = ReplayedEpisode.RandomPlayer.MCP1;
-		} else {
-		    throw new IllegalArgumentException("Invalid model name: " + mode);
-		}
+		randomPlayerModel = ReplayedEpisode.RandomPlayer.valueOf1(argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-config")) {
 		config = argv[++j];
 	    } else if (j+1< argv.length && a.equals("-export")) {
@@ -151,7 +144,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	    } else if (j+1< argv.length && a.equals("-defaultMStar")) {
 		defaultMStar = Double.parseDouble( argv[++j] );
 	    } else if (j+1< argv.length && a.equals("-precMode")) {
-		precMode = Enum.valueOf(MwByHuman.PrecMode.class, argv[++j]);
+		precMode = MwByHuman.PrecMode.valueOf( argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-curveMode")) {
 		String s = argv[++j];
 		if (s.equals("all")) {
@@ -160,11 +153,11 @@ public class MwByHuman extends AnalyzeTranscripts {
 		} else {
 		    String [] ss = s.split(":");
 		    if (ss.length!=2) usage("Expected '-curveMode yChoice:xChoice', or '-curveMode all'");
-		    curveMode = Enum.valueOf(MwByHuman.CurveMode.class, ss[0]);
-		    curveArgMode = Enum.valueOf(MwByHuman.CurveArgMode.class, ss[1]);
+		    curveMode = CurveMode.valueOf( ss[0]);
+		    curveArgMode = CurveArgMode.valueOf( ss[1]);
 		}
 	    } else if (j+1< argv.length && a.equals("-median")) {
-		medianMode = Enum.valueOf(MwByHuman.MedianMode.class, argv[++j]);
+		medianMode = MedianMode.valueOf( argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-csvOut")) {
 		csvOutDir = new File(argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-target")) {
