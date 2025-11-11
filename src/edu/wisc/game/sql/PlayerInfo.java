@@ -88,7 +88,7 @@ public class PlayerInfo {
 	    } else {	    
 		String q = "";
 		q = mainDir.getName();
-		Logging.info("postLoadPart1: q=" + q);
+		//Logging.info("postLoadPart1: q=" + q);
 		coopGame = q.startsWith("coop.");
 		adveGame = q.startsWith("adve.");
 	    }

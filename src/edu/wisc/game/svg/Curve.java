@@ -135,11 +135,13 @@ public class Curve {
 
     /** @param useExtra If true, include the extrapolated sections of curves into the analysis */
     public static String mkMedianSvgPathElement(Curve[] curves, int x0, int y0, double xFactor, double yFactor,
-						String color, int strokWidth, String dash,
+						String color, int strokWidth, String dash, String linecap, String opacity,
 						boolean useExtra) {
 	String s = "<path d=\"" +mkMedianSvgPath(curves, x0, y0, xFactor, yFactor, useExtra) + "\" " +
 	    "stroke=\""+color+"\" stroke-width=\""+strokWidth+"\"  ";
 	if (dash!=null && !dash.equals(""))  s += "stroke-dasharray=\""+dash+"\" ";
+	if (linecap!=null) s+= "stroke-linecap=\""+linecap+"\" ";
+	if (opacity!=null) s+= "stroke-opacity=\""+opacity+"\" ";
 	s += "fill=\"none\" />";
 	return s;
 	
@@ -149,33 +151,51 @@ public class Curve {
 	return  mkSvgPathElement(x0, y0, 1.0, yFactor, color, strokWidth);
     }
 
+    /** @return {f(x), f(x+0)} where f(x)=median(curves)(x) */
+    private static double[] medianY(Curve[] curves, boolean useExtra, int x) {
+	Vector<Double> ya=new Vector<>(), yb=new Vector<>();
+	for(Curve c: curves) {
+	    boolean extra = useExtra && c.extraX!=null && x<=c.extraX;
+	    if (x<c.y.length) ya.add( c.y[x]);
+	    else if (extra) ya.add( c.getLastY());
+		
+	    if (x+1<c.y.length) yb.add( c.y[x]);
+	    else if (extra) yb.add( c.getLastY());
+	}
+	if (ya.size()==0) return null;
+	double[] m = {Util.median(ya), 0};
+	m[1] = (yb.size()==0) ? m[0]: 	Util.median(yb);
+	return m;
+    }
+
 
     private static String mkMedianSvgPath(Curve[] curves, int x0, int y0, double xFactor, double yFactor, boolean useExtra) {
 	Vector<String> v = new Vector<>();
 
 	for(int x=0; ; x++) {
-	    Vector<Double> ya=new Vector<>(), yb=new Vector<>();
-	    for(Curve c: curves) {
-		boolean extra = useExtra && c.extraX!=null && x<=c.extraX;
-		if (x<c.y.length) ya.add( c.y[x]);
-		else if (extra) ya.add( c.getLastY());
-		
-		if (x+1<c.y.length) yb.add( c.y[x]);
-		else if (extra) yb.add( c.getLastY());
-	    }
-	    if (ya.size()==0) break;
-	    double ymeda = Util.median(ya);
-	    String s = (x==0? "M":"L") + (x0+xFactor* x)+ " " + (y0+yFactor* ymeda);
+	    double[] ym = medianY(curves, useExtra, x);
+	    if (ym==null) break;
+
+	    String s= (x==0?"M":"L") + (x0+xFactor*x)+" " + (y0+yFactor*ym[0]);
 	    v.add(s);
 	    
-	    if (yb.size()==0) break;
-	    double ymedb = Util.median(yb);
-	    if (ymedb!=ymeda) { // discontinuity
-		s = "M" + (x0+xFactor* x)+ " " + (y0+yFactor* ymedb);
+	    if (ym[1]!=ym[0]) { // discontinuity
+		s = "M" + (x0+xFactor* x)+ " " + (y0+yFactor* ym[1]);
 		v.add(s);		
 	    }
 	}	
 	return String.join(" " , v);
+    }
+
+    
+    public static double maxMedianY(Curve[] curves, boolean useExtra) {
+	double m = 0;
+	for(int x=0; ; x++) {
+	    double[] ym = medianY(curves, useExtra, x);
+	    if (ym==null) break;
+	    m = Math.max(m, Math.max(ym[0],ym[1]));
+	}
+	return m;
     }
 
 

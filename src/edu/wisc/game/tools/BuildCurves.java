@@ -289,75 +289,114 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
     /** The data for one key */
     static class OneKey extends Vector<MwSeries> {
 	String plot;
-    }
-    
-    private HashMap<String, OneKey>  doPlots(CurveMode mode, CurveArgMode argMode) {
-
-	int H=600;
-	int W=600;
-	int maxX = (argMode==CurveArgMode.C)? roundUp(findMaxC()):  (int)defaultMStar;
+	Curve[] curves = {};
 	
-	HashMap<String, OneKey> h = new HashMap<>(), hr = new HashMap<>();
-	for(MwSeries ser: savedMws) {
+	Curve[] mkCurves(CurveMode mode, CurveArgMode argMode, double maxX) {
+	    curves = new Curve[size()];
+	    int k = 0;
+	    for(MwSeries ser: this) {
+		curves[k++] = mkCurve(ser, mode, argMode, maxX);
+	    }
+	    return curves;
+	}	 
+    }
+
+
+    static class DataMap extends 	HashMap<String, OneKey> {
+	void mkCurves(CurveMode mode, CurveArgMode argMode, double maxX) {
+	    for(String key: keySet()) {
+		OneKey z = get(key);
+		z.mkCurves( mode, argMode, maxX);
+	    }
+	}
+    }
+
+    /** Breaks down the list of series by the key */
+    private static DataMap prepMaps(Vector<MwSeries> all, PrecMode precMode) {
+	DataMap h = new DataMap();
+	for(MwSeries ser: all) {
 	    String key = ser.getKey(precMode);
 	    OneKey z = h.get(key);
 	    if (z==null) {
-		//		System.out.println("DEBUG: key(" + precMode+")=" + key);
 		h.put(key, z=new OneKey());
 	    }
 	    z.add(ser);
 	}
-
-	if (doRandom) {
-	    for(MwSeries ser: randomMws) {
-		String key = ser.getKey(PrecMode.Ignore);
-		OneKey z = hr.get(key);
-		if (z==null) {
-		    //  System.out.println("DEBUG: key(" + precMode+")=" + key);
-		    hr.put(key, z=new OneKey());
-		}
-		z.add(ser);
-	    }	    
-	}
-
-
-	
-	String[] results = new String[h.size()];
-	int j=0;
-	for(String key: h.keySet()) {
-	    OneKey z = h.get(key);
-	    //MwSeries[] ss = new MwSeries[z.size()];
-	    Curve[] curves = new Curve[z.size()], randomCurves=new Curve[0];
-
-
-	    int k = 0;
-	    for(MwSeries ser: z) {
-		curves[k++] = mkCurve(ser, mode, argMode, maxX);
-	    }
-
-	    if (doRandom) {
-		OneKey w = hr.get( MwSeries.keyToIgnoreKey(key));
-		randomCurves = new Curve[w.size()];
-		k  = 0;
-		for(MwSeries ser: w) {
-		    randomCurves[k++] = mkCurve(ser, mode, argMode, maxX);
-		}		
-	    }
-
-	   
-	    z.plot = mkPlotSvg(W,H, maxX, curves, randomCurves);
-	}
-
 	return h;
     }
 
+    
+    /** Produces a plot for each key that appears in savedMws.
+	@return a HashMap that maps each key to a OneKey structure that includes the corresponding plot
+     */
+    private HashMap<String, OneKey>  doPlots(CurveMode mode, CurveArgMode argMode) {
+	int H=600;
+	int W=600;
+	int maxX = (argMode==CurveArgMode.C)? roundUp(findMaxC(savedMws)):  (int)defaultMStar;
+	
+	DataMap h = prepMaps(savedMws, precMode);
+	h.mkCurves(mode, argMode, maxX);
+	DataMap hr = doRandom? prepMaps(randomMws, PrecMode.Ignore): null;
+	if (doRandom) hr.mkCurves(mode, argMode, maxX);
+	
+	String[] results = new String[h.size()];
 
-    private int findMaxC() {
+	for(String key: h.keySet()) {
+	    OneKey z = h.get(key);
+	    Curve[] randomCurves = {};
+	    if (doRandom) {
+		OneKey w = hr.get( MwSeries.keyToIgnoreKey(key));
+		if (w!=null) randomCurves = w.curves;
+	    }
+	    
+	    boolean useExtra =(medianMode==MedianMode.Extra);
+	    SvgPlot svg = new SvgPlot(W, H, maxX);
+	    svg.adjustMaxY(z.curves, randomCurves, useExtra);
+	    svg.addPlot(z.curves, randomCurves, useExtra);
+	    z.plot = svg.complete();
+	}
+	return h;
+    }
+
+    /** @param keys Two keys. Both curve sets are to be put into the same plot. */
+    private String  doDoublePlot(CurveMode mode, CurveArgMode argMode, String keys[]) {
+	int H=600;
+	int W=600;
+	int maxX = (argMode==CurveArgMode.C)? roundUp(findMaxC(savedMws)):  (int)defaultMStar;
+
+	DataMap h = prepMaps(savedMws, precMode);
+	h.mkCurves(mode, argMode, maxX);
+	DataMap hr = doRandom? prepMaps(randomMws, PrecMode.Ignore): null;
+	if (doRandom) hr.mkCurves(mode, argMode, maxX);
+
+	boolean useExtra =(medianMode==MedianMode.Extra);
+	SvgPlot svg = new SvgPlot(W, H, maxX);
+
+	Curve[][] curves = new Curve[2][], randomCurves=new Curve[2][];
+	for(int j=0; j<2; j++) {
+	    String key = keys[j];
+	    OneKey z = h.get(key);
+	    if (z==null) throw new IllegalArgumentException("This key does not occur in the data: " + key);
+	    curves[j]= z.curves;
+	    randomCurves[j]= (doRandom)? new Curve[0]:  hr.get( MwSeries.keyToIgnoreKey(key)).curves;
+
+	    svg.adjustMaxY(curves[j], randomCurves[j], useExtra);
+	}
+	
+	for(int j=0; j<2; j++) {
+	    svg.addPlot(curves[j], randomCurves[j], useExtra);
+	}
+	return svg.complete();
+    }
+
+
+    
+    private static int findMaxC(Vector<MwSeries> savedMws) {
 	int n = 0;
 	for(MwSeries ser: savedMws) {
 	    int q = findMaxC(ser);
 	    if (q>n) {
-		System.out.println("maxC( " + ser.getKey(precMode) + " )=" + q);
+		//System.out.println("maxC( " + ser.getKey(precMode) + " )=" + q);
 		n = q;
 	    }
 	}
@@ -365,7 +404,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
     }
 
     /** How many pieces were removed in this series? */
-    private int findMaxC(MwSeries ser) {
+    private static int findMaxC(MwSeries ser) {
 	int n=0;
 	for(MoveInfo mi: ser.moveInfo) {
 	    if (mi.success)	n++;
@@ -380,7 +419,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	<li>dashed before, and solid after the (m*,w*) point for people who do meet the criterion. Actually, since we are plotting GOOD moves, not ALL moves, I should not call it m*.  Better is to call the axis something like c - for correct moves, And the criterion point becomes (c".w*). 
 	</ul>
     */
-    private Curve mkCurve(MwSeries ser, CurveMode mode, CurveArgMode argMode, double maxX) {
+    private static Curve mkCurve(MwSeries ser, CurveMode mode, CurveArgMode argMode, double maxX) {
 
 	int n = (argMode ==  CurveArgMode.C)? findMaxC(ser):  ser.moveInfo.length;
 	
@@ -423,91 +462,105 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	c.setDash(dash);
 	return c;
     }
-    
-    //    double maxY;
-    //    public double getMaxY() { return maxY;}
 
-
-   /** Produces a SVG element for a bundle of curves, plus their median etc.
-       @param randomCurves If not empty, also plot the median of these curves
+    /** Sample usage:
+	    SvgPlot svg = new SvgPlot(W, H, maxX);
+	    svg.adjustMaxY(curves, randomCurves, useExtra);
+	    svg.addPlot(curves, randomCurves, useExtra);
+	    String plot = svg.complete();
     */
-    private String mkPlotSvg(int W, int H, double maxX, Curve[] curves, Curve[] randomCurves) {
-	if (curves.length==0) return "No data have been collected";
-
-	double maxY=0;
-	for(Curve curve: curves) {
-	    maxY = Math.max(maxY, curve.getMaxY());
+    static class SvgPlot {
+	Vector<String> sections = new Vector<>();
+	int W, H;
+	double maxX, maxY=0;
+	
+	SvgPlot(int _W, int _H, double _maxX) {
+	    W = _W;
+	    H = _H;
+	    maxX = _maxX;
 	}
-	for(Curve curve: randomCurves) {
-	    maxY = Math.max(maxY, curve.getMaxY());
+
+	/** Should only be called once maxY is known */
+	private Vector<String> mkGrid() {
+	    double xFactor = W/maxX;
+	    Vector<String> v = new Vector<>();
+	    v.add( "<rect width=\""+ W+ "\" height=\"" + H + "\" " +
+		   "style=\"fill:rgb(240,240,240);stroke-width:1;stroke:rgb(0,0,0)\"/>"); 
+	    for(int m: ticPoints((int)maxX)) {
+		double x = m*xFactor, y=H+15;
+		v.add("<text x=\"" +(x-10) + "\" y=\"" +y + "\" fill=\"black\">" +
+		      m + "</text>");
+		v.add("<line x1=\""+x+"\" y1=\""+H+"\" x2=\""+x+"\" y2=\"0\" stroke=\"black\" stroke-dasharray=\"3 5\"/>");
+	    }
+
+	    for(int m: ticPoints((int)maxY)) {
+		double x = 0, y= (int)( (maxY-m)*H/maxY);
+		v.add("<text x=\"" +(x-20) + "\" y=\"" +y + "\" fill=\"black\">" +
+		      m + "</text>");
+		v.add("<line x1=\"0\" y1=\""+y+"\" x2=\""+W+"\" y2=\""+y+"\" stroke=\"black\" stroke-dasharray=\"3 5\"/>");
+	    }
+	    return v;
 	}
 
+	
+	String complete() {
+	    int width = W+70;
+	    int height = H+60;
+	    
+	    Vector<String> v = new Vector<>();
+	    v.add( "<svg   xmlns=\"http://www.w3.org/2000/svg\" width=\"" +
+		   width + "\" height=\"" + height +
+		   "\" viewBox=\"-20 -20 " + (W+50) + " " + (H+40)+"\">");
+	    
+	    maxY +=2; // give some blank space above the highest curve
+
+	    v.addAll(mkGrid());
+	    v.addAll(sections);
+	    v.add( "</svg>");
+	    return String.join("\n", v);
+	}
+	    
+
+	/** This must be called before any plotting.
+	    @param randomCurves If not empty, also plot the median of these curves
+	*/
+	void adjustMaxY(Curve[] curves, Curve[] randomCurves, boolean useExtra) {
+	    if (curves.length==0) throw new IllegalArgumentException("No data have been collected");
+		//return "No data have been collected";
+	
+	    for(Curve curve: curves) {
+		maxY = Math.max(maxY, curve.getMaxY());
+	    }
+	    if (randomCurves.length>0) {
+		maxY = Math.max(maxY, Curve.maxMedianY(randomCurves, useExtra));
+	    }		
+	}
+    
+	/** Produces a SVG element for a bundle of curves, plus their
+	    median etc, and adds it to "sections".
+	    @param randomCurves If not empty, also plot the median of these curves
+	*/
+	void  addPlot(Curve[] curves, Curve[] randomCurves, boolean useExtra) {
+	    //if (curves.length==0) return "No data have been collected";
+
+	    double yFactor = -H/maxY; // getMaxY();
+	    double xFactor = W/maxX;
+	
+	    Vector<String> v = new Vector<>();
+			
+	    v.add( Curve.mkShading(curves, 0,H, xFactor, yFactor, useExtra));
+	    
+	    v.add( Curve.mkSvgNoOverlap(curves, 0, H, xFactor, yFactor, "green",1));
+	
+	    v.add( Curve.mkMedianSvgPathElement(curves, 0,H,xFactor, yFactor, "red",3, null, null, null, useExtra));
+
+	    if (randomCurves.length>0) {
+		v.add( Curve.mkMedianSvgPathElement(randomCurves, 0,H,xFactor, yFactor, "blue",6, "0.01 8", "round", "0.4", useExtra));
+	    }
 		
-	maxY +=2; // give some blank space above the highest curve
-	
-	double yFactor = -H/maxY; // getMaxY();
-	double xFactor = W/maxX;
-	
-	int width = W+70;
-	int height = H+60;
-
-	Vector<String> v = new Vector<>();
-	v.add( "<svg   xmlns=\"http://www.w3.org/2000/svg\" width=\"" +
-	       width + "\" height=\"" + height +
-	       "\" viewBox=\"-20 -20 " + (W+50) + " " + (H+40)+"\">");
-
-	v.add( "<rect width=\""+ W+ "\" height=\"" + H + "\" " +
-	       "style=\"fill:rgb(240,240,240);stroke-width:1;stroke:rgb(0,0,0)\"/>"); 
-	for(int m: ticPoints((int)maxX)) {
-	    double x = m*xFactor, y=H+15;
-	    v.add("<text x=\"" +(x-10) + "\" y=\"" +y + "\" fill=\"black\">" +
-		  m + "</text>");
-	    v.add("<line x1=\""+x+"\" y1=\""+H+"\" x2=\""+x+"\" y2=\"0\" stroke=\"black\" stroke-dasharray=\"3 5\"/>");
+	    //return v;
+	    sections.addAll(v);
 	}
-
-
-	for(int m: ticPoints((int)maxY)) {
-	    double x = 0, y= (int)( (maxY-m)*H/maxY);
-	    v.add("<text x=\"" +(x-20) + "\" y=\"" +y + "\" fill=\"black\">" +
-		  m + "</text>");
-	    v.add("<line x1=\"0\" y1=\""+y+"\" x2=\""+W+"\" y2=\""+y+"\" stroke=\"black\" stroke-dasharray=\"3 5\"/>");
-	}
-
-	v.add( Curve.mkShading(curves, 0,H, xFactor, yFactor, medianMode==MedianMode.Extra));
-
-	
-	//for(Curve cu: curves) {	    
-	//    v.add( cu.mkSvgPathElement(0,H,xFactor, yFactor, "green",1));
-	//}
-
-	v.add( Curve.mkSvgNoOverlap(curves, 0, H, xFactor, yFactor, "green",1));
-	
-	v.add( Curve.mkMedianSvgPathElement(curves, 0,H,xFactor, yFactor, "red",3, null, medianMode==MedianMode.Extra));
-
-	if (randomCurves.length>0) {
-	    v.add( Curve.mkMedianSvgPathElement(randomCurves, 0,H,xFactor, yFactor, "blue",2, "2", medianMode==MedianMode.Extra));
-	}
-	
-	/*
-	if (haveCumulative()) { 
-	    s += medianCu.mkSvgPathElement(0,H,yFactor, "darkorange",5);
-	}
-	s += "\n";
-	*/
-
-	/*
-	for(int j=0; j<nex; j++) {
-	    Expert ex = getWhoGaveEstimates().get(j);
-	    double[] c = getCenters().get(j);
-	    double cx=W*c[0], cy=H+yFactor*c[1];
-	    s += "<circle cx=\""+cx+"\" cy=\""+cy+"\" r=\"5\" stroke=\"black\" stroke-width=\"1\" fill=\"red\" /> \n";
-	    s += "<text x=\"" + (cx+7) + "\" y=\"" + cy+ "\" fill=\"black\">" +
-		getInitials().get2(ex) + "</text>\n";
-	}
-	*/
-	
-	v.add( "</svg>");
-	return String.join("\n", v);
     }
 
 

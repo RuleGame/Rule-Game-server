@@ -6,9 +6,11 @@ import java.util.*;
 /** Auxiliary methods for files and directories */
 public class FileUtil {
 
-    /** Creates index.html in the specified directory, and all subdirectories */
+    /** Creates index.html in the specified directory, and in all
+	subdirectories recursively */
     static public void mkIndexes(File dir) throws IOException {
 	File[] files = dir.listFiles();
+	Arrays.sort(files);
 	Vector<File> subdirs = new Vector<>();
 	Vector<String> v = new  Vector<>(), v2 = new  Vector<>();
 	v.add("<p>Content of " + dir);
