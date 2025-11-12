@@ -218,6 +218,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    //processor.printCurveData();
 
 	    processor.doCurves();
+	    processor.doPairCurves();
 	    
 	    
 	    
@@ -243,7 +244,6 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 
 	*/
     void doCurves() throws IOException {
-
 	File d = new File("out");
 	CurveMode[] modes = {curveMode};
 	CurveArgMode[] argModes = {curveArgMode};
@@ -259,7 +259,16 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    if (argMode==CurveArgMode.ALL) continue;
 	    for(CurveMode mode: modes) {
 		if (mode==CurveMode.ALL) continue;
-		HashMap<String, OneKey>  h = doPlots(mode, argMode);
+
+		int maxX = (argMode==CurveArgMode.C)? roundUp(findMaxC(savedMws)):  (int)defaultMStar;
+
+		DataMap h = prepMaps(savedMws, precMode);
+		h.mkCurves(mode, argMode, maxX);
+		DataMap hr = doRandom? prepMaps(randomMws, PrecMode.Ignore): null;
+		if (doRandom) hr.mkCurves(mode, argMode, maxX);
+
+		
+		h = doPlots(h, hr, mode, argMode, maxX);
 		File dm = new File(d, mode.toString() + "_" + argMode);
 		for(String key: h.keySet()) {
 		    OneKey z = h.get(key);
@@ -272,10 +281,55 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	FileUtil.mkIndexes(d);
     }
 
+    void doPairCurves() throws IOException {
+
+	File d = new File("out/pairs");
+	CurveMode[] modes = {curveMode};
+	CurveArgMode[] argModes = {curveArgMode};
+	if (curveMode==CurveMode.ALL) {
+	    modes=CurveMode.class.getEnumConstants();
+	}
+
+	if (curveArgMode==CurveArgMode.ALL) {
+	    argModes=CurveArgMode.class.getEnumConstants();
+	}
+	
+	for(CurveArgMode argMode: argModes) {
+	    if (argMode==CurveArgMode.ALL) continue;
+	    for(CurveMode mode: modes) {
+		if (mode==CurveMode.ALL) continue;
+
+		File dm = new File(d, mode.toString() + "_" + argMode);
+		// zzz
+		int maxX = (argMode==CurveArgMode.C)? roundUp(findMaxC(savedMws)):  (int)defaultMStar;
+
+		DataMap h = prepMaps(savedMws, precMode);
+		h.mkCurves(mode, argMode, maxX);
+		DataMap hr = doRandom? prepMaps(randomMws, PrecMode.Ignore): null;
+		if (doRandom) hr.mkCurves(mode, argMode, maxX);
+
+		for(String key0: h.keySet()) {
+		    for(String key1: h.keySet()) {
+			if (key1.equals(key0)) continue;
+			String keys[] = {key0, key1};			
+			String plot =  doDoublePlot(h, hr, mode, argMode, maxX, keys);
+
+			File f = new File(dm, simplifyKey(key0 + "-" + key1) + ".svg");
+			f.getParentFile().mkdirs();
+			Util.writeTextFile(f, plot);
+		    }
+		}
+	    }
+	}
+	FileUtil.mkIndexes(d);
+    }
+
+
+    
     /** Replaces "dir/r1:dir/r2:dir/r3" with "dir/r1.r2.r3", in order to 
 	be able to create a more manageable file name */
     private static String simplifyKey(String key) {
-	String v[] = key.split(":");
+	String v[] = key.split("[-:]");
 	if (v.length<2) return key;
 	// remove the dir part from all segments other than the very first one
 	for(int j=1; j<v.length; j++) {
@@ -329,15 +383,12 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
     /** Produces a plot for each key that appears in savedMws.
 	@return a HashMap that maps each key to a OneKey structure that includes the corresponding plot
      */
-    private HashMap<String, OneKey>  doPlots(CurveMode mode, CurveArgMode argMode) {
+    private DataMap  doPlots(DataMap h, DataMap hr, CurveMode mode, CurveArgMode argMode, double maxX) {
+	//	String [] colors = {"green", "red", "blue"};
+	String [] colors = {"green", "red", "blue", "lightgrey"};
+
 	int H=600;
 	int W=600;
-	int maxX = (argMode==CurveArgMode.C)? roundUp(findMaxC(savedMws)):  (int)defaultMStar;
-	
-	DataMap h = prepMaps(savedMws, precMode);
-	h.mkCurves(mode, argMode, maxX);
-	DataMap hr = doRandom? prepMaps(randomMws, PrecMode.Ignore): null;
-	if (doRandom) hr.mkCurves(mode, argMode, maxX);
 	
 	String[] results = new String[h.size()];
 
@@ -352,22 +403,19 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    boolean useExtra =(medianMode==MedianMode.Extra);
 	    SvgPlot svg = new SvgPlot(W, H, maxX);
 	    svg.adjustMaxY(z.curves, randomCurves, useExtra);
-	    svg.addPlot(z.curves, randomCurves, useExtra);
+	    svg.addPlot(z.curves, randomCurves, useExtra, colors);
 	    z.plot = svg.complete();
 	}
 	return h;
     }
 
     /** @param keys Two keys. Both curve sets are to be put into the same plot. */
-    private String  doDoublePlot(CurveMode mode, CurveArgMode argMode, String keys[]) {
+    private String  doDoublePlot(DataMap h, DataMap hr,CurveMode mode, CurveArgMode argMode, double maxX, String keys[]) {
+	String [][] colors = {{"red", "red", "red", null},
+			      {"blue", "blue", "blue", null}};
+	
 	int H=600;
 	int W=600;
-	int maxX = (argMode==CurveArgMode.C)? roundUp(findMaxC(savedMws)):  (int)defaultMStar;
-
-	DataMap h = prepMaps(savedMws, precMode);
-	h.mkCurves(mode, argMode, maxX);
-	DataMap hr = doRandom? prepMaps(randomMws, PrecMode.Ignore): null;
-	if (doRandom) hr.mkCurves(mode, argMode, maxX);
 
 	boolean useExtra =(medianMode==MedianMode.Extra);
 	SvgPlot svg = new SvgPlot(W, H, maxX);
@@ -378,13 +426,13 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    OneKey z = h.get(key);
 	    if (z==null) throw new IllegalArgumentException("This key does not occur in the data: " + key);
 	    curves[j]= z.curves;
-	    randomCurves[j]= (doRandom)? new Curve[0]:  hr.get( MwSeries.keyToIgnoreKey(key)).curves;
+	    randomCurves[j]= (doRandom)?hr.get( MwSeries.keyToIgnoreKey(key)).curves:  new Curve[0];
 
 	    svg.adjustMaxY(curves[j], randomCurves[j], useExtra);
 	}
 	
 	for(int j=0; j<2; j++) {
-	    svg.addPlot(curves[j], randomCurves[j], useExtra);
+	    svg.addPlot(curves[j], randomCurves[j], useExtra, colors[j]);
 	}
 	return svg.complete();
     }
@@ -538,27 +586,27 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
     
 	/** Produces a SVG element for a bundle of curves, plus their
 	    median etc, and adds it to "sections".
+	    @param colors {"green", "red", "blue", "lightgrey"}
 	    @param randomCurves If not empty, also plot the median of these curves
 	*/
-	void  addPlot(Curve[] curves, Curve[] randomCurves, boolean useExtra) {
+	void  addPlot(Curve[] curves, Curve[] randomCurves, boolean useExtra, String colors[]) {
 	    //if (curves.length==0) return "No data have been collected";
 
 	    double yFactor = -H/maxY; // getMaxY();
 	    double xFactor = W/maxX;
 	
 	    Vector<String> v = new Vector<>();
-			
-	    v.add( Curve.mkShading(curves, 0,H, xFactor, yFactor, useExtra));
+
+	    if (colors[3]!=null) v.add( Curve.mkShading(curves, 0,H, xFactor, yFactor, useExtra, colors[3]));
 	    
-	    v.add( Curve.mkSvgNoOverlap(curves, 0, H, xFactor, yFactor, "green",1));
-	
-	    v.add( Curve.mkMedianSvgPathElement(curves, 0,H,xFactor, yFactor, "red",3, null, null, null, useExtra));
+	    v.add( Curve.mkSvgNoOverlap(curves, 0, H, xFactor, yFactor, colors[0],1));
+
+	    v.add( Curve.mkMedianSvgPathElement(curves, 0,H,xFactor, yFactor, colors[1],3, null, null, null, useExtra));
 
 	    if (randomCurves.length>0) {
-		v.add( Curve.mkMedianSvgPathElement(randomCurves, 0,H,xFactor, yFactor, "blue",6, "0.01 8", "round", "0.4", useExtra));
+		v.add( Curve.mkMedianSvgPathElement(randomCurves, 0,H,xFactor, yFactor, colors[2],6, "0.01 8", "round", "0.4", useExtra));
 	    }
 		
-	    //return v;
 	    sections.addAll(v);
 	}
     }

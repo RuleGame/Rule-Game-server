@@ -224,7 +224,7 @@ on  n/2 - 0.5 (the zero-based indexes ranging from 0 to n-1)
 https://www-users.york.ac.uk/~mb55/intro/cicent.htm
 
     */
-    public static String mkShading(Curve[] curves, int x0, int y0, double xFactor, double yFactor, boolean useExtra) {
+    public static String mkShading(Curve[] curves, int x0, int y0, double xFactor, double yFactor, boolean useExtra, String color) {
 	Vector<String> w = new Vector<>();
 	for(int x=1; ; x++) {
 	    Vector<Double> ya=new Vector<>(), yb=new Vector<>();
@@ -260,10 +260,12 @@ https://www-users.york.ac.uk/~mb55/intro/cicent.htm
 		"L" + (x0+xFactor*(x-1))+ " " + (y0+yFactor* high[0])};
 	    
 	    String q = Util.joinNonBlank(" " , v);
-	    String color = "lightgrey";
+	    //String color = "lightgrey";
 	    String s = "<path d=\"" +q + "\" " +		
-	    "stroke=\""+color+"\" stroke-width=\""+1+"\"  "+
-	    "fill=\"" + color + "\" />";
+		"stroke=\""+color+"\" stroke-width=\""+1+"\"  "+
+		"fill=\"" + color + "\" " +
+		"stroke-opacity=\"0.5\" " +
+		"fill-opacity=\"0.5\" />";
 	    w.add(s);	    
 	}
 	return String.join("\n" , w);	

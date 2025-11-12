@@ -15,6 +15,7 @@ import edu.wisc.game.tools.MwByHuman.PrecMode;
 import edu.wisc.game.svg.*;
 import edu.wisc.game.svg.SvgEcd.Point;
 import edu.wisc.game.sql.Episode;
+import edu.wisc.game.sql.ReplayedEpisode;
 import edu.wisc.game.formatter.*;
 
 import edu.wisc.game.tools.pooling.Clustering.Node;
@@ -316,8 +317,9 @@ public class Ecd {
 	    Fmter plainFm = new Fmter();
 	    final int targetStreak=10;
 	    final double targetR = 0;
-	    MwByHuman processor = new MwByHuman(PrecMode.EveryCond,
-						targetStreak, targetR, 300, plainFm);
+	    MwByHuman processor = new MwByHuman(PrecMode.EveryCond, targetStreak, targetR, 300,
+						ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM,
+						plainFm);
 	    processor.savedMws.addAll(data);
 
 	    String ta = (target==null ?  "cross-target comparison" : "Target " + target);

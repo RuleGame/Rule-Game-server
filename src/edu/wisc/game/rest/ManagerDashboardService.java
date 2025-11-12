@@ -62,7 +62,9 @@ public class ManagerDashboardService {
 
 	    body += fm.para("Taking into account players assigned to the following experiment plans: " + fm.tt( String.join(", " , plans)));
 
-	    MwByHuman processor = new MwByHuman(precMode, targetStreak, targetR, defaultMStar, fm);
+	    MwByHuman processor = new MwByHuman(precMode, targetStreak, targetR, defaultMStar,
+						ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM,
+						fm);
 
 	    // Extract the data from the transcript, and put them into savedMws
 	    processor.processStage1(plans, pids, nicknames, uids);

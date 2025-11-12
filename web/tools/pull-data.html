@@ -52,7 +52,7 @@ GRANT GRANT OPTION ON *.* TO 'replicator'@'localhost';
       cp ~vmenkov/.mylogin.cnf .
     </pre>
 
-<p>If you are setting up the analysis host on another machine, you'll need to create that file from scratch, using the script       <tt>scripts/run-mysql-config-editor.sh</tt> that comes with the Game Server, which runs, with appropriate parameters, the tool called <a href="https://www.prisma.io/dataguide/mysql/tools/mysql-config-editor">mysql-config-editor</a>
+<p>If you are setting up the analysis host on another machine, you'll need to create that file from scratch, using the script       <tt>scripts/run-mysql-config-editor.sh</tt> that comes with the Game Server, which runs, with appropriate parameters, the tool called <a href="https://www.prisma.io/dataguide/mysql/tools/mysql-config-editor">mysql_config_editor</a>
 
   <p>During the execution of the script <tt>scripts/run-mysql-config-editor.sh</tt> you will be asked for several database passwords. That will include the passwords for the accounts <tt>game</tt> and <tt>replicator</tt> on your own MySQL server (you should know them, because you likely have created them yourself), as well as the passowrds for the accounts named <tt>game</tt>  on the the MySQL servers on the two Plesk hosts at UW (you can get them from the project staff who works with these hosts).
 
