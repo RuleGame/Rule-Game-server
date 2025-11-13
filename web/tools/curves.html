@@ -6,7 +6,7 @@
 
 <h1>Cumulative curves</h1>
 
-<div align="center"><em>Updated 2025-10-30, for Game Server 8.036</em></div>
+<div align="center"><em>Updated 2025-11-12, for Game Server 8.039</em></div>
 
 <p>The script <tt>analyze-transcripts-curves.sh</tt> draws cumulative error curves for human players sharing a particular experience. It pulls the data for a group of players from the data store (the SQL database and transcript files) and produces SVG images displaying the individual players' cumulative errors curves and their median curve.
 
@@ -104,5 +104,40 @@ http://action.rutgers.edu/tmp/out-all-ignore/
 http://action.rutgers.edu/tmp/out-learned-every/
 http://action.rutgers.edu/tmp/out-all-every/
 
+  <h2>Random players</h2>
+
+<p>As Paul requested,<br> 
+<em>"(d) it would be good to show the purely random line in some uniform way because scales may change."</em>
+
+<p>
+The "purely random line" was interpreted in a slightly broader sense, as the one that would describe the median curve of a large population of players described by the same random player model that is used to compute p0 in this particular series of plots. (At present, the Game Server and its analysis tools support two such models, COMPLETELY_RANDOM and MCP1. The former is, I think, a fine candidate for producing what you describe as a " purely random line").
+
+<p>
+Naturally, the behavior of the "purely random line" will depend, in general, not only on the rule set, but also on the mix of the initial boards being played. (The rule set ordL1 is a good example here:
+http://action.rutgers.edu/tmp/out-all-ignore-COMPLETELY_RANDOM/AAIB_C/FDCL/basic/ordL1.svg ; the random line is the blue short-dashed one). Therefore, an effort was made for the "purely random" line to be based on the same boards on which the actual players played. For every "series" (rule set + player) combination in the analysis, several (3) random players were created, and each one was made to play the same sequence of boards that the real player did. That created a sufficiently large population of random players whose curves can be meaningfully averaged (or, actually, "medianized").
+
+<p>
+One can see such sample curves for the FDCL/basic rule sets in 
+  <pre>
+http://action.rutgers.edu/tmp/out-all-ignore-COMPLETELY_RANDOM/
+http://action.rutgers.edu/tmp/out-all-ignore-MCP1/
+http://action.rutgers.edu/tmp/out-learned-ignore-COMPLETELY_RANDOM/
+http://action.rutgers.edu/tmp/out-learned-ignore-MCP1/
+</pre>
+(In these runs,  precMode=Ignore, i.e. the experiences of all players who played a particular rule set are put together, regardless of what rule sets they may have played previously).
+
+  <h3>
+Theoretical discussion of random lines:</h3>
+
+  <ul>
+    <li> W_M (wrong moves vs all moves). This is easy to theoretically analyze for many examples; e.g. for quad match (Nearby or Mixed), cw/ccw, color or shape match you'd expect W = 0.75 *M, and this is indeed displayed. For ordL1, to remove 9 pieces, one would need, on average, approximately  9 + 8  + ... + 2 + 1  = 45 moves  (summing from the last move backward) moves, thus giving the  W/M ratio of (45-9)/45 =  0.80, and indeed W = 0.8*M is more or less what's displayed. 
+
+<li> W_C (wrong moves vs good moves). For quad match / sm / cm / ccw etc, we have W = 3*C. For ord1, this produces a sequence of upside-down parabolas, since all boards are of the same size, and each successive piece is easier to remove.
+
+<li> AAIB_M: theoretically, one should expect the average of AAIB = M for a random player (since the same random player model is used in the p0 computation, and in the random play simulation!) on all rule sets, and the displayed curves are indeed fairly close to that. In some cases the displayed curve is a bit higher than expected, and I would not mind looking deeper into that.
+
+<li> AAIB_C: theoretically, that should approximate the curve of M vs C (all moves against correct moves). Since M = C+W, this is basically the addition of the curve in W_C  and the y=x curve. E.g., for cm/sm/ccw etc, we get M=4*C, and that's what the random curves show. For ordL1 and its derivative rules sets, we have the expected sequence of upside-down parabolas.
+  </ul>
+  
        </body>
 </html>
