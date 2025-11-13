@@ -145,12 +145,15 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
 <!-- This target tells Ant how to compile the application. -->
 <target name="compile" depends="init"
         description="Compile the source code" >
-  <!-- Compile the java code from ${src} into ${classes} -->
+  <!-- Compile the java code from ${src} into ${classes}
+	 target="1.8" source="1.8"
+
+  -->
   <javac srcdir="${src}" destdir="${classes}"
 	 includes="edu/**"  optimize="on"
 	 debug="on" debuglevel="lines,vars,source"	 
 	 includeantruntime="false"
-	 target="1.8" source="1.8"
+	 target="11" source="11"
 	 >
     <classpath refid="classpath"/>
     <!-- compilerarg value="-Xlint"/ -->

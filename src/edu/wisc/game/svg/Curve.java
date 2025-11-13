@@ -264,7 +264,7 @@ https://www-users.york.ac.uk/~mb55/intro/cicent.htm
 	    String s = "<path d=\"" +q + "\" " +		
 		"stroke=\""+color+"\" stroke-width=\""+1+"\"  "+
 		"fill=\"" + color + "\" " +
-		"stroke-opacity=\"0.5\" " +
+		"stroke-opacity=\"0.25\" " +
 		"fill-opacity=\"0.5\" />";
 	    w.add(s);	    
 	}

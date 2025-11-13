@@ -300,7 +300,6 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		if (mode==CurveMode.ALL) continue;
 
 		File dm = new File(d, mode.toString() + "_" + argMode);
-		// zzz
 		int maxX = (argMode==CurveArgMode.C)? roundUp(findMaxC(savedMws)):  (int)defaultMStar;
 
 		DataMap h = prepMaps(savedMws, precMode);
@@ -314,14 +313,14 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 			String keys[] = {key0, key1};			
 			String plot =  doDoublePlot(h, hr, mode, argMode, maxX, keys);
 
-			File f = new File(dm, simplifyKey(key0 + "-" + key1) + ".svg");
+			File f = new File(dm, simplifyKey(key0) + "-" + basicKey(key1) + ".svg");
 			f.getParentFile().mkdirs();
 			Util.writeTextFile(f, plot);
 		    }
 		}
 	    }
 	}
-	FileUtil.mkIndexes(d);
+	FileUtil.mkIndexes(d.getParentFile());
     }
 
 
@@ -336,6 +335,11 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    v[j] = v[j].replaceFirst(".*/", "");
 	}
 	return String.join(".", v);
+    }
+
+    /** Removes the directory part */
+    private static String basicKey(String key) {
+	return key.replaceFirst(".*/", "");
     }
 
 
@@ -430,6 +434,9 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 
 	    svg.adjustMaxY(curves[j], randomCurves[j], useExtra);
 	}
+
+	String mainColor[] = {colors[0][0], colors[1][0]};
+	svg.addLegendPair(mainColor, keys);
 	
 	for(int j=0; j<2; j++) {
 	    svg.addPlot(curves[j], randomCurves[j], useExtra, colors[j]);
@@ -547,6 +554,41 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		      m + "</text>");
 		v.add("<line x1=\"0\" y1=\""+y+"\" x2=\""+W+"\" y2=\""+y+"\" stroke=\"black\" stroke-dasharray=\"3 5\"/>");
 	    }
+	    return v;
+	}
+
+	Vector<String> addLegendPair(String[] color, String[] key) {
+	    Vector<String> v = new Vector<>();
+	    int j=0;
+	    int L = 25;
+	    int x1 = 10, xmid = x1+L, x2 = x1+2*L, xt = x2+10;
+	    int y = 25;
+	    for(; j<2; j++) {
+		v.add("<line x1=\""+x1+"\" y1=\""+y+"\" x2=\""+x2+"\" y2=\""+y+"\" stroke=\""+color[j]+"\" stroke-width=\"5\"/>");
+		v.add("<text x=\"" +xt + "\" y=\"" +y + "\" fill=\"black\">" +
+		      basicKey(key[j]) + "</text>");	
+		y += 30;
+	    }
+
+	    for(int k=0; k<2; k++) {
+		int ax1 = x1 + k*L;
+		int ax2 = ax1 + L;
+
+		//v.add( Curve.mkMedianSvgPathElement(randomCurves, 0,H,xFactor, yFactor, colors[2],6,
+		String dash = "0.01 8";
+		String linecap = "round",
+		    opacity = "0.4";
+		
+		v.add("<line x1=\""+ax1+"\" y1=\""+y+"\" x2=\""+ax2+"\" y2=\""+y+"\" stroke=\""+color[k]+"\" stroke-width=\"6\" " +
+		      "stroke-dasharray=\""+dash+"\" "+
+		      "stroke-linecap=\""+linecap+"\" "+
+		      "stroke-opacity=\""+opacity+"\" />");
+
+	    }
+	    v.add("<text x=\"" +xt + "\" y=\"" +y + "\" fill=\"black\" >" +
+		  "random player</text>");	
+	    
+	    sections.addAll(v);
 	    return v;
 	}
 
