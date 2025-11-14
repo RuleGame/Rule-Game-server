@@ -628,7 +628,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
     
 	/** Produces a SVG element for a bundle of curves, plus their
 	    median etc, and adds it to "sections".
-	    @param colors {"green", "red", "blue", "lightgrey"}
+	    @param colors {"green", "red", "blue", "lightgrey"} = colors of {the individual players curve, median, random, shading}
 	    @param randomCurves If not empty, also plot the median of these curves
 	*/
 	void  addPlot(Curve[] curves, Curve[] randomCurves, boolean useExtra, String colors[]) {
@@ -639,7 +639,9 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	
 	    Vector<String> v = new Vector<>();
 
-	    if (colors[3]!=null) v.add( Curve.mkShading(curves, 0,H, xFactor, yFactor, useExtra, colors[3]));
+	    boolean needShading =  (colors[3]!=null);
+	    v.add( Curve.mkShading(curves, 0,H, xFactor, yFactor, useExtra,
+				   (needShading? colors[3]: colors[0]), needShading));
 	    
 	    v.add( Curve.mkSvgNoOverlap(curves, 0, H, xFactor, yFactor, colors[0],1));
 

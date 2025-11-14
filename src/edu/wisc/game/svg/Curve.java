@@ -223,9 +223,25 @@ on  n/2 - 0.5 (the zero-based indexes ranging from 0 to n-1)
 <p> Or see the ref here:
 https://www-users.york.ac.uk/~mb55/intro/cicent.htm
 
+@param color the shading color
+@param needShading: if true, shade the area; if false, just draw an error bar at the end
+
     */
-    public static String mkShading(Curve[] curves, int x0, int y0, double xFactor, double yFactor, boolean useExtra, String color) {
+    public static String mkShading(Curve[] curves, int x0, int y0, double xFactor, double yFactor, boolean useExtra, String color, boolean needShading) {
 	Vector<String> w = new Vector<>();
+	double barY[] = {0,0};
+	int lastX = 0;
+
+	String colorB = "orange";
+	
+	if (needShading) w.add( "<g stroke=\""+color+"\" stroke-width=\""+1+"\"  "+
+	       "fill=\"" + color + "\" " +
+	       "stroke-opacity=\"0.25\" " +
+	       "fill-opacity=\"0.5\">");
+	else w.add( "<g stroke=\""+color+"\" stroke-width=\""+5+"\" strike-opacity=\"0.5\">");
+	//else w.add( "<g stroke=\""+colorB+"\" stroke-width=\""+3+"\">");
+
+
 	for(int x=1; ; x++) {
 	    Vector<Double> ya=new Vector<>(), yb=new Vector<>();
 	    for(Curve c: curves) {
@@ -244,30 +260,38 @@ https://www-users.york.ac.uk/~mb55/intro/cicent.htm
 	    Double[] b = yb.toArray(new Double[0]);
 	    Arrays.sort(b);
 
-
 	    final int n = a.length;
 	    final double z = 1.96;
 	    //j: nq
 	    double r = z * Math.sqrt( n * 0.25);		
 	    int j0 =  (int) Math.round((n-1)*0.5 - r);
 	    int j1 =  (int) Math.round((n-1)*0.5 + r);
-	    double[] low = {a[j0], b[j0]}, high = {a[j1], b[j1]};	       
+	    double[] low = {a[j0], barY[0]=b[j0]}, high = {a[j1], barY[1]=b[j1]};	       	
+	    lastX = x;
 	    
-	    String[] v = {
-		"M" + (x0+xFactor*(x-1))+ " " + (y0+yFactor* low[0]),
-		"L" + (x0+xFactor*x)+ " " + (y0+yFactor* low[1]),
-		"L" + (x0+xFactor*x)+ " " + (y0+yFactor* high[1]),
-		"L" + (x0+xFactor*(x-1))+ " " + (y0+yFactor* high[0])};
+	    if (needShading) {
+		String[] v = {
+		    "M" + (x0+xFactor*(x-1))+ " " + (y0+yFactor* low[0]),
+		    "L" + (x0+xFactor*x)+ " " + (y0+yFactor* low[1]),
+		    "L" + (x0+xFactor*x)+ " " + (y0+yFactor* high[1]),
+		    "L" + (x0+xFactor*(x-1))+ " " + (y0+yFactor* high[0])};
 	    
-	    String q = Util.joinNonBlank(" " , v);
-	    //String color = "lightgrey";
-	    String s = "<path d=\"" +q + "\" " +		
-		"stroke=\""+color+"\" stroke-width=\""+1+"\"  "+
-		"fill=\"" + color + "\" " +
-		"stroke-opacity=\"0.25\" " +
-		"fill-opacity=\"0.5\" />";
-	    w.add(s);	    
+		String q = Util.joinNonBlank(" " , v);
+		w.add( "<path d=\"" +q + "\">");
+	    }
 	}
+
+
+	int r=10;
+	if (!needShading && lastX > 0) { // error bar at the right end
+	    double sx = x0+xFactor*lastX;
+	    double sy[] = {y0+yFactor* barY[0], y0+yFactor* barY[1]};
+	    for(int j=0; j<2; j++) {
+		w.add("<line x1=\""+(sx-r)+"\" y1=\""+sy[j]+"\" x2=\""+(sx+r)+"\" y2=\""+sy[j]+ "\"/>");
+	    }
+	    w.add("<line x1=\""+sx+"\" y1=\""+sy[0]+"\" x2=\""+sx+"\" y2=\""+sy[1]+ "\"/>");
+	}
+	w.add( "</g>");
 	return String.join("\n" , w);	
     }
 
