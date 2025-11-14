@@ -239,7 +239,6 @@ https://www-users.york.ac.uk/~mb55/intro/cicent.htm
 	       "stroke-opacity=\"0.25\" " +
 	       "fill-opacity=\"0.5\">");
 	else w.add( "<g stroke=\""+color+"\" stroke-width=\""+5+"\" strike-opacity=\"0.5\">");
-	//else w.add( "<g stroke=\""+colorB+"\" stroke-width=\""+3+"\">");
 
 
 	for(int x=1; ; x++) {
@@ -277,7 +276,7 @@ https://www-users.york.ac.uk/~mb55/intro/cicent.htm
 		    "L" + (x0+xFactor*(x-1))+ " " + (y0+yFactor* high[0])};
 	    
 		String q = Util.joinNonBlank(" " , v);
-		w.add( "<path d=\"" +q + "\">");
+		w.add( "<path d=\"" +q + "\"/>");
 	    }
 	}
 
