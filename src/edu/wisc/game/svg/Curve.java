@@ -224,10 +224,10 @@ on  n/2 - 0.5 (the zero-based indexes ranging from 0 to n-1)
 https://www-users.york.ac.uk/~mb55/intro/cicent.htm
 
 @param color the shading color
-@param needShading: if true, shade the area; if false, just draw an error bar at the end
-
+@param needShading: if true, shade the area; if false, just draw an error bar at the end of the shading zone
+@param barOffset: if we draw error bars, shift it to the right by this much
     */
-    public static String mkShading(Curve[] curves, int x0, int y0, double xFactor, double yFactor, boolean useExtra, String color, boolean needShading) {
+    public static String mkShading(Curve[] curves, int x0, int y0, double xFactor, double yFactor, boolean useExtra, String color, boolean needShading, int barOffset) {
 	Vector<String> w = new Vector<>();
 	double barY[] = {0,0};
 	int lastX = 0;
@@ -283,7 +283,7 @@ https://www-users.york.ac.uk/~mb55/intro/cicent.htm
 
 	int r=10;
 	if (!needShading && lastX > 0) { // error bar at the right end
-	    double sx = x0+xFactor*lastX;
+	    double sx = x0+xFactor*lastX + barOffset;
 	    double sy[] = {y0+yFactor* barY[0], y0+yFactor* barY[1]};
 	    for(int j=0; j<2; j++) {
 		w.add("<line x1=\""+(sx-r)+"\" y1=\""+sy[j]+"\" x2=\""+(sx+r)+"\" y2=\""+sy[j]+ "\"/>");

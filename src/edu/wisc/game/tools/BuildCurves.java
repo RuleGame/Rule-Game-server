@@ -407,7 +407,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    boolean useExtra =(medianMode==MedianMode.Extra);
 	    SvgPlot svg = new SvgPlot(W, H, maxX);
 	    svg.adjustMaxY(z.curves, randomCurves, useExtra);
-	    svg.addPlot(z.curves, randomCurves, useExtra, colors);
+	    svg.addPlot(z.curves, randomCurves, useExtra, colors, 0);
 	    z.plot = svg.complete();
 	}
 	return h;
@@ -439,7 +439,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	svg.addLegendPair(mainColor, keys);
 	
 	for(int j=0; j<2; j++) {
-	    svg.addPlot(curves[j], randomCurves[j], useExtra, colors[j]);
+	    svg.addPlot(curves[j], randomCurves[j], useExtra, colors[j], j);
 	}
 	return svg.complete();
     }
@@ -630,8 +630,9 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    median etc, and adds it to "sections".
 	    @param colors {"green", "red", "blue", "lightgrey"} = colors of {the individual players curve, median, random, shading}
 	    @param randomCurves If not empty, also plot the median of these curves
+	    @param If this method is called multiple times (to draw multiple bundles of curves on the same plot), this is the sequence number (0, 1,...) of the current bundle  of curves
 	*/
-	void  addPlot(Curve[] curves, Curve[] randomCurves, boolean useExtra, String colors[]) {
+	void  addPlot(Curve[] curves, Curve[] randomCurves, boolean useExtra, String colors[], int sequenceNumber) {
 	    //if (curves.length==0) return "No data have been collected";
 
 	    double yFactor = -H/maxY; // getMaxY();
@@ -641,7 +642,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 
 	    boolean needShading =  (colors[3]!=null);
 	    v.add( Curve.mkShading(curves, 0,H, xFactor, yFactor, useExtra,
-				   (needShading? colors[3]: colors[0]), needShading));
+				   (needShading? colors[3]: colors[0]), needShading, sequenceNumber * 8));
 	    
 	    v.add( Curve.mkSvgNoOverlap(curves, 0, H, xFactor, yFactor, colors[0],1));
 
