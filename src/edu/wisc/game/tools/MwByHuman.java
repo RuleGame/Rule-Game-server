@@ -84,7 +84,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	their command line arguments.
     */
     static class RunParams {
-
+	boolean doRandom=false;
 	RandomPlayer randomPlayerModel;
 	
 	ArgType argType = ArgType.PLAN;
@@ -129,6 +129,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 		debug=true;
 	    } else if (a.equals("-mDagger")) {
 		useMDagger = true;
+	    } else if (j+1< argv.length && a.equals("-random")) {
+		doRandom = Boolean.parseBoolean( argv[++j] );
 	    } else if (j+1< argv.length && a.equals("-p0")) {
 		randomPlayerModel = ReplayedEpisode.RandomPlayer.valueOf1(argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-config")) {

@@ -160,7 +160,7 @@ public  class MwSeries {
 	if (!f.canRead()) throw new IOException("Cannot read file: " + f);
 	CsvData csv = new CsvData(f, false, false, null);
 	
-	if (csv.entries.length<2) throw new IOException("No data found in file: " + f);
+	if (csv.entries.length<1) throw new IOException("No data found in file: " + f);
 	CsvData.BasicLineEntry header =  (CsvData.BasicLineEntry)csv.header;
 	//System.out.println("Header=" + header);
 	//int nCol = header.nCol();
@@ -262,8 +262,8 @@ public  class MwSeries {
 
     /** Various things that may be used to draw curves */
     static class MoveInfo {
-	boolean success;
-	double p0;
+	final boolean success;
+	final double p0;
 	MoveInfo(boolean _success,	double _p0) {
 	    success = _success;
 	    p0 = _p0;

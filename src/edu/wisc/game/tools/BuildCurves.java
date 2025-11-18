@@ -43,13 +43,15 @@ public class BuildCurves extends MwByHuman {
     /** @param  _targetStreak this is how many consecutive error-free moves the player must make (e.g. 10) in order to demonstrate successful learning. If 0 or negative, this criterion is turned off
 	@param _targetR the product of R values of a series of consecutive moves should be at least this high) in order to demonstrate successful learning. If 0 or negative, this criterion is turned off
      */
-    public BuildCurves(RandomPlayer _randomPlayerModel,
+    public BuildCurves(boolean _doRandom,
+		       RandomPlayer _randomPlayerModel,
 		       PrecMode _precMode,
 		       CurveMode _curveMode,
 		       CurveArgMode _curveArgMode,
 		       MedianMode _medianMode,
 		       int _targetStreak, double _targetR, double _defaultMStar, Fmter _fm) {
 	super( _precMode, _targetStreak, _targetR, _defaultMStar, _randomPlayerModel, _fm);
+	doRandom = _doRandom;
 	curveMode =  _curveMode;
 	curveArgMode =  _curveArgMode;
 	medianMode = _medianMode;
@@ -66,7 +68,7 @@ public class BuildCurves extends MwByHuman {
     }
 
 
-    static boolean doRandom = true;
+    boolean doRandom = false;
     Vector<MwSeries> randomMws = new Vector<>();
 
 
@@ -181,7 +183,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	RunParams p = new RunParams(argv);
 	//MwByHuman processor = p.mkProcessor();
 	Fmter plainFm = new Fmter();
-	BuildCurves processor = new BuildCurves(p.randomPlayerModel,
+	BuildCurves processor = new BuildCurves(p.doRandom, p.randomPlayerModel,
 						p.precMode, p.curveMode, p.curveArgMode, p.medianMode,
 						p.targetStreak, p.targetR, p.defaultMStar, plainFm);
 	
@@ -193,7 +195,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		if (p.exportTo!=null) {
 		    File gsum=new File(p.exportTo);		    
 		    exportMws(gsum, processor.savedMws);
-		    if (doRandom) {
+		    if (p.doRandom) {
 			gsum=new File( randomMwsFileName(p.exportTo));
 			exportMws(gsum, processor.randomMws);		
 		    }
@@ -207,7 +209,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		    MwSeries.readFromFile(g, processor.savedMws);
 		    System.out.println("DEBUG: Has read " + processor.savedMws.size() + " MWS data lines");
 		    
-		    if (doRandom) {
+		    if (p.doRandom) {
 			g=new File(randomMwsFileName(from));
 			MwSeries.readFromFile(g ,processor.randomMws);
 			System.out.println("DEBUG: Has read " + processor.randomMws.size() + " random MWS data lines");
@@ -491,9 +493,14 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 
 	    double aai = (sumZP==0)? 0: sumE/sumZP;
 
+
+	    
 	    double y;
 	    if (mode==CurveMode.W) 	    y = sumE;
-	    else if (mode==CurveMode.AAI) 	    y = aai;
+	    else if (mode==CurveMode.AAI) {
+		//System.out.println("DEBUG: m=" +m+", sumE/sumZP=" + sumE+"/"+sumZP+"=" + aai);
+		y = aai;
+	    }
 	    else if (mode==CurveMode.AAIB) 	    y = aai * (m+1);
 	    else throw new IllegalArgumentException("curveMode=" + mode);
 
@@ -535,7 +542,11 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    maxX = _maxX;
 	}
 
-	/** Should only be called once maxY is known */
+	/** Should only be called once maxY is known
+
+	    <P>
+	    Elsewhere (in Curve.*), y0=H, yFactor = -H/maxY,  y=y0 * yFactor* mathY
+	 */
 	private Vector<String> mkGrid() {
 	    double xFactor = W/maxX;
 	    Vector<String> v = new Vector<>();
@@ -549,6 +560,9 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    }
 
 	    for(int m: ticPoints((int)maxY)) {
+
+		//y= H -m*H/maxY);
+		
 		double x = 0, y= (int)( (maxY-m)*H/maxY);
 		v.add("<text x=\"" +(x-20) + "\" y=\"" +y + "\" fill=\"black\">" +
 		      m + "</text>");
@@ -602,8 +616,6 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		   width + "\" height=\"" + height +
 		   "\" viewBox=\"-20 -20 " + (W+50) + " " + (H+40)+"\">");
 	    
-	    maxY +=2; // give some blank space above the highest curve
-
 	    v.addAll(mkGrid());
 	    v.addAll(sections);
 	    v.add( "</svg>");
@@ -635,6 +647,11 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	void  addPlot(Curve[] curves, Curve[] randomCurves, boolean useExtra, String colors[], int sequenceNumber) {
 	    //if (curves.length==0) return "No data have been collected";
 
+	    maxY *= 1.01;	    // give some blank space above the highest curve
+
+
+
+	    
 	    double yFactor = -H/maxY; // getMaxY();
 	    double xFactor = W/maxX;
 	

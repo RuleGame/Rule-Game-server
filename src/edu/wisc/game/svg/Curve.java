@@ -44,6 +44,9 @@ public class Curve {
     public double getLastY() {
 	return y[ y.length-1];
     }
+
+    //    Vector<String> debugLabels = null;
+
     
     /** Represents this curve as a SVG element. 
 	The first point will be M x0 y0; after that, between two
@@ -55,11 +58,17 @@ public class Curve {
     */
     private String mkSvgPath(int x0, int y0, double xFactor, double yFactor, int [] offset) {
 	Vector<String> v = new Vector<>();
+	//debugLabels = new Vector<>();
 	for(int i=0; i<y.length; i++) {
+	    double sx = (x0+xFactor*i);
 	    double sy = y0+yFactor*y[i];
 	    if (offset!=null) sy -= offset[i];
-	    String s = (i==0? "M":"L") + (x0+xFactor*i)+ " " + sy;
+	    
+	    String s = (i==0? "M":"L") + sx+ " " + sy;
 	    v.add(s);
+
+	    //	    s = "<text x=\"" +sx + "\" y=\"" +sy + "\" fill=\"black\">" +    y[i] + "</text>";
+	    //debugLabels.add(s);
 	}
 	return String.join(" " , v);
     }
@@ -127,10 +136,8 @@ public class Curve {
 
 	    //System.out.println("s("+j+")=" +s);
 	    v.add(s);
-	}
-	    
-	return String.join("\n", v);
-	
+	}	    
+	return String.join("\n", v);	
     }
 
     /** @param useExtra If true, include the extrapolated sections of curves into the analysis */
@@ -305,6 +312,7 @@ https://www-users.york.ac.uk/~mb55/intro/cicent.htm
 	Vector<String> v = new Vector<>();
 	for(Curve cu: curves) {	    
 	    v.add( cu.mkSvgPathElement2(x0,y0,xFactor, yFactor, color, strokWidth, noo));
+	    //v.addAll(cu.debugLabels);
 	}
 	return String.join("\n", v);
     }
