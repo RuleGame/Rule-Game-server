@@ -70,9 +70,9 @@ class MakeMwSeries {
 
      */
     protected MwSeries mkMwSeries(Vector<TranscriptManager.ReadTranscriptData.Entry[]> section,
-				    Vector<EpisodeHandle> includedEpisodes,
-				    P0andR p0andR, int chosenMover,
-				    boolean needCurves)
+				  Vector<EpisodeHandle> includedEpisodes,
+				  P0andR p0andR, int chosenMover,
+				  boolean needCurves)
 	throws  IOException, IllegalInputException,  RuleParseException {
 
 	double rValues[] = p0andR.rValues;
@@ -119,10 +119,10 @@ class MakeMwSeries {
 	// If yes, then this is reflected in each Episode's xFactor 
 	boolean mastery = includedEpisodes.get(0).para.getIncentive().mastery();
     
-	
-	int k=0;
+	// pointer to p0 and r. Increment in the beginning of each loop before use
+	int k= -1; 
 	int xFactor=0; // will be updated from the last episode
-	for(TranscriptManager.ReadTranscriptData.Entry[] subsection: section) {
+	for(TranscriptManager.ReadTranscriptData.Entry[] subsection: section) { // for each episode
 	    eh = includedEpisodes.get(je ++);
 
 	    int xNew =  eh.xFactor[chosenMover<0? 0: chosenMover];
@@ -139,7 +139,8 @@ class MakeMwSeries {
 	    for(; j<subsection.length && !ser.learned; j++) {
 		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
 		if (!eh.episodeId.equals(e.eid)) throw new IllegalArgumentException("Array mismatch");
-		double r = rValues[k++];
+		k++;
+		
 
 		boolean wrongPlayer= (chosenMover>0) && (e.mover!=chosenMover);
 		if (wrongPlayer) continue;
@@ -150,7 +151,7 @@ class MakeMwSeries {
 		
 		ser.totalMoves++;
 		if (needCurves) {
-		    MoveInfo mi = new MoveInfo(e.code==CODE.ACCEPT, p0[j]);
+		    MoveInfo mi = new MoveInfo(e.code==CODE.ACCEPT, p0[k]);
 		    vmi.add(mi);
 		}
 		    
@@ -165,12 +166,12 @@ class MakeMwSeries {
 		    if (e.pick instanceof Episode.Move) {
 			streak++;
 			if (lastR==0) lastR=1;
-			lastR *= r;
+			lastR *=  rValues[k];
 			if (streak > maxStreak) maxStreak = streak;
 			if (lastR > maxR) maxR = lastR;
 
 
-			if (debug) System.out.println("DEBUG: " + e.eid + "["+j+"], R *=" +r+ "=" + lastR);
+			if (debug) System.out.println("DEBUG: " + e.eid + "["+j+"], R *=" +rValues[k]+ "=" + lastR);
 		    } else {
 			if (debug) System.out.println("["+j+"] successful pick");
 		    }
@@ -199,6 +200,7 @@ class MakeMwSeries {
 
 	    // Also count any errors that were made after the learning success
 	    for(; j<subsection.length; j++) {
+		k++;
 		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
 		if (!eh.episodeId.equals(e.eid)) throw new IllegalArgumentException("Array mismatch");
 
@@ -209,7 +211,7 @@ class MakeMwSeries {
 
 		ser.totalMoves++;
 		if (needCurves) {
-		    MoveInfo mi = new MoveInfo(e.code==CODE.ACCEPT, p0[j]);
+		    MoveInfo mi = new MoveInfo(e.code==CODE.ACCEPT, p0[k]);
 		    vmi.add(mi);
 		}
 		
