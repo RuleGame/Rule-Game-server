@@ -125,8 +125,6 @@ public class Curve {
 		mkSvgPath(x0, y0, xFactor, yFactor, offset):
 		mkExtraSvgPath(x0, y0, xFactor, yFactor, offset);
 
-	    //System.out.println("p("+j+")=" +p);
-	    
 	    if (p==null) continue;
 	    
 	    String s = "<path d=\"" +p + "\" " +
@@ -134,7 +132,6 @@ public class Curve {
 	    if (!dash[j].equals("")) s += "stroke-dasharray=\""+dash[j]+"\" ";
 	    s += " fill=\"none\" />";
 
-	    //System.out.println("s("+j+")=" +s);
 	    v.add(s);
 	}	    
 	return String.join("\n", v);	
@@ -178,7 +175,7 @@ public class Curve {
 
     private static String mkMedianSvgPath(Curve[] curves, int x0, int y0, double xFactor, double yFactor, boolean useExtra) {
 	Vector<String> v = new Vector<>();
-
+	//	System.out.println("mkMedian: in");
 	for(int x=0; ; x++) {
 	    double[] ym = medianY(curves, useExtra, x);
 	    if (ym==null) break;
@@ -190,7 +187,8 @@ public class Curve {
 		s = "M" + (x0+xFactor* x)+ " " + (y0+yFactor* ym[1]);
 		v.add(s);		
 	    }
-	}	
+	}
+	//	System.out.println("mkMedian: have "+v.size());
 	return String.join(" " , v);
     }
 

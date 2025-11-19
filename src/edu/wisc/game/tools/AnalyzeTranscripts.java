@@ -29,7 +29,7 @@ import edu.wisc.game.sql.ReplayedEpisode.RandomPlayer;
 public class AnalyzeTranscripts {
 
     protected boolean quiet = false;
-    static boolean debug=false;
+    static boolean debug=true;
     
     private static void usage() {
 	usage(null);
@@ -714,8 +714,8 @@ public class AnalyzeTranscripts {
 	    for(int j=0; j<subsection.length; j++) {
 		TranscriptManager.ReadTranscriptData.Entry e = subsection[j];
 
- 		//System.out.println("j=" + j);
-		//System.out.println(rep.graphicDisplay());
+ 		if (debug) System.out.println("j=" + j);
+		if (debug) System.out.println(rep.graphicDisplay());
 
 		if (boardHistory!=null) {		
 		    Board b = rep.getCurrentBoard();

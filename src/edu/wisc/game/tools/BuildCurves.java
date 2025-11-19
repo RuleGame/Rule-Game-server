@@ -131,24 +131,6 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	includedEpisodes.clear();
     }
 
-    /** Various things that may be used to draw curves */
-    /*
-    static class MoveInfo {
-	boolean success;
-	double p0;
-    }
-    *
-    /** Besides the aggregate information that MwSeries contains, this
-	also has per-move data used to draw curves */
-    /*
-    static class MwSeries2 extends MwSeries {
-	MoveInfo[] moveInfo;
-	MwSeries2(EpisodeHandle o, Set<String> ignorePrec, int chosenMover) {
-	    super(o, ignorePrec, chosenMover);
-	}
-    }
-    */				      
-
     /** Creates an MwSeries object for a (player,rule set)
 	interaction, and adds it to savedMws, if appropriate.
 
@@ -269,8 +251,9 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		DataMap hr = doRandom? prepMaps(randomMws, PrecMode.Ignore): null;
 		if (doRandom) hr.mkCurves(mode, argMode, maxX);
 
-		
+		//		System.out.println("call doPlots " + mode);
 		h = doPlots(h, hr, mode, argMode, maxX);
+		//		System.out.println("done doPlots " + mode);
 		File dm = new File(d, mode.toString() + "_" + argMode);
 		for(String key: h.keySet()) {
 		    OneKey z = h.get(key);
@@ -409,8 +392,13 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    boolean useExtra =(medianMode==MedianMode.Extra);
 	    SvgPlot svg = new SvgPlot(W, H, maxX);
 	    svg.adjustMaxY(z.curves, randomCurves, useExtra);
+	    //System.out.println("doPlots: call addPlot "+ key);
 	    svg.addPlot(z.curves, randomCurves, useExtra, colors, 0);
+
+
+	    //System.out.println("doPlots: call complete "+ key);
 	    z.plot = svg.complete();
+	    //System.out.println("doPlots: done "+key);
 	}
 	return h;
     }
@@ -482,14 +470,23 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	
 	double [] yy = new double[n+1];
 	yy[0] = 0;
-	double sumE=0, sumZP=0;
+	double sumE=0, sumZP=0, recentSumZP=0, omega=0;
 	int j=1;
 	int q=0, lastQ=0;
 	for(int m=0; m<ser.moveInfo.length; m++) {
 	    MoveInfo mi = ser.moveInfo[m];
-	    if (!mi.success)	sumE++;
-	    else q++;
+
 	    sumZP += 1-mi.p0;
+	    recentSumZP += 1-mi.p0;
+	    
+	    if (!mi.success)	{
+		sumE++;
+		if (recentSumZP==0) throw new IllegalArgumentException("sumZP=0, mi="+mi);
+		omega += 1.0/recentSumZP;
+		recentSumZP=0;
+	    } else		q++;
+	    
+
 
 	    double aai = (sumZP==0)? 0: sumE/sumZP;
 
@@ -497,6 +494,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    
 	    double y;
 	    if (mode==CurveMode.W) 	    y = sumE;
+	    else if (mode==CurveMode.OMEGA) 	    y = omega;
 	    else if (mode==CurveMode.AAI) {
 		//System.out.println("DEBUG: m=" +m+", sumE/sumZP=" + sumE+"/"+sumZP+"=" + aai);
 		y = aai;
@@ -518,7 +516,9 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    //System.exit(1);
 	    throw new IllegalArgumentException("yy[] size mismatch for mode=" + mode + ":" + argMode+": expect " + (n+1) +", found " + j);
 	}
-	Double extraX = (mode==CurveMode.W || mode==CurveMode.AAIB) && ser.getLearned()? maxX: null;
+	Double extraX = (mode==CurveMode.W || mode==CurveMode.AAIB|| mode==CurveMode.OMEGA
+			 ) && ser.getLearned()? maxX: null;
+	//System.out.println("call Curve " + mode);
 	Curve c =  new Curve(yy, extraX);
 	String [] dash = ser.learned? new String[] {"2", ""}:	new String[] {"1", null};
 	c.setDash(dash);
@@ -548,6 +548,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    Elsewhere (in Curve.*), y0=H, yFactor = -H/maxY,  y=y0 * yFactor* mathY
 	 */
 	private Vector<String> mkGrid() {
+	    System.out.println("mkGrid maxX="+maxX+", maxY=" + maxY);
 	    double xFactor = W/maxX;
 	    Vector<String> v = new Vector<>();
 	    v.add( "<rect width=\""+ W+ "\" height=\"" + H + "\" " +
@@ -559,6 +560,8 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		v.add("<line x1=\""+x+"\" y1=\""+H+"\" x2=\""+x+"\" y2=\"0\" stroke=\"black\" stroke-dasharray=\"3 5\"/>");
 	    }
 
+	    System.out.println("mkGrid ti y=");
+	    System.out.println(Util.joinNonBlank(", ",     ticPoints((int)maxY)));
 	    for(int m: ticPoints((int)maxY)) {
 
 		//y= H -m*H/maxY);
@@ -614,9 +617,11 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    Vector<String> v = new Vector<>();
 	    v.add( "<svg   xmlns=\"http://www.w3.org/2000/svg\" width=\"" +
 		   width + "\" height=\"" + height +
-		   "\" viewBox=\"-20 -20 " + (W+50) + " " + (H+40)+"\">");
-	    
+		   "\" viewBox=\"-40 -20 " + (W+50) + " " + (H+40)+"\">");
+
+	    //System.out.println("complete(): call mkGrid");
 	    v.addAll(mkGrid());
+	    //System.out.println("complete(): done mkGrid");
 	    v.addAll(sections);
 	    v.add( "</svg>");
 	    return String.join("\n", v);
@@ -658,17 +663,23 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    Vector<String> v = new Vector<>();
 
 	    boolean needShading =  (colors[3]!=null);
+
+
+	    System.out.println("addPlot: mkShading");
 	    v.add( Curve.mkShading(curves, 0,H, xFactor, yFactor, useExtra,
 				   (needShading? colors[3]: colors[0]), needShading, sequenceNumber * 8));
-	    
+
+	    System.out.println("addPlot: mkSvg");
 	    v.add( Curve.mkSvgNoOverlap(curves, 0, H, xFactor, yFactor, colors[0],1));
 
+	    System.out.println("addPlot: mkMedian");
 	    v.add( Curve.mkMedianSvgPathElement(curves, 0,H,xFactor, yFactor, colors[1],3, null, null, null, useExtra));
 
+	    System.out.println("addPlot: mkMedian random");
 	    if (randomCurves.length>0) {
 		v.add( Curve.mkMedianSvgPathElement(randomCurves, 0,H,xFactor, yFactor, colors[2],6, "0.01 8", "round", "0.4", useExtra));
 	    }
-		
+	    System.out.println("addPlot: all done");
 	    sections.addAll(v);
 	}
     }

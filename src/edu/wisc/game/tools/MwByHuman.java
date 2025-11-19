@@ -434,7 +434,9 @@ public class MwByHuman extends AnalyzeTranscripts {
 	// Error count normalized error prob, Sum_m(e_m)/Sum_m(1-p0(m))
 	AAI,
 	// AAI * m
-	AAIB
+	AAIB,
+	OMEGA
+       
     }
 
     public enum CurveArgMode {
