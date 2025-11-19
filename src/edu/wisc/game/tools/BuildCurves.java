@@ -481,7 +481,11 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    
 	    if (!mi.success)	{
 		sumE++;
-		if (recentSumZP==0) throw new IllegalArgumentException("sumZP=0, mi="+mi);
+		if (recentSumZP==0) {
+		    System.out.println("Found a user who was worse than random");
+		    recentSumZP=0.5;
+		    //throw new IllegalArgumentException("sumZP=0, mi="+mi);
+		}
 		omega += 1.0/recentSumZP;
 		recentSumZP=0;
 	    } else		q++;
