@@ -470,7 +470,8 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	
 	double [] yy = new double[n+1];
 	yy[0] = 0;
-	double sumE=0, sumZP=0, recentSumZP=0, omega=0;
+	double sumE=0, sumZP=0, recentSumE=0, recentSumZP=0,recentSumP=0,
+	    omega=0;
 	int j=1;
 	int q=0, lastQ=0;
 	for(int m=0; m<ser.moveInfo.length; m++) {
@@ -478,18 +479,25 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 
 	    sumZP += 1-mi.p0;
 	    recentSumZP += 1-mi.p0;
+	    recentSumP += mi.p0;
 	    
 	    if (!mi.success)	{
 		sumE++;
+		recentSumE++;
+	    } else		q++;
+
+	    boolean omegaPoint = (argMode==CurveArgMode.M) || (q>lastQ);
+	    if (omegaPoint) {
 		if (recentSumZP==0) {
 		    System.out.println("Found a user who was worse than random");
 		    recentSumZP=0.5;
 		    //throw new IllegalArgumentException("sumZP=0, mi="+mi);
 		}
-		omega += 1.0/recentSumZP;
+		omega += recentSumE * recentSumP/recentSumZP;
 		recentSumZP=0;
-	    } else		q++;
-	    
+		recentSumP=0;
+		recentSumE=0;				
+	    }
 
 
 	    double aai = (sumZP==0)? 0: sumE/sumZP;
