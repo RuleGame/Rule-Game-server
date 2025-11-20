@@ -686,7 +686,10 @@ public class EpisodeInfo extends Episode {
 	return getCurrentBoard(true);
     }
 
-    /** Computes the "mustWait" flag for the current player */
+    /** Computes the "mustWait" flag for the current player in a 2PG.
+	@param mover The player we're asking about
+	@true if it currently isn't this player turn to make a move.
+     */
     private boolean computeMustWait(int mover) {
 	if (getPlayer().is2PG() && getFinishCode()==FINISH_CODE.NO)  {
 	    int whoMustPlay = whoMustMakeNextMove();
