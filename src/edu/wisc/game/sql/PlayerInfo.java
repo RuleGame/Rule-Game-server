@@ -1,4 +1,4 @@
- package edu.wisc.game.sql;
+package edu.wisc.game.sql;
 
 import java.io.*;
 import java.util.*;
@@ -17,8 +17,11 @@ import edu.wisc.game.rest.PlayerResponse;
 import edu.wisc.game.engine.RuleSet;
 import edu.wisc.game.engine.AllRuleSets;
 import edu.wisc.game.saved.*;
+import edu.wisc.game.pseudo.*;
 
 import edu.wisc.game.websocket.WatchPlayer;
+
+
 
 /** A PlayerInfo object represent information about a player (what trial list he's in, what episodes he's done etc) stored in the SQL database. It is identiied by a playerId (a string). A humans playing the Rule Game may create just one PlayerInfo object (a single playerId), if he comes from the Mechanical Turk, or goes directly to the GUI Client URL; or he can create many such objects (each one with a particular experiment plan), if he starts many games from the Repeat User Launch page, or from the Android app. In the latter case, all such PlayerInfo objects are linked to a single User object.
  */
@@ -120,20 +123,11 @@ public class PlayerInfo {
 	    }
 	    needChat = para.getBoolean("chat", false);
 
-
-	    botGameName = para.getString("bot", null);
-	    if (botGameName != null) {
-		if (botGameName.equals("pseudo")) {
-		    readPseudoParams(para);
-		} else {
-		    throw new IllegalArgumentException("Illegal bot partner name ("+botGameName+") for player " + playerId);
-		}
-	    }
-	    
+	    // Is this going to be a Human-vs-Bot 2PG?
+	    botPartnerParams = BotParams.init(para,"bot", 0);
 	} else {
 	    needChat = false;
-	    botGameName = null;
-	    botGameName = null;
+	    botPartnerParams = null;
 	}
 
 	
@@ -142,12 +136,12 @@ public class PlayerInfo {
     /** These are set in setExperimentPlan */
     @Transient
     private boolean coopGame, adveGame, needChat;
-    /** If not null, it means that this a 2PG game with a bot
-	partner, of the specified type */
+    /** If not null, it means that this a "human-vs-bot" 2PG, with a bot
+	partner of the specified type */
     @Transient
-    private String botGameName;
+    public BotParams botPartnerParams; 
     
-        /** @return true if the name of the experiment plan indicates that this
+    /** @return true if the name of the experiment plan indicates that this
 	is a cooperative two-player game */
     public boolean isCoopGame() {
 	return coopGame;
@@ -162,30 +156,18 @@ public class PlayerInfo {
     public boolean is2PG() {
 	return coopGame || adveGame;
     }
+    /** Is this a "human-vs-bot" 2PG? */
     public boolean isBotGame() {
-	return botGameName!=null;
+	return botPartnerParams!=null;
     }
 
-    /** True if this particular player is a bot. (And not just the game involves a bot) */
+    /** True if this particular player is a bot (in a HvB 2PG). (And
+	not just the game involves a bot) */
     @Basic
     boolean amBot;
     public boolean getAmBot() { return amBot; }
     @XmlElement
     public void setAmBot(boolean _amBot) { amBot = _amBot; }
-
-    /** This is used in pseudo-AI bots, to indicate how fast it pretends to learn */
-    @Transient
-    public double pseudoHalftime = 8.0;
-    @Transient
-    public double pseudoInitErrorRate = 0.75;
-
-    /** Reads the pseudo learning params, for bot assist or bot player, from
-	the para set */
-    private void readPseudoParams(ParaSet para) {
-	pseudoHalftime = para.getDouble("pseudo_halftime", true, 8.0);
-	pseudoInitErrorRate =para.getDouble("pseudo_init_error_rate", true, 0.75);
-    }
-
     
     /** Do we need a between-player chat element in the GUI? (In 2PG only,
 	based on para.chat of the first para set of this player.  */
@@ -230,24 +212,26 @@ public class PlayerInfo {
     }
 
     /** The PlayerInfo of the player with the specified role. This should only be called on a paired player in 2PG. 
-	@param mover Whose PlayerInfo do you want? 
+	@param mover Whose PlayerInfo do you want?	
      */
     public PlayerInfo getPlayerForRole(int mover) {
 	return (pairState==mover)? this: xgetPartner();
     }
     
     
-    /** Is this playerId of player 0 or player 1 in a 2PG?
+    /** Is this playerId of player 0 or of player 1 in a 2PG?
 	@param pid The playerId of this player, or of its partner
-	@return 0 or 1
+	@return 0 or 1 in 2PG; 0 in 1PG
      */
     int getRoleForPlayerId(String pid) {
 	if (pid==null) {
 	    return Pairing.State.ERROR;
 	} else if (pid.equals(getPlayerId())) {
-	    return  Pairing.State.ZERO;
+	    int mover = pairState;
+	    if (mover<0) mover = 0;
+	    return mover;
 	} else if (pid.equals(getPartnerPlayerId())) {
-	    return  Pairing.State.ONE;
+	    return  xgetPartner().pairState;
 	} else {
 	    return Pairing.State.ERROR;
 	}
@@ -358,47 +342,32 @@ public class PlayerInfo {
 	final boolean 	cont;
 	final GameGenerator gg;
 
-	/** If not null, there is a bot assistant (8.014+) 
+	/** If botAssistParams[j] is not null, there is a bot
+	    assistant for player j in this series. (In 1PG, there is
+	    only player 0).
 	 */
-	//@Transient
-	final private String botAssistName;
-	public boolean hasBotAssist() {
-	    return botAssistName!=null;
-	}
+	final BotParams[] botAssistParams = new BotParams[2];
 	/** Does the specified player (Player 0 or Player 1) has bot assist?
 	    @param mover 0 or 1
 	 */
 	public boolean hasBotAssist(int mover) {
-	    return hasBotAssist() && mover<botAssistPlayers;
+	    return botAssistParams[mover]!=null;
 	}
 
-
-	/** How many players have bot assist? The default is of course 1, but in 2PG the value 2 is allowed as well */
-	final int botAssistPlayers; 
-	
 	public Vector<EpisodeInfo> episodes = new Vector<>();
 	int size() { return episodes.size(); }
-	
+
+	String msg = "";
 	Series(ParaSet _para) throws IOException, IllegalInputException, ReflectiveOperationException, RuleParseException {
 	    para = _para;
 	    cont = para.getBoolean("continue", Boolean.FALSE);
 	    gg = GameGenerator.mkGameGenerator(Episode.random, para);
-
-	    //-- Bot Assist is mostly used in 1PG 
-	    botAssistName = para.getString("bot_assist", null);
-	    if (botAssistName != null) {
-		if (botAssistName.equals("pseudo")) {
-		    readPseudoParams(para);
-		} else {
-		    throw new IllegalArgumentException("Illegal bot assist name ("+botAssistName+") for player " + playerId);
-		}
-		botAssistPlayers = para.getInt("bot_assist_players", true, 1);
-		if (botAssistPlayers<1 || botAssistPlayers>2) throw new IllegalArgumentException("Illegal value for botAssistPlayers="+ botAssistPlayers);
-
-	    } else {
-		botAssistPlayers = 0;
+	    //-- Bot Assistants for either (or both) players
+	    for(int j=0; j<2; j++) {
+		botAssistParams[j] = BotParams.init(para, "bot_assist", j);
+		msg += "; (botAssist["+j+"]=" + botAssistParams[j] +")";
 	    }
-	    Logging.info("DEBUG: Created new series for p=" + getPlayerId() +"; botAssistName=" + botAssistName +", botAssistPlayers="+ botAssistPlayers);
+	    Logging.info("DEBUG: Created new series for p=" + getPlayerId() + " "+ msg);
 
 	}
 
@@ -406,9 +375,7 @@ public class PlayerInfo {
 	    int canGiveUpAt = para.getInt("give_up_at", true, 999);
 	    return (canGiveUpAt>=0) && (size()<=canGiveUpAt);
 	}
-
-		
-	
+			
 	public String toString() {
 	    return "(Series: para.rules=" +	para.getRuleSetName() +
 		", episode cnt= "+ episodes.size()+")";
@@ -480,9 +447,9 @@ public class PlayerInfo {
 
     /** Does any of the para sets in this player's trial list
 	has the bot assist feature? */
-    public boolean anySeriesHasBotAssist() {
+    private boolean anySeriesHasBotAssist(int mover) {
 	for(Series ser: allSeries) {
-	    if (ser.hasBotAssist()) return true;
+	    if (ser.hasBotAssist(mover)) return true;
 	}
 	return false;
     }
@@ -1246,8 +1213,10 @@ public class PlayerInfo {
 	f =  Files.transcriptsFile(playerId);
 	// Save the bot assist transcript separately for each player who is
 	// provided with bot assist
-	TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.transcript, anySeriesHasBotAssist(), epi.botAssist!=null);
-	for(int mover=0; mover<epi.mySeries().botAssistPlayers; mover++) {
+	// ZZZ who needs to have assist?
+	TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.transcript, anySeriesHasBotAssist(0) ||anySeriesHasBotAssist(1),
+					       epi.botAssist[0]!=null|| epi.botAssist[1]!=null      );
+	for(int mover=0; mover<2; mover++) {
 	    if ( epi.botAssist[mover]!=null) {
 		f = Files.botAssistFile(playerId, mover);
 		TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.botAssist[mover].botAssistTranscript, false, false);

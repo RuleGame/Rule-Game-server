@@ -14,20 +14,53 @@ import edu.wisc.game.saved.*;
 
 import edu.wisc.game.websocket.WatchPlayer;
 
-/** Support for a Pseudo-learning bot playing as a partner with, or against, a human
-    player in a 2PG */
+/** Support for a Pseudo-learning bot playing as a partner with, or
+    against, a human player in a 2PG, or as a bot assistant for a
+    human player (in a 1PG or 2PG). An instance of Pseudo is created
+    by EpisodeInfo (in human-vs-bot games), or by BotAssist, for each
+    move that the bot needs to make or to suggest.
+*/
 public class Pseudo {
 
-    /** The bot player (who is not necessarily Player 0, the one who stores the episode!) */
+    public static class Params extends BotParams {
+	/** This is used in pseudo-AI bots, to indicate how fast it pretends to learn */
+	public double halftime = 8.0;
+	public double initErrorRate = 0.75;
+	/** Reads the pseudo learning params, for bot assist or bot
+	    player, from the para set.
+	    @param j 0 or 1; used to modify param names, so that we
+	    can read params for Player 1 if j==1.
+	*/
+	public Params(ParaSet para, int j) {
+	    String suff = (j==0)? "": "" + j;
+	    halftime = para.getDouble("pseudo_halftime" + suff, true, 8.0);
+	    initErrorRate =para.getDouble("pseudo_init_error_rate" + suff, true, 0.75);
+	}
+
+	public String toString() {
+	    return "(Pseudo bot: halfLife=" + halftime +", initErrorRate="+initErrorRate+")";
+	}
+
+    }
+
+    /** This bot's parameters */
+    final Params params;
+    
+    
+    /** In a game "human against bot", this is the bot player; in a bot assist
+	game, this is the player whom the bot assists. Either way,
+	this is not necessarily Player 0, the one who stores the episode! */
     PlayerInfo p;
     /** Episode in which the move is to be made */
     EpisodeInfo epi;
     int expectedAttemptCnt;
     
-    /** Creates a bot player. Modeled, to some extent on PlayerResponse.
-	@param p The live partner with whom this bot will eventually play
+    /** Creates a PlayerInfo object that represents a bot player, rather than
+	a human player.  This is only used in human-vs-bot 2PG, not in bot
+	assist games. This method is modeled, to some extent on PlayerResponse.
+	@param p The live partner against/with whom this bot will eventually play.
      */
-    public static PlayerInfo mkBot(PlayerInfo p) {
+    public static PlayerInfo mkBotPlayer(PlayerInfo p) {
 
 	String pid = p.getPlayerId() + "-bot";
 	PlayerResponse pr = new PlayerResponse(pid, p.getExperimentPlan(), -1, true);
@@ -40,7 +73,21 @@ public class Pseudo {
 	return x;
     }
 
-    public Pseudo(   PlayerInfo _p,     EpisodeInfo _epi, int _expectedAttemptCnt) {
+    /** Creates a task (for making a move), either for a bot that
+	plays against a human (in a HvB 2PG), or for a bot that assists
+	a human player.
+	
+	@param _params The bot parameters
+	
+	@param _p Either a bot player (playing against a human in a HvB 2PG),
+	or an assistant bot. This is used to access information about the
+	game that has been played so far, rather than for the parameters.
+
+	@param _expectedAttemptCnt This is just used for bookkeeping purposes,
+	not for the math.
+     */
+    public Pseudo(Params _params, PlayerInfo _p,    EpisodeInfo _epi, int _expectedAttemptCnt) {
+	params = _params;
 	p = _p;
 	epi = _epi;
 	expectedAttemptCnt = _expectedAttemptCnt;
@@ -51,9 +98,15 @@ public class Pseudo {
     }
     
     static private Queue<Pseudo> taskQueue = new ArrayDeque<>();
-    
+
+    /** Creates a queued a Pseudo object, which represents a task of making
+	a bot move in a human-vs-bot 2PG.
+	@param botPlayer A PlayerInfo representing a bot that plays against a human
+     */
     static public void addTask(PlayerInfo botPlayer, EpisodeInfo epi, int expectedAttemptCnt) {
-	Pseudo task = new Pseudo(botPlayer, epi, expectedAttemptCnt);
+	BotParams params = botPlayer.botPartnerParams;
+	if (params == null || !(params instanceof Params)) throw new IllegalArgumentException("Wrong bot parameter set (need Pseudo): "+ params);
+	Pseudo task = new Pseudo((Params)params, botPlayer, epi, expectedAttemptCnt);
 	Logging.info("Adding " + task);
 	taskQueue.add(task);
     }
@@ -90,7 +143,9 @@ public class Pseudo {
 	bad suggestion, which will make the player wonder how dumb the bot is */
     private Move lastProposedBadMove = null;
     
-    /** Pseudo-randomly proposes a move, without actually executing it */
+    /** Pseudo-randomly proposes a move, without actually executing it.
+	This is used both in HvB and in bot assist.
+     */
     public Move proposeMove() throws IOException {
 	if (expectedAttemptCnt < epi.getAttemptCnt()) {
 	    Logging.info("Pseudo: skipping apparently duplicate request " + this);
@@ -104,8 +159,7 @@ public class Pseudo {
 	
 	// Player 0, who owns the episodes
 	PlayerInfo owner = p.getPlayerForRole(Pairing.State.ZERO);
-	
-	double	halftime = p.pseudoHalftime;
+		
 	// the sum for all episodes in the series
 	int t = owner.seriesAttemptCntExcludingSuccessfulPicks(); 
 	// The probability of offering a bad move (if bad moves are
@@ -113,10 +167,10 @@ public class Pseudo {
 	// initial value 0.75 (or as specified in the para set) and
 	// the specified half-life time
 	double Q =
-	    (halftime <= 0)? 0:
-	    p.pseudoInitErrorRate * 
-	    (halftime == Double.POSITIVE_INFINITY ? 1:
-	     Math.exp( -t/halftime*log2));
+	    (params.halftime <= 0)? 0:
+	    params.initErrorRate * 
+	    (params.halftime == Double.POSITIVE_INFINITY ? 1:
+	     Math.exp( -t/params.halftime*log2));
 	
 	Board b =  epi.getCurrentBoard(true);
 	boolean show = epi.weShowAllMovables();
@@ -195,8 +249,6 @@ public class Pseudo {
 	// Player 0, who owns the episodes
 	PlayerInfo owner = p.getPlayerForRole(Pairing.State.ZERO);
 	
-	double	halftime = p.pseudoHalftime;
-
         //Board b = d.getBoard();
 	Board b =  epi.getCurrentBoard(true);
 	boolean show = epi.weShowAllMovables();
@@ -226,9 +278,9 @@ public class Pseudo {
 	// An exponential-decay with the initial value 1 and the specified
 	// half-life time
 	double ex =
-	    (halftime <= 0)? 0:
-	    (halftime == Double.POSITIVE_INFINITY) ? 1:
-	    Math.exp( -t/halftime*log2);
+	    (params.halftime <= 0)? 0:
+	    (params.halftime == Double.POSITIVE_INFINITY) ? 1:
+	    Math.exp( -t/params.halftime*log2);
 
 	boolean allowed = false;
 	int[] bu = piece.getBuckets();
@@ -238,11 +290,11 @@ public class Pseudo {
 	}
 	if (!allowed) {
 	    boolean mustRedo;
-	    if (halftime <= 0) mustRedo=true;
-	    else if (halftime == Double.POSITIVE_INFINITY)  mustRedo=false;
+	    if (params.halftime <= 0) mustRedo=true;
+	    else if (params.halftime == Double.POSITIVE_INFINITY)  mustRedo=false;
 	    else {
 		double redoProb = 1 - ex;
-		Logging.info("Pseudo-AI: after " +t+ "/"+halftime + "m, redoProb=" + redoProb);
+		Logging.info("Pseudo-AI: after " +t+ "/"+params.halftime + "m, redoProb=" + redoProb);
 		mustRedo = (Episode.random.nextDouble() < redoProb);
 	    }
 	    if (mustRedo) { // replace bad move with a guaranteed good one

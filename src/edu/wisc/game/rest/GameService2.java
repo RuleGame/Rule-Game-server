@@ -157,7 +157,7 @@ public class GameService2 {
 	/** Timing at the end of the web API call + update the last activity time for the player.
 	    (Only used on /move and /pick, and not on /display) */
 	String ending(String playerId) {
-	    updatedPlayerLastActivityTime(playerId);
+	    updatePlayerLastActivityTime(playerId);
 	    return ending0();	    
 	}
 
@@ -173,7 +173,7 @@ public class GameService2 {
 	}
 
 	/** @param playerId May be null (it legacy code), or the actual mover (in 2PG) */
-	private void updatedPlayerLastActivityTime(String playerId) {
+	private void updatePlayerLastActivityTime(String playerId) {
 	    EpisodeInfo epi = EpisodeInfo.locateEpisode(episodeId);
 	    if (epi==null) return;
 	    PlayerInfo p = epi.getPlayer();

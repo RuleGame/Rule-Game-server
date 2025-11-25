@@ -1202,7 +1202,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     /** Since ver 8.020, it is "EARLY_WIN" (and not just normal "FINISH") even if the mastery 
 	was achieved on the very last move of an episode, and the board was cleared.
     */
-    int getFinishCode() {
+    public int getFinishCode() {
 	 return
 	     earlyWin? FINISH_CODE.EARLY_WIN :
 	     cleared? FINISH_CODE.FINISH :
@@ -1251,7 +1251,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
     /** The current version of the application */
-    public static final String version = "8.040";
+    public static final String version = "8.041";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }
@@ -1265,6 +1265,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	be used to display the current state of the episode */
     public class Display     {
 	// The following describe the state of this episode, and are only used in the web GUI
+	// ZZZ - should be mover-based
 	int finishCode = Episode.this.getFinishCode();
 	Board board =  getCurrentBoard(true);
 

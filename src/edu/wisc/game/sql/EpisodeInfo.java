@@ -36,7 +36,7 @@ public class EpisodeInfo extends Episode {
 	clearings" */
     static final boolean stalematesAsClears = true;
 
-    /** Back link to the player, for JPA's use */
+    /** Back link to the player, for JPA's use. In 2PG, this link is to Player 0. */
     @ManyToOne(fetch = FetchType.EAGER)
     private PlayerInfo player;
     public PlayerInfo getPlayer() { return player; }
@@ -610,6 +610,7 @@ public class EpisodeInfo extends Episode {
 	    if (thisPlayer.getAmBot()) { // I am a bot 
 		if (!q.mustWait && !isCompleted()) { // and I am given another move
 		    Logging.info("Bot queuing another task for himself=" +thisPid);
+		    // FIXME once we have bots other than Pseudo...
 		    Pseudo.addTask(thisPlayer, this, attemptCnt);
 		}
 	    }
@@ -617,6 +618,7 @@ public class EpisodeInfo extends Episode {
 	    if (otherPlayer.getAmBot()) { // bot partner
 		if (q.mustWait && !isCompleted()) { // and it's bot's turn
 		    Logging.info("Human queuing a task for bot=" + otherPid);
+		    // FIXME once we have bots other than Pseudo...
 		    Pseudo.addTask(otherPlayer, this, attemptCnt);
 		}
 
@@ -637,7 +639,7 @@ public class EpisodeInfo extends Episode {
 	// since they may add little new info)
 	if (mySeries().hasBotAssist(move.mover) &&
 	    (isMove || move.code != CODE.ACCEPT)) { 
-	    if (botAssist[move.mover]==null) botAssist[move.mover]=new BotAssist();
+	    if (botAssist[move.mover]==null) botAssist[move.mover]=new BotAssist(mySeries().botAssistParams[move.mover]);
 	    botAssist[move.mover].didHeFollow(move);
 	    String chat = botAssist[move.mover].makeSuggestion(this);
 
@@ -732,6 +734,8 @@ public class EpisodeInfo extends Episode {
 	    error = _error;
 	    this.mover = mover;
 	    if (dummy) return;
+	    // this may modified the code for an abandoned/walkAway player
+	    finishCode = getMyFinishCode(mover);
 	    bonus = EpisodeInfo.this.isBonus();
 	    seriesNo = EpisodeInfo.this.getSeriesNo();
 	    displaySeriesNo = EpisodeInfo.this.displaySeriesNo;
@@ -1039,6 +1043,7 @@ public class EpisodeInfo extends Episode {
 	    
 	    if (otherPlayer.getAmBot()) { // bot partner; get him to start playing
 		Logging.info("Human queuing initial task for bot=" + otherPid);
+		// FIXME once we have bots other than Pseudo...
 		Pseudo.addTask(otherPlayer, this, attemptCnt);
 	    }
 	}
@@ -1386,12 +1391,17 @@ public class EpisodeInfo extends Episode {
 	only once, shared by the two players;
 	but the finish code should be returned
 	differently to the two players).
+
+	@param mover To whom do we return this?
+	
+	/// ZZZ - FIXME: "player" means player 0. Need "mover"!
     */
-    public int getFinishCode() {
+    public int getMyFinishCode(int mover) {
 	int fc = super.getFinishCode();
 	if (fc==FINISH_CODE.ABANDONED || fc==FINISH_CODE.WALKED_AWAY  ) {
-	    if (player.getCompletionMode() == PlayerInfo.COMPLETION.WALKED_AWAY) fc = FINISH_CODE.WALKED_AWAY;
-	    else if (player.getCompletionMode() == PlayerInfo.COMPLETION.ABANDONED) fc = FINISH_CODE.ABANDONED;
+	    PlayerInfo y = player.getPlayerForRole(mover);
+	    if (y.getCompletionMode() == PlayerInfo.COMPLETION.WALKED_AWAY) fc = FINISH_CODE.WALKED_AWAY;
+	    else if (y.getCompletionMode() == PlayerInfo.COMPLETION.ABANDONED) fc = FINISH_CODE.ABANDONED;
 	}
 	return fc;
     }

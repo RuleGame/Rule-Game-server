@@ -56,8 +56,8 @@ public class Pairing {
 	    return false;
 	}
 
-	if (p.isBotGame()) {    // Create a bot partner
-	    PlayerInfo other = Pseudo.mkBot(p);
+	if (p.isBotGame()) {    // Create a bot partner, which will be the partner for this one
+	    PlayerInfo other = Pseudo.mkBotPlayer(p);
 	    p.linkToPartner(other, State.ZERO);
 	    Logging.info("Pairing: paired " + p + " WITH bot " + other);
 	    return false;

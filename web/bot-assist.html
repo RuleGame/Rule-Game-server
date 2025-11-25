@@ -10,7 +10,7 @@ Bot Assist
     </h1>
 
     <div align="center"><em>
-	Updated 2025-10-12 for GS 8.035</em>
+	Updated 2025-11-23 for GS 8.041</em>
 	</div>
 
     <p>This is document provides an overview of the "Bot Assist" feature, which was introduced in GS ver. 8.014. Originally, the entire trial list had to either have bot assist or not, but since ver 8.022, we have parameter-set-level granularity.
@@ -19,7 +19,7 @@ Bot Assist
 
     <p>The Bot Assist functionality is intended to work as follows. After each move (succesful or unsuccessful) by the player, the "bot" of some kind will provide him with a suggestion of what would be the next move to try. The suggestion can be delivered to the player via a "chat box", similar to that used in 2PG coop games.
 
-    <p>The Bot Assist feature is primarily designed for traditional single-player games (2PG); however, it is available in      two-player games (2PG) as well.
+    <p>The Bot Assist feature was originally designed for traditional single-player games (2PG); however,  it is now available in      two-player games (2PG) as well. In a 2PG, the bot assist capability needs to be configured separately for each player to which you can provide this service.
       
       <h2><a name="prep">
 	  Experiment preparation
@@ -28,28 +28,37 @@ Bot Assist
 
       <P>See also: <a href="2pg-bot.html#prep">two-player games with a bot -- Experiment preparation</a>
 
-      <p>Here we assume that you want to enable Bot Assist in a 1PG. To do that, you need to add to your trial list file a column named <tt>bot_assist</tt>, the value in which should indicate the name of the bot you want to use (typically, a wrapper over some AI algorithm). This should be chosen from the same set of bots that's also available for adve and coop 2PGs with a bot partner, where the corresponding value is put in the column named <tt>bot</tt>.
-
-	<p>
-	The only bot included in GS 8.014 is <tt>pseudo</tt>, which stands for "pseudo learning".
+      <p>To enable Bot Assist in a 1PG, or to enable Bot Assist for Player 0 in a 2PG, you need to add to your trial list file a column named <tt>bot_assist</tt>, the value in which should indicate the name of the bot you want to use (typically, a wrapper over some AI algorithm). This should be chosen from the same set of bots that's also available for human-vs-bot games (i.e. adve and coop 2PGs with a bot partner), where the corresponding value is put in the column named <tt>bot</tt>.
 	
-	<p>Additionally, the trial list file may include columns containing the necessary parameter values for the bot in question. See the "Bot algo parameters" secton below.
+	<p>
+	  The only bot included in GS 8.041 is <tt>pseudo</tt>, which stands for "pseudo learning".
 
-	<P> These parameters also have the same syntax and semantics as those for the partner bot in 2PG.
+	<p>In a 2PG, you can also enable Bot Assist for Player 1; to do that put the name of the bot algorithm into the column named <tt>bot_assist1</tt>.
+
+	  <p>In a 2PG, Bot Assist service provided to the two players independently from each other; i.e. each of the players to whom you're providing bot assist is served by his own separately configured bot.  This means that you can choose to enable the bot for Player 0 only, for Player 1 only, or for both players. (Or for none of them, of course).
+	  
+	<p>Additionally, the trial list file may include columns containing the necessary parameter values for the bot in question. See the "Bot algo parameters" secton below.
 
 	<p>For an example, see the plan
   <tt>vm/colorVshape-bot-assist</tt>.
 
-	  <h2><a name="botAlgo">Bot algo parameters</a></h2>
+<h3>Multiple series</h3>
 
-	  As of ver. 8.025, the bot <tt>pseudo</tt> uses two columns in the parameter set, both optional:
+	<p>In an experiment involving playing multiple series of episodes (typically, with a different rule set in each series), the bot (or bots) are configured independently in each parameter set of your trial list file. (<a href="concepts.html#exp">A parameter set in GOHR controls one series of episodes</a>). Thus you can construct, for example, a trial list file for a 2PG, in which in the first series (series 0) only Player 0 has bot assist, and in the next series, only plyayer 1 does.
+
+
+	  <h3><a name="botAlgo">Bot algo parameters</a></h3>
+
+	  As of ver. 8.041, if <tt>bot_assist=pseudo</tt>, the bot uses two optional columns in the parameter set, controlling the behaviour of the bot:
 
 	  <ul>
 	    <li><tt>pseudo_halftime</tt> (default=8.0): a non-negative real value that specifies how fast the bot pretends to learn, i.e. how fast the simulated error declines. The value <tt>Infinity</tt> is allowed; it is interpreted as positive infinity, i.e. the bot never learning (the error rate never declining from its initial value).
 
-	    <li><tt>pseudo_init_error_rate</tt> (default=0.75): the initial error rate (
+	    <li><tt>pseudo_init_error_rate</tt> (default=0.75): the initial error rate.
 	  </ul>
 
+(In a 2PG, if <tt>bot_assist1=pseudo</tt>, the bot for Player 1 is controlled by the parameters named <tt>pseudo_halftime1</tt> and <tt>pseudo_init_error_rate1</tt>, whose semantics is analogous to those described above).
+	  
 	<p>At every step the bot computes the simulated error rate
 	  <div align="center">
 	    Q = Q<sub>0</sub> 2<sup>-t/h</sup> =
@@ -69,34 +78,24 @@ where t is the number of previous steps (the player's move attempts, excluding s
 	<p>Note also that the same two parameters are used for configuring the bot partner / bot opponent in two-player games pairing a human and a bot.
 
 
-	  <h3>In two-player games (2PG)</h3>
-
-<p>Since ver 8.035, Bot Assist is available in adversarial and cooperative 2PGs (A2PG and C2PG) as well. 
-	  
-<p>For an example of a 2PG experiment plan that offers Bot Assist to the players, see the plan <tt>vm/adve.colorVshape-bot-assist</tt>. In this plan, an additional column, named <tt>bot_assist_players</tt> exists. Its value may be either  1 or 2, indicating whether only one player (Player 0) will get Bot Assist or both will.
-	  
-<p>When both players receive Bot Assist service, two separate and independent Bot Assist instances are created, one for each player. At present, both of them use the same algorithm with the same parameters, but in the future it may be possible to add additional config parameters so that the two players will receive different kinds of assistance.
-
-  <h4>Example</h4>
-<p>Here's an example of an experiment plan:
+  <h2>Example</h2>
+<p>Here's an example of an experiment plan in 2PG
   
 <pre>
 action trial-lists/vm> more adve.colorVshape-bot-assist/colorVshape.csv 
-rule_id,max_boards,min_points,max_points,min_objects,max_objects,min_shapes,max_shapes,min_colors,max_colors,b,feedback_switches,stack_memory_depth,stack_memory_show_order,grid_memory_show_order,g
-ive_up_at,x2_likelihood,x4_likelihood,pregame,images,bot_assist,bot_assist_players,pseudo_halftime,pseudo_init_error_rate
-pk/shapeVcolor,2,2,10,4,6,2,4,2,4,1.5,free,10,TRUE,TRUE,0,100,10000,doubling,pk/shapeVcolor/*.png,pseudo,1,10,0.90
-FDCL/basic/cw,2,2,10,4,6,2,4,2,4,1.5,free,10,TRUE,TRUE,0,100,10000,doubling,,pseudo,2,10,0.90
-FDCL/basic/ccw,2,2,10,4,6,2,4,2,4,1.5,free,10,TRUE,TRUE,0,100,10000,doubling,,pseudo,,10,0.90
+rule_id,max_boards,min_points,max_points,min_objects,max_objects,min_shapes,max_shapes,min_colors,max_colors,b,feedback_switches,stack_memory_depth,stack_memory_show_order,grid_memory_show_order,give_up_at,x2_likelihood,x4_likelihood,pregame,images,bot_assist,pseudo_halftime,pseudo_init_error_rate,bot_assist1,pseudo_halftime1,pseudo_init_error_rate1
+pk/shapeVcolor,2,2,10,4,6,2,4,2,4,1.5,free,10,TRUE,TRUE,0,100,10000,doubling,pk/shapeVcolor/*.png,pseudo,10,0.90,,,
+FDCL/basic/cw,2,2,10,4,6,2,4,2,4,1.5,free,10,TRUE,TRUE,0,100,10000,doubling,,,,,pseudo,10,0.90
+FDCL/basic/ccw,2,2,10,4,6,2,4,2,4,1.5,free,10,TRUE,TRUE,0,100,10000,doubling,,,,,pseudo,10,0.90,pseudo,20,0.40
 </pre>
 
-As you can see, the parameter which controls the number of players receiving bot assistance is bot_assist_players, with the default value 1. Therefore, in the 1st and 3rd series of this trial list, only one player (PLayer 0) receives bot assistance, while in the 2nd series, both do.
-
+As you can see, in the first series, only Player 0 receives bot assistance, in the second series, only Player 1 does, and in the thrid series, both do.
   
 	  <strike>
 
 	   
 	   
-	  <h3>Older algorithm (used before ver 8.025)</h3>
+	  <h2>Older algorithm (used before ver 8.025)</h2>
 	<p>
 	  The one   column that the  bot <tt>pseudo</tt> uses is named <tt>pseudo_halftime</tt>; it contains an integer value that specifies how fast the bot pretends to learn. That is, at every step the bot can elect to either choose a perfectly random move (which may or may not be good), or choose some guaranteed good move (picking it from the set of all possible good moves). The probability of the first election is decaying exponetially; thus, when the bot starts with the rule set, it will choose a move randomly;  after  <tt>pseudo_halftime</tt> moves it's fifty-fifty chance whether the bot will choose your move from the set of all (good or bad) possible move attempts, or from the set of all possible good moves. 
 
@@ -127,9 +126,9 @@ p = (1-Q)+ Q*p(t) = 1 - Q *(1-p(t)).
 
 
 
-  <h3>Using a dynamic plan</h3>
+  <h2>Using a dynamic plan</h2>
 
-<p>You can take any 1PG experiment plan  (your "base plan") and use it for a play with bot assist. To do that:  go to the <a href="front-end-form.jsp">launch form</a>, scroll down to Form 2, and enter a <a href="concepts.html#sd">P:-type dynamic plan name</a> which will include the name of your "base plan" and the name of a modifier. For example, if your base plan is   <tt>FDCL/basic</tt>, and you want to use the modifier <tt>bot-assist/pseudo-10</tt> (whose file is in <tt>/opt/w2020/game-data/modifiers/bot-assist/pseudo-10.csv</tt>, you will enter 
+<p>You can take any 1PG experiment plan  (your "base plan") and use it for a 1PG play with bot assist. To do that:  go to the <a href="front-end-form.jsp">launch form</a>, scroll down to Form 2, and enter a <a href="concepts.html#sd">P:-type dynamic plan name</a> which will include the name of your "base plan" and the name of a modifier. For example, if your base plan is   <tt>FDCL/basic</tt>, and you want to use the modifier <tt>bot-assist/pseudo-10</tt> (whose file is in <tt>/opt/w2020/game-data/modifiers/bot-assist/pseudo-10.csv</tt>, you will enter 
   <strong><tt>P:FDCL/basic:bot-assist/pseudo-10</tt></strong> in the plan name box.
 
 <p>The way P:-type dynamic plan works, the columns from the modifier file (which, in this case, specify the bot type and parameters) are virtually pasted at the end of all lines of the base plan's trial list files, thus adding the bot assist feature to your base plan.

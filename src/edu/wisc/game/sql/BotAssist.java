@@ -5,7 +5,7 @@ import java.util.*;
 import java.text.*;
 
 import edu.wisc.game.util.*;
-import edu.wisc.game.pseudo.Pseudo;
+import edu.wisc.game.pseudo.*;
 import edu.wisc.game.rest.ParaSet;
 
 import edu.wisc.game.sql.Episode.Pick;
@@ -14,6 +14,13 @@ import edu.wisc.game.sql.Episode.Move;
 /** Data structures used for the Bot Assist functionality for a
     particular episode in Bot Assist games */
 class BotAssist {
+
+    final BotParams params;
+    
+    BotAssist(BotParams _params) {
+	params = _params;
+    }
+
     
 /** In Bot Assist games, the list of all move suggestions made by the bot in this episode */
 
@@ -48,7 +55,8 @@ class BotAssist {
 	@return the new suggestion text that can be sent to the player
     */
     String makeSuggestion(EpisodeInfo epi)	throws IOException {
-	Pseudo task = new Pseudo(epi.getPlayer(), epi, epi.getAttemptCnt());
+	// FIXME: once other bots exist, cast may fail.
+	Pseudo task = new Pseudo((Pseudo.Params)params, epi.getPlayer(), epi, epi.getAttemptCnt());
 	proposed = task.proposeMove();
 	chat = null;
 	if (proposed==null) {

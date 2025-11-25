@@ -93,9 +93,10 @@ public class MaintenanceThread extends Thread {
 		    if (p.is2PG() && !p.isBotGame()) {
 			cntAll2++;
 			if (p.getPartnerPlayerId() == null) continue; // not paired yet
+			if (p.xgetPartner()==null) continue; // just in case
 			PlayerInfo y = p;
-			//-- if it's a 2PG, all episodes are stored by player ZERO
-			if (p.xgetPartner()!=null && p.getPairState()==Pairing.State.ONE) {
+			//-- if it's a 2PG, all episodes are stored by Player ZERO
+			if (p.getPairState()==Pairing.State.ONE) {
 			    y = p.xgetPartner();
 			}	    
 			
@@ -117,7 +118,11 @@ public class MaintenanceThread extends Thread {
 			    // have the NEXT button, and both can press it any time
 			    continue;
 			}
-			if (p.getLastActivityTime().getTime() + timeout2pg *1000 < now.getTime()) {
+
+			long lastActive = Math.max(p.getLastActivityTime().getTime(),
+						   p.xgetPartner().getLastActivityTime().getTime());
+			
+			if (lastActive + timeout2pg *1000 < now.getTime()) {
 			    cntTimeout2 ++;
 			    Logging.info("MaintenanceThread: Detected a 2PG walk-away: " + playerId + ", lastActive=" + p.getLastActivityTime());
 			    p.abandon();
