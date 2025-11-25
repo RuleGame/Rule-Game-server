@@ -50,12 +50,14 @@ class BotAssist {
     
     /** Proposes one more move, adds it to the bot assist transcript,
 	and stores it in "proposed". Creates a human-readable chat
-	message to be sent to the player, saves it in this.chat, and returns it
+	message to be sent to the player, saves it in this.chat (so
+	that it can be retrieved with getChat() during subsequent /display
+	calls), and returns it
 
 	@return the new suggestion text that can be sent to the player
     */
     String makeSuggestion(EpisodeInfo epi)	throws IOException {
-	// FIXME: once other bots exist, cast may fail.
+	// FIXME: once other bot types are supported, this  cast may fail!
 	Pseudo task = new Pseudo((Pseudo.Params)params, epi.getPlayer(), epi, epi.getAttemptCnt());
 	proposed = task.proposeMove();
 	chat = null;

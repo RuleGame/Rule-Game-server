@@ -644,14 +644,28 @@ public class EpisodeInfo extends Episode {
 	    String chat = botAssist[move.mover].makeSuggestion(this);
 
 	    if (q.mustWait) {
-		if (chat!=null) chat = "[Not your turn yet] " + chat;
+		// Since 8.041, no chat message is sent to the
+		// now-inactive player until it's his turn again.
+		// That will be done by the appropriate /display
+		// call.
+
+		//if (chat!=null) chat = "[Not your turn yet] " + chat;
+		chat = null;
+		chatIsToBeSent[move.mover] = true;
+	    } else {
+		q.setBotAssistChat(chat);
+		chatIsToBeSent[move.mover] = false;
 	    }
-	    q.setBotAssistChat(chat);
 	}
 
 	lastCall.saveDisplay(q);	
 	return q;
     }
+
+    /** True if a chat message has been prepared for a player, 
+	but not sent yet (because it wasn't his turn) */
+    @Transient
+    private boolean[] chatIsToBeSent = new boolean[2];
 
     /** The key that can be printed next to reports to help understand them */
     public String reportKey() {
@@ -1056,8 +1070,11 @@ public class EpisodeInfo extends Episode {
     	return q;
     }
 
-    /** Checks if this game has bot assist, and send a chat bot message
-	when appropriate */
+    /** Checks if this game has bot assist, and, if appropriate,
+	obtains a chat  message from the BA and adds it to the 
+	ExtendedDisplay structure, so that it would be
+	sent to the client.
+    */
     // zzz
     private void supplyChatMessage(ExtendedDisplay q, int mover) {
 	if (!mySeries().hasBotAssist(mover)) return;
@@ -1065,24 +1082,28 @@ public class EpisodeInfo extends Episode {
 	if (q.mustWait) { // clear any chat message, if there is one
 	    q.setClearBotAssistChat(true);
 	} else if (getAttemptCnt(q.mover)==0) {
-	    // This is the /display call before the first move (of
-	    // this player) of an episode with bot assist. No
-	    // suggestions are made yet, so let's just send an inspirational
-	    // message
+	    // This is the /display call before the first move (of this
+	    // player) of an episode with bot assist. No suggestions
+	    // are made yet, so let's just send a welcome  message
 	    
 	    int k = q.getEpisodeNo();
-	    String chat = (k==0)?
-		"Starting the first episode of a new rule (Rule no. " + (seriesNo+1)+" . Please make your first move!":
-		"Starting episode no. " + k + " of Rule no. " + (seriesNo+1)+" . Please make your first move!";
+	    String chat = 
+		"Starting episode No. " + (k+1) + " of Rule No. " + (seriesNo+1)+". Please make your first move!";
 	    
 	    q.setBotAssistChat(chat);
+	    chatIsToBeSent[mover] = false;
 	} else  {
-	    String chat = botAssist[q.mover].getChat();
-	    // if (chat!=null) chat = "Reminding of my suggestion: " + chat;
-	    if (chat!=null) {
-		q.setBotAssistChat(chat);
-	    } else {
-		q.setClearBotAssistChat(true);
+
+	    if (chatIsToBeSent[mover]) {
+		
+		String chat = botAssist[q.mover].getChat();
+		// if (chat!=null) chat = "Reminding of my suggestion: " + chat;
+		if (chat!=null) {
+		    q.setBotAssistChat(chat);
+		} else {
+		    q.setClearBotAssistChat(true);
+		}
+		chatIsToBeSent[mover] = false;
 	    }
 	}		      
 	

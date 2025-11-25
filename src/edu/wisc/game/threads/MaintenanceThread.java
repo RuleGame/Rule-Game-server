@@ -124,7 +124,7 @@ public class MaintenanceThread extends Thread {
 			
 			if (lastActive + timeout2pg *1000 < now.getTime()) {
 			    cntTimeout2 ++;
-			    Logging.info("MaintenanceThread: Detected a 2PG walk-away: " + playerId + ", lastActive=" + p.getLastActivityTime());
+			    Logging.info("MaintenanceThread: Detected a 2PG walk-away: " + playerId + ", lastActive: this @ " + p.getLastActivityTime() + ", partner @ " + p.xgetPartner().getLastActivityTime());
 			    p.abandon();
 			}
 		    } else { // 1PG, or bot game
