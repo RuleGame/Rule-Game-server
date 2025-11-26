@@ -1081,6 +1081,16 @@ public class EpisodeInfo extends Episode {
 	
 	if (q.mustWait) { // clear any chat message, if there is one
 	    q.setClearBotAssistChat(true);
+	    return;
+	}
+
+	int fc = getMyFinishCode(mover);
+	if (fc==FINISH_CODE.WALKED_AWAY) {
+	    q.setClearBotAssistChat(true);
+	    q.setBotAssistChat("Your session has timed out due to inactivity");
+	} else if (fc==FINISH_CODE.ABANDONED) {
+	    q.setClearBotAssistChat(true);
+	    q.setBotAssistChat("Unfortunately, your partner has unexpectedly left the game");
 	} else if (getAttemptCnt(q.mover)==0) {
 	    // This is the /display call before the first move (of this
 	    // player) of an episode with bot assist. No suggestions
