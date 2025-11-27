@@ -915,6 +915,9 @@ public class PlayerInfo {
 		if (ser.size()>0) {
 		    epi.setLastStretch(ser.episodes.lastElement().getLastStretch());
 		    epi.setLastR(ser.episodes.lastElement().getLastR());
+		    // Do it for Player 1 too (in case its A2PG; otherwise, it's just 0) (fixed in ver 8.043)
+		    epi.setLastStretch1(ser.episodes.lastElement().getLastStretch1());
+		    epi.setLastR1(ser.episodes.lastElement().getLastR1());
 		}
 		
 		ser.episodes.add(epi);

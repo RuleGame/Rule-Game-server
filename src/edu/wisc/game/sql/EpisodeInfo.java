@@ -202,15 +202,15 @@ public class EpisodeInfo extends Episode {
     public void setLastStretch1(int x) { lastStretch[1] = x; }
 
     
-    /** Bayesian-based intervention: the R product for the last stretch of good moves */
-    //double lastR;
+    /** Bayesian-based intervention: the R product for the last
+     stretch of good moves. The value is normally stored in lastR[0],
+     except for A2PG, where the two players use separate counts. */
     private double lastR[] = new double[2];
     @Access(AccessType.PROPERTY)
     public double getLastR() { return lastR[0]; }
     //@XmlElement
     public void setLastR(double x) { lastR[0] = x; }
 
-    //double lastR1;
     /** For Player 1, in adversarial games only */
     @Access(AccessType.PROPERTY)
     public double getLastR1() { return lastR[1]; }
@@ -304,15 +304,6 @@ public class EpisodeInfo extends Episode {
 	return epi;	    	      
     }
 
-
-    /** An episode deserves a bonus if it was part of the bonus series,
-	has been completed, and was completed sufficiently quickly */
-    //    boolean deservesBonus() {
-    //	bonusSuccessful = bonusSuccessful ||
-    //	    (bonus && cleared && movesLeftToStayInBonus()>=0);
-    //	return bonusSuccessful;
-    //    }
-
     /** Our GUI tells the player where all movable pieces are, unless the 
 	para set mandates "free" mode.
      */
@@ -329,18 +320,8 @@ public class EpisodeInfo extends Episode {
 	if (!para.isFeedbackSwitchesFree() || para.pickCostIsInt()) { // all int
 	    x = (int)x;
 	}
-	return x;
-	
-	//	return bonus?
-	//	    (int)(getNPiecesStart()*clearingThreshold) -  attemptCnt :
-	//	    null;
+	return x;	
     }
-
-    /** An episode was part of a bonus series, but has permanently failed to earn the
-	bonus */
-    //    boolean failedBonus() {
-    //	return bonus && (givenUp || stalemate || lost || cleared && !deservesBonus());
-    //    }
 
     /** An allowance for rounding */
     private static final double eps = 1e-6;
@@ -1003,7 +984,7 @@ public class EpisodeInfo extends Episode {
         public int getFactorPromised() { return factorPromised; }
 
 	/** Sets a few fields related to the DOUBLING or LIKELIHOOD incentive scheme.
-	    @param mj Whose record do we look at? (0 for 1PG or coop 2PG; actual player for adversarial 2PG)
+	    @param mj Whose record do we look at? (0 for 1PG or C2PG; actual player for A2PG)
 	 */
 	private void incentive2(int mj) {	    
 	    incentive = xgetIncentive();
