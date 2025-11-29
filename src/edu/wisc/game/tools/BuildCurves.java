@@ -202,8 +202,9 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    //processor.printCurveData();
 
 	    processor.doCurves();
-	    processor.doPairCurves();
-	    
+	    if (p.doPairs) {
+		processor.doPairCurves();
+	    }
 	    
 	    
 	} finally {
@@ -463,15 +464,36 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 
 	<li>dashed before, and solid after the (m*,w*) point for people who do meet the criterion. Actually, since we are plotting GOOD moves, not ALL moves, I should not call it m*.  Better is to call the axis something like c - for correct moves, And the criterion point becomes (c".w*). 
 	</ul>
+
+	<pre>
+	Part 1. Can there be an "normalized to start of good runs" curve for each different player that is on the C vs. W plot?  
+
+sumW=0;
+sumE=0;
+sumC=0;
+C=0; 
+plot(0,0);
+at each move that is either  correct or wrong (not ignored)
+  if wrong: sumW+=1
+      sumE+=(1-p)  
+      no point on plot
+  if correct: sumC +=1
+     if preceding move was correct
+                  plot  (sumC,y)
+     if preceding move was wrong
+                 y=(sumW/sumE)*sumC
+                 plot(sumC,y)
+     if this is the first move, plot (1,0). 
+</pre>
     */
     private static Curve mkCurve(MwSeries ser, CurveMode mode, CurveArgMode argMode, double maxX) {
 
-	int n = (argMode ==  CurveArgMode.C)? findMaxC(ser):  ser.moveInfo.length;
+	int n = (argMode == CurveArgMode.C)? findMaxC(ser):  ser.moveInfo.length;
 	
 	double [] yy = new double[n+1];
 	yy[0] = 0;
-	double sumE=0, sumZP=0, recentSumE=0, recentSumZP=0,recentSumP=0,
-	    omega=0;
+	double sumW=0, sumZP=0, sumZP1=0, recentSumW=0, recentSumZP=0,recentSumP=0,
+	    omega=0, aaid=0;
 	int j=1;
 	int q=0, lastQ=0;
 	for(int m=0; m<ser.moveInfo.length; m++) {
@@ -481,10 +503,14 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    recentSumZP += 1-mi.p0;
 	    recentSumP += mi.p0;
 	    
-	    if (!mi.success)	{
-		sumE++;
-		recentSumE++;
-	    } else		q++;
+	    if (mi.success)	{
+		q++;
+	    } else {
+		sumW++;
+		recentSumW++;
+		sumZP1 += 1-mi.p0;
+		aaid = (sumW/sumZP1) * q;
+	    } 
 
 	    boolean omegaPoint = (argMode==CurveArgMode.M) || (q>lastQ);
 	    if (omegaPoint) {
@@ -493,25 +519,29 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		    recentSumZP=0.5;
 		    //throw new IllegalArgumentException("sumZP=0, mi="+mi);
 		}
-		omega += recentSumE * recentSumP/recentSumZP;
+		omega += recentSumW * recentSumP/recentSumZP;
 		recentSumZP=0;
 		recentSumP=0;
-		recentSumE=0;				
+		recentSumW=0;				
 	    }
 
 
-	    double aai = (sumZP==0)? 0: sumE/sumZP;
+	    double aai = (sumZP==0)? 0: sumW/sumZP;
+	    double aaic = (sumZP==0)? q : (sumW/sumZP) * q;
+	    
 
 
 	    
 	    double y;
-	    if (mode==CurveMode.W) 	    y = sumE;
+	    if (mode==CurveMode.W) 	    y = sumW;
 	    else if (mode==CurveMode.OMEGA) 	    y = omega;
 	    else if (mode==CurveMode.AAI) {
-		//System.out.println("DEBUG: m=" +m+", sumE/sumZP=" + sumE+"/"+sumZP+"=" + aai);
+		//System.out.println("DEBUG: m=" +m+", sumW/sumZP=" + sumW+"/"+sumZP+"=" + aai);
 		y = aai;
 	    }
 	    else if (mode==CurveMode.AAIB) 	    y = aai * (m+1);
+	    else if (mode==CurveMode.AAIC) 	    y = aaic;
+	    else if (mode==CurveMode.AAID) 	    y = aaid;
 	    else throw new IllegalArgumentException("curveMode=" + mode);
 
 	    if (argMode ==  CurveArgMode.M) {	    

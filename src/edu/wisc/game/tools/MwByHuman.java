@@ -23,7 +23,11 @@ import edu.wisc.game.tools.MwSeries.MoveInfo;
 import edu.wisc.game.sql.ReplayedEpisode.RandomPlayer;
 
 /** Ranking rule sets by the ease of learning by human players. As
- * requested by PK, 2022-12-22.
+    requested by PK, 2022-12-22.
+
+    <p>This is also the base class from which BuildCurves derives, so
+    it has some stuff (mostly related to parsing command line args)
+    need only for the latter.
  */
 public class MwByHuman extends AnalyzeTranscripts {
 
@@ -109,6 +113,9 @@ public class MwByHuman extends AnalyzeTranscripts {
 	String exportTo = null;
 	Vector<String> importFrom = new Vector<>();
 
+	// BuildCurves: do we draw pair plots?
+	boolean doPairs = false;
+	
 	String config = null;
 	
 	RunParams(String[] argv) throws IOException, IllegalInputException {
@@ -131,6 +138,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 		useMDagger = true;
 	    } else if (j+1< argv.length && a.equals("-random")) {
 		doRandom = Boolean.parseBoolean( argv[++j] );
+	    } else if (j+1< argv.length && a.equals("-pairs")) {
+		doPairs = Boolean.parseBoolean( argv[++j] );
 	    } else if (j+1< argv.length && a.equals("-p0")) {
 		randomPlayerModel = ReplayedEpisode.RandomPlayer.valueOf1(argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-config")) {
@@ -435,6 +444,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 	AAI,
 	// AAI * m
 	AAIB,
+	AAIC, // simplification of AAID
+	AAID, // Paul's Nov 19 proposal
 	OMEGA
        
     }
