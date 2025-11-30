@@ -300,13 +300,18 @@ https://www-users.york.ac.uk/~mb55/intro/cicent.htm
     }
 
 
-    /** 
+    /** Draws several curves, optionally adjusted with the "no-overlap" feature
+	@param noOverlap If true, turn on the "no-overlap" adjustment, so
+	that overlapping (coinciding) horizontal segments of two or several
+	curves would be slightly shifted relative to each other (stacked one
+	on top of the other), so that a bundle of coinciding curve segments
+	would be visually different from just a single curve.
      */
     static public String mkSvgNoOverlap( Curve[] curves,
-				  int x0, int y0, double xFactor, double yFactor,
-				  String color, int strokWidth) {
+					 int x0, int y0, double xFactor, double yFactor,
+					 String color, int strokWidth, boolean noOverlap) {
 
-	NoOverlap noo = new NoOverlap();
+	NoOverlap noo = (noOverlap? new NoOverlap() : null);
 	Vector<String> v = new Vector<>();
 	for(Curve cu: curves) {	    
 	    v.add( cu.mkSvgPathElement2(x0,y0,xFactor, yFactor, color, strokWidth, noo));

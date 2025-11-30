@@ -103,7 +103,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	double targetR = 0;
 	double defaultMStar=300;
 	PrecMode precMode = PrecMode.Naive;
-	CurveMode curveMode = CurveMode.AAIB;
+	CurveMode curveMode = CurveMode.AAIC;
 	CurveArgMode curveArgMode = CurveArgMode.C;
 	MedianMode medianMode = MedianMode.Real;
 	boolean useMDagger = false;
@@ -444,8 +444,9 @@ public class MwByHuman extends AnalyzeTranscripts {
 	AAI,
 	// AAI * m
 	AAIB,
-	AAIC, // simplification of AAID
+	AAIC, // simplification of AAID (like AAIE, but with no freezing)
 	AAID, // Paul's Nov 19 proposal
+	AAIE, // based on Paul's Nov 19 proposal, but with regularized sumZP
 	OMEGA
        
     }

@@ -6,7 +6,7 @@
 
 <h1>Cumulative curves</h1>
 
-<div align="center"><em>Updated 2025-11-17, for Game Server 8.039</em></div>
+<div align="center"><em>Updated 2025-11-29, for Game Server 8.044</em></div>
 
 <p>The script <tt>analyze-transcripts-curves.sh</tt> draws cumulative error curves for human players sharing a particular experience. It pulls the data for a group of players from the data store (the SQL database and transcript files) and produces SVG images displaying the individual players' cumulative errors curves and their median curve.
 
@@ -24,22 +24,79 @@ Support for the -export and -import options has the same form as well, although 
 
   <p>In all formulas, <em>m</em> is the move count (more precisely, the number of successful and failed moves and failed picks) since the beginning of the series. (Successful picks are entirely ignored, as if we deem them to be merely "slips of the fingers", or actions of a player who does not understand what he needs to do). <em>q</em> is the number of game pieces removed so far in the series, i.e. the number of successful moves.
 
-<p> <em>yVar</em> specifies the variable plotted on the vertical axis. The possible values are:
+<p><strong> <em>yVar</em> specifies the variable plotted on the vertical axis.</strong> The possible values are:
   <ul>
     <li><tt>W</tt> = Raw error count, W(M)=Sum_m(e_m). One would expect E(m) for a random player to increase roughly linearly with <em>m</em>, and for successful learner, to stabilize at some value (the total number of errors the player makes before he fully learns the rules).
     <li><tt>AAI</tt> = Error count normalized error prob, AAI = Sum_m(e_m)/Sum_m(1-p0(m)).  One would expect the average AAI(m) for a grouop of random players to stabilize around 1.0,  and for a successful learner, to decrease as const/m.
     <li><tt>AAIB</tt> =  AAI * m. One would expect the average E(m) for a large group of random players to be equal to <em>m</em>, and for a successful learner, to stabilize at some value (which is the total number of errors the player makes before he fully learns the rules, divided by the "average error rate of a random player").
+    <li><tt>AAIC</tt> = A different type of error count normalization, AAIC = AAI * C, where C is the number of good moves so far (i.e. the number of game pieces that have been removed). This can be viewed as a "regularization" of Paul's AAID metric.
+      An average AAIC(C) curve for a group of random players behaves much like y=x. <!-- and      for a successful learner??? -->
+      
+    <li><tt>AAID</tt> = Paul's proposal, a bit more complicated than AAIC. (See below).
+    <li><tt>AAIE</tt> = like AAIC, but with the y value "frozen" for the duration of each correct-move streak
     <li><tt>ALL</tt> = produce multiple plots, one for each of the above modes
   </ul>
 
-<p> <em>xVar</em> specifies the variable plotted on the horizontal axis. The possible values are:
+  <p>AAID (proposed by Paul on 2025-11-19): <em>Can there be an "normalized to start of good runs" curve for each different player that is on the C vs. W plot?  </em>
+  <pre>
+sumW=0;
+sumE=0;
+sumC=0;
+C=0; 
+plot(0,0);
+at each move that is either  correct or wrong (not ignored)
+  if wrong: sumW+=1
+      sumE+=(1-p)  
+      no point on plot
+  if correct: sumC +=1
+     if preceding move was correct
+                  plot  (sumC,y)
+     if preceding move was wrong
+                 y=(sumW/sumE)*sumC
+                 plot(sumC,y)
+     if this is the first move, plot (1,0). 
+  </pre>
+  <em>
+  <p>
+  I think if the player moves randomly, this plot will be around the 45 degree line, whether the rule is hard or easy. 
+
+  <p>
+If the player starts a run of correct moves, the y-value will become flat, and will stay flat until a 
+wrong moves. 
+
+  <p>
+  if the player makes a wrong move, the trace of errors will be smoothed, by averaging against the whole run, from the start. I think but am not sure, that this approach will not produce strange dips at the end of a run of correct moves.
+  </em>
+
+  <p>AAIE is very similar to AAID, except that sumE includes (1-p) for all moves, not just the incorrect ones. Thus,
+  <pre>
+sumW=0;
+sumE=0;
+sumC=0;
+C=0; 
+plot(0,0);
+at each move that is either  correct or wrong (not ignored)
+  sumE+=(1-p)  
+  if wrong: sumW+=1
+      no point on plot
+  if correct: sumC +=1
+     if preceding move was correct
+                  plot  (sumC,y)
+     if preceding move was wrong
+                 y=(sumW/sumE)*sumC
+                 plot(sumC,y)
+     if this is the first move, plot (1,0). 
+  </pre>
+    
+  
+<p><strong>  <em>xVar</em> specifies the variable plotted on the horizontal axis.</strong>  The possible values are:
   <ul>
     <li><tt>M</tt> = <em>m</em>,  the move count (more precisely, the number of successful and failed moves and failed picks) since the beginning of the series.
     <li><tt>C</tt> = <em>c</em>,  the number of game pieces removed by the player since the beginning of the series. (This is also equal to the number of successful ["correct"] moves).
     <li><tt>ALL</tt> = produce multiple plots, one for each of the above modes
   </ul>
 
-<p><strong>The default value of curveMode is AAIB:C, meaning plotting AAIB as a function of C.</strong></p>
+<p><strong>The default value of curveMode is AAIC:C, meaning plotting AAIC as a function of C.</strong></p>
   
 <p>An advantage of using C instead of M as the variable on the horizontal axis is that in a game where most players clear all boards presented to them (i.e. no incentive scheme, and no "give up" option), all curves will end at roughly the same value of C, so a median would be much better defined than it would in a plot where the variable being plotted is plotted with respect to M.
 
@@ -50,12 +107,32 @@ Support for the -export and -import options has the same form as well, although 
     <p>The tool creates directory <tt>out</tt>; in it, subdirectories corresponding to display modes (<tt>W_M</tt> etc). Within each of them, plots are written as individual SVG files, each file name corresponding to the identifier of the "experience" reflected therein. SDepedning on the -precMode, that may be just the name of the rule set, or a combination of strings including the preceding rule sets. In the latter case, the components of the file names are separated by dots (because using semicolons would not be appropriate in file names).
 
     
-      <h2>Identifying learners. Extrapolating</h2>
+      <h2>Identifying learners. Behavior of learners' curves. Extrapolating</h2>
 
       <p>The plotting tool uses the same criterion as the MWH tool (-targetR or -targetStreak) to identify "learners", i.e. players who  appear to have "mastered the rules" and have demonstrated this mastery by making a sequence of correct moves. The two options (-targetR or -targetStreak) correspond to Paul's two incentive schemes (LIKELIHOOD or DOUBLING, respectively); if the data you analyze have come from an experiment in which one of these two incentive schemes was employed, you may want to use the corresponding option, with the appropriate value (as per the experiment's parameter sets), so that the tool's identification of the players are learners or non-learners matched the identification of them as such made in real time by the Game Server.
 
-      <p>In E and AAIB plots, the curves for the identified "learners" can be easily identified, because on the graph the curve is extrapolated, by a dotted horizontal line, beyond the point where the player stopped playing. (The dotted line shows how the curve would hypothetically continued if the player kept playing, without making any more errors).  In the AAI plots, there is no extrapolations, because I did not bother drawing hyperboles (for AAIB(m)=const/m).
+		<h3>W, AAIB</h3>
+      <p>In W and AAIB plots, the curves for the identified "learners" can be easily identified, because on the graph the curve is extrapolated, by a solid horizontal line, beyond the point where the player stopped playing.
 
+      <p>
+	The solid line shows how the curve would hypothetically continued if the player kept playing, without making any more errors than Wstar, the number of errors he had made by the point of reaching mastery. The position of the solid line can be theoretically computed as  W=Wstar, or (for a game with a constant p for all moves), AAIB=Wstar/(1-p).
+
+	<p>
+	In the AAI plots, there is no extrapolations, because I did not bother drawing hyperboles (for AAI(m)=const/m).
+
+	<h3>AAID, AAIE</h3>
+      <p>In AAID and AAIE plots, the curve for a learner becomes a horizontal line after the last error has been made, because of the design of these metrics: the "freeze" the metric value during an error-free stretch. (Of course, should even a single error happen later, the metric will make a huge jump forward, more or less toward the hyperbole of AAIC). Thus on the plots we also draw horizontal extrapolation lines.
+
+	<h3>AAIC</h3>
+      <p>For AAIC, the AAIC_C curve of a learner, after the player has mastered the rule, is either a hyperbole (for a game with constant p for all moves), or an approximation of such a hyperbole. Consider a game with a constant p, e.g. quadNearby, where the probability of a good move for a COMPLETELY_RANDOM player is p=0.25. One can show that for a perfect learner the post-mastery curve is
+	<div align="center">
+	  AAIC(C) = (1/(1-p))*W*C/(C+W) = (W/(1-p)) * (1 - W/(W+C)),
+	</div>
+	where W is Wstar, i.e. the number of wrong moves the player had made before achieving mastery. This is a section of hyperbole, that passes through (0,0) and runs upward, approaching  the horizontal asymptote AAIC = Wstar /(1-p), which for quadNearby (and, very nearly, foorr cw or ccw) is (4/3)*Wstar. (Incidentally, this is also the value which AAIB has for a learner once he has achieved mastery).
+	
+	<p>For a game where p varies from one move to the next, the "future behavior" of a curve for a perfect learner (after he has stopped actually playing) is, in general, not perfectly predictable, since for some more complicated games their randomly generated boards may come with different distribution of p. Still, it stands to reason that if the player kept playing (without making more errors), his AAIC curve would 
+
+	
   <h2>Specifying the median plotting mode</h2>
 
   <ul>
@@ -137,6 +214,13 @@ Theoretical discussion of random lines:</h3>
 <li> AAIB_M: theoretically, one should expect the average of AAIB = M for a random player (since the same random player model is used in the p0 computation, and in the random play simulation!) on all rule sets, and the displayed curves are indeed fairly close to that. In some cases the displayed curve is a bit higher than expected, and I would not mind looking deeper into that.
 
 <li> AAIB_C: theoretically, that should approximate the curve of M vs C (all moves against correct moves). Since M = C+W, this is basically the addition of the curve in W_C  and the y=x curve. E.g., for cm/sm/ccw etc, we get M=4*C, and that's what the random curves show. For ordL1 and its derivative rules sets, we have the expected sequence of upside-down parabolas.
+
+<li>AAIC_C: very good approximation of the AAIC=M straight line
+
+<li>AAID_C, AAIE_C: a bit of  corruption of the above, primarily due to   the step-wise character of each player's curve.
+
+  
+  
   </ul>
   
        </body>

@@ -493,9 +493,9 @@ at each move that is either  correct or wrong (not ignored)
 	double [] yy = new double[n+1];
 	yy[0] = 0;
 	double sumW=0, sumZP=0, sumZP1=0, recentSumW=0, recentSumZP=0,recentSumP=0,
-	    omega=0, aaid=0;
+	    omega=0, aaid=0, aaie = 0;
 	int j=1;
-	int q=0, lastQ=0;
+	int q=0, lastQ=0; // count of correct moves (C, in Paul's notation)
 	for(int m=0; m<ser.moveInfo.length; m++) {
 	    MoveInfo mi = ser.moveInfo[m];
 
@@ -510,6 +510,7 @@ at each move that is either  correct or wrong (not ignored)
 		recentSumW++;
 		sumZP1 += 1-mi.p0;
 		aaid = (sumW/sumZP1) * q;
+		aaie = (sumW/sumZP) * q;
 	    } 
 
 	    boolean omegaPoint = (argMode==CurveArgMode.M) || (q>lastQ);
@@ -527,8 +528,8 @@ at each move that is either  correct or wrong (not ignored)
 
 
 	    double aai = (sumZP==0)? 0: sumW/sumZP;
-	    double aaic = (sumZP==0)? q : (sumW/sumZP) * q;
-	    
+	    double aaic = aai * q;
+	    double aaib = aai * (m+1);
 
 
 	    
@@ -539,26 +540,32 @@ at each move that is either  correct or wrong (not ignored)
 		//System.out.println("DEBUG: m=" +m+", sumW/sumZP=" + sumW+"/"+sumZP+"=" + aai);
 		y = aai;
 	    }
-	    else if (mode==CurveMode.AAIB) 	    y = aai * (m+1);
+	    else if (mode==CurveMode.AAIB) 	    y = aaib;
 	    else if (mode==CurveMode.AAIC) 	    y = aaic;
 	    else if (mode==CurveMode.AAID) 	    y = aaid;
+	    else if (mode==CurveMode.AAIE) 	    y = aaie;
 	    else throw new IllegalArgumentException("curveMode=" + mode);
 
 	    if (argMode ==  CurveArgMode.M) {	    
-		yy[j++] = y;
+		yy[m+1] = y;
 	    } else if (argMode ==  CurveArgMode.C) {
-		if (q>lastQ) yy[j++] = y;
+		if (q>lastQ) yy[q] = y;
 		lastQ = q;
 	    } else throw new IllegalArgumentException("curveArgMode=" + argMode);
 	}
-	if (j!= n+1)  {
-	    System.out.println("ERROR here: " + ser.toCsv());
-	    System.out.println(Util.joinNonBlank(" ", ser.moveInfo));
-	    System.out.println("yy[] size mismatch for mode=" + mode + ":" + argMode+": expect " + (n+1) +", found " + j);
-	    //System.exit(1);
-	    throw new IllegalArgumentException("yy[] size mismatch for mode=" + mode + ":" + argMode+": expect " + (n+1) +", found " + j);
+
+	if (argMode ==  CurveArgMode.C) {
+	    if (q!= n)  {
+		System.out.println("ERROR here: " + ser.toCsv());
+		System.out.println(Util.joinNonBlank(" ", ser.moveInfo));
+		String msg = "yy[] size mismatch for mode=" + mode + ":" + argMode+": expect n=" + (n) +", found q=" + q;
+		System.out.println(msg);
+		//System.exit(1);
+		throw new IllegalArgumentException(msg);
+	    }
 	}
-	Double extraX = (mode==CurveMode.W || mode==CurveMode.AAIB|| mode==CurveMode.OMEGA
+	Double extraX = (mode==CurveMode.W || mode==CurveMode.AAIB|| mode==CurveMode.AAID|| mode==CurveMode.AAIE||
+			 mode==CurveMode.OMEGA
 			 ) && ser.getLearned()? maxX: null;
 	//System.out.println("call Curve " + mode);
 	Curve c =  new Curve(yy, extraX);
@@ -712,7 +719,9 @@ at each move that is either  correct or wrong (not ignored)
 				   (needShading? colors[3]: colors[0]), needShading, sequenceNumber * 8));
 
 	    System.out.println("addPlot: mkSvg");
-	    v.add( Curve.mkSvgNoOverlap(curves, 0, H, xFactor, yFactor, colors[0],1));
+	    // FIXME: let's make this command-line controllable!
+	    final boolean noOverlap = true;
+	    v.add( Curve.mkSvgNoOverlap(curves, 0, H, xFactor, yFactor, colors[0],1, noOverlap));
 
 	    System.out.println("addPlot: mkMedian");
 	    v.add( Curve.mkMedianSvgPathElement(curves, 0,H,xFactor, yFactor, colors[1],3, null, null, null, useExtra));
