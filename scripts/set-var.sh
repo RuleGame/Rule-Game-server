@@ -26,8 +26,3 @@ else
     echo "Don't know where to find JAR files; no game.jar found in either $h/lib or $weblib"
     exit
 endif
-
-
-
-
-  

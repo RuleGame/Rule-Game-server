@@ -77,6 +77,7 @@ class MakeMwSeries {
 
 	double rValues[] = p0andR.rValues;
 	double p0[] = p0andR.p0;
+	double mu[] = p0andR.mu;
 	
 	// this players successes and failures on the rules he's done
 	EpisodeHandle eh = includedEpisodes.firstElement();
@@ -151,7 +152,7 @@ class MakeMwSeries {
 		
 		ser.totalMoves++;
 		if (needCurves) {
-		    MoveInfo mi = new MoveInfo(e.code==CODE.ACCEPT, p0[k]);
+		    MoveInfo mi = new MoveInfo(e.code==CODE.ACCEPT, p0[k], mu[k]);
 		    vmi.add(mi);
 		}
 		    
@@ -211,7 +212,7 @@ class MakeMwSeries {
 
 		ser.totalMoves++;
 		if (needCurves) {
-		    MoveInfo mi = new MoveInfo(e.code==CODE.ACCEPT, p0[k]);
+		    MoveInfo mi = new MoveInfo(e.code==CODE.ACCEPT, p0[k],  mu[k]);
 		    vmi.add(mi);
 		}
 		

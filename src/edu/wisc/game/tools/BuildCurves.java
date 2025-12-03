@@ -245,8 +245,8 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    for(CurveMode mode: modes) {
 		if (mode==CurveMode.ALL) continue;
 
-		int maxX = (argMode==CurveArgMode.C)? roundUp(findMaxC(savedMws)):  (int)defaultMStar;
-
+		int maxX = (argMode==CurveArgMode.C)? findMaxC(savedMws):  findMaxM(savedMws);  
+		
 		DataMap h = prepMaps(savedMws, precMode);
 		h.mkCurves(mode, argMode, maxX);
 		DataMap hr = doRandom? prepMaps(randomMws, PrecMode.Ignore): null;
@@ -286,8 +286,8 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		if (mode==CurveMode.ALL) continue;
 
 		File dm = new File(d, mode.toString() + "_" + argMode);
-		int maxX = (argMode==CurveArgMode.C)? roundUp(findMaxC(savedMws)):  (int)defaultMStar;
-
+		int maxX = (argMode==CurveArgMode.C)? findMaxC(savedMws):  findMaxM(savedMws);  
+		
 		DataMap h = prepMaps(savedMws, precMode);
 		h.mkCurves(mode, argMode, maxX);
 		DataMap hr = doRandom? prepMaps(randomMws, PrecMode.Ignore): null;
@@ -335,7 +335,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	String plot;
 	Curve[] curves = {};
 	
-	Curve[] mkCurves(CurveMode mode, CurveArgMode argMode, double maxX) {
+	Curve[] mkCurves(CurveMode mode, CurveArgMode argMode, int maxX) {
 	    curves = new Curve[size()];
 	    int k = 0;
 	    for(MwSeries ser: this) {
@@ -347,7 +347,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 
 
     static class DataMap extends 	HashMap<String, OneKey> {
-	void mkCurves(CurveMode mode, CurveArgMode argMode, double maxX) {
+	void mkCurves(CurveMode mode, CurveArgMode argMode, int maxX) {
 	    for(String key: keySet()) {
 		OneKey z = get(key);
 		z.mkCurves( mode, argMode, maxX);
@@ -373,9 +373,9 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
     /** Produces a plot for each key that appears in savedMws.
 	@return a HashMap that maps each key to a OneKey structure that includes the corresponding plot
      */
-    private DataMap  doPlots(DataMap h, DataMap hr, CurveMode mode, CurveArgMode argMode, double maxX) {
+    private DataMap  doPlots(DataMap h, DataMap hr, CurveMode mode, CurveArgMode argMode, int maxX) {
 	//	String [] colors = {"green", "red", "blue"};
-	String [] colors = {"green", "red", "blue", "lightgrey"};
+	String [] colors = {"green", "red", "blue", "grey"};
 
 	int H=600;
 	int W=600;
@@ -405,7 +405,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
     }
 
     /** @param keys Two keys. Both curve sets are to be put into the same plot. */
-    private String  doDoublePlot(DataMap h, DataMap hr,CurveMode mode, CurveArgMode argMode, double maxX, String keys[]) {
+    private String  doDoublePlot(DataMap h, DataMap hr,CurveMode mode, CurveArgMode argMode, int maxX, String keys[]) {
 	String [][] colors = {{"red", "red", "red", null},
 			      {"blue", "blue", "blue", null}};
 	
@@ -437,6 +437,17 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 
 
     
+    private static int findMaxM(Vector<MwSeries> savedMws) {
+	int n = 0;
+	for(MwSeries ser: savedMws) {
+	    int m = ser.moveInfo.length;
+	    if (m>n) {
+		n = m;
+	    }
+	}
+	return n;
+    }
+
     private static int findMaxC(Vector<MwSeries> savedMws) {
 	int n = 0;
 	for(MwSeries ser: savedMws) {
@@ -465,6 +476,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	<li>dashed before, and solid after the (m*,w*) point for people who do meet the criterion. Actually, since we are plotting GOOD moves, not ALL moves, I should not call it m*.  Better is to call the axis something like c - for correct moves, And the criterion point becomes (c".w*). 
 	</ul>
 
+	<p>Paul's method AAID:
 	<pre>
 	Part 1. Can there be an "normalized to start of good runs" curve for each different player that is on the C vs. W plot?  
 
@@ -486,7 +498,7 @@ at each move that is either  correct or wrong (not ignored)
      if this is the first move, plot (1,0). 
 </pre>
     */
-    private static Curve mkCurve(MwSeries ser, CurveMode mode, CurveArgMode argMode, double maxX) {
+    private static Curve mkCurve(MwSeries ser, CurveMode mode, CurveArgMode argMode, int maxX) {
 
 	int n = (argMode == CurveArgMode.C)? findMaxC(ser):  ser.moveInfo.length;
 	
@@ -494,14 +506,22 @@ at each move that is either  correct or wrong (not ignored)
 	yy[0] = 0;
 	double sumW=0, sumZP=0, sumZP1=0, recentSumW=0, recentSumZP=0,recentSumP=0,
 	    omega=0, aaid=0, aaie = 0;
-	int j=1;
+	double sumMu1 = 0; // sum over C, not over M! Only sum mu from the first move after the board changes
+	//int j=1;
 	int q=0, lastQ=0; // count of correct moves (C, in Paul's notation)
+
 	for(int m=0; m<ser.moveInfo.length; m++) {
 	    MoveInfo mi = ser.moveInfo[m];
 
 	    sumZP += 1-mi.p0;
 	    recentSumZP += 1-mi.p0;
 	    recentSumP += mi.p0;
+
+	    if (m==0 || ser.moveInfo[m-1].success) {
+		// new board, new mu
+		sumMu1 += mi.mu-1;
+	    }
+
 	    
 	    if (mi.success)	{
 		q++;
@@ -513,6 +533,8 @@ at each move that is either  correct or wrong (not ignored)
 		aaie = (sumW/sumZP) * q;
 	    } 
 
+
+	    
 	    boolean omegaPoint = (argMode==CurveArgMode.M) || (q>lastQ);
 	    if (omegaPoint) {
 		if (recentSumZP==0) {
@@ -528,8 +550,9 @@ at each move that is either  correct or wrong (not ignored)
 
 
 	    double aai = (sumZP==0)? 0: sumW/sumZP;
-	    double aaic = aai * q;
 	    double aaib = aai * (m+1);
+	    double aaic = aai * q;
+	    double aaig = (sumMu1==0)? 0: (sumW/sumMu1) * q;
 
 
 	    
@@ -544,6 +567,7 @@ at each move that is either  correct or wrong (not ignored)
 	    else if (mode==CurveMode.AAIC) 	    y = aaic;
 	    else if (mode==CurveMode.AAID) 	    y = aaid;
 	    else if (mode==CurveMode.AAIE) 	    y = aaie;
+	    else if (mode==CurveMode.AAIG) 	    y = aaig;
 	    else throw new IllegalArgumentException("curveMode=" + mode);
 
 	    if (argMode ==  CurveArgMode.M) {	    
@@ -564,12 +588,42 @@ at each move that is either  correct or wrong (not ignored)
 		throw new IllegalArgumentException(msg);
 	    }
 	}
-	Double extraX = (mode==CurveMode.W || mode==CurveMode.AAIB|| mode==CurveMode.AAID|| mode==CurveMode.AAIE||
-			 mode==CurveMode.OMEGA
-			 ) && ser.getLearned()? maxX: null;
-	//System.out.println("call Curve " + mode);
-	Curve c =  new Curve(yy, extraX);
-	String [] dash = ser.learned? new String[] {"2", ""}:	new String[] {"1", null};
+
+	//-- extrapolation of learner's curves, if feasible
+	double[] ye = yy;
+	int startExtra = yy.length-1;
+	if (ser.getLearned()) {
+	    double yLast = yy[startExtra];
+	    if  (mode==CurveMode.W || mode==CurveMode.AAIB|| mode==CurveMode.AAID|| mode==CurveMode.AAIE||mode==CurveMode.AAIG|| mode==CurveMode.OMEGA) {
+		//-- extrapolation by a horizontal line
+		ye = new double[maxX+1];
+		int j=0; 
+		for(; j<= startExtra; j++) {
+		    ye[j] = yy[j];
+		}
+		for(; j< ye.length; j++) {
+		    ye[j] = yLast;
+		}
+	    } else if (mode==CurveMode.AAIC && argMode ==  CurveArgMode.C) {
+		//-- extrapolation by a hyperbola,
+		//-- y=gamma*C*W/(W+C)
+		ye = new double[maxX+1];
+		int j=0; 
+		for(; j<= startExtra; j++) {
+		    ye[j] = yy[j];
+		}
+
+		double gamma = (sumW==0) ? 0: yLast*(sumW+startExtra)/(double)(startExtra*sumW);
+		
+		for(; j< ye.length; j++) {
+		    ye[j] = gamma * j * sumW / (double)(j+sumW);
+		}
+	    }
+	    //System.out.println("call Curve(ye[0:"+startExtra+":" +(ye.length-1)+"])");
+	}
+	
+	Curve c =  new Curve(ye, startExtra);
+	String [] dash = ser.learned? new String[] {"", "4"}:	new String[] {"1", null};
 	c.setDash(dash);
 	return c;
     }
@@ -585,10 +639,10 @@ at each move that is either  correct or wrong (not ignored)
 	int W, H;
 	double maxX, maxY=0;
 	
-	SvgPlot(int _W, int _H, double _maxX) {
+	SvgPlot(int _W, int _H, int _maxX) {
 	    W = _W;
 	    H = _H;
-	    maxX = _maxX;
+	    maxX = roundUp(_maxX);
 	}
 
 	/** Should only be called once maxY is known

@@ -24,29 +24,42 @@ else if ( "$origin" == "rulegame" ) then
    set u=rulegame
 else if ( "$origin" == "sapir.psych" ) then
    set u=vmenkov
+else if ( "$origin" == "action" ) then
+   set u=vmenkov
 else
     echo "Illegal origin=$origin. It should be either rulegame or wwwtest.rulegame"
     exit
 endif
 
-set h=${origin}.wisc.edu
+if ( "$origin" == "action" ) then
+   set h=action.rutgers.edu
+else
+   set h=${origin}.wisc.edu
+endif   
 set uh=${u}@${h}
 set date=`date +'%Y_%m_%d_%H%M%S'`
 
 #========================================================================
-echo "Step 1: Requesting the remote host ($h) to prepare a ZIP file with data. You may be asked for the password of $uh, unless you have set up ssh-agent for password-free ssh/sftp login"
+echo "Step 1: Requesting the remote host (${h}) to prepare a ZIP file with data. You may be asked for the password of $uh, unless you have set up ssh-agent for password-free ssh/sftp login"
 
 #-- The script named here needs to have been manually installed on the
-#-- remote server. 
+#-- remote server, in your ~/mybin/ . You can get that script from
+#-- the plesk-scripts directory of the GitHub repo of the server code.
+
 
 ssh $uh mybin/zip-saved.sh
 
 set tmpzip = tmp.zip
 
 if (-e $tmpzip) then
-   echo "Removing the old file $tmpzip"
+   echo "Removing the old file $tmpzip on localhost"
    rm $tmpzip
 endif
+
+echo "This is what we have on the remote host ($h) now:"
+ssh $uh ls -l $tmpzip
+exit
+
 
 #========================================================================
 echo "Step 2: Attempting file transfer from the remote host ($h) by sftp. You may be asked for the password of $uh, unless you have set up ssh-agent for password-free login"
@@ -97,6 +110,11 @@ set dump=dump-game.sql
 #========================================================================
 if ( "$origin" == "sapir.psych" ) then
 echo "Skipping step 4. Assuming that you have already transmitted the MySQL dump file, $dump, from $h. This is the file we're going to use"
+
+#-- the command used on the remote server may look like this:
+# mariadb-dump -u game -p --no-tablespaces game > dump-game.sql
+
+
 else 
 
 echo "Step 4: Exporting data from $origin to the temporary file $dump. This may take a few minutes"
@@ -180,7 +198,7 @@ zip -r $oz $out
 #========================================================================
 echo "================== IMPORTANT MESSAGE ==========================="
 
-echo "The file $oz has been created, which contains both SQL and CSV data imported today. It can be archived on your backup disk, or copied to yet another host to create a copy of this snapshot there"
+echo "The file $oz has been created, which contains both SQL and CSV data imported today. You can archive it on your backup disk, or copy it to yet another host to create a copy of this snapshot there"
 
 ls -l $oz
 

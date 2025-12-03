@@ -90,7 +90,7 @@ lrwxrwxrwx root/root         0 2023-06-26 12:10 ./usr/share/java/mysql-connector
     So this tells you where the JAR file gets installed, and you can simply sym-link it into Tomcat's lib directory, instead of copying it.
     </s>
 
-    <P>(Note: As of ver. 6.023, the above is not recommended anymore; instead, we pack the JAR file in question into the main WAR file).
+    <P>(Note: As of ver. 6.023, the above is not recommended anymore; instead, we pack the JAR file in question into the main WAR file. For that to happen, place the JAR file into ~/w2020/other-lib directory in your build tree, and when you build your WAR file, the Ant build process will pick the JAR).
     </s>
     
     <h2>Running on port 80</h2>

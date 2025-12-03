@@ -5,6 +5,8 @@ set sc=`dirname $0`
 set h=`(cd $sc/..; pwd)`
 source "$sc/set-var.sh"
 
+#echo $CLASSPATH
+
 #-- For usage, see tools/analyze-transcripts-mwh.html
 
 # mkdir tmp

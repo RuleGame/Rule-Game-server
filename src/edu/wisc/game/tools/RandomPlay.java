@@ -58,7 +58,7 @@ class RandomPlay {
 
 	    Vector<TranscriptManager.ReadTranscriptData.Entry[]> randomSection = new Vector<>();
 	    
-	    Vector<Double> p0=new Vector<>(), r=new Vector<>();
+	    Vector<Double> p0=new Vector<>(), r=new Vector<>(), mu=new Vector<>();
 	    int k=0;
 
 	    Vector<EpisodeHandle> includedEpisodes = new Vector<>();
@@ -88,7 +88,9 @@ class RandomPlay {
 		while(!rep.isCompleted()) {
 		    Pick move = rep.generateRandomMove();
 		    move.setMover(chosenMover);
-		    p0.add( rep.computeP0(move, false));
+		    double pm[] = rep.computeP0andMu(move, false);
+		    p0.add( pm[0]);
+		    mu.add( pm[1]);
 	    
 		    //-- replay the move/pick attempt 
 		    int code = rep.accept(move);
@@ -100,7 +102,7 @@ class RandomPlay {
 		randomSection.add(w.toArray(new TranscriptManager.ReadTranscriptData.Entry[0]));
 	    }
 
-	    P0andR p0andR = new P0andR(p0,r);
+	    P0andR p0andR = new P0andR(p0,r,mu);
 	    MwSeries ser = makeMwSeries.mkMwSeries(randomSection, includedEpisodes, p0andR, chosenMover, true);
 
 	    result.add(ser);

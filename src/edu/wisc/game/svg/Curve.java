@@ -9,10 +9,11 @@ import  edu.wisc.game.util.Util;
     f(x) in N equally spaced points. */
 public class Curve {
     final double[] y;
-    /** If non-null, the curve is extrapolated beyond its end point
-	as a horizontal line, up to the specified X value
+    /** The extrapolated section of the curve (to be drawn in a
+	different style) is from y[startExtra] to the end of y[].
+	Curves without an extrapolated section have startExtra=y.length-1
     */
-    Double  extraX=null;
+    final int startExtra;
 
     /** 
 	Controls how the main section and the extrapolated section (if
@@ -27,11 +28,14 @@ public class Curve {
     //}
     public Curve(double [] _y) {
 	y = _y;
+	startExtra=y.length-1;
     }
-    public Curve(double [] _y, Double _extraX) {
+
+    public Curve(double [] _y, int _startExtra) {
 	y = _y;
-	extraX = _extraX;
+	startExtra = _startExtra;
     }
+
     /** The max value of y on the curve */
     public double getMaxY() {
 	double maxY=0;
@@ -41,14 +45,14 @@ public class Curve {
 	return maxY;
     }
 
-    public double getLastY() {
+    double getLastY() {
 	return y[ y.length-1];
     }
 
     //    Vector<String> debugLabels = null;
 
     
-    /** Represents this curve as a SVG element. 
+    /** Represents the "main" (non-extrapolated) part of the curve as a SVG element. 
 	The first point will be M x0 y0; after that, between two
 	adjacent points,  dx = 1, dy *= yFactor. 
 	@param yFactor Usually, negative
@@ -59,12 +63,14 @@ public class Curve {
     private String mkSvgPath(int x0, int y0, double xFactor, double yFactor, int [] offset) {
 	Vector<String> v = new Vector<>();
 	//debugLabels = new Vector<>();
-	for(int i=0; i<y.length; i++) {
+	boolean start = true;
+	for(int i=0; i<=startExtra; i++) {
 	    double sx = (x0+xFactor*i);
 	    double sy = y0+yFactor*y[i];
 	    if (offset!=null) sy -= offset[i];
 	    
-	    String s = (i==0? "M":"L") + sx+ " " + sy;
+	    String s = (start? "M":"L") + sx+ " " + sy;
+	    start = false;
 	    v.add(s);
 
 	    //	    s = "<text x=\"" +sx + "\" y=\"" +sy + "\" fill=\"black\">" +    y[i] + "</text>";
@@ -75,16 +81,18 @@ public class Curve {
 
     /** The extrapolated part, or null */
     private String mkExtraSvgPath(int x0, int y0, double xFactor, double yFactor, int [] offset) {
-	if (extraX==null) return null;
+	if (startExtra==y.length-1) return null;
 	Vector<String> v = new Vector<>();
-	int i=y.length-1; 
-	double sy = y0+yFactor*y[i];
-	if (offset!=null) sy -= offset[i];
+	boolean start = true;
+	for(int i=startExtra; i<y.length; i++) {
+	    double sx = (x0+xFactor*i);
+	    double sy = y0+yFactor*y[i];
+	    if (offset!=null) sy -= offset[i];	    
+	    String s = (start? "M":"L") + sx+ " " + sy;
+	    start = false;
+	    v.add(s);
+	}
 
-	String s =  "M" + (x0+xFactor*i)+ " " + sy;
-	v.add(s);
-	s =  "L" + (x0+xFactor*extraX)+ " " + sy;
-	v.add(s);
 	return String.join(" " , v);
     }
 
@@ -101,7 +109,6 @@ public class Curve {
 	
     public String mkSvgPathElement(int x0, int y0, double xFactor, double yFactor,
 				   String color, int strokWidth) {
-	//	final String dash[] =  {"", "2"};
 	return mkSvgPathElement2(x0, y0, xFactor, yFactor,
 				 color, strokWidth, null);
     }
@@ -159,12 +166,10 @@ public class Curve {
     private static double[] medianY(Curve[] curves, boolean useExtra, int x) {
 	Vector<Double> ya=new Vector<>(), yb=new Vector<>();
 	for(Curve c: curves) {
-	    boolean extra = useExtra && c.extraX!=null && x<=c.extraX;
-	    if (x<c.y.length) ya.add( c.y[x]);
-	    else if (extra) ya.add( c.getLastY());
+	    boolean extra = useExtra && x<c.y.length;
+	    if (x<=c.startExtra || extra) ya.add( c.y[x]);
+	    if (x+1<=c.startExtra || extra) yb.add( c.y[x]);
 		
-	    if (x+1<c.y.length) yb.add( c.y[x]);
-	    else if (extra) yb.add( c.getLastY());
 	}
 	if (ya.size()==0) return null;
 	double[] m = {Util.median(ya), 0};
@@ -192,7 +197,8 @@ public class Curve {
 	return String.join(" " , v);
     }
 
-    
+    /** @return The max Y value of the median curve of the specified bundle
+	of curves */
     public static double maxMedianY(Curve[] curves, boolean useExtra) {
 	double m = 0;
 	for(int x=0; ; x++) {
@@ -204,7 +210,7 @@ public class Curve {
     }
 
 
-    /** The confidence interva calculations as per 
+    /** The confidence interval calculations as per 
 https://www.statology.org/confidence-interval-for-median/
 <pre>
      We can use the following formula to calculate the upper and lower bounds of a confidence interval for a population median:
@@ -249,13 +255,10 @@ https://www-users.york.ac.uk/~mb55/intro/cicent.htm
 	for(int x=1; ; x++) {
 	    Vector<Double> ya=new Vector<>(), yb=new Vector<>();
 	    for(Curve c: curves) {
-		boolean extra = useExtra && c.extraX!=null && x<=c.extraX;
-		if (x<c.y.length) {
+		boolean extra = useExtra && x<c.y.length;
+		if (x<=c.startExtra || extra) {
 		    ya.add( c.y[x-1]);
 		    yb.add( c.y[x]);
-		} else if (extra) {
-		    ya.add( c.getLastY());
-		    yb.add( c.getLastY());
 		}
 	    }
 	    if (ya.size()<5) break;

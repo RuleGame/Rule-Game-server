@@ -440,15 +440,21 @@ s	    non-existing piece) the value may be different from those of
 	     player, or a completely random player) would be
 	     successful.
 
+	     <p>mu is the avg number of move attempts that an MCP1
+	     player would need to remove one piece from this board.
+	     On any board, mu &ge; 1; is all moves are allowed, mu=1.
+	     
 	     @param knownFailedPicks The number of distinct (piece,
 	     destination) pairs that the model player, in accordance
 	     with his mental ability, realizes are currently not
 	     allowed.  (This may be non-zero for MCP, but always 0 for
 	     a competely random player).  This reduces the denominator
 	     (= the number of still-not-tested pieces).
+
+	     @return {p0, mu}
 	    
 	*/
-  	double computeP0ForMoves(int knownFailedMoves) {
+  	double[] computeP0andMuForMoves(int knownFailedMoves) {
 	    int countMoves=0, countAllowedMoves=0;
 	    for(int j=0; j<values.size(); j++) {
 		// In the show-movables ("fixed") mode, only movable pieces are taken into account
@@ -467,7 +473,12 @@ s	    non-existing piece) the value may be different from those of
 	    countMoves -= knownFailedMoves;
 	    
 	    if (countAllowedMoves>countMoves)  throw new IllegalArgumentException("What, there are more allowed moves (" + countAllowedMoves+") than not-tested-yet moves ("+countMoves+")?");
-	    return (countMoves==0)? 0.0: countAllowedMoves/(double)countMoves;
+
+	    double mu = (countMoves + 1.0) / (countAllowedMoves + 1.0);
+	    double p0 = (countMoves==0)? 0.0: countAllowedMoves/(double)countMoves;	    
+	    double result[] = {p0, mu};
+	    return result;
+
 	}
 
 	/** For the "Bayesian-based intervention": computes the ratio
@@ -1251,7 +1262,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
     /** The current version of the application */
-    public static final String version = "8.044";
+    public static final String version = "8.045";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }

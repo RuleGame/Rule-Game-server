@@ -659,19 +659,24 @@ public class AnalyzeTranscripts {
 
 
     public static class P0andR {
-	public final double [] p0, rValues;
+	public final double [] p0, rValues, mu;
 	
 	public P0andR(int n) {
 	    p0 = new double[n];
 	    rValues = new double[n];
+	    mu = new double[n];
 	}
-	public P0andR(Vector<Double> _p0, Vector<Double> r) {
+	public P0andR(Vector<Double> _p0, Vector<Double> r, Vector<Double> _mu) {
+	    
 	    this( _p0.size());
 	    if (r.size() != p0.length) throw new IllegalArgumentException();
+	    if (r.size() != mu.length) throw new IllegalArgumentException();
 	    int k=0;
 	    for(double x: _p0) p0[k++] = x;
 	    k=0;
 	    for(double x: r) rValues[k++] = x;		       
+	    k=0;
+	    for(double x: _mu) mu[k++] = x;		       
 	}
    
     }
@@ -722,16 +727,17 @@ public class AnalyzeTranscripts {
 		    boardHistory.add(b);
 		}
 
-
-		double p =rep.computeP0(e.pick, e.isSuccessfulPick());	    
-		result.p0[k] = p;
+		double pm[] =rep.computeP0andMu(e.pick, e.isSuccessfulPick());
+		result.p0[k] = pm[0];
+		result.mu[k] = pm[1];
+	    
 	    
 		//-- replay the move/pick attempt 
 		int code = rep.accept(e.pick);
 
 		result.rValues[k] = e.pick.getRValue();
 
-		if (debug) System.out.println("Move["+k+"]=" +e.pick.toString() +", p0=" + p+", replay code=" + code +", r=" + result.rValues[k]);
+		if (debug) System.out.println("Move["+k+"]=" +e.pick.toString() +", p0=" + pm[0]+", mu=" +pm[1] +" replay code=" + code +", r=" + result.rValues[k]);
 
 		k++;
 

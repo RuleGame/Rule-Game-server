@@ -263,19 +263,21 @@ public  class MwSeries {
     /** Various things that may be used to draw curves */
     static class MoveInfo {
 	final boolean success;
-	final double p0;
-	MoveInfo(boolean _success,	double _p0) {
+	final double p0, mu;
+	MoveInfo(boolean _success,	double _p0, double _mu) {
 	    success = _success;
 	    p0 = _p0;
+	    mu = _mu;
 	}
-	/** @param s "success:p0", e.g. "1:0.33" */
+	/** @param s "success:p0:mu", e.g. "1:0.33:3.0" */
 	MoveInfo(String s) {
 	    String [] v = s.split(":");
 	    success = (v[0].equals("1"));
 	    p0 = Double.parseDouble(v[1]);
+	    mu = Double.parseDouble(v[2]);
 	}
 	public String toString() {
-	    return  "" + (success? 1:0) +  ":" + p0;
+	    return  "" + (success? 1:0) +  ":" + p0 +  ":" + mu;
 	}
     }
     /** Besides the aggregate information that MwSeries contains, this

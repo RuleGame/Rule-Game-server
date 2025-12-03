@@ -109,18 +109,33 @@ public class ReplayedEpisode extends Episode {
 	@param successfulPick True if this was a "successful pick",
 	based on the historical acceptance code for this attempt, as
 	read from the transcript
+
+	@return {p0,mu}
     */
-    public double computeP0( Pick nextMove, boolean successfulPick) {
-    
+    public double[] computeP0andMu( Pick nextMove, boolean successfulPick) {
+
+	
+	int knownFailedMoves = 	countKnownFailedMoves();
+	// this returns {p0 for moves, mu for MCP}
+	double[] pm = ruleLine.computeP0andMuForMoves(knownFailedMoves);
+
 	if (successfulPick) {
 	    int knownFailedPicks = failedPicks.cardinality();
-	    return  ruleLine.computeP0ForPicks(knownFailedPicks);
-	} else {
-	    int knownFailedMoves = 	countKnownFailedMoves();
-	    return ruleLine.computeP0ForMoves(knownFailedMoves);
-	}
+	    pm[0] = ruleLine.computeP0ForPicks(knownFailedPicks);
+	} 
+
+	if (randomPlayerModel==RandomPlayer.COMPLETELY_RANDOM) {
+	    pm[1] = 1.0/pm[0];
+	} else if (randomPlayerModel==RandomPlayer.MCP1) {
+	} else throw new IllegalArgumentException();
+
+	return pm;
     }
 
+    public double computeP0( Pick nextMove, boolean successfulPick) {
+	return computeP0andMu( nextMove, successfulPick)[0];
+    }
+    
     int countKnownFailedMoves() {
 	int knownFailedMoves = 0;	
 	for(BitSet b : failedMoves)  {	    
@@ -340,15 +355,16 @@ public class ReplayedEpisode extends Episode {
 		    boardHistory.add(b);
 		}
 
-		double p =rep.computeP0(e.pick, false);	    
-		result.p0[k] = p;
+		double pm[] =rep.computeP0andMu(e.pick, false);	    
+		result.p0[k] = pm[0];
+		result.mu[k] = pm[1];
 	    
 		//-- replay the move/pick attempt 
 		int code = rep.accept(e.pick);
 
 		result.rValues[k] = e.pick.getRValue();
 
-		if (debug) System.out.println("Replay move["+k+"]=" +e.pick.toString() +", p0=" + p+", recorded code=" + e.code +", r=" + result.rValues[k]);
+		if (debug) System.out.println("Replay move["+k+"]=" +e.pick.toString() +", p0=" + pm[0]+", mu=" + pm[1]+", recorded code=" + e.code +", r=" + result.rValues[k]);
 
 		k++;
 

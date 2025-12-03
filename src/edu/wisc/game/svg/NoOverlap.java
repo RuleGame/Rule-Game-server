@@ -49,8 +49,8 @@ class NoOverlap extends HashMap<Double, NoOverlap.Horizontal> {
 	point of the curve. */
     int[] add(Curve c) {
 	int[] offset = new int[c.y.length];
-	for(int j=0; j<c.y.length-1 ||j == c.y.length-1 && c.extraX!=null; j++) {
-	    int x0 = j, x1 = (j+1 < c.y.length)? j+1: (int)c.extraX.doubleValue();
+	for(int j=0; j<c.y.length-1 ; j++) {
+	    int x0 = j, x1 = j+1;
 	    double y0 =  c.y[j];
 	    double y1 = (j+1 < c.y.length)? c.y[j+1]: y0;
 
