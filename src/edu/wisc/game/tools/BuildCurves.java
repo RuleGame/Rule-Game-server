@@ -234,16 +234,24 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	CurveArgMode[] argModes = {curveArgMode};
 	if (curveMode==CurveMode.ALL) {
 	    modes=CurveMode.class.getEnumConstants();
+	} else 	if (curveMode==CurveMode.NONE) {
+	    modes=new CurveMode[0];
+	    return;
 	}
 
 	if (curveArgMode==CurveArgMode.ALL) {
 	    argModes=CurveArgMode.class.getEnumConstants();
+	} else if (curveArgMode==CurveArgMode.NONE) {
+	    argModes=new CurveArgMode[0];
+	    return;
 	}
 	
 	for(CurveArgMode argMode: argModes) {
-	    if (argMode==CurveArgMode.ALL) continue;
+	    if (argMode==CurveArgMode.ALL ||
+		argMode==CurveArgMode.NONE) continue;
 	    for(CurveMode mode: modes) {
-		if (mode==CurveMode.ALL) continue;
+		if (mode==CurveMode.ALL ||
+		    mode==CurveMode.NONE) continue;
 
 		int maxX = (argMode==CurveArgMode.C)? findMaxC(savedMws):  findMaxM(savedMws);  
 		
@@ -272,18 +280,28 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	File d = new File("out/pairs");
 	CurveMode[] modes = {curveMode};
 	CurveArgMode[] argModes = {curveArgMode};
+
 	if (curveMode==CurveMode.ALL) {
 	    modes=CurveMode.class.getEnumConstants();
+	} else 	if (curveMode==CurveMode.NONE) {
+	    modes=new CurveMode[0];
+	    return;
 	}
 
 	if (curveArgMode==CurveArgMode.ALL) {
 	    argModes=CurveArgMode.class.getEnumConstants();
+	} else if (curveArgMode==CurveArgMode.NONE) {
+	    argModes=new CurveArgMode[0];
+	    return;
 	}
+
 	
 	for(CurveArgMode argMode: argModes) {
-	    if (argMode==CurveArgMode.ALL) continue;
+	    if (argMode==CurveArgMode.ALL ||
+		argMode==CurveArgMode.NONE) continue;
 	    for(CurveMode mode: modes) {
-		if (mode==CurveMode.ALL) continue;
+		if (mode==CurveMode.ALL ||
+		    mode==CurveMode.NONE) continue;
 
 		File dm = new File(d, mode.toString() + "_" + argMode);
 		int maxX = (argMode==CurveArgMode.C)? findMaxC(savedMws):  findMaxM(savedMws);  

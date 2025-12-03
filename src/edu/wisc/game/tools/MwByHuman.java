@@ -161,6 +161,9 @@ public class MwByHuman extends AnalyzeTranscripts {
 		if (s.equals("all")) {
 		    curveMode = CurveMode.ALL;
 		    curveArgMode = CurveArgMode.ALL;
+		} else if (s.equals("none")) {
+		    curveMode = CurveMode.NONE;
+		    curveArgMode = CurveArgMode.NONE;
 		} else {
 		    String [] ss = s.split(":");
 		    if (ss.length!=2) usage("Expected '-curveMode yChoice:xChoice', or '-curveMode all'");
@@ -437,7 +440,7 @@ public class MwByHuman extends AnalyzeTranscripts {
     }
 
     public enum CurveMode {
-	ALL,
+	ALL, NONE,
 	// Raw error count, Sum_m(e_m) (formerly E)
 	W,
 	// Error count normalized error prob, Sum_m(e_m)/Sum_m(1-p0(m))
@@ -453,7 +456,7 @@ public class MwByHuman extends AnalyzeTranscripts {
     }
 
     public enum CurveArgMode {
-	ALL,
+	ALL, NONE,
 	// count of move attempts
 	M,
 	// count of removed pieces (formerly Q)
