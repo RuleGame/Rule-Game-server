@@ -651,7 +651,7 @@ at each move that is either  correct or wrong (not ignored)
 	    Elsewhere (in Curve.*), y0=H, yFactor = -H/maxY,  y=y0 * yFactor* mathY
 	 */
 	private Vector<String> mkGrid() {
-	    System.out.println("mkGrid maxX="+maxX+", maxY=" + maxY);
+	    //System.out.println("mkGrid maxX="+maxX+", maxY=" + maxY);
 	    double xFactor = W/maxX;
 	    Vector<String> v = new Vector<>();
 	    v.add( "<rect width=\""+ W+ "\" height=\"" + H + "\" " +
@@ -663,8 +663,8 @@ at each move that is either  correct or wrong (not ignored)
 		v.add("<line x1=\""+x+"\" y1=\""+H+"\" x2=\""+x+"\" y2=\"0\" stroke=\"black\" stroke-dasharray=\"3 5\"/>");
 	    }
 
-	    System.out.println("mkGrid ti y=");
-	    System.out.println(Util.joinNonBlank(", ",     ticPoints((int)maxY)));
+	    //System.out.println("mkGrid ti y=");
+	    //System.out.println(Util.joinNonBlank(", ",     ticPoints((int)maxY)));
 	    for(int m: ticPoints((int)maxY)) {
 
 		//y= H -m*H/maxY);
@@ -722,9 +722,7 @@ at each move that is either  correct or wrong (not ignored)
 		   width + "\" height=\"" + height +
 		   "\" viewBox=\"-40 -20 " + (W+50) + " " + (H+40)+"\">");
 
-	    //System.out.println("complete(): call mkGrid");
 	    v.addAll(mkGrid());
-	    //System.out.println("complete(): done mkGrid");
 	    v.addAll(sections);
 	    v.add( "</svg>");
 	    return String.join("\n", v);
@@ -768,23 +766,18 @@ at each move that is either  correct or wrong (not ignored)
 	    boolean needShading =  (colors[3]!=null);
 
 
-	    System.out.println("addPlot: mkShading");
 	    v.add( Curve.mkShading(curves, 0,H, xFactor, yFactor, useExtra,
 				   (needShading? colors[3]: colors[0]), needShading, sequenceNumber * 8));
 
-	    System.out.println("addPlot: mkSvg");
 	    // FIXME: let's make this command-line controllable!
 	    final boolean noOverlap = true;
 	    v.add( Curve.mkSvgNoOverlap(curves, 0, H, xFactor, yFactor, colors[0],1, noOverlap));
 
-	    System.out.println("addPlot: mkMedian");
 	    v.add( Curve.mkMedianSvgPathElement(curves, 0,H,xFactor, yFactor, colors[1],3, null, null, null, useExtra));
 
-	    System.out.println("addPlot: mkMedian random");
 	    if (randomCurves.length>0) {
 		v.add( Curve.mkMedianSvgPathElement(randomCurves, 0,H,xFactor, yFactor, colors[2],6, "0.01 8", "round", "0.4", useExtra));
 	    }
-	    System.out.println("addPlot: all done");
 	    sections.addAll(v);
 	}
     }
