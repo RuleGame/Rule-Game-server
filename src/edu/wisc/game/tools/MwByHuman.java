@@ -451,6 +451,7 @@ public class MwByHuman extends AnalyzeTranscripts {
 	AAID, // Paul's Nov 19 proposal
 	AAIE, // based on Paul's Nov 19 proposal, but with regularized sumZP
 	AAIG, // W*C/sum(mu)
+	AAIH, // W*C/sum(mu)
 	OMEGA
        
     }

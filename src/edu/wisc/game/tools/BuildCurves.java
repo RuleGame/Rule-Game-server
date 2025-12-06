@@ -253,7 +253,11 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		if (mode==CurveMode.ALL ||
 		    mode==CurveMode.NONE) continue;
 
-		int maxX = (argMode==CurveArgMode.C)? findMaxC(savedMws):  findMaxM(savedMws);  
+		boolean nonTrivial =  mode==CurveMode.AAIH;
+		int maxX = (argMode==CurveArgMode.C)?
+		    findMaxC(savedMws, nonTrivial):  findMaxM(savedMws);  
+
+		if (nonTrivial)	System.out.println("DEBUG: nt="+nonTrivial+", maxX="+ maxX);
 		
 		DataMap h = prepMaps(savedMws, precMode);
 		h.mkCurves(mode, argMode, maxX);
@@ -304,7 +308,8 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		    mode==CurveMode.NONE) continue;
 
 		File dm = new File(d, mode.toString() + "_" + argMode);
-		int maxX = (argMode==CurveArgMode.C)? findMaxC(savedMws):  findMaxM(savedMws);  
+		boolean nonTrivial =  mode==CurveMode.AAIH;
+		int maxX = (argMode==CurveArgMode.C)? findMaxC(savedMws, nonTrivial):  findMaxM(savedMws);  
 		
 		DataMap h = prepMaps(savedMws, precMode);
 		h.mkCurves(mode, argMode, maxX);
@@ -352,12 +357,17 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
     static class OneKey extends Vector<MwSeries> {
 	String plot;
 	Curve[] curves = {};
+
 	
 	Curve[] mkCurves(CurveMode mode, CurveArgMode argMode, int maxX) {
+	    //zzz
+	    boolean nonTrivial =  mode==CurveMode.AAIH;
+	    int maxXCurves = (argMode==CurveArgMode.C)? findMaxC(this, nonTrivial):  findMaxM(this);  
+	    
 	    curves = new Curve[size()];
 	    int k = 0;
 	    for(MwSeries ser: this) {
-		curves[k++] = mkCurve(ser, mode, argMode, maxX);
+		curves[k++] = mkCurve(ser, mode, argMode, maxXCurves);
 	    }
 	    return curves;
 	}	 
@@ -466,24 +476,43 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	return n;
     }
 
-    private static int findMaxC(Vector<MwSeries> savedMws) {
+    private static int findMaxC(Vector<MwSeries> savedMws, boolean nonTrivial) {
 	int n = 0;
 	for(MwSeries ser: savedMws) {
-	    int q = findMaxC(ser);
+	    int q = findMaxC(ser, nonTrivial);
 	    if (q>n) {
-		//System.out.println("maxC( " + ser.getKey(precMode) + " )=" + q);
+		System.out.println("maxC(nt="+nonTrivial+")=" + q);
 		n = q;
 	    }
 	}
 	return n;
     }
 
-    /** How many pieces were removed in this series? */
-    private static int findMaxC(MwSeries ser) {
+    /** How many pieces were removed in this series?
+	@parm nonTrivial If true, only count "non-trivial" successful
+	moves, i.e. those where there was an opportunity for a wrong move.
+     */
+    private static int findMaxC(MwSeries ser, boolean nonTrivial) {
 	int n=0;
+	boolean needMu=true;
+	double keepMu=0;
+	String s = "";
 	for(MoveInfo mi: ser.moveInfo) {
-	    if (mi.success)	n++;
+	    if (needMu) {
+		keepMu = mi.mu;
+		needMu = false;
+	    }
+	    if (mi.success) {
+		if (nonTrivial) {
+		    if (keepMu>1) n++;
+		    s += (keepMu>1) ? "+":"-";
+		} else {
+		    n++;
+		}
+		needMu = true;
+	    }
 	}
+	//	if (nonTrivial) System.out.println(set.getKey(PrecMode.Ignore) + ": " + s);
 	return n;
     }
 
@@ -517,8 +546,8 @@ at each move that is either  correct or wrong (not ignored)
 </pre>
     */
     private static Curve mkCurve(MwSeries ser, CurveMode mode, CurveArgMode argMode, int maxX) {
-
-	int n = (argMode == CurveArgMode.C)? findMaxC(ser):  ser.moveInfo.length;
+	boolean nonTrivial =  mode==CurveMode.AAIH;
+	int n = (argMode == CurveArgMode.C)? findMaxC(ser, nonTrivial):  ser.moveInfo.length;
 	
 	double [] yy = new double[n+1];
 	yy[0] = 0;
@@ -527,7 +556,8 @@ at each move that is either  correct or wrong (not ignored)
 	double sumMu1 = 0; // sum over C, not over M! Only sum mu from the first move after the board changes
 	//int j=1;
 	int q=0, lastQ=0; // count of correct moves (C, in Paul's notation)
-
+	double keepMu = 0, aaih = 0;// qNonTrivial;
+	
 	for(int m=0; m<ser.moveInfo.length; m++) {
 	    MoveInfo mi = ser.moveInfo[m];
 
@@ -537,18 +567,24 @@ at each move that is either  correct or wrong (not ignored)
 
 	    if (m==0 || ser.moveInfo[m-1].success) {
 		// new board, new mu
-		sumMu1 += mi.mu-1;
+		keepMu = mi.mu;
+		sumMu1 += mi.mu-1;		
 	    }
 
 	    
 	    if (mi.success)	{
-		q++;
+		if (nonTrivial) {
+		    if (keepMu>1) q++;
+		} else {
+		    q++;
+		}
 	    } else {
 		sumW++;
 		recentSumW++;
 		sumZP1 += 1-mi.p0;
 		aaid = (sumW/sumZP1) * q;
 		aaie = (sumW/sumZP) * q;
+		aaih += 1.0/(keepMu - 1);
 	    } 
 
 
@@ -586,6 +622,7 @@ at each move that is either  correct or wrong (not ignored)
 	    else if (mode==CurveMode.AAID) 	    y = aaid;
 	    else if (mode==CurveMode.AAIE) 	    y = aaie;
 	    else if (mode==CurveMode.AAIG) 	    y = aaig;
+	    else if (mode==CurveMode.AAIH) 	    y = aaih;
 	    else throw new IllegalArgumentException("curveMode=" + mode);
 
 	    if (argMode ==  CurveArgMode.M) {	    
@@ -598,12 +635,18 @@ at each move that is either  correct or wrong (not ignored)
 
 	if (argMode ==  CurveArgMode.C) {
 	    if (q!= n)  {
-		System.out.println("ERROR here: " + ser.toCsv());
-		System.out.println(Util.joinNonBlank(" ", ser.moveInfo));
-		String msg = "yy[] size mismatch for mode=" + mode + ":" + argMode+": expect n=" + (n) +", found q=" + q;
-		System.out.println(msg);
-		//System.exit(1);
-		throw new IllegalArgumentException(msg);
+		if (mode==CurveMode.AAIH) {
+		    // the yy[] is shorter than 27 because some moves
+		    // were trivial
+		    yy = Arrays.copyOf(yy, q+1);
+		} else {		
+		    System.out.println("ERROR here: " + ser.toCsv());
+		    System.out.println(Util.joinNonBlank(" ", ser.moveInfo));
+		    String msg = "yy[] size mismatch for mode=" + mode + ":" + argMode+": expect n=" + (n) +", found q=" + q;
+		    System.out.println(msg);
+		    //System.exit(1);
+		    throw new IllegalArgumentException(msg);
+		}
 	    }
 	}
 
@@ -612,7 +655,8 @@ at each move that is either  correct or wrong (not ignored)
 	int startExtra = yy.length-1;
 	if (ser.getLearned()) {
 	    double yLast = yy[startExtra];
-	    if  (mode==CurveMode.W || mode==CurveMode.AAIB|| mode==CurveMode.AAID|| mode==CurveMode.AAIE||mode==CurveMode.AAIG|| mode==CurveMode.OMEGA) {
+	    if  (mode==CurveMode.W || mode==CurveMode.AAIB|| mode==CurveMode.AAID|| mode==CurveMode.AAIE||mode==CurveMode.AAIG||mode==CurveMode.AAIH||
+		 mode==CurveMode.OMEGA) {
 		//-- extrapolation by a horizontal line
 		ye = new double[maxX+1];
 		int j=0; 
