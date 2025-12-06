@@ -162,34 +162,50 @@ public class Curve {
 	return  mkSvgPathElement(x0, y0, 1.0, yFactor, color, strokWidth);
     }
 
+    // zzzz
     /** @return {f(x), f(x+0)} where f(x)=median(curves)(x) */
-    private static double[] medianY(Curve[] curves, boolean useExtra, int x) {
-	Vector<Double> ya=new Vector<>(), yb=new Vector<>();
-	for(Curve c: curves) {
-	    boolean extra = useExtra && x<c.y.length;
-	    if (x<=c.startExtra || extra) ya.add( c.y[x]);
-	    if (x+1<=c.startExtra || extra) yb.add( c.y[x]);
+    private static class MedianY {
+	final double[] m = {0,0};
+	final int curveCnt;
+	MedianY(Curve[] curves, boolean useExtra, int x) {
+	    Vector<Double> ya=new Vector<>(), yb=new Vector<>();
+	    for(Curve c: curves) {
+		boolean extra = useExtra && x<c.y.length;
+		if (x<=c.startExtra || extra) ya.add( c.y[x]);
+		if (x+1<=c.startExtra || extra) yb.add( c.y[x]);
 		
+	    }
+	    curveCnt = ya.size();
+	    if (ya.size()==0) return;
+	    m[0] = Util.median(ya);
+	    m[1] = (yb.size()==0) ? m[0]: 	Util.median(yb);
 	}
-	if (ya.size()==0) return null;
-	double[] m = {Util.median(ya), 0};
-	m[1] = (yb.size()==0) ? m[0]: 	Util.median(yb);
-	return m;
     }
 
 
     private static String mkMedianSvgPath(Curve[] curves, int x0, int y0, double xFactor, double yFactor, boolean useExtra) {
 	Vector<String> v = new Vector<>();
 	//	System.out.println("mkMedian: in");
-	for(int x=0; ; x++) {
-	    double[] ym = medianY(curves, useExtra, x);
-	    if (ym==null) break;
 
-	    String s= (x==0?"M":"L") + (x0+xFactor*x)+" " + (y0+yFactor*ym[0]);
+
+	int breakPoint=suggestBreakPoint(curves);
+	int curveCnt = 0;
+
+	
+	for(int x=0; ; x++) {
+	    MedianY ym = new MedianY(curves, useExtra, x);
+	    if (ym.curveCnt==0) break;
+
+	    if (x<=breakPoint) curveCnt = ym.curveCnt;
+	    // stop shading once curves start disappearing, to avoid
+	    // a "drooping end" of the median
+	    if (x>breakPoint && ym.curveCnt<curveCnt) break;
+	    
+	    String s= (x==0?"M":"L") + (x0+xFactor*x)+" " + (y0+yFactor*ym.m[0]);
 	    v.add(s);
 	    
-	    if (ym[1]!=ym[0]) { // discontinuity
-		s = "M" + (x0+xFactor* x)+ " " + (y0+yFactor* ym[1]);
+	    if (ym.m[1]!=ym.m[0]) { // discontinuity
+		s = "M" + (x0+xFactor* x)+ " " + (y0+yFactor* ym.m[1]);
 		v.add(s);		
 	    }
 	}
@@ -202,9 +218,9 @@ public class Curve {
     public static double maxMedianY(Curve[] curves, boolean useExtra) {
 	double m = 0;
 	for(int x=0; ; x++) {
-	    double[] ym = medianY(curves, useExtra, x);
-	    if (ym==null) break;
-	    m = Math.max(m, Math.max(ym[0],ym[1]));
+	    MedianY ym = new MedianY(curves, useExtra, x);
+	    if (ym.curveCnt==0) break;
+	    m = Math.max(m, Math.max(ym.m[0],ym.m[1]));
 	}
 	return m;
     }
@@ -252,6 +268,10 @@ https://www-users.york.ac.uk/~mb55/intro/cicent.htm
 	else w.add( "<g stroke=\""+color+"\" stroke-width=\""+5+"\" strike-opacity=\"0.5\">");
 
 
+	int breakPoint=suggestBreakPoint(curves);
+	int curveCnt = 0;
+
+
 	for(int x=1; ; x++) {
 	    Vector<Double> ya=new Vector<>(), yb=new Vector<>();
 	    for(Curve c: curves) {
@@ -261,6 +281,12 @@ https://www-users.york.ac.uk/~mb55/intro/cicent.htm
 		    yb.add( c.y[x]);
 		}
 	    }
+
+	    if (x<=breakPoint) curveCnt = ya.size();
+	    // stop shading once curves start disappearing, to avoid
+	    // a "drooping end" of the median // zzz
+	    if (x>breakPoint && ya.size()<curveCnt) break;
+	    
 	    if (ya.size()<5) break;
 	    Double[] a = ya.toArray(new Double[0]);
 	    Arrays.sort(a);
@@ -302,6 +328,16 @@ https://www-users.york.ac.uk/~mb55/intro/cicent.htm
 	return String.join("\n" , w);	
     }
 
+	// The heuristic: if, at some point above 80% of the
+	// length of the longest curve, some curves start disappear
+	// (the AAIH_C phenomenon, because the curves' length varies
+	// slightly), then stop shading at that point.
+    static private int suggestBreakPoint(Curve[] curves) {
+	int maxLen = 0;
+	for(Curve c: curves) maxLen = Math.max(maxLen, c.y.length);
+	int breakPoint = (int)(0.8 * maxLen);
+	return breakPoint;
+    }
 
     /** Draws several curves, optionally adjusted with the "no-overlap" feature
 	@param noOverlap If true, turn on the "no-overlap" adjustment, so
