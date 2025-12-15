@@ -8,6 +8,19 @@ import  edu.wisc.game.util.Util;
 /** Information about one curve. The object stores the value of some function
     f(x) in N equally spaced points. */
 public class Curve {
+
+    /** An annotation can be printed a bit above a particular point of the curve */
+    static public class Annotation {
+	int x;
+	String text;
+	Annotation(int _x, 	String _text) {
+	    x = _x;
+	    text = _text;
+	}
+    }
+
+    Vector<Annotation> annotations = new Vector<>();
+    
     final double[] y;
     /** The extrapolated section of the curve (to be drawn in a
 	different style) is from y[startExtra] to the end of y[].
@@ -100,20 +113,23 @@ public class Curve {
 	y from 0 (top) to boxHeight, with a 10% gap on top.
 	@return    <path d="..."   stroke="green" stroke-width="5"  fill="none" />
      */
-    public String mkSvgPathElement( int boxHeight, String color, int strokWidth) {
+    public String mkSvgPathElement( int boxHeight, String color, int strokeWidth) {
 	// the vertical scaling factor for the curve, computed so that a 10% gap
 	// will remain between the top of the curve and the top of the thumbnail box
 	double yFactor = -(double)boxHeight/(1.1 * getMaxY());
-	return mkSvgPathElement(0, boxHeight, yFactor, color, strokWidth);
+	return mkSvgPathElement(0, boxHeight, yFactor, color, strokeWidth);
     }
 	
     public String mkSvgPathElement(int x0, int y0, double xFactor, double yFactor,
-				   String color, int strokWidth) {
+				   String color, int strokeWidth) {
 	return mkSvgPathElement2(x0, y0, xFactor, yFactor,
-				 color, strokWidth, null);
+				 color, strokeWidth, null);
     }
 
-    /**
+    /** The underlying method for all mkSvgPathElement methods. Produces an SVG snippet
+	with PATH elements for the solid and dashed sections of the curve,
+	as well as any required annotations.
+       
        @param noo if non-null, used to provide "deterministic jitter"
        of overlapping horizontal segments 
 	    
@@ -140,7 +156,17 @@ public class Curve {
 	    s += " fill=\"none\" />";
 
 	    v.add(s);
-	}	    
+	}
+
+	
+	for(Annotation ann: annotations) {	   
+	    double sx = (x0+xFactor*ann.x);
+	    double sy = y0+yFactor*y[ann.x];
+	    if (offset!=null) sy -= offset[ann.x];	    
+	    String s =  "<text x=\"" +sx + "\" y=\"" +sy + "\" fill=\""+color+"\">" + ann.text + "</text>";
+	    v.add(s);
+	}   
+	
 	return String.join("\n", v);	
     }
 
@@ -158,11 +184,10 @@ public class Curve {
 	
     }
 
-    public String mkSvgPathElement(int x0, int y0, double yFactor, String color, int strokWidth) {	
-	return  mkSvgPathElement(x0, y0, 1.0, yFactor, color, strokWidth);
+    public String mkSvgPathElement(int x0, int y0, double yFactor, String color, int strokeWidth) {	
+	return  mkSvgPathElement(x0, y0, 1.0, yFactor, color, strokeWidth);
     }
 
-    // zzzz
     /** @return {f(x), f(x+0)} where f(x)=median(curves)(x) */
     private static class MedianY {
 	final double[] m = {0,0};
@@ -197,8 +222,10 @@ public class Curve {
 	    if (ym.curveCnt==0) break;
 
 	    if (x<=breakPoint) curveCnt = ym.curveCnt;
-	    // stop shading once curves start disappearing, to avoid
-	    // a "drooping end" of the median
+	    // stop shading once curves start disappearing (players end playing), to avoid
+	    // a "drooping end" of the median. This is primarily an issue for
+	    // AAIH_C, where C is C' (non-trivial removed pieces), and the range of
+	    // C' may be different for different players
 	    if (x>breakPoint && ym.curveCnt<curveCnt) break;
 	    
 	    String s= (x==0?"M":"L") + (x0+xFactor*x)+" " + (y0+yFactor*ym.m[0]);
@@ -358,6 +385,12 @@ https://www-users.york.ac.uk/~mb55/intro/cicent.htm
 	}
 	return String.join("\n", v);
     }
+
+    /** Add text to be printed above a specified point of the curve */
+    public void addAnnotation(int x, String text) {
+	annotations.add(new Annotation(x, text));
+    }
+
     
 }
 

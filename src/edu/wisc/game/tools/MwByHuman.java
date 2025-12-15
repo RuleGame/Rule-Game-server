@@ -113,8 +113,10 @@ public class MwByHuman extends AnalyzeTranscripts {
 	String exportTo = null;
 	Vector<String> importFrom = new Vector<>();
 
-	// BuildCurves: do we draw pair plots?
+	/**  BuildCurves: do we draw pair plots? */
 	boolean doPairs = false;
+	/**  BuildCurves: do we annotate the longest flat section? */
+	boolean doAnn = false;
 	
 	String config = null;
 	
@@ -140,6 +142,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 		doRandom = Boolean.parseBoolean( argv[++j] );
 	    } else if (j+1< argv.length && a.equals("-pairs")) {
 		doPairs = Boolean.parseBoolean( argv[++j] );
+	    } else if (j+1< argv.length && a.equals("-annotate")) {
+		doAnn = Boolean.parseBoolean( argv[++j] );
 	    } else if (j+1< argv.length && a.equals("-p0")) {
 		randomPlayerModel = ReplayedEpisode.RandomPlayer.valueOf1(argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-config")) {

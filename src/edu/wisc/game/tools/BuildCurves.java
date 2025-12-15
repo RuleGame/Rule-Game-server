@@ -24,8 +24,20 @@ import edu.wisc.game.sql.ReplayedEpisode.RandomPlayer;
 
 
 
-/** As
- * requested by PK, 2025-10
+/** Drawing cumulative curves of human performance (error count W, or
+    some derived metric, against the number of moves M or number of
+    correct moves C) for individual players, as well as the median
+    (and its confidence interval) for a population playing a
+    particular rule set. Pair plots (comparing players playing
+    2 different rule sets) are also supported.
+
+    <p>This class is derived from MwByHuman in order to reuse the
+    infrastructure used for selecting a slice of data (e.g. everything
+    related to a particular experiment) and dividing it into player
+    populations associated with various "experiences".
+
+    <p>
+    As  requested by PK, 2025-10
  */
 public class BuildCurves extends MwByHuman {
 
@@ -36,6 +48,8 @@ public class BuildCurves extends MwByHuman {
     /** Used in processing random player runs */
     private final MakeMwSeries randomMakeMwSeries;
 
+    /**  BuildCurves: do we annotate the longest flat section? */
+    boolean doAnn = false;
     
     /** Info about each episode gets added here */
     //    public Vector<MwSeries> savedMws = new Vector<>();
@@ -168,7 +182,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	BuildCurves processor = new BuildCurves(p.doRandom, p.randomPlayerModel,
 						p.precMode, p.curveMode, p.curveArgMode, p.medianMode,
 						p.targetStreak, p.targetR, p.defaultMStar, plainFm);
-	
+	processor.doAnn = p.doAnn;
 	try {
 	    if (p.importFrom.size()==0) {
 	    // Extract the data from the transcript, and put them into savedMws
@@ -260,9 +274,10 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		if (nonTrivial)	System.out.println("DEBUG: nt="+nonTrivial+", maxX="+ maxX);
 		
 		DataMap h = prepMaps(savedMws, precMode);
-		h.mkCurves(mode, argMode, maxX);
+		boolean needAnn = doAnn && mode == CurveMode.W;
+		h.mkCurves(mode, argMode, maxX, needAnn);
 		DataMap hr = doRandom? prepMaps(randomMws, PrecMode.Ignore): null;
-		if (doRandom) hr.mkCurves(mode, argMode, maxX);
+		if (doRandom) hr.mkCurves(mode, argMode, maxX, false);
 
 		//		System.out.println("call doPlots " + mode);
 		h = doPlots(h, hr, mode, argMode, maxX);
@@ -312,9 +327,9 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		int maxX = (argMode==CurveArgMode.C)? findMaxC(savedMws, nonTrivial):  findMaxM(savedMws);  
 		
 		DataMap h = prepMaps(savedMws, precMode);
-		h.mkCurves(mode, argMode, maxX);
+		h.mkCurves(mode, argMode, maxX, false);
 		DataMap hr = doRandom? prepMaps(randomMws, PrecMode.Ignore): null;
-		if (doRandom) hr.mkCurves(mode, argMode, maxX);
+		if (doRandom) hr.mkCurves(mode, argMode, maxX, false);
 
 		for(String key0: h.keySet()) {
 		    for(String key1: h.keySet()) {
@@ -359,7 +374,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	Curve[] curves = {};
 
 	
-	Curve[] mkCurves(CurveMode mode, CurveArgMode argMode, int maxX) {
+	Curve[] mkCurves(CurveMode mode, CurveArgMode argMode, int maxX, boolean needAnn) {
 	    //zzz
 	    boolean nonTrivial =  mode==CurveMode.AAIH;
 	    int maxXCurves = (argMode==CurveArgMode.C)? findMaxC(this, nonTrivial):  findMaxM(this);  
@@ -367,7 +382,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    curves = new Curve[size()];
 	    int k = 0;
 	    for(MwSeries ser: this) {
-		curves[k++] = mkCurve(ser, mode, argMode, maxXCurves);
+		curves[k++] = mkCurve(ser, mode, argMode, maxXCurves, needAnn);
 	    }
 	    return curves;
 	}	 
@@ -375,10 +390,10 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 
 
     static class DataMap extends 	HashMap<String, OneKey> {
-	void mkCurves(CurveMode mode, CurveArgMode argMode, int maxX) {
+	void mkCurves(CurveMode mode, CurveArgMode argMode, int maxX, boolean needAnn) {
 	    for(String key: keySet()) {
 		OneKey z = get(key);
-		z.mkCurves( mode, argMode, maxX);
+		z.mkCurves( mode, argMode, maxX, needAnn);
 	    }
 	}
     }
@@ -516,11 +531,13 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	return n;
     }
 
-    /** Paul's suggestion on dash arrays (2025-10-28):
-	<ul>
-	<li>dotted lines, all the way along, for people who don't meet the criterion
+    /** Creates a curve object displaying a specified metric for an individual player, with an appropriate line style.
 
-	<li>dashed before, and solid after the (m*,w*) point for people who do meet the criterion. Actually, since we are plotting GOOD moves, not ALL moves, I should not call it m*.  Better is to call the axis something like c - for correct moves, And the criterion point becomes (c".w*). 
+
+       <p>Line style:
+	<ul>
+	<li>dotted lines, all the way along, for people who don't meet the criterion;
+	<li>solid before, and dotted after the (m*,w*) point for people who do meet the criterion. 
 	</ul>
 
 	<p>Paul's method AAID:
@@ -544,8 +561,12 @@ at each move that is either  correct or wrong (not ignored)
                  plot(sumC,y)
      if this is the first move, plot (1,0). 
 </pre>
+
+@param ser The player's prepackaged data
+
+@param needAnn Annotate the beginning of the longest flat section
     */
-    private static Curve mkCurve(MwSeries ser, CurveMode mode, CurveArgMode argMode, int maxX) {
+    private static Curve mkCurve(MwSeries ser, CurveMode mode, CurveArgMode argMode, int maxX, boolean needAnn) {
 	boolean nonTrivial =  mode==CurveMode.AAIH;
 	int n = (argMode == CurveArgMode.C)? findMaxC(ser, nonTrivial):  ser.moveInfo.length;
 	
@@ -650,7 +671,27 @@ at each move that is either  correct or wrong (not ignored)
 	    }
 	}
 
-	//-- extrapolation of learner's curves, if feasible
+	//-- if requested, identify the longest flat section (the number of consecutive good moves, for W_C)
+	int startLongest = -1, lenLongest = 0;
+	if (needAnn) {
+	    int i0 = 0;
+	    for(int i=0; i<yy.length; i++) {
+		if (yy[i] == yy[i0]) {
+		    int len = (i-i0);
+		    if (i0>0) len++;
+		    if (len > lenLongest) {
+			startLongest = i0;
+			lenLongest = len;
+		    }
+		} else {
+		    i0 = i;
+		}
+	    }
+	}
+
+
+	
+	//-- extrapolation of a learner's curve, if feasible for the metric being used
 	double[] ye = yy;
 	int startExtra = yy.length-1;
 	if (ser.getLearned()) {
@@ -687,6 +728,11 @@ at each move that is either  correct or wrong (not ignored)
 	Curve c =  new Curve(ye, startExtra);
 	String [] dash = ser.learned? new String[] {"", "4"}:	new String[] {"1", null};
 	c.setDash(dash);
+
+	if (needAnn && lenLongest>1) {
+	    c.addAnnotation( startLongest, ""+ lenLongest);
+	}
+
 	return c;
     }
 
