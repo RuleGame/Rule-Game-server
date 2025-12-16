@@ -327,9 +327,10 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		int maxX = (argMode==CurveArgMode.C)? findMaxC(savedMws, nonTrivial):  findMaxM(savedMws);  
 		
 		DataMap h = prepMaps(savedMws, precMode);
-		h.mkCurves(mode, argMode, maxX, false);
+		boolean needAnn = doAnn && mode == CurveMode.W;
+		h.mkCurves(mode, argMode, maxX, needAnn);
 		DataMap hr = doRandom? prepMaps(randomMws, PrecMode.Ignore): null;
-		if (doRandom) hr.mkCurves(mode, argMode, maxX, false);
+		if (doRandom) hr.mkCurves(mode, argMode, maxX, needAnn);
 
 		for(String key0: h.keySet()) {
 		    for(String key1: h.keySet()) {
