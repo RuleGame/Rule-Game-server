@@ -146,7 +146,7 @@ public class Pseudo {
     /** Pseudo-randomly proposes a move, without actually executing it.
 	This is used both in HvB and in bot assist.
      */
-    public Move proposeMove() throws IOException {
+    public Move proposeMove() {//throws IOException {
 	if (expectedAttemptCnt < epi.getAttemptCnt()) {
 	    Logging.info("Pseudo: skipping apparently duplicate request " + this);
 	    return null;

@@ -622,20 +622,19 @@ public class EpisodeInfo extends Episode {
 	    (isMove || move.code != CODE.ACCEPT)) { 
 	    if (botAssist[move.mover]==null) botAssist[move.mover]=new BotAssist(mySeries().botAssistParams[move.mover]);
 	    botAssist[move.mover].didHeFollow(move);
-	    String chat = botAssist[move.mover].makeSuggestion(this);
 
+	    // don't create a sugg yet until it's your turn!
 	    if (q.mustWait) {
 		// Since 8.041, no chat message is sent to the
 		// now-inactive player until it's his turn again.
 		// That will be done by the appropriate /display
 		// call.
 
-		//if (chat!=null) chat = "[Not your turn yet] " + chat;
-		chat = null;
-		chatIsToBeSent[move.mover] = true;
+		chatIsToBeMade[move.mover] = true;
 	    } else {
+		String chat = botAssist[move.mover].makeSuggestion(this);	
 		q.setBotAssistChat(chat);
-		chatIsToBeSent[move.mover] = false;
+		chatIsToBeMade[move.mover] = false;
 	    }
 	}
 
@@ -643,10 +642,10 @@ public class EpisodeInfo extends Episode {
 	return q;
     }
 
-    /** True if a chat message has been prepared for a player, 
-	but not sent yet (because it wasn't his turn) */
+    /** True if a chat message needs to be prepared and sent for a player, 
+	(we postpone this because it wasn't his turn) */
     @Transient
-    private boolean[] chatIsToBeSent = new boolean[2];
+    private boolean[] chatIsToBeMade = new boolean[2];
 
     /** The key that can be printed next to reports to help understand them */
     public String reportKey() {
@@ -1083,19 +1082,18 @@ public class EpisodeInfo extends Episode {
 	    
 	    q.setBotAssistChat(chat);
 	    q.setClearBotAssistChat(true);
-	    chatIsToBeSent[mover] = false;
+	    chatIsToBeMade[mover] = false;
 	} else  {
 
-	    if (chatIsToBeSent[mover]) {
-		
-		String chat = botAssist[q.mover].getChat();
-		// if (chat!=null) chat = "Reminding of my suggestion: " + chat;
+	    if (chatIsToBeMade[mover]) {
+		String chat = botAssist[mover].makeSuggestion(this);	
+
 		if (chat!=null) {
 		    q.setBotAssistChat(chat);
 		} else {
 		    q.setClearBotAssistChat(true);
 		}
-		chatIsToBeSent[mover] = false;
+		chatIsToBeMade[mover] = false;
 	    }
 	}		      
 	

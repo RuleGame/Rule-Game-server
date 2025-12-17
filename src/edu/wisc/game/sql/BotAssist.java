@@ -45,7 +45,7 @@ class BotAssist {
 
     /** The last chat message generate by this assistant. It is updated every time a new suggestion is generated. */
     private String chat=null;
-    String getChat() { return chat; }
+    //String getChat() { return chat; }
 
     
     /** Proposes one more move, adds it to the bot assist transcript,
@@ -56,7 +56,7 @@ class BotAssist {
 
 	@return the new suggestion text that can be sent to the player
     */
-    String makeSuggestion(EpisodeInfo epi)	throws IOException {
+    String makeSuggestion(EpisodeInfo epi){//	throws IOException {
 	// FIXME: once other bot types are supported, this  cast may fail!
 	Pseudo task = new Pseudo((Pseudo.Params)params, epi.getPlayer(), epi, epi.getAttemptCnt());
 	proposed = task.proposeMove();
