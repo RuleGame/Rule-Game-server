@@ -1210,25 +1210,33 @@ public class PlayerInfo {
 	// save the data in the SQL server
 	saveMe();
 	// save the data in the CSV files
-	File f =  Files.boardsFile(playerId);
-	Board b = epi.getCurrentBoard(true);
-	BoardManager.saveToFile(b, playerId, epi.episodeId, f);
-	f =  Files.transcriptsFile(playerId);
-	// Save the bot assist transcript separately for each player who is
-	// provided with bot assist
-	// ZZZ who needs to have assist?
-	TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.transcript, anySeriesHasBotAssist(0) ||anySeriesHasBotAssist(1),
-					       epi.botAssist[0]!=null|| epi.botAssist[1]!=null      );
-	for(int mover=0; mover<2; mover++) {
+	try {
+	    File f =  Files.boardsFile(playerId);
+	    Board b = epi.getCurrentBoard(true);
+	    BoardManager.saveToFile(b, playerId, epi.episodeId, f);
+	    f =  Files.transcriptsFile(playerId);
+	    // Save the bot assist transcript separately for each player who is
+	    // provided with bot assist
+	    // ZZZ who needs to have assist?
+	    TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.transcript, anySeriesHasBotAssist(0) ||anySeriesHasBotAssist(1),
+						   epi.botAssist[0]!=null|| epi.botAssist[1]!=null      );
+	    for(int mover=0; mover<2; mover++) {
 	    if ( epi.botAssist[mover]!=null) {
 		f = Files.botAssistFile(playerId, mover);
 		TranscriptManager.saveTranscriptToFile(playerId, epi.episodeId, f, epi.botAssist[mover].botAssistTranscript, false, false);
 	    }
+	    }
+	    f =  Files.detailedTranscriptsFile(playerId);
+	    //epi.saveDetailedTranscriptToFile(f);
+	    TranscriptManager.saveDetailedTranscriptToFile(epi, null, f);
+	    Logging.info("PlayerInfo.ended: saved transcripts for (epi=" + epi.getEpisodeId()+"); finishCode =" + epi.finishCode);
+	} catch(IOException ex) {
+	    StringWriter sw = new StringWriter();		
+	    ex.printStackTrace(new PrintWriter(sw));
+	    Logging.error("Exception when saving episode data to CSV files: " + ex);
+	    Logging.error("Trace: " + sw);
+	    ex.printStackTrace(System.out);
 	}
-	f =  Files.detailedTranscriptsFile(playerId);
-	//epi.saveDetailedTranscriptToFile(f);
-	TranscriptManager.saveDetailedTranscriptToFile(epi, null, f);
-	Logging.info("PlayerInfo.ended: saved transcripts for (epi=" + epi.getEpisodeId()+"); finishCode =" + epi.finishCode);
 	try {
 	    WatchPlayer.tellAbout(playerId, "Ended episode " +epi.getEpisodeId()+
 			     " with finishCode =" + epi.finishCode);

@@ -1082,6 +1082,7 @@ public class EpisodeInfo extends Episode {
 		"Starting episode No. " + (k+1) + " of Rule No. " + (seriesNo+1)+". Please make your first move!";
 	    
 	    q.setBotAssistChat(chat);
+	    q.setClearBotAssistChat(true);
 	    chatIsToBeSent[mover] = false;
 	} else  {
 
