@@ -89,7 +89,8 @@ public class MwByHuman extends AnalyzeTranscripts {
     */
     static class RunParams {
 	boolean doRandom=false;
-	RandomPlayer randomPlayerModel;
+	RandomPlayer randomPlayerModel = RandomPlayer.COMPLETELY_RANDOM;	
+;
 	
 	ArgType argType = ArgType.PLAN;
 	boolean fromFile = false;
@@ -103,20 +104,25 @@ public class MwByHuman extends AnalyzeTranscripts {
 	double targetR = 0;
 	double defaultMStar=300;
 	PrecMode precMode = PrecMode.Naive;
-	CurveMode curveMode = CurveMode.AAIC;
-	CurveArgMode curveArgMode = CurveArgMode.C;
-	MedianMode medianMode = MedianMode.Real;
 	boolean useMDagger = false;
+
 	File csvOutDir = null;
 	
 	// At most one of them can be non-null
 	String exportTo = null;
 	Vector<String> importFrom = new Vector<>();
 
+	/** Stuff for BuildCurves */
+	CurveMode curveMode = CurveMode.AAIC;
+	CurveArgMode curveArgMode = CurveArgMode.C;
+	MedianMode medianMode = MedianMode.Real;
+
 	/**  BuildCurves: do we draw pair plots? */
 	boolean doPairs = false;
 	/**  BuildCurves: do we annotate the longest flat section? */
 	boolean doAnn = false;
+	/** Allow coinciding curves to overlap (instead of shifting them a bit) */
+	boolean doOverlap = false;
 	
 	String config = null;
 	
@@ -144,6 +150,8 @@ public class MwByHuman extends AnalyzeTranscripts {
 		doPairs = Boolean.parseBoolean( argv[++j] );
 	    } else if (j+1< argv.length && a.equals("-annotate")) {
 		doAnn = Boolean.parseBoolean( argv[++j] );
+	    } else if (j+1< argv.length && a.equals("-overlap")) {
+		doOverlap = Boolean.parseBoolean( argv[++j] );
 	    } else if (j+1< argv.length && a.equals("-p0")) {
 		randomPlayerModel = ReplayedEpisode.RandomPlayer.valueOf1(argv[++j]);
 	    } else if (j+1< argv.length && a.equals("-config")) {

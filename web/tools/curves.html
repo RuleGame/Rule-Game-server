@@ -6,7 +6,7 @@
 
 <h1>Cumulative curves</h1>
 
-<div align="center"><em>Updated 2025-11-29, for Game Server 8.044</em></div>
+<div align="center"><em>Updated 2025-12-31, for Game Server 8.048</em></div>
 
 <p>The script <tt>analyze-transcripts-curves.sh</tt> draws cumulative error curves for human players sharing a particular experience. It pulls the data for a group of players from the data store (the SQL database and transcript files) and produces SVG images displaying the individual players' cumulative errors curves and their median curve.
 
@@ -34,6 +34,9 @@ Support for the -export and -import options has the same form as well, although 
       
     <li><tt>AAID</tt> = Paul's proposal, a bit more complicated than AAIC. (See below).
     <li><tt>AAIE</tt> = like AAIC, but with the y value "frozen" for the duration of each correct-move streak
+
+    <li><tt>AAIG</tt>, <tt>AAIH</tt>: see "C-based metrics" below.
+
     <li><tt>ALL</tt> = produce multiple plots, one for each of the above modes
   </ul>
 
@@ -101,7 +104,60 @@ at each move that is either  correct or wrong (not ignored)
 <p>An advantage of using C instead of M as the variable on the horizontal axis is that in a game where most players clear all boards presented to them (i.e. no incentive scheme, and no "give up" option), all curves will end at roughly the same value of C, so a median would be much better defined than it would in a plot where the variable being plotted is plotted with respect to M.
 
 <p>If  <tt>-curveMode</tt> has been specified as <tt>ALL.ALL</tt> (or just as <tt>all</tt>, for short), the tool will plot the curves for all supported <em>yVar.xVar</em> combinations, placing each family of plots in an appropriately named subdirectory of the <tt>out</tt> directory. E.g. the plots of AAI vs. C will be in the subdirectory <tt>AAI_C</tt>.
+
+<h2>C-based metrics</h2>
+
+<p>
+<strong>Background.</strong> I understand that the properties we'd like to see in a metric useful for comparing different rule sets (or, generally, "experiences") on a given human player population are as follows:
+
+<p>
+(1) Monotonicity: the cumulative curve for any player is monotonically non-decreasing. (Such as the raw W count is, with respect to any argument, be it M or C).
+
+<p>
+(2) Flatlining:  It would be nice for a cumulative curve for a "learner" (someone who learns to play without making any more errors after some point) to end in a horizontal segment, so it would be easy to extrapolate it by a horizontal line, or to describe it by a single number (such as W, for which the final value can be called is Wstar). AAIB, for example is designed this way. 
+
+<p>
+(3) Comparability: In order for different rule sets' data to be comparable on the same graph, it would be desirable for the metric to be defined in such a way that the curve for an "average random player", however defined, behaved in the same way (e.g. as y=x) for all rule sets. This was the idea for AAIB_M, or AAIC_C.
+
+<strong>Again on AAIC.</strong> The AAIC_C curve satisfies (1) and (3), but does not quite meet (2): a "learner's" AAIC curve would have a horizontal asymptote, but the curve itself (in AAIC_C coordinates) will be a hyperbola approaching that asymptote. 
+
+<p>
+Additionally, the mapping of the height of the cumulative curve in "raw" W_C coordinates to that in AAIC_C coordinates is very non-linear. That is, curves that are very different in the W space (you can easily say that rule set R1 is much more difficult than R2, when one compares the ratio W(human players)/W(random players)) may look much less different in the AAIC_C coordinates; on the AAIC_C plot, all these curves are all much closer to the y=x line, and don't look very different from each other.
+
+<strong>The idea of a C-based metric.</strong> What if, instead of focusing on moves, we concentrate on removed pieces. That is, one can ask:
+<ul>
+<li> for a given board state, what is the average number of move attempts mu that  a random player would end up making in order to remove my piece from this board? (This is easily computable).
+<li> for a given board, what is the number of move attempts that a given human player ended up making in order to remove my piece from this board? (This is obtainable from the logs).
+<li> can we use some kind of a ratio of the latter divided by the former to measure how much better our human players did on a given rule set than random players would have done?
+</ul>
+
+    <strong>AAIG</stron> is pretty similar to Paul's original AAIB, but conceptually based on summing over removed pieces (i.e. over good moves) rather than over all moves. The metric is the ratio of two cumulative values, that is
+      <div align=center>
+	AAIG(C) =  ( W / Sum_b( mu(b)-1) ) * C
+	</div>
+Here, the sum is over the C intermediate board states (over the C removed pieces), and thus is meant to estimate the number of errors that a random player would need to change that board state (i.e. to remove the piece).  By this design, AAIG_C for random players is meant to approximate C, thus satisfying (3).  For a game where mu is constant (e.g., for shape matching or color matching or quadNearby, mu=4 in the COMPLETELY_RANDOM player model), 
+  AAIG(C) =  W / mu. This obviously satisfies (2) (learners flatlining), although for games with varying mu (like ordL1, or various "one color at a time" games), this flatlining is only approximate. Also, the condition (1) (monotonicity) only holds for games with constant mu
+(e.g. http://action.rutgers.edu/tmp/out-all-ignore-COMPLETELY_RANDOM/pairs/AAIG_C/FDCL/basic/buckets_2130-quadMixed1.svg ); for variable-mu games (like ordL1) you get a lot of somewhat unsightly artifacts, since the C/Sum(mu) ratio varies during an episode, even as W (for a learner after passing mStar) stays constant. (E.g.
+http://action.rutgers.edu/tmp/out-all-ignore-COMPLETELY_RANDOM/AAIG_C/FDCL/basic/allOfColOrd_BRKY.svg 
+http://action.rutgers.edu/tmp/out-all-ignore-COMPLETELY_RANDOM/pairs/AAIG_C/FDCL/basic/allOfShaOrd_qcts-shaOrdL1_csqt.svg
+)
+
+      <p>
+	<strong>AAIH.</strong> This is an enhancement on AAIG, involving two ideas: computing ratios for individual moves, and removing "trivial moves" from consideration.
+	<div align=center>
+	  AAIH(C') = Sum_{b over C'} ( w(b) / (mu(b)-1) )
+	  </div>
+Here, w(b) is the number of wrong attempts the player made when removing a piece from a given board state, and mu(b) is, again, the avg number of errors a random player would make for removing that state. The summation is over the board states that includes "trivial moves" (when mu=1, i.e. a wrong move is impossible, such as for the first piece of cw or ccw, or the last piece of ordL1). C' is also defined as including only "non-trivial" moves (thus, for cw or ordL1 we have C=24, rather than 27, for our 3-board experiment; for methods such as allOfShaOrd_qcts, it is a variable number, always <= 24, since some players may end up ending the game with just several squares on it, and no thinking needed).
+http://action.rutgers.edu/tmp/out-all-ignore-COMPLETELY_RANDOM/pairs/AAIH_C/FDCL/basic/allOfShaOrd_qcts-shaOrdL1_csqt.svg
+
+<p>
+  This formula guarantees monotonicity (since it is a simple non-decreasing sum), flatlining (since no new terms are added once the player makes no more errors), and it is meant to approximate AAIH(C')=C' well for random players. Besides, explaining the metrics is easy in the terms of the ratio of the number of errors made by Prolific players vs random players. So I think it's the best of our formulas so far.
   
+<p>
+ <strong>The final C' for AAIH.</strong> One small complication with this formula is that when we look not only at the learners, but at all players (thus striving to e.g. see if a bimodal distribution appears, or comparing the distributions for 2 rule sets), the question arises, Where (at which C') exactly to put the end point (for the error bars, or the end of the shading area)? For constant-mu rules, like sm/cm/quadNearby this is not an issue, since every non-learner  who does not give up reaches C'=C=27. For a rule that has always the same number of trivial moves (e.g. cw/ccw/ordL1), we also have the same C' (24) for all non-learners. But for a rule set such as allOfShaOrd_qcts, C' varies slightly from player to player, since some got easier boards than others. Now, proactively, this could be handled by ensuring that all player are given boards with the same number of trivial moves (e.g. all boards in allOfShaOrd_qcts have exactly 2 squares). But to handle already collected data, I have imposed a simple heuristic, which simply places a final bar at some point where some non-learners' curves start disappearing. That could be as low as C'=19 or 20 in some rule sets.
+
+
+
     <h2>Output</h2>
 
     <p>The tool creates directory <tt>out</tt>; in it, subdirectories corresponding to display modes (<tt>W_M</tt> etc). Within each of them, plots are written as individual SVG files, each file name corresponding to the identifier of the "experience" reflected therein. SDepedning on the -precMode, that may be just the name of the rule set, or a combination of strings including the preceding rule sets. In the latter case, the components of the file names are separated by dots (because using semicolons would not be appropriate in file names).

@@ -59,7 +59,7 @@ public class ReplayedEpisode extends Episode {
 			   RandomPlayer _randomPlayerModel   ) {
 	super(game, Episode.OutputMode.BRIEF, null, null, _episodeId, false);
 	randomPlayerModel  = _randomPlayerModel;
-	if (randomPlayerModel  == null) throw new IllegalArgumentException("randomPlayerModel not specified when creating ReplayedEpisode");
+	if (randomPlayerModel  == null) throw new IllegalArgumentException("randomPlayerModel not specified when creating ReplayedEpisode. In some applications, you can specify it using e.g. -p0 COMPLETELY_RANDOM");
 
 	para = _para;
 	if (game.initialBoard==null) {

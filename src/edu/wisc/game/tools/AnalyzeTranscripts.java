@@ -84,10 +84,8 @@ public class AnalyzeTranscripts {
      */
     public static void main(String[] argv) throws Exception {
 
-	//protected static
-	ReplayedEpisode.RandomPlayer randomPlayerModel=//null;
-	ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;	
-
+	ReplayedEpisode.RandomPlayer randomPlayerModel=
+	    ReplayedEpisode.RandomPlayer.COMPLETELY_RANDOM;	
 
 	String outDir = "tmp";
 
@@ -96,8 +94,6 @@ public class AnalyzeTranscripts {
 	    test(y);
 	    return;
 	}
-
-
 	
 	if (argv.length==2 && argv[0].equals("-y")) {
 	    String[] ys = argv[1].split("\\s+");

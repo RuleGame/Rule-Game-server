@@ -50,6 +50,8 @@ public class BuildCurves extends MwByHuman {
 
     /**  BuildCurves: do we annotate the longest flat section? */
     boolean doAnn = false;
+    /** Allow coinciding curves to overlap (instead of shifting them a bit) */
+    boolean doOverlap = false;
     
     /** Info about each episode gets added here */
     //    public Vector<MwSeries> savedMws = new Vector<>();
@@ -183,6 +185,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 						p.precMode, p.curveMode, p.curveArgMode, p.medianMode,
 						p.targetStreak, p.targetR, p.defaultMStar, plainFm);
 	processor.doAnn = p.doAnn;
+	processor.doOverlap = p.doOverlap;
 	try {
 	    if (p.importFrom.size()==0) {
 	    // Extract the data from the transcript, and put them into savedMws
@@ -436,6 +439,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	    
 	    boolean useExtra =(medianMode==MedianMode.Extra);
 	    SvgPlot svg = new SvgPlot(W, H, maxX);
+	    svg.doOverlap = doOverlap;
 	    svg.adjustMaxY(z.curves, randomCurves, useExtra);
 	    //System.out.println("doPlots: call addPlot "+ key);
 	    svg.addPlot(z.curves, randomCurves, useExtra, colors, 0);
@@ -458,7 +462,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 
 	boolean useExtra =(medianMode==MedianMode.Extra);
 	SvgPlot svg = new SvgPlot(W, H, maxX);
-
+	svg.doOverlap = doOverlap;
 	Curve[][] curves = new Curve[2][], randomCurves=new Curve[2][];
 	for(int j=0; j<2; j++) {
 	    String key = keys[j];
@@ -739,6 +743,7 @@ at each move that is either  correct or wrong (not ignored)
 
     /** Sample usage:
 	    SvgPlot svg = new SvgPlot(W, H, maxX);
+	    svg.doOverlap = false;
 	    svg.adjustMaxY(curves, randomCurves, useExtra);
 	    svg.addPlot(curves, randomCurves, useExtra);
 	    String plot = svg.complete();
@@ -747,6 +752,7 @@ at each move that is either  correct or wrong (not ignored)
 	Vector<String> sections = new Vector<>();
 	int W, H;
 	double maxX, maxY=0;
+	boolean doOverlap = false;
 	
 	SvgPlot(int _W, int _H, int _maxX) {
 	    W = _W;
@@ -878,9 +884,7 @@ at each move that is either  correct or wrong (not ignored)
 	    v.add( Curve.mkShading(curves, 0,H, xFactor, yFactor, useExtra,
 				   (needShading? colors[3]: colors[0]), needShading, sequenceNumber * 8));
 
-	    // FIXME: let's make this command-line controllable!
-	    final boolean noOverlap = true;
-	    v.add( Curve.mkSvgNoOverlap(curves, 0, H, xFactor, yFactor, colors[0],1, noOverlap));
+	    v.add( Curve.mkSvgNoOverlap(curves, 0, H, xFactor, yFactor, colors[0],1, !doOverlap));
 
 	    v.add( Curve.mkMedianSvgPathElement(curves, 0,H,xFactor, yFactor, colors[1],3, null, null, null, useExtra));
 
