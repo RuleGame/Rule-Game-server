@@ -631,10 +631,14 @@ public class EpisodeInfo extends Episode {
 		// call.
 
 		chatIsToBeMade[move.mover] = true;
+		Logging.info("/move will not include BotAssist message; mustWait until /display");
 	    } else {
-		String chat = botAssist[move.mover].makeSuggestion(this);	
-		q.setBotAssistChat(chat);
-		chatIsToBeMade[move.mover] = false;
+		String chat = botAssist[move.mover].makeSuggestion(this);
+		if (chat!=null) {
+		    q.setBotAssistChat(chat);
+		    chatIsToBeMade[move.mover] = false;
+		    Logging.info("/move will include BotAssist=" + chat);
+		}
 	    }
 	}
 
@@ -1019,6 +1023,7 @@ public class EpisodeInfo extends Episode {
     }
     
     /** Builds a Dsplay object to be sent out over the web UI on a /display call
+	(or a /newEpisode, /mostRecentEpisode call).
 	@param playerId This can be null in 1PG, but in 2PG it must
 	identify the player to whom we are to show the display
      */
@@ -1053,7 +1058,7 @@ public class EpisodeInfo extends Episode {
     /** Checks if this game has bot assist, and, if appropriate,
 	obtains a chat  message from the BA and adds it to the 
 	ExtendedDisplay structure, so that it would be
-	sent to the client.
+	sent to the client. This is used for the /display call.
     */
     // zzz
     private void supplyChatMessage(ExtendedDisplay q, int mover) {
@@ -1090,6 +1095,7 @@ public class EpisodeInfo extends Episode {
 
 		if (chat!=null) {
 		    q.setBotAssistChat(chat);
+		    Logging.info("/display will include BotAssist=" + chat);
 		} else {
 		    q.setClearBotAssistChat(true);
 		}

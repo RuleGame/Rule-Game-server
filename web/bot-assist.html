@@ -10,7 +10,7 @@ Bot Assist
     </h1>
 
     <div align="center"><em>
-	Updated 2025-11-23 for GS 8.041</em>
+	Updated 2025-01-27 for GS 8.041</em>
 	</div>
 
     <p>This is document provides an overview of the "Bot Assist" feature, which was introduced in GS ver. 8.014. Originally, the entire trial list had to either have bot assist or not, but since ver 8.022, we have parameter-set-level granularity.
@@ -86,7 +86,7 @@ action trial-lists/vm> more adve.colorVshape-bot-assist/colorVshape.csv
 rule_id,max_boards,min_points,max_points,min_objects,max_objects,min_shapes,max_shapes,min_colors,max_colors,b,feedback_switches,stack_memory_depth,stack_memory_show_order,grid_memory_show_order,give_up_at,x2_likelihood,x4_likelihood,pregame,images,bot_assist,pseudo_halftime,pseudo_init_error_rate,bot_assist1,pseudo_halftime1,pseudo_init_error_rate1
 pk/shapeVcolor,2,2,10,4,6,2,4,2,4,1.5,free,10,TRUE,TRUE,0,100,10000,doubling,pk/shapeVcolor/*.png,pseudo,10,0.90,,,
 FDCL/basic/cw,2,2,10,4,6,2,4,2,4,1.5,free,10,TRUE,TRUE,0,100,10000,doubling,,,,,pseudo,10,0.90
-FDCL/basic/ccw,2,2,10,4,6,2,4,2,4,1.5,free,10,TRUE,TRUE,0,100,10000,doubling,,,,,pseudo,10,0.90,pseudo,20,0.40
+FDCL/basic/ccw,2,2,10,4,6,2,4,2,4,1.5,free,10,TRUE,TRUE,0,100,10000,doubling,,pseudo,10,0.90,pseudo,20,0.40
 </pre>
 
 As you can see, in the first series, only Player 0 receives bot assistance, in the second series, only Player 1 does, and in the thrid series, both do.
