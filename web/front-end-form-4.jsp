@@ -55,7 +55,7 @@ Choose one of the experiment plans listed below:<br>
 	 <tt>
 	 	 <%= (main.exp==null) ?
 	  Files.listSAllExperimentPlansHtml(true) :
-	  Tools.radio("exp", main.exp, main.exp, false)
+	  Tools.radio("exp", main.exp, main.exp, true)
 	  %>
 
 	 </tt>    
