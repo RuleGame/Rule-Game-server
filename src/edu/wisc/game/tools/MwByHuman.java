@@ -87,24 +87,24 @@ public class MwByHuman extends AnalyzeTranscripts {
 	class so that different utilities can use this class to parse
 	their command line arguments.
     */
-    static class RunParams {
-	boolean doRandom=false;
-	RandomPlayer randomPlayerModel = RandomPlayer.COMPLETELY_RANDOM;	
-;
+    public static class RunParams {
+	public boolean doRandom=false;
+	public RandomPlayer randomPlayerModel = RandomPlayer.COMPLETELY_RANDOM;	
+
 	
 	ArgType argType = ArgType.PLAN;
 	boolean fromFile = false;
 	
-	Vector<String> plans = new Vector<>();
-	Vector<String> pids = new Vector<>();
-	Vector<String> nicknames = new Vector<>();
-	Vector<Long> uids = new Vector<>();
+	public Vector<String> plans = new Vector<>();
+	public Vector<String> pids = new Vector<>();
+	public Vector<String> nicknames = new Vector<>();
+	public Vector<Long> uids = new Vector<>();
 
-	int targetStreak = 0;
-	double targetR = 0;
-	double defaultMStar=300;
-	PrecMode precMode = PrecMode.Naive;
-	boolean useMDagger = false;
+	public int targetStreak = 0;
+	public double targetR = 0;
+	public double defaultMStar=300;
+	public PrecMode precMode = PrecMode.Naive;
+	public boolean useMDagger = false;
 
 	File csvOutDir = null;
 	
@@ -113,19 +113,20 @@ public class MwByHuman extends AnalyzeTranscripts {
 	Vector<String> importFrom = new Vector<>();
 
 	/** Stuff for BuildCurves */
-	CurveMode curveMode = CurveMode.AAIC;
-	CurveArgMode curveArgMode = CurveArgMode.C;
-	MedianMode medianMode = MedianMode.Real;
+	public CurveMode curveMode = CurveMode.AAIC;
+	public CurveArgMode curveArgMode = CurveArgMode.C;
+	public MedianMode medianMode = MedianMode.Real;
 
 	/**  BuildCurves: do we draw pair plots? */
-	boolean doPairs = false;
+	public boolean doPairs = false;
 	/**  BuildCurves: do we annotate the longest flat section? */
-	boolean doAnn = false;
+	public boolean doAnn = false;
 	/** Allow coinciding curves to overlap (instead of shifting them a bit) */
-	boolean doOverlap = false;
+	public boolean doOverlap = false;
 	
 	String config = null;
-	
+
+	public RunParams() {}
 	RunParams(String[] argv) throws IOException, IllegalInputException {
 	for(int j=0; j<argv.length; j++) {
 	    String a = argv[j];

@@ -13,7 +13,7 @@ import edu.wisc.game.sql.Episode.CODE;
 import edu.wisc.game.tools.MwByHuman.PrecMode;
 
 
-/**  An auxiliary class for MwByHuman, an MWSeries object contains the data for one series (group of episodes played by one player under the same rule set) needed to contribute a number to an M-W Comparandum. For each episode, we need these data:
+/**  An auxiliary class for MwByHuman, an MWSeries object contains the data for one series (group of episodes played by one player under the same rule set) needed to contribute a number to an M-W Comparandum. For each episode, we need these aggregate data:
 	 <pre>
 playerId
 episodeId
@@ -22,6 +22,8 @@ predecessors
 achieved10
 m*
 </pre>
+
+Later on (fall 2025), the field moveInfo has been added; it just contains the success and p0 values for each move, to be used in drawing cumulative curves.
      */
 public  class MwSeries {
 
