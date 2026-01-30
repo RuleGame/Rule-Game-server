@@ -4,7 +4,7 @@
 <body>
   <h1>The Export Transcripts tool</h1>
 
-<div align="center"><em>Updated 2024-12-02, for Game Server 6.046</em></div>
+<div align="center"><em>Updated 2026-01-30, for Game Server 6.046</em></div>
 
 <h2>Introduction</h2>
 
@@ -12,14 +12,11 @@
 
   <p>This document describes one of the simplest tools, the script <tt>export-transcripts.sh</tt>. Its primary purpose is to select the transcript files from the participants who satisfy your criteria (e.g. "everybody listed in study summary files on Prolific"; "everybody who participated in experiment plans <tt>FDCL/basic</tt>, and whose player ID started with <tt>prolific-</tt> or <tt>RU-</tt>", etc). Additionally, it will also extract the selected players' rows from the tables in the MySQL database, and will export them in CSV format. All files so selected or produced will be put into a new directory, so that you can ZIP it and then transfer the ZIP file to another computer for further analysis.
 
-  <h2>Use case examples</h2>
+  <h2>Obtaining Prolific participant list</h2>
 
-<p>The script  <tt>export-transcripts.sh</tt> takes most of the same command line arguments as does  <A href="analyze-transcripts.html">analyze-transcripts.sh</a>, allowing selecting records based on experiment plan name, player IDs, user ID (for repeat players), etc. This section discusses a few examples that are likely to occur in your practice.
+<h3>In 2024</h3>
 
-  <h3>Example 1: Using Prolific summary files</h3>
-
-
-<p>If you run an "experiment" on Prolific, Prolific stores the list of participants for each "study" included in the experiment. You can download that list by going to the study's detail page, opening the "Actions" pop-up menu, choosing "Download summary", and saving the CSV file offered to you.
+<p>In 2024, if you run an "experiment" on Prolific, Prolific stores the list of participants for each "study" included in the experiment. You can download that list by going to the study's detail page, opening the "Actions" pop-up menu, choosing "Download summary", and saving the CSV file offered to you.
 
 <p>The download summary file is in CSV format with many columns; it looks like this:
   <pre>
@@ -35,6 +32,20 @@
     When the Prolific participants play our games, their Prolific PIDs are converted to our Game Server player IDs, which combine the study ID and the Prolific PID, e.g. <tt>prolific-671b8ae84509b9a624b95e13-5e9088a8a4b6ed018b450000</tt>.
 
   <p>Once you have downloaded the study summary files for your experiment to your PC, you need to upload them to the Game Server host (<tt>action.rutgers.edu</tt>) using <tt>sftp</tt> or <tt>scp</tt>. Put them into the same directory under your home directory, e.g. <tt>fdcl-01</tt>.
+
+
+    <h3>In 2026</h3>
+
+    <p>Prolific has changed its web site lately. In 2026, the "download study summary" button now gets you PDF files, which are not useful with this tool. Instead, to get a CSV summary file, you go to the main study detail page, and click on the "Download demographic data" button. A pop-up screen will come up, which may contain some check boxes. Don't check any check boxes; just click on "Download". This will give you a CSV file that has a different name from what you're used to (e.g. prolific_demographic_export_697a2d4a48adcf23d999b8f9.csv ), but which can be used just the same as a "summary file" discussed above. In the subsequent examples, use that CSV file as the argument wherever a "summary file" is mentioned.
+
+    
+  <h2>Use case examples</h2>
+
+<p>The script  <tt>export-transcripts.sh</tt> takes most of the same command line arguments as does  <A href="analyze-transcripts.html">analyze-transcripts.sh</a>, allowing selecting records based on experiment plan name, player IDs, user ID (for repeat players), etc. This section discusses a few examples that are likely to occur in your practice.
+
+  <h3>Example 1: Using Prolific summary files</h3>
+
+
 
   <p>Log in to the Game Server host using <tt>ssh</tt>, go to the directory where you have put the summary files, and run the export transcripts script:
 <pre>

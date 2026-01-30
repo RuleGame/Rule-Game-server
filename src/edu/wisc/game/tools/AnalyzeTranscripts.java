@@ -385,6 +385,7 @@ public class AnalyzeTranscripts {
 	of a CSV file.
 
 	<p>
+	(Prolific, 2024 vintage)
 	Special treatment is provided for Prolific summary files
 	(exportable with "Download summary" on a study's screen in Prolific.com).
 	These files are identified by their name (e.g. prolific_export_671b8ae84509b9a624b95e13.csv);
@@ -396,6 +397,15 @@ public class AnalyzeTranscripts {
 671b8e95b17f88050648883e,5e9088a8a4b6ed018b45ba7b,APPROVED,Not Applicable,2024-10-25T12:27:09.179000Z,2024-10-25T12:46:18.540000Z,2024-10-25T23:35:53.040000Z,2024-10-25T12:46:19.217499Z,1150,prolific-671b8ae84509b9a624b95e13-5e9088a8a4b6ed018b45ba7b-20241025-084454-22D5,389,"Czech, English, Russian, Slovak",25,Female,...
 671b8e98fd64b1b65fa1a726,5c655e3c42faef0001283e77,APPROVED,Not Applicable,2024-10-25T12:27:10.328000Z,2024-10-25T12:52:05.286000Z,2024-10-25T23:35:53.354000Z,2024-10-25T12:54:01.498864Z,1495,prolific-671b8ae84509b9a624b95e13-5c655e3c42faef0001283e77-20241025-085043-C77D,365,"German, English",24,Male,....
 </pre>
+
+
+	(Prolific, 2026 vintage)
+	<pre>
+% more prolific_demographic_export_697a2d4a48adcf23d999b8f9.csv 
+Submission id,Participant id,Status,Custom study tncs accepted at,Started at,Completed at,Reviewed at,Archived at,Time taken,Completion code,Total approvals,Age,Sex,Ethnicity simplified,Country of birth,Country of residence,Nationality,Language,Student status,Employment status
+697a2e13c493b55b58eb9c46,5c747b0f181ad300113363ed,APPROVED,Not Applicable,2026-01-28T15:41:10.770000Z,2026-01-28T16:16:51.507000Z,2026-01-28T17:17:15.035000Z,2026-01-28T16:16:51.859673Z,2141.0,NOCODE,11289,29,Male,White,United States,United States,United States,English,DATA_EXPIRED,DATA_EXPIRED
+6
+	</pre>
     */
     static String[] readList(File f) throws IOException, IllegalInputException{
 
@@ -418,7 +428,10 @@ public class AnalyzeTranscripts {
 	return v.toArray(new String[0]);
     }
 
-    private static Pattern prolificFileNamePat =  Pattern.compile("prolific_export_([a-zA-Z0-9]+)\\.csv");
+    private static Pattern prolificFileNamePat[] =  {
+	Pattern.compile("prolific_export_([a-zA-Z0-9]+)\\.csv"),
+	Pattern.compile("prolific_demographic_export_([a-zA-Z0-9]+)\\.csv")};
+    
     
     /** Looks at a file name, and if it looks like a Prolific study summary file (e.g.
 	prolific_export_671b8ae84509b9a624b95e13.csv), extracts study ID from it.
@@ -426,9 +439,11 @@ public class AnalyzeTranscripts {
 	summary file.
     */
     private static String getProlificStudyId(File f) {
-	Matcher m = prolificFileNamePat.matcher(f.getName());
-	if (!m.matches()) return null;
-	return m.group(1);
+	for(Pattern pat: prolificFileNamePat) {
+	    Matcher m = pat.matcher(f.getName());
+	    if (m.matches()) 	return m.group(1);
+	}
+	return null;
     }
     
     /** An ordered list of unique PlayerInfo objects. It can be

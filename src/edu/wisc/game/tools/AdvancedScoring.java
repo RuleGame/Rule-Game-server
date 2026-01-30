@@ -32,7 +32,7 @@ class AdvancedScoring {
     }
 
 
-    /** Jacob Fledman's preferred format */
+    /** Jacob Feldman's preferred format */
     static void doJF(EpisodesByPlayer ph, EntityManager em, String outDir) throws IOException, SQLException {
 	//-- select only players with at least 1 episodes
 	//-- ignore players with a slash in their names (this is prohibited
@@ -211,7 +211,7 @@ class AdvancedScoring {
 
 	
 	String q= "CREATE TEMPORARY TABLE IF NOT EXISTS master(experimentPlan varchar(128), trialListId varchar(128), seriesNo int, rule varchar(128), maxToRemove int)";
-	q += " collate utf8mb4_general_ci";
+	//q += " collate utf8mb4_general_ci";
 	stmt.execute(q);
 
 	String s = "insert into master values(?,?,?,?,?)";
