@@ -211,24 +211,27 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 
 	After that, creates index.html in each directory, so that the
 	whole thing can be uploaded to a web server and navigated in a
-	browser
+	browser.
+
+	@return A map that maps e.g. "W_C" to a DataMap that stores SVG file of "W_C" for various experiences.
 
 	*/
-    public void doCurves(File d) throws IOException {
+    public HashMap<String, DataMap> doCurves(File d) throws IOException {
+	HashMap<String, DataMap> result = new HashMap<>();
 	CurveMode[] modes = {curveMode};
 	CurveArgMode[] argModes = {curveArgMode};
 	if (curveMode==CurveMode.ALL) {
 	    modes=CurveMode.class.getEnumConstants();
 	} else 	if (curveMode==CurveMode.NONE) {
 	    modes=new CurveMode[0];
-	    return;
+	    return result;
 	}
 
 	if (curveArgMode==CurveArgMode.ALL) {
 	    argModes=CurveArgMode.class.getEnumConstants();
 	} else if (curveArgMode==CurveArgMode.NONE) {
 	    argModes=new CurveArgMode[0];
-	    return;
+	    return result;
 	}
 	
 	for(CurveArgMode argMode: argModes) {
@@ -256,13 +259,15 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 		File dm = new File(d, mode.toString() + "_" + argMode);
 		for(String key: h.keySet()) {
 		    OneKey z = h.get(key);
-		    File f = new File(dm, simplifyKey(key) + ".svg");
-		    f.getParentFile().mkdirs();
-		    Util.writeTextFile(f, z.plot);
+		    z.file = new File(dm, simplifyKey(key) + ".svg");
+		    z.file.getParentFile().mkdirs();
+		    Util.writeTextFile(z.file, z.plot);
 		}
+		result.put(""+ mode + "_" + argMode, h);
 	    }
 	}
 	FileUtil.mkIndexes(d);
+	return result;
     }
 
 
@@ -349,9 +354,11 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
 	all these curves) for one experience key (e.g.  a rule set
 	name).
     */
-    static class OneKey extends Vector<MwSeries> {
+    static public class OneKey extends Vector<MwSeries> {
 	String plot;
 	Curve[] curves = {};
+	/** If the plot has been written to file, here's a handle */
+	public File file = null;
 	
 	Curve[] mkCurves(CurveMode mode, CurveArgMode argMode, int maxX, boolean needAnn) {
 	    boolean nonTrivial =  mode==CurveMode.AAIH;
@@ -369,7 +376,7 @@ Saves the data (the summary of a series) for a single (player, ruleSet) pair. Th
     /** A map that maps each experience key (e.g. a rule set name) to a
 	OneKey object containing the curve data and the plot for that key.
     */
-    static class DataMap extends 	HashMap<String, OneKey> {
+    static public class DataMap extends 	HashMap<String, OneKey> {
 
 	/** Breaks down the list of series by the experience key, producing
 	    a DataMap object which contains, for each experience key,

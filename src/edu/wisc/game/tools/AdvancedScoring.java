@@ -205,7 +205,13 @@ class AdvancedScoring {
 
 	//	Vector<String> qq = new Vector<>();
 	//qq.add(q);
+
+	// Trying the collate clause to prevent the following error on kasag:
+	// java.sql.SQLException: Illegal mix of collations (utf8mb4_general_ci,IMPLICIT) and (utf8mb4_0900_ai_ci,IMPLICIT) for operation '='
+
+	
 	String q= "CREATE TEMPORARY TABLE IF NOT EXISTS master(experimentPlan varchar(128), trialListId varchar(128), seriesNo int, rule varchar(128), maxToRemove int)";
+	q += " collate utf8mb4_general_ci";
 	stmt.execute(q);
 
 	String s = "insert into master values(?,?,?,?,?)";

@@ -159,7 +159,7 @@ public class ExportTable {
 
 	for(int j=0; j<queries.length-1; j++) {
 	    String qs = queries[j];
-	    //System.out.println("Preliminary statement: " + qs);
+	    System.out.println("Preliminary statement ("+j+"/"+(queries.length-1)+"): " + qs);
 	    stmt.execute(qs);
 	}
 

@@ -109,6 +109,7 @@ public class ManagerDashboardService {
 			  ) {
 
 
+	
 	if (targetStreak <=0 && targetR <=0) targetStreak = 10;
 
 
@@ -142,13 +143,33 @@ public class ManagerDashboardService {
 
 	    /// zzz need a file under /opt/tomcat/webapps/tmp/xxxx
 	    /// zzz need to return a list of files, to insert into HTML page
-	    File d = new File("out");
+	    File webapps = new File("/opt/tomcat/webapps");
+	    String appMain = "/tmp";
+	    File app = new File(webapps, appMain);
+	    final DateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");	   
+	    File d = new File(webapps, appMain  + "/run-" +   sdf.format( new Date()));
+	    String msg = ". Please ask your webmaster to allow the Rule Game Server to create data directories under "+app;
+	    if (d.exists()) {
+		if (!d.isDirectory() || !d.canWrite())  throw new IOException("Not a writeable directory: " + d + msg);
+	    } else if (!d.mkdirs()) {
+		throw new IOException("Failed to create directory: " + d + msg);
+	    }
+ 
+	    // A map that maps e.g. "W_C" to a DataMap that stores SVG file of "W_C" for various experiences.
 
-	    processor.doCurves(d);
+	    Vector<String> v = new Vector<>();
+	    HashMap<String, BuildCurves.DataMap> bigMap =  processor.doCurves(d);
+	    for(String y_x : bigMap.keySet()) {
+		BuildCurves.DataMap h = bigMap.get(y_x);
+		for(String key : h.keySet()) {
+		    v.add(fm.h2(y_x + " curve " + key));
+		    v.add(fm.para("File = " + h.get(key).file));
+		}
+	    }
 	    //if (p.doPairs) {
 	    //	processor.doPairCurves();
 	    //}
-
+	    body += Util.joinNonBlank("\n", v);
 
 	} catch(Exception ex) {
 	    title = "Error";
