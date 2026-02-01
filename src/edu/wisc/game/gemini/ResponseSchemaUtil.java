@@ -13,6 +13,9 @@ import edu.wisc.game.engine.*;
 
 import edu.wisc.game.gemini.GeminiPlayer.MoveLine;
 
+/** 2026-02-01: After each "properties": {...}, need to add
+    "required": ["inferredRules", "inferredRulesAppliedToTheCompletedEpisodes"]
+ */
 class ResponseSchemaUtil {
     /*
         "responseSchema": {
@@ -63,6 +66,7 @@ class ResponseSchemaUtil {
 	return ab;
     }
     */
+
     
     static JsonObjectBuilder schemaInteger(String desc) {
 	JsonObjectBuilder ob = Json.createObjectBuilder().
@@ -71,11 +75,14 @@ class ResponseSchemaUtil {
 	return ob;
     }
 
-    static JsonObjectBuilder schemaObject(String desc, JsonObjectBuilder prop) {
+    static JsonObjectBuilder schemaObject(String desc, MyJsonObjectBuilder prop) {
 	JsonObjectBuilder ob = Json.createObjectBuilder().
 	    add("type", "OBJECT");
 	if (desc!=null) ob.add("description", desc);
 	ob.add("properties", prop);
+	// zzz
+	// 2026-02-01: need "required"
+	ob.add("required", prop.listNames());
 	return ob;
     }
 	
@@ -130,7 +137,7 @@ class ResponseSchemaUtil {
 	JsonObjectBuilder bidOb = schemaInteger("The ID of the bucket into which you want to move the object");                    
 	
 	JsonObjectBuilder itemsOb = schemaObject("Here you should describe one proposed move",
-						 Json.createObjectBuilder().
+						 (new MyJsonObjectBuilder()).
 						 add("id", idOb).
 						 add("bucketId", bidOb));
 
@@ -185,7 +192,7 @@ class ResponseSchemaUtil {
 
 	
 	JsonObjectBuilder itemsOb = schemaObject( "Looking at one of Bob's move attempts, what was the actual outcome (as found in the transcript given to you), and what would be the outcome of this move if the hidden rules were the same as those inferred by you?",
-						  Json.createObjectBuilder().
+						  (new MyJsonObjectBuilder()).
 						  add("id", idOb).
 						  add("bucketId", bidOb).
 						  add("actualResponse", actualResponseOb).
@@ -202,7 +209,7 @@ class ResponseSchemaUtil {
 
     static JsonObjectBuilder mkResponseSchema() {
 	return schemaObject(null,
-			    Json.createObjectBuilder().
+			    (new MyJsonObjectBuilder()).
 			    add("inferredRules", schemaString("Please describe here the hidden rules that best explain all completed episodes shown to you")).
 			    add("inferredRulesAppliedToTheCompletedEpisodes", mkAppliedMovesOb()).
 			    add("proposedMoves", mkProposedMovesOb()));

@@ -379,7 +379,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
     
     static String keyFile = "/opt/w2020/gemini-api-key.txt";
     static String gemini_api_key = null;
-    static String model = "gemini-2.0-flash";
+    static String model = "gemini-3-flash-preview";
     static long wait = 4000;
     static int max_boards=10;
     static int max_requests=0;
@@ -1012,7 +1012,7 @@ void askAboutPreparedEpisodes(GeminiPlayer future) throws IOException,  Reflecti
 	String lines[] = doOneRequest(gr);
 	for(int j=0; j<lines.length; j++) {
 	    if (lines.length>0) System.out.println("Candidate " + j+ " of " + lines.length);
-	    log.run=j;
+	    if (log!=null) log.run=j;
 	    future.digestProposedMoves(lines[j]);
 	}
 }

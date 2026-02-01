@@ -6,6 +6,7 @@ import jakarta.json.*;
 
 import java.lang.reflect.*;
 import edu.wisc.game.util.Logging;
+import edu.wisc.game.util.Util;
 
 /** Tools for exporting Java objects as JSON structures */
 public class JsonReflect {
@@ -143,7 +144,7 @@ public class JsonReflect {
 
 
 	Reflect r = Reflect.getReflect(  o.getClass());
-	//System.out.println("DEBUG: Reflecting on object "+o	+", class="+ o.getClass() +"; reflect=" + r + ", has " + r.entries.length + " entries");
+	//	System.out.println("DEBUG: Reflecting on {object "+o	+", class="+ o.getClass() +"}; reflect=" + r + ", has " + r.entries.length + " entries");// + Util.joinNonBlank("; ", r.entries));
 	for(Reflect.Entry e: r.entries) {
 	    if (excludableNames!=null) {
 		if (excludableNames.contains(e.name)) continue;

@@ -17,7 +17,12 @@
 #   scripts/gemini.sh  -inputDir /home/vmenkov/my-game-data ~/my-game-data/trial-lists/vmColorTest/trial_1.csv 1
 #
 # scripts/gemini.sh inputDir=game-data log=sample.csv log.nickname=JohnDoe log.run=0  R:MLC/BMK/colOrd_nearby.txt:MLC/BMK/bmk.csv
+
+
+# scripts/gemini.sh  /opt/w2020/game-data/rules/FDCL/basic/ccw.txt  9 max_requests=1 max_boards=10 wait=1000 instructionsFile=/opt/w2020/game-data/gemini/system-prepared.txt  prepared_episodes=10 candidateCount=3 
+
 #
+
 #---------------------------------------------------------------------
 
 

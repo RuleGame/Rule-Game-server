@@ -53,9 +53,9 @@ public class GeminiRequest {
     public static class ConfigElement implements JsonReflect.HasBuilderAugment {
 	Double temperature = null;
 	public Double getTemperature() { return temperature;}
-	Integer candidateCount=null;
+	private Integer candidateCount=null;
 	public Integer getCandidateCount() { return candidateCount; }
-	Integer maxOutputTokens=null;
+	private Integer maxOutputTokens=null;
 	public Integer getMaxOutputTokens() { return maxOutputTokens; }
 	ThinkingConfigElement thinkingConfig = null;
 	public ThinkingConfigElement getThinkingConfig() { return thinkingConfig; } 
@@ -65,7 +65,8 @@ public class GeminiRequest {
 	*/
 	boolean needResponseSchema = false;
 
-	//String responseMimeType = "application/json";
+	/** Keep this var: reflect needs it! Not used otherwise. */
+	private String responseMimeType = "application/json";
 	/** Do we want JSON or plain text back? */
 	public String getResponseMimeType() {
 	    return needResponseSchema?"application/json": "text/plain";
@@ -80,7 +81,7 @@ public class GeminiRequest {
 	    to add some extra fields to the builder */
 	public void augmentBuilder(JsonObjectBuilder ob){
 	    System.out.println("augmentBuilder() called");
-
+	    //System.exit(0); 
 	    if (needResponseSchema) {
 		ob.add( "responseSchema", ResponseSchemaUtil.mkResponseSchema());
 	    }
