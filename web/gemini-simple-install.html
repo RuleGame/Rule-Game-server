@@ -10,7 +10,7 @@
 
     <p>As discussed in our main <a href="gemini.html">Gemini Harness</a> document, the Java-based Gemini Harness application can be used to feed GOHR rule sets to one of the LLM models of Google Gemini, to see how well it can guess the rules.
 
-    <p>Our project staff at Rutgers can ssh to our server to run that application there. Collaborators elsewhere would need to install this application on their own computers if they want to try it out. One way to do it is to pull the Rule Game Server's source code from the GitHub repository, and build the application from the source code, along with the rest of the Game Server (See the <a href="setup/">Setup instructions</a>. However, if you just want to try it out, this is needlessly complex; this document describes a way to install the Gemini Harness app by downloading a zip file with already compiled code (JAR files).
+    <p>Our project staff at Rutgers can ssh to our server to run that application there. Collaborators elsewhere would need to install this application on their own computers if they want to try it out. One way to do it is to pull the Rule Game Server's source code from the GitHub repository, and build the application from the source code, along with the rest of the Game Server (See the <a href="setup/">Setup instructions</a>). However, if you just want to try it out, this is needlessly complex; this document describes a way to install the Gemini Harness app by downloading a zip file with already compiled code (JAR files).
 
       <h3>Prerequisites</h3>
 
@@ -25,7 +25,7 @@
 
       <p>The necessary JAR files and source code are packed into a zip file named captive.zip, or something similar (the name suffixed with a version number and/or date). 
 
-      <p>Download a recent version of that file <a href="/download">Download Area</a>. Choose a file with a name that indicates it's the most recent version, e.g. <tt>captive-8.049.zip</tt>, or whatever you see.
+      <p>Download a recent version of that file from our site's <a href="/download">Download Area</a>. Choose a file with a name that indicates it's the most recent version, e.g. <tt>captive-8.049.zip</tt>, or whatever you see.
 
 	<p>From the same directory, download another zip file, called <tt>rules.zip</tt> (possibly, suffixed with a version number). It contains some sample rule files.
 	
@@ -78,8 +78,31 @@ This will  create the directories  <tt>~/w2020/game</tt>, with all the CGS code 
 	      </pre>
 	      if you want to use rule set files from some other directory.
 
+	    <p>You can run this script with the <tt>nohup</tt> command:
+
+	      <pre>
+		nohup ./prepared.sh >& tmp.log
+	      </pre>
+
+	      You can check whether it's still running with the
+	      <pre>
+		jobs
+	      </pre>
+	      command.
+
+	    <p>Once it has completed, it should produce a log file and csv file for every rule set in the "for" loop, e.g.
+	      <pre>
+% ls -lt
+	    rw-rw-r--  1 vmenkov vmenkov      389 Feb  7 14:14 colOrdL1_BRKY-260207-1410.csv
+-rw-rw-r--  1 vmenkov vmenkov    93173 Feb  7 14:14 prepared-5-colOrdL1_BRKY-260207-1410.txt
+  </pre>
+
+	      You can see the summary line in each file with
+	      <pre>
+		% grep -H Overall prepared-*.txt
+prepared-5-colOrdL1_BRKY-260207-1410.txt:Overall, cleared boards: 0/5, good moves: 5/45
+	      <pre>
 	      
-	    
 
   </body>
 
