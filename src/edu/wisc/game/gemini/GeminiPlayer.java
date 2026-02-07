@@ -368,8 +368,6 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
 
     static String instructions=null;
-    //    static String responseSchema=null;
-    
     
     static String instructionsFile = null;
     /** null means "let the model use its default value" */

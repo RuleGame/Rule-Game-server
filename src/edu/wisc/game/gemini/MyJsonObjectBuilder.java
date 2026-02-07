@@ -1,11 +1,15 @@
 package edu.wisc.game.gemini;
 
-import java.io.*;
+//import java.io.*;
 import java.util.*;
-import java.util.regex.*;
-import java.net.*;
+//import java.util.regex.*;
+//import java.net.*;
 import jakarta.json.*;
 
+/** This is a wrapper over  JsonObjectBuilder, created because that class does not
+    have a method to list the names of all elements. We need that method
+    so that we can create a "required:" element of our JSOB schema.
+ */
 class MyJsonObjectBuilder implements JsonObjectBuilder {
 	final private JsonObjectBuilder builder = Json.createObjectBuilder();
 	private Vector<String> names = new Vector<>();

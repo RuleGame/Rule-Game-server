@@ -1,0 +1,86 @@
+
+<html>
+  <head><title>Installing Gemini Harness on your computer</title>
+ <link rel="stylesheet" type="text/css" href="css/rule-game.css"/>
+  </head>  
+  <body>
+    <h1>Installing Gemini Harness on your computer</h1>
+
+    <div align="center"><em>Updated 2026-02-07 for Game Server ver 8.049</em></div>
+
+    <p>As discussed in our main <a href="gemini.html">Gemini Harness</a> document, the Java-based Gemini Harness application can be used to feed GOHR rule sets to one of the LLM models of Google Gemini, to see how well it can guess the rules.
+
+    <p>Our project staff at Rutgers can ssh to our server to run that application there. Collaborators elsewhere would need to install this application on their own computers if they want to try it out. One way to do it is to pull the Rule Game Server's source code from the GitHub repository, and build the application from the source code, along with the rest of the Game Server (See the <a href="setup/">Setup instructions</a>. However, if you just want to try it out, this is needlessly complex; this document describes a way to install the Gemini Harness app by downloading a zip file with already compiled code (JAR files).
+
+      <h3>Prerequisites</h3>
+
+    <p>These instructions assume that you will download and use the application on a Linux, MacOS, or UNIX computer. MS Windows users may need to make some minor adjustments (mostly, changes to the shell scripts used to run the app).
+
+    <p>You need to have a  Java Runtime Environment (JRE) (i.e. the system for running pre-compiled Java code) installed on your machine. Type <tt>which java</tt> on your console to see if you have one already; if you don't, you can get one from Oracle (<a href="https://java.com/en/download/help/download_options.html">How do I install Java?</a>) or from OpenJDK (<a href="https://openjdk.java.net/install/index.html">How to download and install prebuilt OpenJDK packages</a>).
+
+    <p>Our shell scripts are written in <tt>csh</tt>, so your system should have  <tt>csh</tt> installed. (Most Linux / UNIX system already have, and if yours don't, you should be able to easily <a href="https://www.cyberciti.biz/faq/howto-install-csh-shell-on-linux/">install it</a>). Alternatively, you can re-write the scripts for your favorite shell (<tt>sh, bash, ksh,</tt> whatever) or convert them to MS Windows batch files.
+      
+
+      <h3>Downloading</h3>
+
+      <p>The necessary JAR files and source code are packed into a zip file named captive.zip, or something similar (the name suffixed with a version number and/or date). 
+
+      <p>Download a recent version of that file <a href="/download">Download Area</a>. Choose a file with a name that indicates it's the most recent version, e.g. <tt>captive-8.049.zip</tt>, or whatever you see.
+
+	<p>From the same directory, download another zip file, called <tt>rules.zip</tt> (possibly, suffixed with a version number). It contains some sample rule files.
+	
+	<p>Choose a directory in which you will install the application. Here, as an example, we assume it will be  <tt>~/w2020</tt>. Let's call that location your "main Gemini directory".
+
+	  <p>Unzip the two zip files in your main Gemini directory:
+    
+	<pre>
+	  cd
+	  mkdir w2020
+	  cd ~/w2020
+	  unzip ~/captive-8.049.zip
+	  unzip ~/rules.zip
+      </pre>
+This will  create the directories  <tt>~/w2020/game</tt>, with all the CGS code in it, and 
+<tt>~/w2020/game-data</tt>, with some sample data files.
+
+<h3>API key</h3>
+
+	  <p>To be able to access the Gemini API, you must have a Gemini API key. As of February 2026, it can be obtained by creating an account at the Google AI Studio, creating a project in that studio, and then getting a key for that project. <a href="https://aistudio.google.com/">Google AI Studio</a>.
+
+	    <p>Put your newly obtained key into the file named gemini-api-key.txt in your main Gemini directory.
+
+	    <p>Once you have a project with a key, you can view your daily request limit, and how much of it has been used, at the <a href="https://aistudio.google.com/usage">Usage</a> page, under the "Rate Limit" tab.
+
+	      <h3>Running the Gemini Harness app</h3>
+
+
+	    <p>A detailed discussion of the app can be found in <a href="gemini.html">our Gemini page</a>. One thin to keep in mind is that out of the two modes of interacting with the Gemini LLM -- the "play mode" and the "prepared-episodes mode" -- only the latter is affordable under these days' quotas (which are on the order of 20 RPD (requests per day)).
+
+	    <p>
+	      The main script is <tt>game/scripts/gemini.sh</tt>; it is discussed in that document.
+
+	    <p>For your convenience, the script <tt>game/gemini-sample-scripts/prepared.sh</tt> shows you how to use gemini.sh in the prepared-episodes mode. Before using this script, you may choose to edit some of the shell script variables in it:
+
+	      <ul>
+		<li><code>set main=~/w2020</code> -- the location of your main enini directory
+
+		<li><code>set model=gemini-2.5-flash</code> -- the Gemini model to use. At present (Feb 2026), the two models available to free-tier users are gemini-2.5-flash and gemini-3-flash-preview. Paid-tier users can also use gemini-3-pro.
+
+		<li><code>set p=5</code> -- how many prepared episodes to generate and send to the bot
+
+		<li><code>set ins=$data/gemini/system-prepared-03.txt</code> -- the system instructions file, explaining the "meta-rules" to the bot. This one is taken from the directory <tt>game-data/gemini</tt>; you can write your own!
+ 
+	      </ul>
+
+	    <p>The script has a <tt>for</tt> loop, looping over several names of rule sets. For each rule set named in the  <tt>for</tt> loop, it takes the rule set file from <tt>game-data/rules/FDCL/basic</tt>, and creates <em>n</em> random episodes played with that rule set, to be sent to the bot as its training set. You can change the line
+	      <pre>
+		set rule=$data/rules/FDCL/basic/$x.txt
+	      </pre>
+	      if you want to use rule set files from some other directory.
+
+	      
+	    
+
+  </body>
+
+  </html>
