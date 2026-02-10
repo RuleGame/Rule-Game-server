@@ -1278,6 +1278,22 @@ MoveLine[] parseResponse(String line) {
 	
     }
 
+    int[] listAllowedBuckets(Piece p, 	    RecentKnowledge rk) {
+	//-- Must cast long to int before using it as the key for the
+	//-- RecentKnowledge HashMap!!!
+	int j= (int)p.getId();
+	RecentKnowledge.Datum d = rk.get( j);
+	//System.out.println("Datum(" + j + ")=" + d);
+
+	BitSet q = new BitSet(Episode.NBU);
+	if (d!=null && d.getDeniedBuckets()!=null) {
+	    for(int z: d.getDeniedBuckets()) { q.set(z); }
+	}
+	q.flip(0, Episode.NBU); // allowed buckets
+	return  Util.listBits(q);
+    }
+
+    
     /** Creates an episode of (e.g.) random moves and adds them to the history
      */
     void addPreparedEpisode(GameGenerator gg,
@@ -1299,20 +1315,8 @@ MoveLine[] parseResponse(String line) {
 	    Board b = epi.getCurrentBoard(false);
 	    Piece p = rk.chooseOnePiece( random, b);
 	    if (p==null) throw new IllegalArgumentException("No movable pieces left; stalemate?");
-
-	    //-- Must cast long to int before using it as the key for the
-	    //-- RecentKnowledge HashMap!!!
-	    int j= (int)p.getId();
-	    RecentKnowledge.Datum d = rk.get( j);
-	    //System.out.println("Datum(" + j + ")=" + d);
-
-	    BitSet q = new BitSet(Episode.NBU);
-	    if (d!=null && d.getDeniedBuckets()!=null) {
-		for(int z: d.getDeniedBuckets()) { q.set(z); }
-	    }
-	    q.flip(0, Episode.NBU); // allowed buckets
-	    int[] allowedBuckets = Util.listBits(q);
-
+	    
+	    int[] allowedBuckets = listAllowedBuckets( p,rk);
 	    //System.out.println("For piece " + p.getId() + ", allowed buckets are " + Util.joinNonBlank(", ", allowedBuckets));
 
 	    if (prepareMode==PrepareMode.random) {
@@ -1324,14 +1328,23 @@ MoveLine[] parseResponse(String line) {
 		//if (code == CODE.ACCEPT) continue;
 	    } else if (prepareMode==PrepareMode.positive) {
 		int [] w = new int[2];
-		Pick move;
-		do {
+		int cnt = 0;
+		while(true) {
+		    if (cnt++ >1000) {
+			System.out.println("Cannot find a good move!");
+			System.exit(1);
+		    }
 		    int k = random.nextInt(allowedBuckets.length);
 		    int bucketNo = allowedBuckets[k];
 		    w[0] = (int)p.getId();
 		    w[1] = bucketNo;
-		    move= epi.form2(w[0], w[1]);
-		} while(epi.acceptPreview(move)!= CODE.ACCEPT);
+		    Pick move= epi.form2(w[0], w[1]);
+		    //System.out.println("Try moving " + w[0] + " to " + w[1]);
+		    if (epi.acceptPreview(move)== CODE.ACCEPT) break;
+		    p = rk.chooseOnePiece( random, b);
+		    allowedBuckets = listAllowedBuckets( p,rk);
+		} 
+		
 		int code = digestMoveBasic(his, w);
 
 	    } else 	    if (prepareMode==PrepareMode.orderly) {
