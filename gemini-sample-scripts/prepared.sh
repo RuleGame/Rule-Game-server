@@ -49,8 +49,8 @@ foreach x ( colOrdL1_BRKY)
     #-- The rule set file and the instruction file. Change the locations
     #-- if desired
     set rule=$data/rules/FDCL/basic/$x.txt
-#    set ins=$data/gemini/pk/pk_system_gemini.txt
-    set ins=$data/gemini/system-prepared-03.txt
+    set ins=$data/gemini/pk/pk_system_gemini.txt
+#    set ins=$data/gemini/system-prepared-positive-03.txt
     #-- the output file
     set out=prepared-${p}-${x}-$t.txt
 

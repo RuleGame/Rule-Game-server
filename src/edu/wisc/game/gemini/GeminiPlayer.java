@@ -386,9 +386,10 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
     static int prepared_episodes = 0;
     /** In a prepared-episode run, how many initial boards episodes are shown to the bot to solve? (AKA the test set) */
     static int future_episodes = 0;
-    static boolean bob = false;
+    static boolean prepared = false;
+    static String who = "you";
     enum PrepareMode {
-	random, orderly;
+	random, orderly, positive, negative;
     }
     static PrepareMode prepareMode = PrepareMode.random;
     
@@ -452,8 +453,11 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	if (prepared_episodes >0) future_episodes = ht.getOption("future_episodes", 5);
 	
 	prepareMode = ht.getOptionEnum(PrepareMode.class, "prepareMode", PrepareMode.random);	    
-	bob = (prepared_episodes>0);
-
+	prepared = (prepared_episodes>0);
+	if (prepared) who = (prepareMode==PrepareMode.positive)? "Alice" : "Bob";
+	System.out.println("prepareMode=" + prepareMode+", who=" + who);
+	//System.exit(0);
+	
 	File f =  (instructionsFile==null)? new File( Files.geminiDir(), "system.txt"):
 	    new File(instructionsFile);
 	instructions = Util.readTextFile( f);
@@ -620,7 +624,6 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
     /** If transcripting is requested, saves the detailed transcript of the most recent episode.
 	Should be called at the end of each episode */
-    // zzz
     private void saveDetailedTranscript() {
 	if (transcriptFile != null) {
 
@@ -780,7 +783,7 @@ void addFutureBoards(GameGenerator gg) {
 	    // describe all previous episodes.
 	    int n= lastIsClearedToo?  size() : size()-1;
 
-	    String youHave = (bob?"Bob has":"You have");
+	    String youHave = (prepared? who + " has":"You have");
 	    if (n==1) {
 		v.add(youHave + " completed 1 episode so far. Its summary follows.");
 	    } else {
@@ -837,9 +840,9 @@ void addFutureBoards(GameGenerator gg) {
 
 	if (j==size()-1) {
 	    if (cleared) {
-		v.add((bob? "Bob has": "You have")+ " just completed Episode "+(j+1)+".");
+		v.add((prepared? who+" has": "You have")+ " just completed Episode "+(j+1)+".");
 	    } else {
-		v.add((bob? "Bob is" : "You are")+" playing Episode "+(j+1)+" now.");
+		v.add((prepared? who + " is" : "You are")+" playing Episode "+(j+1)+" now.");
 	    }
 	}
 
@@ -850,17 +853,15 @@ void addFutureBoards(GameGenerator gg) {
 	      ehi.initialBoardAsString());
 
 	if (cleared) {
-	    v.add("During episode "+(j+1)+", "+
-		  (bob? "Bob" : "you") +
+	    v.add("During episode "+(j+1)+", "+	  who +
 		  " cleared the board by making " +
 		  n + " move attempts. They are shown below, along with their results.");
 	} else if (n==0) {
 	    v.add("You are about to make your first move now");
 	} else {
 	    
-	    v.add("During episode "+(j+1)+
-		  (bob? ", Bob " : ", you ")+
-		  (isLast ? "have made so far ": "made ") +
+	    v.add("During episode "+(j+1)+ ", " + who +
+		  (isLast ? " have made so far ": "made ") +
 		  "the following "+ n + " move attempt" + (n>1? "s":"") +
 		  ", with the following results:");
 	}
@@ -1060,9 +1061,8 @@ private void digestProposedMoves(String line)  throws ReflectiveOperationExcepti
 
 
 /** @return null if the episode needs to continue; a boolean value, to be 
-    returned by playingLoop(), is the episodes ends now */
-private int digestMoveBasic(EpisodeHistory ehi, int[] w) //throws IOException
-{
+    returned by playingLoop(), is the episode ends now */
+private int digestMoveBasic(EpisodeHistory ehi, int[] w) {
     Episode epi = ehi.epi;
     totalAttemptCnt++;
     int id = w[0];
@@ -1282,8 +1282,7 @@ MoveLine[] parseResponse(String line) {
      */
     void addPreparedEpisode(GameGenerator gg,
 			    RandomRG random
-			    ) //throws IOException,
-					 {
+			    ) 					 {
 	Game game = gg.nextGame();
 	Episode epi = new Episode(game, outputMode,
 				  new InputStreamReader(System.in),
@@ -1316,7 +1315,6 @@ MoveLine[] parseResponse(String line) {
 
 	    //System.out.println("For piece " + p.getId() + ", allowed buckets are " + Util.joinNonBlank(", ", allowedBuckets));
 
-	    
 	    if (prepareMode==PrepareMode.random) {
 		
 		int k = random.nextInt(allowedBuckets.length);
@@ -1324,6 +1322,18 @@ MoveLine[] parseResponse(String line) {
 		int[] w = {(int)p.getId(), bucketNo};
 		int code = digestMoveBasic(his, w);
 		//if (code == CODE.ACCEPT) continue;
+	    } else if (prepareMode==PrepareMode.positive) {
+		int [] w = new int[2];
+		Pick move;
+		do {
+		    int k = random.nextInt(allowedBuckets.length);
+		    int bucketNo = allowedBuckets[k];
+		    w[0] = (int)p.getId();
+		    w[1] = bucketNo;
+		    move= epi.form2(w[0], w[1]);
+		} while(epi.acceptPreview(move)!= CODE.ACCEPT);
+		int code = digestMoveBasic(his, w);
+
 	    } else 	    if (prepareMode==PrepareMode.orderly) {
 		for(int bucketNo: allowedBuckets) {
 		    int[] w = {(int)p.getId(), bucketNo};

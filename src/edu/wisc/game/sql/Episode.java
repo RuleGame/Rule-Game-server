@@ -403,8 +403,12 @@ s	    non-existing piece) the value may be different from those of
 	    the piece currently at pos to bucket[dest]. */
 	//private BitSet[][] acceptanceMap = new BitSet[Board.N*Board.N+1][];
 	//protected boolean[] isMoveable = new boolean[Board.N*Board.N+1];
-	/** Based on the pieces currently on the board; the arrays are coordinate with values[] */
-	  
+	/** jAcceptanceMap[j] tells into which buckets the game piece
+	    values[j] can be moved. (Based on the pieces currently on
+	    the board; the arrays are coordinate with values[]). This
+	    array is rebuilt from scratch by buildJAcceptanceMap()
+	    every time when the board state changes.
+	 */	  
 	private BitSet[][] jAcceptanceMap = null;//new BitSet[][];
 	protected boolean[] isJMoveable = null; //new boolean[];
 
@@ -652,23 +656,8 @@ s	    non-existing piece) the value may be different from those of
 	    //System.out.println("DEBUG A: attemptCnt:=" + attemptCnt); //transcript=" + getTranscript());
 	    attemptSpent += (pick instanceof Move) ? 1.0: xgetPickCost();
 
-
-	    int j=-1;
-	    if (pick.getPieceId()>=0) { // modern client supplies piece ID
-		try {
-		    j = findJ(pick);
-		} catch(IllegalArgumentException ex) {
-		    return pick.code=CODE.INVALID_OBJECT_ID;
-		}
-	    } else {
-	        int[] jj = findJforPos(pick.pos);
-		if (jj.length==0) return pick.code=CODE.EMPTY_CELL;
-		else if (jj.length>0) return pick.code=CODE.MULTIPLE_OBJECTS_IN_CELL;
-		j = jj[0];
-		pick.pieceId = (int)values.get(j).getId();
-	    }
-	    
-	    pick.piece = values.get(j);
+	    int j = findJForPick(pick);
+	    if (j<0) return pick.code;
 
 	    boolean movable = isJMoveable[j];
 	    callComputeR(pick);
@@ -724,7 +713,63 @@ s	    non-existing piece) the value may be different from those of
 	    return  move.code=CODE.ACCEPT;
 	}
 
+	/** Finds j, which is the index into the values[] array
+	    pointing to the game piece referred to by this Pick or
+	    Move. Sets pick.pieceId, if it isn't set yet, and sets
+	    pick.piece as well.
 
+	    @return the appropriate j, or -1 if the pick neither contains
+	    a good object id nor a good position. If -1 is returned, then
+	    pick.code is set to an appropriate error code.
+
+	 */
+	private int findJForPick(Pick pick) {
+	    int j=-1;
+	    if (pick.getPieceId()>=0) { // modern client supplies piece ID
+		try {
+		    j = findJ(pick);
+		} catch(IllegalArgumentException ex) {
+		    pick.code=CODE.INVALID_OBJECT_ID;
+		}
+	    } else {
+	        int[] jj = findJforPos(pick.pos);
+		if (jj.length==0) pick.code=CODE.EMPTY_CELL;
+		else if (jj.length>0) pick.code=CODE.MULTIPLE_OBJECTS_IN_CELL;
+		j = jj[0];
+		pick.pieceId = (int)values.get(j).getId();
+	    }
+	    if (j>=0) pick.piece = values.get(j);
+
+	    return j;
+	}
+
+	/** Preview only: like accept(), but without changing the state of the Episode's game engine.
+	    @return the acceptance code
+	 */
+	private int acceptPreview(Pick pick) {
+
+	    if (doneWith) throw  new IllegalArgumentException("Forgot to scroll?");
+
+	    int j = findJForPick(pick);
+	    if (j<0) return pick.code;
+
+	    boolean movable = isJMoveable[j];
+	    callComputeR(pick);
+
+	    if (!movable) {  // immovable piece
+		return pick.code =  CODE.IMMOVABLE;
+	    } else if (!(pick instanceof Move)) {  // accepted pick
+		return pick.code = CODE.ACCEPT;
+	    }
+	    Move move = (Move)pick;
+	    for(BitSet ri: jAcceptanceMap[j]) {
+		if (ri.get(move.bucketNo)) {
+		    return  move.code=CODE.ACCEPT;
+		}
+	    }
+	    return move.code=CODE.DENY;
+	}
+	
 	/** Is this row of rules "exhausted", based either on the
 	    global counter for the row, or the individual rules?
 	    "Control moves to the next row when either all counters OR
@@ -1074,6 +1119,12 @@ s	    non-existing piece) the value may be different from those of
     }
 
 
+    /** Just to check what the acceptance code would be, without changing the
+	state of the Epiode's game engine */
+    public int acceptPreview(Pick move) {
+	return  ruleLine.acceptPreview(move);
+    }
+    
     /** The basic mode tells the player where all movable pieces are, 
 	but EpisodeInfo will override it if the para set mandates "free" mode.
      */
@@ -1431,7 +1482,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     /** Forms a Move or Pick, depending on whether bucketId is valid
 	@param bucketId If its negative, it's a pick
      */
-    private Pick form2( int pieceId, int bucketId) {
+    public Pick form2( int pieceId, int bucketId) {
 
 	int j = findJforIdZ(pieceId);
 
@@ -1510,8 +1561,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
 
-    public Display doMove2(int pieceId, int bucketId, int _attemptCnt)// throws IOException
-    {
+    public Display doMove2(int pieceId, int bucketId, int _attemptCnt)     {
 	Display errorDisplay =inputErrorCheck2(pieceId, _attemptCnt);
 	if (errorDisplay!=null) return errorDisplay;
 
