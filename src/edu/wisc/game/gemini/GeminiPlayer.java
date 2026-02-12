@@ -389,7 +389,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
     static boolean prepared = false;
     static String who = "you";
     enum PrepareMode {
-	random, orderly, positive, negative;
+	random, orderly, positive, negative1;
     }
     static PrepareMode prepareMode = PrepareMode.random;
     
@@ -526,13 +526,40 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	    long seed = ht.getOptionLong("seed", 0L);
 	    final RandomRG random= (seed != 0L)? new RandomRG(seed): new RandomRG();
 
-	    for(int i=0; i<prepared_episodes; i++) {
-		System.out.println("Generating prepared episode " + i);
-		history.addPreparedEpisode(gg, random);
+	    // zzz
+	    if (prepareMode==PrepareMode.negative1) {
+		RandomGameGenerator rgg = (RandomGameGenerator)gg;
+		int n0 = rgg.nPiecesRange[0];
+		for(int n = n0; n>0; n--) {
+		    RandomGameGenerator mygg = (n==n0)? rgg: rgg.changeNPieces( new int[]{n,n});
+		    for(int i=0; i<prepared_episodes; i++) {
+			System.out.println("Generating prepared episode("+n+") " + i);
+		    
+			Episode epi=null;
+			int cnt=0;
+			do {
+			    if (cnt ++ > 10) {
+				String msg= "Cannot create a non-empty episode with "+n+" pieces. This may only happen in PrepareMode.negative1 when there are few pieces left and no move is prohibited";
+				System.out.println(msg);
+				//throw new IllegalArgumentException(msg);
+				break;
+			    }
+			
+			    epi = history.mkPreparedEpisode(mygg, random);
+			} while(epi.getTranscript().isEmpty());
+			
+			if (epi!=null) history.add(new EpisodeHistory(epi));
+		    }
+		    
+		}
+	    } else {
+		for(int i=0; i<prepared_episodes; i++) {
+		    System.out.println("Generating prepared episode " + i);
+		    Episode epi= history.mkPreparedEpisode(gg, random);
+		    history.add(new EpisodeHistory(epi));
+		}
 	    }
 
-	    //System.exit(0);
-	    
 	    // Add a few empty episode, for the bot to solve
 
 	    GeminiPlayer future = new GeminiPlayer();
@@ -644,19 +671,19 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
     }
 
     /** Adds a few future boards to this GeminiPlayer object */
-void addFutureBoards(GameGenerator gg) {
+    void addFutureBoards(GameGenerator gg) {
 
-    for(int j=0; j<future_episodes; j++) {
+	for(int j=0; j<future_episodes; j++) {
+	    
+	    Game game = gg.nextGame();
+	    Episode epi = new Episode(game, outputMode,
+				      new InputStreamReader(System.in),
+				      new PrintWriter(System.out, true));
     
-	Game game = gg.nextGame();
-	Episode epi = new Episode(game, outputMode,
-				  new InputStreamReader(System.in),
-				  new PrintWriter(System.out, true));
-    
-	EpisodeHistory his = new EpisodeHistory(epi);
-	add(his);
+	    EpisodeHistory his = new EpisodeHistory(epi);
+	    add(his);
+	}
     }
-}
 
 
     private String costReport() {
@@ -710,7 +737,7 @@ void addFutureBoards(GameGenerator gg) {
 	gr.addMaxOutputTokens(maxToken);
 	gr.addThinkingBudget(thinkingBudget);
 	gr.addCandidateCount(candidateCount);
-	Vector<String> v = describeHistory(false);
+	Vector<String> v = describeHistory(false, true);
 	v.add("YOUR MOVE?");
 	String text = Util.joinNonBlank("\n", v);
 	System.out.println("===========================================\n"+
@@ -724,7 +751,7 @@ void addFutureBoards(GameGenerator gg) {
     GeminiRequest makeRequestHow() throws IOException {
 	GeminiRequest gr = new GeminiRequest();	    
 	gr.addInstruction(instructions);
-	Vector<String> v = describeHistory(true);
+	Vector<String> v = describeHistory(true, true);
 	v.add("You have played pretty well recently. Could you now EXPLAIN your understanding of the secret rule?");
 	String text = Util.joinNonBlank("\n", v);
 	System.out.println("===========================================\n"+
@@ -746,7 +773,7 @@ void addFutureBoards(GameGenerator gg) {
 	gr.addMaxOutputTokens(maxToken);
 	gr.addThinkingBudget(thinkingBudget);
 	gr.addCandidateCount(candidateCount);
-	Vector<String> v = describeHistory(true);
+	Vector<String> v = describeHistory(true, false);
 	v.add("Please tell me what you think the hidden rules are.");
 	v.add("Finally, based on your idea of the hidden rules, please propose, for each of the following " + future.size() +  " future episodes, a sequence of move attempts that are most likely to clear the board in that episode");
 
@@ -766,8 +793,10 @@ void addFutureBoards(GameGenerator gg) {
 	
 	@param how If true, this history is produced for a "how did you do it" 
 	request, rather than a "YOUR MOVE?" request.
+
+	@param theseAreYourMoves If true, we are describing the bot's own past actions, rather than "prepared episodes" that we have made ourselves. So we can point to some of bot's past (meta-rules) mistakes, if we want.
     */
-    private Vector<String> describeHistory(boolean how) {
+    private Vector<String> describeHistory(boolean how, boolean theseAreYourMoves) {
 	Vector<String> v = new Vector<>();
 	
 	if (size()==0) throw new IllegalArgumentException("No episode exists yet. What to ask?");
@@ -784,14 +813,21 @@ void addFutureBoards(GameGenerator gg) {
 	    int n= lastIsClearedToo?  size() : size()-1;
 
 	    String youHave = (prepared? who + " has":"You have");
-	    if (n==1) {
+
+	    if (prepareMode==PrepareMode.negative1) {
+		if (size()==1) {
+		    v.add(youHave + " played " + size() + " episode so far. The summary of its starting section follows.");
+		} else {
+		    v.add(youHave + " played " + size() + " episodes so far. The summaries of their starting sections follow.");
+		}
+	    } else  if (n==1) {
 		v.add(youHave + " completed 1 episode so far. Its summary follows.");
 	    } else {
 		v.add(youHave + " completed " + n + " episodes so far. Their summary follow.");
 	    }
 	}
 	for(int j=0; j<size(); j++) {
-	    v.addAll( episodeText(j));
+	    v.addAll( episodeText(j, theseAreYourMoves));
 	}
 	return v;
     }
@@ -820,7 +856,7 @@ void addFutureBoards(GameGenerator gg) {
 	@param j The epsiode's sequential (0-based) number in the 
 	series. In the output, the number is converted to 1-based though.
      */
-    private Vector<String> episodeText(int j) {
+    private Vector<String> episodeText(int j, boolean theseAreYourMoves) {
 	
 	Vector<String> v = new Vector<>();
 	boolean isLast = (j==size()-1);
@@ -861,7 +897,7 @@ void addFutureBoards(GameGenerator gg) {
 	} else {
 	    
 	    v.add("During episode "+(j+1)+ ", " + who +
-		  (isLast ? " have made so far ": "made ") +
+		  (isLast ? " have made so far ": " made ") +
 		  "the following "+ n + " move attempt" + (n>1? "s":"") +
 		  ", with the following results:");
 	}
@@ -880,8 +916,8 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 	    String s = "MOVE " + move.getPieceId() +" "+ move.getBucketNo()+" "+
 		CODE.toBasicName(code);
 
-	    redundant = ehi.repeats.redundant.get(k);
-	    if (remind) {
+	    if (theseAreYourMoves && remind) {
+		redundant = ehi.repeats.redundant.get(k);
 		if (redundant) {
 		    s += " -- redundant!";
 		}
@@ -1002,10 +1038,10 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
   }
 
 
-/** Creates and sends a one-shot request, asking to analyze prepared episodes and solve future boards; then processes the response.
-    @param future the boards for future episodes (to be solved)
-*/
-void askAboutPreparedEpisodes(GeminiPlayer future) throws IOException,  ReflectiveOperationException {
+    /** Creates and sends a one-shot request, asking to analyze prepared episodes and solve future boards; then processes the response.
+	@param future the boards for future episodes (to be solved)
+    */
+    void askAboutPreparedEpisodes(GeminiPlayer future) throws IOException,  ReflectiveOperationException {
 
 	GeminiRequest gr = makeRequestPrepared(future);
 	String lines[] = doOneRequest(gr);
@@ -1014,148 +1050,154 @@ void askAboutPreparedEpisodes(GeminiPlayer future) throws IOException,  Reflecti
 	    if (log!=null) log.run=j;
 	    future.digestProposedMoves(lines[j]);
 	}
-}
-
-/** Handles one candidate with proposed moves in it. This is called on the 
-"future" object  */
-private void digestProposedMoves(String line)  throws ReflectiveOperationException {
-    System.out.println("Response text={" + line.trim() + "}");
-
-    MoveLine[][] r =  PreparedEpisodesResponse.parseResponse(line);
-    if (r==null) { // field not supplied
-	return;
     }
-    
-    System.out.println("Found " + r.length + " proposed solutions in the response, for "+size() + " future boards");
-    if (r.length != size()) throw new IllegalArgumentException("Future board count mismatch");
-    
-    int nc=0, nGoodMoves=0, nAttempts=0;
-    
-    for(int j=0; j<r.length; j++) {
+
+    /** Handles one candidate with proposed moves in it. This is called on the 
+	"future" object  */
+    private void digestProposedMoves(String line)  throws ReflectiveOperationException {
+	System.out.println("Response text={" + line.trim() + "}");
 	
-	Episode epi = get(j).epi;
-	epi.reset();
-	int n = epi.getNPiecesStart();
-	if (n!=r[j].length) {
-	    System.err.println("Warning: the number of returned moves (" + r[j].length +  ") is different from the board population ("+n+")");
+	MoveLine[][] r =  PreparedEpisodesResponse.parseResponse(line);
+	if (r==null) { // field not supplied
+	    return;
 	}
 	
-	for(int i=0; i<r[j].length; i++) {
-	    int [] w = r[j][i].asPair();
-	    int code = digestMoveBasic(get(j), w);
-	    nAttempts ++;
-	    if (code == Episode.CODE.ACCEPT) nGoodMoves ++;
-	}	   
-	    
-	System.out.println("Future board "+j+ " of "+r.length+": Result of proposed moves: cleared=" + epi.getCleared() + ", good moves count=" + epi.getDoneMoveCnt() + "/" + r[j].length);
-	if ( epi.getCleared() ) nc++;
+	System.out.println("Found " + r.length + " proposed solutions in the response, for "+size() + " future boards");
+	if (r.length != size()) throw new IllegalArgumentException("Future board count mismatch");
 	
-	log.logEpisode(epi, j);
+	int nc=0, nGoodMoves=0, nAttempts=0;
+	
+	for(int j=0; j<r.length; j++) {
+	    
+	    Episode epi = get(j).epi;
+	    epi.reset();
+	    int n = epi.getNPiecesStart();
+	    if (n!=r[j].length) {
+		System.err.println("Warning: the number of returned moves (" + r[j].length +  ") is different from the board population ("+n+")");
+	    }
+	    
+	    for(int i=0; i<r[j].length; i++) {
+		int [] w = r[j][i].asPair();
+		int code = digestMoveBasic(epi, w);
+		Vector<Pick> moves = epi.getTranscript();
+		if (!moves.isEmpty()) {
+		    // Normally, n is positive, but if the first move was invalid
+		    // (code=-10), then it wasn't added to moves[]	
+		    boolean redundant = get(j).repeats.add((Move)moves.lastElement(), code);
+		}
+
+		nAttempts ++;
+		if (code == Episode.CODE.ACCEPT) nGoodMoves ++;
+	    }	   
+	    
+	    System.out.println("Future board "+j+ " of "+r.length+": Result of proposed moves: cleared=" + epi.getCleared() + ", good moves count=" + epi.getDoneMoveCnt() + "/" + r[j].length);
+	    if ( epi.getCleared() ) nc++;
+	
+	    log.logEpisode(epi, j);
 	
 		
-    }
+	}
     
-    System.out.println("Overall, cleared boards: " + nc + "/" + r.length +", good moves: " + nGoodMoves + "/" + nAttempts);
-}
-
-
-
-/** @return null if the episode needs to continue; a boolean value, to be 
-    returned by playingLoop(), is the episode ends now */
-private int digestMoveBasic(EpisodeHistory ehi, int[] w) {
-    Episode epi = ehi.epi;
-    totalAttemptCnt++;
-    int id = w[0];
-    int bid = w[1];
-    
-    Episode.Display q = epi.doMove2(id, bid,  epi.getTranscript().size());
-    int code = q.getCode();
-    System.out.println("At "+	reqt()+", Moving piece " + id + " to bucket " + bid + ". Code=" + code);
-    //System.out.println("DEBUG B: transcript=" + epi.getTranscript());
-
-    if (code==CODE.ATTEMPT_CNT_MISMATCH) {
-	System.out.println("I have ended up with an attempt count mismatch somehow. My logic bug probably. Terminating");
-	System.exit(1);
-	//return false;
+	System.out.println("Overall, cleared boards: " + nc + "/" + r.length +", good moves: " + nGoodMoves + "/" + nAttempts);
     }
-	    
-    Vector<Pick> moves = epi.getTranscript();
-    final int n = moves.size();
-	    
-    if (code==CODE.ACCEPT) { // add to the "mastery stretch"
-	lastStretch++;
-	if (lastR==0) lastR=1;
-	lastR *= epi.getLastMove().getRValue();		    
-    } else { // a failed move or pick breaks the "mastery stretch"
-	lastStretch=0;
-	lastR = 0;
+
+
+
+    /** @return null if the episode needs to continue; a boolean value, to be 
+	returned by playingLoop(), is the episode ends now */
+    private int digestMoveBasic(Episode epi, int[] w) {
+	totalAttemptCnt++;
+	int id = w[0];
+	int bid = w[1];
+    
+	Episode.Display q = epi.doMove2(id, bid,  epi.getTranscript().size());
+	int code = q.getCode();
+	System.out.println("At "+	reqt()+", Moving piece " + id + " to bucket " + bid + ". Code=" + code);
+	//System.out.println("DEBUG B: transcript=" + epi.getTranscript());
 	
-	if (n>1 &&
-	    ((Move)moves.get(n-1)).sameMove(moves.get(n-2))) {
-	    // The bot has just repeated the last move attempt,
-	    // despite its failure
+	if (code==CODE.ATTEMPT_CNT_MISMATCH) {
+	    System.out.println("I have ended up with an attempt count mismatch somehow. My logic bug probably. Terminating");
+	    System.exit(1);
+	    //return false;
+	}
 	    
-	    failedRepeatsCnt++;
-	    failedRepeatsCurrentStreak++;
-	    if (failedRepeatsCurrentStreak>failedRepeatsLongestStreak) {
-		failedRepeatsLongestStreak = failedRepeatsCurrentStreak;
-	    }
-	}		
+	Vector<Pick> moves = epi.getTranscript();
+	final int n = moves.size();
+	    
+	if (code==CODE.ACCEPT) { // add to the "mastery stretch"
+	    lastStretch++;
+	    if (lastR==0) lastR=1;
+	    lastR *= epi.getLastMove().getRValue();		    
+	} else { // a failed move or pick breaks the "mastery stretch"
+	    lastStretch=0;
+	    lastR = 0;
+	    
+	    if (n>1 &&
+		((Move)moves.get(n-1)).sameMove(moves.get(n-2))) {
+		// The bot has just repeated the last move attempt,
+		// despite its failure
+		
+		failedRepeatsCnt++;
+		failedRepeatsCurrentStreak++;
+		if (failedRepeatsCurrentStreak>failedRepeatsLongestStreak) {
+		    failedRepeatsLongestStreak = failedRepeatsCurrentStreak;
+		}
+	    }		
+	}
+
+	return code;
     }
 
-    if (n>0) {
-	// Normally, n is positive, but if the first move was invalid
-	// (code=-10), then it wasn't added to moves[]	
-	boolean redundant = ehi.repeats.add((Move)moves.get(n-1), code);
-    }
+    /** @return null if the episode needs to continue; a boolean value, to be 
+	returned by playingLoop(), is the episodes ends now */
+    private Boolean digestMove(int[] w)// throws IOException
+    {
+	
+	EpisodeHistory ehi = lastElement();
+	Episode epi = ehi.epi;
+	
+	int code = digestMoveBasic(epi, w);
+	Vector<Pick> moves = epi.getTranscript();
+	if (!moves.isEmpty()) {
+	    // Normally, n is positive, but if the first move was invalid
+	    // (code=-10), then it wasn't added to moves[]	
+	    boolean redundant = ehi.repeats.add((Move)moves.lastElement(), code);
+	}
     
-    return code;
-}
-
-/** @return null if the episode needs to continue; a boolean value, to be 
-    returned by playingLoop(), is the episodes ends now */
-private Boolean digestMove(int[] w)// throws IOException
-{
-
-    EpisodeHistory ehi = lastElement();
-    Episode epi = ehi.epi;
-
-    int code = digestMoveBasic(ehi, w);
-
-    Vector<Pick> moves = epi.getTranscript();
-    final int n = moves.size();
-
-    boolean redundant = ehi.repeats.lastAddResult;
-	    
-    String stats = "Transcript has "+epi.getTranscript().size()+" moves. Board pop="+epi.getValues().size()+". lastStretch=" + lastStretch + ", lastR=" + lastR;
-    
-    System.out.println(stats);
-    
-    if (remind && ehi.repeats.totalRepeats()>0) {
-	stats = "The episode includes " + ehi.repeats.totalRepeats()
-	    + " redundant moves";
-	if (redundant) stats += ", including the last one.";
+	
+	//final int n = moves.size();
+	
+	boolean redundant = ehi.repeats.lastAddResult;
+	
+	String stats = "Transcript has "+epi.getTranscript().size()+" moves. Board pop="+epi.getValues().size()+". lastStretch=" + lastStretch + ", lastR=" + lastR;
+	
 	System.out.println(stats);
-    }
+    
+	if (remind && ehi.repeats.totalRepeats()>0) {
+	    stats = "The episode includes " + ehi.repeats.totalRepeats()
+		+ " redundant moves";
+	    if (redundant) stats += ", including the last one.";
+	    System.out.println(stats);
+	}
+	
 
+	boolean won = false;
+	if (targetStreak>0 & lastStretch>=targetStreak) won = true;
+	if (targetR>0 & lastR>=targetR) won = true;
+	
 
-    boolean won = false;
-    if (targetStreak>0 & lastStretch>=targetStreak) won = true;
-    if (targetR>0 & lastR>=targetR) won = true;
+	if (won) {
+	    System.out.println("Victory: mastery demonstrated! " + stats);
+	    return true;
+	}
     
 
-    if (won) {
-	System.out.println("Victory: mastery demonstrated! " + stats);
-	return true;
+	if (max_requests > 0 && requestCnt >= max_requests) {
+	    System.out.println("Request limit (" + max_requests+") reached");
+	    return false;
+	}
+	return null;
     }
-    
-
-    if (max_requests > 0 && requestCnt >= max_requests) {
-	System.out.println("Request limit (" + max_requests+") reached");
-	return false;
-    }
-    return null;
-}
 
 static class MoveLine {
     final int pieceId, bucketNo;
@@ -1296,17 +1338,12 @@ MoveLine[] parseResponse(String line) {
     
     /** Creates an episode of (e.g.) random moves and adds them to the history
      */
-    void addPreparedEpisode(GameGenerator gg,
-			    RandomRG random
-			    ) 					 {
+    Episode mkPreparedEpisode(GameGenerator gg,  RandomRG random) {
 	Game game = gg.nextGame();
 	Episode epi = new Episode(game, outputMode,
 				  new InputStreamReader(System.in),
 				  new PrintWriter(System.out, true));
 	
-	EpisodeHistory his = new EpisodeHistory(epi);
-	add(his);
-
 	while( !epi.getCleared()) {
 
 	    RecentKnowledge rk = new RecentKnowledge(epi.getTranscript(), false);
@@ -1324,7 +1361,7 @@ MoveLine[] parseResponse(String line) {
 		int k = random.nextInt(allowedBuckets.length);
 		int bucketNo = allowedBuckets[k];
 		int[] w = {(int)p.getId(), bucketNo};
-		int code = digestMoveBasic(his, w);
+		int code = digestMoveBasic(epi, w);
 		//if (code == CODE.ACCEPT) continue;
 	    } else if (prepareMode==PrepareMode.positive) {
 		int [] w = new int[2];
@@ -1345,19 +1382,29 @@ MoveLine[] parseResponse(String line) {
 		    allowedBuckets = listAllowedBuckets( p,rk);
 		} 
 		
-		int code = digestMoveBasic(his, w);
-
+		int code = digestMoveBasic(epi, w);
+	    } else if (prepareMode==PrepareMode.negative1) {
+		int [] w = new int[2];
+		int k = random.nextInt(allowedBuckets.length);
+		int bucketNo = allowedBuckets[k];
+		w[0] = (int)p.getId();
+		w[1] = bucketNo;
+		Pick move= epi.form2(w[0], w[1]);
+		//System.out.println("Try moving " + w[0] + " to " + w[1]);
+		// In negative1, the record of the episode ends before the first good move
+		if (epi.acceptPreview(move)== CODE.ACCEPT) break;
+		int code = digestMoveBasic(epi, w);
+	
 	    } else 	    if (prepareMode==PrepareMode.orderly) {
 		for(int bucketNo: allowedBuckets) {
 		    int[] w = {(int)p.getId(), bucketNo};
-		    int code = digestMoveBasic(his, w);
+		    int code = digestMoveBasic(epi, w);
 		    if (code == CODE.ACCEPT) break;		    
 		}
-	    } else throw new IllegalArgumentException("Wrong mode: " + prepareMode);
-	    
-	    
+	    } else throw new IllegalArgumentException("Wrong mode: " + prepareMode);	    	    
 	}
 
+	return epi;
 	
     }
     

@@ -16,7 +16,7 @@ import edu.wisc.game.rest.TrialList;
     range specifications */
 public class RandomGameGenerator extends GameGenerator {
 
-    final int[] nPiecesRange, nShapesRange, nColorsRange;
+    public final int[] nPiecesRange, nShapesRange, nColorsRange;
     final Piece.Shape[] allShapes;// = 	Piece.Shape.legacyShapes;
     final Piece.Color[] allColors;// = 	Piece.Color.legacyColors;
 
@@ -64,6 +64,16 @@ public class RandomGameGenerator extends GameGenerator {
 	if (nPiecesRange[1]>Board.N * Board.N) throw new IOException("GameGenerator: more pieces than cells: #pieces=" + nPiecesRange[1]);
     }
 
+
+    /** Creates a new generator, which is very similar to the current one, but 
+	requires a different number of game pieces.
+     */
+    public RandomGameGenerator changeNPieces( int[] _nPiecesRange) throws IOException, RuleParseException {	
+	return new RandomGameGenerator(random, rules,  _nPiecesRange, nShapesRange,
+				       nColorsRange,  allShapes, allColors);
+    }
+
+    
     /** Generates a game with a random initial board, in accordance with this 
 	generator's parameters */
     public Game nextGame() {
