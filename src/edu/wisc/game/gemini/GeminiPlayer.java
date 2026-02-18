@@ -701,10 +701,16 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	// https://ai.google.dev/gemini-api/docs/pricing
 	// $0.30 per million input tokens,
 	// $2.50 per mln output and thinking tokens
+
+	// Feb 2026,  G3F: 0.50 input, 3.00 output
+	
 	int in = sumPromptTokenCount, out = sumTotalTokenCount - in;
 	    
-	double cost =  (0.30 * in + 2.50 * out)*1e-6;
-	v.add("G2.5F cost estimate: $" + dollarFmt.format(cost));
+	//double cost =  (0.30 * in + 2.50 * out)*1e-6;
+	//v.add("G2.5F cost estimate: $" + dollarFmt.format(cost));
+	double cost =  (0.50 * in + 3.00 * out)*1e-6;
+	v.add("G3F cost estimate: $" + dollarFmt.format(cost));
+
 	return String.join("\n", v);
     }
     

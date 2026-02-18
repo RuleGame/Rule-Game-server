@@ -4,7 +4,7 @@
 <body>
   <h1>Main Rule Game server concepts</h1>
 
-    <p align="center"><em>Updated for Ver 4.002,  2021-11-19</em></p>
+    <p align="center"><em>Updated for Ver 8.050,  2026-02-17</em></p>
 
 <p>In this document we discuss the main concepts of the  Rule Game server: repeat users,  players, experiment plans, trial lists, series, episodes.
 
@@ -26,7 +26,7 @@
   <P>A player entry may or may not be associated with a repeat user. (This is reflected in the <tt>PlayerInfo</tt> table). Specifically:
     <ul>
       <li>
-    Each persons who comes to the Rule Game from Mechanical Turk is given one (system-created) player id, and has one player record created  for him, without association with any repeat user. M-Turkers, generally, are not supposed to come back for another round (with a different player ID). I assume that our set up with M-Turk ensures that, i.e. no more than 1 player ID for any M-Turk registered user. Similarly, when a person starts a game through a launch page that does not require identification (e.g. <a href="front-end-form.jsp">this one</a>, where one invents his own player ID  for the round to be played), there player record is not associated with a User entry.
+    Each persons who comes to the Rule Game from Mechanical Turk or Prolific is given one (system-created) player id, and has one player record created  for him, without association with any repeat user. M-Turkers, generally, are not supposed to come back for another round (with a different player ID). I assume that our set up with M-Turk ensures that, i.e. no more than 1 player ID for any M-Turk registered user. Similarly, when a person starts a game through a launch page that does not require identification (e.g. <a href="front-end-form.jsp">this one</a>, where one invents his own player ID  for the round to be played), there player record is not associated with a User entry.
 
       <li>On the other hand, when a repeat user starts a round from an "identification-required" (or "-suggested") launch page, such as the a href="launch/">the MLC launch page</a>, the system creates a new PlayerInfo entry associated with the User entry, for use in that round.
     </ul>
@@ -86,7 +86,7 @@
 
 <p>Normally, when a player is registered (which happens when an M-Turker follows a link from the M-Turk side, or when somebody uses a launch page), the name of the experiment plan is an explicit part of the start URL.
 
-  <em>
+<strike>  <em>
 <p>For historical purposes, we mention here a deprecated Game server feature  that has remained since GS 1.*, and should not be used anymore. Namely, there is a procedure to assign a player to an experiment plan even if the plan name is not provided in the URL. It works  as follows:
 
     <ul>
@@ -95,12 +95,13 @@
       <li>In the absence of an explicit assignment, if the PlayerId has a hyphen in it, the part of the PlayerID preceding the hyphen (or preceding the first hyphen, if there are several) is taken to be the name of the experiment plan. For example, if PlayerId=<tt>qt-01-a</tt>, it will be considered belonging to experiment plan <tt>qt</tt>.
     </ul>
   </p>
-  </em>
+  </em></strike>
   
 <P>As stated above, player IDs normally don't have a connection with the experiment plan name, and, generally, can be picked freely if one comes from a non-registration launch page. However, certain conventions exist which allow one to guess, with a high probability, the origin of a particular player. In particular:
 
   <ul>
     <li>M-Turkers have player IDs consisting of upper-case letters and digits, e.g. <tt>A16QZSBYXE5VY8</tt>. Most commonly, they are 14 characters long, but there are some shorter and longer ones (from 12 to 20 characters long).
+    <li>Prolific subjects have player IDs starting with <tt>prolific-</tt>, followed by the "study ID", which is then followed by a hyphen and the subject ID within the study. For example, <tt>prolific-69299ec54dbac9c823f503c2-692957f15ca93fa8d9126eb0</tt> belongs to one of the subjects in the study <tt>69299ec54dbac9c823f503c2</tt>. The Prolific experiment design requires that all players within a given study played the same experiment plan; however, if the experiment plan has multiple trial lists, different players may be assigned to different trial lists.
     <li>Player IDs created for repeat users usually start with <tt>RepeatUser-</tt>
   </ul>
 

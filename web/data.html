@@ -4,7 +4,7 @@
 <body>
   <h1>Rule Game server data</h1>
 
-    <p align="center"><em>Updated for Ver 4.002,  2021-11-20</em></p>
+    <p align="center"><em>Updated for Ver 8.050,  2026-02-17</em></p>
 
   <h2>Introduction</h2>
 
@@ -151,7 +151,7 @@ Each line  consists of 4 fields. The first field is the color name, writen using
 
     <h3><a name="PlayerInfo">PlayerInfo</a></h3>
 
-<p>There is one PlayerInfo entry (table row) for each player.
+<p>There is one PlayerInfo entry (table row) for each player. As of GS 4.*, the data looked as follows:
     
 <pre>
 mysql> describe  PlayerInfo;
@@ -182,10 +182,20 @@ mysql> describe  PlayerInfo;
       <li>experimentPlan  - the expeirment plan to which this player belongs
     </ol>
 
+  <p>By ver. 8.*, with 2PG and bot assist, more columns appeared. This includes:
+
+    <ul>
+      <li>    partnerPlayerId - in a 2PG, this is the playerId of the player with whom this player has been paired
+      <li> pairState - if this player has been paired with another player in a 2PG, this field will have the value of 0 (for Player 0 of the pair) or 1 (for Player 1 of the pair). Player 0 is the one whose ID is used in the name of the transcript file for this pair's games.
+      <li>completionMode - typically, 0. If the game ended with this player just "walking away" from his computer (or his internet connection failing), this will be 2; if this was 2PG, the other player (the "abandoned" partner of this "walk-away" player) will have 1 in this field. 
+      <li>lastActivityTime - what the name says
+      <li>amBot - if true, this player was a bot, rather than human. (As of 2026-02, we have not had any major experiments with a bot playing on his own, though).
+    </ul>
+    
 
     <h3>Episode</h3>
 
-  <p>The <tt>Episode</tt> table has one entry (row) for each episode played by each player.
+  <p>The <tt>Episode</tt> table has one entry (row) for each episode played by each player. You need to look at the PLAYER_ID column, which allows you to link this episode with the player's ID column in the PlayerInfo table. (I.e. the SQL join is "where Episode.PLAYER_ID = PlayerInfo.ID").
 
 <pre><code>
 mysql> describe  Episode;
@@ -239,7 +249,7 @@ mysql> describe  Episode;
       <li>rewardBonus - the number of bonus points awarded at the completion of this episode. This may be non-zero only if earnedBonus=true.
       <li>rewardMain - the "base pay" reward, awarded to this episode based on how many moves it took the player to clear the board, according to the formula in Gary's document, <a href="https://rulegame.slack.com/files/UKF4M2Y4D/F019E2J188L/points_gameplay.pdf">points_gameplay.pdf</a>
 	<li>seriesNo - the 0-based number of the current series of episodes played by this user (i.e. the sequential number of the current parameter set in the trial list). After all parameter sets' series have been played, seriesNo is equal to the number of parameter sets in the trial file.
-	  <li>PLAYER_ID - MySQL internal ID of the player; only used to join with the PlayerInfo table
+	  <li>PLAYER_ID - MySQL internal ID of the player; only used to join with the PlayerInfo table (via the ID column in that table).
 	  <li>guessSaved - true if the player's guess about the rules has been submitted and recorded at the end of this episode.
 	  <li>bonusSuccessful - true if this was a bonus episode (bonus=true) and the player managed to clear the board sufficiently fast. If a required number of episodes with bonusSuccessful=true is 
 	  <li>lost - bit flag, set to true if the player fails to clear the board in a bonus episode within a required number of moves. Which this happens, the episode is terminated by the server, and so is series.
@@ -247,6 +257,17 @@ mysql> describe  Episode;
 	  <li>guessConfidence - an integer entered by the player in the guess form, to represent his confidence in his guess on a certain numerical scale
 	    <li>attemptSpent - the total cost of all moves (or move attempts) made by the player in this episode. This is only introduced in GS 2.003. Typically, the value is the same as attemptCnt, but if the param set requires that the player make "touch" attempts to identify movable pieces, and those "touch" attempts cost less than one move (<tt>free_wrong_cost</tt> &lt; 1.0), then attemptSpent will be smaller than attemptCnt.
     </ol>
+
+    <p>More columns have appeared by ver 8.*:
+
+      <ol><li>xFactor -- typically 0. In experiments with the DOUBLING or LIKELIHOOD incentive schemes, this is set to 2 or 4 if the player (the one after whom the file has been named; in a 2PG, this is Player 0 of the pair)  met the first or the second mastery criterion in this episode.
+	<li>xFactor1 -- typically 0. In 2PG experiments with the DOUBLING or LIKELIHOOD incentive schemes, this is set to 2 or 4 if Player 1 has met the first or the second mastery criterion.
+</ol>
+
+	  <!--
+	  ,PLAYER_ID,lastR,firstMover,guess1,guess1Confidence,guess1Saved,attemptCnt1,attemptSpent1,doneMoveCnt1,lastR1,lastStretch1,rewardMain1,successfulPickCnt1,xFactor1,abandoned
+-->
+    
 
     <h3> SQL commands examples</h3>
 
@@ -379,7 +400,7 @@ qt-07,20200910-122815-2S2435,4,1,null,null,vm/image_test_01/cat-01.png
 
 <h3>The transcript</h3>
 
- <p>The transripts are saved in  /opt/tomcat/saved/transcripts/ , in file names based on the PlayerID + ".transcripts.csv".
+ <p>The transripts are saved in  /opt/tomcat/saved/transcripts/ , in file names based on the PlayerID + ".transcripts.csv". The original (ver. 4.*) format was as follows:
 
 <pre>
 more /opt/tomcat/saved/transcripts/qt-07.transcripts.csv 
@@ -396,6 +417,22 @@ qt-07,20200910-123116-PRDLET,1,20200910-123151,5,1,7,7,0
 
 
 <p><strong>Note: in certain circumstances the Game Server may save a partial transcript before the episode is completed, and then write out the full transcript again at the end of the episode. It is recommended that the data user remove duplicate lines from each transcript before analyzing the data.</strong>
+
+<p>In ver. 8.*, with 2PG and bot assist, the format may be more complicated:
+  <pre>
+action tmp/transcripts> head prolific-69908fb678627f3757b4f9d7-697a6e218c22f673469201da.transcripts.csv
+#pid,episodeId,moveNo,timestamp,mover,objectId,y,x,by,bx,code,followed
+prolific-69908fb678627f3757b4f9d7-697a6e218c22f673469201da,20260214-102126-4K7NK5,0,20260214-102141.260,0,6,6,1,7,0,4,0
+prolific-69908fb678627f3757b4f9d7-697a6e218c22f673469201da,20260214-102126-4K7NK5,1,20260214-102155.446,1,0,1,6,0,7,0,0
+...
+  </pre>
+
+<p>Here:
+  <ul>
+    <li>mover -- in a 2PG, the value 0 or 1 tells you which player (Player 0 or Player 1) made this move
+    <li>objectId -- each game piece has a unique numeric id within a given board, so it may be easier to use that ID instead of the (y,x) pair. (This was introduced so that we could support games with multiple game pieces in the same cell... yes, really! Ask Paul :-)
+    <li>followed -- this field is present and non-empty only in games with bot assist. It has the value 1 if the player's move attempt matched the suggestion made by the bot before this move. Note that if the bot suggested moving a game piece that was not movable, this value will always be 0, because it is not possible to fully follow such a suggestion in a way that the server will know that you did. (That is, the player can try to pick that piece, but it won't budge... so the player won't be able to move it toward the suggested bucket).</ul>
+  
   
   <h3><a name="detailed">The detailed transcript</a></h3>
 
