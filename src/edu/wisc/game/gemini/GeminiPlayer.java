@@ -617,7 +617,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	    if (log!=null) log.close();
 
 	    
-	    //System.exit(0);
+	    System.exit(0); 
 	}
 
 
@@ -966,7 +966,7 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 	    String s = "MOVE " + move.getPieceId() +" "+ move.getBucketNo()+" "+
 		CODE.toBasicName(code);
 
-	    if (theseAreYourMoves && remind) {
+	    if (theseAreYourMoves && remind ) {
 		redundant = ehi.repeats.redundant.get(k);
 		if (redundant) {
 		    s += " -- redundant!";
@@ -1473,7 +1473,17 @@ MoveLine[] parseResponse(String line) {
 	    Pick pick  = oldTranscript[j].pick;
 	    int bucketNo = (pick instanceof Move)? ((Move)pick).getBucketNo(): 0;
 	    int[] w = {(int)pick.getPieceId(), bucketNo};
+	    if (!(pick instance Move) && code==CODE.ACCEPT) {
+		// Our system instructions have not told the bot about successful
+		// picks, so let's just skip them
+		System.out.println("Ignore successful pick in transcript, j="+j)
+		continue;
+	    }
+								
+
+	    
 	    int code = digestMoveBasic(epi, w);
+	    if (code != pick.code)  throw new IllegalArgumentException("Code mismatch in move no. " + j + ". Stored move=" + pick +", code="+ pick.code+"; replay gives code=" + code);
 	    if (!(pick instanceof Move) && code!=CODE.IMMOVABLE) throw new IllegalArgumentException("The old transcript contains a pick, but the code is not IMMOVABLE. Cannot handle this");
 	}
 	     
