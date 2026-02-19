@@ -27,7 +27,7 @@ class EpisodeHistory {
 	Repeats repeats = new Repeats();
 	EpisodeHistory(Episode _epi) {
 	    epi = _epi;
-	    initialBoard = epi.getCurrentBoard(false);
+	    initialBoard = epi.getInitialBoard();
 	}
 	static HashSet<String> excludableNames =
 	    Util.array2set("buckets", 

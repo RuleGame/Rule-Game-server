@@ -619,31 +619,6 @@ Submission id,Participant id,Status,Custom study tncs accepted at,Started at,Com
 	includedEpisodes.clear();
     }
 
-    /** Splits a section of transcript pertaining to a single rule set (i.e. a series of episodes) into subsections, each subsection pertaining to one specific
-	episode.
-     */
-    static public Vector<TranscriptManager.ReadTranscriptData.Entry[]> splitTranscriptIntoEpisodes(Vector<TranscriptManager.ReadTranscriptData.Entry> section) {
-	Vector<TranscriptManager.ReadTranscriptData.Entry[]> result = new Vector<>();
-	Vector<TranscriptManager.ReadTranscriptData.Entry> q = new Vector<>();
-	String lastEid = "";
-	for( TranscriptManager.ReadTranscriptData.Entry e: section) {
-	    String eid = e.eid;
-	    if (!eid.equals(lastEid)) {
-		if (q.size()>0) {
-		    result.add( q.toArray(new TranscriptManager.ReadTranscriptData.Entry[0]));
-		}
-		q.clear();
-		lastEid = eid;
-	    }
-	    q.add(e);
-	}
-	
-	if (q.size()>0) {
-	    result.add( q.toArray(new TranscriptManager.ReadTranscriptData.Entry[0]));
-	}
-	return result;			
-    }
-
     /** Removes any duplicate entries from each subsection. Such
 	entries may have been created due to imperfections in the
 	transcript-saving process.
@@ -785,7 +760,7 @@ Submission id,Participant id,Status,Custom study tncs accepted at,Started at,Com
 	TranscriptManager.ReadTranscriptData transcript = new TranscriptManager.ReadTranscriptData(inFile);
 
 	// split by episode 
-	Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections = splitTranscriptIntoEpisodes(transcript);
+	Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections = AnalyzeTranscriptsUtils.splitTranscriptIntoEpisodes(transcript);
 	// remove any duplicates that may exist due to imperfections in the transcript saving mechanism
 	removeDuplicates(subsections);
 	
@@ -1047,7 +1022,8 @@ Submission id,Participant id,Status,Custom study tncs accepted at,Started at,Com
 				       ofg,
 				       GoalType.MAXIMIZE,
 				       new InitialGuess(startPoint));
-	    } catch(  org.apache.commons.math3.exception.TooManyEvaluationsException ex) {
+	    } catch(org.apache.commons.math3.exception.TooManyEvaluationsException ex
+) {
 		System.out.println(ex);
 		continue;
 	    }

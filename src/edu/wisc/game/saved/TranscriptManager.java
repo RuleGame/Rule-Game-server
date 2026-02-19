@@ -275,7 +275,7 @@ episodeNo, -- same as in log files (sequentially numbered within run or within s
 		mover = pick.getMover();
 		k = moveNo;
 	    }
-	    
+
 	    /** Used when an Entry has been read from a transcript file */
 	    Entry(CsvData.BasicLineEntry e, boolean hasMover, boolean hasObjectId) {
 		//-- the "mover" column was added in GS 7.0
@@ -305,6 +305,47 @@ episodeNo, -- same as in log files (sequentially numbered within run or within s
 		pick.setCode( code);
 	    }
 
+	    
+	    
+	    /** From a split transcript (prepared by AnalyzeTranscripts.
+ruleSetName,playerId,experimentPlan,trialListId,seriesNo,orderInSeries,episodeId,moveNo,timestamp,y,x,by,bx,code
+FDCL/basic/quadMixed1,prolific-671b8ae84509b9a624b95e13-5c655e3c42faef0001283e77,FDCL/basic,basic-03-B,2,0,20241025-084021-FLVDJC,0,20241025-084025.795,6,5,7,0,4
+	     */
+	    Entry(CsvData.BasicLineEntry e) {
+		// so this won't do for 2PG data...
+		boolean hasMover=false, hasObjectId=false;
+		csv = e;
+		int j=0;
+		String ruleSetName = e.getCol(j++); 
+		pid = e.getCol(j++);
+		String exp = e.getCol(j++);
+		String tid = e.getCol(j++);
+		int seriesNo = e.getColInt(j++);
+		int orderInSeries = e.getColInt(j++);
+		eid = e.getCol(j++);
+		k = e.getColInt(j++);
+		timeString = e.getCol(j++);
+		mover = hasMover? e.getColInt(j++) : 0;
+		int objectId = hasObjectId? e.getColInt(j++) : -1;
+		int qy = e.getColInt(j++);
+		int qx = e.getColInt(j++);
+		if (objectId < 0) objectId = BoardManager.substituteObjectId(qx,qy);
+		Integer by = e.getColInt(j++);
+		Integer bx = e.getColInt(j++);
+		boolean isMove =(by!=null);
+	
+		Pos pos = new Pos(qx,qy);
+		pick = isMove?
+		    new Move(pos, new Pos(bx, by)):
+		    new Pick(pos);
+		pick.setPieceId(objectId);
+		
+		code = e.getColInt(j++);
+		pick.setCode( code);
+	    }
+
+
+	    
 	    /** Requires the equality of the strings in all columns */
 	    public boolean equals(Object o) {
 		return (o instanceof Entry) &&
@@ -337,19 +378,35 @@ episodeNo, -- same as in log files (sequentially numbered within run or within s
 	    // from ver 7.*: "#pid,episodeId,moveNo,timestamp,mover,y,x,by,bx,code"
 	    // from ver 9.*: "#pid,episodeId,moveNo,timestamp,mover,objectId,y,x,by,bx,code"
 
-	    int ja=4;
-	    hasMover = header.getCol(ja).equals("mover");
-	    if (hasMover) 	ja++;
-	    hasObjectId=header.getCol(ja).equals("objectId");
-	    if (hasObjectId)		ja++;
+	    // Split transcripts (from AnalyzeTranscripts)
+	    // ruleSetName,playerId,experimentPlan,trialListId,seriesNo,orderInSeries,episodeId,moveNo,timestamp,y,x,by,bx,code
 
-	    if (!header.getCol(ja).equals("y")) {
-		throw new IllegalInputException("Column y not found in " + csvFile);
+	    boolean readingSplitTranscript = false;
+	    if (header.getCol(6).equals("episodeId")) {
+		// FIXME: as of 8.051, the split transcript format
+		// is pretty archaic... but it may change in the future
+		readingSplitTranscript = true;
+		hasMover = hasObjectId = false;
+	    } else {
+	    
+		int ja=4;
+		hasMover = header.getCol(ja).equals("mover");
+		if (hasMover) 	ja++;
+		hasObjectId=header.getCol(ja).equals("objectId");
+		if (hasObjectId)		ja++;
+		
+		if (!header.getCol(ja).equals("y")) {
+		    throw new IllegalInputException("Column y not found in " + csvFile);
+
+		}
 	    }
 	    
 	    for(CsvData.LineEntry _e: csv.entries) {
 		CsvData.BasicLineEntry e= (CsvData.BasicLineEntry )_e;
-		Entry z = new Entry(e, hasMover, hasObjectId);
+		Entry z =
+		    readingSplitTranscript?
+		    new Entry(e):
+		    new Entry(e, hasMover, hasObjectId);
 		// ignore picks at empty cells, as they may drive p0
 		// calculation crazy
 		if (z.code == Episode.CODE.EMPTY_CELL) continue;

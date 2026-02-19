@@ -329,7 +329,7 @@ public class Board {
 	into the generated Board object, with the flag dropped=true. This is 
 	what the GUI client wants.
 	@param moveableTo Specifies to which buckets each piece can be moved to.
-	Coordinayed with "pieces"
+	Coordinated with "pieces"
      */
     public Board(Vector<Piece> pieces, Vector<Piece> removedPieces, BitSet[] moveableTo) {
 

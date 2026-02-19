@@ -1301,6 +1301,18 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	return getCurrentBoard(false);
     }
 
+    /** This is mostly for use with Gemini. Note that "movable" is not set in the
+	return value, so can't be used in a GUI client in an actual game. */
+    public Board getInitialBoard() {
+	Vector<Piece> v = new Vector<>();
+	v.addAll(values);
+	v.addAll(removedValues);
+	Board b = new Board(v, null, null);
+	b.dropLabels();
+	return b;
+    }
+
+
     /** No need to show this field */
     private static final HashSet<String> excludableNames =  Util.array2set("dropped");
 
@@ -1313,7 +1325,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
     /** The current version of the application */
-    public static final String version = "8.050";
+    public static final String version = "8.051";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }

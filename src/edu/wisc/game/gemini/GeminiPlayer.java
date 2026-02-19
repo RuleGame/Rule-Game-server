@@ -17,8 +17,9 @@ import edu.wisc.game.sql.Episode.Pick;
 import edu.wisc.game.sql.Episode.Move;
 import edu.wisc.game.rest.*;
 import edu.wisc.game.engine.*;
-import edu.wisc.game.saved.TranscriptManager;
-
+import edu.wisc.game.saved.*;
+import edu.wisc.game.saved.TranscriptManager.ReadTranscriptData;
+import edu.wisc.game.tools.AnalyzeTranscriptsUtils;
 
 public class GeminiPlayer  extends Vector<EpisodeHistory> {
 
@@ -382,11 +383,19 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
     static int max_boards=10;
     static int max_requests=0;
 
-    /** In a prepared-episode run, how many completed episodes are shown to the bot to learn? (AKA the training set) */
-    static int prepared_episodes = 0;
-    /** In a prepared-episode run, how many initial boards episodes are shown to the bot to solve? (AKA the test set) */
+    /** Are we in prepared-episodes mode? (That includes both random episodes,
+	with prepared_episodes&gt;0, and human-player transcripted episodes,
+	with human!=null).  */
+    private static boolean prepared = false;
+    
+    /** In a prepared-episode run with random episodes, how many completed episodes are shown to the bot to learn? (AKA the training set) */
+    private static int prepared_episodes = 0;
+
+    /** In a prepared-episode run using old human player's episodes, the transcript file to read */
+    private static File human=null;
+    
+    /** In a prepared-episode run (either random or human), how many initial boards episodes are shown to the bot to solve? (AKA the test set) */
     static int future_episodes = 0;
-    static boolean prepared = false;
     static String who = "you";
     enum PrepareMode {
 	random, orderly, positive, negative1;
@@ -422,9 +431,11 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
     public static void main(String[] argv) throws Exception {
 	
 	Files.allowCachingAllRules(true); // for greater efficiency
-	
-	// The captive server does not need the master conf file in /opt/w2020
-	MainConfig.setPath(null);
+
+	// Since 8.051, we do need the config file, in order to access human
+	// players' board files.
+	//-- The captive server does not need the master conf file in /opt/w2020
+	//-- MainConfig.setPath(null);
 	// Enable the computing of feature-lists for Composite objects
 	// (which is normally turned off)
 	edu.wisc.game.svg.Composite.setNeedFeatures(true);
@@ -450,12 +461,20 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	candidateCount  = ht.getOptionIntegerObject("candidateCount", candidateCount);
 
 	prepared_episodes = ht.getOption("prepared_episodes", prepared_episodes);
-	if (prepared_episodes >0) future_episodes = ht.getOption("future_episodes", 5);
+	String humanFileName = ht.getOption("human", null);
+	if (humanFileName !=null) {
+	    if (prepared_episodes >0) throw new IllegalArgumentException("Cannot combined 'human' and 'prepared_episodes'");
+	    human = new File(humanFileName);
+	}
+	prepared = (prepared_episodes>0) || (human!=null);
 	
 	prepareMode = ht.getOptionEnum(PrepareMode.class, "prepareMode", PrepareMode.random);	    
-	prepared = (prepared_episodes>0);
+
 	if (prepared) who = (prepareMode==PrepareMode.positive)? "Alice" : "Bob";
 	System.out.println("prepareMode=" + prepareMode+", who=" + who);
+
+	if (prepared) future_episodes = ht.getOption("future_episodes", 5);
+
 	//System.exit(0);
 	
 	File f =  (instructionsFile==null)? new File( Files.geminiDir(), "system.txt"):
@@ -522,43 +541,71 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
 	boolean won = false;
 
-	if (prepared_episodes>0) {
+	if (prepared) {
 	    long seed = ht.getOptionLong("seed", 0L);
 	    final RandomRG random= (seed != 0L)? new RandomRG(seed): new RandomRG();
 
-	    // zzz
-	    if (prepareMode==PrepareMode.negative1) {
-		RandomGameGenerator rgg = (RandomGameGenerator)gg;
-		int n0 = rgg.nPiecesRange[0];
-		for(int n = n0; n>0; n--) {
-		    RandomGameGenerator mygg = (n==n0)? rgg: rgg.changeNPieces( new int[]{n,n});
-		    for(int i=0; i<prepared_episodes; i++) {
-			System.out.println("Generating prepared episode("+n+") " + i);
-		    
-			Episode epi=null;
-			int cnt=0;
-			do {
-			    if (cnt ++ > 10) {
-				String msg= "Cannot create a non-empty episode with "+n+" pieces. This may only happen in PrepareMode.negative1 when there are few pieces left and no move is prohibited";
-				System.out.println(msg);
-				//throw new IllegalArgumentException(msg);
-				break;
-			    }
+	    if (prepared_episodes>0) {
+		if (prepareMode==PrepareMode.negative1) {
+		    RandomGameGenerator rgg = (RandomGameGenerator)gg;
+		    int n0 = rgg.nPiecesRange[0];
+		    for(int n = n0; n>0; n--) {
+			RandomGameGenerator mygg = (n==n0)? rgg: rgg.changeNPieces( new int[]{n,n});
+			for(int i=0; i<prepared_episodes; i++) {
+			    System.out.println("Generating prepared episode("+n+") " + i);
+			    
+			    Episode epi=null;
+			    int cnt=0;
+			    do {
+				if (cnt ++ > 10) {
+				    String msg= "Cannot create a non-empty episode with "+n+" pieces. This may only happen in PrepareMode.negative1 when there are few pieces left and no move is prohibited";
+				    System.out.println(msg);
+				    //throw new IllegalArgumentException(msg);
+				    break;
+				}
+				
+				epi = history.mkPreparedEpisode(mygg, random);
+			    } while(epi.getTranscript().isEmpty());
+			    
+			    if (epi!=null) history.add(new EpisodeHistory(epi));
+			}
 			
-			    epi = history.mkPreparedEpisode(mygg, random);
-			} while(epi.getTranscript().isEmpty());
-			
-			if (epi!=null) history.add(new EpisodeHistory(epi));
 		    }
-		    
+		} else {
+		    for(int i=0; i<prepared_episodes; i++) {
+			System.out.println("Generating prepared episode " + i);
+			Episode epi= history.mkPreparedEpisode(gg, random);
+			history.add(new EpisodeHistory(epi));
+		    }
 		}
-	    } else {
-		for(int i=0; i<prepared_episodes; i++) {
-		    System.out.println("Generating prepared episode " + i);
-		    Episode epi= history.mkPreparedEpisode(gg, random);
+	    } else if (human!=null) {
+		String playerId = human.getName().replaceAll("\\..*", "");
+		System.out.println("Using transcript of player " + playerId);
+		File boardFile =  Files.boardsFile(playerId, true);
+		// not supporting IPB games
+		HashMap<String,Board> bh = BoardManager.readBoardFile(boardFile, null);
+		// Vector<ReadTranscriptData.Entry>
+		ReadTranscriptData rtd = new ReadTranscriptData(human);
+		
+		Vector<ReadTranscriptData.Entry[]> subsections = AnalyzeTranscriptsUtils.splitTranscriptIntoEpisodes(rtd);
+
+		
+		for(int i=0; i<subsections.size(); i++) {
+		    ReadTranscriptData.Entry[] oldTranscript = subsections.get(i);
+		    String eid = oldTranscript[0].eid;
+		    System.out.println("Using transcripted episode " + i);
+
+		    Board initialBoard = bh.get(eid);
+		    Episode epi = history.mkRestoredEpisode(gg,
+							    random,
+							    initialBoard,
+							    oldTranscript);
+		    
 		    history.add(new EpisodeHistory(epi));
 		}
-	    }
+
+		
+	    } else throw new IllegalArgumentException("Where to get episodes from?");
 
 	    // Add a few empty episode, for the bot to solve
 
@@ -570,7 +617,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	    if (log!=null) log.close();
 
 	    
-	    System.exit(0);
+	    //System.exit(0);
 	}
 
 
@@ -767,7 +814,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
     }
 
 /** Makes a request describing prepared episodes (stored in this
-    player) and future episodes.
+    player) and future episodes (stored in "future").
     @param future The initial boards for the future episodes.
  */
     private GeminiRequest makeRequestPrepared(GeminiPlayer future) throws IOException {
@@ -806,13 +853,10 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	Vector<String> v = new Vector<>();
 	
 	if (size()==0) throw new IllegalArgumentException("No episode exists yet. What to ask?");
-	//	EpisodeHistory ehi = lastElement();
-	//Episode epi = ehi.epi;
 	if (lastElement().epi.isCompleted() && !how)  throw new IllegalArgumentException("Last episode already completed. What to ask?");
 
 	if (size()>1) {
-	    // A rare case of mastery demonstrated on the last piece
-	    // of the board
+	    // A rare case of mastery demonstrated on the last piece of the board
 	    boolean lastIsClearedToo = lastElement().epi.getCleared();	    
 
 	    // describe all previous episodes.
@@ -1050,6 +1094,7 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
     void askAboutPreparedEpisodes(GeminiPlayer future) throws IOException,  ReflectiveOperationException {
 
 	GeminiRequest gr = makeRequestPrepared(future);
+	//	System.exit(0);
 	String lines[] = doOneRequest(gr);
 	for(int j=0; j<lines.length; j++) {
 	    if (lines.length>0) System.out.println("Candidate " + j+ " of " + lines.length);
@@ -1407,11 +1452,33 @@ MoveLine[] parseResponse(String line) {
 		    int code = digestMoveBasic(epi, w);
 		    if (code == CODE.ACCEPT) break;		    
 		}
-	    } else throw new IllegalArgumentException("Wrong mode: " + prepareMode);	    	    
+	    } else throw new IllegalArgumentException("Wrong mode: " +prepareMode);	    	    
 	}
-
-	return epi;
-	
+	return epi;	
     }
+
+    /** Creates an episode based on a human player's transcript and adds it to the history
+     */
+    Episode mkRestoredEpisode(GameGenerator gg0,
+			      RandomRG random,
+			      Board initialBoard, TranscriptManager.ReadTranscriptData.Entry[] oldTranscript)	 {
+	RuleSet rules = gg0.getRules();
+	Game game = new Game(rules, initialBoard);
+	
+	Episode epi = new Episode(game, outputMode,
+				  new InputStreamReader(System.in),
+				  new PrintWriter(System.out, true));
+
+	for(int j=0; j<oldTranscript.length; j++) {
+	    Pick pick  = oldTranscript[j].pick;
+	    int bucketNo = (pick instanceof Move)? ((Move)pick).getBucketNo(): 0;
+	    int[] w = {(int)pick.getPieceId(), bucketNo};
+	    int code = digestMoveBasic(epi, w);
+	    if (!(pick instanceof Move) && code!=CODE.IMMOVABLE) throw new IllegalArgumentException("The old transcript contains a pick, but the code is not IMMOVABLE. Cannot handle this");
+	}
+	     
+	return epi;	
+    }
+
     
 }

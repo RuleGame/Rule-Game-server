@@ -274,7 +274,7 @@ public class ReplayedEpisode extends Episode {
 	TranscriptManager.ReadTranscriptData transcript = new TranscriptManager.ReadTranscriptData(inFile);
 
 	// split by episode 
-	Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections = AnalyzeTranscripts.splitTranscriptIntoEpisodes(transcript);
+	Vector<TranscriptManager.ReadTranscriptData.Entry[]> subsections = AnalyzeTranscriptsUtils.splitTranscriptIntoEpisodes(transcript);
 	// remove any duplicates that may exist due to imperfections in the transcript saving mechanism
 	AnalyzeTranscripts.removeDuplicates(subsections);
 	
