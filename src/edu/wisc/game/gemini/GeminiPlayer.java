@@ -1473,17 +1473,17 @@ MoveLine[] parseResponse(String line) {
 	    Pick pick  = oldTranscript[j].pick;
 	    int bucketNo = (pick instanceof Move)? ((Move)pick).getBucketNo(): 0;
 	    int[] w = {(int)pick.getPieceId(), bucketNo};
-	    if (!(pick instance Move) && code==CODE.ACCEPT) {
+	    if (!(pick instanceof Move) && pick.getCode()==CODE.ACCEPT) {
 		// Our system instructions have not told the bot about successful
 		// picks, so let's just skip them
-		System.out.println("Ignore successful pick in transcript, j="+j)
+		System.out.println("Ignore successful pick in transcript, j="+j);
 		continue;
 	    }
 								
 
 	    
 	    int code = digestMoveBasic(epi, w);
-	    if (code != pick.code)  throw new IllegalArgumentException("Code mismatch in move no. " + j + ". Stored move=" + pick +", code="+ pick.code+"; replay gives code=" + code);
+	    if (code != pick.getCode())  throw new IllegalArgumentException("Code mismatch in move no. " + j + ". Stored move=" + pick +", code="+ pick.getCode()+"; replay gives code=" + code);
 	    if (!(pick instanceof Move) && code!=CODE.IMMOVABLE) throw new IllegalArgumentException("The old transcript contains a pick, but the code is not IMMOVABLE. Cannot handle this");
 	}
 	     
