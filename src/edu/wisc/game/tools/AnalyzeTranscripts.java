@@ -72,6 +72,8 @@ public class AnalyzeTranscripts {
     /** Produce a CSV file with episode counts, move numbers, timing
 	numbers etc for all players */
     private static boolean weWantTiming=true;
+    /** Compute xFactor */
+    //    private static boolean weWantX=true;
 
     /** Various ways to interpret argv elements -- as experiment plan
 	names, player IDs, etc. */
@@ -142,6 +144,8 @@ public class AnalyzeTranscripts {
 		weWantFitting=true;
 	    } else if  (a.equals("-nofit")) {
 		weWantFitting=false;
+		//	    } else if  (a.equals("-xFactor")) {
+		//		weWantX=true;
 	    } else if (j+1< argv.length && a.equals("-out")) {
 		outDir = argv[++j];
 	    } else if (j+1< argv.length && a.equals("-in")) {
@@ -206,7 +210,7 @@ public class AnalyzeTranscripts {
 	if (!base.isDirectory() || !base.canWrite()) usage("Not a writeable directory: " + base);
 
 	PrintWriter wsum =null;
-	if (weWantFitting || weWantTiming) {
+	if (weWantFitting || weWantTiming) { // || weWantX) {
 	    File gsum=new File(base, needP0? "summary-p0-"+randomPlayerModel+".csv" : "summary-flat.csv");
 	    wsum = new PrintWriter(new FileWriter(gsum, false));
 	    String sumHeader = "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo";
@@ -216,6 +220,9 @@ public class AnalyzeTranscripts {
 	    if (weWantTiming) {
 		sumHeader += ",episodes,moves,sec";
 	    }
+	    //	    if (weWantX) {
+	    //		sumHeader += ",xFactor";
+	    //	    }
 
 	    wsum.println(sumHeader);
 	}
@@ -1115,6 +1122,5 @@ Submission id,Participant id,Status,Custom study tncs accepted at,Started at,Com
 	
 	}       
     }
-
 	
 }

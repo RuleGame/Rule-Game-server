@@ -423,6 +423,9 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
     private File transcriptFile = null;
     private Captive.GGWrapper ggw=null;
 
+    /** Used with human players' transcripts If it's 4, we don't show most of the
+	final winning streak to the bot */
+    private static int xFactor=0;
     
     /** Modeled on Captive.java
 	model=gemini-2.0-flash
@@ -453,6 +456,8 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	max_requests  = ht.getOption("max_requests", max_requests);
 	targetStreak = ht.getOption("targetStreak", targetStreak);
 	targetR = ht.getOptionDouble("targetR", targetR);
+	xFactor = ht.getOption("xFactor", xFactor);
+
 	
 	temperature = ht.getOptionDoubleObject("temperature", temperature);
 	boolean tZero = (temperature!=null && temperature.doubleValue()==0);
@@ -1469,21 +1474,37 @@ MoveLine[] parseResponse(String line) {
 				  new InputStreamReader(System.in),
 				  new PrintWriter(System.out, true));
 
+	Vector<Pick> moves = new Vector<>();
+	
 	for(int j=0; j<oldTranscript.length; j++) {
 	    Pick pick  = oldTranscript[j].pick;
-	    int bucketNo = (pick instanceof Move)? ((Move)pick).getBucketNo(): 0;
-	    int[] w = {(int)pick.getPieceId(), bucketNo};
 	    if (!(pick instanceof Move) && pick.getCode()==CODE.ACCEPT) {
 		// Our system instructions have not told the bot about successful
 		// picks, so let's just skip them
 		System.out.println("Ignore successful pick in transcript, j="+j);
 		continue;
 	    }
-								
+	    moves.add(pick);
+	}
 
+	int n0 = moves.size();
+	if (xFactor==4) {
+	    // remove the final winning streak, except for its first element, as per PBK's request
+	    int lastFail = 0;
+	    for(int k=0; k<moves.size(); k++) {
+		if (moves.get(k).getCode()!=CODE.ACCEPT) lastFail = k;
+	    }
+	    int n = Math.min( lastFail + 2, n0);
+	    moves.setSize(n);
+	    System.out.println("Shortened the transcript from "+n0+" to " + n + " moves");
+	}
+
+	for(Pick pick: moves) {
+	    int bucketNo = (pick instanceof Move)? ((Move)pick).getBucketNo(): 0;
+	    int[] w = {(int)pick.getPieceId(), bucketNo};
 	    
 	    int code = digestMoveBasic(epi, w);
-	    if (code != pick.getCode())  throw new IllegalArgumentException("Code mismatch in move no. " + j + ". Stored move=" + pick +", code="+ pick.getCode()+"; replay gives code=" + code);
+	    if (code != pick.getCode())  throw new IllegalArgumentException("Code mismatch: Stored move=" + pick +", code="+ pick.getCode()+"; replay gives code=" + code);
 	    if (!(pick instanceof Move) && code!=CODE.IMMOVABLE) throw new IllegalArgumentException("The old transcript contains a pick, but the code is not IMMOVABLE. Cannot handle this");
 	}
 	     
