@@ -548,6 +548,8 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
 	if (prepared) {
 	    long seed = ht.getOptionLong("seed", 0L);
+	    
+	    System.out.println(seed == 0L? "RG seed=random": "RG seed="+ seed);
 	    final RandomRG random= (seed != 0L)? new RandomRG(seed): new RandomRG();
 
 	    if (prepared_episodes>0) {
