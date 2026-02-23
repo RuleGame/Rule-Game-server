@@ -593,6 +593,11 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 		HashMap<String,Board> bh = BoardManager.readBoardFile(boardFile, null);
 		// Vector<ReadTranscriptData.Entry>
 		ReadTranscriptData rtd = new ReadTranscriptData(human);
+
+
+		if (xFactor==4) { // remove the final winning streak
+		    removeFinalWinningStreak(rtd);
+		}
 		
 		Vector<ReadTranscriptData.Entry[]> subsections = AnalyzeTranscriptsUtils.splitTranscriptIntoEpisodes(rtd);
 
@@ -1476,8 +1481,6 @@ MoveLine[] parseResponse(String line) {
 				  new InputStreamReader(System.in),
 				  new PrintWriter(System.out, true));
 
-	Vector<Pick> moves = new Vector<>();
-	
 	for(int j=0; j<oldTranscript.length; j++) {
 	    Pick pick  = oldTranscript[j].pick;
 	    if (!(pick instanceof Move) && pick.getCode()==CODE.ACCEPT) {
@@ -1486,22 +1489,7 @@ MoveLine[] parseResponse(String line) {
 		System.out.println("Ignore successful pick in transcript, j="+j);
 		continue;
 	    }
-	    moves.add(pick);
-	}
 
-	int n0 = moves.size();
-	if (xFactor==4) {
-	    // remove the final winning streak, except for its first element, as per PBK's request
-	    int lastFail = 0;
-	    for(int k=0; k<moves.size(); k++) {
-		if (moves.get(k).getCode()!=CODE.ACCEPT) lastFail = k;
-	    }
-	    int n = Math.min( lastFail + 2, n0);
-	    moves.setSize(n);
-	    System.out.println("Shortened the transcript from "+n0+" to " + n + " moves");
-	}
-
-	for(Pick pick: moves) {
 	    int bucketNo = (pick instanceof Move)? ((Move)pick).getBucketNo(): 0;
 	    int[] w = {(int)pick.getPieceId(), bucketNo};
 	    
@@ -1513,5 +1501,30 @@ MoveLine[] parseResponse(String line) {
 	return epi;	
     }
 
-    
+    /** Preprocessing of "good learners'" transcripts before feeding them to the bot,
+	as per Paul's request. This only should be called when */
+    static private void removeFinalWinningStreak(Vector<ReadTranscriptData.Entry> section) {
+	int n0 = section.size();
+
+	// remove the final winning streak, except for its first element, as per PBK's request
+	int lastFail = 0;
+	for(int k=0; k<  section.size(); k++) {
+	    Pick move = section.get(k).pick;
+	    if (move.getCode()!=CODE.ACCEPT) lastFail = k;
+	}
+
+	// j will point to the last element to keep, which should be the
+	// first successful move after the last fail. (May need to ignore
+	// any successful picks in between)
+	int j = lastFail;
+	if (j+1 < section.size()) j++; // keep one good move
+	
+	while( j+1<section.size() &&  !(section.get(j).pick instanceof Move))  j++;
+	
+	int n = j+1;
+	section.setSize(n);
+	System.out.println("Shortened the series transcript from "+n0+" to " + n + " moves and/or picks");
+    }
+
 }
+
