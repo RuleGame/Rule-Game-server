@@ -212,19 +212,18 @@ public class GeminiPlayer  extends Vector<EpisodeHistory> {
 		System.out.println("Hit MAX_TOKENS; raised budgetDivider to " + budgetDivider);
 	    } else if (code==429) {
 		int waitSec = error429(responseJo);
-		System.out.println("Waiting for " + waitSec + " seconds to retry, as told by the server");
+		System.out.println("Server suggest waiting for " + waitSec + " seconds to retry");
+		if (waitSec < 60) waitSec = computeWait( retryCnt);
+		System.out.println("Waiting for " + waitSec + " seconds to retry");
 		waitABit(waitSec * 1000);
 	    } else if (code==503) {
 	// Error: HTTP response code = 503
 	// SERVER RESPONSE: {"error":{"code":503,"message":"The model is overloaded. Please try again later.","status":"UNAVAILABLE"}}
 
 		// This error often repeats even after 1-2 min, so let's have
-		// longer periods: 1, 2, 4, 8 min.
-		
+		// longer periods: 2, 4, 8... min.
 
-		int waitSec = 60;
-		for(int i=0; i<retryCnt; i++) waitSec*=2;
-
+		int waitSec = computeWait( retryCnt);
 		System.out.println("Waiting for " + waitSec + " seconds to retry, as a wild guess");
 		waitABit(waitSec * 1000);
 
@@ -289,6 +288,12 @@ public class GeminiPlayer  extends Vector<EpisodeHistory> {
 "usageMetadata": ...
 	*/	
 	
+    }
+
+    private static int computeWait(int retryCnt) {
+	int waitSec = 120;
+	for(int i=0; i<retryCnt; i++) waitSec*=2;
+	return waitSec;
     }
     
     /** Sometimes, a code-200 response may look like this:
@@ -633,10 +638,13 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	}
 
 
+	boolean mustResumeNow = false;
 	
 	if (resumeFrom != null) {
 	    System.out.println("Resuming from old log file " + resumeFrom);
 	    history.readLogBack( gg, resumeFrom);
+	    System.out.println("Restored " + history.size() + " episodes");
+	    mustResumeNow = history.size()>0 && !history.lastElement().epi.isCompleted();// unfinished last episode (resumeFile mode);
 	}
 
 
@@ -650,12 +658,20 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
 	    System.out.println("At "+  now()+ " Starting episode " + (gameCnt+1) + " of up to " + max_boards);
 
-	    Episode epi = new Episode(game, outputMode,
-				      new InputStreamReader(System.in),
-				      new PrintWriter(System.out, true));
-	
-	    EpisodeHistory his = new EpisodeHistory(epi);
-	    history.add(his);
+	    Episode epi;
+	    EpisodeHistory his;
+	    if (mustResumeNow) { // unfinished last episode (resumeFile mode);
+		his = history.lastElement();
+		epi = his.epi;
+		mustResumeNow = false;
+	    } else {
+		epi = new Episode(game, outputMode,
+				  new InputStreamReader(System.in),
+				  new PrintWriter(System.out, true));
+		
+		his = new EpisodeHistory(epi);
+		history.add(his);
+	    }
 
 	    //System.out.println("DEBUG: B=" + his.initialBoardAsString());
 
@@ -1010,8 +1026,8 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
     }
 
     //    final Pattern movePat = Pattern.compile("\\bMOVE\\s+([0-9]+)\\s+([0-9]+)");
-    final Pattern movePat = Pattern.compile("^MOVE\\s+([0-9]+)\\s+([0-9]+)\\s*$",
-					    Pattern.MULTILINE);
+    //    final Pattern movePat = Pattern.compile("^MOVE\\s+([0-9]+)\\s+([0-9]+)\\s*$",   Pattern.MULTILINE);
+    final Pattern movePat = Pattern.compile("^MOVE\\s+([0-9]+)\\s+([0-9]+)",   Pattern.MULTILINE);
     int lastStretch;
     double lastR;
 
@@ -1058,7 +1074,7 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	
 	while( !epi.isCompleted()){
 	    GeminiRequest gr = makeRequest();
-
+	    //	    System.exit(0); //zzz
 	    int tryCnt = 0;
 	    Matcher m = null;
 	    int[] w = null;
@@ -1262,17 +1278,17 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	return null;
     }
 
-static class MoveLine {
-    final int pieceId, bucketNo;
-    MoveLine(int p, int b) {
-	pieceId=p;
-	bucketNo=b;
+    static class MoveLine {
+	final int pieceId, bucketNo;
+	MoveLine(int p, int b) {
+	    pieceId=p;
+	    bucketNo=b;
+	}
+	int [] asPair() {
+	    return new int[] {pieceId, bucketNo};
+	}
+	public String toString() { return "(" + pieceId + ", " + bucketNo+ ")";  }
     }
-    int [] asPair() {
-	return new int[] {pieceId, bucketNo};
-    }
-
-}
 
 
     /** Parses the text returned from Gemini, looking for the last "MOVE id bid" pattern
@@ -1280,7 +1296,7 @@ static class MoveLine {
 	which Gemini sometimes includes before its proposed move).
 	@return {id, bid} or null
     */
-MoveLine[] parseResponse(String line) {
+    MoveLine[] parseResponse(String line) {
 	Matcher m = movePat.matcher(line);
 	Vector<MoveLine> result = new Vector<>();
 	while(m.find()) {
@@ -1289,7 +1305,8 @@ MoveLine[] parseResponse(String line) {
 		Integer.parseInt( m.group(2)));
 	    result.add(q);
 	}
-	return result.toArray(new MoveLine[0]);
+	//	return result.toArray(new MoveLine[0]);
+	return (result.size()==0)? new MoveLine[0]: new MoveLine[] { result.lastElement() };
     }
           
     /** Out model is gemini-2.0-flash, which allows 15 RPM in the free tier.
@@ -1375,7 +1392,10 @@ MoveLine[] parseResponse(String line) {
 	    }
 	    MoveLine[] w = parseResponse(line);
 	    if (w.length>0) {
+		System.out.println("Found move: " + w[0]);
 		digestMove(w[0].asPair());
+	    } else {
+		System.out.println("There is no move in this line: " +line);
 	    }
 		
 	    
