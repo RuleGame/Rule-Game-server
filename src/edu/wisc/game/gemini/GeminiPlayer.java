@@ -403,7 +403,9 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
     /** In a prepared-episode run using old human player's episodes, the transcript file to read */
     private static File human=null;
     
-    /** In a prepared-episode run (either random or human), how many initial boards episodes are shown to the bot to solve? (AKA the test set) */
+    /** In a prepared-episode run (either random or human), or in a
+     * play-mode run's final question,how many initial boards episodes
+     * are shown to the bot to solve? (AKA the test set) */
     static int future_episodes = 0;
     static String who = "you";
     enum PrepareMode {
@@ -488,7 +490,9 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	if (prepared) who = (prepareMode==PrepareMode.positive)? "Alice" : "Bob";
 	System.out.println("prepareMode=" + prepareMode+", who=" + who);
 
-	if (prepared) future_episodes = ht.getOption("future_episodes", 5);
+	// future episodes can be used in both prepared-episodes mode and play modes (for the final questions)
+	//if (prepared)
+	    future_episodes = ht.getOption("future_episodes", 5);
 
 	//System.exit(0);
 	
