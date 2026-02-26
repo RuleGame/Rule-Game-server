@@ -374,8 +374,12 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
 
     static String instructions=null;
+    /** In Play mode, these are the instructions used for the final request,
+	when asking to explain the rules and play future episodes */
+    static String instructions2=null;
     
     static String instructionsFile = null;
+    static String instructionsFile2 = null;
     /** null means "let the model use its default value" */
     static Double temperature = null;
     static Integer thinkingBudget = null;
@@ -458,6 +462,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	max_boards  = ht.getOption("max_boards", max_boards);
 	keyFile = ht.getOption("keyFile", keyFile);
 	instructionsFile = ht.getOption("instructionsFile", instructionsFile);
+	instructionsFile2 = ht.getOption("instructionsFile2", instructionsFile2);
 	max_requests  = ht.getOption("max_requests", max_requests);
 	targetStreak = ht.getOption("targetStreak", targetStreak);
 	targetR = ht.getOptionDouble("targetR", targetR);
@@ -490,6 +495,10 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	File f =  (instructionsFile==null)? new File( Files.geminiDir(), "system.txt"):
 	    new File(instructionsFile);
 	instructions = Util.readTextFile( f);
+
+	f =   (instructionsFile2==null)? new File( Files.geminiDir(), "system-prepared-03.txt"):
+	    new File(instructionsFile2);
+	instructions2 = Util.readTextFile( f);
 
 	
 	String resumeFileName = ht.getOption("resume", null);
@@ -629,7 +638,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	    GeminiPlayer future = new GeminiPlayer();
 	    future.addFutureBoards(gg);
 	    
-	    history.askAboutPreparedEpisodes(future);
+	    history.askAboutPreparedEpisodes(future, instructions);
 	    System.out.println(history.costReport());
 	    if (log!=null) log.close();
 
@@ -695,13 +704,22 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	}
 
 
-	if (won) { // Ask the bot how he did it
+	if (won) { // Ask the bot how he did it // ZZZ - use the prepared-episodes approach at this point!
+	    /*
 	    GeminiRequest gr = history.makeRequestHow();
 	    String lines[] = history.doOneRequest(gr);
 	    for(int j=0; j<lines.length; j++) {
 		if (lines.length>0) System.out.println("Candidate " + j+ " of " + lines.length);
 		System.out.println("Response text={" + lines[j].trim() + "}");
 	    }
+	    */
+	    GeminiPlayer future = new GeminiPlayer();
+	    future.addFutureBoards(gg);
+
+	    // zzz
+
+	    System.out.println("Instructions for the final request: {\n" + instructions2 +  "\n}");
+	    history.askAboutPreparedEpisodes(future, instructions2);
 	}
 	} finally {
 	    System.out.println(history.costReport());
@@ -845,11 +863,11 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
     player) and future episodes (stored in "future").
     @param future The initial boards for the future episodes.
  */
-    private GeminiRequest makeRequestPrepared(GeminiPlayer future) throws IOException {
+    private GeminiRequest makeRequestPrepared(GeminiPlayer future, String instruc) throws IOException {
 	GeminiRequest gr = new GeminiRequest();
 	gr.setNeedResponseSchema(true); // ask for structured response
 	
-	gr.addInstruction(instructions);
+	gr.addInstruction(instruc);
 	gr.addTemperature(temperature);
 	gr.addMaxOutputTokens(maxToken);
 	gr.addThinkingBudget(thinkingBudget);
@@ -1119,9 +1137,9 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
     /** Creates and sends a one-shot request, asking to analyze prepared episodes and solve future boards; then processes the response.
 	@param future the boards for future episodes (to be solved)
     */
-    void askAboutPreparedEpisodes(GeminiPlayer future) throws IOException,  ReflectiveOperationException {
+    void askAboutPreparedEpisodes(GeminiPlayer future, String instruc) throws IOException,  ReflectiveOperationException {
 
-	GeminiRequest gr = makeRequestPrepared(future);
+	GeminiRequest gr = makeRequestPrepared(future, instruc);
 	//	System.exit(0);
 	String lines[] = doOneRequest(gr);
 	for(int j=0; j<lines.length; j++) {
@@ -1376,7 +1394,7 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 		String boardText = m.group(2);
 		if (j==eNo+1) eNo++;
 		else throw new IllegalArgumentException("Episode number out of order: " + j);
-		System.out.println("Found board text=" + boardText);
+		//System.out.println("Found board text=" + boardText);
 		Board board = Board.readBoardFromString(boardText);
 		board.dropLabels();
 		Episode epi = new Episode(gg.getRules(), board, outputMode,
@@ -1392,10 +1410,10 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	    }
 	    MoveLine[] w = parseResponse(line);
 	    if (w.length>0) {
-		System.out.println("Found move: " + w[0]);
+		//System.out.println("Found move: " + w[0]);
 		digestMove(w[0].asPair());
 	    } else {
-		System.out.println("There is no move in this line: " +line);
+		//System.out.println("There is no move in this line: " +line);
 	    }
 		
 	    
