@@ -509,7 +509,9 @@ s	    non-existing piece) the value may be different from those of
 	    double inverseProbFullKnowledge = countMovables * countDest;
 	    double r = inverseProbRandom/inverseProbFullKnowledge;
 
-	    //Logging.debug("r=("+countTryMovables+"/"+countMovables+")*(4/"+countDest+")=" + r);
+	    System.out.println("DEBUG: show="+weShowAllMovables()+", |values|=" + values.size());
+			       
+	    System.out.println("DEBUG: r=("+countTryMovables+"/"+countMovables+")*(4/"+countDest+")=" + r);
 	    
 	    return r;
 	    
@@ -1124,12 +1126,18 @@ s	    non-existing piece) the value may be different from those of
     public int acceptPreview(Pick move) {
 	return  ruleLine.acceptPreview(move);
     }
+
+
+    private boolean showAllMovables = true;
+
+    /** This method is only used by Gemini play mode, to override the default functionality */
+    public void setShowAllMovables(boolean x) {showAllMovables =x;}
     
     /** The basic mode tells the player where all movable pieces are, 
-	but EpisodeInfo will override it if the para set mandates "free" mode.
+	but EpisodeInfo will override this method if the para set mandates "free" mode.
      */
     public boolean weShowAllMovables() {
-	return true;
+	return  showAllMovables;
     }
  
 
@@ -1325,7 +1333,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
     /** The current version of the application */
-    public static final String version = "8.052";
+    public static final String version = "8.053";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }
@@ -1591,6 +1599,8 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	} else {
 	    code = accept(move);
 	}
+
+	System.out.println("Debug: move=" + move +", r=" + move.getRValue());		    
 	return new Display(code, move, mkDisplayMsg());
     }
 

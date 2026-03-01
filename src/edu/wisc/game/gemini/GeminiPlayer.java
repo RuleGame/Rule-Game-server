@@ -641,7 +641,8 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
 	    GeminiPlayer future = new GeminiPlayer();
 	    future.addFutureBoards(gg);
-	    
+
+	    who = "Bob"; // to match the languauge in the instructions
 	    history.askAboutPreparedEpisodes(future, instructions);
 	    System.out.println(history.costReport());
 	    if (log!=null) log.close();
@@ -658,6 +659,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	    history.readLogBack( gg, resumeFrom);
 	    System.out.println("Restored " + history.size() + " episodes");
 	    mustResumeNow = history.size()>0 && !history.lastElement().epi.isCompleted();// unfinished last episode (resumeFile mode);
+	    System.exit(0);//zzz
 	}
 
 
@@ -681,7 +683,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 		epi = new Episode(game, outputMode,
 				  new InputStreamReader(System.in),
 				  new PrintWriter(System.out, true));
-		
+		epi.setShowAllMovables(false);
 		his = new EpisodeHistory(epi);
 		history.add(his);
 	    }
@@ -776,7 +778,8 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	    Episode epi = new Episode(game, outputMode,
 				      new InputStreamReader(System.in),
 				      new PrintWriter(System.out, true));
-    
+	    epi.setShowAllMovables(false);
+
 	    EpisodeHistory his = new EpisodeHistory(epi);
 	    add(his);
 	}
@@ -1050,8 +1053,8 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
     //    final Pattern movePat = Pattern.compile("\\bMOVE\\s+([0-9]+)\\s+([0-9]+)");
     //    final Pattern movePat = Pattern.compile("^MOVE\\s+([0-9]+)\\s+([0-9]+)\\s*$",   Pattern.MULTILINE);
     final Pattern movePat = Pattern.compile("^MOVE\\s+([0-9]+)\\s+([0-9]+)",   Pattern.MULTILINE);
-    int lastStretch;
-    double lastR;
+    private int lastStretch;
+    private double lastR;
 
     /** The total number of Gemini requests made so far in all episodes played in this run.
 	Normally (if no retries are ever needed) this is equals to the number of moves
@@ -1269,16 +1272,16 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	//final int n = moves.size();
 	
 	boolean redundant = ehi.repeats.lastAddResult;
+
 	
-	String stats = "Transcript has "+epi.getTranscript().size()+" moves. Board pop="+epi.getValues().size()+". lastStretch=" + lastStretch + ", lastR=" + lastR;
+	String stats = "This episode has "+epi.getTranscript().size()+" moves. Board pop="+epi.getValues().size()+". lastStretch=" + lastStretch + ", lastR=" + lastR;
 	
 	System.out.println(stats);
     
 	if (remind && ehi.repeats.totalRepeats()>0) {
-	    stats = "The episode includes " + ehi.repeats.totalRepeats()
-		+ " redundant moves";
-	    if (redundant) stats += ", including the last one.";
-	    System.out.println(stats);
+	    String stats1 = "The episode includes " + ehi.repeats.totalRepeats() + " redundant moves";
+	    if (redundant) stats1 += ", including the last one.";
+	    System.out.println(stats1);
 	}
 	
 
@@ -1287,7 +1290,12 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	if (targetR>0 & lastR>=targetR) won = true;
 	
 
+	
 	if (won) {
+	    int sumLen = 0;
+	    for(EpisodeHistory eh: this) sumLen += eh.epi.getTranscript().size();
+	    stats =  "All "+size()+" episodes have "+sumLen+" moves. lastStretch=" + lastStretch + ", lastR=" + lastR;
+
 	    System.out.println("Victory: mastery demonstrated! " + stats);
 	    return true;
 	}
@@ -1404,6 +1412,8 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 		Episode epi = new Episode(gg.getRules(), board, outputMode,
 					  new InputStreamReader(System.in),
 					  new PrintWriter(System.out, true));
+		// FIXME: if this was a human player transcript, and the para set mandated "fixed" mode, this would be wrong
+		epi.setShowAllMovables(false);
 
 		EpisodeHistory his = new EpisodeHistory(epi);
 		/* history.*/add(his);
@@ -1448,7 +1458,8 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	Episode epi = new Episode(game, outputMode,
 				  new InputStreamReader(System.in),
 				  new PrintWriter(System.out, true));
-	
+	epi.setShowAllMovables(false);
+
 	while( !epi.getCleared()) {
 
 	    RecentKnowledge rk = new RecentKnowledge(epi.getTranscript(), false);
@@ -1522,6 +1533,8 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	Episode epi = new Episode(game, outputMode,
 				  new InputStreamReader(System.in),
 				  new PrintWriter(System.out, true));
+	// FIXME: if this was a human player transcript, and the para set mandated "fixed" mode, this would be wrong
+	epi.setShowAllMovables(false);
 
 	for(int j=0; j<oldTranscript.length; j++) {
 	    Pick pick  = oldTranscript[j].pick;

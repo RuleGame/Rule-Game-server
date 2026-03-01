@@ -72,16 +72,10 @@ public class GeminiRequest {
 	    return needResponseSchema?"application/json": "text/plain";
 	}
   
-	
-
-	//	JsonObject responseSchemaJo
-	
 	/** This method is called by JsonReflect after the standard conversion
 	    to a builder has been carried out, in order to allow this object
 	    to add some extra fields to the builder */
 	public void augmentBuilder(JsonObjectBuilder ob){
-	    System.out.println("augmentBuilder() called");
-	    //System.exit(0); 
 	    if (needResponseSchema) {
 		ob.add( "responseSchema", ResponseSchemaUtil.mkResponseSchema());
 	    }
@@ -178,6 +172,5 @@ public class GeminiRequest {
     }
     */
 	
-
     
 }
