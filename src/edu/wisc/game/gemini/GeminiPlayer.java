@@ -710,7 +710,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	}
 
 
-	if (won) { // Ask the bot how he did it // ZZZ - use the prepared-episodes approach at this point!
+	//if (won) { // Ask the bot how he did it // ZZZ - use the prepared-episodes approach at this point!
 	    /*
 	    GeminiRequest gr = history.makeRequestHow();
 	    String lines[] = history.doOneRequest(gr);
@@ -726,7 +726,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
 	    System.out.println("Instructions for the final request: {\n" + instructions2 +  "\n}");
 	    history.askAboutPreparedEpisodes(future, instructions2);
-	}
+	    //}
 	} finally {
 	    System.out.println(history.costReport());
 	    if (log!=null) log.close();
