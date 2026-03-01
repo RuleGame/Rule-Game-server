@@ -659,7 +659,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	    history.readLogBack( gg, resumeFrom);
 	    System.out.println("Restored " + history.size() + " episodes");
 	    mustResumeNow = history.size()>0 && !history.lastElement().epi.isCompleted();// unfinished last episode (resumeFile mode);
-	    System.exit(0);//zzz
+	    //System.exit(0);
 	}
 
 

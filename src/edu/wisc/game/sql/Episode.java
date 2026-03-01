@@ -509,9 +509,9 @@ s	    non-existing piece) the value may be different from those of
 	    double inverseProbFullKnowledge = countMovables * countDest;
 	    double r = inverseProbRandom/inverseProbFullKnowledge;
 
-	    System.out.println("DEBUG: show="+weShowAllMovables()+", |values|=" + values.size());
+	    //System.out.println("DEBUG: show="+weShowAllMovables()+", |values|=" + values.size());
 			       
-	    System.out.println("DEBUG: r=("+countTryMovables+"/"+countMovables+")*(4/"+countDest+")=" + r);
+	    //System.out.println("DEBUG: r=("+countTryMovables+"/"+countMovables+")*(4/"+countDest+")=" + r);
 	    
 	    return r;
 	    
@@ -1549,7 +1549,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	    // case, and is saved in transcript, for Gemini runs
 	    transcript.add(move);
 	    attemptCnt++;
-	    System.out.println("DEBUG B: attemptCnt:=" + attemptCnt); //transcript=" + getTranscript());
+	    //System.out.println("DEBUG B: attemptCnt:=" + attemptCnt); //transcript=" + getTranscript());
 	} else {
 	    code = accept(move);
 	}
@@ -1595,12 +1595,12 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	    // case, and is saved in transcript, for Gemini runs
 	    transcript.add(move);
 	    attemptCnt++;
-	    System.out.println("DEBUG C: attemptCnt:=" + attemptCnt); //transcript=" + getTranscript());
+	    //System.out.println("DEBUG C: attemptCnt:=" + attemptCnt); //transcript=" + getTranscript());
 	} else {
 	    code = accept(move);
 	}
 
-	System.out.println("Debug: move=" + move +", r=" + move.getRValue());		    
+	//System.out.println("Debug: move=" + move +", r=" + move.getRValue());		    
 	return new Display(code, move, mkDisplayMsg());
     }
 
@@ -1781,7 +1781,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 
     static final String file_writing_lock = "Board file writing lock";
 	
-        /** Concise report, handy for debugging */
+    /** Concise report, handy for debugging */
     public String report() {
 	return "["+episodeId+"; FC="+getFinishCode()+
 	    " " +
