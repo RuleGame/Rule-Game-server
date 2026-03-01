@@ -402,6 +402,10 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
     /** In a prepared-episode run using old human player's episodes, the transcript file to read */
     private static File human=null;
+    /** If non-negative, the human player's transcript is truncated to this many move attempts */
+    private static int humanMaxMoves=0;
+
+
     
     /** In a prepared-episode run (either random or human), or in a
      * play-mode run's final question,how many initial boards episodes
@@ -482,6 +486,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	if (humanFileName !=null) {
 	    if (prepared_episodes >0) throw new IllegalArgumentException("Cannot combined 'human' and 'prepared_episodes'");
 	    human = new File(humanFileName);
+	    humanMaxMoves = ht.getOption("humanMaxMoves", 0);
 	}
 	prepared = (prepared_episodes>0) || (human!=null);
 	
@@ -619,8 +624,8 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 		
 		Vector<ReadTranscriptData.Entry[]> subsections = AnalyzeTranscriptsUtils.splitTranscriptIntoEpisodes(rtd);
 
-		
-		for(int i=0; i<subsections.size(); i++) {
+		int allowedMoves = (humanMaxMoves>0)? humanMaxMoves: 1000000;
+		for(int i=0; i<subsections.size() && allowedMoves>0; i++) {
 		    ReadTranscriptData.Entry[] oldTranscript = subsections.get(i);
 		    String eid = oldTranscript[0].eid;
 		    System.out.println("Using transcripted episode " + i);
@@ -629,7 +634,9 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 		    Episode epi = history.mkRestoredEpisode(gg,
 							    random,
 							    initialBoard,
-							    oldTranscript);
+							    oldTranscript,
+							    allowedMoves);
+		    allowedMoves -= epi.getTranscript().size();
 		    
 		    history.add(new EpisodeHistory(epi));
 		}
@@ -1523,10 +1530,12 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
     }
 
     /** Creates an episode based on a human player's transcript and adds it to the history
+	@param allowedMoves. This must always be supplied, and non-negative.
      */
     Episode mkRestoredEpisode(GameGenerator gg0,
 			      RandomRG random,
-			      Board initialBoard, TranscriptManager.ReadTranscriptData.Entry[] oldTranscript)	 {
+			      Board initialBoard, TranscriptManager.ReadTranscriptData.Entry[] oldTranscript,
+			      int allowedMoves) 	 {
 	RuleSet rules = gg0.getRules();
 	Game game = new Game(rules, initialBoard);
 	
@@ -1536,7 +1545,7 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	// FIXME: if this was a human player transcript, and the para set mandated "fixed" mode, this would be wrong
 	epi.setShowAllMovables(false);
 
-	for(int j=0; j<oldTranscript.length; j++) {
+	for(int j=0; j<oldTranscript.length && allowedMoves>0; j++) {
 	    Pick pick  = oldTranscript[j].pick;
 	    if (!(pick instanceof Move) && pick.getCode()==CODE.ACCEPT) {
 		// Our system instructions have not told the bot about successful
@@ -1548,9 +1557,10 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	    int bucketNo = (pick instanceof Move)? ((Move)pick).getBucketNo(): 0;
 	    int[] w = {(int)pick.getPieceId(), bucketNo};
 	    
-	    int code = digestMoveBasic(epi, w);
+	    int code = digestMoveBasic(epi, w);	    
 	    if (code != pick.getCode())  throw new IllegalArgumentException("Code mismatch: Stored move=" + pick +", code="+ pick.getCode()+"; replay gives code=" + code);
 	    if (!(pick instanceof Move) && code!=CODE.IMMOVABLE) throw new IllegalArgumentException("The old transcript contains a pick, but the code is not IMMOVABLE. Cannot handle this");
+	    allowedMoves --;
 	}
 	     
 	return epi;	
