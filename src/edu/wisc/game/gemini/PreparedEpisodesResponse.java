@@ -44,11 +44,11 @@ public class PreparedEpisodesResponse {
         public void setBucketId(int _bucketId) { bucketId = _bucketId; }
     }
 
-    CompletedMove[][] inferredRulesAppliedToTheCompletedEpisodes;
+    CompletedMove[][] inferredRulesAppliedToOldEpisodes;
     ProposedMove[][] proposedMoves;
 
-    public CompletedMove[][] getInferredRulesAppliedToTheCompletedEpisodes() { return inferredRulesAppliedToTheCompletedEpisodes; }
-    public void setInferredRulesAppliedToTheCompletedEpisodes(CompletedMove[][] _inferredRulesAppliedToTheCompletedEpisodes) { inferredRulesAppliedToTheCompletedEpisodes = _inferredRulesAppliedToTheCompletedEpisodes; }
+    public CompletedMove[][] getInferredRulesAppliedToOldEpisodes() { return inferredRulesAppliedToOldEpisodes; }
+    public void setInferredRulesAppliedToOldEpisodes(CompletedMove[][] _inferredRulesAppliedToOldEpisodes) { inferredRulesAppliedToOldEpisodes = _inferredRulesAppliedToOldEpisodes; }
     public ProposedMove[][] getProposedMoves() { return proposedMoves; }
     public void setProposedMoves(ProposedMove[][] _proposedMoves) { proposedMoves = _proposedMoves; }
 

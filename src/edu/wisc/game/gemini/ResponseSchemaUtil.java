@@ -14,7 +14,7 @@ import edu.wisc.game.engine.*;
 import edu.wisc.game.gemini.GeminiPlayer.MoveLine;
 
 /** 2026-02-01: After each "properties": {...}, need to add
-    "required": ["inferredRules", "inferredRulesAppliedToTheCompletedEpisodes"]
+    "required": ["inferredRules", "inferredRulesAppliedToOldEpisodes"]
  */
 class ResponseSchemaUtil {
     /*
@@ -23,13 +23,13 @@ class ResponseSchemaUtil {
 	    "properties": {
 		"inferredRules": {
 		    "type": "STRING",
-		    "description": "Please describe here the hidden rules that best explain all completed episodes shown to you."},
-		"InferredRulesAppliedToTheCompletedEpisodes": {
+		    "description": "Please describe here the hidden rules that best explain all previously played (completed or incomplete) episodes shown to you."},
+		"InferredRulesAppliedToOldEpisodes": {
 		    "type": "ARRAY",
-		    "description": "Here you should put the results of the application of the inferred rules to all the completed episodes from which they have been inferred. Each item in this array should correspond to one completed episode."
+		    "description": "Here you should put the results of the application of the inferred rules to all the previously played (completed or incomplete) episodes from which they have been inferred. Each item in this array should correspond to one previously played episode."
           "items": {
               "type": "ARRAY",
-	       "description": "Here you should put the results of the application of the inferred rules to one of the completed episodes. Each element of the array corresponds to one move attempt",
+	       "description": "Here you should put the results of the application of the inferred rules to one of the previously played episodes. Each element of the array corresponds to one move attempt",
                "items": {
                     "type":"OBJECT",
                     "description": "Looking at one of Bob's move attempts, what was the actual outcome (as found in the transcript given to you), and what would be the outcome of this move if the hidden rules were the same as those inferred by you?"
@@ -151,7 +151,7 @@ class ResponseSchemaUtil {
 
 
     /**
-		"InferredRulesAppliedToTheCompletedEpisodes": {
+		"InferredRulesAppliedToOldEpisodes": {
 		    "type": "ARRAY",
 		    "description": "Here you should put the results of the application of the inferred rules to all the completed episodes from which they have been inferred. Each item in this array should correspond to one completed episode."
           "items": {
@@ -199,10 +199,10 @@ class ResponseSchemaUtil {
 						  add("expectedResponse", expectedResponseOb));
 
 
-	JsonObjectBuilder oneEpisodeOb = schemaArray( "Here you should put the results of the application of the inferred rules to one of the completed episodes. Each element of the array corresponds to one move attempt",
+	JsonObjectBuilder oneEpisodeOb = schemaArray( "Here you should put the results of the application of the inferred rules to one of the already played episodes. Each element of the array corresponds to one move attempt",
 						    itemsOb);
 						    
-	return schemaArray("Here you should put the results of the application of the inferred rules to all the completed episodes from which they have been inferred. Each item in this array should correspond to one completed episode.",
+	return schemaArray("Here you should put the results of the application of the inferred rules to all the already played episodes from which they have been inferred. Each item in this array should correspond to one already played episode.",
 			   oneEpisodeOb);
 
     }
@@ -210,8 +210,8 @@ class ResponseSchemaUtil {
     static JsonObjectBuilder mkResponseSchema() {
 	return schemaObject(null,
 			    (new MyJsonObjectBuilder()).
-			    add("inferredRules", schemaString("Please describe here the hidden rules that best explain all completed episodes shown to you")).
-			    add("inferredRulesAppliedToTheCompletedEpisodes", mkAppliedMovesOb()).
+			    add("inferredRules", schemaString("Please describe here the hidden rules that best explain all already played episodes shown to you")).
+			    add("inferredRulesAppliedToOldEpisodes", mkAppliedMovesOb()).
 			    add("proposedMoves", mkProposedMovesOb()));
 			     
     }
