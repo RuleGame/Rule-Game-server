@@ -1,6 +1,13 @@
 #!/usr/bin/perl
 use strict;
+use Getopt::Long;
 
+#--------------------------------------------------------------------------------
+# usage: collate-human-stats.pl --flat summary-flat.csv
+#--------------------------------------------------------------------------------
+# This script is to be run in a directory that contains the outputs of Gemini bot
+# run on human players' transcripts. It will produces a CSV file with 1 line per human player,
+# combining info from several sources.
 #--------------------------------------------------------------------------------
 #vmenkov-ThinkPad-X1-Yoga-Gen-5:~/w2020/gemini_logs_7/human-naive/tmp> head summary-flat.csv
 #ruleSetName,playerId,experimentPlan,trialListId,seriesNo,yy,B,C,t_I,k,Z,n,L/n,AIC/n,episodes,moves,sec
@@ -17,6 +24,13 @@ use strict;
 #--------------------------------------------------------------------------------
 
 my $flatFile = "tmp/summary-flat.csv";
+
+GetOptions ('flatFile=s' => \$flatFile);
+
+#print "flatFile=$flatFile\n";
+#die;
+
+
 open(F, $flatFile) or die "Cannot read $flatFile\n";
 my $cnt = 0;
 my @flatHeader = ();
