@@ -68,12 +68,18 @@ print "#ruleSetName,playerId,experimentPlan,trialListId,seriesNo,episodes,moves,
 print "trainingMoves,xFactor,botClearedTestBoards,botAllTestBoards\n";
 
 #-- prepared-sm_csqt-x4-prolific-674356a24a8d722d903654ac-673520973e45f02809e56f00.txt
+
+#-- prepared-allOfColOrd_BRKY-nonnaive-x0-prolific-671b8ae84509b9a624b95e13-613018599782583980fbf406.txt
+
+
 my $xx = "x4";
 for my $line (`grep -H Overall prepared-*-${xx}-*.txt`) {
     $line =~ s/\s+$//;
     $line =~ /^(.*?):\s*(.*)/ or die "Cannot parse line: $line";       
     my ($file,$datum) = ($1,$2);
-    $file =~ /prepared-(.*?)-x(\d)-(.*).txt/ or die "Cannot parse file name: $file";       
+    my $ff = $file;
+    $ff=~ s/n?o?n?naive-//; # for another series
+    $ff =~ /prepared-(.*?)-x(\d)-(.*).txt/ or die "Cannot parse file name: $file";       
     my ($rule,$xFactor,$player) = ($1,$2,$3);
 
 #    $ruleSet{$rule} ++;
