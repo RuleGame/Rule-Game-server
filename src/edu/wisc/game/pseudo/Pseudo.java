@@ -26,6 +26,9 @@ public class Pseudo {
 	/** This is used in pseudo-AI bots, to indicate how fast it pretends to learn */
 	public double halftime = 8.0;
 	public double initErrorRate = 0.75;
+	/** If true (which is the historic default), the bot assist's message include the
+	    "confidence" phrase */
+	public boolean reportConfidence = true;
 	/** Reads the pseudo learning params, for bot assist or bot
 	    player, from the para set.
 	    @param j 0 or 1; used to modify param names, so that we
@@ -35,6 +38,7 @@ public class Pseudo {
 	    String suff = (j==0)? "": "" + j;
 	    halftime = para.getDouble("pseudo_halftime" + suff, true, 8.0);
 	    initErrorRate =para.getDouble("pseudo_init_error_rate" + suff, true, 0.75);
+	    reportConfidence = para.getBoolean("pseudo_report_confidence"+ suff, true);
 	}
 
 	public String toString() {
@@ -44,7 +48,7 @@ public class Pseudo {
     }
 
     /** This bot's parameters */
-    final Params params;
+    public final Params params;
     
     
     /** In a game "human against bot", this is the bot player; in a bot assist

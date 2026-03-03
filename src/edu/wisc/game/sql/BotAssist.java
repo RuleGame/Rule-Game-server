@@ -67,8 +67,10 @@ class BotAssist {
 	} else {
 	    botAssistTranscript.add(proposed);
 	    chat = "I suggest moving piece " + proposed.getPiece().getLabel() + " to bucket " + proposed.getBucketNo();
-	    int pc = (int)(task.confidence * 100);
-	    chat += ". I am "+pc+"% confident in this move";
+	    if (task.params.reportConfidence) {
+		int pc = (int)(task.confidence * 100);
+		chat += ". I am "+pc+"% confident in this move";
+	    }
 	    Logging.info("BotAssist: " + chat);
 	}
 	return chat;
