@@ -31,7 +31,7 @@ Bot Assist
       <p>To enable Bot Assist in a 1PG, or to enable Bot Assist for Player 0 in a 2PG, you need to add to your trial list file a column named <tt>bot_assist</tt>, the value in which should indicate the name of the bot you want to use (typically, a wrapper over some AI algorithm). This should be chosen from the same set of bots that's also available for human-vs-bot games (i.e. adve and coop 2PGs with a bot partner), where the corresponding value is put in the column named <tt>bot</tt>.
 	
 	<p>
-	  The only bot included in GS 8.041 is <tt>pseudo</tt>, which stands for "pseudo learning".
+	  The only bot included in GS 8.055 is <tt>pseudo</tt>, which stands for "pseudo learning".
 
 	<p>In a 2PG, you can also enable Bot Assist for Player 1; to do that put the name of the bot algorithm into the column named <tt>bot_assist1</tt>.
 
@@ -49,12 +49,15 @@ Bot Assist
 
 	  <h3><a name="botAlgo">Bot algo parameters</a></h3>
 
-	  As of ver. 8.041, if <tt>bot_assist=pseudo</tt>, the bot uses two optional columns in the parameter set, controlling the behaviour of the bot:
+	  As of ver. 8.055, if <tt>bot_assist=pseudo</tt>, the bot uses 3 optional columns in the parameter set, controlling the behaviour of the bot:
 
 	  <ul>
 	    <li><tt>pseudo_halftime</tt> (default=8.0): a non-negative real value that specifies how fast the bot pretends to learn, i.e. how fast the simulated error declines. The value <tt>Infinity</tt> is allowed; it is interpreted as positive infinity, i.e. the bot never learning (the error rate never declining from its initial value).
 
 	    <li><tt>pseudo_init_error_rate</tt> (default=0.75): the initial error rate.
+
+	    <li><tt>pseudo_report_confidence</tt> (default=true): this controls whether the bot includes "I am XX% confident..." phrase in its messages. The default is <tt>true</tt>; if you want the bot not to print this clause during a particular series, set the value to <tt>false</tt> in the appropriate parameter set.
+	      
 	  </ul>
 
 (In a 2PG, if <tt>bot_assist1=pseudo</tt>, the bot for Player 1 is controlled by the parameters named <tt>pseudo_halftime1</tt> and <tt>pseudo_init_error_rate1</tt>, whose semantics is analogous to those described above).

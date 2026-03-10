@@ -556,7 +556,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
 	
 
-
+	System.out.println("instructionsFile=" + instructionsFile );
 	System.out.println("Instructions are: {\n" + instructions +  "\n}");
 	if (temperature==null) {
 	    System.out.println("Using the model's default temperature");
@@ -730,8 +730,8 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	    future.addFutureBoards(gg);
 
 	    // zzz
-
-	    System.out.println("Instructions for the final request: {\n" + instructions2 +  "\n}");
+	    System.out.println("instructionsFile2=" + instructionsFile2 );
+	    System.out.println("Instructions or the final request: {\n" + instructions2 +  "\n}");
 	    history.askAboutPreparedEpisodes(future, instructions2);
 	    //}
 	} finally {
