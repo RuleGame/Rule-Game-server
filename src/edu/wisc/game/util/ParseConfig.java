@@ -399,8 +399,8 @@ public final class ParseConfig extends Hashtable<String,Object> {
      */
     public String[] enrichFromArgv(String [] argv) {
 	Vector<String> v = new Vector<>();
-	Pattern p = Pattern.compile("([a-zA-Z_-][a-zA-Z_\\.-]*)=(.+)");
-	Pattern p2 = Pattern.compile("([a-zA-Z_-][a-zA-Z_\\.-]*)=");
+	Pattern p = Pattern.compile("([a-zA-Z_-][a-zA-Z_\\.-0-9]*)=(.+)");
+	Pattern p2 = Pattern.compile("([a-zA-Z_-][a-zA-Z_\\.-0-9]*)=");
 	for(int j=0; j< argv.length; j++) {
 	    String s =argv[j].trim();
 	    Matcher m = p.matcher(s);
