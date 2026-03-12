@@ -194,7 +194,10 @@ class MakeMwSeries {
 		    //-- This was in effect through ver 8.028. After that, we switched to
 		    //-- counting all move attempts, rather than errors
 		    // ser.mStar = Math.min( ser.errcnt, ser.mStar);
-		    ser.mStar = Math.min( attempts1 - attempts2 + 1, ser.mStar);
+		    //-------------
+		    //-- This was used in 8.028 thru 8.055. After that, we switched to zero-based count
+		    // ser.mStar = Math.min( attempts1 - attempts2 + 1, ser.mStar);
+		    ser.mStar = Math.min( attempts1 - attempts2, ser.mStar);
 		}
 		whatILearned.put(eh.ruleSetName, learned);
 	    }
