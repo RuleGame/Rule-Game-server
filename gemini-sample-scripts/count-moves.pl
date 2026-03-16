@@ -36,6 +36,7 @@ foreach my $line (@lines) {
     #--- rule name
     $f =~/^gemini-(.*)-seed./ or die "Cannot parse file name: $f\n";
     my $rule = $1;
+    $rule =~ s/-resume//;  #-- seen in some old run names
 
     #--- test boards
     # Overall, cleared boards: 0/5, good moves: 15/45

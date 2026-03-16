@@ -2,10 +2,16 @@
 
 use strict;
 
-#-------------------------------------------------------------------------------------------------
-# Joins lines from the file produced by count-moves.pl
-#-------------------------------------------------------------------------------------------------
-
+#-------------------------------------------------------------------------------
+# Joins lines from the file produced by count-moves.pl, computing various
+# aggregate values for each rule set.
+#-------------------------------------------------------------------------------
+# cd home/vmenkov/gemini-play
+#
+# /home/vmenkov/w2020/game/gemini-sample-scripts/count-moves.pl --long > all-moves-long.csv
+# /home/vmenkov/w2020/game/gemini-sample-scripts/join-count-moves.pl  all-moves-long.csv > joined.csv
+#-------------------------------------------------------------------------------
+    
 # cat  fc_oc24_combined_v2.csv | perl -pe 's/\b[ADI]+\b/MMM/g'
 # ...
 # runName,algorithm,rule_set,rule_set_conditions,
@@ -15,7 +21,14 @@ use strict;
 # FC_a2c_Transformer_cm_RBKY,a2c_Transformer,cm_RBKY,no predecessors,
 #    0.25,10,0.25,5,426,405,469,"[457, 407, 426, 469, 405]",440,403,584,"[579, 426, 440, 584, 403]",0.2277731092436974,440,422,470,"[458, 440, 426, 470, 422]",
 #    MMM ; MMM ; MMM ; MMM ; MMM,10,"[9527, 9136, 4976, 11010, 10350]",9527.0,https://drive.google.com/file/d/1suVeXNIgino_XvQn-MVVX8AWfoDsPQxL/view?usp=drivesdk
+#-------------------------------------------------------------------------------
 
+use Getopt::Long;
+
+#-- With the --semicolon option, only use semicolons inside fields, so that
+#-- "cut -d , " can be later used to separate fields
+my $semicolon           = undef;
+GetOptions ('semicolon' => \$semicolon);
 
 
 
@@ -81,14 +94,24 @@ foreach my $rule(@rules) {
     } else {
 	$param = "t9-9";
     }
-    
+
+
+# runName algorithm rule_set rule_set_conditions
+# move_logs good_move_length m_star_values M_star alg_parameter
+# good_test_boards all_test_boards accuracy_on_test_boards    
+
+    #-- always semicolon, per Christo
+    my $moveLogs = join(";", map{ ${$_}{"move_logs"}} @tables);
+    #-- either comma per Christo, or semicolon for "cut -d ," convenience
+    my $sep = $semicolon? ";" : ",";
+
     my %out = (	"runName" => "playStateless",
 		"algorithm" => "G3F",
 		"rule_set" => $rule,
 		"rule_set_conditions" => "",
-		"move_logs" => join(";", map{ ${$_}{"move_logs"}} @tables),
+		"move_logs" => $moveLogs,
 		"good_move_length" => $targetStreak,
-		"m_star_values" => "[". join(",", @mm) . "]",
+		"m_star_values" => "[". join($sep, @mm) . "]",
 		"M_star" => &median(\@mm),
 		"alg_parameter" => $param,
 		"good_test_boards" => $good,
