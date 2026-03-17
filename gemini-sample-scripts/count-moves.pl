@@ -73,7 +73,7 @@ foreach my $line (@lines) {
 	    } 
 	} else {
 	    #-- some runs' logs have "f" omitted occidentally
-	    my $sfin = `grep -n "Instructions f?or the final request" $path`;
+	    my $sfin = `egrep -n "Instructions f?or the final request" $path`;
 	    
 	    ($sfin =~ /^\s*(\d+):/ ) or die "Cannot find the final request line for $path\n";
 	    $tailStart = $1;
