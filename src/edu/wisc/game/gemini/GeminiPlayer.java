@@ -51,9 +51,10 @@ public class GeminiPlayer  extends Vector<EpisodeHistory> {
 
     public static final DateFormat sqlDf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     static Date lastRequestTime = null;
-    
+
+    static Date now = null;
     static String now() {
-	return sqlDf.format(new Date());
+	return sqlDf.format(now = new Date());
     }
     static String reqt() {
 	return sqlDf.format(new Date());
@@ -516,6 +517,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
 	
 	System.out.println("At " + now() +", starting playing with Gemini. Game Server ver. "+ Episode.getVersion());
+	Date startDate = now;
 	System.out.println("Gemini model=" + model);
 	//System.out.println("output=" +  ht.getOption("output", null));
 	outputMode = ht.getOptionEnum(OutputMode.class, "output", outputMode);
@@ -731,12 +733,17 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
 	    // zzz
 	    System.out.println("instructionsFile2=" + instructionsFile2 );
-	    System.out.println("Instructions or the final request: {\n" + instructions2 +  "\n}");
+	    System.out.println("Instructions for the final request: {\n" + instructions2 +  "\n}");
 	    history.askAboutPreparedEpisodes(future, instructions2);
 	    //}
 	} finally {
 	    System.out.println(history.costReport());
 	    if (log!=null) log.close();
+
+	    
+	    long msec = new Date().getTime() - startDate.getTime();
+	    System.out.println("The run took " + msec + " msec");
+	    
 	}
     
 	//---------

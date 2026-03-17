@@ -72,7 +72,8 @@ foreach my $line (@lines) {
 		($nepi,$movesReported) = ($1,$2);
 	    } 
 	} else {
-	    my $sfin = `grep -n "Instructions for the final request" $path`;
+	    #-- some runs' logs have "f" omitted occidentally
+	    my $sfin = `grep -n "Instructions f?or the final request" $path`;
 	    
 	    ($sfin =~ /^\s*(\d+):/ ) or die "Cannot find the final request line for $path\n";
 	    $tailStart = $1;
