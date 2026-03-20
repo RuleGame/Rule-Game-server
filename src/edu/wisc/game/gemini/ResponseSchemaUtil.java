@@ -11,7 +11,7 @@ import edu.wisc.game.reflect.*;
 import edu.wisc.game.rest.*;
 import edu.wisc.game.engine.*;
 
-import edu.wisc.game.gemini.GeminiPlayer.MoveLine;
+import edu.wisc.game.gemini.PreparedEpisodesResponse.MoveLine;
 
 /** 2026-02-01: After each "properties": {...}, need to add
     "required": ["inferredRules", "inferredRulesAppliedToOldEpisodes"]
@@ -207,15 +207,13 @@ class ResponseSchemaUtil {
 
     }
 
-    static JsonObjectBuilder mkResponseSchema() {
-	return schemaObject(null,
-			    (new MyJsonObjectBuilder()).
-			    add("inferredRules", schemaString("Please describe here the hidden rules that best explain all already played episodes shown to you")).
-			    add("inferredRulesAppliedToOldEpisodes", mkAppliedMovesOb()).
-			    add("proposedMoves", mkProposedMovesOb()));
-			     
+    static JsonObjectBuilder mkResponseSchema(boolean needOld) {
+	MyJsonObjectBuilder bb = new MyJsonObjectBuilder();
+	bb.add("inferredRules", schemaString("Please describe here the hidden rules that best explain all already played episodes shown to you"));
+	if (needOld) bb.add("inferredRulesAppliedToOldEpisodes", mkAppliedMovesOb());
+	bb.add("proposedMoves", mkProposedMovesOb());
+	return schemaObject(null, bb);
     }
 
-    //   MoveLine[] parseResponse(String line) {    }    
     
 }

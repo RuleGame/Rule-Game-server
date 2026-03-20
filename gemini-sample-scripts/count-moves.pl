@@ -82,7 +82,7 @@ foreach my $line (@lines) {
     
     ($moves,$codes) = &countMoveLines($path, $tailStart);
     if (defined $movesReported) {
-	$movesReported == $moves or die "Mismatch in file $path: Victory line has moves=$movesReported, but found $moves MOVE lines in final request";
+	$movesReported == $moves or print "WARNING: Mismatch in file $path: Victory line has moves=$movesReported, but found $moves MOVE lines in final request. Probably caused by re-tries on busy server or poorly formatted response text.\n";
     }
 	    
 

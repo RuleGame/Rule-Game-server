@@ -20,6 +20,7 @@ import edu.wisc.game.engine.*;
 import edu.wisc.game.saved.*;
 import edu.wisc.game.saved.TranscriptManager.ReadTranscriptData;
 import edu.wisc.game.tools.AnalyzeTranscriptsUtils;
+import edu.wisc.game.gemini.PreparedEpisodesResponse.MoveLine;
 
 public class GeminiPlayer  extends Vector<EpisodeHistory> {
 
@@ -1117,11 +1118,12 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	    int tryCnt = 0;
 	    Matcher m = null;
 	    int[] w = null;
+	    requestCnt ++;
 	    while(true) {
 		String lines[] = doOneRequest(gr);
 		if (lines.length!=1) throw new IllegalArgumentException("Expected 1 candidate, found " + lines.length);
 		String line=lines[0];
-		requestCnt ++;
+		//		requestCnt ++;
 		tryCnt++;
 		System.out.println("Response text={" + line.trim() + "}");
 		MoveLine[] r = parseResponse(line);
@@ -1320,18 +1322,6 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	    return false;
 	}
 	return null;
-    }
-
-    static class MoveLine {
-	final int pieceId, bucketNo;
-	MoveLine(int p, int b) {
-	    pieceId=p;
-	    bucketNo=b;
-	}
-	int [] asPair() {
-	    return new int[] {pieceId, bucketNo};
-	}
-	public String toString() { return "(" + pieceId + ", " + bucketNo+ ")";  }
     }
 
 

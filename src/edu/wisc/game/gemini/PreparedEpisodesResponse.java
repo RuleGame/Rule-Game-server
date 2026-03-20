@@ -11,9 +11,21 @@ import edu.wisc.game.reflect.*;
 import edu.wisc.game.rest.*;
 import edu.wisc.game.engine.*;
 
-import edu.wisc.game.gemini.GeminiPlayer.MoveLine;
-
 public class PreparedEpisodesResponse {
+
+    static class MoveLine {
+	final int pieceId, bucketNo;
+	MoveLine(int p, int b) {
+	    pieceId=p;
+	    bucketNo=b;
+	}
+	int [] asPair() {
+	    return new int[] {pieceId, bucketNo};
+	}
+	public String toString() { return "(" + pieceId + ", " + bucketNo+ ")";  }
+    }
+
+
     String inferredRules;
     public String getInferredRules() { return inferredRules; }
     public void setInferredRules(String _inferredRules) { inferredRules = _inferredRules; }

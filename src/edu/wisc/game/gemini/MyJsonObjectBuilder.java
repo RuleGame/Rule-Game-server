@@ -11,77 +11,77 @@ import jakarta.json.*;
     so that we can create a "required:" element of our JSOB schema.
  */
 class MyJsonObjectBuilder implements JsonObjectBuilder {
-	final private JsonObjectBuilder builder = Json.createObjectBuilder();
-	private Vector<String> names = new Vector<>();
+    final private JsonObjectBuilder builder = Json.createObjectBuilder();
+    private Vector<String> names = new Vector<>();
 	
-	public MyJsonObjectBuilder	add(java.lang.String name, boolean value) {
-	    builder.add(name, value);
-	    names.add(name);
-	    return this;
-	}
+    public MyJsonObjectBuilder   add(java.lang.String name, boolean value) {
+	builder.add(name, value);
+	names.add(name);
+	return this;
+    }
 
-	public MyJsonObjectBuilder	add(java.lang.String name, double value) {
-	    builder.add(name, value);
-	    names.add(name);
-	    return this;
-	}
+    public MyJsonObjectBuilder   add(java.lang.String name, double value) {
+	builder.add(name, value);
+	names.add(name);
+	return this;
+    }
 	
-	public MyJsonObjectBuilder	add(java.lang.String name, int value)  {
-	    builder.add(name, value);
-	    names.add(name);
-	    return this;
-	}
-	public MyJsonObjectBuilder	add(java.lang.String name, java.math.BigDecimal value)  {
-	    builder.add(name, value);
-	    names.add(name);
-	    return this;
-	}
-	public MyJsonObjectBuilder	add(java.lang.String name, java.math.BigInteger value)  {
-	    builder.add(name, value);
-	    names.add(name);
-	    return this;
-	}
-	//Adds a name/JsonNumber pair to the JSON object associated with this object builder.
-	public MyJsonObjectBuilder	add(java.lang.String name, JsonArrayBuilder b)  {
-	  builder.add(name, b);
-	  names.add(name);
-	  return this;
-	}
-	//Adds a name/JsonArray pair to the JSON object associated with this object builder.
-	public MyJsonObjectBuilder	add(java.lang.String name, JsonObjectBuilder b)  {
-	    builder.add(name, b);
-	    names.add(name);
-	    return this;
-	}
-	//Adds a name/JsonObject pair to the JSON object associated with this object builder.
-	public MyJsonObjectBuilder	add(java.lang.String name, JsonValue value)   {
-	    builder.add(name, value);
-	    names.add(name);
-	    return this;
-	}
-	//Adds a name/JsonValue pair to the JSON object associated with this object builder.
-	public MyJsonObjectBuilder	add(java.lang.String name, long value)   {
-	    builder.add(name, value);
-	    names.add(name);
-	    return this;
-	}
-	//Adds a name/JsonNumber pair to the JSON object associated with this object builder.
-	public MyJsonObjectBuilder	add(java.lang.String name, java.lang.String value)   {
-	    builder.add(name, value);
-	    names.add(name);
-	    return this;
-	}
-	//Adds a name/JsonString pair to the JSON object associated with this object builder.
-	public MyJsonObjectBuilder	addNull(java.lang.String name)   {
-	    builder.addNull(name);
-	    names.add(name);
-	    return this;
-	}
-	//Adds a name/JsonValue#NULL pair to the JSON object associated with this object builder where the value is null.
-	public JsonObject	build() {
-	    return builder.build();
-	}
-
+    public MyJsonObjectBuilder   add(java.lang.String name, int value)  {
+	builder.add(name, value);
+	names.add(name);
+	return this;
+    }
+    
+    public MyJsonObjectBuilder  add(java.lang.String name, java.math.BigDecimal value)  {
+	builder.add(name, value);
+	names.add(name);
+	return this;
+    }
+    public MyJsonObjectBuilder  add(java.lang.String name, java.math.BigInteger value)  {
+	builder.add(name, value);
+	names.add(name);
+	return this;
+    }
+    //Adds a name/JsonNumber pair to the JSON object associated with this object builder.
+    public MyJsonObjectBuilder  add(java.lang.String name, JsonArrayBuilder b)  {
+	builder.add(name, b);
+	names.add(name);
+	return this;
+    }
+    //Adds a name/JsonArray pair to the JSON object associated with this object builder.
+    public MyJsonObjectBuilder  add(java.lang.String name, JsonObjectBuilder b)  {
+	builder.add(name, b);
+	names.add(name);
+	return this;
+    }
+    //Adds a name/JsonObject pair to the JSON object associated with this object builder.
+    public MyJsonObjectBuilder  add(java.lang.String name, JsonValue value)   {
+	builder.add(name, value);
+	names.add(name);
+	return this;
+    }
+    //Adds a name/JsonValue pair to the JSON object associated with this object builder.
+    public MyJsonObjectBuilder add(java.lang.String name, long value)   {
+	builder.add(name, value);
+	names.add(name);
+	return this;
+    }
+    //Adds a name/JsonNumber pair to the JSON object associated with this object builder.
+    public MyJsonObjectBuilder add(java.lang.String name, java.lang.String value)   {
+	builder.add(name, value);
+	names.add(name);
+	return this;
+    }
+    //Adds a name/JsonString pair to the JSON object associated with this object builder.
+    public MyJsonObjectBuilder addNull(java.lang.String name)   {
+	builder.addNull(name);
+	names.add(name);
+	return this;
+    }
+    //Adds a name/JsonValue#NULL pair to the JSON object associated with this object builder where the value is null.
+    public JsonObject	build() {
+	return builder.build();
+    }
 
     JsonArrayBuilder listNames() {
     	JsonArrayBuilder ab = Json.createArrayBuilder();
