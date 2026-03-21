@@ -67,8 +67,9 @@ foreach my $line (@lines) {
 
 
 my @outCols = qw( runName algorithm rule_set rule_set_conditions
-		  move_logs good_move_length m_star_values M_star alg_parameter
-		  good_test_boards all_test_boards accuracy_on_test_boards     );
+		  move_logs good_move_length m_star_values M_star M_harmonic
+		  alg_parameter
+		  good_test_boards all_test_boards accuracy_on_test_boards );
 
 my $targetStreak = 10;
 
