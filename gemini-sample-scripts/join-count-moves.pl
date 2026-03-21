@@ -30,7 +30,8 @@ use Getopt::Long;
 my $semicolon           = undef;
 GetOptions ('semicolon' => \$semicolon);
 
-
+my $big           = 100;
+GetOptions ('big=s' => \$big);
 
 my ($inFile) = @ARGV;
 
@@ -46,6 +47,7 @@ my @cols = split(/,/, $header);
 
 #-- maps rule name to a ref to hash table
 my %h = ();
+
 
 # $header = "#path,rule,won,trainEpisodes,trainMoves,testBoards,move_logs";
 my $lineNo = 0;
@@ -81,15 +83,25 @@ foreach my $rule(@rules) {
     my @mm = ();
     my $good=0;
     my $all=0;
+    my $sumInv = 0;
+    my $hasZeroM = 0;
     foreach my $rt (@tables) {
 	my %g = %{$rt};
+	my $won = $g{"won"};
 	my $s = $g{"testBoards"};
 	$s=~ m|(\d+)/(\d+)| or die "Cannot parse ratio $s\n";
 	$good += $1;
 	$all += $2;
-	push @mm, $g{"trainMoves"} - $targetStreak;
+	my $ms = $won? $g{"trainMoves"} - $targetStreak : $big;
+	push @mm, $ms;
+	if ($ms == 0) {
+	    $hasZeroM = 0;
+	} else {
+	    $sumInv += 1.0/$ms;
+	}
     }
-
+    my $harmonic = $hasZeroM? 0: 1.0/$sumInv;
+	
     my $param = "";
     if ($rule =~ /^(t\d+-\d+)-(.*)/) {
 	($param,$rule) = ($1,$2);
@@ -115,6 +127,7 @@ foreach my $rule(@rules) {
 		"good_move_length" => $targetStreak,
 		"m_star_values" => "[". join($sep, @mm) . "]",
 		"M_star" => &median(\@mm),
+		"M_harmonic" => $harmonic,
 		"alg_parameter" => $param,
 		"good_test_boards" => $good,
 		"all_test_boards" => $all,
