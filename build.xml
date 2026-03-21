@@ -145,8 +145,10 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
 <!-- This target tells Ant how to compile the application. -->
 <target name="compile" depends="init"
         description="Compile the source code" >
-  <!-- Compile the java code from ${src} into ${classes}
-	 target="1.8" source="1.8"
+  <!-- Compile the java code from ${src} into ${classes}.
+       Excludes one file that requires Genai libraries.
+       target="1.8" source="1.8"
+
 
   -->
   <javac srcdir="${src}" destdir="${classes}"
@@ -154,6 +156,7 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
 	 debug="on" debuglevel="lines,vars,source"	 
 	 includeantruntime="false"
 	 target="11" source="11"
+	 excludes="edu/wisc/game/gemini/GenaiPlayer.java"
 	 >
     <classpath refid="classpath"/>
     <!-- compilerarg value="-Xlint"/ -->

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ivy-module version="2.0">
+    <info organisation="edu.rutgers.rulegame" module="gemini-app"/>
+    <dependencies>
+        <dependency org="com.google.genai" name="google-genai" rev="1.43.0"/>
+    </dependencies>
+</ivy-module>

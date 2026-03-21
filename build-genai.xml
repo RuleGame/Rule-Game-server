@@ -1,0 +1,191 @@
+<!-- This is the main build file for use with Apache Ant. It tells Ant how to
+    compile our application from the source code, how to build Javadoc documentation,
+    etc. 
+
+    To carry out a particular operation with Ant, you provide the name of the
+    appropriate target. E.g., to compile the code, you type 
+
+      and compile
+
+     Apache Ant is available for most modern operating systems.
+     You can read more about Apache Ant at http://ant.apache.org/manual/index.html
+
+-->
+
+<project name="w2020" default="jar" basedir="."  xmlns:ivy="antlib:org.apache.ivy.ant">
+  
+ <property name="main" location="."/>
+
+ <property name="src" location="src"/>
+ <!-- property name="src.doc" location="src.doc"/ -->
+
+ <property name="classes" location="${main}/classes"/>
+ <property name="lib" location="${main}/lib"/>
+ <property name="build.tmp" location="/tmp"/>
+
+ <property name="our.jar" value="captive.jar"/>
+ <property name="dist.war"       value="w2020.war"/>
+ <property name="dist-dev.war"       value="w2020-dev.war"/>
+
+
+<!-- where to look for OpenJPA -->
+<!-- property name="openjpa"  location="/opt/apache-openjpa-3.1.0"/ -->
+<property name="openjpa"  location="/opt/apache-openjpa"/>
+
+<!-- property name="javamail.lib"  location="../javax-mail-1.6.2"/ -->
+
+<!-- =============== Ivy stuff  ====================== -->
+<!-- Directory for third-party JAR files needed for Genai, as selected
+     and pulled by Ivy -->
+ <property name="libGenai.dir" value="../genai-lib" />
+    <!-- property name="build.dir" value="bin" />
+    <property name="src.dir" value="src" / -->
+
+    <target name="bootstrap-ivy">
+        <mkdir dir="${user.home}/.ant/lib"/>
+        <get src="https://repo1.maven.org/maven2/org/apache/ivy/ivy/2.5.2/ivy-2.5.2.jar" 
+             dest="${user.home}/.ant/lib/ivy.jar" usetimestamp="true"/>
+    </target>
+
+    <target name="resolve" depends="bootstrap-ivy">
+	<ivy:retrieve pattern="${libGenai.dir}/[artifact]-[revision]-[type].[ext]" />  
+    </target>
+
+    <!-- target name="compile" depends="resolve">
+        <mkdir dir="${build.dir}"/>
+        <javac srcdir="${src.dir}" destdir="${build.dir}" includeantruntime="false">
+            <classpath>
+                <fileset dir="${lib.dir}" includes="*.jar"/>
+            </classpath>
+        </javac>
+    </target -->
+
+    <!-- target name="clean">
+        <delete dir="${build.dir}"/>
+        <delete dir="${lib.dir}"/>
+    </target -->
+
+<!-- =============== End ivy stuff  ====================== -->
+ 
+<path id="classpath"
+       description="The classpath to use for compiling this app">
+  <fileset dir="${libGenai}"> <!-- downloaded by Ivy -->
+    <include name="*.jar"/>
+  </fileset>
+
+     <!-- Obtained from https://mvnrepository.com/artifact/org.glassfish.jersey.bundles -->
+   <fileset dir="/opt/tomcat/lib">
+     <include name="jsp-api.jar"/>
+     <include name="websocket-api.jar"/>
+     <include name="websocket-client-api.jar"/>
+   </fileset>
+   <!-- The JAR here is needed for the websocket code. Maybe need to change
+	path for other hosts -->
+   <!-- fileset dir="/usr/local/opt/tomcat/libexec/bin">
+     <include name="tomcat-juli.jar"/>
+   </fileset -->     
+   <fileset dir="${main}/../jaxrs-ri/api">
+     <include name="*.jar"/>
+   </fileset>
+   <fileset dir="${main}/../jaxrs-ri/ext">
+     <include name="*.jar"/>
+   </fileset>
+   <fileset dir="${main}/../jaxrs-ri/lib">
+     <include name="*.jar"/>
+   </fileset>
+   <fileset dir="${main}/../jaxb-ri/mod">
+     <include name="*.jar"/>
+   </fileset>
+   <!-- fileset dir="${main}/../commons-math3-3.6.1" -->
+   <fileset dir="${main}/../commons-math3">
+     <include name="*.jar"/>
+   </fileset>
+   <fileset dir="${main}/../other-lib">
+     <include name="*.jar"/>
+   </fileset>
+  <fileset dir="${openjpa}">
+     <include name="**/*.jar"/>
+   </fileset>
+ </path>
+
+
+
+<!-- An auxiliary target; you aren't likely to use it directly.  It just creates necessary directories -->
+<target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${lib}"/>
+    <mkdir dir="${classes}"/>
+    <mkdir dir=""/>
+</target>
+
+
+<target name="clean"
+        description="Clean up compiled files and generated database files">
+
+  <delete dir="${classes}"/>
+	
+  <delete file="${lib}/${our.jar}"/>
+</target>
+
+
+<!-- This target tells Ant how to compile the application. -->
+<target name="compile" depends="init,resolve"
+        description="Compile the source code" >
+  <javac srcdir="${src}" destdir="${classes}"
+	 includes="edu/**"  optimize="on"
+	 debug="on" debuglevel="lines,vars,source"	 
+	 includeantruntime="false"
+	 target="11" source="11"
+	 >
+    <classpath refid="classpath"/>
+
+  </javac>
+</target>
+
+<target name="fast-compile" depends="init"
+        description="Compile the source code, assuming that resolve has been done" >
+  <javac srcdir="${src}" destdir="${classes}"
+	 includes="edu/**"  optimize="on"
+	 debug="on" debuglevel="lines,vars,source"	 
+	 includeantruntime="false"
+	 target="11" source="11"
+	 >
+    <classpath refid="classpath"/>
+
+  </javac>
+</target>
+
+<target name="genai-jar" depends="fast-compile"
+        description="Builds a Jar file that will include all  class files. This version uses non-enhanced class files, to run a captive server without persistence; thus no JPA needed.">
+  <echo message="lib=${lib}, our=${our.jar}. Preparing jar file ${lib}/${our.jar}, from ${classes}"/>
+  <!-- jar destfile="${lib}/genai-harness.jar"   basedir="${classes}" -->
+  <jar destfile="${lib}/${our.jar}"   basedir="${classes}">
+    <manifest>
+      <attribute name="Main-Class" value="edu.wisc.game.genai.GeminiConversation"/>   
+    </manifest>
+ </jar>
+</target>
+
+
+<target name="javadoc" depends="init,compile">
+   <javadoc sourcepath="src" packagenames="edu.*"
+	   classpathref="classpath"
+	   destdir="web/api"
+           use="true"
+	   link="https://docs.oracle.com/en/java/javase/11/docs/api/"
+	   windowtitle="Rule Game web API documentation" 
+	   additionalparam="-Xdoclint:none">
+    <header>
+        <![CDATA[<em>The Rule Game (a.k.a. the Game of Hidden Rules)</em>]]>
+    </header>   
+    <footer>
+      <![CDATA[<p>Software Copyright University Wisconsin-Madison, under <a href="https://opensource.org/licenses/Apache-2.0">Apache License, Version 2.0</a></p>]]>     
+    </footer>
+  </javadoc>
+</target>
+
+</project>
+
+
