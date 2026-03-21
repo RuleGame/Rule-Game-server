@@ -48,10 +48,12 @@ my @cols = split(/,/, $header);
 my %h = ();
 
 # $header = "#path,rule,won,trainEpisodes,trainMoves,testBoards,move_logs";
+my $lineNo = 0;
 foreach my $line (@lines) {
+    $lineNo++;
     $line =~ s/\s+$//;
     my @q = split(/,/, $line);
-    scalar(@q) == scalar(@cols) or die "Column count mismatch: $line\n";
+    scalar(@q) == scalar(@cols) or die "Column count mismatch in line $lineNo: $line\n";
     my %g = ();    
     foreach my $j (0..$#cols) {
 	$g{ $cols[$j] } = $q[$j];
