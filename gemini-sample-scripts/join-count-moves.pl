@@ -101,7 +101,7 @@ foreach my $rule(@rules) {
 	    $sumInv += 1.0/$ms;
 	}
     }
-    my $harmonic = $hasZeroM? 0: 1.0/$sumInv;
+    my $harmonic = $hasZeroM? 0: scalar(@tables)/$sumInv;
 	
     my $param = "";
     if ($rule =~ /^(t\d+-\d+)-(.*)/) {
