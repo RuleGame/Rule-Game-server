@@ -30,7 +30,7 @@ use Getopt::Long;
 my $semicolon           = undef;
 GetOptions ('semicolon' => \$semicolon);
 
-my $big           = 100;
+my $big           = 1000;
 GetOptions ('big=s' => \$big);
 
 my ($inFile) = @ARGV;

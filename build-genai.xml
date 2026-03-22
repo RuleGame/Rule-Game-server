@@ -69,7 +69,7 @@
  
 <path id="classpath"
        description="The classpath to use for compiling this app">
-  <fileset dir="${libGenai}"> <!-- downloaded by Ivy -->
+  <fileset dir="${libGenai.dir}"> <!-- downloaded by Ivy -->
     <include name="*.jar"/>
   </fileset>
 
