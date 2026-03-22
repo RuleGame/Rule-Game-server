@@ -101,7 +101,8 @@ public class GenaiPlayer  extends BasePlayer {
     boolean isFirstResponse = true;
     
     /** Sends a "YOUR MOVE?" request to the Gemini bot, and extracts the main (text) part
-	of the response from the received JSON structure. 
+	of the response from the received JSON structure.
+	zzz: need response code from previous move
     */
     private String[] doOneRequest(Chat chat) throws MalformedURLException, IOException, ProtocolException, ClassCastException
     {
@@ -112,8 +113,31 @@ public class GenaiPlayer  extends BasePlayer {
 	EpisodeHistory ehi = get(j);
 	Vector<Pick> moves = ehi.epi.getTranscript();
 	if (moves.size()==0) {
+
+	    if (j>0) {
+		// acknowledge the successful completion of the previous
+		// episode
+		v.add("ACCEPT");
+		v.add("BOARD CLEARED!");
+	    }
+	    
 	    v.add("NEW EPISODE");
 	    v.add(ehi.initialBoardAsString());
+	} else {
+	    Move move = (Move)moves.lastElement();
+	    /*
+"MOVE id bucketId response",
+where "id" is the ID of the object that you attempted to move, "bucketId" is the ID of the bucket into which you wanted to place it, and "response" is whatever response I have given to that move. The response is one word, which can be one of the following: ACCEPT, NOT_MOVABLE, DENY, INVALID.
+	    */
+	    int code = move.getCode();
+	    
+	    //	    String s = "MOVE " + move.getPieceId() +" "+ move.getBucketNo()+" "+
+	    //		CODE.toBasicName(code);
+	    v.add(CODE.toBasicName(code));
+	    
+	  
+
+		//--
 	}
 	v.add("YOUR MOVE?");
 	String text = Util.joinNonBlank("\n", v);
@@ -548,12 +572,8 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 
         EpisodeHistory ehi = lastElement();
 	Episode epi = ehi.epi;
-	
-	while( !epi.isCompleted()){
-	    //	    GeminiRequest gr = makeRequest();
 
-	    
-	    //	    System.exit(0); //zzz
+	while( !epi.isCompleted()){
 	    int tryCnt = 0;
 	    Matcher m = null;
 	    int[] w = null;
@@ -585,7 +605,8 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 		waitABit(wait);
 		*/	       
 	    }
-	
+
+	    // zzzz
 	    Boolean b = digestMove(w);
 	    if (b!=null) return b;
 	    
@@ -612,6 +633,14 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
             .build();
 
 	Vector<String> v = new Vector<>();
+
+	// acknowledge the successful completion of the previous
+	// episode
+	v.add("ACCEPT");
+	v.add("BOARD CLEARED!");
+
+	// now, ask about prepared episodes
+	
 	v.add("EXPLAIN");
 	v.add("Finally, based on your idea of the hidden rules, please propose, for each of the following " + future.size() +  " future episodes, a sequence of move attempts that are most likely to clear the board in that episode");
 
