@@ -160,18 +160,26 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 	Optional<List<Candidate>> candidates = response.candidates();
 	Candidate candidate = candidates.get().get(0);
 
-	String answer[] = {null};
+	Vector<String> answer = new Vector<>();
 	for (Part part : candidate.content().get().parts().get()) {
 	    if (part.thought().isPresent()) {
 		System.out.println("[THOUGHTS]: " + part.text());
 	    } else if (part.text() != null) {
 		//System.out.println("[ANSWER]: " + part.text());
-		if (answer[0]!=null) throw new IllegalArgumentException("Multiple text parts found in response");
-		answer[0] = part.text().get();
+		//if (answer[0]!=null) throw new IllegalArgumentException("Multiple text parts found in response");
+		answer.add( part.text().get());
 	    }
 	}
+
+	if (answer.size()==0)  throw new IllegalArgumentException("No text parts found in response");
+	else if (answer.size()>1) {
+	    String msg = "Warning: multiple (" + answer.size()+") text parts found in response";
+	    System.out.println(msg);
+	    System.out.println(Util.joinNonBlank(">>\n<<", answer));
+	}
+				  
 	
-	return answer;
+	return answer.toArray(new String[0]);
     }
 
     /** xxx
@@ -579,8 +587,13 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	    int[] w = null;
 	    while(true) {
 		String lines[] = doOneRequest(chat);
+		// zzz
+		/*
 		if (lines.length!=1) throw new IllegalArgumentException("Expected 1 candidate, found " + lines.length);
 		String line=lines[0];
+		*/
+		String line= Util.joinNonBlank("\n", lines);
+					      
 		requestCnt ++;
 		tryCnt++;
 		System.out.println("Response text={" + line.trim() + "}");
