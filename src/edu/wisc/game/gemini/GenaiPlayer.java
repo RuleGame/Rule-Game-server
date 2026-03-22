@@ -347,6 +347,8 @@ public class GenaiPlayer  extends BasePlayer {
 
 
         // 1. Initialize the Client (Instead of having GEMINI_API_KEY is in your environment, we get it from the command line)
+	readApiKey();
+	
         Client client = Client.builder()
             .apiKey(gemini_api_key)
             .build();
