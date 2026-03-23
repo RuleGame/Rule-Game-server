@@ -67,17 +67,19 @@ class ResponseSchemaUtil {
     }
     */
 
+
+
     
     static JsonObjectBuilder schemaInteger(String desc) {
 	JsonObjectBuilder ob = Json.createObjectBuilder().
-	    add("type", "INTEGER").
+	    add("type", INTEGER).
 	    add( "description", desc);
 	return ob;
     }
 
     static JsonObjectBuilder schemaObject(String desc, MyJsonObjectBuilder prop) {
 	JsonObjectBuilder ob = Json.createObjectBuilder().
-	    add("type", "OBJECT");
+	    add("type", OBJECT);
 	if (desc!=null) ob.add("description", desc);
 	ob.add("properties", prop);
 	// zzz
@@ -88,7 +90,7 @@ class ResponseSchemaUtil {
 	
     static JsonObjectBuilder schemaArray(String desc, JsonObjectBuilder items) {
 	JsonObjectBuilder ob = Json.createObjectBuilder().
-	    add("type", "ARRAY").
+	    add("type", ARRAY).
 	    add("description", desc).
 	    add("items", items);
 	return ob;
@@ -103,7 +105,7 @@ class ResponseSchemaUtil {
 
     static JsonObjectBuilder schemaString(String desc) {	
 	return Json.createObjectBuilder().
-	    add("type", "string").
+	    add("type", STRING).
 	    add("description", desc);
     }
 
@@ -207,7 +209,17 @@ class ResponseSchemaUtil {
 
     }
 
-    static JsonObjectBuilder mkResponseSchema(boolean needOld) {
+    static String INTEGER = "INTEGER", STRING = "STRING", OBJECT="OBJECT", ARRAY = "ARRAY";
+    
+    static JsonObjectBuilder mkResponseSchema(boolean needOld, boolean forGenai) {
+
+	if (forGenai) {
+	    INTEGER = "integer";
+	    STRING = "string";
+	    OBJECT="object";
+	    ARRAY="array";
+	}
+	
 	MyJsonObjectBuilder bb = new MyJsonObjectBuilder();
 	bb.add("inferredRules", schemaString("Please describe here the hidden rules that best explain all already played episodes shown to you"));
 	if (needOld) bb.add("inferredRulesAppliedToOldEpisodes", mkAppliedMovesOb());

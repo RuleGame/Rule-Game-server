@@ -638,13 +638,25 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
     */
     void askAboutPreparedEpisodes(Chat chat, GenaiPlayer future) throws IOException,  ReflectiveOperationException {
 
-	String schemaString = ResponseSchemaUtil.mkResponseSchema(false).build().toString();
+	/*
+	String schemaString = ResponseSchemaUtil.mkResponseSchema(false, true).build().toString();
+
+	System.out.println("Using the following response schema for the final request:<<\n" + schemaString + "\n>>");
+	
 	// Configure the specific turn for JSON
 	GenerateContentConfig jsonConfig = GenerateContentConfig.builder()
 	    .responseMimeType("application/json")
             .responseJsonSchema(schemaString)
             .build();
+	*/
+	Schema rootSchema = GenaiResponseSchema.makeRootSchema();
 
+	GenerateContentConfig jsonConfig = GenerateContentConfig.builder()
+	    .responseMimeType("application/json")
+	    .responseSchema(rootSchema)
+	    .build();
+
+	
 	Vector<String> v = new Vector<>();
 
 	// acknowledge the successful completion of the previous

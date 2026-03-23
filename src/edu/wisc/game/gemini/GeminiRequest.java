@@ -77,7 +77,7 @@ public class GeminiRequest {
 	    to add some extra fields to the builder */
 	public void augmentBuilder(JsonObjectBuilder ob){
 	    if (needResponseSchema) {
-		ob.add( "responseSchema", ResponseSchemaUtil.mkResponseSchema(true));
+		ob.add( "responseSchema", ResponseSchemaUtil.mkResponseSchema(true, false));
 	    }
 	}
 	
