@@ -30,6 +30,8 @@ use Getopt::Long;
 my $semicolon           = undef;
 GetOptions ('semicolon' => \$semicolon);
 
+#-- if true, interpret $big as +Infinity
+my $doInf = 1;
 my $big           = 1000;
 GetOptions ('big=s' => \$big);
 
@@ -97,6 +99,7 @@ foreach my $rule(@rules) {
 	push @mm, $ms;
 	if ($ms == 0) {
 	    $hasZeroM = 0;
+	} elsif ($ms == $big && $doInf) {  #-- 1/Inf=0
 	} else {
 	    $sumInv += 1.0/$ms;
 	}
@@ -120,14 +123,16 @@ foreach my $rule(@rules) {
     #-- either comma per Christo, or semicolon for "cut -d ," convenience
     my $sep = $semicolon? ";" : ",";
 
+    my @imm = map &orInf($_), @mm;
+    
     my %out = (	"runName" => "playStateless",
 		"algorithm" => "G3F",
 		"rule_set" => $rule,
 		"rule_set_conditions" => "",
 		"move_logs" => $moveLogs,
 		"good_move_length" => $targetStreak,
-		"m_star_values" => "[". join($sep, @mm) . "]",
-		"M_star" => &median(\@mm),
+		"m_star_values" => "[". join($sep, @imm) . "]",
+		"M_star" => &orInf( &median(\@mm)),
 		"M_harmonic" => $harmonic,
 		"alg_parameter" => $param,
 		"good_test_boards" => $good,
@@ -147,3 +152,29 @@ sub median($) {
     my $n = scalar @a;
     return ($n % 2 ==0) ? 0.5*( $a[$n/2-1] + $a[$n/2]) : $a[int($n/2)];
 }
+
+sub orInf($) {
+    my ($x) = @_;
+    ($doInf && $x == $big) ? "Infinity" : $x;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    

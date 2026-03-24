@@ -32,6 +32,7 @@ foreach my $line (@lines) {
     $line =~ m|(.*/(gemini.*txt)):| or next;
     my ($path, $f) = ($1,$2);
     if ($path =~ /error/) { next; }
+    if ($path =~ /extend/) { next; }
 
     #--- rule name
     $f =~/^gemini-(.*)-seed./ or die "Cannot parse file name: $f\n";
