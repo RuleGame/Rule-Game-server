@@ -687,7 +687,8 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	the one still in progress */
     GeminiRequest makeRequest() throws IOException {
 	GeminiRequest gr = new GeminiRequest();
-	gr.setNeedResponseSchema(true); // ask for structured response
+	//gr.setNeedResponseSchema(true); // ask for structured response
+	gr.setResponseSchemaOb(ResponseSchemaUtil.mkMoveResponseSchema());
 	gr.addInstruction(instructions);
 	gr.addTemperature(temperature);
 	gr.addMaxOutputTokens(maxToken);
@@ -722,8 +723,8 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
  */
     private GeminiRequest makeRequestPrepared(GeminiPlayer future, String instruc) throws IOException {
 	GeminiRequest gr = new GeminiRequest();
-	gr.setNeedResponseSchema(true); // ask for structured response
-	
+	//gr.setNeedResponseSchema(true); // ask for structured response
+	gr.setResponseSchemaOb(ResponseSchemaUtil.mkResponseSchema(true));
 	gr.addInstruction(instruc);
 	gr.addTemperature(temperature);
 	gr.addMaxOutputTokens(maxToken);

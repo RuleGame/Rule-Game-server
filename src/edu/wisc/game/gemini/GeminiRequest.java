@@ -34,12 +34,19 @@ public class GeminiRequest {
 	FIXME: Should also explain what structure we're looking for.
 	Prepared-episodes mode is different from play mode.
     */
-    void setNeedResponseSchema(boolean _needResponseSchema) {
+    //    void setNeedResponseSchema(boolean _needResponseSchema) {
+    //	if (generationConfig == null) generationConfig = new ConfigElement();
+    //	generationConfig.needResponseSchema = _needResponseSchema;
+    //    }
+
+    /** Call this if you want this request to receive a structured response.
+	@param _responseSchemaOb what structure we're looking for. Prepared-episodes mode is different from play mode.
+    */
+    void setResponseSchemaOb(JsonObjectBuilder _responseSchemaOb) {
 	if (generationConfig == null) generationConfig = new ConfigElement();
-	generationConfig.needResponseSchema = _needResponseSchema;
+	generationConfig.responseSchemaOb = _responseSchemaOb;
     }
-
-
+	
 
     public static class InstructionElement {
 	Vector<ElementPart> parts = new Vector<>();
@@ -63,21 +70,27 @@ public class GeminiRequest {
 	/** This flag should be set if we want this request to ask the
 	    Gemini bot for a structured response (rather than plain text)
 	*/
-	boolean needResponseSchema = false;
-
+	//boolean needResponseSchema = false;
+	/** This field should be set if we want this request to ask
+	    the Gemini bot for a structured (JSON) response.  A null
+	    value in this fields means that a plain-text response is
+	    expected.
+	*/
+	JsonObjectBuilder responseSchemaOb = null;
+	
 	/** Keep this var: reflect needs it! Not used otherwise. */
 	private String responseMimeType = "application/json";
 	/** Do we want JSON or plain text back? */
 	public String getResponseMimeType() {
-	    return needResponseSchema?"application/json": "text/plain";
+	    return responseSchemaOb!=null?"application/json": "text/plain";
 	}
   
 	/** This method is called by JsonReflect after the standard conversion
 	    to a builder has been carried out, in order to allow this object
 	    to add some extra fields to the builder */
 	public void augmentBuilder(JsonObjectBuilder ob){
-	    if (needResponseSchema) {
-		ob.add( "responseSchema", ResponseSchemaUtil.mkResponseSchema(true));
+	    if (responseSchemaOb!=null) {
+		ob.add( "responseSchema", responseSchemaOb);
 	    }
 	}
 	
