@@ -938,7 +938,8 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 		    throw new IllegalArgumentException("Unexpectedly found multiple moves in the response");
 		}
 		*/
-		MoveLine mm = PreparedEpisodesResponse.parseMoveResponse(lines[0]); // throws 	 ReflectiveOperationException 
+		MoveLine mm = PreparedEpisodesResponse.parseMoveResponse(lines[0]); // throws 	 ReflectiveOperationException
+		w = mm.asPair();
 		break;
 
 		/*
