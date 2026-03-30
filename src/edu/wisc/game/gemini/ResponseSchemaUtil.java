@@ -122,6 +122,8 @@ class ResponseSchemaUtil {
 	    add("enum", ab);
     }
 
+    static final String INTEGER = "INTEGER", STRING = "STRING", OBJECT="OBJECT", ARRAY = "ARRAY";
+    
     static final JsonObjectBuilder idOb = schemaInteger("The object ID of the object you want to move");
     static final JsonObjectBuilder bidOb = schemaInteger("The ID of the bucket into which you want to move the object");                    
 	
@@ -213,7 +215,6 @@ class ResponseSchemaUtil {
 
     }
 
-    static String INTEGER = "INTEGER", STRING = "STRING", OBJECT="OBJECT", ARRAY = "ARRAY";
     
     static JsonObjectBuilder mkResponseSchema(boolean needOld) {
 
