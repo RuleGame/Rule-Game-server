@@ -77,6 +77,9 @@ class ResponseSchemaUtil {
 	return ob;
     }
 
+    /** Converts a MyJsonObjectBuilder into a JsonObjectBuilder, which
+	also has the "required" field set, as required by Gemini.
+     */
     static JsonObjectBuilder schemaObject(String desc, MyJsonObjectBuilder prop) {
 	JsonObjectBuilder ob = Json.createObjectBuilder().
 	    add("type", OBJECT);
@@ -119,6 +122,9 @@ class ResponseSchemaUtil {
 	    add("enum", ab);
     }
 
+    static final JsonObjectBuilder idOb = schemaInteger("The object ID of the object you want to move");
+    static final JsonObjectBuilder bidOb = schemaInteger("The ID of the bucket into which you want to move the object");                    
+	
     
     /*
 	"ProposedMoves": {
@@ -134,14 +140,7 @@ class ResponseSchemaUtil {
     */
     static JsonObjectBuilder mkProposedMovesOb() {
 	
-	JsonObjectBuilder idOb = schemaInteger("The object ID of the object you want to move");
-
-	JsonObjectBuilder bidOb = schemaInteger("The ID of the bucket into which you want to move the object");                    
-	
-	JsonObjectBuilder itemsOb = schemaObject("Here you should describe one proposed move",
-						 (new MyJsonObjectBuilder()).
-						 add("id", idOb).
-						 add("bucketId", bidOb));
+	JsonObjectBuilder itemsOb = schemaObject("Here you should describe one proposed move", mkMoveOb());
 
 	JsonObjectBuilder oneEpisodeOb = schemaArray("Here you should put your proposed moves for one future episode, which should clear the episode's board without any errors. Each element of the array corresponds to one move attempt. The number of moves in this array should be equal to the number of objects on the episode's board",
 			   itemsOb);
@@ -151,6 +150,11 @@ class ResponseSchemaUtil {
 	    	
     }
 
+    static MyJsonObjectBuilder mkMoveOb() {
+	return (new MyJsonObjectBuilder()).
+	    add("id", idOb).
+	    add("bucketId", bidOb);
+    }
 
     /**
 		"InferredRulesAppliedToOldEpisodes": {
@@ -211,19 +215,26 @@ class ResponseSchemaUtil {
 
     static String INTEGER = "INTEGER", STRING = "STRING", OBJECT="OBJECT", ARRAY = "ARRAY";
     
-    static JsonObjectBuilder mkResponseSchema(boolean needOld, boolean forGenai) {
+    static JsonObjectBuilder mkResponseSchema(boolean needOld) {
 
-	if (forGenai) {
+	/*	if (forGenai) {
 	    INTEGER = "integer";
 	    STRING = "string";
 	    OBJECT="object";
 	    ARRAY="array";
 	}
+	*/
 	
 	MyJsonObjectBuilder bb = new MyJsonObjectBuilder();
 	bb.add("inferredRules", schemaString("Please describe here the hidden rules that best explain all already played episodes shown to you"));
 	if (needOld) bb.add("inferredRulesAppliedToOldEpisodes", mkAppliedMovesOb());
 	bb.add("proposedMoves", mkProposedMovesOb());
+	return schemaObject(null, bb);
+    }
+
+    static JsonObjectBuilder mkMoveResponseSchema() {
+	
+	MyJsonObjectBuilder bb = mkMoveOb();
 	return schemaObject(null, bb);
     }
 

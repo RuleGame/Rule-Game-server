@@ -7,7 +7,6 @@ import java.net.*;
 import java.text.*;
 import jakarta.json.*;
 
-
 import edu.wisc.game.util.*;
 import edu.wisc.game.reflect.*;
 import edu.wisc.game.sql.*;
@@ -548,6 +547,24 @@ class BasePlayer  extends Vector<EpisodeHistory> {
 	return v;
     }
 
+    /** Out model is gemini-2.0-flash, which allows 15 RPM in the free tier.
+    https://ai.google.dev/gemini-api/docs/rate-limits
+    */
+    protected void waitABit(long msec) {
+    
+	try {
+            Thread.sleep(msec); 
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected static int computeWait(int retryCnt) {
+	int waitSec = 120;
+	for(int i=0; i<retryCnt; i++) waitSec*=2;
+	return waitSec;
+    }
+    
 
     
 }

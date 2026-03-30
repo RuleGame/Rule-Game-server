@@ -3,21 +3,12 @@ package edu.wisc.game.gemini;
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
-import java.net.*;
-import java.text.*;
 import jakarta.json.*;
-
 
 import com.google.genai.Client;
 import com.google.genai.Chat;
 import com.google.genai.types.*;
-/*
-  import com.google.genai.types.GenerateContentConfig;
-import com.google.genai.types.GenerateContentResponse;
-import com.google.genai.types.Candidate;
-import com.google.genai.types.Part;
-import com.google.genai.types.ThinkingConfig;
-*/
+
 import edu.wisc.game.util.*;
 import edu.wisc.game.reflect.*;
 import edu.wisc.game.sql.*;
@@ -104,7 +95,7 @@ public class GenaiPlayer  extends BasePlayer {
 	of the response from the received JSON structure.
 	zzz: need response code from previous move
     */
-    private String[] doOneRequest(Chat chat) throws MalformedURLException, IOException, ProtocolException, ClassCastException
+    private String[] doOneRequest(Chat chat) //throws MalformedURLException, IOException, ProtocolException, ClassCastException
     {
 
 	Vector<String> v = new Vector<>();
@@ -142,7 +133,27 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 	v.add("YOUR MOVE?");
 	String text = Util.joinNonBlank("\n", v);
 	System.out.println("At " + new Date() + ", sending text: " + text);
-	GenerateContentResponse response = chat.sendMessage(text);
+	// zzz:
+
+
+	GenerateContentResponse response = null;
+	int retryCnt = 0;
+	while(response == null && retryCnt++ < 4) {
+	    try {
+		response = chat.sendMessage(text);
+	    } catch( com.google.genai.errors.ServerException ex) {
+		if (ex.code()==14) { // code UNAVAILABLE, corresponds to HTTP response code 503
+		    //	Exception in thread "main" com.google.genai.errors.ServerException: 503 . This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.
+		    // at com.google.genai.errors.ApiException.throwFromResponse(ApiException.java:96)
+		    int waitSec = computeWait( retryCnt);
+		    System.out.println("Waiting for " + waitSec + " seconds to retry, as a wild guess");
+		    waitABit(waitSec * 1000);
+
+		} else {		
+		    throw ex;
+		}
+	    }
+	}
 
 	System.out.println("At " + new Date() + ", received response");
 	Optional<FinishReason> oreason = response.candidates().get().get(0).finishReason();
@@ -392,18 +403,33 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
                     .build()
             ))
             .build();
-        // 2. Configure Thinking (Required for Gemini 3 models to show reasoning)
+
+	Schema moveSchema = GenaiResponseSchema.makeMoveSchema();
+
+	//	GenerateContentConfig jsonConfig = GenerateContentConfig.builder()
+	//	    .responseMimeType("application/json")
+	//	    .responseSchema(moveSchema)
+	//	    .build();
+
+
+	// 2. Configure Thinking (Required for Gemini 3 models to show reasoning)
         GenerateContentConfig config = GenerateContentConfig.builder()
             .thinkingConfig(ThinkingConfig.builder()
                 .includeThoughts(true) // Allows us to see the "thought" parts
                 .build())
 	    .systemInstruction(systemInstruction)
+	    .responseMimeType("application/json")
+	    .responseSchema(moveSchema)
             .build();
 
+
+	
         // 3. Start a stateful Chat session
         // The SDK's Chat object automatically passes thoughtSignatures back and forth
         Chat chat = client.chats.create(model, config);
 
+
+	
            
 	try {
 	    
@@ -463,53 +489,6 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 	System.exit(0);
     }
 
-
-    /** Adds a few future boards to this GenaiPlayer object */
-    /* xxx
-    void addFutureBoards(GameGenerator gg) {
-
-	for(int j=0; j<future_episodes; j++) {
-	    
-	    Game game = gg.nextGame();
-	    Episode epi = new Episode(game, outputMode,
-				      new InputStreamReader(System.in),
-				      new PrintWriter(System.out, true));
-	    epi.setShowAllMovables(false);
-
-	    EpisodeHistory his = new EpisodeHistory(epi);
-	    add(his);
-	}
-    }
-
-
-    private String costReport() {
-	Vector<String> v = new Vector<>();
-	v.add("In this session of "+totalAttemptCnt+" move attempts, there were "+
-	      failedRepeatsCnt + " redundant repeated bad moves in streaks; the longest streak included " + failedRepeatsLongestStreak + " redundant repeats.");
-	    
-
-	v.add("Recorded costs over this session:" +
-	      " sum(promptTokenCount)="+ sumPromptTokenCount +
-	      " sum(CandidatesTokenCount)="+sumCandidatesTokenCount +
-	      " sum(ThoughtsTokenCount)="+sumThoughtsTokenCount +
-	      " sum(TotalTokenCount)="+sumTotalTokenCount);
-
-	// https://ai.google.dev/gemini-api/docs/pricing
-	// $0.30 per million input tokens,
-	// $2.50 per mln output and thinking tokens
-
-	// Feb 2026,  G3F: 0.50 input, 3.00 output
-	
-	int in = sumPromptTokenCount, out = sumTotalTokenCount - in;
-	    
-	//double cost =  (0.30 * in + 2.50 * out)*1e-6;
-	//v.add("G2.5F cost estimate: $" + dollarFmt.format(cost));
-	double cost =  (0.50 * in + 3.00 * out)*1e-6;
-	v.add("G3F cost estimate: $" + dollarFmt.format(cost));
-
-	return String.join("\n", v);
-    }
-    */
     
     GenaiPlayer() { super(); }
 
@@ -519,64 +498,7 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 	every request into the log, to save space */
     static boolean logsBrief = true;
     
-    /** Describes the boards for the bot to solve. Used in
-	prepared-episodes runs
-     */
-    /* xxx
-    private Vector<String> describeFutureEpisodes() {
-	Vector<String> v = new Vector<>();
-	
-	if (size()==0) throw new IllegalArgumentException("No episode exists yet. What to ask?");
-
-	for(int j=0; j<size(); j++) {
-	    v.add( "The initial board for future episode No. " + (j+1)+ ":");
-	    EpisodeHistory ehi = get(j);
-	    v.add( ehi.initialBoardAsString());
-	}
-	return v;
-    }
-
-
-    final Pattern movePat = Pattern.compile("^MOVE\\s+([0-9]+)\\s+([0-9]+)",   Pattern.MULTILINE);
-    private int lastStretch;
-    private double lastR;
-    */
-    /** The total number of Gemini requests made so far in all episodes played in this run.
-	Normally (if no retries are ever needed) this is equals to the number of moves
-	in all episodes so far.	
-    */
-    //int requestCnt = 0;
-
-    /** Total number of attempted moves the bot has made in all episodes */
-    //int totalAttemptCnt = 0;
-
-    
-    /** Plays the last (latest) episode of this GenaiPlayer, until it ends.
-
-	What comes back from Gemini is this:
-<pre>	
-{
-"candidates":[
-  {"content": {"parts": [{"text": "MOVE 0 0\n"}],"role": "model"},
-   "finishReason": "STOP",
-   "avgLogprobs": -1.9414728740230203e-05}
-  ],
-"usageMetadata":
-   {"promptTokenCount": 1219,
-    "candidatesTokenCount": 6,
-    "totalTokenCount": 1225,
-    "promptTokensDetails": [{"modality": "TEXT","tokenCount": 1219}],
-    "candidatesTokensDetails": [{"modality": "TEXT","tokenCount": 6}]
-    },
-"modelVersion": "gemini-2.0-flash"}
-</pre>
-
-Very occasionally, the "parts" array has multiple elements, each one havng a "text" in it. 
-
-@return true on victory (mastery demonstrated), false otherwise
-     */
-
-    boolean playingLoop(Chat chat)  throws IOException {
+    boolean playingLoop(Chat chat)  throws IOException,  ReflectiveOperationException{
 
         EpisodeHistory ehi = lastElement();
 	Episode epi = ehi.epi;
@@ -587,11 +509,14 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	    int[] w = null;
 	    while(true) {
 		String lines[] = doOneRequest(chat);
+		System.out.println("Response text={" + Util.joinNonBlank("}\n{", lines) + "}");
+
 		// zzz
 		/*
 		if (lines.length!=1) throw new IllegalArgumentException("Expected 1 candidate, found " + lines.length);
 		String line=lines[0];
 		*/
+		/*
 		String line= Util.joinNonBlank("\n", lines);
 					      
 		requestCnt ++;
@@ -606,6 +531,15 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 		}
 
 		throw new IllegalArgumentException("Could not find 'MOVE id bid' in this response text; exiting");
+		*/
+
+
+		//			String lines[] = {response.text()};
+		if (lines.length!=1) throw new IllegalArgumentException("Response has " + lines.length + " text lines");	
+		MoveLine mm = PreparedEpisodesResponse.parseMoveResponse(lines[0]);
+		w = mm.asPair();
+		break;
+
 		/*
 		
 		if (tryCnt>=2) {
@@ -638,29 +572,16 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
     */
     void askAboutPreparedEpisodes(Chat chat, GenaiPlayer future) throws IOException,  ReflectiveOperationException {
 
-	/*
-	String schemaString = ResponseSchemaUtil.mkResponseSchema(false, true).build().toString();
-
-	System.out.println("Using the following response schema for the final request:<<\n" + schemaString + "\n>>");
-	
-	// Configure the specific turn for JSON
-	GenerateContentConfig jsonConfig = GenerateContentConfig.builder()
-	    .responseMimeType("application/json")
-            .responseJsonSchema(schemaString)
-            .build();
-	*/
 	Schema rootSchema = GenaiResponseSchema.makeRootSchema();
 
 	GenerateContentConfig jsonConfig = GenerateContentConfig.builder()
 	    .responseMimeType("application/json")
 	    .responseSchema(rootSchema)
 	    .build();
-
 	
 	Vector<String> v = new Vector<>();
 
-	// acknowledge the successful completion of the previous
-	// episode
+	// acknowledge the successful completion of the previous episode
 	v.add("ACCEPT");
 	v.add("BOARD CLEARED!");
 
@@ -675,27 +596,16 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	
         // Request the structured data
 	GenerateContentResponse response = chat.sendMessage(msg,  jsonConfig);
-      
+	
 	String lines[] = {response.text()};
+
+	
 	for(int j=0; j<lines.length; j++) {
 	    if (lines.length>0) System.out.println("Candidate " + j+ " of " + lines.length);
 	    if (log!=null) log.run=j;
 	    future.digestProposedMoves(lines[j]);
 	}
     }
-
-    /** Out model is gemini-2.0-flash, which allows 15 RPM in the free tier.
-    https://ai.google.dev/gemini-api/docs/rate-limits
-    */
-    private void waitABit(long msec) {
-    
-	try {
-            Thread.sleep(msec); 
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-
+   
 }
 

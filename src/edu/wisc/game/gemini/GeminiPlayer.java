@@ -265,12 +265,6 @@ public class GeminiPlayer  extends BasePlayer {
 	
     }
 
-    private static int computeWait(int retryCnt) {
-	int waitSec = 120;
-	for(int i=0; i<retryCnt; i++) waitSec*=2;
-	return waitSec;
-    }
-    
     /** Sometimes, a code-200 response may look like this:
 
 <pre>
@@ -692,7 +686,8 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	GeminiPlayer, i.e. all episodes that have been completed, and
 	the one still in progress */
     GeminiRequest makeRequest() throws IOException {
-	GeminiRequest gr = new GeminiRequest();	    
+	GeminiRequest gr = new GeminiRequest();
+	gr.setNeedResponseSchema(true); // ask for structured response
 	gr.addInstruction(instructions);
 	gr.addTemperature(temperature);
 	gr.addMaxOutputTokens(maxToken);
@@ -915,7 +910,7 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 @return true on victory (mastery demonstrated), false otherwise
      */
 
-    boolean playingLoop()  throws IOException {
+    boolean playingLoop()  throws IOException, 	 ReflectiveOperationException  {
 
         EpisodeHistory ehi = lastElement();
 	Episode epi = ehi.epi;
@@ -934,14 +929,18 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 		//		requestCnt ++;
 		tryCnt++;
 		System.out.println("Response text={" + line.trim() + "}");
-		MoveLine[] r = parseResponse(line);
+		/*		MoveLine[] r = parseResponse(line);
 		if (r.length==1) {
 		    w = r[0].asPair();
 		    break;
 		} else if (r.length>1) {
 		    throw new IllegalArgumentException("Unexpectedly found multiple moves in the response");
 		}
+		*/
+		MoveLine mm = PreparedEpisodesResponse.parseMoveResponse(lines[0]); // throws 	 ReflectiveOperationException 
+		break;
 
+		/*
 		if (tryCnt>=2) {
 		    throw new IllegalArgumentException("Could not find 'MOVE id bid' in this response text, even after "+tryCnt+" attempts: {" + line +"}");
 		}
@@ -950,6 +949,7 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 		gr.addUserText("I don't understand English very well. Please say again what YOUR MOVE is, remembering to describe your attempted move in the following format: 'MOVE objectId bucketId'!");
 		System.out.println("At "+reqt()+", received an incomprehensible response, and am trying to ask again");
 		waitABit(wait);
+		*/
 	    }
 	
 	    Boolean b = digestMove(w);
@@ -981,19 +981,7 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
     }
 
 
-          
-    /** Out model is gemini-2.0-flash, which allows 15 RPM in the free tier.
-    https://ai.google.dev/gemini-api/docs/rate-limits
-    */
-    private void waitABit(long msec) {
-    
-	try {
-            Thread.sleep(msec); 
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
+        
 
 
     /** Reading log back, for restoring a history.

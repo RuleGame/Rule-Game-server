@@ -64,6 +64,8 @@ public class PreparedEpisodesResponse {
     public ProposedMove[][] getProposedMoves() { return proposedMoves; }
     public void setProposedMoves(ProposedMove[][] _proposedMoves) { proposedMoves = _proposedMoves; }
 
+    /** @param line A string representing the JSON content of the
+	response received from Gemini for our final request */
     static MoveLine[][] parseResponse(String line) throws 	 ReflectiveOperationException {
 	StringReader sr = new StringReader(line);
 	JsonReader jsonReader = Json.createReader(sr);
@@ -89,6 +91,29 @@ public class PreparedEpisodesResponse {
 	return rr;
     }
 
+
+    /** @param line A string representing the JSON content of the
+	single-move response received from Gemini during the play
+	phase */
+    static MoveLine parseMoveResponse(String line) throws 	 ReflectiveOperationException {
+	StringReader sr = new StringReader(line);
+	JsonReader jsonReader = Json.createReader(sr);
+	JsonObject obj = jsonReader.readObject();
+
+	ProposedMove m = new ProposedMove();
+	m.setId(-1);
+	JsonToJava.json2java(obj, m);
+
+	if (m.id<0) {
+	    System.out.println("No move info found in the response! obj="+obj);
+	    return null;	      
+	}
+	
+	MoveLine r = new MoveLine(m.id, m.bucketId);
+	return r;
+    }
+
+    
     /** Unit test */
     public static void main(String argv[]) throws IOException, ReflectiveOperationException  {
 	String s = Util.readTextFile(new File(argv[0]));
