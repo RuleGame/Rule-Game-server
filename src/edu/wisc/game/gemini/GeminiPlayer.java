@@ -987,8 +987,8 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	method finds the last request in which GeminiPlayer had
 	recapitulated the sessions's history. The log section
 	(the request text) this method looks for starts after
-	"The text part of the request:", and ends with "YOUR MOVE?".
-
+	"The text part of the request:", and ends with "YOUR MOVE?"
+	(or, for the final request, with the "Request took" [XXX msec] line)
     */
     private Vector<String> extractLastRequest(File f) throws FileNotFoundException, IOException {
 	
@@ -1003,7 +1003,8 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 		inside = true;
 	    }
 	    if (inside) {
-		if (s.startsWith("YOUR MOVE")) {
+		if (s.startsWith("YOUR MOVE") ||
+		    s.startsWith("Request took")) {
 		    inside = false;
 		    lastFoundText = new Vector<>();
 		    lastFoundText.addAll(v);
