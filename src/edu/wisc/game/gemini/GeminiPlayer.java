@@ -341,7 +341,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	return gr;
     }
 
-
+    static boolean needFormal = false;
     
     /** Modeled on Captive.java
 	model=gemini-2.0-flash
@@ -374,7 +374,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	targetStreak = ht.getOption("targetStreak", targetStreak);
 	targetR = ht.getOptionDouble("targetR", targetR);
 	xFactor = ht.getOption("xFactor", xFactor);
-
+	needFormal = ht.getOption("formal", needFormal);
 	
 	temperature = ht.getOptionDoubleObject("temperature", temperature);
 	boolean tZero = (temperature!=null && temperature.doubleValue()==0);
@@ -398,17 +398,16 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
 	// future episodes can be used in both prepared-episodes mode and play modes (for the final questions)
 	//if (prepared)
-	    future_episodes = ht.getOption("future_episodes", 5);
+	future_episodes = ht.getOption("future_episodes", 5);
 
 	//System.exit(0);
-	
-	File f =  (instructionsFile==null)? new File( Files.geminiDir(), "system.txt"):
-	    new File(instructionsFile);
-	instructions = Util.readTextFile( f);
 
-	f =   (instructionsFile2==null)? new File( Files.geminiDir(), "system-prepared-03.txt"):
-	    new File(instructionsFile2);
-	instructions2 = Util.readTextFile( f);
+	// read the instructions from a file or from several files
+	instructions =  (instructionsFile==null)? Util.readTextFile( new File( Files.geminiDir(), "system.txt")):
+	    readInstructions(instructionsFile);
+
+	instructions2 =  (instructionsFile2==null)? Util.readTextFile( new File( Files.geminiDir(), "system-prepared-03.txt")):
+	    readInstructions(instructionsFile2);
 
 	
 	String resumeFileName = ht.getOption("resume", null);
@@ -565,8 +564,8 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	
 	if (resumeFrom != null) {
 	    System.out.println("Resuming from old log file " + resumeFrom);
-	    history.readLogBack( gg, resumeFrom);
-	    System.out.println("Restored " + history.size() + " episodes");
+	    won = history.readLogBack( gg, resumeFrom);
+	    System.out.println("Restored " + history.size() + " episodes; already won=" + won);
 	    mustResumeNow = history.size()>0 && !history.lastElement().epi.isCompleted();// unfinished last episode (resumeFile mode);
 	    //System.exit(0);
 	}
@@ -724,7 +723,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
     private GeminiRequest makeRequestPrepared(GeminiPlayer future, String instruc) throws IOException {
 	GeminiRequest gr = new GeminiRequest();
 	//gr.setNeedResponseSchema(true); // ask for structured response
-	gr.setResponseSchemaOb(ResponseSchemaUtil.mkResponseSchema(true));
+	gr.setResponseSchemaOb(ResponseSchemaUtil.mkResponseSchema(true, needFormal));
 	gr.addInstruction(instruc);
 	gr.addTemperature(temperature);
 	gr.addMaxOutputTokens(maxToken);
@@ -982,15 +981,13 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	}
     }
 
-
-        
-
-
-    /** Reading log back, for restoring a history.
-	The text starts after 
-	"The text part of the request:",
-	and ends with 
-	"YOUR MOVE?"
+       
+    /** Reading back a log produced by GeminiPlayer at an earlier
+	session, in order to restore the session's history. This
+	method finds the last request in which GeminiPlayer had
+	recapitulated the sessions's history. The log section
+	(the request text) this method looks for starts after
+	"The text part of the request:", and ends with "YOUR MOVE?".
 
     */
     private Vector<String> extractLastRequest(File f) throws FileNotFoundException, IOException {
@@ -1026,11 +1023,21 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
     //	movePat("^(MOVE [0-9]+ [0-9]+)");
 		
 
-    /** Fills this GeminiPlayer with the recorded history from a file */
-    private void readLogBack(GameGenerator gg, File f) throws IOException,
+    /** Fills this GeminiPlayer with the recorded history from a file.
+
+	<p>If the player reaches the *current* mastery criterion
+	in the middle of the transcript, stop right there and
+	don't load the rest of the transcript. This is done
+	so that we can recompute m_star based on a different
+	mastery criterion than the one used in the original run.
+
+	@return true if the mastery criterion has been reached within the read-in history
+     */
+    private boolean readLogBack(GameGenerator gg, File f) throws IOException,
 							      ReflectiveOperationException {
 	Vector<String> v = extractLastRequest(f);
 	int eNo = 0;
+	boolean won = false;
 	for(String line: v) {
 	    // "Episode 1 had the following initial board: {"value":...}"
 	    Matcher m = boardPat.matcher(line);
@@ -1058,14 +1065,14 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	    MoveLine[] w = parseResponse(line);
 	    if (w.length>0) {
 		//System.out.println("Found move: " + w[0]);
-		digestMove(w[0].asPair());
+		Boolean b = digestMove(w[0].asPair());
+		if (b!=null) won = (won || b);
+		if (won) break;
 	    } else {
 		//System.out.println("There is no move in this line: " +line);
-	    }
-		
-	    
+	    }			    
 	}
-	
+	return won;
     }
 
 

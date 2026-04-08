@@ -307,8 +307,9 @@ class BasePlayer  extends Vector<EpisodeHistory> {
 	return code;
     }
 
-    /** @return null if the episode needs to continue; a boolean value, to be 
-	returned by playingLoop(), is the episodes ends now */
+    /** @return null if the episode needs to continue; a boolean value (true
+	on meeting the mastery criterion, false on reaching max count), to be 
+	returned by playingLoop(), is the episodes needs to end now */
     protected Boolean digestMove(int[] w)// throws IOException
     {
 	
@@ -564,7 +565,20 @@ class BasePlayer  extends Vector<EpisodeHistory> {
 	for(int i=0; i<retryCnt; i++) waitSec*=2;
 	return waitSec;
     }
-    
 
+    /** Reads the contents of one or several files and concatenates them.
+       @param fileList "f.txt", or maybe "f1.txt:f2.txt:...."
+     */
+    protected static String readInstructions(String fileList) throws IOException {
+	String names [] = fileList.split(":");
+	Vector<String> v = new Vector<>();
+	for(String name: names) {
+	    File f = new File(name);
+	    v.add( Util.readTextFile( f));
+	}
+	return Util.joinNonBlank("\n---\n", v);
+    }
+
+    
     
 }

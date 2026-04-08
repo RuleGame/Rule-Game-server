@@ -13,7 +13,10 @@ import edu.wisc.game.engine.*;
 
 import edu.wisc.game.gemini.PreparedEpisodesResponse.MoveLine;
 
-/** 2026-02-01: After each "properties": {...}, need to add
+/** Response schemas for various requests.
+
+    <p>
+   2026-02-01: After each "properties": {...}, need to add
     "required": ["inferredRules", "inferredRulesAppliedToOldEpisodes"]
  */
 class ResponseSchemaUtil {
@@ -66,8 +69,6 @@ class ResponseSchemaUtil {
 	return ab;
     }
     */
-
-
 
     
     static JsonObjectBuilder schemaInteger(String desc) {
@@ -216,7 +217,7 @@ class ResponseSchemaUtil {
     }
 
     
-    static JsonObjectBuilder mkResponseSchema(boolean needOld) {
+    static JsonObjectBuilder mkResponseSchema(boolean needOld, boolean needFormal) {
 
 	/*	if (forGenai) {
 	    INTEGER = "integer";
@@ -227,7 +228,8 @@ class ResponseSchemaUtil {
 	*/
 	
 	MyJsonObjectBuilder bb = new MyJsonObjectBuilder();
-	bb.add("inferredRules", schemaString("Please describe here the hidden rules that best explain all already played episodes shown to you"));
+	bb.add("inferredRules", schemaString("Please describe here, in English, the hidden rules that best explain all already played episodes shown to you"));
+	if (needFormal) bb.add("inferredRulesFormal", schemaString("Please describe here, using our Rule Description Language, the hidden rules that best explain all already played episodes shown to you"));
 	if (needOld) bb.add("inferredRulesAppliedToOldEpisodes", mkAppliedMovesOb());
 	bb.add("proposedMoves", mkProposedMovesOb());
 	return schemaObject(null, bb);
