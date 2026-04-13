@@ -259,8 +259,8 @@ class BasePlayer  extends Vector<EpisodeHistory> {
 	if (r==null) { // field not supplied
 	    return;
 	}
-	System.out.println("Found " + r.length + " proposed solutions in the response, for "+size() + " future boards");
-	if (r.length != size()) throw new IllegalArgumentException("Future board count mismatch");
+	System.out.println("Found " + r.length + " proposed solutions in the response, for "+future.size() + " future boards");
+	if (r.length != future.size()) throw new IllegalArgumentException("Future board count mismatch");
 	
 	future.digestProposedMoves(r, false);
 	String irFormal = per.getInferredRulesFormal();
