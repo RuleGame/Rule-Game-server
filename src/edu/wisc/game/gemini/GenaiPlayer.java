@@ -603,7 +603,7 @@ where "id" is the ID of the object that you attempted to move, "bucketId" is the
 	for(int j=0; j<lines.length; j++) {
 	    if (lines.length>0) System.out.println("Candidate " + j+ " of " + lines.length);
 	    if (log!=null) log.run=j;
-	    future.digestProposedMoves(lines[j]);
+	    digestResponse(future, lines[j]);
 	}
     }
    

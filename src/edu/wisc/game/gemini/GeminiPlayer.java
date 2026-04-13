@@ -716,9 +716,9 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	return gr;
     }
 
-/** Makes a request describing prepared episodes (stored in this
-    player) and future episodes (stored in "future").
-    @param future The initial boards for the future episodes.
+    /** Makes a request presenting a few transcripts (either of
+	prepared episodes, or of the episodes of a play mode session; stored in this player), and a few test boards ("future episodes", stored in "future").
+	@param future The initial boards for the future episodes.
  */
     private GeminiRequest makeRequestPrepared(GeminiPlayer future, String instruc) throws IOException {
 	GeminiRequest gr = new GeminiRequest();
@@ -941,16 +941,6 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 		w = mm.asPair();
 		break;
 
-		/*
-		if (tryCnt>=2) {
-		    throw new IllegalArgumentException("Could not find 'MOVE id bid' in this response text, even after "+tryCnt+" attempts: {" + line +"}");
-		}
-		// try to tell the bot to use the proper format
-		gr.addModelText(line);
-		gr.addUserText("I don't understand English very well. Please say again what YOUR MOVE is, remembering to describe your attempted move in the following format: 'MOVE objectId bucketId'!");
-		System.out.println("At "+reqt()+", received an incomprehensible response, and am trying to ask again");
-		waitABit(wait);
-		*/
 	    }
 	
 	    Boolean b = digestMove(w);
@@ -973,11 +963,12 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 
 	GeminiRequest gr = makeRequestPrepared(future, instruc);
 	//	System.exit(0);
+	// zzz: extract formal description...
 	String lines[] = doOneRequest(gr);
 	for(int j=0; j<lines.length; j++) {
 	    if (lines.length>0) System.out.println("Candidate " + j+ " of " + lines.length);
 	    if (log!=null) log.run=j;
-	    future.digestProposedMoves(lines[j]);
+	    digestFinalResponse(future, lines[j]);
 	}
     }
 

@@ -8,7 +8,7 @@ import edu.wisc.game.parser.*;
 import edu.wisc.game.engine.*;
 
 /** A Game object defines how an Episode may be created. A Game object
-    may either consists of a rule set + a predefined board, or of a
+    may either consist of a rule set + a predefined board, or of a
     rule set + the procedure for creating a random board. In the
     latter case, the procedure for creating a random board may include
     a random number generator and the parameters of the distribution

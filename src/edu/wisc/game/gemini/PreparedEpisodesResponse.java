@@ -11,6 +11,9 @@ import edu.wisc.game.reflect.*;
 import edu.wisc.game.rest.*;
 import edu.wisc.game.engine.*;
 
+/** A Java object whose structure matches the JSON schema used for our
+    responseSchema. Used for parsing the response.
+ */
 public class PreparedEpisodesResponse {
 
     static class MoveLine {
@@ -26,9 +29,18 @@ public class PreparedEpisodesResponse {
     }
 
 
+    /** Description of the rules in English */
     String inferredRules;
     public String getInferredRules() { return inferredRules; }
     public void setInferredRules(String _inferredRules) { inferredRules = _inferredRules; }
+
+    /** Description of the rules in our formal language  */
+    String inferredRulesFormal;
+    public String getInferredRulesFormal() { return inferredRulesFormal; }
+    public void setInferredRulesFormal(String _inferredRulesFormal) { inferredRulesFormal = _inferredRulesFormal; }
+
+    
+
 
     public static class CompletedMove {
 	String actualResponse;
@@ -64,27 +76,37 @@ public class PreparedEpisodesResponse {
     public ProposedMove[][] getProposedMoves() { return proposedMoves; }
     public void setProposedMoves(ProposedMove[][] _proposedMoves) { proposedMoves = _proposedMoves; }
 
-    /** @param line A string representing the JSON content of the
+    /** Parses the response in prepared-episodes mode, or the final
+       response in play mode.
+       
+       @param line A string representing the JSON content of the
 	response received from Gemini for our final request */
-    static MoveLine[][] parseResponse(String line) throws 	 ReflectiveOperationException {
+    static PreparedEpisodesResponse parseResponse(String line) throws 	 ReflectiveOperationException {
 	StringReader sr = new StringReader(line);
 	JsonReader jsonReader = Json.createReader(sr);
 	JsonObject obj = jsonReader.readObject();
 
 	PreparedEpisodesResponse per = new 	PreparedEpisodesResponse();
 	JsonToJava.json2java(obj, per);
+	return per;
+    }
 
+    /** After a PreparedEpisodesResponse has been created with
+	parseResponse(line), this method gets from it the list of
+	proposed moves.
+     */
+    MoveLine[][] getMoves() throws 	 ReflectiveOperationException {
 
-	if (per.proposedMoves==null) {
+	if (proposedMoves==null) {
 	    System.out.println("No proposedMoves included in the response!");
 	    return null;	      
 	}
 	
-	MoveLine rr[][] = new MoveLine[ per.proposedMoves.length][];
+	MoveLine rr[][] = new MoveLine[ proposedMoves.length][];
 	for(int k=0; k<rr.length; k++) {
-	    rr[k] = new MoveLine[ per.proposedMoves[k].length];
+	    rr[k] = new MoveLine[ proposedMoves[k].length];
 	    int j=0;
-	    for(ProposedMove m: per.proposedMoves[k]) {
+	    for(ProposedMove m: proposedMoves[k]) {
 		rr[k][j++] = new MoveLine(m.id, m.bucketId);
 	    }
 	}
@@ -117,7 +139,8 @@ public class PreparedEpisodesResponse {
     /** Unit test */
     public static void main(String argv[]) throws IOException, ReflectiveOperationException  {
 	String s = Util.readTextFile(new File(argv[0]));
-	MoveLine[][] moves = parseResponse(s);
+	PreparedEpisodesResponse per = PreparedEpisodesResponse.parseResponse(s);
+	MoveLine[][] moves =  per.getMoves();
 	System.out.println("Found moves for " + moves.length + " episodes");
     }
     

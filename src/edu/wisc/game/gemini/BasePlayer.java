@@ -16,6 +16,7 @@ import edu.wisc.game.sql.Episode.Pick;
 import edu.wisc.game.sql.Episode.Move;
 import edu.wisc.game.rest.*;
 import edu.wisc.game.engine.*;
+import edu.wisc.game.parser.RuleParseException;
 import edu.wisc.game.saved.*;
 import edu.wisc.game.saved.TranscriptManager.ReadTranscriptData;
 import edu.wisc.game.tools.AnalyzeTranscriptsUtils;
@@ -166,7 +167,10 @@ class BasePlayer  extends Vector<EpisodeHistory> {
 	}
     }
 
-    /** Adds a few future boards to this GeminiPlayer object */
+    /** Adds a few future boards to this GeminiPlayer object. Each
+	board is put into a not-played-yet Episode object, which is
+	added to this GeminiPlayer object.
+     */
     void addFutureBoards(GameGenerator gg) {
 
 	for(int j=0; j<future_episodes; j++) {
@@ -182,6 +186,24 @@ class BasePlayer  extends Vector<EpisodeHistory> {
 	}
     }
 
+    /** Creates a BasePlayer that stores empty episodes based on those
+	that were played in this episode, but with a different
+	("alternative") rule set.  This is used to analyze the inferred
+	rule set proposed by the bot.
+     */
+    private BasePlayer makePlayerUsingAltRules(RuleSet rules) {
+	BasePlayer alt = new BasePlayer();
+	for( EpisodeHistory his0: this) {
+	    Episode epi0 = his0.epi;
+	    Episode epi = new Episode(rules, epi0.getInitialBoard(),
+				      outputMode,
+				      new InputStreamReader(System.in),
+				      new PrintWriter(System.out, true));
+	    EpisodeHistory his = new EpisodeHistory(epi);
+	    alt.add(his);
+	}
+	return alt;
+    }
 
     protected String costReport() {
 	Vector<String> v = new Vector<>();
@@ -211,19 +233,87 @@ class BasePlayer  extends Vector<EpisodeHistory> {
 	return String.join("\n", v);
     }
 
-    /** Handles one candidate with proposed moves in it. This is called on the 
-	"future" object  */
-    protected void digestProposedMoves(String line)  throws ReflectiveOperationException {
-	System.out.println("Response text={" + line.trim() + "}");
+    /** Handles one candidate with proposed moves in it.
+	@line the text of the response for the final request (in play
+	mode) or the only request (in prepared episodes mode). Its
+	content should be JSON code, as per the response schema that we have
+	sent with the request.
+
+
+	/// zzzz FIXME: if inferredRulesFormal has been received, need to do the following:
+	* apply them to the old episodes (that is, replay the transcript of
+	old episodes against the bot's inferred rules, to see if the outcome
+	of any move is different from the one recorded originally)
+	* compare the results on the old episodes against what the bot said they would be
+	* apply them to the future episodes (that is, run's bot's proposed moves
+	against the bot's inferred rules, to see (a) if the bot's proposed rules are consistent with the bot's theory... and (b) whether the bot's theory gives the same outcome as our real rules).
 	
-	MoveLine[][] r =  PreparedEpisodesResponse.parseResponse(line);
+	
+    */
+    protected void digestFinalResponse(BasePlayer future, String line)  throws ReflectiveOperationException {
+	System.out.println("Response text={" + line.trim() + "}");
+
+	// Process JSON
+	PreparedEpisodesResponse per = PreparedEpisodesResponse.parseResponse(line);
+	MoveLine[][] r =  per.getMoves();
 	if (r==null) { // field not supplied
 	    return;
 	}
-	
 	System.out.println("Found " + r.length + " proposed solutions in the response, for "+size() + " future boards");
 	if (r.length != size()) throw new IllegalArgumentException("Future board count mismatch");
 	
+	future.digestProposedMoves(r, false);
+	String irFormal = per.getInferredRulesFormal();
+	if (irFormal==null) return;
+	System.out.println("Gemini described inferred rules as follows:\n" + irFormal);
+	RuleSet iRules = null;
+	try {
+	    iRules = new  RuleSet(irFormal);
+	} catch( RuleParseException ex) {
+	    System.out.println("Rule set cannot be parsed:" + ex);
+	    ex.printStackTrace(System.out);
+	    return;
+	}
+	System.out.println("How well do inferred rules explain training episodes?");
+	int matchCnt=0, mismatchCnt=0, epiMatchCnt = 0;
+	for(int j=0; j<size(); j++) {
+	    Episode epi0 = get(j).epi;
+	    Episode epi = new Episode(iRules, epi0.getInitialBoard(),
+				      outputMode,
+				      new InputStreamReader(System.in),
+				      new PrintWriter(System.out, true));
+	    Vector<Pick> tra0  = epi0.getTranscript();
+	    boolean hasMismatch=false;
+	    for(Pick pick: tra0) {
+		Move move = (Move)pick;
+		int[] w = {move.getPieceId(), move.getBucketNo()};
+		int code = digestMoveBasic(epi, w);
+		if (code == move.getCode()) {
+		    matchCnt++;
+		} else {
+		    mismatchCnt++;
+		    hasMismatch = true;
+		}
+	    }
+	    if (!hasMismatch) {
+		epiMatchCnt ++;
+	    } 
+	}
+	System.out.println("If the training episodes had been played with inferred rules, "+matchCnt+"/" +(matchCnt+mismatchCnt)+ " moves would have had the same outcome, and " + epiMatchCnt +"/" + size()+ " episodes would have been identical");
+	// zzzz
+	System.out.println("How well do inferred rules explain the bot's solutions for test episodes?");
+	BasePlayer altFuture = future.makePlayerUsingAltRules(iRules);
+	altFuture.digestProposedMoves(r, true);
+    }
+
+    /**
+       	This is called on the 
+	"future" object (which contains the future boards, AKA prepared episodes).
+	@param ir Running with inferred rules, rather than with the original hidden rules
+	
+    */
+    private void digestProposedMoves(MoveLine[][] r, boolean ir) {
+
 	int nc=0, nGoodMoves=0, nAttempts=0;
 	
 	for(int j=0; j<r.length; j++) {
@@ -249,7 +339,10 @@ class BasePlayer  extends Vector<EpisodeHistory> {
 		if (code == Episode.CODE.ACCEPT) nGoodMoves ++;
 	    }	   
 	    
-	    System.out.println("Future board "+j+ " of "+r.length+": Result of proposed moves: cleared=" + epi.getCleared() + ", good moves count=" + epi.getDoneMoveCnt() + "/" + r[j].length);
+	    String msg = "Future board "+j+ " of "+r.length+": Result of proposed moves";
+	    if (ir) msg += " applied to inferred rules";
+	    msg += ": cleared=" + epi.getCleared() + ", good moves count=" + epi.getDoneMoveCnt() + "/" + r[j].length;
+	    System.out.println(msg);
 	    if ( epi.getCleared() ) nc++;
 	
 	    log.logEpisode(epi, j);
@@ -257,12 +350,18 @@ class BasePlayer  extends Vector<EpisodeHistory> {
 		
 	}
     
-	System.out.println("Overall, cleared boards: " + nc + "/" + r.length +", good moves: " + nGoodMoves + "/" + nAttempts);
+	String msg = ir?
+	    "Proposed moves applied to inferred rules: overall, cleared boards" :
+	    "Overall, cleared boards";
+	msg += ": " + nc + "/" + r.length +", good moves: " + nGoodMoves + "/" + nAttempts;
+	System.out.println(msg);
     }
 
 
 
-    /** @return null if the episode needs to continue; a boolean value, to be 
+    /**@param w {pieceId, bucketId}
+       
+       @return null if the episode needs to continue; a boolean value, to be 
 	returned by playingLoop(), is the episode ends now */
     protected int digestMoveBasic(Episode epi, int[] w) {
 	totalAttemptCnt++;
