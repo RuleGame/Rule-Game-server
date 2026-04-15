@@ -156,7 +156,7 @@ http://paulgrenyer.blogspot.in/2011/11/catalina-ant-for-tomcat-7.html
 	 debug="on" debuglevel="lines,vars,source"	 
 	 includeantruntime="false"
 	 target="11" source="11"
-	 excludes="edu/wisc/game/gemini/Genai*.java"
+	 excludes="edu/wisc/game/gemini/Genai*.java,edu/wisc/game/gemini/GeminiConversation.java"
 	 >
     <classpath refid="classpath"/>
     <!-- compilerarg value="-Xlint"/ -->

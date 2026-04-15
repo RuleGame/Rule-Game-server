@@ -763,6 +763,12 @@ public interface Expression {
 	    Vector<Expression> v = new Vector<>();
 	    while(!tokens.isEmpty()) {
 		a = tokens.get(0);
+
+			    //zzz
+		/*
+
+	    
+		*/
 		if (a.equals(Token.STAR)) {
 		    tokens.remove(0);
 		    v.add( new Star());
@@ -785,12 +791,22 @@ public interface Expression {
 		
 		if (tokens.isEmpty()) throw new  RuleParseException("Unexpected end of a paren list expression");
 		Token b = tokens.get(0);
+		Token c = ( tokens.size()>1)?  tokens.get(1): null;
 		if (b.type==Token.Type.COMMA) {
 		    tokens.remove(0);
 		    continue;
 		} else 	if (b.type==Token.Type.CLOSE && b.cVal==')') {
 		    tokens.remove(0);
 		    return new ParenList(v);
+		    /*
+		} else if (b.type==Token.Type.COMMA && c!=null && 
+		       c.type==Token.Type.CLOSE && c.cVal==')') {
+		    // for Gemini
+		    tokens.remove(0);
+		    tokens.remove(0);
+		    return new ParenList(v);
+		    */
+
 		} else {
 		    throw new  RuleParseException("Unexpected end of a parenthesized list: instead of a comma or a closing paren, found " + b);
 		}	
@@ -822,12 +838,12 @@ public interface Expression {
     
     /** Creates the longest ArithmeticExpression starting at the beginning of the tokens array. 
 	<pre>
-	E := E5
-	E5 :=  E4  |  E4==E4
-	E4 :=  E3  |  E3+E3+...
-	E3 :=  E2  |  E2*E2...
-	E2 :=  E1  |  !E2
-	E1 :=  (E)  |  Id.Id | Id  | Num |  [E4,E4,...]
+	E ::= E5
+	E5 ::=  E4  |  E4==E4
+	E4 ::=  E3  |  E3+E3+...
+	E3 ::=  E2  |  E2*E2...
+	E2 ::=  E1  |  !E2
+	E1 ::=  (E)  |  Id.Id | Id  | Num |  [E4,E4,...]
     */
     static ArithmeticExpression mkLongestArithmeticExpression(Vector<Token> tokens) throws RuleParseException {
 	return mkLongestE5( tokens);
@@ -875,7 +891,7 @@ public interface Expression {
 	return (y.size()>1) ? y : q;
     }
     
-    /** E2 :=  E1  |  !E2 */
+    /** E2 ::=  E1  |  !E2 */
     //private
     static ArithmeticExpression mkLongestE2(Vector<Token> tokens) throws RuleParseException {
 	if (tokens.size()==0) throw new RuleParseException("Unexpected end of line. (Expected an E2-type arithmetic expression)");
@@ -887,7 +903,7 @@ public interface Expression {
 	    return mkLongestE1(tokens);
 	}
     }
-   /** 	E1 :=  (E) | Id.Id |  Id  | Num | -Num |  [E,E,...] */ 
+   /** 	E1 ::=  (E) | Id.Id |  Id  | Num | -Num |  [E,E,...] */ 
     static ArithmeticExpression mkLongestE1(Vector<Token> tokens) throws RuleParseException {
 	if (tokens.size()==0) throw new RuleParseException("Unexpected end of line. (Expected an E1-type arithmetic expression)");
 	Token a = tokens.firstElement();
@@ -923,9 +939,20 @@ public interface Expression {
 	    ArithmeticExpression q = mkLongestArithmeticExpression(tokens);
 	    if (tokens.size()==0) throw new  RuleParseException("Unexpected end of a parenthesized expression");
 	    Token b = tokens.firstElement();
+	    Token c = ( tokens.size()>1)?  tokens.get(1): null;
+
 	    if (b.type==Token.Type.CLOSE && b.cVal==')') {
 		tokens.remove(0);
 		return q;
+		/*
+	    } else if (b.type==Token.Type.COMMA && c!=null && 
+		       c.type==Token.Type.CLOSE && c.cVal==')') {
+		// Special permission for Gemini to create rules with an extra trailing comma, e.g. "(a,b,c,)".
+		// This permission exists to make it easier for us to write formal grammars. (2026-04-14)
+		tokens.remove(0);
+		tokens.remove(1);
+		return q;
+		*/
 	    } else {
 		throw new  RuleParseException("Unexpected end of a parenthesized expression: instead of a closing paren, found " + b);
 	    }

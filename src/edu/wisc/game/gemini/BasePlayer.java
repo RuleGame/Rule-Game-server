@@ -265,6 +265,7 @@ class BasePlayer  extends Vector<EpisodeHistory> {
 	future.digestProposedMoves(r, false);
 	String irFormal = per.getInferredRulesFormal();
 	if (irFormal==null) return;
+	irFormal.replace(",)", ")"); // Special BNF dispensation for Gemini
 	System.out.println("Gemini described inferred rules as follows:\n" + irFormal);
 	RuleSet iRules = null;
 	try {
