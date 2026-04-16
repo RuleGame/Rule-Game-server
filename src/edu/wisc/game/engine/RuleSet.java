@@ -301,13 +301,18 @@ public class RuleSet {
 	    boolean colonized=(colonCnt==pex.size());
 
 	    HashMap<String, Expression> arms=new HashMap<>();
+	    HashSet<Expression> posExp = new HashSet<>(); // for pos clauses
 	    
 	    if (colonized) {
 		for(Expression _g: pex) {
 		    Expression.ColonExpression g = (Expression.ColonExpression)_g;
 		    String key=g.prefix.toString();
-		    if (arms.get(key)!=null)  throw new RuleParseException("An atom has multiple clauses with the same prefix '" + key+"'");
-		    arms.put(key, g.arex);			
+		    if (key.equals("pos")) {
+			posExp.add(g.arex);
+		    } else {
+			if (arms.get(key)!=null)  throw new RuleParseException("An atom has multiple clauses with the same prefix '" + key+"'");
+			arms.put(key, g.arex);
+		    }
 		}
 	    } else {
 		if (colonCnt>0) throw new RuleParseException("An atom must not combine colon-based and colon-less clauses: size="+ pex.size() +": " + pex);
@@ -316,7 +321,8 @@ public class RuleSet {
 		arms.put("count", pex.get(0));
 		arms.put("shape", pex.get(1));
 		arms.put("color", pex.get(2));
-		arms.put("pos",   pex.get(3));
+		//arms.put("pos",   pex.get(3));
+		posExp.add( pex.get(3));
 		arms.put("bucket", pex.get(4));
 	    }
 	    
@@ -332,11 +338,18 @@ public class RuleSet {
 		throw new RuleParseException("Counter is not a star or number: " + pex);
 	    }
 
-	    
+	    /*
 	    g = arms.remove("pos"); // position
 	    if (g!=null && agen!=null) g = g.map(agen.mkMapper("pos"));
 	    if (g!=null && !(g instanceof Expression.Star))  plists.add( new PositionList(g, orders));
-
+	    */
+	    for(Expression pg: posExp) { // allow multiple pos clauses
+		if (pg==null || pg instanceof Expression.Star) continue;
+		if (agen!=null) pg = pg.map(agen.mkMapper("pos"));
+		plists.add( new PositionList(pg, orders));
+	    }
+					  
+	    
 	    g = arms.remove("postpos"); // post-processing orders (GS 6.041)
 	    if (g!=null && agen!=null) g = g.map(agen.mkMapper("postpos"));
 	    postPlist = new PositionList(g, orders);
