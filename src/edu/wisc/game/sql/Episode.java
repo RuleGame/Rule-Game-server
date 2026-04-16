@@ -609,7 +609,7 @@ s	    non-existing piece) the value may be different from those of
 		    RuleSet.Atom atom = row.get(j);
 		    if (atom.counter>=0 && ourCounter[j]==0) continue;
 		    if (!atom.acceptsColorShapeAndProperties(p, varMap)) continue;
-		    if (!atom.plist.allowsPicking(pos.num(), eligibleForEachOrder)) continue;
+		    if (!atom.plistsAllowPicking(pos.num(), eligibleForEachOrder)) continue;
 		    boolean can = atom.bucketList.destinationAllowed( varMap, bucketNo);
 		    if (can) whoAccepts[j].set(bucketNo);
 		}
@@ -1333,7 +1333,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
     }
 
     /** The current version of the application */
-    public static final String version = "8.058";
+    public static final String version = "8.059";
 
     /** FIXME: this shows up in Reflection, as if it's a property of each object */
     public static String getVersion() { return version; }

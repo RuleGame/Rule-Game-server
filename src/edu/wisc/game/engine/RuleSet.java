@@ -192,8 +192,8 @@ public class RuleSet {
 	public Piece.Color[] colors;
 	/** Alternative for GS5 */
 	//	ArithmeticExpression colorsExp;
-	/** The "pos:" components of the atom */
-	public PositionList plist;       	
+	/** The "pos:" components of the atom. Usually, there is at most 1 element in this vector */
+	private Vector<PositionList> plists = new Vector<>();       	
 	/** The "postpos:" components of the atom GS (ver 6.041) */
 	public PositionList postPlist;       	
 	public BucketList bucketList;
@@ -204,14 +204,15 @@ public class RuleSet {
 	HashMap<String,PropertyCondition> propertyConditions=new HashMap<>();
 
 	//ArithemeticExpression code = null;
-	
+
+	/** FIXME: what format is this supposed to be in, anyway? */
 	public String toString() {
 	    String s= "(" + counter + ","  +showList(shapes) + "," + showList(colors)+",";
 	    for(String key: propertyConditions.keySet()) {
 		s += key + ":" + propertyConditions.get(key) + ",";
 	    }
 	    
-	    s += plist +  "," + bucketList + ")";
+	    s += Util.joinNonBlank(",", plists) +  "," + bucketList + ")";
 	    return s;
 	}
 
@@ -241,14 +242,16 @@ public class RuleSet {
 	
 	/** Formats the Atom as the source code of the rule set */
 	public String toSrc() {
-	    if (hasNonSCCond()) {
+	    if (hasNonSCCond() || plists.size()!=1) {
 		Vector<String> v = new Vector<>();
 		v.add("count:" +  (counter<0? "*" : ""+counter));
 		for(String key: propertyConditions.keySet()) {
 		    v.add(key + ":" + propertyConditions.get(key));
 		}
-	
-		v.add("pos:" + plist.toSrc());
+		
+		for(PositionList pl: plists) {
+		    v.add("pos:" + pl.toSrc());
+		}
 		if (!postPlist.isTrivial()) {
 		    v.add("postpos:" + postPlist.toSrc());
 		}
@@ -258,7 +261,7 @@ public class RuleSet {
 		return "(" +  (counter<0? "*" : ""+counter) +
 		    "," + showList(shapes) +
 		    "," + showList(colors) +
-		    "," + plist.toSrc() +  "," + bucketList.toSrc() + ")";
+		    "," + plists.get(0).toSrc() +  "," + bucketList.toSrc() + ")";
 	    }
 	}
 
@@ -332,7 +335,7 @@ public class RuleSet {
 	    
 	    g = arms.remove("pos"); // position
 	    if (g!=null && agen!=null) g = g.map(agen.mkMapper("pos"));
-	    plist = new PositionList(g, orders);
+	    if (g!=null && !(g instanceof Expression.Star))  plists.add( new PositionList(g, orders));
 
 	    g = arms.remove("postpos"); // post-processing orders (GS 6.041)
 	    if (g!=null && agen!=null) g = g.map(agen.mkMapper("postpos"));
@@ -455,14 +458,16 @@ public class RuleSet {
 	 */
 	Atom mkLite() {
 	    Atom a=new Atom(shapes,colors);
-	    a.plist = plist;
+	    a.plists = plists;
 	    a.propertyConditions=propertyConditions;
 	    return a;
 	}
 	
 	/** Used when converting Kevin's JSON to our server format */
 	void forceOrder(String orderName) {
-	    plist.forceOrder(orderName);
+	    for(PositionList pl: plists) {
+		pl.forceOrder(orderName);
+	    }
 	}
 
 
@@ -524,6 +529,22 @@ public class RuleSet {
 	    }
 	       
 	}
+
+	/** Do this atom's position list(s) presently allow picking a piece from the
+	specified position?
+	@param  eligibleForEachOrder What positions are now "in front"
+	of each order. If null is passed here (that's only used in some
+	simplified board generation modes), no acceptance based on orders
+	happens.
+	*/
+	public boolean plistsAllowPicking(int pos,
+					  HashMap<String, BitSet> eligibleForEachOrder) {
+	    for(PositionList pl: plists) {
+		if (!pl.allowsPicking(pos, eligibleForEachOrder)) return false;
+	    }
+	    return true;
+	}
+
 
     }
 
@@ -853,7 +874,7 @@ public class RuleSet {
 	if (row.size()!=1) return false;
 	Atom atom = row.get(0);
 
-	return atom.shapes==null && atom.colors == null && atom.plist != null;
+	return atom.shapes==null && atom.colors == null && atom.plists.size()>0;
     }
 
     

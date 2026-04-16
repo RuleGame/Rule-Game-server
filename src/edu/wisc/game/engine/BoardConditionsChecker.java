@@ -79,7 +79,7 @@ public class BoardConditionsChecker {
 			//	System.out.println("DEBUG: Accepted");
 		    }
 
-		    if (!atom.plist.allowsPicking(pos.num(), eligibleForEachOrder)) continue;
+		    if (!atom.plistsAllowPicking(pos.num(), eligibleForEachOrder)) continue;
 		    if (atom.bucketList.destinationAllowed( varMap, bucketNo)) {
 			acceptingAtomsCnt ++;
 		    }
@@ -108,7 +108,7 @@ public class BoardConditionsChecker {
 	    int acceptingAtomCnt = 0;
 	    for(int j=0; j<row.size(); j++) {
 		RuleSet.Atom atom = row.get(j);
-		if (atom.plist.allowsPicking(pos, null)) acceptingAtomCnt++;
+		if (atom.plistsAllowPicking(pos, null)) acceptingAtomCnt++;
 	    }
 	    if (acceptingAtomCnt == row.size())  acceptingRowCnt++;
 	}

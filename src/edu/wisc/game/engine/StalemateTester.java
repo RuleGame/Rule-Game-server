@@ -176,7 +176,7 @@ public class StalemateTester {
     private boolean pieceCanBeMoved(int posNum, Piece p, EligibilityForOrders eligibleForEachOrder) {	
 	for(RuleSet.Atom atom: rules.rows.get(0)) {
 	    if (!atom.acceptsColorShapeAndProperties(p,null)) continue;
-	    if (!atom.plist.allowsPicking(posNum, eligibleForEachOrder)) continue;
+	    if (!atom.plistsAllowPicking(posNum, eligibleForEachOrder)) continue;
 	    return true;
 	}
 	return false;
