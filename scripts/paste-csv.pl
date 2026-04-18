@@ -3,7 +3,7 @@
 use strict;
 
 #--------------------------------------------------------------------
-# This script merges to file, using the values in the first column of each
+# This script merges two files into one, using the values in the first column of each
 # one as the key. Example:
 #
 # File 1:
@@ -30,11 +30,15 @@ open(F, $f1) or die "Cannot read $f1\n";
 my @lines1 = <F>;
 close(F);
 
+my %h1 = (); 
 my $maxN1 = 0;
 foreach my $s (@lines1) {
     $s =~ s/\s+$//;
-    my $n = scalar( split /,/, $s);
+    my @a = split( /,/, $s);
+    my $n = scalar( @a);
     if ($n>$maxN1) { $maxN1 = $n; }
+    ($n>0) or next;
+    $h1{$a[0]} = $s;
 }
 
 # print "File $f1 has $maxN1 columns\n";
@@ -54,6 +58,7 @@ foreach my $s (@lines2) {
     $h2{$a[0]} = $s;
 }
 
+#-- keys from f1
 foreach my $s (@lines1) {
     $s =~ s/\s+$//;
     my @a = split( /,/, $s);
@@ -68,3 +73,24 @@ foreach my $s (@lines1) {
     push(@a,@b);
     print join(",", @a) . "\n";
 }
+
+
+#-- keys from f2 absent in f1
+foreach my $s (@lines2) {
+    $s =~ s/\s+$//;
+    my @b = split( /,/, $s);
+    my $n = scalar( @b);
+    if ($n>$maxN2) { $maxN2 = $n; }
+    ($n>0) or next;
+    my $key = shift @b;
+    while( scalar(@b) <$maxN2-1) { push(@b, ""); }
+    if (defined $h1{$key}) { next; }
+    my @a = ($key);
+    while( scalar(@a) <$maxN1) { push(@a, ""); }
+    push(@a,@b);
+    print join(",", @a) . "\n";
+    
+    
+}
+
+
