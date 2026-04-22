@@ -286,20 +286,28 @@ class BasePlayer  extends Vector<EpisodeHistory> {
 				      new PrintWriter(System.out, true));
 	    Vector<Pick> tra0  = epi0.getTranscript();
 	    boolean hasMismatch=false;
+	    int localMatchCnt=0, localMismatchCnt=0;
 	    for(Pick pick: tra0) {
 		Move move = (Move)pick;
 		int[] w = {move.getPieceId(), move.getBucketNo()};
 		int code = digestMoveBasic(epi, w);
 		if (code == move.getCode()) {
 		    matchCnt++;
+		    localMatchCnt++;
 		} else {
 		    mismatchCnt++;
+		    localMismatchCnt++;
 		    hasMismatch = true;
 		}
 	    }
 	    if (!hasMismatch) {
 		epiMatchCnt ++;
 	    } 
+	    String msg = "Training board "+j+ " of "+size()+": Result of training moves";
+	    msg += " applied to inferred rules";
+	    msg += ": cleared=" + epi.getCleared() + ", good moves count=" + epi.getDoneMoveCnt() + "/" +tra0.size();
+	    msg += ". Matched outcome on " + localMatchCnt +"/" + (localMatchCnt+localMismatchCnt) + " moves.";
+	    System.out.println(msg);
 	}
 	System.out.println("If the training episodes had been played with inferred rules, "+matchCnt+"/" +(matchCnt+mismatchCnt)+ " moves would have had the same outcome, and " + epiMatchCnt +"/" + size()+ " episodes would have been identical");
 	// zzzz

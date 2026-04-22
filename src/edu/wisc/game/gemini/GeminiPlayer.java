@@ -554,6 +554,8 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	    history.askAboutPreparedEpisodes(future, instructions);
 	    System.out.println(history.costReport());
 	    if (log!=null) log.close();
+	    long msec = new Date().getTime() - startDate.getTime();
+	    System.out.println("The run took " + msec + " msec");
 
 	    
 	    System.exit(0); 
