@@ -467,7 +467,10 @@ class BasePlayer  extends Vector<EpisodeHistory> {
     
 
 	if (max_requests > 0 && requestCnt >= max_requests) {
-	    System.out.println("Request limit (" + max_requests+") reached");
+	    int sumLen = 0;
+	    for(EpisodeHistory eh: this) sumLen += eh.epi.getTranscript().size();
+	    stats =  "All "+size()+" episodes have "+sumLen+" moves. lastStretch=" + lastStretch + ", lastR=" + lastR;
+	    System.out.println("Request limit (" + max_requests+") reached. "+stats);
 	    return false;
 	}
 	return null;
