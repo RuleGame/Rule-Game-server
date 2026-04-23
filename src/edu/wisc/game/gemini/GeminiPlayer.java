@@ -413,7 +413,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	String resumeFileName = ht.getOption("resume", null);
 	File resumeFrom = null;
 	if (resumeFileName!=null) resumeFrom  = new File( resumeFileName);
-
+	boolean reuseResponse = ht.getOption("reuseResponse", false);
 	
 	System.out.println("At " + now() +", starting playing with Gemini. Game Server ver. "+ Episode.getVersion());
 	Date startDate = now;
@@ -563,13 +563,21 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
 
 	boolean mustResumeNow = false;
-	
+	ReadBack rb =null;	
 	if (resumeFrom != null) {
 	    System.out.println("Resuming from old log file " + resumeFrom);
-	    won = history.readLogBack( gg, resumeFrom);
+	    rb = history.readLogBack( gg, resumeFrom);
+	    won = rb.won;
 	    System.out.println("Restored " + history.size() + " episodes; already won=" + won);
 	    mustResumeNow = history.size()>0 && !history.lastElement().epi.isCompleted();// unfinished last episode (resumeFile mode);
-	    //System.exit(0);
+
+	    if (reuseResponse) { // just re-do the processing of the canned response
+		if (rb.responseText==null)  throw new IllegalArgumentException("Cannot reuseResponse, as no response has been found in  " + resumeFrom);
+		System.out.println("Reusing response...");
+		history.digestFinalResponse(rb.future, rb.responseText);
+		System.exit(0);
+	    }
+	    
 	}
 
 
@@ -620,23 +628,14 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	}
 
 
-	//if (won) { // Ask the bot how he did it // ZZZ - use the prepared-episodes approach at this point!
-	    /*
-	    GeminiRequest gr = history.makeRequestHow();
-	    String lines[] = history.doOneRequest(gr);
-	    for(int j=0; j<lines.length; j++) {
-		if (lines.length>0) System.out.println("Candidate " + j+ " of " + lines.length);
-		System.out.println("Response text={" + lines[j].trim() + "}");
-	    }
-	    */
+
 	    GeminiPlayer future = new GeminiPlayer();
 	    future.addFutureBoards(gg);
 
-	    // zzz
 	    System.out.println("instructionsFile2=" + instructionsFile2 );
 	    System.out.println("Instructions for the final request: {\n" + instructions2 +  "\n}");
 	    history.askAboutPreparedEpisodes(future, instructions2);
-	    //}
+
 	} finally {
 	    System.out.println(history.costReport());
 	    if (log!=null) log.close();
@@ -975,48 +974,18 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
     }
 
        
-    /** Reading back a log produced by GeminiPlayer at an earlier
-	session, in order to restore the session's history. This
-	method finds the last request in which GeminiPlayer had
-	recapitulated the sessions's history. The log section
-	(the request text) this method looks for starts after
-	"The text part of the request:", and ends with "YOUR MOVE?"
-	(or, for the final request, with the "Request took" [XXX msec] line)
-    */
-    private Vector<String> extractLastRequest(File f) throws FileNotFoundException, IOException {
-	
-	LineNumberReader r = new LineNumberReader(new FileReader(f));
-	String s = null;
-	Vector<String> v = new Vector<>();
-	Vector<String> lastFoundText = null;
-	boolean inside = false;
-	while((s = r.readLine())!=null) {
-	    if (s.startsWith(	"The text part of the request:")) {
-		v.clear();
-		inside = true;
-	    }
-	    if (inside) {
-		if (s.startsWith("YOUR MOVE") ||
-		    s.startsWith("Request took")) {
-		    inside = false;
-		    lastFoundText = new Vector<>();
-		    lastFoundText.addAll(v);
-		    v.clear();
-		    requestCnt++;
-		} else {		    
-		    v.add(s);
-		}
-	    }	    
-	}
-	System.out.println("Found " + requestCnt + " requests in the log. The last one has " + lastFoundText.size() + "  lines");
-	return lastFoundText;
-    }
-
-    
     private static final Pattern boardPat = Pattern.compile("^Episode ([0-9]+) .*?(\\{.*\\})");
     //	movePat("^(MOVE [0-9]+ [0-9]+)");
-		
 
+    //    The initial board for future episode No. 1:
+    private static final Pattern futureBoardPat = Pattern.compile("^The initial board for future episode No. ([0-9]+)");
+
+    private static class ReadBack {
+	boolean won=false;
+	GeminiPlayer future=new GeminiPlayer();
+	String responseText = null;
+    }
+    
     /** Fills this GeminiPlayer with the recorded history from a file.
 
 	<p>If the player reaches the *current* mastery criterion
@@ -1025,17 +994,27 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	so that we can recompute m_star based on a different
 	mastery criterion than the one used in the original run.
 
+	// zzz: also want the details of prepared episodes etc
+	
 	@return true if the mastery criterion has been reached within the read-in history
      */
-    private boolean readLogBack(GameGenerator gg, File f) throws IOException,
+    private ReadBack readLogBack(GameGenerator gg, File f) throws IOException,
 							      ReflectiveOperationException {
-	Vector<String> v = extractLastRequest(f);
+
+	ReadBack rb = new ReadBack();
+	//GeminiPlayer future = new GeminiPlayer(); // only useful if this the final request
+
+	LogFileParser parsed = new LogFileParser(f);
+	requestCnt += parsed.requestCnt;
+	Vector<String> v = parsed.requestLines;
+	if (v==null) throw new IOException("Failed to find a request in the file " + f);
 	int eNo = 0;
-	boolean won = false;
-	for(String line: v) {
+	for(int i=0; i<v.size(); i++) {
+	    String line = v.get(i);
 	    // "Episode 1 had the following initial board: {"value":...}"
 	    Matcher m = boardPat.matcher(line);
 	    if (m.find()) {
+		if (rb.won) continue; // don't need this episode if we've already "won" under the current criterion
 		int j = Integer.parseInt(m.group(1));
 		String boardText = m.group(2);
 		if (j==eNo+1) eNo++;
@@ -1058,15 +1037,50 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	    }
 	    MoveLine[] w = parseResponse(line);
 	    if (w.length>0) {
+		if (rb.won) continue; // can ignore the move now
 		//System.out.println("Found move: " + w[0]);
 		Boolean b = digestMove(w[0].asPair());
-		if (b!=null) won = (won || b);
-		if (won) break;
+		if (b!=null) rb.won = (rb.won || b);
+		if (rb.won) continue;
 	    } else {
 		//System.out.println("There is no move in this line: " +line);
-	    }			    
+	    }
+
+	    // see if we're on the "future episodes" now...
+	    m = futureBoardPat.matcher(line);
+	    if (m.find()) { // the board is on the next line
+		i++; 
+		line = v.get(i);
+		String boardText = line;
+		Board board = Board.readBoardFromString(boardText);
+		board.dropLabels();
+		Episode epi = new Episode(gg.getRules(), board, outputMode,
+					  new InputStreamReader(System.in),
+					  new PrintWriter(System.out, true));
+		// FIXME: if this was a human player transcript, and the para set mandated "fixed" mode, this would be wrong
+		epi.setShowAllMovables(false);
+
+		EpisodeHistory his = new EpisodeHistory(epi);
+		rb.future.add(his);
+
+	    }
 	}
-	return won;
+
+	if (rb.future.size()==0) {
+	    System.out.println("No future boards found");
+	    return rb;
+	} else {
+	    for(int j=0; j<rb.future.size(); j++) {
+		System.out.println("Recovered future board " + j + ":");
+		System.out.println(rb.future.get(j).initialBoardAsString());
+	    }
+	}
+
+	// go for the response...
+	rb.responseText = parsed.responseText;
+	
+	//System.exit(0);
+	return rb;
     }
 
 

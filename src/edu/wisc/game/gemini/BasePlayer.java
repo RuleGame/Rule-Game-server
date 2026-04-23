@@ -290,6 +290,14 @@ class BasePlayer  extends Vector<EpisodeHistory> {
 	    for(Pick pick: tra0) {
 		Move move = (Move)pick;
 		int[] w = {move.getPieceId(), move.getBucketNo()};
+
+		Board board = epi.getCurrentBoard();
+		/*		System.out.println("REPLAY DEBUG: completed=" + epi.isCompleted()+
+				   ", fc=" + epi.getFinishCode() +
+				   ", board=" +
+				   JsonReflect.reflectToJSONObject(   board,true));
+		*/
+		
 		int code = digestMoveBasic(epi, w);
 		if (code == move.getCode()) {
 		    matchCnt++;
@@ -381,6 +389,7 @@ class BasePlayer  extends Vector<EpisodeHistory> {
 	Episode.Display q = epi.doMove2(id, bid,  epi.getTranscript().size());
 	int code = q.getCode();
 	System.out.println("At "+	reqt()+", Moving piece " + id + " to bucket " + bid + ". Code=" + code);
+	if (epi.isCompleted()) System.out.println("Finish code=" + epi.getFinishCode());
 	//System.out.println("DEBUG B: transcript=" + epi.getTranscript());
 	
 	if (code==CODE.ATTEMPT_CNT_MISMATCH) {

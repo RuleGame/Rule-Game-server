@@ -1316,6 +1316,7 @@ Vector<Piece> values, Pick lastMove, boolean weShowAllMovables, boolean[] isJMov
 	v.addAll(values);
 	v.addAll(removedValues);
 	Board b = new Board(v, null, null);
+	b.scrubDropped();
 	b.dropLabels();
 	return b;
     }
