@@ -685,7 +685,9 @@ static protected void removeFinalWinningStreak(Vector<ReadTranscriptData.Entry> 
 
     protected static int computeWait(int retryCnt) {
 	int waitSec = 120;
-	for(int i=0; i<retryCnt; i++) waitSec*=2;
+	for(int i=0; i<retryCnt && waitSec < 1200; i++) {
+	    waitSec*=2;
+	}
 	return waitSec;
     }
 

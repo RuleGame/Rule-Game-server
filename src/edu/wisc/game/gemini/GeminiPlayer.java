@@ -109,7 +109,8 @@ public class GeminiPlayer  extends BasePlayer {
 	JsonObject responseJo = null;       
 	int code=0;
 	int budgetDivider = 1;
-	for(; retryCnt < 4; retryCnt++) {
+	final int MR = 8;
+	for(; retryCnt <= MR+1; retryCnt++) {
 
 	    // Have to re-create the request with a lower budget
 	    if (budgetDivider>1) {
@@ -135,6 +136,7 @@ public class GeminiPlayer  extends BasePlayer {
 	    } catch( javax.net.ssl.SSLHandshakeException ex) {
 		System.out.println("Caught exception when writing to connection: "+ ex);
 		int waitSec = 60;
+		if (retryCnt >= MR) break;
 		System.out.println("Waiting for " + waitSec + " seconds to retry after an exception");
 		waitABit(waitSec * 1000);
 		continue;
@@ -166,6 +168,7 @@ public class GeminiPlayer  extends BasePlayer {
 	    System.out.println("Request took " + msecUsed + " msec");
 	    if (responseJo == null) {
 		int waitSec = 60;
+		if (retryCnt >= MR) break;
 		System.out.println("Waiting for " + waitSec + " seconds to retry after a failed read");
 		waitABit(waitSec * 1000);
 		continue;
@@ -189,6 +192,7 @@ public class GeminiPlayer  extends BasePlayer {
 		int waitSec = error429(responseJo);
 		System.out.println("Server suggest waiting for " + waitSec + " seconds to retry");
 		if (waitSec < 60) waitSec = computeWait( retryCnt);
+		if (retryCnt >= MR) break;
 		System.out.println("Waiting for " + waitSec + " seconds to retry");
 		waitABit(waitSec * 1000);
 	    } else if (code==503) {
@@ -199,6 +203,7 @@ public class GeminiPlayer  extends BasePlayer {
 		// longer periods: 2, 4, 8... min.
 
 		int waitSec = computeWait( retryCnt);
+		if (retryCnt >= MR) break;
 		System.out.println("Waiting for " + waitSec + " seconds to retry, as a wild guess");
 		waitABit(waitSec * 1000);
 
