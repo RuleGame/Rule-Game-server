@@ -474,7 +474,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	System.out.println("Instructions are: {\n" + instructions +  "\n}");
 	System.out.println("instructionsFile2=" + instructionsFile2 );
 	System.out.println("Instructions2 are: {\n" + instructions2 +  "\n}");
-	System.exit(0);
+	//	System.exit(0);
 	if (temperature==null) {
 	    System.out.println("Using the model's default temperature");
 	} else {
