@@ -690,11 +690,13 @@ public class RuleSet {
 
 
     //	Row(Vector<Token> tokens, TreeMap<String, Order> orders, AutomaticRuleGenerator agen) throws RuleParseException {
-    
+
+    /** @param The rule set as a string, with "\n" separating lines */
     public RuleSet(String ruleText) throws RuleParseException {
 	this( ruleText, null);
     }
-    
+
+    /** @param The rule set as a string, with "\n" separating lines */
     public RuleSet(String ruleText, AutomaticRuleGenerator agen) throws RuleParseException {
 	this( ruleText.split("\n"), agen);
     }
@@ -702,7 +704,7 @@ public class RuleSet {
     /** Creates a RuleSet based on the content of a rule set file. 
 	The file may contain some (optional) custom order definition
 	lines, followed by one or more rule lines.
-	@param rr The lines  from the rule set file */
+	@param rr The lines  from the rule set file, as an array */
     public RuleSet(String[] rr) throws RuleParseException {
 	this(rr,null);
     }

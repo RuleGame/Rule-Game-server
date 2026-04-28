@@ -240,14 +240,16 @@ class BasePlayer  extends Vector<EpisodeHistory> {
 	sent with the request.
 
 
-	/// zzzz FIXME: if inferredRulesFormal has been received, need to do the following:
+	<p>If inferredRulesFormal has been received, we do the following:
 	* apply them to the old episodes (that is, replay the transcript of
 	old episodes against the bot's inferred rules, to see if the outcome
 	of any move is different from the one recorded originally)
 	* compare the results on the old episodes against what the bot said they would be
 	* apply them to the future episodes (that is, run's bot's proposed moves
 	against the bot's inferred rules, to see (a) if the bot's proposed rules are consistent with the bot's theory... and (b) whether the bot's theory gives the same outcome as our real rules).
-	
+
+	@param future An object that holds the "future episodes" (aka the test set)
+	@param line The response text
 	
     */
     protected void digestFinalResponse(BasePlayer future, String line)  throws ReflectiveOperationException {
@@ -318,7 +320,7 @@ class BasePlayer  extends Vector<EpisodeHistory> {
 	    System.out.println(msg);
 	}
 	System.out.println("If the training episodes had been played with inferred rules, "+matchCnt+"/" +(matchCnt+mismatchCnt)+ " moves would have had the same outcome, and " + epiMatchCnt +"/" + size()+ " episodes would have been identical");
-	// zzzz
+
 	System.out.println("How well do inferred rules explain the bot's solutions for test episodes?");
 	BasePlayer altFuture = future.makePlayerUsingAltRules(iRules);
 	altFuture.digestProposedMoves(r, true);
@@ -630,7 +632,7 @@ class BasePlayer  extends Vector<EpisodeHistory> {
 
     /** Preprocessing of "good learners'" transcripts before feeding them to the bot,
 	as per Paul's request. This only should be called when */
-    static protected void removeFinalWinningStreak(Vector<ReadTranscriptData.Entry> section) {
+static protected void removeFinalWinningStreak(Vector<ReadTranscriptData.Entry> section) {
 	int n0 = section.size();
 
 	// remove the final winning streak, except for its first element, as per PBK's request
@@ -689,17 +691,169 @@ class BasePlayer  extends Vector<EpisodeHistory> {
 
     /** Reads the contents of one or several files and concatenates them.
        @param fileList "f.txt", or maybe "f1.txt:f2.txt:...."
-     */
-    protected static String readInstructions(String fileList) throws IOException {
+       @param transferFrom if this  array is non-empty, it contains logs of previous runs from other rule sets. This method will instruct the player's conclusions (IR) from those logs, and will add them to the instructions.
+       @param bnf Can talk BNF
+    */
+    protected static String readInstructions(String fileList, Vector<File> transferFrom, boolean bnf) throws IOException,  ReflectiveOperationException {
 	String names [] = fileList.split(":");
 	Vector<String> v = new Vector<>();
 	for(String name: names) {
 	    File f = new File(name);
 	    v.add( Util.readTextFile( f));
 	}
+
+	if (transferFrom.size()>0) {
+	    Vector<String> w = new Vector<>();
+	    w.add("# Previously played games (with different hidden rules).\n");
+	    w.add("Previously, you also helped Bob to play with an oracle programmed with different rules.");
+		
+	    int j=0;
+	    for(File f: transferFrom) {
+		System.out.println("Knowledge transfer from old log file " + f);
+		j++;
+		w.add("## Game No. " + j);
+		w.add("In Game No. " + j + ", you discovered hidden rules that you described as follows:");
+	       
+		BasePlayer dummy = new BasePlayer(); // not actually used
+		
+		// zzz
+	    	LogFileParser parsed = new LogFileParser(f);
+		if (parsed.responseText==null) throw new IllegalArgumentException("Found no response text in " + f);
+		PreparedEpisodesResponse per = PreparedEpisodesResponse.parseResponse(parsed.responseText);
+		String ir = per.getInferredRules();
+		w.add("<extract>");
+		w.add(ir);
+		w.add("</extract>");
+		w.add("\n");
+		      
+		     
+		if (ir==null) throw new IllegalArgumentException("Found no inferred rules in "+ f);
+		String irFormal = per.getInferredRulesFormal();
+		if (bnf && irFormal!=null) {
+		    irFormal = irFormal.replace(",)", ")"); // Special BNF dispensation for Gemini
+		    irFormal = irFormal.replace("\\n", "\n"); // On rare occasions, Gemini puts a literal backslash-n instead of line break
+		    w.add("\n");
+		    w.add("You also provided the following formal description of these rules, using our BNF syntax:");
+		    w.add("```bnf");
+		    w.add(irFormal);
+		    w.add("```");
+		}
+		w.add("\n");
+	    }
+	    v.add(Util.joinNonBlank("\n", w));
+	}
+	
 	return Util.joinNonBlank("\n---\n", v);
     }
 
+      
+    private static final Pattern boardPat = Pattern.compile("^Episode ([0-9]+) .*?(\\{.*\\})");
+    //	movePat("^(MOVE [0-9]+ [0-9]+)");
+
+    //    The initial board for future episode No. 1:
+    private static final Pattern futureBoardPat = Pattern.compile("^The initial board for future episode No. ([0-9]+)");
+
+    /** Additional data extracted from reading a log */
+    static class ReadBack {
+	/** true if the mastery criterion has been reached within the read-in history */
+	boolean won=false;
+	GeminiPlayer future=new GeminiPlayer();
+	String responseText = null;
+    }
     
+
+    /** Fills this GeminiPlayer with the recorded history from a file.
+
+	<p>If the player reaches the *current* mastery criterion
+	in the middle of the transcript, stop right there and
+	don't load the rest of the transcript. This is done
+	so that we can recompute m_star based on a different
+	mastery criterion than the one used in the original run.
+
+
+	@param gg The GameGenerator in whose spirit we interpret the training transcripts
+	and the future episodes found in the log.
+	
+	@return 
+     */
+    ReadBack readLogBack(GameGenerator gg, File f) throws IOException,
+							      ReflectiveOperationException {
+
+	ReadBack rb = new ReadBack();
+
+	LogFileParser parsed = new LogFileParser(f);
+	requestCnt += parsed.requestCnt;
+	Vector<String> v = parsed.requestLines;
+	if (v==null) throw new IOException("Failed to find a request in the file " + f);
+	int eNo = 0;
+	for(int i=0; i<v.size(); i++) {
+	    String line = v.get(i);
+	    // "Episode 1 had the following initial board: {"value":...}"
+	    Matcher m = boardPat.matcher(line);
+	    if (m.find()) {
+		if (rb.won) continue; // don't need this episode if we've already "won" under the current criterion
+		int j = Integer.parseInt(m.group(1));
+		String boardText = m.group(2);
+		if (j==eNo+1) eNo++;
+		else throw new IllegalArgumentException("Episode number out of order: " + j);
+		//System.out.println("Found board text=" + boardText);
+		Board board = Board.readBoardFromString(boardText);
+		board.dropLabels();
+		Episode epi = new Episode(gg.getRules(), board, outputMode,
+					  new InputStreamReader(System.in),
+					  new PrintWriter(System.out, true));
+		// FIXME: if this was a human player transcript, and the para set mandated "fixed" mode, this would be wrong
+		epi.setShowAllMovables(false);		    
+
+		EpisodeHistory his = new EpisodeHistory(epi);
+		add(his);
+		continue;
+
+	    }
+	    MoveLine[] w = parseResponse(line);
+	    if (w.length>0) {
+		if (rb.won) continue; // can ignore the move now
+		Boolean b = digestMove(w[0].asPair());
+		if (b!=null) rb.won = (rb.won || b);
+		if (rb.won) continue;
+	    } else {
+		//System.out.println("There is no move in this line: " +line);
+	    }
+
+	    // see if we're on the "future episodes" now...
+	    m = futureBoardPat.matcher(line);
+	    if (m.find()) { // the board is on the next line
+		i++; 
+		line = v.get(i);
+		String boardText = line;
+		Board board = Board.readBoardFromString(boardText);
+		board.dropLabels();
+		Episode epi = new Episode(gg.getRules(), board, outputMode,
+					  new InputStreamReader(System.in),
+					  new PrintWriter(System.out, true));
+		// FIXME: if this was a human player transcript, and the para set mandated "fixed" mode, this would be wrong
+		epi.setShowAllMovables(false);
+		
+		EpisodeHistory his = new EpisodeHistory(epi);
+		rb.future.add(his);
+	    }
+	}
+
+	if (rb.future.size()==0) {
+	    System.out.println("No future boards found");
+	    return rb;
+	} else {
+	    for(int j=0; j<rb.future.size(); j++) {
+		System.out.println("Recovered future board " + j + ":");
+		System.out.println(rb.future.get(j).initialBoardAsString());
+	    }
+	}
+
+	// go for the response...
+	rb.responseText = parsed.responseText;
+	
+	return rb;
+    }
+
     
 }

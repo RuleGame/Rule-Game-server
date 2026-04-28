@@ -402,12 +402,14 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
 	//System.exit(0);
 
-	// read the instructions from a file or from several files
-	instructions =  (instructionsFile==null)? Util.readTextFile( new File( Files.geminiDir(), "system.txt")):
-	    readInstructions(instructionsFile);
-
-	instructions2 =  (instructionsFile2==null)? Util.readTextFile( new File( Files.geminiDir(), "system-prepared-03.txt")):
-	    readInstructions(instructionsFile2);
+	Vector<File> transferFrom = new Vector<>();
+	String transfer = ht.getOption("transfer", null);
+	if (transfer!=null && transfer.length()>0) {
+	    for(String fname: transfer.split(":")) {
+		transferFrom.add(new File(fname));
+	    }
+	    
+	}
 
 	
 	String resumeFileName = ht.getOption("resume", null);
@@ -415,6 +417,8 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	if (resumeFileName!=null) resumeFrom  = new File( resumeFileName);
 	boolean reuseResponse = ht.getOption("reuseResponse", false);
 	
+
+
 	System.out.println("At " + now() +", starting playing with Gemini. Game Server ver. "+ Episode.getVersion());
 	Date startDate = now;
 	System.out.println("Gemini model=" + model);
@@ -455,10 +459,22 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 	}
 
 
-	
+	// read the instructions for each move from a file or from several files
+	if (instructionsFile==null) instructionsFile= (new File( Files.geminiDir(), "system.txt")).getPath();
+	instructions = readInstructions(instructionsFile, transferFrom, false);
+
+	// final instructions (they are different for per-move instructions, since they contain the
+	// BNF description of the syntax)
+	if (instructionsFile2==null) instructionsFile2= (new File( Files.geminiDir(), "system-prepared-03.txt")).getPath();	
+	instructions2 = readInstructions(instructionsFile2, transferFrom, true);
+
+
 
 	System.out.println("instructionsFile=" + instructionsFile );
 	System.out.println("Instructions are: {\n" + instructions +  "\n}");
+	System.out.println("instructionsFile2=" + instructionsFile2 );
+	System.out.println("Instructions2 are: {\n" + instructions2 +  "\n}");
+	System.exit(0);
 	if (temperature==null) {
 	    System.out.println("Using the model's default temperature");
 	} else {
@@ -972,117 +988,6 @@ Very occasionally, the "parts" array has multiple elements, each one havng a "te
 	    digestFinalResponse(future, lines[j]);
 	}
     }
-
-       
-    private static final Pattern boardPat = Pattern.compile("^Episode ([0-9]+) .*?(\\{.*\\})");
-    //	movePat("^(MOVE [0-9]+ [0-9]+)");
-
-    //    The initial board for future episode No. 1:
-    private static final Pattern futureBoardPat = Pattern.compile("^The initial board for future episode No. ([0-9]+)");
-
-    private static class ReadBack {
-	boolean won=false;
-	GeminiPlayer future=new GeminiPlayer();
-	String responseText = null;
-    }
-    
-    /** Fills this GeminiPlayer with the recorded history from a file.
-
-	<p>If the player reaches the *current* mastery criterion
-	in the middle of the transcript, stop right there and
-	don't load the rest of the transcript. This is done
-	so that we can recompute m_star based on a different
-	mastery criterion than the one used in the original run.
-
-	// zzz: also want the details of prepared episodes etc
-	
-	@return true if the mastery criterion has been reached within the read-in history
-     */
-    private ReadBack readLogBack(GameGenerator gg, File f) throws IOException,
-							      ReflectiveOperationException {
-
-	ReadBack rb = new ReadBack();
-	//GeminiPlayer future = new GeminiPlayer(); // only useful if this the final request
-
-	LogFileParser parsed = new LogFileParser(f);
-	requestCnt += parsed.requestCnt;
-	Vector<String> v = parsed.requestLines;
-	if (v==null) throw new IOException("Failed to find a request in the file " + f);
-	int eNo = 0;
-	for(int i=0; i<v.size(); i++) {
-	    String line = v.get(i);
-	    // "Episode 1 had the following initial board: {"value":...}"
-	    Matcher m = boardPat.matcher(line);
-	    if (m.find()) {
-		if (rb.won) continue; // don't need this episode if we've already "won" under the current criterion
-		int j = Integer.parseInt(m.group(1));
-		String boardText = m.group(2);
-		if (j==eNo+1) eNo++;
-		else throw new IllegalArgumentException("Episode number out of order: " + j);
-		//System.out.println("Found board text=" + boardText);
-		Board board = Board.readBoardFromString(boardText);
-		board.dropLabels();
-		Episode epi = new Episode(gg.getRules(), board, outputMode,
-					  new InputStreamReader(System.in),
-					  new PrintWriter(System.out, true));
-		// FIXME: if this was a human player transcript, and the para set mandated "fixed" mode, this would be wrong
-		epi.setShowAllMovables(false);
-
-		EpisodeHistory his = new EpisodeHistory(epi);
-		/* history.*/add(his);
-
-
-		continue;
-
-	    }
-	    MoveLine[] w = parseResponse(line);
-	    if (w.length>0) {
-		if (rb.won) continue; // can ignore the move now
-		//System.out.println("Found move: " + w[0]);
-		Boolean b = digestMove(w[0].asPair());
-		if (b!=null) rb.won = (rb.won || b);
-		if (rb.won) continue;
-	    } else {
-		//System.out.println("There is no move in this line: " +line);
-	    }
-
-	    // see if we're on the "future episodes" now...
-	    m = futureBoardPat.matcher(line);
-	    if (m.find()) { // the board is on the next line
-		i++; 
-		line = v.get(i);
-		String boardText = line;
-		Board board = Board.readBoardFromString(boardText);
-		board.dropLabels();
-		Episode epi = new Episode(gg.getRules(), board, outputMode,
-					  new InputStreamReader(System.in),
-					  new PrintWriter(System.out, true));
-		// FIXME: if this was a human player transcript, and the para set mandated "fixed" mode, this would be wrong
-		epi.setShowAllMovables(false);
-
-		EpisodeHistory his = new EpisodeHistory(epi);
-		rb.future.add(his);
-
-	    }
-	}
-
-	if (rb.future.size()==0) {
-	    System.out.println("No future boards found");
-	    return rb;
-	} else {
-	    for(int j=0; j<rb.future.size(); j++) {
-		System.out.println("Recovered future board " + j + ":");
-		System.out.println(rb.future.get(j).initialBoardAsString());
-	    }
-	}
-
-	// go for the response...
-	rb.responseText = parsed.responseText;
-	
-	//System.exit(0);
-	return rb;
-    }
-
 
 }
 
