@@ -9,18 +9,25 @@ use Getopt::Long;
 # statistical information about Gemini play-mode runs.
 # Skipping files in "error" subdirectories.
 # Options
-# --long : to print more fields 
+# --long : to add move_logs column
+# --transfer : to add rule_set_conditions column
 #-------------------------------------------------------------------------------------------------
 
 my $long           = undef;
-GetOptions ('long' => \$long);
+my $transfer       = undef;
+GetOptions ('long' => \$long, 'transfer' => \$transfer);
+
 
 #--------------------------------------------------------------------------------
 my @lines = `grep -r Overall .`;
 
 #seed-5/gemini-special_spiralInward-seed5.txt:Victory: mastery demonstrated! All 3 episodes have 35 moves. lastStretch=10, lastR=2177280.0
 
-my $header = "#path,rule,won,trainEpisodes,trainMoves,testBoards";
+my $header = "#path,rule";
+if ($transfer) {
+    $header .= ",rule_set_conditions";
+}
+$header .= ",won,trainEpisodes,trainMoves,testBoards";
 if ($long) {
     $header .= ",move_logs";
 }
@@ -38,7 +45,9 @@ foreach my $line (@lines) {
     $f =~/^gemini-(.*)-seed./ or die "Cannot parse file name: $f\n";
     my $rule = $1;
     $rule =~ s/-resume//;  #-- seen in some old run names
-
+    #--- any transfers (repeated twice in the log)
+    my @kt = &findKT($path);
+    
     #--- test boards
     # Overall, cleared boards: 0/5, good moves: 15/45
     my $s =  `grep  "Overall" $path`;
@@ -87,7 +96,9 @@ foreach my $line (@lines) {
     }
 	    
 
-    print "$path,$rule,$won,$nepi,$moves,$testBText";
+    print "$path,$rule";
+    if ($transfer) { print ",".join(":", @kt); }
+    print ",$won,$nepi,$moves,$testBText";
     if ($long) { print ",$codes";}
     print "\n";
 }
@@ -122,4 +133,27 @@ sub countMoveLines($$) {
     return ($moves, join(//, @codes));
 }
 
+#--- any transfers (repeated twice in the log)
+# Knowledge transfer from old log file ../gemini-play-formal/seed-01/gemini-quadNearby-seed1.txt
+# Knowledge transfer from old log file seed-01/gemini-ordL1-seed1.txt
+sub findKT($) {
+    my ($path) = @_;
+    
+    my @ktLines = `grep 'Knowledge transfer from old log file' $path`;
+    my @kt = ();
+    foreach my $line (@ktLines) {
+	$line =~ s/.*log file *//;
+	#print "Line: $line";
+	if ($line =~ /gemini-([0-9a-z_]+)-[0-9a-z]+.txt/i) {
+	    my $q = $1;
+	    my $found = 0;
+	    foreach my $x (@kt) {
+		if ($x eq $q) { $found=1; last; }
+	    }
+	    if (!$found) { push(@kt, $q); }
+	    #print "q=$q\n";
+	}
+    }
+    return @kt;
+}
 

@@ -45,13 +45,15 @@ defined($header) or die "No data in $inFile\n";
 
 $header =~ s/\s+$//;
 $header =~ s/^#//;
+#-- column names, as per the header
 my @cols = split(/,/, $header);
 
 #-- maps rule name to a ref to hash table
 my %h = ();
 
-
+#-- Either of these two:
 # $header = "#path,rule,won,trainEpisodes,trainMoves,testBoards,move_logs";
+# $header = "#path,rule,rule_set_conditions,won,trainEpisodes,trainMoves,testBoards,move_logs";
 my $lineNo = 0;
 foreach my $line (@lines) {
     $lineNo++;
@@ -62,9 +64,11 @@ foreach my $line (@lines) {
     foreach my $j (0..$#cols) {
 	$g{ $cols[$j] } = $q[$j];
     }
-    my $rule = $g{"rule"};
-    exists($h{$rule}) or $h{$rule} = [];
-    push @{$h{$rule}}, \%g;
+    my $key = $g{"rule"};
+    my $transfer = $g{"rule_set_conditions"};
+    if (defined $transfer && $transfer ne "") { $key = "$key.$transfer"; }
+    exists($h{$key}) or $h{$key} = [];
+    push @{$h{$key}}, \%g;
 }
 
 
@@ -75,12 +79,12 @@ my @outCols = qw( runName algorithm rule_set rule_set_conditions
 
 my $targetStreak = 10;
 
-my @rules = sort(keys %h);
+my @keys = sort(keys %h);
 
 print join(",", @outCols) . "\n";
 
-foreach my $rule(@rules) {
-    my @tables = @{$h{$rule}};
+foreach my $key (@keys) {
+    my @tables = @{$h{$key}};
     @tables = sort{ my %ga = %{$a}; my %gb = %{$b}; $ga{"path"} cmp $gb{"path"}} @tables;
 #    print "Rule $rule: ". scalar(@tables). " runs\n";
     my @mm = ();
@@ -107,6 +111,8 @@ foreach my $rule(@rules) {
     my $harmonic = $hasZeroM? 0: scalar(@tables)/$sumInv;
 	
     my $param = "";
+    my ($rule,$transfer) = split( /\./, $key);
+    defined $transfer or $transfer = "";
     if ($rule =~ /^(t\d+-\d+)-(.*)/) {
 	($param,$rule) = ($1,$2);
     } else {
@@ -128,7 +134,7 @@ foreach my $rule(@rules) {
     my %out = (	"runName" => "playStateless",
 		"algorithm" => "G3F",
 		"rule_set" => $rule,
-		"rule_set_conditions" => "",
+		"rule_set_conditions" => $transfer,
 		"move_logs" => $moveLogs,
 		"good_move_length" => $targetStreak,
 		"m_star_values" => "[". join($sep, @imm) . "]",
