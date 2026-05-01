@@ -409,6 +409,7 @@ This usually only happens with temperature=0, when Gemini thinks especially hard
 
 	Vector<File> transferFrom = new Vector<>();
 	String transfer = ht.getOption("transfer", null);
+	if ("null".equals(transfer)) transfer=null;
 	if (transfer!=null && transfer.length()>0) {
 	    for(String fname: transfer.split(":")) {
 		transferFrom.add(new File(fname));
