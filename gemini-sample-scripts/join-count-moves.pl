@@ -99,7 +99,7 @@ foreach my $key (@keys) {
 	$s=~ m|(\d+)/(\d+)| or die "Cannot parse ratio $s\n";
 	$good += $1;
 	$all += $2;
-	my $ms = $won? $g{"trainMoves"} - $targetStreak : $big;
+	my $ms = $won? $g{"trainMoves"} - $targetStreak +1 : $big;
 	push @mm, $ms;
 	if ($ms == 0) {
 	    $hasZeroM = 0;
@@ -108,7 +108,8 @@ foreach my $key (@keys) {
 	    $sumInv += 1.0/$ms;
 	}
     }
-    my $harmonic = $hasZeroM? 0: scalar(@tables)/$sumInv;
+    my $harmonic = $hasZeroM? 0:
+    ($sumInv==0)? "+Infinity":	scalar(@tables)/$sumInv;
 	
     my $param = "";
     my ($rule,$transfer) = split( /\./, $key);

@@ -35,7 +35,7 @@ public class GeminiPlayer  extends BasePlayer {
 	System.err.println("  java [options]  edu.wisc.game.gemini.GeminiPlayer game-rule-file.txt npieces [nshapes ncolors]");
 	System.err.println("  java [options]  edu.wisc.game.gemini.GeminiPlayer uildtrial-list-file.csv rowNumber");
 	System.err.println("  java [options]  edu.wisc.game.gemini.GeminiPlayer R:rule-file.txt:modifier-file.csv");
-	System.err.println("Each of 'npieces', 'nshapes', and 'ncolors' is eitheвr 'n' (for a single value) or 'n1:n2' (for a range). '0' means 'any'");
+	System.err.println("Each of 'npieces', 'nshapes', and 'ncolors' is either 'n' (for a single value) or 'n1:n2' (for a range). '0' means 'any'");
 	if (msg!=null) 	System.err.println(msg + "\n");
 	System.exit(1);
     }
