@@ -262,7 +262,10 @@ class BasePlayer  extends Vector<EpisodeHistory> {
 	    return;
 	}
 	System.out.println("Found " + r.length + " proposed solutions in the response, for "+future.size() + " future boards");
-	if (r.length != future.size()) throw new IllegalArgumentException("Future board count mismatch");
+	// ZZZ warning
+	//if (r.length != future.size()) throw new IllegalArgumentException("Future board count mismatch");
+	//-- Alas, sometimes Gemini fails to solve all requested test boards...
+	if (r.length != future.size()) System.out.println("WARNING: Future board count mismatch");
 	
 	future.digestProposedMoves(r, false);
 	String irFormal = per.getInferredRulesFormal();
@@ -718,7 +721,6 @@ static protected void removeFinalWinningStreak(Vector<ReadTranscriptData.Entry> 
 	       
 		BasePlayer dummy = new BasePlayer(); // not actually used
 		
-		// zzz
 	    	LogFileParser parsed = new LogFileParser(f);
 		if (parsed.responseText==null) throw new IllegalArgumentException("Found no response text in " + f);
 		PreparedEpisodesResponse per = PreparedEpisodesResponse.parseResponse(parsed.responseText);
