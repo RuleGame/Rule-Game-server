@@ -196,6 +196,8 @@ class MakeMwSeries {
 		    // ser.mStar = Math.min( ser.errcnt, ser.mStar);
 		    //-------------
 		    //-- This was used in 8.028 thru 8.055. After that, we switched to zero-based count
+		    //-- (see email thread "New CSV file format for consolidated Gemini results" with
+		    //-- Christo and PK, 2026-03-11)		 
 		    // ser.mStar = Math.min( attempts1 - attempts2 + 1, ser.mStar);
 		    ser.mStar = Math.min( attempts1 - attempts2, ser.mStar);
 		}
