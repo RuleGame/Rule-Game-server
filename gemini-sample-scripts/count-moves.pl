@@ -19,7 +19,14 @@ GetOptions ('long' => \$long, 'transfer' => \$transfer);
 
 
 #--------------------------------------------------------------------------------
-my @lines = `grep -r Overall .`;
+
+my @dirs = @ARGV;
+scalar(@dirs)>0 or @dirs=(".");
+
+my @lines = ();
+foreach my $dir (@dirs) {
+    push @lines, `grep -r Overall $dir`;
+}
 
 #seed-5/gemini-special_spiralInward-seed5.txt:Victory: mastery demonstrated! All 3 episodes have 35 moves. lastStretch=10, lastR=2177280.0
 
