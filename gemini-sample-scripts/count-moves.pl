@@ -45,11 +45,13 @@ print "$header\n";
 foreach my $line (@lines) {
     $line =~ m|(.*?):| or die "No colon in this line: $line";
     my $path = $1;
-    $path =~ m|/(gemini-.*?\.txt)$| or next;
-    my $f = $1;
-#    print "Path=$path, f=$f\n";
     if ($path =~ /error/) { next; }
     if ($path =~ /extend/) { next; }
+
+    $path =~ m|.*/(.*)$| or die "No slash in this line: $line";
+    my $f = $1;
+    $f =~ m|^gemini-.*?\.txt$| or next;
+#    print "Path=$path, f=$f\n";
 
     #--- rule name
     $f =~/^gemini-(.*)-seed./ or die "Cannot parse file name: $f\n";
