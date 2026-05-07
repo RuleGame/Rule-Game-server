@@ -43,8 +43,11 @@ print "$header\n";
 
 
 foreach my $line (@lines) {
-    $line =~ m|(.*/(gemini.*txt)):| or next;
-    my ($path, $f) = ($1,$2);
+    $line =~ m|(.*?):| or die "No colon in this line: $line";
+    my $path = $1;
+    $path =~ m|/(gemini-.*?\.txt)$| or next;
+    my $f = $1;
+#    print "Path=$path, f=$f\n";
     if ($path =~ /error/) { next; }
     if ($path =~ /extend/) { next; }
 
@@ -58,7 +61,7 @@ foreach my $line (@lines) {
     #--- test boards
     # Overall, cleared boards: 0/5, good moves: 15/45
     my $s =  `grep  "Overall" $path`;
-    $s =~ m|cleared boards: (\d/\d), good moves: (\d+/\d+)| or die "Cannot parse Overall line in $path: $s\n";
+    $s =~ m|cleared boards: (\d/\d), good moves: (\d+/\d+)| or die "Cannot parsethe Overall line in $path: $s\n";
     my $testBText = $1;
     
     #--- episodes and moves
