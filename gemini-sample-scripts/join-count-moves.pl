@@ -33,6 +33,9 @@ GetOptions ('semicolon' => \$semicolon);
 #-- if true, interpret $big as +Infinity
 my $doInf = 1;
 my $big           = 1000;
+#-- the smallest of the positive values at which the process was ended without
+#-- demonstrating mastery
+my $minThreshold = 0;
 GetOptions ('big=s' => \$big);
 
 my ($inFile) = @ARGV;
@@ -99,8 +102,13 @@ foreach my $key (@keys) {
 	$s=~ m|(\d+)/(\d+)| or die "Cannot parse ratio $s\n";
 	$good += $1;
 	$all += $2;
+	#-- help to interpret "Infinity"
+	my $q = $g{"trainMoves"};
+	if (!$won) {
+	    if ($minThreshold==0 || $q < $minThreshold) { $minThreshold=$q; }
+	}
 	#-- zero based mStar, as per 2026-03-11 email discussion
-	my $ms = $won? $g{"trainMoves"} - $targetStreak : $big;
+	my $ms = $won? $q - $targetStreak : &mkBig($q);
 	push @mm, $ms;
 	if ($ms == 0) {
 	    $hasZeroM = 1;
@@ -156,18 +164,45 @@ foreach my $key (@keys) {
 sub median($) {
     my ($pa) = @_;
     my @a = @{$pa};
-    @a = sort { $a <=> $b} @a;
+    @a = sort { &cmpBig($a,$b)} @a;
     my $n = scalar @a;
     return ($n % 2 ==0) ? 0.5*( $a[$n/2-1] + $a[$n/2]) : $a[int($n/2)];
 }
 
+#-- replaces ":500" with "Infinity(500)" or "1000"
 sub orInf($) {
     my ($x) = @_;
-    ($doInf && $x == $big) ? "Infinity" : $x;
+    my $y = $x;
+    $y =~ s/^://;
+    &isBig($x)?     ($doInf ? "Infinity($y)" : $big) : $x;
 }
 
+#-- representation for "too-big" numbers: ":$x". Used to mark the length
+#-- of incomplete runs
+sub mkBig($) {
+    my ($x) = @_;
+    return ":$x";
+}
 
+sub isBig($) {
+    my ($x) = @_;
+    return ($x =~ /^:/)? 1: 0;
+}
 
+sub cmpBig($$) {
+    my ($a, $b) = @_;
+    if (&isBig($a)) {
+	if (&isBig($b)) {
+	    $a =~ s/^://;
+	    $b =~ s/^://;
+	} else {
+	    return 1;
+	}
+    } elsif (&isBig($b)) {
+	return -1;
+    } 
+    return $a<=>$b;
+}
 
 
 

@@ -45,6 +45,7 @@ print "$header\n";
 foreach my $line (@lines) {
     $line =~ m|(.*?):| or die "No colon in this line: $line";
     my $path = $1;
+    if ($path =~ /early/) { next; }
     if ($path =~ /error/) { next; }
     if ($path =~ /extend/) { next; }
 
