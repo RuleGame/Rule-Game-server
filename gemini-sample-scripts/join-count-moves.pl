@@ -166,7 +166,14 @@ sub median($) {
     my @a = @{$pa};
     @a = sort { &cmpBig($a,$b)} @a;
     my $n = scalar @a;
-    return ($n % 2 ==0) ? 0.5*( $a[$n/2-1] + $a[$n/2]) : $a[int($n/2)];
+    return ($n % 2 ==0) ? avgTwo( $a[$n/2-1], $a[$n/2]) : $a[int($n/2)];
+}
+
+#-- typically, $a <= $b
+sub avgTwo($$) {
+    my ($a,$b)= @_;
+    return  &isBig($a)? $a:
+    &isBig($b)? $b: 0.5*($a+$b);
 }
 
 #-- replaces ":500" with "Infinity(500)" or "1000"

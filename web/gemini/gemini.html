@@ -1,0 +1,35 @@
+
+<html>
+  <head><title>Gemini</title>
+ <link rel="stylesheet" type="text/css" href="css/rule-game.css"/>
+  </head>  
+  <body>
+    <h1>The Gemini harness tool: Making Gemini play the GOHR</h1>
+
+    <div align="center"><em>Updated 2026-05-16 for Game Server ver 8.060 and <tt>gemini-2.3-flash</tt></em></div>
+
+    <h2>Goals</h2>
+
+    <p>This document describes the Java-based Gemini harness tool created within the GOHR ("Game of Hidden Rules") project at Rutgers University. An earlier version of this tool, used in the spring and summer of 2025 to play with Gemini 2.0 and 2.5 is described <a href="gemini-2025.html">elsewhere</a>.
+
+    <p>The Gemini harness tool has been designed to allow us feeding GOHR rules sets (the same ones offered to human players) the Gemini LLM, and to process Gemini's response to assess the LLM's ability to "solve" the problem, i.e. to guess a correct rule sets, and to apply its guess to the game being played.
+
+    <p><strong>Two training modes</strong>. The harness tool can allow the bot to learn about the hidden rule set in one of the two ways: the play mode or the prepared-episodes mode.
+
+      <ul>
+      
+      	 <li>In the play mode, the Gemini bot makes moves one by one, receiving the feedback from our side. Occasionally, we ask the bot to describe its mental model of the rules; or sometimes it volunteers to do so.
+
+	 <li>
+	   In the prepared-episodes mode, we create a number of completed episodes (e.g. with random moves, eventually clearing each board), and send their transcripts to Gemini asking the bot to provide its idea of the rules, and based on that idea, tell us how it would clear several new ("future") boards shown to it (by sending to us a sequence of proposed moves). We then analyze Gemini's proposed sequences of moves to see if they would indeed clear the board.
+      </ul>
+      
+    <p><strong>Performance assessment</strong>. Several metrics can be used to assess the bot's performance in a given run.
+
+      <ul>
+	<li>A "winning streak" (in play mode only). In play mode, the interaction between the Gemini LLM bot and the GOHR Game Engine is similar to that between a human player and the GOHR Game Server. Therefore, we can use the same "masytery criterion"
+      </ul>
+
+
+	   
+    <h2><a name="arch">Architecture</a></h2>
