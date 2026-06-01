@@ -27,9 +27,136 @@
     <p><strong>Performance assessment</strong>. Several metrics can be used to assess the bot's performance in a given run.
 
       <ul>
-	<li>A "winning streak" (in play mode only). In play mode, the interaction between the Gemini LLM bot and the GOHR Game Engine is similar to that between a human player and the GOHR Game Server. Therefore, we can use the same "masytery criterion"
+	<li><u>A "winning streak" (in play mode only).</u> In play mode, the interaction between the Gemini LLM bot and the GOHR Game Engine is similar to that between a human player and the GOHR Game Server. Therefore, we can use the same "mastery criterion" that is used in the <a href="../incentive-doubling.html">DOUBLING</a> or LIKELIHOOD incentive schemes: if a human player succeeds at making a certain number of correct moves in a row, he is thought to have "learned the hidden rule"; similarly, we stop the play-mode run when the bot has made a certain number of good moves in a row. Typically, the bot was expected to provide 10 good moves in a row for the harness app to end the play-mode run.
+
+	<li><u>Test boards.</u> The bot is asked (in the only request of the prepared-episodes run, or in the final request of the play-mode run) to propose full solutions for a certain number of boards. We typically present the bot with 5 boards, each one with 9 objects on them; so solving them all correctly (i.e. producing for each board a sequence of 9 moves that would clear them) is equivalent to making 45 (additional) correct moves in a row.
+
+	<li><u>Explanation of the rules.</u> The bot is asked (in the only request of the prepared-episodes run, or in the final request of the play-mode run) to describe its understanding of the hidden rules, as inferred from the (accumulated of presented) training data. In addition to asking the bot to describe the inferred rules in English, the harness app can also provide the bot with the (simplified) formal description of the GOHR rule syntax, and ask the bot to write the inferred rules using that syntax. The advantage of the latter approach is that the harness app can then immediately assess, to some extent at least, the correctness of the bot's inferred rules. We don't actually try to fully determine the equivalence of the inferred rules and the hidden rules, but we feed the formally described inferred rules into the Game Engine, and quantitatively answer two questions:
+	  <ol>
+	    <li>Are the inferred rules fully consistent with the bot's training experience? That is, has the bot managed to infer rules that don't contradict in any way the training data it has seen? This testing is carried out as follows. We take the transctripts of the training episodes (in the prepared-episodes mode, those are the episodes we prepared ourselves; in the play mode, those are the episodes played by the bot), and ask whether all moves in these transcripts would have had the same outcome if, instead of being played against the hidden rules, they had been played against a Game Engine implementing the inferred rules.
+	      
+	  </ol>
       </ul>
 
 
-	   
     <h2><a name="arch">Architecture</a></h2>
+
+	  <p>The GOHR Gemini harness supports 2 modes: the "play" mode and the "prepared episodes" mode.</p>
+    <p>In the play mode, the Gemini bot makes moves one by one, receiving the feedback from our side. We end the play when either a certain "mastery level" has been demonstrated (e.g. by making a certain number of correct moves in a row), or when the limit on the number of requests or the number of episodes has been reached. At this point, we make the "final request", asking the bot to describe its mental model of the rules, in readable English and in our rule-description language. Sometimes it volunteers to do so. 
+
+	 <p>
+	   In the prepared-episodes mode, we create a number of completed episodes (e.g. with random moves, eventually clearing each board), and send their transcripts to Gemini asking the bot to provide its idea of the rules, and based on that idea, tell us how it would clear several new ("future") boards shown to it (by sending to us a sequence of proposed moves). We then analyze Gemini's proposed sequences of moves to see if they would indeed clear the board.
+		  
+	  </p>
+
+    <p>While the setup used in the prepared episodes mode is obvious (one request, one response), the arrangements used in the play mode require a more detailed description. 
+	    
+      The setup that we use in the play mode in order to get Google Gemini to play the Rule Game (aka the GOHR) is, in a way, the inverse of that of the <a href="captive.html">Captive Game Server</a> (CGS). With the CGS, the control resides in the ML (AI) program that wants to solve a GOHR problem; whenever the ML program makes a move, it sends its proposed move as a request to the CGS, and then the CGS applies the move to the current board and returns its decision (accept/deny) in the response. With our Gemini app, the control resides in our app; the app keeps sending requests to the Gemini server at Google, asking it to make its next move. The Gemini's proposed move, hopefully, arrives in the response, and our app then applies it to the board, and prepares to send to Gemini the next request for a move.
+
+      <h2>Gemini models</h2>
+
+    <p>As of the early 2025, Gemini offers a number of "models". We started in March 2025 with the then current model named <tt>gemini-2.0-flash</tt>, which produced very disappointing results.
+
+    <p>Later we switched to a more recent model, <tt>gemini-2.5-flash-preview-05-20</tt>, which Google bills as a <a href="https://ai.google.dev/gemini-api/docs/thinking">model with thinking support</a>. It produces much better results, although it works much more slowly.
+
+    <p>
+      Out harness tool can be configured to use other models as well (with the command-line option <tt>model=...</tt>).
+
+      <h2>Conversation structure in the play mode</h2>
+      
+    <p>A Gemini user could easily imaginge that  when a person or an app interacts with the Gemini server, the server somehow keeps track of the entire content of the "conversation",  perhaps by means of creating some kind of a "model"      of the knowledge conveyed to it by the user's input, in a suitable      internal representation,      and expanding and updating that model as more user input comes through.
+
+
+    <p>Somewhat unexpectedly, Gemini documentation
+      (see e.g. <a href="https://ai.google.dev/api/generate-content#v1beta.GenerateContentResponse">Home |
+Gemini API  |
+Models | 
+API Reference |
+Generating content</a>)      implies that nothing like this takes place! The Gemini server is essentially stateless, meaning that when a person or an app interacts with the Gemini server it, the server does not keep track of the user's previous requests, and does not store any "model" of that knowledge.
+
+<p>Instead, if you desire to have a "conversation" with the Gemini bot, you need to supply the entire record of the conversation (what you said -- what the bot said -- what you said -- ... -- what you say now) in each of your HTTP requests! The JSON structure that one sends to the server in the request provides support for "packing" one's conversation into it.
+
+      <p>The GOHR, of course, is built on a dialogue, with the player and the Game Server typically exchanging a request/response pair (in whichever direction) per move. It is possible to literally pack one's dialogue into the Gemini request structure, using the framework provided. But since we are already quite inefficient, the decision was made to normally pack the entire transcript of a series (all episodes played in a single run of our app, on the same rule set) into a single prompt. Certain limited exceptions exist though, and are discussed in appropriate places below.
+
+	<h3>Asking Gemini about this</h3>
+	<p>If asked, Gemini will tell all of this to you itself:
+	<a href="https://g.co/gemini/share/a08eb7c33222">session transcript</a>
+
+	<p>
+	If you want to spare yourself reading our long and verbose conversation, here are a few salient points:
+
+	<p>
+1) If you communicate with Gemini using the plain HTTP API, then yes, you have to explicitly include the same system instructions in each API call. If you use the Python API or Node.js API, then, on the surface level, it gives you the concept of a session, so you put your system instructions into the higher-level API only once. But what the higher-level API does behind the scenes is simply "prepending this instruction to the conversation history for you in subsequent sendMessage() calls." So in reality the system instructions are still sent over the wire on every API call, exactly the same way as with the plain HTTP API.
+
+<p>
+2) If I use the cached content API, then of course I send the introductory text (the meta-rules, or content of previous episodes) over the wire only once. But internally,  "in terms of the [Gemini] model's core understanding and generation, the behavior should be largely identical" to what happens if no caching has been used.
+
+<p>
+3) I asked how the cached content is actually handled: is it stored simply as plain text to be parsed again and again, as some kind of parsed-text structure, or in a more sophisticated way? The answer was, quite a bit of pre-processing is done, so that the cached text's tokens "are then converted into numerical vector embeddings. These embeddings are high-dimensional mathematical representations that capture the semantic meaning of the tokens and their relationships within the context. This is the crucial step where the "text" is transformed into something the neural network can directly work with." Additionally, something called the Key-Value (KV) cache for Gemini's "attention mechanism" is filled.
+
+<p>
+So this is quite a bit of data processing work, and caching is helpful with reducing the overall  amount  of work in a long session. But again, it appears what happens is that caching simply eliminates the duplication of some work; the results of the work would be roughly the same with and without caching.
+
+   <h2>Using the app</h2>
+
+
+    <p>The main script is in <tt>/home/vmenkov/w2020/game/scripts/gemini.sh</tt>. The usage is very similar to that of <a href="captive.html"><tt>captive-full.sh</tt></a>; all the same arguments and options describing the rule set and the board generation are accepted.
+
+      <h3>Options</h3>
+
+      <p>
+      There are a number of additional options you can put on the command line, in the <em>key=value</em> format, as follows:
+
+      <ul>
+
+	<li>keyFile=/opt/w2020/gemini-api-key.txt  -- the location of the file with the Gemini API key
+
+	<li>model=gemini-2.0-flash -- the name of the Gemini model to use
+
+	<li>instructionsFile=/opt/w2020/game-data/gemini/system.txt -- the name of the text file with the "system instructions", which are set to the Gemini server with each request
+	  
+	<li>wait=4000 -- for how long (measured in milliseconds) the client waits between making two requests to the Gemini server (in the play mode only). Since most models allow at most 15 queries per minute for free-tier users. The value of 4000 (i.e. 4 sec) is appropriate. 
+
+	  <li>max_boards=10 -- the max number of episodes to run with each rule set (in the play mode only).
+		  
+	  <li>max_requests=0 -- the max number of requests the client is allowed to make. (If no retries are ever needed, this is equal to the max total number of moves in all episodes). The default value, 0, means "no limit". If you feel the client sometimes likes to loop making the same request over and over, set this to something like 200 or 1000.
+
+		  <li>prepared_episodes=5 -- this option activates the prepared episodes mode, indicating how many of them to include into the request.
+		  </li>
+      </ul>
+ 
+
+<pre>
+("model", model);
+Long("wait", wait);
+("max_boards", max_boards);
+("keyFile", keyFile);
+("instructionsFile", instructionsFile);
+("instructionsFile2", instructionsFile2);
+("max_requests", max_requests);
+("targetStreak", targetStreak);
+Double("targetR", targetR);
+("xFactor", xFactor);
+("formal", needFormal);
+DoubleObject("temperature", temperature);
+IntegerObject("thinkingBudget",
+IntegerObject("candidateCount", candidateCount);
+("prepared_episodes", prepared_episodes);
+("human", null);
+("humanMaxMoves", 0);
+Enum(PrepareMode.class, "prepareMode", PrepareMode.random);	    
+("future_episodes", 5);
+("transfer", null);
+("resume", null);
+("reuseResponse", false);
+("output", null));
+Enum(OutputMode.class, "output", outputMode);
+("inputDir", null);
+("detailedTranscript", null);
+Long("seed", 0L);
+</pre>
+
+
+... to be continued ...
+
+</html>
