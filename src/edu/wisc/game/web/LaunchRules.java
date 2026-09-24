@@ -57,8 +57,10 @@ public class LaunchRules      extends LaunchRulesBase  {
 
 	if (mode==Mode.CGS || mode==Mode.BRM) {
 	    modsShort = null;
-	    modsLong = new String[] {"APP/APP-no-feedback"};
-	    hm = new String[] {""};
+		// making the list of playing mods in part B the same for cgs (and brm) 
+		// as for the other rules, as per PK 2026-06-12
+	    // modsLong = new String[] {"APP/APP-no-feedback"};
+	   // hm = new String[] {""};
 	}
     
 
