@@ -59,7 +59,9 @@ public class ContextInfo    extends ResultsBase  {
 	//String proto = request.getProtocol(); // could give "HTTP/1.0"
 	//proto = proto.replaceAll("/.*", "");
 	
-	host = request.getLocalName();
+	//host = request.getLocalName();
+	// 2026-10-07: getServerName may be better than getLocalName, because the former is more likely to contain the domain name
+	host = request.getServerName();
 	localPort= request.getLocalPort();
 	serverPort= request.getServerPort();
 	port = serverPort;
